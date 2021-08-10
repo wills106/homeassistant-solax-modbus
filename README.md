@@ -8,7 +8,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 # Known Issues
 
 1. Tick boxes in configflow have no Text.
-![Issue1](https://github.com/wills106/homeassistant-solax-modbus/blob/master/images1/issue1.png)
+![Issue1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/issue1.png)
 They are:
 Gen2 X1
 Gen3 X1
