@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Definieer uw Solax Power Inverter modbus-verbinding",
+        "data": {
+          "host": "Het ip-adres van uw Solax Power-omvormer modbus apparaat",
+          "name": "Het voorvoegsel dat moet worden gebruikt voor uw Solax Power-sensoren",
+          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de Solax Power-omvormer",
+          "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+          "gen2_x1": "SolaX Gen2 X1",
+          "gen3_x1": "SolaX Gen3 X1",
+          "gen3_x3": "SolaX Gen2 X3"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Apparaat is al geconfigureerd"
+    },
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd"
+    }
+  }
+}
