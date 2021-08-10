@@ -15,3 +15,4 @@ Gen3 X1
 Gen3 X3
 2. Only supports reading at the moment., writing to registers not net implemented.
 3. Gen3 X3 Not yet implemented.
+4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
