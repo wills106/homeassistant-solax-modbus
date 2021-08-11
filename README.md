@@ -20,3 +20,9 @@ They are:
 4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
 5. Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards.
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
+
+Version 0.0.2
+BMS Connect State
+Start and End Times for Force-Time-Mode Formatted
+House Load
+Import, Export & Solar Daily Energy working in Energy Dashboard
