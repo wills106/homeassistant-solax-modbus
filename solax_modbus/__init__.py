@@ -23,9 +23,11 @@ from .const import (
     CONF_READ_GEN2X1,
 	CONF_READ_GEN3X1,
 	CONF_READ_GEN3X3,
+	CONF_READ_OPTIONAL_SENSORS,
 	DEFAULT_READ_GEN2X1,
 	DEFAULT_READ_GEN3X1,
 	DEFAULT_READ_GEN3X3,
+	DEFAULT_READ_OPTIONAL_SENSORS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
+        vol.Optional(CONF_READ_OPTIONAL_SENSORS, default=DEFAULT_READ_OPTIONAL_SENSORS): cv.boolean,
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
         ): cv.positive_int,
@@ -66,10 +69,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
     read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
+    read_optional_sensors = entry.data.get(CONF_READ_OPTIONAL_SENSORS, False)
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3)
+    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_optional_sensors)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -109,6 +113,7 @@ class SolaXModbusHub:
         read_gen2x1=False,
         read_gen3x1=False,
         read_gen3x3=False,
+        read_optional_sensors=False,
     ):
         """Initialize the Modbus hub."""
         self._hass = hass
@@ -118,6 +123,7 @@ class SolaXModbusHub:
         self.read_gen2x1 = read_gen2x1
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
+        self.read_optional_sensors = read_optional_sensors
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
         self._sensors = []
@@ -189,7 +195,7 @@ class SolaXModbusHub:
 
     def read_modbus_data(self):
         try:
-            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_input_registers_1()
+            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")   
             
@@ -290,7 +296,9 @@ class SolaXModbusHub:
         battery_charge_float_voltage = decoder.decode_16bit_uint()
         self.data["battery_charge_float_voltage_g2"] = round(battery_charge_float_voltage * 0.01, 1)
         self.data["battery_charge_float_voltage_g3"] = round(battery_charge_float_voltage * 0.1, 1)
-       
+
+#round(battery_charge_float_voltage * 0.1, 1)
+        
         battery_discharge_cut_off_voltage = decoder.decode_16bit_uint()
         self.data["battery_discharge_cut_off_voltage"] = round(battery_discharge_cut_off_voltage * 0.1, 1)
         
@@ -300,31 +308,23 @@ class SolaXModbusHub:
         battery_discharge_max_current = decoder.decode_16bit_uint()
         self.data["battery_discharge_max_current"] = round(battery_discharge_max_current * 0.1, 1)
         
-        charger_start_time_1_h = decoder.decode_16bit_uint()
-        self.data["charger_start_time_1_h"] = charger_start_time_1_h
+        charger_start_time_1_h = decoder.decode_16bit_uint()        
+        charger_start_time_1_m = decoder.decode_16bit_uint()        
+        self.data["charger_start_time_1"] = f"{charger_start_time_1_h}:{charger_start_time_1_m}"
         
-        charger_start_time_1_m = decoder.decode_16bit_uint()
-        self.data["charger_start_time_1_m"] = charger_start_time_1_m
-
-        charger_end_time_1_h = decoder.decode_16bit_uint()
-        self.data["charger_end_time_1_h"] = charger_end_time_1_h
-        
+        charger_end_time_1_h = decoder.decode_16bit_uint()        
         charger_end_time_1_m = decoder.decode_16bit_uint()
-        self.data["charger_end_time_1_m"] = charger_end_time_1_m
+        self.data["charger_end_time_1"] = f"{charger_end_time_1_h}:{charger_end_time_1_m}"
         
         decoder.skip_bytes(8)
         
-        charger_start_time_2_h = decoder.decode_16bit_uint()
-        self.data["charger_start_time_2_h"] = charger_start_time_2_h
-        
+        charger_start_time_2_h = decoder.decode_16bit_uint()        
         charger_start_time_2_m = decoder.decode_16bit_uint()
-        self.data["charger_start_time_2_m"] = charger_start_time_2_m
+        self.data["charger_start_time_2"] = f"{charger_start_time_2_h}:{charger_start_time_2_m}"
         
-        charger_end_time_2_h = decoder.decode_16bit_uint()
-        self.data["charger_end_time_2_h"] = charger_end_time_2_h
-        
+        charger_end_time_2_h = decoder.decode_16bit_uint()        
         charger_end_time_2_m = decoder.decode_16bit_uint()
-        self.data["charger_end_time_2_m"] = charger_end_time_2_m
+        self.data["charger_end_time_2"] = f"{charger_end_time_2_h}:{charger_end_time_2_m}"
         
         decoder.skip_bytes(34)
         
@@ -380,7 +380,7 @@ class SolaXModbusHub:
 
         return True
 
-    def read_modbus_input_registers_1(self):
+    def read_modbus_input_registers_0(self):
 
         realtime_data = self.read_input_registers(unit=1, address=0x0, count=86)
 
@@ -481,15 +481,16 @@ class SolaXModbusHub:
         
         battery_capacity_charge = decoder.decode_16bit_uint()
         self.data["battery_capacity_charge"] = battery_capacity_charge
-        
+#
+#
+# skip 10 should be battery health?        
+#
+#
         decoder.skip_bytes(82)
         
         feedin_power = decoder.decode_16bit_int()
         self.data["feedin_power"] = feedin_power
                 
-        feedin_energy_total = decoder.decode_32bit_uint()
-        self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
-        
         if feedin_power > 0:
           self.data["grid_export"] = feedin_power
         else:
@@ -499,7 +500,15 @@ class SolaXModbusHub:
           self.data["grid_import"] = abs(feedin_power)
         else:
           self.data["grid_import"] = 0
-        
+          
+        if inverter_load > 0:
+          self.data["house_load"] = inverter_load - feedin_power
+        else:
+          self.data["house_load"] = 0
+                            
+        feedin_energy_total = decoder.decode_32bit_uint()
+        self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
+                
         consumed_energy_total = decoder.decode_32bit_uint()
         self.data["consumed_energy_total"] = round(consumed_energy_total * 0.01, 1)
         
@@ -525,5 +534,31 @@ class SolaXModbusHub:
         
         total_energy_to_grid = decoder.decode_32bit_uint()
         self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
+        
+        return True
+    
+    def read_modbus_input_registers_1(self):
+
+        realtime_data = self.read_input_registers(unit=1, address=0x96, count=5)
+
+        if realtime_data.isError():
+            return False
+
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            realtime_data.registers, byteorder=Endian.Big
+        )
+
+        solar_energy_today = decoder.decode_16bit_uint()
+        self.data["solar_energy_today"] = round(solar_energy_today * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
+        export_energy_today = decoder.decode_16bit_uint()
+        self.data["export_energy_today"] = round(export_energy_today * 0.01, 1)
+        
+        decoder.skip_bytes(2)
+        
+        import_energy_today = decoder.decode_16bit_uint()
+        self.data["import_energy_today"] = round(import_energy_today * 0.01, 1)
         
         return True

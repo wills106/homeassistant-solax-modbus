@@ -15,9 +15,11 @@ from .const import (
 	CONF_READ_GEN2X1,
 	CONF_READ_GEN3X1,
 	CONF_READ_GEN3X3,
+	CONF_READ_OPTIONAL_SENSORS,
 	DEFAULT_READ_GEN2X1,
 	DEFAULT_READ_GEN3X1,
 	DEFAULT_READ_GEN3X3,
+	DEFAULT_READ_OPTIONAL_SENSORS,
 )
 
 DATA_SCHEMA = vol.Schema(
@@ -28,6 +30,7 @@ DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): bool,
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): bool,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): bool,
+        vol.Optional(CONF_READ_OPTIONAL_SENSORS, default=DEFAULT_READ_OPTIONAL_SENSORS): bool,
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
     }
 )

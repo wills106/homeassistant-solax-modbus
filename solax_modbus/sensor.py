@@ -6,7 +6,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN2_X1_SENSOR_TYPES, GEN3_X1_SENSOR_TYPES
+from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN2_X1_SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, OPTIONAL_SENSOR_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +66,22 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 gen3_x1_info[4],
                 gen3_x1_info[5] if len(gen3_x1_info) > 5 else None,
                 gen3_x1_info[6] if len(gen3_x1_info) > 6 else None,
+            )
+            entities.append(sensor)
+            
+    if hub.read_optional_sensors == True:
+        for optional_sensors_info in OPTIONAL_SENSOR_TYPES.values():
+            sensor = SolaXModbusSensor(
+                hub_name,
+                hub,
+                device_info,
+                optional_sensors_info[0],
+                optional_sensors_info[1],
+                optional_sensors_info[2],
+                optional_sensors_info[3],
+                optional_sensors_info[4],
+                optional_sensors_info[5] if len(optional_sensors_info) > 5 else None,
+                optional_sensors_info[6] if len(optional_sensors_info) > 6 else None,
             )
             entities.append(sensor)
 
