@@ -14,15 +14,20 @@ After reboot of Home-Assistant, this integration can be configured through the i
 5. Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards.
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
 
-Version 0.0.2
+## Version 0.0.2
+
 BMS Connect State
+
 Start and End Times for Force-Time-Mode Formatted
+
 House Load
+
 Import, Export & Solar Daily Energy working in Energy Dashboard
 
-Version 0.1.0
+## Version 0.1.0
+
 EPIC Version bump to 0.1.0
 
 Issue 1 no longer exists, working config screen!
 
-[Issue1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/issue1b.PNG)
+![Issue1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/issue1b.PNG)
