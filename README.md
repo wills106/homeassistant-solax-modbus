@@ -9,7 +9,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 
 1. Tick boxes in configflow have no Text. - Fixed!
 2. Only supports reading at the moment., writing to registers not net implemented.
-3. Gen3 X3 Not yet implemented.
+3. Gen3 X3 - Supported.
 4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
 5. Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards.
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
@@ -31,3 +31,14 @@ EPIC Version bump to 0.1.0
 Issue 1 no longer exists, working config screen!
 
 ![Issue1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/issue1b.PNG)
+
+
+## Version 0.2.0
+
+More Optional Sensors
+
+X3 Support
+
+X1 EPS Sensors
+
+X3 EPS Sensors

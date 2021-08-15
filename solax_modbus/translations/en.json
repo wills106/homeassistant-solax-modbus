@@ -2,15 +2,17 @@
   "config": {
     "step": {
       "user": {
-        "title": "Define your Solax Power Inverter modbus-connection",
+        "title": "Define your SolaX Power Inverter modbus-connection",
         "data": {
-          "host": "The ip-address of your Solax Power Inverter modbus device",
-          "name": "The prefix to be used for your Solax Power Inverter sensors",
-          "port": "The TCP port on which to connect to the Solax Power Inverter",
+          "host": "The ip-address of your SolaX Power Inverter modbus device",
+          "name": "The prefix to be used for your SolaX Power Inverter sensors",
+          "port": "The TCP port on which to connect to the SolaX Power Inverter",
           "read_gen2_x1": "SolaX Gen2 X1",
           "read_gen3_x1": "SolaX Gen3 X1",
           "read_gen3_x3": "SolaX Gen3 X3",
           "read_optional_sensor_s": "Optional Sensors",
+          "read_x1_eps": "X1 EPS",
+          "read_x3_eps": "X3 EPS",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       }

@@ -6,7 +6,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN2_X1_SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, OPTIONAL_SENSOR_TYPES
+from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN2_X1_SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, OPTIONAL_SENSOR_TYPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +66,54 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 gen3_x1_info[4],
                 gen3_x1_info[5] if len(gen3_x1_info) > 5 else None,
                 gen3_x1_info[6] if len(gen3_x1_info) > 6 else None,
+            )
+            entities.append(sensor)
+            
+    if hub.read_gen3x3 == True:
+        for gen3_x3_info in GEN3_X3_SENSOR_TYPES.values():
+            sensor = SolaXModbusSensor(
+                hub_name,
+                hub,
+                device_info,
+                gen3_x3_info[0],
+                gen3_x3_info[1],
+                gen3_x3_info[2],
+                gen3_x3_info[3],
+                gen3_x3_info[4],
+                gen3_x3_info[5] if len(gen3_x3_info) > 5 else None,
+                gen3_x3_info[6] if len(gen3_x3_info) > 6 else None,
+            )
+            entities.append(sensor)
+            
+    if hub.read_x1_eps == True:
+        for x1_eps_info in X1_EPS_SENSOR_TYPES.values():
+            sensor = SolaXModbusSensor(
+                hub_name,
+                hub,
+                device_info,
+                x1_eps_info[0],
+                x1_eps_info[1],
+                x1_eps_info[2],
+                x1_eps_info[3],
+                x1_eps_info[4],
+                x1_eps_info[5] if len(x1_eps_info) > 5 else None,
+                x1_eps_info[6] if len(x1_eps_info) > 6 else None,
+            )
+            entities.append(sensor)
+            
+    if hub.read_x3_eps == True:
+        for x3_eps_info in X3_EPS_SENSOR_TYPES.values():
+            sensor = SolaXModbusSensor(
+                hub_name,
+                hub,
+                device_info,
+                x3_eps_info[0],
+                x3_eps_info[1],
+                x3_eps_info[2],
+                x3_eps_info[3],
+                x3_eps_info[4],
+                x3_eps_info[5] if len(x3_eps_info) > 5 else None,
+                x3_eps_info[6] if len(x3_eps_info) > 6 else None,
             )
             entities.append(sensor)
             

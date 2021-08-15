@@ -24,10 +24,14 @@ from .const import (
 	CONF_READ_GEN3X1,
 	CONF_READ_GEN3X3,
 	CONF_READ_OPTIONAL_SENSORS,
+	CONF_READ_X1_EPS,
+    CONF_READ_X3_EPS,
 	DEFAULT_READ_GEN2X1,
 	DEFAULT_READ_GEN3X1,
 	DEFAULT_READ_GEN3X3,
 	DEFAULT_READ_OPTIONAL_SENSORS,
+	DEFAULT_READ_X1_EPS,
+	DEFAULT_READ_X3_EPS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,6 +45,8 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
         vol.Optional(CONF_READ_OPTIONAL_SENSORS, default=DEFAULT_READ_OPTIONAL_SENSORS): cv.boolean,
+        vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
+        vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
         ): cv.positive_int,
@@ -70,10 +76,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
     read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
     read_optional_sensors = entry.data.get(CONF_READ_OPTIONAL_SENSORS, False)
+    read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
+    read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_optional_sensors)
+    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_optional_sensors, read_x1_eps, read_x3_eps)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -114,6 +122,8 @@ class SolaXModbusHub:
         read_gen3x1=False,
         read_gen3x3=False,
         read_optional_sensors=False,
+        read_x1_eps=False,
+        read_x3_eps=False,
     ):
         """Initialize the Modbus hub."""
         self._hass = hass
@@ -124,6 +134,8 @@ class SolaXModbusHub:
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
         self.read_optional_sensors = read_optional_sensors
+        self.read_x1_eps = read_x1_eps
+        self.read_x3_eps = read_x3_eps
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
         self._sensors = []
@@ -256,19 +268,12 @@ class SolaXModbusHub:
         self.data["rtc_seconds"] = rtc_seconds
         
         rtc_minutes = decoder.decode_16bit_uint()
-        self.data["rtc_minutes"] = rtc_minutes
-        
         rtc_hours = decoder.decode_16bit_uint()
-        self.data["rtc_hours"] = rtc_hours
-        
         rtc_days = decoder.decode_16bit_uint()
-        self.data["rtc_days"] = rtc_days
-        
         rtc_months = decoder.decode_16bit_uint()
-        self.data["rtc_months"] = rtc_months
-        
         rtc_years = decoder.decode_16bit_uint()
-        self.data["rtc_years"] = rtc_years
+        
+        self.data["rtc"] = f"{rtc_hours}:{rtc_minutes}:{rtc_seconds} {rtc_days}/{rtc_months}/{rtc_years}"
         
         charger_use_modes = decoder.decode_16bit_uint()       
         if charger_use_modes == 0:
@@ -294,10 +299,7 @@ class SolaXModbusHub:
           self.data["battery_type"] = "Unknown"
         
         battery_charge_float_voltage = decoder.decode_16bit_uint()
-        self.data["battery_charge_float_voltage_g2"] = round(battery_charge_float_voltage * 0.01, 1)
-        self.data["battery_charge_float_voltage_g3"] = round(battery_charge_float_voltage * 0.1, 1)
-
-#round(battery_charge_float_voltage * 0.1, 1)
+        self.data["battery_charge_float_voltage"] = round(battery_charge_float_voltage * 0.1, 1)
         
         battery_discharge_cut_off_voltage = decoder.decode_16bit_uint()
         self.data["battery_discharge_cut_off_voltage"] = round(battery_discharge_cut_off_voltage * 0.1, 1)
@@ -359,7 +361,7 @@ class SolaXModbusHub:
         
         eps_set_frequencys = decoder.decode_16bit_uint()
         if eps_set_frequencys == 0:
-          self.data["eps_set_frequencs"] = "50Hz"
+          self.data["eps_set_frequency"] = "50Hz"
         elif eps_set_frequencys == 1:
           self.data["eps_set_frequency"] = "60Hz"
         else:
@@ -376,7 +378,7 @@ class SolaXModbusHub:
         elif languages == 1:
           self.data["language"] = "Deutsche"
         else:
-          self.data["languag"] = languages
+          self.data["language"] = languages
 
         return True
 
@@ -481,12 +483,38 @@ class SolaXModbusHub:
         
         battery_capacity_charge = decoder.decode_16bit_uint()
         self.data["battery_capacity_charge"] = battery_capacity_charge
-#
-#
-# skip 10 should be battery health?        
-#
-#
-        decoder.skip_bytes(82)
+        
+        output_energy_charge_lsb = decoder.decode_16bit_uint()
+        self.data["output_energy_charge_lsb"] = round(output_energy_charge_lsb * 0.1, 1)
+        
+        output_energy_charge_msb = decoder.decode_16bit_uint()
+        self.data["output_energy_charge_msb"] = round(output_energy_charge_msb * 0.1, 1)
+        
+        bms_warning_lsb = decoder.decode_16bit_uint()
+        self.data["bms_warning_lsb"] = bms_warning_lsb
+        
+        output_energy_charge_today = decoder.decode_16bit_uint()
+        self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
+        
+        input_energy_charge_lsb = decoder.decode_16bit_uint()
+        self.data["input_energy_charge_lsb"] = round(input_energy_charge_lsb * 0.1, 1)
+        
+        input_energy_charge_msb = decoder.decode_16bit_uint()
+        self.data["input_energy_charge_msb"] = round(input_energy_charge_msb * 0.1, 1)
+        
+        input_energy_charge_today = decoder.decode_16bit_uint()
+        self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
+        
+        bms_charge_max_current = decoder.decode_16bit_uint()
+        self.data["BMS Charge Max Current"] = round(bms_charge_max_current * 0.1, 1)
+        
+        bms_discharge_max_current = decoder.decode_16bit_uint()
+        self.data["BMS Discharge Max Current"] = round(bms_discharge_max_current * 0.1, 1)
+        
+        bms_warning_msb = decoder.decode_16bit_uint()
+        self.data["bms_warning_msb"] = bms_warning_msb
+        
+        decoder.skip_bytes(62)
         
         feedin_power = decoder.decode_16bit_int()
         self.data["feedin_power"] = feedin_power
@@ -535,11 +563,19 @@ class SolaXModbusHub:
         total_energy_to_grid = decoder.decode_32bit_uint()
         self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
         
+        lock_states = decoder.decode_16bit_uint()
+        if lock_states == 0:
+          self.data["lock_state"] = "Locked"
+        elif lock_states == 1:
+          self.data["lock_state"] = "Unlocked"
+        else:
+          self.data["lock_state"] = "Unknown"
+        
         return True
     
     def read_modbus_input_registers_1(self):
 
-        realtime_data = self.read_input_registers(unit=1, address=0x96, count=5)
+        realtime_data = self.read_input_registers(unit=1, address=0x66, count=54)
 
         if realtime_data.isError():
             return False
@@ -547,7 +583,142 @@ class SolaXModbusHub:
         decoder = BinaryPayloadDecoder.fromRegisters(
             realtime_data.registers, byteorder=Endian.Big
         )
-
+        
+        bus_volt = decoder.decode_16bit_uint()
+        self.data["bus_volt"] = round(bus_volt * 0.1, 1)
+        
+        dc_fault_val = decoder.decode_16bit_uint()
+        self.data["dc_fault_val"] = round(dc_fault_val * 0.1, 1)
+        
+        overload_fault_val = decoder.decode_16bit_uint()
+        self.data["overload_fault_val"] = overload_fault_val
+        
+        battery_volt_fault_val = decoder.decode_16bit_uint()
+        self.data["battery_volt_fault_val"] = round(battery_volt_fault_val * 0.1, 1)
+        
+        grid_voltage_r = decoder.decode_16bit_uint()
+        self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
+        
+        grid_current_r = decoder.decode_16bit_int()
+        self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
+        
+        grid_power_r = decoder.decode_16bit_int()
+        self.data["grid_power_r"] = round(grid_power_r * 0.1, 1)
+        
+        grid_frequency_r = decoder.decode_16bit_uint()
+        self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 1)
+        
+        grid_voltage_s = decoder.decode_16bit_uint()
+        self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)
+        
+        grid_current_s = decoder.decode_16bit_int()
+        self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
+        
+        grid_power_s = decoder.decode_16bit_int()
+        self.data["grid_power_s"] = round(grid_power_s * 0.1, 1)
+        
+        grid_frequency_s = decoder.decode_16bit_uint()
+        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
+        
+        grid_voltage_t = decoder.decode_16bit_uint()
+        self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)
+        
+        grid_current_t = decoder.decode_16bit_int()
+        self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
+        
+        grid_power_t = decoder.decode_16bit_int()
+        self.data["grid_power_t"] = round(grid_power_t * 0.1, 1)
+        
+        grid_frequency_t = decoder.decode_16bit_uint()
+        self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 1)
+        
+        eps_voltage_r = decoder.decode_16bit_uint()
+        self.data["eps_voltage_r"] = round(eps_voltage_r * 0.1, 1)
+        
+        eps_current_r = decoder.decode_16bit_uint()
+        self.data["eps_current_r"] = round(eps_current_r * 0.1, 1)
+        
+        eps_power_active_r = decoder.decode_16bit_uint()
+        self.data["eps_power_active_r"] = eps_power_active_r
+        
+        eps_power_r = decoder.decode_16bit_uint()
+        self.data["eps_power_r"] = eps_power_r
+        
+        eps_voltage_s = decoder.decode_16bit_uint()
+        self.data["eps_voltage_s"] = round(eps_voltage_s * 0.1, 1)
+        
+        eps_current_s = decoder.decode_16bit_uint()
+        self.data["eps_current_s"] = round(eps_current_s * 0.1, 1)
+        
+        eps_power_active_s = decoder.decode_16bit_uint()
+        self.data["eps_power_active_s"] = eps_power_active_s
+        
+        eps_power_s = decoder.decode_16bit_uint()
+        self.data["eps_power_s"] = eps_power_s
+        
+        eps_voltage_t = decoder.decode_16bit_uint()
+        self.data["eps_voltage_t"] = round(eps_voltage_t * 0.1, 1)
+        
+        eps_current_t = decoder.decode_16bit_uint()
+        self.data["eps_current_t"] = round(eps_current_t * 0.1, 1)
+        
+        eps_power_active_t = decoder.decode_16bit_uint()
+        self.data["eps_power_active_t"] = eps_power_active_t
+        
+        eps_power_t = decoder.decode_16bit_uint()
+        self.data["eps_power_t"] = eps_power_t
+        
+        feedin_power_r = decoder.decode_16bit_int()
+        self.data["feedin_power_r"] = feedin_power_r
+        
+        decoder.skip_bytes(2)
+        
+        feedin_power_s = decoder.decode_16bit_int()
+        self.data["feedin_power_s"] = feedin_power_s
+        
+        decoder.skip_bytes(2)
+        
+        feedin_power_t = decoder.decode_16bit_int()
+        self.data["feedin_power_t"] = feedin_power_t
+        
+        decoder.skip_bytes(2)
+        
+        grid_mode_runtime = decoder.decode_16bit_int()
+        self.data["grid_mode_runtime"] = round(grid_mode_runtime * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
+        eps_mode_runtime = decoder.decode_16bit_int()
+        self.data["eps_mode_runtime"] = round(eps_mode_runtime * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
+        normal_runtime = decoder.decode_16bit_int()
+        self.data["normal_runtime"] = round(normal_runtime * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
+        eps_yield_total = decoder.decode_16bit_uint()
+        self.data["eps_yield_total"] = round(eps_yield_total * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
+        eps_yield_today = decoder.decode_16bit_uint()
+        self.data["eps_yield_today"] = round(eps_yield_today * 0.1, 1)
+        
+        e_charge_today = decoder.decode_16bit_uint()
+        self.data["e_charge_today"] = e_charge_today
+        
+        e_charge_total = decoder.decode_16bit_uint()
+        self.data["e_charge_total"] = e_charge_total
+        
+        decoder.skip_bytes(2)
+        
+        solar_energy_total = decoder.decode_16bit_uint()
+        self.data["solar_energy_total"] = round(solar_energy_total * 0.1, 1)
+        
+        decoder.skip_bytes(2)
+        
         solar_energy_today = decoder.decode_16bit_uint()
         self.data["solar_energy_today"] = round(solar_energy_today * 0.1, 1)
         
