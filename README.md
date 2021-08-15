@@ -1,3 +1,7 @@
+[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V51QQOL)
+
+[Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referal code. You get £50 credit for joining and I get £50 credit.
+
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
 
