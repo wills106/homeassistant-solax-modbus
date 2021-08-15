@@ -46,3 +46,19 @@ X3 Support
 X1 EPS Sensors
 
 X3 EPS Sensors
+
+## Version 0.2.1
+
+New Optional Sensors - Only seem to update when Import / Exporting?
+- Consumed Energy Total
+- Feedin Energy Total
+
+Total Energy To Grid - Tweaked to see if it returns sensible figure?
+
+SolaX Today's Export Energy - Rounded to two places and moved to Gen3 only
+
+SolaX Today's Export Energy - Rounded to two places and moved to Gen3 only
+
+Added missing sensors to Gen3 X3
+- Battery Current Charge
+- Battery Voltage Charge

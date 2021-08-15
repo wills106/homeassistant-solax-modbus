@@ -44,13 +44,13 @@ SENSOR_TYPES = {
     "charger_start_time_2": ["Start Time 2", "charger_start_time_2", None, None, None],
     "charger_end_time_2": ["End Time 2", "charger_end_time_2", None, None, None],
     "energy_today": ["Today's Yield", "energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
-    "export_energy_today": ["Today's Export Energy", "export_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],    
+        
     "feedin_power": ["Measured Power", "feedin_power", "W", None, DEVICE_CLASS_POWER],
     "grid_frequency": ["Inverter Frequency", "grid_frequency", "Hz", None, None,],
     "grid_import": ["Grid Import", "grid_import", "W", None, DEVICE_CLASS_POWER],
     "grid_export": ["Grid Export", "grid_export", "W", None, DEVICE_CLASS_POWER],
     "house_load": ["House Load", "house_load", "W", None, DEVICE_CLASS_POWER],
-    "import_energy_today": ["Today's Import Energy", "import_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
+    
     "inverter_voltage": ["Inverter Voltage", "inverter_voltage", "V", None, DEVICE_CLASS_VOLTAGE],
     "inverter_current": ["Inverter Current", "inverter_current", "A", None, DEVICE_CLASS_CURRENT],
     "inverter_load": ["Inverter Power", "inverter_load", "W", None, DEVICE_CLASS_POWER],
@@ -68,13 +68,15 @@ SENSOR_TYPES = {
 }
 
 GEN2_X1_SENSOR_TYPES = {
+	"battery_current_charge_g2": ["Battery Current Charge", "battery_current_charge_g2", "A", None, DEVICE_CLASS_CURRENT],
 	"battery_voltage_charge_g2": ["Battery Voltage Charge", "battery_voltage_charge_g2", "V", None, DEVICE_CLASS_VOLTAGE],
-	"battery_current_charge_g2": ["Battery Current Charge", "battery_current_charge_g2", "A", None, DEVICE_CLASS_CURRENT],	
 }
 
 GEN3_X1_SENSOR_TYPES = {
-	"battery_voltage_charge_g3": ["Battery Voltage Charge", "battery_voltage_charge_g3", "V", None, DEVICE_CLASS_VOLTAGE],
 	"battery_current_charge_g3": ["Battery Current Charge", "battery_current_charge_g3", "A", None, DEVICE_CLASS_CURRENT],
+	"battery_voltage_charge_g3": ["Battery Voltage Charge", "battery_voltage_charge_g3", "V", None, DEVICE_CLASS_VOLTAGE],
+	"export_energy_today": ["Today's Export Energy", "export_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
+	"import_energy_today": ["Today's Import Energy", "import_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
 }
 X1_EPS_SENSOR_TYPES = {
 	"eps_current": ["EPS Current", "eps_current", "A", None, DEVICE_CLASS_CURRENT],
@@ -99,6 +101,7 @@ X3_EPS_SENSOR_TYPES = {
 }
 GEN3_X3_SENSOR_TYPES = {
 	"battery_current_charge_g3": ["Battery Current Charge", "battery_current_charge_g3", "A", None, DEVICE_CLASS_CURRENT],
+	"export_energy_today": ["Today's Export Energy", "export_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
 	"feedin_power_r": ["Measured Power R", "feedin_power_r", "W", None, DEVICE_CLASS_POWER],
 	"feedin_power_s": ["Measured Power S", "feedin_power_s", "W", None, DEVICE_CLASS_POWER],
 	"feedin_power_t": ["Measured Power T", "feedin_power_t", "W", None, DEVICE_CLASS_POWER],
@@ -111,7 +114,8 @@ GEN3_X3_SENSOR_TYPES = {
 	"grid_power_t": ["Inverter Power T", "grid_power_t", "W", None, DEVICE_CLASS_POWER],
 	"grid_voltage_r": ["Inverter Voltage R", "grid_voltage_r", "V", None, DEVICE_CLASS_VOLTAGE],
 	"grid_voltage_s": ["Inverter Voltage S", "grid_voltage_s", "V", None, DEVICE_CLASS_VOLTAGE],
-	"grid_voltage_t": ["Inverter Voltage T", "grid_voltage_t", "V", None, DEVICE_CLASS_VOLTAGE],	
+	"grid_voltage_t": ["Inverter Voltage T", "grid_voltage_t", "V", None, DEVICE_CLASS_VOLTAGE],
+	"import_energy_today": ["Today's Import Energy", "import_energy_today", "kWh", None, DEVICE_CLASS_ENERGY, STATE_CLASS_MEASUREMENT, "today"],
 }
 OPTIONAL_SENSOR_TYPES = {
 	"eps_mute": ["EPS Mute", "eps_mute", None, None, None, None],
@@ -122,11 +126,13 @@ OPTIONAL_SENSOR_TYPES = {
 	"bms_charge_max_current": ["BMS Charge Max Current", "bms_charge_max_current", "A", None, None],
 	"bms_discharge_max_current": ["BMS Discharge Max Current", "bms_discharge_max_current", "A", None, None],
 	"bus_volt": ["Bus Volt", "bus_volt", "V", None, None, None],
+	"consumed_energy_total": ["Consumed Energy Total", "consumed_energy_total", "kWh", None, DEVICE_CLASS_ENERGY],
 	"dc_fault_val": ["DC Fault Val", "dc_fault_val", None, None, None, None],
 	"eps_mute": ["EPS Mute", "eps_mute", None, None, None, None],
 	"eps_set_frequency": ["EPS Set Frequency", "eps_set_frequency", None, None, None, None],
 	"export_control_factory_limit": ["Export Control Factory Limit", "export_control_factory_limit", "W", None, None],
 	"export_control_user_limit": ["Export Control User Limit", "export_control_user_limit", "W", None, None],
+	"feedin_energy_total": ["Feedin Energy Total", "feedin_energy_total", "kWh", None, DEVICE_CLASS_ENERGY],
 	"firmwareversion_invertermaster": ["Firmware Version Inverter Master", "firmwareversion_invertermaster", None, None, None],
 	"firmwareversion_manager": ["Firmware Version Manager", "firmwareversion_manager", None, None, None],
 	"firmwareversion_modbustcp_major": ["Firmware Version Modbus TCP Major", "firmwareversion_modbustcp_major", None, None, None],

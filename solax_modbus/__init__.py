@@ -533,12 +533,16 @@ class SolaXModbusHub:
           self.data["house_load"] = inverter_load - feedin_power
         else:
           self.data["house_load"] = 0
-                            
-        feedin_energy_total = decoder.decode_32bit_uint()
+#####################                            
+        feedin_energy_total = decoder.decode_16bit_uint()
         self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
+        
+        decoder.skip_bytes(2)
                 
-        consumed_energy_total = decoder.decode_32bit_uint()
+        consumed_energy_total = decoder.decode_16bit_uint()
         self.data["consumed_energy_total"] = round(consumed_energy_total * 0.01, 1)
+        
+        decoder.skip_bytes(2)
         
         eps_volatge = decoder.decode_16bit_uint()
         self.data["eps_volatge"] = round(eps_volatge * 0.1, 1)
@@ -560,8 +564,10 @@ class SolaXModbusHub:
         
         decoder.skip_bytes(2)
         
-        total_energy_to_grid = decoder.decode_32bit_uint()
+        total_energy_to_grid = decoder.decode_16bit_uint()
         self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
+        
+        decoder.skip_bytes(2)
         
         lock_states = decoder.decode_16bit_uint()
         if lock_states == 0:
@@ -725,11 +731,11 @@ class SolaXModbusHub:
         decoder.skip_bytes(2)
         
         export_energy_today = decoder.decode_16bit_uint()
-        self.data["export_energy_today"] = round(export_energy_today * 0.01, 1)
+        self.data["export_energy_today"] = round(export_energy_today * 0.01, 2)
         
         decoder.skip_bytes(2)
         
         import_energy_today = decoder.decode_16bit_uint()
-        self.data["import_energy_today"] = round(import_energy_today * 0.01, 1)
+        self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
         
         return True
