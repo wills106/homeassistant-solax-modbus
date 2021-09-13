@@ -62,3 +62,13 @@ SolaX Today's Export Energy - Rounded to two places and moved to Gen3 only
 Added missing sensors to Gen3 X3
 - Battery Current Charge
 - Battery Voltage Charge
+
+## Version 0.2.2
+
+Converted all Sensors to use SensorEntityDescription
+
+Removed Optional Sensors - Now form part of the main Sensor Group, but disabled by default
+
+Updated Energy Dashboard compatability for 2021.9x Version of Home Assistant
+
+Renamed "Input Energy Charge Today" & "Output Energy Charge Today" to "Battery Input Energy Today" & "Battery Output Energy Today" Now compatible with the Energy Dashboard

@@ -23,13 +23,11 @@ from .const import (
     CONF_READ_GEN2X1,
 	CONF_READ_GEN3X1,
 	CONF_READ_GEN3X3,
-	CONF_READ_OPTIONAL_SENSORS,
 	CONF_READ_X1_EPS,
     CONF_READ_X3_EPS,
 	DEFAULT_READ_GEN2X1,
 	DEFAULT_READ_GEN3X1,
 	DEFAULT_READ_GEN3X3,
-	DEFAULT_READ_OPTIONAL_SENSORS,
 	DEFAULT_READ_X1_EPS,
 	DEFAULT_READ_X3_EPS,
 )
@@ -44,7 +42,6 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
-        vol.Optional(CONF_READ_OPTIONAL_SENSORS, default=DEFAULT_READ_OPTIONAL_SENSORS): cv.boolean,
         vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(
@@ -75,13 +72,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
     read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
-    read_optional_sensors = entry.data.get(CONF_READ_OPTIONAL_SENSORS, False)
     read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_optional_sensors, read_x1_eps, read_x3_eps)
+    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_x1_eps, read_x3_eps)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -121,7 +117,6 @@ class SolaXModbusHub:
         read_gen2x1=False,
         read_gen3x1=False,
         read_gen3x3=False,
-        read_optional_sensors=False,
         read_x1_eps=False,
         read_x3_eps=False,
     ):
@@ -133,7 +128,6 @@ class SolaXModbusHub:
         self.read_gen2x1 = read_gen2x1
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
-        self.read_optional_sensors = read_optional_sensors
         self.read_x1_eps = read_x1_eps
         self.read_x3_eps = read_x3_eps
         self._scan_interval = timedelta(seconds=scan_interval)
