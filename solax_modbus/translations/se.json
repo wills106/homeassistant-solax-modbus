@@ -1,0 +1,27 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter,
+        "data": {
+          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern",
+          "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
+          "port": "TCP-port för anslutning till SolaX Power Invertern",
+          "read_gen2_x1": "SolaX Gen2 X1",
+          "read_gen3_x1": "SolaX Gen3 X1",
+          "read_gen3_x3": "SolaX Gen3 X3",
+          "read_optional_sensor_s": "Ytterligare sensorer",
+          "read_x1_eps": "X1 EPS",
+          "read_x3_eps": "X3 EPS",
+          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Enheten är redan konfigurerad"
+    },
+    "abort": {
+      "already_configured": "Enheten är redan konfigurerad"
+    }
+  }
+}
