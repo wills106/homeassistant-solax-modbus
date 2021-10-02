@@ -93,3 +93,5 @@ Default names of new select / number
 Battery Charge/Discharge Limits
 Gen 2 - 50Amp (I don't know if this applies to all Batterys on the Gen 2 or just the Pylon Tech. Be very carefull!)
 Every other setup 20Amp
+
+![Battery1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/battery1.png)
