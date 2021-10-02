@@ -54,7 +54,7 @@ CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.Schema({cv.slug: SOLAX_MODBUS_SCHEMA})}, extra=vol.ALLOW_EXTRA
 )
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["number", "select", "sensor"]
 
 
 async def async_setup(hass, config):
@@ -196,17 +196,19 @@ class SolaXModbusHub:
             kwargs = {"unit": unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
-    def calculate_value(self, value, sf):
-        return value * 10 ** sf
+    def write_register(self, unit, address, payload):
+        """Write registers."""
+        with self._lock:
+            kwargs = {"unit": unit} if unit else {}
+            return self._client.write_register(address, payload, **kwargs)
 
     def read_modbus_data(self):
         try:
             return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")   
-            
+
             return True
-        
 
     def read_modbus_holding_registers_0(self):
 
@@ -218,18 +220,18 @@ class SolaXModbusHub:
         decoder = BinaryPayloadDecoder.fromRegisters(
             inverter_data.registers, byteorder=Endian.Big
         )
-        
+
         seriesnumber = decoder.decode_string(14).decode("ascii")
         self.data["seriesnumber"] = str(seriesnumber)
-        
+
         factoryname = decoder.decode_string(14).decode("ascii")
         self.data["factoryname"] = str(factoryname)
-        
+
         modulename = decoder.decode_string(14).decode("ascii")
         self.data["modulename"] = str(modulename)
-        
+
         return True
-        
+
     def read_modbus_holding_registers_1(self):
 
         inverter_data = self.read_holding_registers(unit=1, address=0x7d, count=64)
@@ -527,7 +529,7 @@ class SolaXModbusHub:
           self.data["house_load"] = inverter_load - feedin_power
         else:
           self.data["house_load"] = 0
-#####################                            
+                         
         feedin_energy_total = decoder.decode_16bit_uint()
         self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
         

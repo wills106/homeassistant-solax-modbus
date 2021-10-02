@@ -125,14 +125,7 @@ class SolaXModbusSensor(SensorEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return f"{self._platform_name}_{self.entity_description.key}"
-
-#    @property
-#    def state(self):
-#        """Return the state of the sensor."""
-#        if self._key in self._hub.data:
-#            return self._hub.data[self.entity_description.key]
-    
+        return f"{self._platform_name}_{self.entity_description.key}"  
     
     @property
     def native_value(self):

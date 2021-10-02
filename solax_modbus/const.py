@@ -42,6 +42,90 @@ DEFAULT_READ_GEN3X3 = False
 DEFAULT_READ_X1_EPS = False
 DEFAULT_READ_X3_EPS = False
 
+NUMBER_TYPES = [
+    ["Battery Minimum Capacity",
+        "battery_minimum_capacity",
+        0x20,
+        "i",
+        {
+	        "min": 0,
+            "max": 99,
+            "step": 1,
+            "unit": PERCENTAGE,
+        }
+    ],
+]
+NUMBER_TYPES_G2 = [
+	["Battery Charge",
+	    "battery_charge",
+	    0x24,
+	    "f",
+	    {
+	        "min": 0,
+            "max": 50,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+	],
+    ["Battery Discharge",
+        "battery_discharge",
+        0x25,
+        "f",
+	    {
+	        "min": 0,
+            "max": 50,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+    ],
+]
+NUMBER_TYPES_G3 = [
+	["Battery Charge",
+	    "battery_charge",
+	    0x24,
+	    "f",
+	    {
+	        "min": 0,
+            "max": 20,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+	],
+    ["Battery Discharge",
+        "battery_discharge",
+        0x25,
+        "f",
+	    {
+	        "min": 0,
+            "max": 20,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+    ],
+]
+SELECT_TYPES = [
+	["Run Mode Select",
+	    "run_mode_select",
+	    0x1F,
+	    {
+	        0: "Self Use Mode",
+            1: "Force Time Use",
+            2: "Back Up Mode",
+            3: "Feedin Priority",
+        }
+	],
+    ["Grid Charge Select",
+        "grid_charge_select",
+        0x40,
+        {
+            0: "Both Forbidden",
+            1: "Period 1 Allowed",
+            2: "Period 2 Allowed",
+            3: "Both Allowed",
+        }
+    ],
+]
+
 @dataclass
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""

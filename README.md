@@ -12,7 +12,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 # Known Issues
 
 1. Tick boxes in configflow have no Text. - Fixed!
-2. Only supports reading at the moment., writing to registers not net implemented.
+2. ~~Only supports reading at the moment., writing to registers not net implemented.~~ Write support for Run Mode, Charge from Grid Mode, Min Battery Capacity & Charge / Discharge rate of battery
 3. Gen3 X3 - Supported.
 4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
 5. Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
@@ -72,3 +72,24 @@ Removed Optional Sensors - Now form part of the main Sensor Group, but disabled 
 Updated Energy Dashboard compatability for 2021.9x Version of Home Assistant
 
 Renamed "Input Energy Charge Today" & "Output Energy Charge Today" to "Battery Input Energy Today" & "Battery Output Energy Today" Now compatible with the Energy Dashboard
+
+## Version 0.3.0
+
+Write Support!
+- Run Mode
+- Charge periods in Force Time Use Mode
+- Min Battery Capacity
+- Charge / Discharge rate of battery
+
+@mickemartinsson Has done a Swedish Translation
+
+Default names of new select / number
+- select.solax_run_mode_select
+- select.solax_grid_charge_select
+- number.solax_battery_minimum_capacity
+- number.solax_battery_charge
+- number.solax_battery_discharge
+
+Battery Charge/Discharge Limits
+Gen 2 - 50Amp (I don't know if this applies to all Batterys on the Gen 2 or just the Pylon Tech. Be very carefull!)
+Every other setup 20Amp
