@@ -98,3 +98,6 @@ Every other setup 20Amp
 
 ## Version 0.3.1
 Corrected Gen2 Values
+
+## Version 0.3.2
+Added missing Language Mappings for Language Register
