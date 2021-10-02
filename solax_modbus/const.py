@@ -146,6 +146,12 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="battery_charge_max_current",
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
 	),
+	"battery_current_charge": SolaXModbusSensorEntityDescription(
+		name="Battery Current Charge",
+		key="battery_current_charge",
+		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+    ),
     "battery_dicharge_cut_off_voltage": SolaXModbusSensorEntityDescription(
 		name="Battery Discharge Cut Off Voltage",
 		key="battery_discharge_cut_off_voltage",
@@ -196,6 +202,12 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	native_unit_of_measurement=TEMP_CELSIUS,
         device_class=DEVICE_CLASS_TEMPERATURE,
         state_class=STATE_CLASS_MEASUREMENT,
+    ),
+	"battery_voltage_charge": SolaXModbusSensorEntityDescription(
+		name="Battery Voltage Charge",
+		key="battery_voltage_charge",
+		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
     ),
     "battery_volt_fault_val": SolaXModbusSensorEntityDescription(
 		name="Battery Volt Fault Val",
@@ -485,34 +497,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     ),
 }
 
-GEN2_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
-	"battery_current_charge_g2": SolaXModbusSensorEntityDescription(
-		name="Battery Current Charge",
-		key="battery_current_charge_g2",
-		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-	"battery_voltage_charge_g2": SolaXModbusSensorEntityDescription(
-		name="Battery Voltage Charge",
-		key="battery_voltage_charge_g2",
-		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-    ),
-}
-
 GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
-	"battery_current_charge_g3": SolaXModbusSensorEntityDescription(
-		name="Battery Current Charge",
-		key="battery_current_charge_g3",
-		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-	"battery_voltage_charge_g3": SolaXModbusSensorEntityDescription(
-		name="Battery Voltage Charge",
-		key="battery_voltage_charge_g3",
-		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-    ),
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",
@@ -651,12 +636,6 @@ X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     ),
 }
 GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
-	"battery_current_charge_g3": SolaXModbusSensorEntityDescription(
-		name="Battery Current Charge",
-		key="battery_current_charge_g3",
-		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",

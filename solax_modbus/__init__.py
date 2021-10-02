@@ -203,6 +203,7 @@ class SolaXModbusHub:
             return self._client.write_register(address, payload, **kwargs)
 
     def read_modbus_data(self):
+ 	
         try:
             return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
         except ConnectionException as ex:
@@ -233,6 +234,11 @@ class SolaXModbusHub:
         return True
 
     def read_modbus_holding_registers_1(self):
+    	
+        if self.read_gen2x1 == True:
+            mult = 0.01
+        else:
+            mult = 0.1
 
         inverter_data = self.read_holding_registers(unit=1, address=0x7d, count=64)
 
@@ -301,10 +307,10 @@ class SolaXModbusHub:
         self.data["battery_discharge_cut_off_voltage"] = round(battery_discharge_cut_off_voltage * 0.1, 1)
         
         battery_charge_max_current = decoder.decode_16bit_uint()
-        self.data["battery_charge_max_current"] = round(battery_charge_max_current * 0.1, 1)
+        self.data["battery_charge_max_current"] = round(battery_charge_max_current * mult, 1)
         
         battery_discharge_max_current = decoder.decode_16bit_uint()
-        self.data["battery_discharge_max_current"] = round(battery_discharge_max_current * 0.1, 1)
+        self.data["battery_discharge_max_current"] = round(battery_discharge_max_current * mult, 1)
         
         charger_start_time_1_h = decoder.decode_16bit_uint()        
         charger_start_time_1_m = decoder.decode_16bit_uint()        
@@ -379,7 +385,12 @@ class SolaXModbusHub:
         return True
 
     def read_modbus_input_registers_0(self):
-
+    	
+        if self.read_gen2x1 == True:
+            mult = 0.01
+        else:
+            mult = 0.1
+        
         realtime_data = self.read_input_registers(unit=1, address=0x0, count=86)
 
         if realtime_data.isError():
@@ -454,12 +465,10 @@ class SolaXModbusHub:
         self.data["time_count_down"] = round(time_count_down * 0.001, 0)
         
         battery_voltage_charge = decoder.decode_16bit_int()
-        self.data["battery_voltage_charge_g2"] = round(battery_voltage_charge * 0.01, 1)
-        self.data["battery_voltage_charge_g3"] = round(battery_voltage_charge * 0.1, 1)
+        self.data["battery_voltage_charge"] = round(battery_voltage_charge * mult, 1)
         
         battery_current_charge = decoder.decode_16bit_int()
-        self.data["battery_current_charge_g2"] = round(battery_current_charge * 0.01, 1)
-        self.data["battery_current_charge_g3"] = round(battery_current_charge * 0.1, 1)
+        self.data["battery_current_charge"] = round(battery_current_charge * mult, 1)
         
         battery_power_charge = decoder.decode_16bit_int()
         self.data["battery_power_charge"] = battery_power_charge

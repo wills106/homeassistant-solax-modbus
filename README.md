@@ -95,3 +95,6 @@ Gen 2 - 50Amp (I don't know if this applies to all Batterys on the Gen 2 or just
 Every other setup 20Amp
 
 ![Battery1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/battery1.png)
+
+## Version 0.3.1
+Corrected Gen2 Values

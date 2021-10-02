@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN2_X1_SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,16 +31,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
             sensor_description,
         )
         entities.append(sensor)
-    
-    if hub.read_gen2x1 == True:
-        for sensor_description in GEN2_X1_SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
 
     if hub.read_gen3x1 == True:
         for sensor_description in GEN3_X1_SENSOR_TYPES.values():
