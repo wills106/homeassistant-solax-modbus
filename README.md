@@ -11,11 +11,11 @@ After reboot of Home-Assistant, this integration can be configured through the i
 
 # Known Issues
 
-1. Tick boxes in configflow have no Text. - Fixed!
+1. ~~Tick boxes in configflow have no Text.~~ - Fixed!
 2. ~~Only supports reading at the moment., writing to registers not net implemented.~~ Write support for Run Mode, Charge from Grid Mode, Min Battery Capacity & Charge / Discharge rate of battery
-3. Gen3 X3 - Supported.
+3. ~~Gen3 X3 Not yet implemented.~~ Gen3 X3 - Supported.
 4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
-5. Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
+5. ~~The sensors do not support the new "Energy" Dashboard in 2021.08.x and onwards.~~ Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
 
 ## Version 0.0.2
