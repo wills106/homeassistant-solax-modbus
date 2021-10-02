@@ -380,7 +380,7 @@ class SolaXModbusHub:
         elif languages == 1:
           self.data["language"] = "Deutsche"
         elif languages == 2:
-          self.data["language"] = "Français"
+          self.data["language"] = "Francais"
         elif languages == 3:
           self.data["language"] = "Polskie"
         else:
