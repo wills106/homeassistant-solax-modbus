@@ -29,6 +29,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             number_info[2],
             number_info[3],
             number_info[4],
+            number_info[5] if len(number_info) > 5 else None,
         )
         entities.append(number)
     
@@ -43,6 +44,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 number_info[2],
                 number_info[3],
                 number_info[4],
+                number_info[5] if len(number_info) > 5 else None,
             )
             entities.append(number)
     else:
@@ -56,6 +58,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 number_info[2],
                 number_info[3],
                 number_info[4],
+                number_info[5] if len(number_info) > 5 else None,
             )
             entities.append(number)
         
@@ -73,7 +76,8 @@ class SolaXModbusNumber(NumberEntity):
                  key,
                  register,
                  fmt,
-                 attrs
+                 attrs,
+                 state
     ) -> None:
         """Initialize the number."""
         self._platform_name = platform_name
@@ -87,6 +91,7 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_max_value = attrs["max"]
         self._attr_step = attrs["step"]
         self._attr_unit_of_measurement = attrs["unit"]
+        self._state = state
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -94,6 +99,9 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_will_remove_from_hass(self) -> None:
         self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
+    
+    async def async_set_value(self, value: float) -> None:
+    	return self._hub.data[self._state]
 
     @callback
     def _modbus_data_updated(self) -> None:
@@ -102,12 +110,17 @@ class SolaXModbusNumber(NumberEntity):
     @property
     def name(self) -> str:
         """Return the name."""
-        return f"{self._platform_name} ({self._name})"
+        return f"{self._platform_name} {self._name}"
+        
+#    @property
+#    def state(self) -> str:
+#        """Return the state? """
+#        return f"{self._platform_name} {self._state}"
 
-    @property
-    def should_poll(self) -> bool:
-        """Data is delivered by the hub"""
-        return False
+#    @property
+#    def should_poll(self) -> bool:
+#        """Data is delivered by the hub"""
+#        return False
 
     @property
     def unique_id(self) -> Optional[str]:

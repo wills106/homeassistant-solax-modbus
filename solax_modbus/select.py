@@ -71,7 +71,7 @@ class SolaXModbusSelect(SelectEntity):
         self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
 
     @callback
-    def _modbus_data_updated(self) -> None:
+    def _modbus_data_updated(self):
         self.async_write_ha_state()
 
     @property
@@ -80,9 +80,9 @@ class SolaXModbusSelect(SelectEntity):
             return self._hub.data[self._key]
 
     @property
-    def name(self) -> str:
+    def name(self):
         """Return the name."""
-        return f"{self._platform_name} ({self._name})"
+        return f"{self._platform_name} {self._name}"
 
     @property
     def should_poll(self) -> bool:

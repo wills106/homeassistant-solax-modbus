@@ -52,7 +52,8 @@ NUMBER_TYPES = [
             "max": 99,
             "step": 1,
             "unit": PERCENTAGE,
-        }
+        },
+        "battery_capacity_charge"
     ],
 ]
 NUMBER_TYPES_G2 = [
@@ -100,6 +101,28 @@ NUMBER_TYPES_G3 = [
             "max": 20,
             "step": 0.1,
             "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+    ],
+    ["ForceTime Period 1 Max Capacity",
+        "forcetime_period_1_max_capacity",
+        0xA4,
+        "i",
+	    {
+	        "min": 5,
+            "max": 100,
+            "step": 1,
+            "unit": PERCENTAGE,
+        }
+    ],
+    ["ForceTime Period 2 Max Capacity",
+        "forcetime_period_2_max_capacity",
+        0xA5,
+        "i",
+	    {
+	        "min": 5,
+            "max": 100,
+            "step": 1,
+            "unit": PERCENTAGE,
         }
     ],
 ]
@@ -498,6 +521,45 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 }
 
 GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
+	"backup_charge_end": SolaXModbusSensorEntityDescription(
+		name="Backup Charge End",
+		key="backup_charge_end",
+	),
+	"backup_charge_start": SolaXModbusSensorEntityDescription(
+		name="Backup Charge Start",
+		key="backup_charge_start",
+	),
+	"backup_gridcharge": SolaXModbusSensorEntityDescription(
+		name="Backup Gridcharge",
+		key="backup_gridcharge",
+	),
+	"cloud_control": SolaXModbusSensorEntityDescription(
+		name="Cloud Control",
+		key="cloud_control",
+		entity_registry_enabled_default=False,
+	),
+	"ct_meter_setting": SolaXModbusSensorEntityDescription(
+		name="CT Meter Setting",
+		key="ct_meter_setting",
+		entity_registry_enabled_default=False,
+	),
+	"disch_cut_off_capacity_grid_mode": SolaXModbusSensorEntityDescription(
+		name="Discharge Cut Off Capacity Grid Mode",
+		key="disch_cut_off_capacity_grid_mode",
+		native_unit_of_measurement=PERCENTAGE,
+		entity_registry_enabled_default=False,
+	),
+	"disch_cut_off_point_different": SolaXModbusSensorEntityDescription(
+		name="Discharge Cut Off Point Different",
+		key="disch_cut_off_point_different",
+		entity_registry_enabled_default=False,
+	),
+	"disch_cut_off_voltage_grid_mode": SolaXModbusSensorEntityDescription(
+		name="Discharge Cut Off Voltage Grid Mode",
+		key="disch_cut_off_voltage_grid_mode",
+		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+		entity_registry_enabled_default=False,
+	),
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",
@@ -506,6 +568,21 @@ GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
+    "forcetime_period_1_max_capacity": SolaXModbusSensorEntityDescription(
+    	name="Forcetime Period 1 Maximum Capacity",
+    	key="forcetime_period_1_max_capacity",
+    	native_unit_of_measurement=PERCENTAGE,
+    ),
+    "forcetime_period_2_max_capacity": SolaXModbusSensorEntityDescription(
+    	name="Forcetime Period 2 Maximum Capacity",
+    	key="forcetime_period_2_max_capacity",
+    	native_unit_of_measurement=PERCENTAGE,
+    ),
+    "global_mppt_function": SolaXModbusSensorEntityDescription(
+		name="Global MPPT Function",
+		key="global_mppt_function",
+		entity_registry_enabled_default=False,
+	),
 	"import_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Import Energy",
 		key="import_energy_today",
@@ -514,8 +591,42 @@ GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
+    "machine_style": SolaXModbusSensorEntityDescription(
+		name="Machine Style",
+		key="machine_style",
+		entity_registry_enabled_default=False,
+	),
+	"meter_1_id": SolaXModbusSensorEntityDescription(
+		name="Meter 1 id",
+		key="meter_1_id",
+		entity_registry_enabled_default=False,
+	),
+	"meter_2_id": SolaXModbusSensorEntityDescription(
+		name="Meter 2 id",
+		key="meter_2_id",
+		entity_registry_enabled_default=False,
+	),
+	"meter_function": SolaXModbusSensorEntityDescription(
+		name="Meter Function",
+		key="meter_function",
+		entity_registry_enabled_default=False,
+	),
+	"power_control_timeout": SolaXModbusSensorEntityDescription(
+		name="Power Control Timeout",
+		key="power_control_timeout",
+		entity_registry_enabled_default=False,
+	),
+    "was4777_power_manager": SolaXModbusSensorEntityDescription(
+		name="wAS4777 Power Manager",
+		key="was4777_power_manager",
+		entity_registry_enabled_default=False,
+	),
 }
 X1_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
+	"eps_auto_restart": SolaXModbusSensorEntityDescription(
+		name="EPS Auto Restart",
+		key="eps_auto_restart",
+	),
 	"eps_current": SolaXModbusSensorEntityDescription(
 		name="EPS Current",
 		key="eps_current",
@@ -527,6 +638,16 @@ X1_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="eps_frequency",
 		native_unit_of_measurement=FREQUENCY_HERTZ,
 	),
+	"eps_min_esc_soc": SolaXModbusSensorEntityDescription(
+		name="EPS Min Esc SOC",
+		key="eps_min_esc_soc",
+		native_unit_of_measurement=PERCENTAGE,
+    ),
+	"eps_min_esc_voltage": SolaXModbusSensorEntityDescription(
+		name="EPS Min Esc Voltage",
+		key="eps_min_esc_voltage",
+		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+    ),
 	"eps_mute": SolaXModbusSensorEntityDescription(
 		name="EPS Mute",
 		key="eps_mute",
@@ -549,6 +670,10 @@ X1_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     ),
 }
 X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
+	"eps_auto_restart": SolaXModbusSensorEntityDescription(
+		name="EPS Auto Restart",
+		key="eps_auto_restart",
+	),
 	"eps_current_r": SolaXModbusSensorEntityDescription(
 		name="EPS Current R",
 		key="eps_current_r",
@@ -566,6 +691,16 @@ X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="eps_current_t",
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
+    ),
+    "eps_min_esc_soc": SolaXModbusSensorEntityDescription(
+		name="EPS Min Esc SOC",
+		key="eps_min_esc_soc",
+		native_unit_of_measurement=PERCENTAGE,
+    ),
+	"eps_min_esc_voltage": SolaXModbusSensorEntityDescription(
+		name="EPS Min Esc Voltage",
+		key="eps_min_esc_voltage",
+		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
     ),
 	"eps_mode_runtime": SolaXModbusSensorEntityDescription(
 		name="EPS Mode Runtime",
@@ -636,6 +771,10 @@ X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     ),
 }
 GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
+	"earth_detect_x3": SolaXModbusSensorEntityDescription(
+		name="Earth Detect X3",
+		key="earth_detect_x3",
+	),
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",
@@ -717,6 +856,10 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
+    "grid_service_x3": SolaXModbusSensorEntityDescription(
+		name="Grid Service X3",
+		key="grid_service_x3",
+	),
 	"grid_voltage_r": SolaXModbusSensorEntityDescription(
 		name="Inverter Voltage R",
 		key="grid_voltage_r",
@@ -743,4 +886,8 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
+    "phase_power_balance_x3": SolaXModbusSensorEntityDescription(
+		name="Phase Power Balance X3",
+		key="phase_power_balance_x3",
+	),
 }

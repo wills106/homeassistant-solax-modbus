@@ -1,6 +1,6 @@
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V51QQOL)
 
-[Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referal code. You get £50 credit for joining and I get £50 credit.
+[Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
@@ -69,7 +69,7 @@ Converted all Sensors to use SensorEntityDescription
 
 Removed Optional Sensors - Now form part of the main Sensor Group, but disabled by default
 
-Updated Energy Dashboard compatability for 2021.9x Version of Home Assistant
+Updated Energy Dashboard compatibility for 2021.9x Version of Home Assistant
 
 Renamed "Input Energy Charge Today" & "Output Energy Charge Today" to "Battery Input Energy Today" & "Battery Output Energy Today" Now compatible with the Energy Dashboard
 
@@ -91,7 +91,7 @@ Default names of new select / number
 - number.solax_battery_discharge
 
 Battery Charge/Discharge Limits
-Gen 2 - 50Amp (I don't know if this applies to all Batterys on the Gen 2 or just the Pylon Tech. Be very carefull!)
+Gen 2 - 50Amp (I don't know if this applies to all Batteries on the Gen 2 or just the Pylon Tech. Be very careful!)
 Every other setup 20Amp
 
 ![Battery1](https://github.com/wills106/homsassistant-solax-modbus/blob/main/images/battery1.png)
@@ -101,3 +101,42 @@ Corrected Gen2 Values
 
 ## Version 0.3.2
 Added missing Language Mappings for Language Register
+
+## Version 0.3.3
+Added:
+
+EPS Sensors:
+-EPS Auto Restart
+-EPS Min Esc SOC
+-EPS Min Esc Voltage
+
+Gen 3 Sensors:
+-Backup Charge End
+-Backup Charge Start
+-Backup Gridcharge
+-Cloud Control (Disabled by default)
+-CT Meter Setting (Disabled by default)
+-Discharge Cut Off Capacity Grid Mode (Disabled by default)
+-Discharge Cut Off Point Different (Disabled by default)
+-Discharge Cut Off Voltage Grid Mode (Disabled by default)
+-Forcetime Period 1 Maximum Capacity
+-Forcetime Period 2 Maximum Capacity
+-Global MPPT Function (Disabled by default)
+-Machine Style (Disabled by default)
+-Meter 1 id (Disabled by default)
+-Meter 2 id (Disabled by default)
+-Meter Function (Disabled by default)
+-Power Control Timeout (Disabled by default)
+-wAS4777 Power Manager (Disabled by default)
+
+Gen 3 X3 Sensors:
+-Earth Detect X3
+-Grid Service X3
+
+Number:
+-ForceTime Period 1 Max Capacity
+-ForceTime Period 2 Max Capacity
+-Phase Power Balance X3
+
+Also corrected "Select Naming"
+Adjusted Gen2 rounding

@@ -205,7 +205,7 @@ class SolaXModbusHub:
     def read_modbus_data(self):
  	
         try:
-            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
+            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")   
 
@@ -386,6 +386,150 @@ class SolaXModbusHub:
         else:
           self.data["language"] = languages
 
+        return True
+
+    def read_modbus_holding_registers_2(self):
+
+        inverter_data = self.read_holding_registers(unit=1, address=0xfd, count=25)
+
+        if inverter_data.isError():
+            return False
+
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            inverter_data.registers, byteorder=Endian.Big
+        )
+        
+        backup_gridcharge_s = decoder.decode_16bit_uint()
+        if backup_gridcharge_s == 0:
+          self.data["backup_gridcharge"] = "Disabled"
+        elif backup_gridcharge_s == 1:
+          self.data["backup_gridcharge"] = "Enabled"
+        else:
+          self.data["backup_gridcharge"] = "Unknown"
+        
+        backup_charge_start_h = decoder.decode_16bit_uint()        
+        backup_charge_start_m = decoder.decode_16bit_uint()
+        self.data["backup_charge_start"] = f"{backup_charge_start_h}:{backup_charge_start_m}"
+        
+        backup_charge_end_h = decoder.decode_16bit_uint()        
+        backup_charge_end_m = decoder.decode_16bit_uint()
+        self.data["backup_charge_end"] = f"{backup_charge_end_h}:{backup_charge_end_m}"
+        
+        was4777_power_manager_s = decoder.decode_16bit_uint()
+        if was4777_power_manager_s == 0:
+          self.data["was4777_power_manager"] = "Disabled"
+        elif was4777_power_manager_s == 1:
+          self.data["was4777_power_manager"] = "Enabled"
+        else:
+          self.data["was4777_power_manager"] = "Unknown"
+        
+        cloud_control_s = decoder.decode_16bit_uint()
+        if cloud_control_s == 0:
+          self.data["cloud_control"] = "Disabled"
+        elif cloud_control_s == 1:
+          self.data["cloud_control"] = "Enabled"
+        else:
+          self.data["cloud_control"] = "Unknown"
+        
+        global_mppt_function_s = decoder.decode_16bit_uint()
+        if global_mppt_function_s == 0:
+          self.data["global_mppt_function"] = "Disabled"
+        elif global_mppt_function_s == 1:
+          self.data["global_mppt_function"] = "Enabled"
+        else:
+          self.data["global_mppt_function"] = "Unknown"
+        
+        grid_service_x3_s = decoder.decode_16bit_uint()
+        if grid_service_x3_s == 0:
+          self.data["grid_service_x3"] = "Disabled"
+        elif grid_service_x3_s == 1:
+          self.data["grid_service_x3"] = "Enabled"
+        else:
+          self.data["grid_service_x3"] = "Unknown"
+        
+        phase_power_balance_x3_s = decoder.decode_16bit_uint()
+        if phase_power_balance_x3_s == 0:
+          self.data["phase_power_balance_x3"] = "Disabled"
+        elif phase_power_balance_x3_s == 1:
+          self.data["phase_power_balance_x3"] = "Enabled"
+        else:
+          self.data["phase_power_balance_x3"] = "Unknown"
+        
+        machine_style_s = decoder.decode_16bit_uint()
+        if machine_style_s == 0:
+          self.data["machine_style"] = "X-Hybrid"
+        elif machine_style_s == 1:
+          self.data["machine_style"] = "X-Retro Fit"
+        else:
+          self.data["machine_style"] = "Unknown"
+        
+        meter_function_s = decoder.decode_16bit_uint()
+        if meter_function_s == 0:
+          self.data["meter_function"] = "Disabled"
+        elif meter_function_s == 1:
+          self.data["meter_function"] = "Enabled"
+        else:
+          self.data["meter_function"] = "Unknown"
+          
+        meter_1_id = decoder.decode_16bit_uint()
+        self.data["meter_1_id"] = meter_1_id
+        
+        meter_2_id = decoder.decode_16bit_uint()
+        self.data["meter_2_id"] = meter_2_id
+        
+        power_control_timeout = decoder.decode_16bit_uint()
+        self.data["power_control_timeout"] = power_control_timeout
+        
+        eps_auto_restart_s = decoder.decode_16bit_uint()
+        if eps_auto_restart_s == 0:
+          self.data["eps_auto_restart"] = "Disabled"
+        elif eps_auto_restart_s == 1:
+          self.data["eps_auto_restart"] = "Enabled"
+        else:
+          self.data["eps_auto_restart"] = "Unknown"
+        
+        eps_min_esc_voltage = decoder.decode_16bit_uint()
+        self.data["eps_min_esc_voltage"] = eps_min_esc_voltage
+        
+        eps_min_esc_soc = decoder.decode_16bit_uint()
+        self.data["eps_min_esc_soc"] = eps_min_esc_soc
+        
+        forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
+        self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
+        
+        forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
+        self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
+        
+        disch_cut_off_point_different_s = decoder.decode_16bit_uint()
+        if disch_cut_off_point_different_s == 0:
+          self.data["disch_cut_off_point_different"] = "Disabled"
+        elif disch_cut_off_point_different_s == 1:
+          self.data["disch_cut_off_point_different"] = "Enabled"
+        else:
+          self.data["disch_cut_off_point_different"] = "Unknown"
+        
+        disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
+        self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
+        
+        disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
+        self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
+        
+        earth_detect_x3_s = decoder.decode_16bit_uint()
+        if earth_detect_x3_s == 0:
+          self.data["earth_detect_x3"] = "Disabled"
+        elif earth_detect_x3_s == 1:
+          self.data["earth_detect_x3"] = "Enabled"
+        else:
+          self.data["earth_detect_x3"] = "Unknown"
+        
+        ct_meter_setting_s = decoder.decode_16bit_uint()
+        if ct_meter_setting_s == 0:
+          self.data["ct_meter_setting"] = "Meter"
+        elif ct_meter_setting_s == 1:
+          self.data["ct_meter_setting"] = "CT"
+        else:
+          self.data["ct_meter_setting"] = "Unknown"
+        
         return True
 
     def read_modbus_input_registers_0(self):
