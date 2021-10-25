@@ -132,10 +132,10 @@ Gen 3 Sensors:
 Gen 3 X3 Sensors:
 - Earth Detect X3
 - Grid Service X3
+- Phase Power Balance X3
 
 Number:
 - ForceTime Period 1 Max Capacity
 - ForceTime Period 2 Max Capacity
-- Phase Power Balance X3
 
 Also corrected "Select Naming" & Adjusted Gen2 rounding
