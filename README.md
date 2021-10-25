@@ -106,37 +106,37 @@ Added missing Language Mappings for Language Register
 Added:
 
 EPS Sensors:
--EPS Auto Restart
--EPS Min Esc SOC
--EPS Min Esc Voltage
+- EPS Auto Restart
+- EPS Min Esc SOC
+- EPS Min Esc Voltage
 
 Gen 3 Sensors:
--Backup Charge End
--Backup Charge Start
--Backup Gridcharge
--Cloud Control (Disabled by default)
--CT Meter Setting (Disabled by default)
--Discharge Cut Off Capacity Grid Mode (Disabled by default)
--Discharge Cut Off Point Different (Disabled by default)
--Discharge Cut Off Voltage Grid Mode (Disabled by default)
--Forcetime Period 1 Maximum Capacity
--Forcetime Period 2 Maximum Capacity
--Global MPPT Function (Disabled by default)
--Machine Style (Disabled by default)
--Meter 1 id (Disabled by default)
--Meter 2 id (Disabled by default)
--Meter Function (Disabled by default)
--Power Control Timeout (Disabled by default)
--wAS4777 Power Manager (Disabled by default)
+- Backup Charge End
+- Backup Charge Start
+- Backup Gridcharge
+- Cloud Control (Disabled by default)
+- CT Meter Setting (Disabled by default)
+- Discharge Cut Off Capacity Grid Mode (Disabled by default)
+- Discharge Cut Off Point Different (Disabled by default)
+- Discharge Cut Off Voltage Grid Mode (Disabled by default)
+- Forcetime Period 1 Maximum Capacity
+- Forcetime Period 2 Maximum Capacity
+- Global MPPT Function (Disabled by default)
+- Machine Style (Disabled by default)
+- Meter 1 id (Disabled by default)
+- Meter 2 id (Disabled by default)
+- Meter Function (Disabled by default)
+- Power Control Timeout (Disabled by default)
+- wAS4777 Power Manager (Disabled by default)
 
 Gen 3 X3 Sensors:
--Earth Detect X3
--Grid Service X3
+- Earth Detect X3
+- Grid Service X3
 
 Number:
--ForceTime Period 1 Max Capacity
--ForceTime Period 2 Max Capacity
--Phase Power Balance X3
+- ForceTime Period 1 Max Capacity
+- ForceTime Period 2 Max Capacity
+- Phase Power Balance X3
 
 Also corrected "Select Naming"
 Adjusted Gen2 rounding
