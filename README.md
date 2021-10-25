@@ -138,5 +138,4 @@ Number:
 - ForceTime Period 2 Max Capacity
 - Phase Power Balance X3
 
-Also corrected "Select Naming"
-Adjusted Gen2 rounding
+Also corrected "Select Naming" & Adjusted Gen2 rounding
