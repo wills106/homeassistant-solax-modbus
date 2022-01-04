@@ -583,9 +583,9 @@ class SolaXModbusHub:
         elif run_modes == 2:
           self.data["run_mode"] = "Normal Mode"
         elif run_modes == 3:
-          self.data["run_mode"] = "Feedin Priority"
+          self.data["run_mode"] = "Off Mode"
         elif run_modes == 4:
-          self.data["run_mode"] = "Pemanent Fault Mode"
+          self.data["run_mode"] = "Permanent Fault Mode"
         elif run_modes == 5:
           self.data["run_mode"] = "Update Mode"
         elif run_modes == 6:
