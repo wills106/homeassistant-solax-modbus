@@ -182,7 +182,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		entity_registry_enabled_default=False,
     ),
 	"battery_discharge_max_current": SolaXModbusSensorEntityDescription(
-		name="Battery Disharge Max Current",
+		name="Battery Discharge Max Current",
 		key="battery_discharge_max_current",
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
 	),
