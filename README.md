@@ -139,3 +139,8 @@ Number:
 - ForceTime Period 2 Max Capacity
 
 Also corrected "Select Naming" & Adjusted Gen2 rounding
+
+## Version 0.3.4
+Corrected X3 Inverter Power Scaling
+Corrected spelling mistakes
+Fixed House Load showing Zero when charging from the Grid. Should also fix House Load showing zero when Battery is empty.

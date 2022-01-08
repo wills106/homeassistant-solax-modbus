@@ -682,10 +682,7 @@ class SolaXModbusHub:
         else:
           self.data["grid_import"] = 0
           
-        if inverter_load > 0:
-          self.data["house_load"] = inverter_load - feedin_power
-        else:
-          self.data["house_load"] = 0
+        self.data["house_load"] = inverter_load - feedin_power
                          
         feedin_energy_total = decoder.decode_16bit_uint()
         self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
