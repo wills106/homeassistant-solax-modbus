@@ -761,8 +761,11 @@ class SolaXModbusHub:
         grid_current_r = decoder.decode_16bit_int()
         self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
         
+        # @todo Rename variable as it this is the invertor power on phase R, not the grid power.
+        #   The grid power is currently named as feedin_power_(rst)
+        #   (Measured Power), this quantity means what is Solax measuring via smart meter.
         grid_power_r = decoder.decode_16bit_int()
-        self.data["grid_power_r"] = round(grid_power_r * 0.1, 1)
+        self.data["grid_power_r"] = round(grid_power_r, 1)
         
         grid_frequency_r = decoder.decode_16bit_uint()
         self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 1)
@@ -773,8 +776,9 @@ class SolaXModbusHub:
         grid_current_s = decoder.decode_16bit_int()
         self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
         
+        # @todo Rename variable.
         grid_power_s = decoder.decode_16bit_int()
-        self.data["grid_power_s"] = round(grid_power_s * 0.1, 1)
+        self.data["grid_power_s"] = round(grid_power_s, 1)
         
         grid_frequency_s = decoder.decode_16bit_uint()
         self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
@@ -785,8 +789,9 @@ class SolaXModbusHub:
         grid_current_t = decoder.decode_16bit_int()
         self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
         
+        # @todo Rename variable.
         grid_power_t = decoder.decode_16bit_int()
-        self.data["grid_power_t"] = round(grid_power_t * 0.1, 1)
+        self.data["grid_power_t"] = round(grid_power_t, 1)
         
         grid_frequency_t = decoder.decode_16bit_uint()
         self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 1)
