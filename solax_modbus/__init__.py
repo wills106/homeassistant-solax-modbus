@@ -351,7 +351,7 @@ class SolaXModbusHub:
         self.data["export_control_factory_limit"] = round(export_control_factory_limit * 0.1, 1)
         
         export_control_user_limit = decoder.decode_16bit_uint()
-        self.data["export_control_user_limit"] = round(export_control_user_limit * 0.1, 1)
+        self.data["export_control_user_limit"] = round(export_control_user_limit * 10, 1)
         
         eps_mutes = decoder.decode_16bit_uint()
         if eps_mutes == 0:
