@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter,
+        "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter",
         "data": {
           "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern",
           "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
