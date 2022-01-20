@@ -147,6 +147,14 @@ SELECT_TYPES = [
             3: "Both Allowed",
         }
     ],
+    ["Battery Awaken",
+        "battery_awaken",
+        0x56,
+        {
+            0: "Disable",
+            1: "Enable",
+        }
+    ],
 ]
 
 @dataclass
