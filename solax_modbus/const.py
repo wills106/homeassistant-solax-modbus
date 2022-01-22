@@ -153,28 +153,28 @@ NUMBER_TYPES_G4 = [
             "unit": ELECTRIC_CURRENT_AMPERE,
         }
     ],
-    ["ForceTime Period 1 Max Capacity",
-        "forcetime_period_1_max_capacity",
-        0xA4,
-        "i",
-	    {
-	        "min": 5,
-            "max": 100,
-            "step": 1,
-            "unit": PERCENTAGE,
-        }
-    ],
-    ["ForceTime Period 2 Max Capacity",
-        "forcetime_period_2_max_capacity",
-        0xA5,
-        "i",
-	    {
-	        "min": 5,
-            "max": 100,
-            "step": 1,
-            "unit": PERCENTAGE,
-        }
-    ],
+    #["ForceTime Period 1 Max Capacity",
+    #    "forcetime_period_1_max_capacity",
+    #    0xA4,
+    #    "i",
+    #	    {
+    #	        "min": 5,
+    #        "max": 100,
+    #        "step": 1,
+    #        "unit": PERCENTAGE,
+    #    }
+    #],
+    #["ForceTime Period 2 Max Capacity",
+    #    "forcetime_period_2_max_capacity",
+    #    0xA5,
+    #    "i",
+    #	    {
+    #	        "min": 5,
+    #        "max": 100,
+    #        "step": 1,
+    #        "unit": PERCENTAGE,
+    #    }
+    #],
 ]
 SELECT_TYPES = [
 	["Run Mode Select",
