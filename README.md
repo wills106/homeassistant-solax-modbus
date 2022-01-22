@@ -2,11 +2,10 @@
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
-# homsassistant-solax-modbus
-SolaX Power Modbus custom_component for Home Assistant
-
 # DO NOT USE THIS FORK CODE YET !!!! Work in progress - 
  
+# homsassistant-solax-modbus
+SolaX Power Modbus custom_component for Home Assistant
  
 # Installation
 Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
