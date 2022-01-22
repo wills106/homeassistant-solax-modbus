@@ -28,6 +28,8 @@ from .const import (
 	DEFAULT_READ_GEN2X1,
 	DEFAULT_READ_GEN3X1,
 	DEFAULT_READ_GEN3X3,
+	DEFAULT_READ_GEN4X1,
+	DEFAULT_READ_GEN4X3,
 	DEFAULT_READ_X1_EPS,
 	DEFAULT_READ_X3_EPS,
 )
@@ -42,7 +44,9 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
-        vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
+        vol.Optional(CONF_READ_GEN4X1, default=DEFAULT_READ_GEN4X1): cv.boolean,
+        vol.Optional(CONF_READ_GEN4X3, default=DEFAULT_READ_GEN4X3): cv.boolean,
+	vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
@@ -72,12 +76,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
     read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
+    read_gen3x1 = entry.data.get(CONF_READ_GEN4X1, False)
+    read_gen3x3 = entry.data.get(CONF_READ_GEN4X3, False)
     read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_x1_eps, read_x3_eps)
+    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -117,7 +123,9 @@ class SolaXModbusHub:
         read_gen2x1=False,
         read_gen3x1=False,
         read_gen3x3=False,
-        read_x1_eps=False,
+        read_gen4x1=False,
+        read_gen4x3=False,
+	read_x1_eps=False,
         read_x3_eps=False,
     ):
         """Initialize the Modbus hub."""
@@ -128,7 +136,9 @@ class SolaXModbusHub:
         self.read_gen2x1 = read_gen2x1
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
-        self.read_x1_eps = read_x1_eps
+        self.read_gen3x1 = read_gen4x1
+        self.read_gen3x3 = read_gen4x3
+	self.read_x1_eps = read_x1_eps
         self.read_x3_eps = read_x3_eps
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
@@ -263,6 +273,7 @@ class SolaXModbusHub:
         firmwareversion_manager = decoder.decode_16bit_uint()
         self.data["firmwareversion_manager"] = firmwareversion_manager
         
+	# should be bootloader version ??
         myaddress = decoder.decode_16bit_uint()
         self.data["myaddress"] = myaddress
         
@@ -277,20 +288,26 @@ class SolaXModbusHub:
         
         self.data["rtc"] = f"{rtc_hours}:{rtc_minutes}:{rtc_seconds} {rtc_days}/{rtc_months}/{rtc_years}"
         
-        charger_use_modes = decoder.decode_16bit_uint()       
-        if charger_use_modes == 0:
-          self.data["charger_use_mode"] = "Self Use Mode"
-        elif charger_use_modes == 1:
-          self.data["charger_use_mode"] = "Force Time Use"
-        elif charger_use_modes == 2:
-          self.data["charger_use_mode"] = "Back Up Mode"
-        elif charger_use_modes == 3:
-          self.data["charger_use_mode"] = "Feedin Priority"
+	    charger_use_modes = decoder.decode_16bit_uint()
+	    if self.read_gen4x1 or self.read_gen4x3:
+            if   charger_use_modes == 0: self.data["charger_use_mode"] = "Self Use Mode"
+            elif charger_use_modes == 1: self.data["charger_use_mode"] = "Feedin Priority"
+            elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
+            elif charger_use_modes == 3: self.data["charger_use_mode"] = "Manual Mode"
+            else:                        self.data["charger_use_mode"] = "Unknown"
+            manual_mode = decoder.decode_16bit_uint()
+            self.data["manual_mode"] = manual_mode
+            if   manual_mode == 0: self.data["manual_mode_txt"] = "Stop Charge and Discharge"
+            elif manual_mode == 1: self.data["manual_mode_txt"] = "Force Charge"
+            elif manual_mode == 2: self.data["manual_mode_txt"] = "Force Discharge"
         else:
-          self.data["charger_use_mode"] = "Unknown"
-        
-        battery_min_capacity = decoder.decode_16bit_uint()
-        self.data["battery_min_capacity"] = battery_min_capacity
+            if   charger_use_modes == 0: self.data["charger_use_mode"] = "Self Use Mode"
+            elif charger_use_modes == 1: self.data["charger_use_mode"] = "Force Time Use"
+            elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
+            elif charger_use_modes == 3: self.data["charger_use_mode"] = "Feedin Priority"
+            else:                        self.data["charger_use_mode"] = "Unknown"
+            battery_min_capacity = decoder.decode_16bit_uint()
+            self.data["battery_min_capacity"] = battery_min_capacity
         
         battery_types = decoder.decode_16bit_uint()        
         if battery_types == 0:
@@ -312,40 +329,44 @@ class SolaXModbusHub:
         battery_discharge_max_current = decoder.decode_16bit_uint()
         self.data["battery_discharge_max_current"] = round(battery_discharge_max_current * mult, 1)
         
-        charger_start_time_1_h = decoder.decode_16bit_uint()        
-        charger_start_time_1_m = decoder.decode_16bit_uint()        
-        self.data["charger_start_time_1"] = f"{charger_start_time_1_h}:{charger_start_time_1_m}"
-        
-        charger_end_time_1_h = decoder.decode_16bit_uint()        
-        charger_end_time_1_m = decoder.decode_16bit_uint()
-        self.data["charger_end_time_1"] = f"{charger_end_time_1_h}:{charger_end_time_1_m}"
-        
-        decoder.skip_bytes(8)
-        
-        charger_start_time_2_h = decoder.decode_16bit_uint()        
-        charger_start_time_2_m = decoder.decode_16bit_uint()
-        self.data["charger_start_time_2"] = f"{charger_start_time_2_h}:{charger_start_time_2_m}"
-        
-        charger_end_time_2_h = decoder.decode_16bit_uint()        
-        charger_end_time_2_m = decoder.decode_16bit_uint()
-        self.data["charger_end_time_2"] = f"{charger_end_time_2_h}:{charger_end_time_2_m}"
-        
-        decoder.skip_bytes(34)
-        
-        registration_code = decoder.decode_string(10).decode("ascii")
-        self.data["registration_code"] = str(registration_code)
-        
-        allow_grid_charges = decoder.decode_16bit_uint()
-        if allow_grid_charges == 0:
-          self.data["allow_grid_charge"] = "Forbidden"
-        elif allow_grid_charges == 1:
-          self.data["allow_grid_charge"] = "Charger Time 1"
-        elif allow_grid_charges == 2:
-          self.data["allow_grid_charge"] = "Charger Time 2"
-        elif allow_grid_charges == 3:
-          self.data["allow_grid_charge"] = "Both Charger Time's"
+        if self.read_gen4x1 or self.read_gen4x3:
+            decoder.skip_bytes(2)
+            selfuse = decoder.decode_16bit_uint()
+            self.data["selfuse_discharge_min_soc"]  = selfuse % 256
+            self.data["selfuse_nightcharge_enable"] = selfuse / 256
+            selfuse_nightcharge_upper_soc = decoder.decode_16bit_uint()
+            self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
+            NOT COMPLETE !!! 
         else:
-          self.data["allow_grid_charge"] = "Unknown"
+            charger_start_time_1_h = decoder.decode_16bit_uint()        
+            charger_start_time_1_m = decoder.decode_16bit_uint()        
+            self.data["charger_start_time_1"] = f"{charger_start_time_1_h}:{charger_start_time_1_m}"
+        
+            charger_end_time_1_h = decoder.decode_16bit_uint()        
+            charger_end_time_1_m = decoder.decode_16bit_uint()
+            self.data["charger_end_time_1"] = f"{charger_end_time_1_h}:{charger_end_time_1_m}"
+        
+            decoder.skip_bytes(8)
+        
+            charger_start_time_2_h = decoder.decode_16bit_uint()        
+            charger_start_time_2_m = decoder.decode_16bit_uint()
+            self.data["charger_start_time_2"] = f"{charger_start_time_2_h}:{charger_start_time_2_m}"
+        
+            charger_end_time_2_h = decoder.decode_16bit_uint()        
+            charger_end_time_2_m = decoder.decode_16bit_uint()
+            self.data["charger_end_time_2"] = f"{charger_end_time_2_h}:{charger_end_time_2_m}"
+        
+            decoder.skip_bytes(34)
+        
+            registration_code = decoder.decode_string(10).decode("ascii")
+            self.data["registration_code"] = str(registration_code)
+        
+            allow_grid_charges = decoder.decode_16bit_uint()
+            if   allow_grid_charges == 0: self.data["allow_grid_charge"] = "Forbidden"
+            elif allow_grid_charges == 1: self.data["allow_grid_charge"] = "Charger Time 1"
+            elif allow_grid_charges == 2: self.data["allow_grid_charge"] = "Charger Time 2"
+            elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Charger Time's"
+            else:  self.data["allow_grid_charge"] = "Unknown"
         
         export_control_factory_limit = decoder.decode_16bit_uint()
         self.data["export_control_factory_limit"] = round(export_control_factory_limit * 0.1, 1)
@@ -354,20 +375,14 @@ class SolaXModbusHub:
         self.data["export_control_user_limit"] = round(export_control_user_limit * 0.1, 1)
         
         eps_mutes = decoder.decode_16bit_uint()
-        if eps_mutes == 0:
-          self.data["eps_mute"] = "Off"
-        elif eps_mutes == 1:
-          self.data["eps_mute"] = "On"
-        else:
-          self.data["eps_mute"] = "Unknown"
+        if   eps_mutes == 0: self.data["eps_mute"] = "Off"
+        elif eps_mutes == 1: self.data["eps_mute"] = "On"
+        else: self.data["eps_mute"] = "Unknown"
         
         eps_set_frequencys = decoder.decode_16bit_uint()
-        if eps_set_frequencys == 0:
-          self.data["eps_set_frequency"] = "50Hz"
-        elif eps_set_frequencys == 1:
-          self.data["eps_set_frequency"] = "60Hz"
-        else:
-          self.data["eps_set_frequency"] = "Unknown"
+        if   eps_set_frequencys == 0: self.data["eps_set_frequency"] = "50Hz"
+        elif eps_set_frequencys == 1: self.data["eps_set_frequency"] = "60Hz"
+        else: self.data["eps_set_frequency"] = "Unknown"
         
         decoder.skip_bytes(2)
         
@@ -375,16 +390,11 @@ class SolaXModbusHub:
         self.data["inverter_rate_power"] = inverter_rate_power
         
         languages = decoder.decode_16bit_uint()
-        if languages == 0:
-          self.data["language"] = "English"
-        elif languages == 1:
-          self.data["language"] = "Deutsche"
-        elif languages == 2:
-          self.data["language"] = "Francais"
-        elif languages == 3:
-          self.data["language"] = "Polskie"
-        else:
-          self.data["language"] = languages
+        if   languages == 0: self.data["language"] = "English"
+        elif languages == 1: self.data["language"] = "Deutsche"
+        elif languages == 2: self.data["language"] = "Francais"
+        elif languages == 3: self.data["language"] = "Polskie"
+        else: self.data["language"] = languages
 
         return True
 
