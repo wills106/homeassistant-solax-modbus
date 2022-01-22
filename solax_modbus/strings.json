@@ -6,7 +6,7 @@
         "data": {
           "host": "The ip-address of your SolaX Power Inverter modbus device; for RS485, the serial port like /dev/ttyUSB0",
           "name": "The prefix to be used for your SolaX Power Inverter sensors",
-          "port": "The TCP port on which to connect to the SolaX Power Inverter, for RS485, the bus address, usually 1",
+          "port": "The TCP port on which to connect to the SolaX Power Inverter; for RS485, the bus address, usually 1",
           "read_gen2_x1": "SolaX Gen2 X1",
           "read_gen3_x1": "SolaX Gen3 X1",
           "read_gen3_x3": "SolaX Gen3 X3",
