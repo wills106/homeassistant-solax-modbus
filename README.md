@@ -5,6 +5,9 @@
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
 
+ DO NOT USE THIS FORK CODE YET !!!! Work in progress - 
+ 
+ 
 # Installation
 Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
