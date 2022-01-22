@@ -5,7 +5,7 @@
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
 
- DO NOT USE THIS FORK CODE YET !!!! Work in progress - 
+# DO NOT USE THIS FORK CODE YET !!!! Work in progress - 
  
  
 # Installation
