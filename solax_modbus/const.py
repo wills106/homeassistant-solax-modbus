@@ -32,6 +32,8 @@ DEFAULT_PORT = 502
 CONF_READ_GEN2X1 = "read_gen2_x1"
 CONF_READ_GEN3X1 = "read_gen3_x1"
 CONF_READ_GEN3X3 = "read_gen3_x3"
+CONF_READ_GEN4X1 = "read_gen4_x1"
+CONF_READ_GEN4X3 = "read_gen4_x3"
 CONF_READ_X1_EPS = "read_x1_eps"
 CONF_READ_X3_EPS = "read_x3_eps"
 CONF_SolaX_HUB = "solax_hub"
@@ -39,6 +41,8 @@ ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_READ_GEN2X1 = False
 DEFAULT_READ_GEN3X1 = False
 DEFAULT_READ_GEN3X3 = False
+DEFAULT_READ_GEN4X1 = False
+DEFAULT_READ_GEN4X3 = False
 DEFAULT_READ_X1_EPS = False
 DEFAULT_READ_X3_EPS = False
 
@@ -126,6 +130,52 @@ NUMBER_TYPES_G3 = [
         }
     ],
 ]
+NUMBER_TYPES_G4 = [
+	["Battery Charge",
+	    "battery_charge",
+	    0x24,
+	    "f",
+	    {
+	        "min": 0,
+            "max": 25,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+	],
+    ["Battery Discharge",
+        "battery_discharge",
+        0x25,
+        "f",
+	    {
+	        "min": 0,
+            "max": 25,
+            "step": 0.1,
+            "unit": ELECTRIC_CURRENT_AMPERE,
+        }
+    ],
+    ["ForceTime Period 1 Max Capacity",
+        "forcetime_period_1_max_capacity",
+        0xA4,
+        "i",
+	    {
+	        "min": 5,
+            "max": 100,
+            "step": 1,
+            "unit": PERCENTAGE,
+        }
+    ],
+    ["ForceTime Period 2 Max Capacity",
+        "forcetime_period_2_max_capacity",
+        0xA5,
+        "i",
+	    {
+	        "min": 5,
+            "max": 100,
+            "step": 1,
+            "unit": PERCENTAGE,
+        }
+    ],
+]
 SELECT_TYPES = [
 	["Run Mode Select",
 	    "run_mode_select",
@@ -145,6 +195,36 @@ SELECT_TYPES = [
             1: "Period 1 Allowed",
             2: "Period 2 Allowed",
             3: "Both Allowed",
+        }
+    ],
+]
+SELECT_TYPES_G4 = [
+	["Run Mode Select",
+	    "run_mode_select",
+	    0x1F,
+	    {
+	        0: "Self Use Mode",
+            1: "Feed-in Priority",
+            2: "Back Up Mode",
+            3: "Manual Mode",
+        }
+	],
+    # ["Grid Charge Select",
+    #    "grid_charge_select",
+    #    0x40,
+    #    {
+    #        0: "Both Forbidden",
+    #        1: "Period 1 Allowed",
+    #        2: "Period 2 Allowed",
+    #        3: "Both Allowed",
+    #    }
+    #],
+    ["Manual Mode",
+        "manual_mode",
+        0x20,
+        {
+            1: "Force Charge",
+            2: "Force Discharge",
         }
     ],
 ]
