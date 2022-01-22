@@ -233,16 +233,6 @@ SELECT_TYPES_G4 = [
                 3: "Manual Mode",
             }
         ],
-    # ["Grid Charge Select",
-    #    "grid_charge_select",
-    #    0x40,
-    #    {
-    #        0: "Both Forbidden",
-    #        1: "Period 1 Allowed",
-    #        2: "Period 2 Allowed",
-    #        3: "Both Allowed",
-    #    }
-    #],
         ["Manual Mode",
             "manual_mode",
             0x20,
