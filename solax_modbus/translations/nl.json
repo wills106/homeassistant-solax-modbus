@@ -4,12 +4,14 @@
       "user": {
         "title": "Definieer uw SolaX Power Inverter modbus-verbinding",
         "data": {
-          "host": "Het ip-adres van uw SolaX Power-omvormer modbus apparaat",
+          "host": "Het ip-adres van uw SolaX Power-omvormer modbus apparaat; voor RS485, de naam van de seriele poort vb. /dev/ttyUSB0",
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
-          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer",
+          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer; voor RS485, het modbus adres, meestal 1",
           "read_gen2_x1": "SolaX Gen2 X1",
           "read_gen3_x1": "SolaX Gen3 X1",
           "read_gen3_x3": "SolaX Gen3 X3",
+          "read_gen4_x1": "SolaX Gen4 X1",
+          "read_gen4_x3": "SolaX Gen4 X3",
           "read_x1_eps": "X1 EPS",
           "read_x3_eps": "X3 EPS",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
