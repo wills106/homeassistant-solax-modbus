@@ -331,12 +331,36 @@ class SolaXModbusHub:
         
         if self.read_gen4x1 or self.read_gen4x3:
             decoder.skip_bytes(2)
-            selfuse = decoder.decode_16bit_uint()
-            self.data["selfuse_discharge_min_soc"]  = selfuse % 256
-            self.data["selfuse_nightcharge_enable"] = selfuse / 256
+            tmp = decoder.decode_16bit_uint()
+            self.data["selfuse_discharge_min_soc"]  = tmp % 256
+            self.data["selfuse_nightcharge_enable"] = tmp / 256
             selfuse_nightcharge_upper_soc = decoder.decode_16bit_uint()
             self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
-            NOT COMPLETE !!! 
+            tmp = decoder.decode_16bit_uint()
+            self.data["feedin_nightcharge_upper_soc"] = tmp % 256
+            self.data["feedin_nightcharge_min_soc"] = tmp / 256		
+            tmp = decoder.decode_16bit_uint()
+            self.data["backup_nightcharge_upper_soc"] = tmp % 256
+            self.data["backup_nightcharge_min_soc"] = tmp / 256	
+            tmp = decoder.decode_16bit_uint()
+            self.data["charger_start_time_1"] = f"{tmp / 256}:{tmp % 256}"
+            tmp = decoder.decode_16bit_uint()
+            self.data["charger_end_time_1"] = f"{tmp / 256}:{tmp % 256}"    
+            tmp = decoder.decode_16bit_uint()
+            self.data["discharger_start_time_1"] = f"{tmp / 256}:{tmp % 256}"
+            tmp = decoder.decode_16bit_uint()
+            self.data["discharger_end_time_1"] = f"{tmp / 256}:{tmp % 256}" 
+            period2enable = decoder.decode_16bit_uint()
+            self.data["charge_period2-enable"] = period2enable 
+            tmp = decoder.decode_16bit_uint()
+            self.data["charger_start_time_2"] = f"{tmp / 256}:{tmp % 256}"
+            tmp = decoder.decode_16bit_uint()
+            self.data["charger_end_time_2"] = f"{tmp / 256}:{tmp % 256}"    
+            tmp = decoder.decode_16bit_uint()
+            self.data["discharger_start_time_2"] = f"{tmp / 256}:{tmp % 256}"
+            tmp = decoder.decode_16bit_uint()
+            self.data["discharger_end_time_2"] = f"{tmp / 256}:{tmp % 256}" 			
+            decoder.skip_bytes(42)
         else:
             charger_start_time_1_h = decoder.decode_16bit_uint()        
             charger_start_time_1_m = decoder.decode_16bit_uint()        
@@ -399,87 +423,72 @@ class SolaXModbusHub:
         return True
 
     def read_modbus_holding_registers_2(self):
+        if (self.read_gen4x1 or self.read_gen4x3):
+            inverter_data = self.read_holding_registers(unit=1, address=0x106, count=16)
 
-        inverter_data = self.read_holding_registers(unit=1, address=0xfd, count=25)
+            if inverter_data.isError():
+                return False
 
-        if inverter_data.isError():
-            return False
+            decoder = BinaryPayloadDecoder.fromRegisters(
+                inverter_data.registers, byteorder=Endian.Big
+            )
+        else:
+            inverter_data = self.read_holding_registers(unit=1, address=0xfd, count=25)
 
-        decoder = BinaryPayloadDecoder.fromRegisters(
-            inverter_data.registers, byteorder=Endian.Big
-        )
+            if inverter_data.isError():
+                return False
+
+            decoder = BinaryPayloadDecoder.fromRegisters(
+                inverter_data.registers, byteorder=Endian.Big
+            )
         
-        backup_gridcharge_s = decoder.decode_16bit_uint()
-        if backup_gridcharge_s == 0:
-          self.data["backup_gridcharge"] = "Disabled"
-        elif backup_gridcharge_s == 1:
-          self.data["backup_gridcharge"] = "Enabled"
-        else:
-          self.data["backup_gridcharge"] = "Unknown"
+            backup_gridcharge_s = decoder.decode_16bit_uint()
+            if   backup_gridcharge_s == 0: self.data["backup_gridcharge"] = "Disabled"
+            elif backup_gridcharge_s == 1: self.data["backup_gridcharge"] = "Enabled"
+            else: self.data["backup_gridcharge"] = "Unknown"
         
-        backup_charge_start_h = decoder.decode_16bit_uint()        
-        backup_charge_start_m = decoder.decode_16bit_uint()
-        self.data["backup_charge_start"] = f"{backup_charge_start_h}:{backup_charge_start_m}"
+            backup_charge_start_h = decoder.decode_16bit_uint()        
+            backup_charge_start_m = decoder.decode_16bit_uint()
+            self.data["backup_charge_start"] = f"{backup_charge_start_h}:{backup_charge_start_m}"
         
-        backup_charge_end_h = decoder.decode_16bit_uint()        
-        backup_charge_end_m = decoder.decode_16bit_uint()
-        self.data["backup_charge_end"] = f"{backup_charge_end_h}:{backup_charge_end_m}"
+            backup_charge_end_h = decoder.decode_16bit_uint()        
+            backup_charge_end_m = decoder.decode_16bit_uint()
+            self.data["backup_charge_end"] = f"{backup_charge_end_h}:{backup_charge_end_m}"
         
-        was4777_power_manager_s = decoder.decode_16bit_uint()
-        if was4777_power_manager_s == 0:
-          self.data["was4777_power_manager"] = "Disabled"
-        elif was4777_power_manager_s == 1:
-          self.data["was4777_power_manager"] = "Enabled"
-        else:
-          self.data["was4777_power_manager"] = "Unknown"
+            was4777_power_manager_s = decoder.decode_16bit_uint()
+            if   was4777_power_manager_s == 0: self.data["was4777_power_manager"] = "Disabled"
+            elif was4777_power_manager_s == 1: self.data["was4777_power_manager"] = "Enabled"
+            else: self.data["was4777_power_manager"] = "Unknown"
         
-        cloud_control_s = decoder.decode_16bit_uint()
-        if cloud_control_s == 0:
-          self.data["cloud_control"] = "Disabled"
-        elif cloud_control_s == 1:
-          self.data["cloud_control"] = "Enabled"
-        else:
-          self.data["cloud_control"] = "Unknown"
+            cloud_control_s = decoder.decode_16bit_uint()
+            if    cloud_control_s == 0: self.data["cloud_control"] = "Disabled"
+            elif cloud_control_s == 1: self.data["cloud_control"] = "Enabled"
+            else: self.data["cloud_control"] = "Unknown"
         
-        global_mppt_function_s = decoder.decode_16bit_uint()
-        if global_mppt_function_s == 0:
-          self.data["global_mppt_function"] = "Disabled"
-        elif global_mppt_function_s == 1:
-          self.data["global_mppt_function"] = "Enabled"
-        else:
-          self.data["global_mppt_function"] = "Unknown"
+            global_mppt_function_s = decoder.decode_16bit_uint()
+            if   global_mppt_function_s == 0: self.data["global_mppt_function"] = "Disabled"
+            elif global_mppt_function_s == 1: self.data["global_mppt_function"] = "Enabled"
+            else: self.data["global_mppt_function"] = "Unknown"
         
-        grid_service_x3_s = decoder.decode_16bit_uint()
-        if grid_service_x3_s == 0:
-          self.data["grid_service_x3"] = "Disabled"
-        elif grid_service_x3_s == 1:
-          self.data["grid_service_x3"] = "Enabled"
-        else:
-          self.data["grid_service_x3"] = "Unknown"
+            grid_service_x3_s = decoder.decode_16bit_uint()
+            if   grid_service_x3_s == 0: self.data["grid_service_x3"] = "Disabled"
+            elif grid_service_x3_s == 1: self.data["grid_service_x3"] = "Enabled"
+            else: self.data["grid_service_x3"] = "Unknown"
         
         phase_power_balance_x3_s = decoder.decode_16bit_uint()
-        if phase_power_balance_x3_s == 0:
-          self.data["phase_power_balance_x3"] = "Disabled"
-        elif phase_power_balance_x3_s == 1:
-          self.data["phase_power_balance_x3"] = "Enabled"
-        else:
-          self.data["phase_power_balance_x3"] = "Unknown"
+        if   phase_power_balance_x3_s == 0: self.data["phase_power_balance_x3"] = "Disabled"
+        elif phase_power_balance_x3_s == 1: self.data["phase_power_balance_x3"] = "Enabled"
+        else: self.data["phase_power_balance_x3"] = "Unknown"
         
         machine_style_s = decoder.decode_16bit_uint()
-        if machine_style_s == 0:
-          self.data["machine_style"] = "X-Hybrid"
-        elif machine_style_s == 1:
-          self.data["machine_style"] = "X-Retro Fit"
-        else:
-          self.data["machine_style"] = "Unknown"
+        if   machine_style_s == 0: self.data["machine_style"] = "X-Hybrid"
+        elif machine_style_s == 1: self.data["machine_style"] = "X-Retro Fit"
+        else: self.data["machine_style"] = "Unknown"
         
-        meter_function_s = decoder.decode_16bit_uint()
-        if meter_function_s == 0:
-          self.data["meter_function"] = "Disabled"
-        elif meter_function_s == 1:
-          self.data["meter_function"] = "Enabled"
-        else:
-          self.data["meter_function"] = "Unknown"
+        meter_function_s = decoder.decode_16bit_uint() 
+        if   meter_function_s == 0: self.data["meter_function"] = "Disabled"
+        elif meter_function_s == 1: self.data["meter_function"] = "Enabled"
+        else: self.data["meter_function"] = "Unknown"
           
         meter_1_id = decoder.decode_16bit_uint()
         self.data["meter_1_id"] = meter_1_id
