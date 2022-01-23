@@ -834,6 +834,8 @@ class SolaXModbusHub:
         grid_frequency_t = decoder.decode_16bit_uint()
         self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 1)
         
+
+
         eps_voltage_r = decoder.decode_16bit_uint()
         self.data["eps_voltage_r"] = round(eps_voltage_r * 0.1, 1)
         
@@ -870,40 +872,45 @@ class SolaXModbusHub:
         eps_power_t = decoder.decode_16bit_uint()
         self.data["eps_power_t"] = eps_power_t
         
+        #0x082
         feedin_power_r = decoder.decode_16bit_int()
+        feedin_power_r_msb = decoder.decode_16bit_int()
         self.data["feedin_power_r"] = feedin_power_r
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         feedin_power_s = decoder.decode_16bit_int()
+        feedin_power_s_msb = decoder.decode_16bit_int()
         self.data["feedin_power_s"] = feedin_power_s
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         feedin_power_t = decoder.decode_16bit_int()
+        feedin_power_t_msb = decoder.decode_16bit_int()
         self.data["feedin_power_t"] = feedin_power_t
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         grid_mode_runtime = decoder.decode_16bit_int()
+        grid_mode_runtime_msb = decoder.decode_16bit_int()
         self.data["grid_mode_runtime"] = round(grid_mode_runtime * 0.1, 1)
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         eps_mode_runtime = decoder.decode_16bit_int()
+        eps_mode_runtime_msb = decoder.decode_16bit_int()
         self.data["eps_mode_runtime"] = round(eps_mode_runtime * 0.1, 1)
+        #decoder.skip_bytes(2)
         
-        decoder.skip_bytes(2)
         
-        normal_runtime = decoder.decode_16bit_int()
-        self.data["normal_runtime"] = round(normal_runtime * 0.1, 1)
-        
-        decoder.skip_bytes(2)
+        if (self.read_gen4x1 or self.read_gen4x3): #0x08C
+            decoder.skip_bytes(4)
+        else: 
+            normal_runtime = decoder.decode_16bit_int()
+            normal_runtime_msb = decoder.decode_16bit_int()
+            self.data["normal_runtime"] = round(normal_runtime * 0.1, 1)
+            #decoder.skip_bytes(2)
         
         eps_yield_total = decoder.decode_16bit_uint()
+        eps_yield_total_msb = decoder.decode_16bit_uint()
         self.data["eps_yield_total"] = round(eps_yield_total * 0.1, 1)
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         eps_yield_today = decoder.decode_16bit_uint()
         self.data["eps_yield_today"] = round(eps_yield_today * 0.1, 1)
@@ -912,14 +919,14 @@ class SolaXModbusHub:
         self.data["e_charge_today"] = e_charge_today
         
         e_charge_total = decoder.decode_16bit_uint()
+        e_charge_total_msb = decoder.decode_16bit_uint()
         self.data["e_charge_total"] = e_charge_total
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         solar_energy_total = decoder.decode_16bit_uint()
+        solar_energy_total_msb = decoder.decode_16bit_uint()
         self.data["solar_energy_total"] = round(solar_energy_total * 0.1, 1)
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         solar_energy_today = decoder.decode_16bit_uint()
         self.data["solar_energy_today"] = round(solar_energy_today * 0.1, 1)
@@ -927,11 +934,12 @@ class SolaXModbusHub:
         decoder.skip_bytes(2)
         
         export_energy_today = decoder.decode_16bit_uint()
+        export_energy_today_msb = decoder.decode_16bit_uint()
         self.data["export_energy_today"] = round(export_energy_today * 0.01, 2)
-        
-        decoder.skip_bytes(2)
+        #decoder.skip_bytes(2)
         
         import_energy_today = decoder.decode_16bit_uint()
+        import_energy_today_msb = decoder.decode_16bit_uint()
         self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
         
         return True
