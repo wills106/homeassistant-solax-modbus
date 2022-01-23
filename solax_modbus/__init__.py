@@ -424,7 +424,7 @@ class SolaXModbusHub:
 
     def read_modbus_holding_registers_2(self):
         if (self.read_gen4x1 or self.read_gen4x3):
-            inverter_data = self.read_holding_registers(unit=1, address=0x106, count=16)
+            inverter_data = self.read_holding_registers(unit=1, address=0x102, count=20)
 
             if inverter_data.isError():
                 return False
@@ -432,6 +432,24 @@ class SolaXModbusHub:
             decoder = BinaryPayloadDecoder.fromRegisters(
                 inverter_data.registers, byteorder=Endian.Big
             )
+            drm_function_enable = decoder.decode_16bit_uint()
+            if   backup_gridcharge_s == 0: self.data["drm_function"] = "Disabled"
+            elif backup_gridcharge_s == 1: self.data["drm_function"] = "Enabled"
+            else: self.data["drm_function"] = "Unknown"
+
+            decoder.skip_bytes(2)
+
+            shadow_fix_enable = decoder.decode_16bit_uint()
+            if   shadow_fix_enable == 0: self.data["shadow_fix_enable"] = "Off"
+            elif shadow_fix_enable == 1: self.data["shadow_fix_enable"] = "Low"
+            elif shadow_fix_enable == 1: self.data["shadow_fix_enable"] = "Middle"
+            elif shadow_fix_enable == 1: self.data["shadow_fix_enable"] = "High"
+            else: self.data["shadow_fix_enable"] = "Unknown"
+
+            machine_type = decoder.decode_16bit_uint()
+            if   machine_type == 1: self.data["machine_type"] = "X1"
+            elif machine_type == 3: self.data["machine_type"] = "X3"
+            else: self.data["machine_type"] = machine_type
         else:
             inverter_data = self.read_holding_registers(unit=1, address=0xfd, count=25)
 
@@ -475,6 +493,7 @@ class SolaXModbusHub:
             elif grid_service_x3_s == 1: self.data["grid_service_x3"] = "Enabled"
             else: self.data["grid_service_x3"] = "Unknown"
         
+        #0x0106
         phase_power_balance_x3_s = decoder.decode_16bit_uint()
         if   phase_power_balance_x3_s == 0: self.data["phase_power_balance_x3"] = "Disabled"
         elif phase_power_balance_x3_s == 1: self.data["phase_power_balance_x3"] = "Enabled"
@@ -495,59 +514,57 @@ class SolaXModbusHub:
         
         meter_2_id = decoder.decode_16bit_uint()
         self.data["meter_2_id"] = meter_2_id
+
+        if (self.read_gen4x1 or self.read_gen4x3):
+        else:         
+            power_control_timeout = decoder.decode_16bit_uint()
+            self.data["power_control_timeout"] = power_control_timeout
         
-        power_control_timeout = decoder.decode_16bit_uint()
-        self.data["power_control_timeout"] = power_control_timeout
+            eps_auto_restart_s = decoder.decode_16bit_uint()
+            if   eps_auto_restart_s == 0: self.data["eps_auto_restart"] = "Disabled"
+            elif eps_auto_restart_s == 1: self.data["eps_auto_restart"] = "Enabled"
+            else:  self.data["eps_auto_restart"] = "Unknown"
         
-        eps_auto_restart_s = decoder.decode_16bit_uint()
-        if eps_auto_restart_s == 0:
-          self.data["eps_auto_restart"] = "Disabled"
-        elif eps_auto_restart_s == 1:
-          self.data["eps_auto_restart"] = "Enabled"
-        else:
-          self.data["eps_auto_restart"] = "Unknown"
+            eps_min_esc_voltage = decoder.decode_16bit_uint()
+            self.data["eps_min_esc_voltage"] = eps_min_esc_voltage
         
-        eps_min_esc_voltage = decoder.decode_16bit_uint()
-        self.data["eps_min_esc_voltage"] = eps_min_esc_voltage
+            eps_min_esc_soc = decoder.decode_16bit_uint()
+            self.data["eps_min_esc_soc"] = eps_min_esc_soc
         
-        eps_min_esc_soc = decoder.decode_16bit_uint()
-        self.data["eps_min_esc_soc"] = eps_min_esc_soc
+            forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
+            self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
         
-        forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
-        self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
-        
-        forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
-        self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
+            forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
+            self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
         
         disch_cut_off_point_different_s = decoder.decode_16bit_uint()
-        if disch_cut_off_point_different_s == 0:
-          self.data["disch_cut_off_point_different"] = "Disabled"
-        elif disch_cut_off_point_different_s == 1:
-          self.data["disch_cut_off_point_different"] = "Enabled"
+        if   disch_cut_off_point_different_s == 0: self.data["disch_cut_off_point_different"] = "Disabled"
+        elif disch_cut_off_point_different_s == 1: self.data["disch_cut_off_point_different"] = "Enabled"
+        else: self.data["disch_cut_off_point_different"] = "Unknown"
+        
+        if (self.read_gen4x1 or self.read_gen4x3): 
+            decoder.skip_bytes(2)
+
+            disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
+            self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
+
+            decoder.skip_bytes(2)
         else:
-          self.data["disch_cut_off_point_different"] = "Unknown"
+            disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
+            self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
         
-        disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
-        self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
+            disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
+            self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
         
-        disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
-        self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
-        
-        earth_detect_x3_s = decoder.decode_16bit_uint()
-        if earth_detect_x3_s == 0:
-          self.data["earth_detect_x3"] = "Disabled"
-        elif earth_detect_x3_s == 1:
-          self.data["earth_detect_x3"] = "Enabled"
-        else:
-          self.data["earth_detect_x3"] = "Unknown"
+            earth_detect_x3_s = decoder.decode_16bit_uint()
+            if   earth_detect_x3_s == 0:  self.data["earth_detect_x3"] = "Disabled"
+            elif earth_detect_x3_s == 1:  self.data["earth_detect_x3"] = "Enabled"
+            else:  self.data["earth_detect_x3"] = "Unknown"
         
         ct_meter_setting_s = decoder.decode_16bit_uint()
-        if ct_meter_setting_s == 0:
-          self.data["ct_meter_setting"] = "Meter"
-        elif ct_meter_setting_s == 1:
-          self.data["ct_meter_setting"] = "CT"
-        else:
-          self.data["ct_meter_setting"] = "Unknown"
+        if   ct_meter_setting_s == 0: self.data["ct_meter_setting"] = "Meter"
+        elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
+        else: self.data["ct_meter_setting"] = "Unknown"
         
         return True
 
@@ -595,28 +612,31 @@ class SolaXModbusHub:
         self.data["inverter_temperature"] = inverter_temperature
         
         run_modes = decoder.decode_16bit_uint()
-        if run_modes == 0:
-          self.data["run_mode"] = "Waiting"
-        elif run_modes == 1:
-          self.data["run_mode"] = "Checking"
-        elif run_modes == 2:
-          self.data["run_mode"] = "Normal Mode"
-        elif run_modes == 3:
-          self.data["run_mode"] = "Off Mode"
-        elif run_modes == 4:
-          self.data["run_mode"] = "Permanent Fault Mode"
-        elif run_modes == 5:
-          self.data["run_mode"] = "Update Mode"
-        elif run_modes == 6:
-          self.data["run_mode"] = "EPS Check Mode"
-        elif run_modes == 7:
-          self.data["run_mode"] = "EPS Mode"
-        elif run_modes == 8:
-          self.data["run_mode"] = "Self Test"
-        elif run_modes == 9:
-          self.data["run_mode"] = "Idle Mode"
-        else:
-          self.data["run_mode"] = "Unknown"
+        if (self.read_gen4x1 or self.read_gen4x3): 
+            if   run_modes == 0: self.data["run_mode"] = "Waiting"
+            elif run_modes == 1: self.data["run_mode"] = "Checking"
+            elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
+            elif run_modes == 3: self.data["run_mode"] = "Fault"
+            elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
+            elif run_modes == 5: self.data["run_mode"] = "Update Mode"
+            elif run_modes == 6: self.data["run_mode"] = "Off-Grid Waiting"
+            elif run_modes == 7: self.data["run_mode"] = "Off-Grid"
+            elif run_modes == 8: self.data["run_mode"] = "Self Test"
+            elif run_modes == 9: self.data["run_mode"] = "Idle Mode"
+            elif run_modes == 10: self.data["run_mode"] = "Standby"
+            else: self.data["run_mode"] = "Unknown"
+        else: 
+            if   run_modes == 0: self.data["run_mode"] = "Waiting"
+            elif run_modes == 1: self.data["run_mode"] = "Checking"
+            elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
+            elif run_modes == 3: self.data["run_mode"] = "Off Mode"
+            elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
+            elif run_modes == 5: self.data["run_mode"] = "Update Mode"
+            elif run_modes == 6: self.data["run_mode"] = "EPS Check Mode"
+            elif run_modes == 7: self.data["run_mode"] = "EPS Mode"
+            elif run_modes == 8: self.data["run_mode"] = "Self Test"
+            elif run_modes == 9: self.data["run_mode"] = "Idle Mode"
+            else: self.data["run_mode"] = "Unknown"
         
         pv_power_1 = decoder.decode_16bit_uint()
         self.data["pv_power_1"] = pv_power_1
@@ -641,18 +661,16 @@ class SolaXModbusHub:
         self.data["battery_power_charge"] = battery_power_charge
         
         bms_connect_states = decoder.decode_16bit_uint()
-        if bms_connect_states == 0:
-          self.data["bms_connect_state"] = "Disconnected"
-        elif bms_connect_states == 1:
-          self.data["bms_connect_state"] = "Connected"
-        else:
-          self.data["bms_connect_state"] = "Unknown"
+        if   bms_connect_states == 0: self.data["bms_connect_state"] = "Disconnected"
+        elif bms_connect_states == 1: self.data["bms_connect_state"] = "Connected"
+        else: self.data["bms_connect_state"] = "Unknown"
         
         battery_temperature = decoder.decode_16bit_int()
         self.data["battery_temperature"] = battery_temperature
         
         decoder.skip_bytes(6)
         
+        #0x01C
         battery_capacity_charge = decoder.decode_16bit_uint()
         self.data["battery_capacity_charge"] = battery_capacity_charge
         
@@ -662,8 +680,11 @@ class SolaXModbusHub:
         output_energy_charge_msb = decoder.decode_16bit_uint()
         self.data["output_energy_charge_msb"] = round(output_energy_charge_msb * 0.1, 1)
         
-        bms_warning_lsb = decoder.decode_16bit_uint()
-        self.data["bms_warning_lsb"] = bms_warning_lsb
+        if (self.read_gen4x1 or self.read_gen4x3): 
+            decoder.skip_bytes(2)
+        else:
+            bms_warning_lsb = decoder.decode_16bit_uint()
+            self.data["bms_warning_lsb"] = bms_warning_lsb
         
         output_energy_charge_today = decoder.decode_16bit_uint()
         self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
@@ -673,7 +694,7 @@ class SolaXModbusHub:
         
         input_energy_charge_msb = decoder.decode_16bit_uint()
         self.data["input_energy_charge_msb"] = round(input_energy_charge_msb * 0.1, 1)
-        
+
         input_energy_charge_today = decoder.decode_16bit_uint()
         self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
@@ -683,36 +704,35 @@ class SolaXModbusHub:
         bms_discharge_max_current = decoder.decode_16bit_uint()
         self.data["BMS Discharge Max Current"] = round(bms_discharge_max_current * 0.1, 1)
         
-        bms_warning_msb = decoder.decode_16bit_uint()
-        self.data["bms_warning_msb"] = bms_warning_msb
-        
-        decoder.skip_bytes(62)
-        
-        feedin_power = decoder.decode_16bit_int()
-        self.data["feedin_power"] = feedin_power
-                
-        if feedin_power > 0:
-          self.data["grid_export"] = feedin_power
+        if (self.read_gen4x1 or self.read_gen4x3): #0x026
+            decoder.skip_bytes(64)
         else:
-          self.data["grid_export"] = 0
-          
-        if feedin_power < 0:
-          self.data["grid_import"] = abs(feedin_power)
-        else:
-          self.data["grid_import"] = 0
-          
+            bms_warning_msb = decoder.decode_16bit_uint()
+            self.data["bms_warning_msb"] = bms_warning_msb
+        
+            decoder.skip_bytes(62)
+        
+        feedin_power = decoder.decode_16bit_int() #0x046
+        feedin_power_msb = decoder.decode_16bit_uint()
+        self.data["feedin_power"] = feedin_power       
+        if   feedin_power > 0: elf.data["grid_export"] = feedin_power
+        else: self.data["grid_export"] = 0
+        if   feedin_power < 0: self.data["grid_import"] = abs(feedin_power)
+        else: self.data["grid_import"] = 0 
         self.data["house_load"] = inverter_load - feedin_power
-                         
-        feedin_energy_total = decoder.decode_16bit_uint()
+
+        
+        #decoder.skip_bytes(2)
+        feedin_energy_total =  decoder.decode_16bit_int()
+        feedin_energy_total_msb =  decoder.decode_16bit_int()
         self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
-        
-        decoder.skip_bytes(2)
-                
+
         consumed_energy_total = decoder.decode_16bit_uint()
+        consumed_energy_total_msb = decoder.decode_16bit_uint()
         self.data["consumed_energy_total"] = round(consumed_energy_total * 0.01, 1)
+        #decoder.skip_bytes(2)
         
-        decoder.skip_bytes(2)
-        
+        #0x04C
         eps_volatge = decoder.decode_16bit_uint()
         self.data["eps_volatge"] = round(eps_volatge * 0.1, 1)
         
@@ -722,29 +742,31 @@ class SolaXModbusHub:
         eps_power = decoder.decode_16bit_uint()
         self.data["eps_power"] = eps_power
         
-        eps_current = decoder.decode_16bit_uint()
-        self.data["eps_current"] = round(eps_current * 0.1, 1)
+        # error in original code ?
+        #eps_current = decoder.decode_16bit_uint() 
+        #self.data["eps_current"] = round(eps_current * 0.1, 1)
         
         eps_frequency = decoder.decode_16bit_uint()
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
                 
         energy_today = decoder.decode_16bit_uint()
-        self.data["energy_today"] = round(energy_today * 0.1, 1)
+        self.data["energy_today_to_grid"] = round(energy_today * 0.1, 1) # better name ?
         
         decoder.skip_bytes(2)
         
+        #0x052
         total_energy_to_grid = decoder.decode_16bit_uint()
-        self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
-        
-        decoder.skip_bytes(2)
+        total_energy_to_grid_msb = decoder.decode_16bit_uint()
+        if (self.read_gen4x1 or self.read_gen4x3): 
+            self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.1, 1)
+        else:
+            self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
+        #decoder.skip_bytes(2)
         
         lock_states = decoder.decode_16bit_uint()
-        if lock_states == 0:
-          self.data["lock_state"] = "Locked"
-        elif lock_states == 1:
-          self.data["lock_state"] = "Unlocked"
-        else:
-          self.data["lock_state"] = "Unknown"
+        if   lock_states == 0: self.data["lock_state"] = "Locked"
+        elif lock_states == 1: self.data["lock_state"] = "Unlocked"
+        else: self.data["lock_state"] = "Unknown"
         
         return True
     
