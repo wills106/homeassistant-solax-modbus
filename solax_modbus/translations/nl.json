@@ -6,7 +6,7 @@
         "data": {
           "host": "Het ip-adres van uw SolaX Power-omvormer modbus apparaat; voor RS485, de naam van de seriele poort vb. /dev/ttyUSB0",
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
-          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer; voor RS485, het modbus adres, meestal 1",
+          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer; voor RS485, de naam van de seriele poort vb. /dev/ttyUSB0",
           "read_gen2_x1": "SolaX Gen2 X1",
           "read_gen3_x1": "SolaX Gen3 X1",
           "read_gen3_x3": "SolaX Gen3 X3",
