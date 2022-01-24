@@ -90,6 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
+    _LOGGER.info("serial port %s %s", serial_port, serial)
 
     hub = SolaXModbusHub(hass, name, host, port, serial, serial_port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
     """Register the hub."""
