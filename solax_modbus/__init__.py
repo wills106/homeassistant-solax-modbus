@@ -60,11 +60,13 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
     }
 )
 
-_LOGGER.info("solax schema created")
+_LOGGER.info("solax schema prepared")
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.Schema({cv.slug: SOLAX_MODBUS_SCHEMA})}, extra=vol.ALLOW_EXTRA
 )
+
+_LOGGER.info("solax schema created")
 
 PLATFORMS = ["number", "select", "sensor"]
 
@@ -144,6 +146,7 @@ class SolaXModbusHub:
         read_x3_eps=False,
     ):
         """Initialize the Modbus hub."""
+        _LOGGER.info("solax modbushub creation")
         self._hass = hass
         if serial: # serial
             self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
@@ -164,6 +167,7 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensors = []
         self.data = {}
+        _LOGGER.info("solax modbushub done %s", self.__dict__)
 
     @callback
     def async_add_solax_modbus_sensor(self, update_callback):
