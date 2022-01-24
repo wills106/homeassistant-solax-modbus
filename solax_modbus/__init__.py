@@ -20,6 +20,8 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    DEFAULT_SERIAL,
+    DEFAULT_SERIAL_PORT,
     CONF_READ_GEN2X1,
     CONF_READ_GEN3X1,
     CONF_READ_GEN3X3,
@@ -43,6 +45,8 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_PORT): cv.string,
+        vol.Required(CONF_SERIAL,      default=DEFAULT_SERIAL): cv.boolean,
+        vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
@@ -50,9 +54,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN4X3, default=DEFAULT_READ_GEN4X3): cv.boolean,
         vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
-        vol.Optional(
-            CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
-        ): cv.positive_int,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
 
