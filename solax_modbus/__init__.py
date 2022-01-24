@@ -46,7 +46,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
         vol.Optional(CONF_READ_GEN4X1, default=DEFAULT_READ_GEN4X1): cv.boolean,
         vol.Optional(CONF_READ_GEN4X3, default=DEFAULT_READ_GEN4X3): cv.boolean,
-	vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
+	    vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
@@ -125,7 +125,7 @@ class SolaXModbusHub:
         read_gen3x3=False,
         read_gen4x1=False,
         read_gen4x3=False,
-	read_x1_eps=False,
+        read_x1_eps=False,
         read_x3_eps=False,
     ):
         """Initialize the Modbus hub."""
@@ -141,7 +141,7 @@ class SolaXModbusHub:
         self.read_gen3x3 = read_gen3x3
         self.read_gen3x1 = read_gen4x1
         self.read_gen3x3 = read_gen4x3
-	self.read_x1_eps = read_x1_eps
+        self.read_x1_eps = read_x1_eps
         self.read_x3_eps = read_x3_eps
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
