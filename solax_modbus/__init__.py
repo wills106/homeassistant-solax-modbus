@@ -291,8 +291,8 @@ class SolaXModbusHub:
         
         self.data["rtc"] = f"{rtc_hours}:{rtc_minutes}:{rtc_seconds} {rtc_days}/{rtc_months}/{rtc_years}"
         
-	    charger_use_modes = decoder.decode_16bit_uint()
-	    if self.read_gen4x1 or self.read_gen4x3:
+        charger_use_modes = decoder.decode_16bit_uint()
+        if self.read_gen4x1 or self.read_gen4x3:
             if   charger_use_modes == 0: self.data["charger_use_mode"] = "Self Use Mode"
             elif charger_use_modes == 1: self.data["charger_use_mode"] = "Feedin Priority"
             elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
@@ -519,6 +519,7 @@ class SolaXModbusHub:
         self.data["meter_2_id"] = meter_2_id
 
         if (self.read_gen4x1 or self.read_gen4x3):
+            decoder.skip_bytes(12)
         else:         
             power_control_timeout = decoder.decode_16bit_uint()
             self.data["power_control_timeout"] = power_control_timeout

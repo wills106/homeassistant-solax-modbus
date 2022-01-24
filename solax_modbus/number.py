@@ -48,7 +48,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             )
             entities.append(number)
     elif hub.read_gen4x1 or hub.read_gen4x3:
-            for number_info in NUMBER_TYPES_G4:
+        for number_info in NUMBER_TYPES_G4:
             number = SolaXModbusNumber(
                 hub_name,
                 hub,

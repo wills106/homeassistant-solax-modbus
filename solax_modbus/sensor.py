@@ -61,7 +61,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 sensor_description,
             )
             entities.append(sensor)
-     if hub.read_gen4x1 == True:
+    if hub.read_gen4x1 == True:
         for sensor_description in GEN4_X1_SENSOR_TYPES.values():
             sensor = SolaXModbusSensor(
                 hub_name,
