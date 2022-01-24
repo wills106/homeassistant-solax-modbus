@@ -132,7 +132,7 @@ class SolaXModbusHub:
     ):
         """Initialize the Modbus hub."""
         self._hass = hass
-        if port.startswith("/dev/tty") and host.startswith("/dev/tty"): # serial
+        if host.startswith("/dev/tty"): # serial
             self._client = ModbusSerialClient(method="rtu", port=host, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
         else:
             self._client = ModbusTcpClient(host=host, port=port, timeout=5)
