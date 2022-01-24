@@ -74,6 +74,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     host = entry.data[CONF_HOST]
     name = entry.data[CONF_NAME]
     port = entry.data[CONF_PORT]
+    serial = entry.data[CONF_SERIAL]
+    serial_port = entry.[CONF_SERIAL_PORT]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
@@ -85,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
 
-    hub = SolaXModbusHub(hass, name, host, port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
+    hub = SolaXModbusHub(hass, name, host, port, serial, serial_port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -121,6 +123,8 @@ class SolaXModbusHub:
         name,
         host,
         port,
+        serial,
+        serial_port,
         scan_interval,
         read_gen2x1=False,
         read_gen3x1=False,
@@ -132,8 +136,8 @@ class SolaXModbusHub:
     ):
         """Initialize the Modbus hub."""
         self._hass = hass
-        if host.startswith("/dev/tty"): # serial
-            self._client = ModbusSerialClient(method="rtu", port=host, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
+        if serial: # serial
+            self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
         else:
             self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
@@ -145,6 +149,8 @@ class SolaXModbusHub:
         self.read_gen4x3 = read_gen4x3
         self.read_x1_eps = read_x1_eps
         self.read_x3_eps = read_x3_eps
+        self.read_serial = serial
+        self.read_serial_port = serial_port
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
         self._sensors = []

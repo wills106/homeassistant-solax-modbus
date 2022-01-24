@@ -27,7 +27,7 @@ from homeassistant.const import (
 
 DOMAIN = "solax_modbus"
 DEFAULT_NAME = "SolaX"
-DEFAULT_SCAN_INTERVAL = 2
+DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 CONF_READ_GEN2X1 = "read_gen2_x1"
 CONF_READ_GEN3X1 = "read_gen3_x1"
@@ -36,8 +36,12 @@ CONF_READ_GEN4X1 = "read_gen4_x1"
 CONF_READ_GEN4X3 = "read_gen4_x3"
 CONF_READ_X1_EPS = "read_x1_eps"
 CONF_READ_X3_EPS = "read_x3_eps"
+CONF_SERIAL      = "read_serial"
+CONF_SERIAL_PORT = "read_serial_port"
 CONF_SolaX_HUB = "solax_hub"
 ATTR_MANUFACTURER = "SolaX Power"
+DEFAULT_SERIAL      = False
+DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
 DEFAULT_READ_GEN2X1 = False
 DEFAULT_READ_GEN3X1 = False
 DEFAULT_READ_GEN3X3 = False
