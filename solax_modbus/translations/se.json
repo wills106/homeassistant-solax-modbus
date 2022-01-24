@@ -4,9 +4,9 @@
       "user": {
         "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter",
         "data": {
-          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern; for RS485, the serial port name e.g. /dev/ttyUSB0",
+          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern;\nfor RS485, the serial port name e.g. /dev/ttyUSB0",
           "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
-          "port": "TCP-port för anslutning till SolaX Power Invertern; for RS485, the name of the serial port e.g. /dev/ttyUSB0",
+          "port": "TCP-port för anslutning till SolaX Power Invertern;\nfor RS485, this parameter is not relevant",
           "read_gen2_x1": "SolaX Gen2 X1",
           "read_gen3_x1": "SolaX Gen3 X1",
           "read_gen3_x3": "SolaX Gen3 X3",
