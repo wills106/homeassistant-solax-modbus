@@ -21,8 +21,8 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     CONF_READ_GEN2X1,
-	CONF_READ_GEN3X1,
-	CONF_READ_GEN3X3,
+    CONF_READ_GEN3X1,
+    CONF_READ_GEN3X3,
     CONF_READ_GEN4X1,
     CONF_READ_GEN4X3,
 	CONF_READ_X1_EPS,
@@ -48,7 +48,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
         vol.Optional(CONF_READ_GEN4X1, default=DEFAULT_READ_GEN4X1): cv.boolean,
         vol.Optional(CONF_READ_GEN4X3, default=DEFAULT_READ_GEN4X3): cv.boolean,
-	    vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
+        vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
