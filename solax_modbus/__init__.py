@@ -78,8 +78,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
     read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
-    read_gen3x1 = entry.data.get(CONF_READ_GEN4X1, False)
-    read_gen3x3 = entry.data.get(CONF_READ_GEN4X3, False)
+    read_gen4x1 = entry.data.get(CONF_READ_GEN4X1, False)
+    read_gen4x3 = entry.data.get(CONF_READ_GEN4X3, False)
     read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
