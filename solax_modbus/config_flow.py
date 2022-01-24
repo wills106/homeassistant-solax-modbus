@@ -46,6 +46,8 @@ DATA_SCHEMA = vol.Schema(
 
 
 def host_valid(host):
+    """Return True if host contains a serial port """
+    if host.startswith('/dev/tty'): return True
     """Return True if hostname or IP address is valid."""
     try:
         if ipaddress.ip_address(host).version == (4 or 6):

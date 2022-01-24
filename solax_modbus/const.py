@@ -109,17 +109,17 @@ NUMBER_TYPES_G3 = [
             },
             "battery_capacity_charge"
         ],
-	["Battery Charge",
-	    "battery_charge",
-	    0x24,
-	    "f",
+        ["Battery Charge",
+	        "battery_charge",
+	        0x24,
+	        "f",
             {
                 "min": 0,
                 "max": 20,
                 "step": 0.1,
                 "unit": ELECTRIC_CURRENT_AMPERE,
             }
-	],
+        ],
         ["Battery Discharge",
             "battery_discharge",
             0x25,
@@ -155,17 +155,29 @@ NUMBER_TYPES_G3 = [
         ],
 ]
 NUMBER_TYPES_G4 = [
-	["Battery Charge",
-	    "battery_charge",
-	    0x24,
-	    "f",
+        ["Battery Minimum Capacity",
+            "battery_minimum_capacity",
+            0x20,
+            "i",
+            {
+               "min": 0,
+                "max": 99,
+                "step": 1,
+                "unit": PERCENTAGE,
+            },
+            "battery_capacity_charge"
+        ],
+        ["Battery Charge",
+            "battery_charge",
+            0x24,
+            "f",
             {
                 "min": 0,
                 "max": 25,
                 "step": 0.1,
                 "unit": ELECTRIC_CURRENT_AMPERE,
             }
-	],
+        ],
         ["Battery Discharge",
             "battery_discharge",
             0x25,
@@ -177,29 +189,31 @@ NUMBER_TYPES_G4 = [
                 "unit": ELECTRIC_CURRENT_AMPERE,
             }
         ],
-    #["ForceTime Period 1 Max Capacity",
-    #    "forcetime_period_1_max_capacity",
-    #    0xA4,
-    #    "i",
-    #	    {
-    #	        "min": 5,
-    #        "max": 100,
-    #        "step": 1,
-    #        "unit": PERCENTAGE,
-    #    }
-    #],
-    #["ForceTime Period 2 Max Capacity",
-    #    "forcetime_period_2_max_capacity",
-    #    0xA5,
-    #    "i",
-    #	    {
-    #	        "min": 5,
-    #        "max": 100,
-    #        "step": 1,
-    #        "unit": PERCENTAGE,
-    #    }
-    #],
+        ["ForceTime Period 1 Max Capacity",
+            "forcetime_period_1_max_capacity",
+            0xA4,
+            "i",
+            {
+                "min": 5,
+                "max": 100,
+                "step": 1,
+                "unit": PERCENTAGE,
+            }
+         ],
+        ["ForceTime Period 2 Max Capacity",
+            "forcetime_period_2_max_capacity",
+            0xA5,
+            "i",
+            {
+                "min": 5,
+                "max": 100,
+                "step": 1,
+                "unit": PERCENTAGE,
+            }
+        ],
 ]
+
+
 SELECT_TYPES = [
 	["Run Mode Select",
 	    "run_mode_select",
@@ -389,8 +403,8 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		entity_registry_enabled_default=False,
 	),
     "energy_today": SolaXModbusSensorEntityDescription(
-    	name="Today's Yield",
-    	key="energy_today",
+    	name="Today's Yield to Grid",
+    	key="energy_today_to_grid",
     	native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
@@ -613,6 +627,70 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         entity_registry_enabled_default=False,
     ),
 }
+
+GEN4_SENSOR_TYPES = SENSOR_TYPES.copy()
+# on Gen4, some variables are not available
+GEN4_SENSOR_TYPES.pop("allow_grid_charge")
+GEN4_SENSOR_TYPES.pop("battery_min_capacity")
+GEN4_SENSOR_TYPES.pop("registration_code")
+# add some variables for Gen4
+GEN4_SENSOR_TYPES["selfuse_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescription(
+        name="Selfuse Night Charge Upper SOC",
+        key="selfuse_nightcharge_upper_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+GEN4_SENSOR_TYPES["selfuse_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
+        name="Selfuse Night Charge Min SOC",
+        key="selfuse_nightcharge_min_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+GEN4_SENSOR_TYPES["selfuse_nightcharge_enable"] = SolaXModbusSensorEntityDescription(
+        name="Selfuse Night Charge Enable",
+        key="selfuse_nightcharge_enable")
+GEN4_SENSOR_TYPES["charge_period2_enable"] = SolaXModbusSensorEntityDescription(
+        name="Charge Period2 Enable",
+        key="charge_period2_enable",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["discharger_start_time_1"] = SolaXModbusSensorEntityDescription(
+        name="Discharger Start Time 1",
+        key="discharger_start_time_1",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["discharger_start_time_2"] = SolaXModbusSensorEntityDescription(
+        name="Discharger Start Time 2",
+        key="discharger_start_time_2",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["discharger_end_time_1"] = SolaXModbusSensorEntityDescription(
+        name="Discharger End Time 1",
+        key="discharger_start_time_1",
+        entity_registry_enabled_default=False,)
+GEN4_SENSOR_TYPES["discharger_end_time_2"] = SolaXModbusSensorEntityDescription(
+        name="Discharger End Time 2",
+        key="discharger_end_time_2",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["manual_mode"] = SolaXModbusSensorEntityDescription(
+        name="Manual Mode",
+        key="manual_mode")
+GEN4_SENSOR_TYPES["feedin_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
+        name="Feedin Night Charge Min SOC",
+        key="feedin_nightcharge_min_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+GEN4_SENSOR_TYPES["feedine_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescription(
+        name="Feedin Night Charge Upper SOC",
+        key="feedin_nightcharge_upper_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+GEN4_SENSOR_TYPES["backupnightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
+        name="Backup Night Charge Min SOC",
+        key="backup_nightcharge_min_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+GEN4_SENSOR_TYPES["backup_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescription(
+        name="Backup Night Charge Upper SOC",
+        key="backup_nightcharge_upper_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=DEVICE_CLASS_BATTERY)
+
 
 GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"backup_charge_end": SolaXModbusSensorEntityDescription(
@@ -985,3 +1063,8 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="phase_power_balance_x3",
 	),
 }
+
+
+GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES
+
+GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES

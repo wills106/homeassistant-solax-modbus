@@ -1,4 +1,4 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES
+from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES, SELECT_TYPES_G4
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -18,18 +18,30 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     }
     
     entities = []
-    
-    for select_info in SELECT_TYPES:
-        select = SolaXModbusSelect(
-            hub_name,
-            hub,
-            device_info,
-            select_info[0],
-            select_info[1],
-            select_info[2],
-            select_info[3],
-        )
-        entities.append(select)
+    if hub.read_gen4x1 or hub.read_gen4x3:
+        for select_info in SELECT_TYPES_G4:
+            select = SolaXModbusSelect(
+                hub_name,
+                hub,
+                device_info,
+                select_info[0],
+                select_info[1],
+                select_info[2],
+                select_info[3],
+            )
+            entities.append(select)
+    else:
+        for select_info in SELECT_TYPES:
+            select = SolaXModbusSelect(
+                hub_name,
+                hub,
+                device_info,
+                select_info[0],
+                select_info[1],
+                select_info[2],
+                select_info[3],
+            )
+            entities.append(select)
         
     async_add_entities(entities)
     return True

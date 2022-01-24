@@ -11,7 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
-from pymodbus.client.sync import ModbusTcpClient
+from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
@@ -130,7 +130,10 @@ class SolaXModbusHub:
     ):
         """Initialize the Modbus hub."""
         self._hass = hass
-        self._client = ModbusTcpClient(host=host, port=port, timeout=5)
+        if port.startswith("/dev/tty") and host.startswith("/dev/tty"): # serial
+            self._client = ModbusSerialClient(method="rtu", port=port, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
+        else:
+            self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
         self._name = name
         self.read_gen2x1 = read_gen2x1
@@ -351,7 +354,7 @@ class SolaXModbusHub:
             tmp = decoder.decode_16bit_uint()
             self.data["discharger_end_time_1"] = f"{tmp / 256}:{tmp % 256}" 
             period2enable = decoder.decode_16bit_uint()
-            self.data["charge_period2-enable"] = period2enable 
+            self.data["charge_period2_enable"] = period2enable 
             tmp = decoder.decode_16bit_uint()
             self.data["charger_start_time_2"] = f"{tmp / 256}:{tmp % 256}"
             tmp = decoder.decode_16bit_uint()
@@ -699,10 +702,10 @@ class SolaXModbusHub:
         self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
         bms_charge_max_current = decoder.decode_16bit_uint()
-        self.data["BMS Charge Max Current"] = round(bms_charge_max_current * 0.1, 1)
+        self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
         
         bms_discharge_max_current = decoder.decode_16bit_uint()
-        self.data["BMS Discharge Max Current"] = round(bms_discharge_max_current * 0.1, 1)
+        self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
         
         if (self.read_gen4x1 or self.read_gen4x3): #0x026
             decoder.skip_bytes(64)
@@ -749,7 +752,7 @@ class SolaXModbusHub:
         eps_frequency = decoder.decode_16bit_uint()
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
                 
-        energy_today = decoder.decode_16bit_uint()
+        energy_today_to_grid = decoder.decode_16bit_uint()
         self.data["energy_today_to_grid"] = round(energy_today * 0.1, 1) # better name ?
         
         decoder.skip_bytes(2)
