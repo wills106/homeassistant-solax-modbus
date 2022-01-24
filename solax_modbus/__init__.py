@@ -141,8 +141,8 @@ class SolaXModbusHub:
         self.read_gen2x1 = read_gen2x1
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
-        self.read_gen3x1 = read_gen4x1
-        self.read_gen3x3 = read_gen4x3
+        self.read_gen4x1 = read_gen4x1
+        self.read_gen4x3 = read_gen4x3
         self.read_x1_eps = read_x1_eps
         self.read_x3_eps = read_x3_eps
         self._scan_interval = timedelta(seconds=scan_interval)
