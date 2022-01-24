@@ -75,7 +75,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     name = entry.data[CONF_NAME]
     port = entry.data[CONF_PORT]
     serial = entry.data[CONF_SERIAL]
-    serial_port = entry.[CONF_SERIAL_PORT]
+    serial_port = entry.data[CONF_SERIAL_PORT]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
     read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
     read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
