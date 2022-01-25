@@ -251,8 +251,8 @@ SELECT_TYPES_G4 = [
                 3: "Manual Mode",
             }
         ],
-        ["Manual Mode",
-            "manual_mode",
+        ["Manual Mode Select",
+            "manual_mode_select",
             0x20,
             {
                 1: "Force Charge",
@@ -671,9 +671,9 @@ GEN4_SENSOR_TYPES["discharger_end_time_2"] = SolaXModbusSensorEntityDescription(
         name="Discharger End Time 2",
         key="discharger_end_time_2",
         entity_registry_enabled_default=False)
-GEN4_SENSOR_TYPES["manual_mode_cur"] = SolaXModbusSensorEntityDescription(
-        name="Manual Mode Current",
-        key="manual_mode_cur")
+GEN4_SENSOR_TYPES["manual_mode"] = SolaXModbusSensorEntityDescription(
+        name="Manual Mode",
+        key="manual_mode")
 GEN4_SENSOR_TYPES["feedin_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
         name="Feedin Night Charge Min SOC",
         key="feedin_nightcharge_min_soc",
