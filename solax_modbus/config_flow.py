@@ -87,10 +87,10 @@ class SolaXModbusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            #serial = user_input[CONF_SERIAL]
+            serial = user_input[CONF_SERIAL]
             if self._host_in_configuration_exists(host):
                 errors[CONF_HOST] = "already_configured"
-            elif not host_valid(user_input[CONF_HOST]): # and not serial:
+            elif not host_valid(user_input[CONF_HOST]) and not serial:
                 errors[CONF_HOST] = "invalid host IP"
             else:
                 await self.async_set_unique_id(user_input[CONF_HOST])
