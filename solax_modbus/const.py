@@ -653,6 +653,10 @@ GEN4_SENSOR_TYPES.pop("allow_grid_charge")
 GEN4_SENSOR_TYPES.pop("battery_min_capacity")
 GEN4_SENSOR_TYPES.pop("registration_code")
 GEN4_SENSOR_TYPES.pop("eps_set_frequency")
+#GEN4_SENSOR_TYPES.pop("was4777_power_manager")
+#GEN4_SENSOR_TYPES.pop("cloud_control")
+#GEN4_SENSOR_TYPES.pop("global_mppt_function")
+
 # add some variables for Gen4
 GEN4_SENSOR_TYPES["selfuse_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescription(
         name="Selfuse Night Charge Upper SOC",
@@ -690,6 +694,14 @@ GEN4_SENSOR_TYPES["discharger_end_time_1"] = SolaXModbusSensorEntityDescription(
 GEN4_SENSOR_TYPES["discharger_end_time_2"] = SolaXModbusSensorEntityDescription(
         name="Discharger End Time 2",
         key="discharger_end_time_2",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["shadow_fix_enable"] = SolaXModbusSensorEntityDescription(
+        name="Shadow Fix Function Level",
+        key="shadow_fix_enable",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["machine_type"] = SolaXModbusSensorEntityDescription(
+        name="Machine Type X1/X3",
+        key="machine_type",
         entity_registry_enabled_default=False)
 GEN4_SENSOR_TYPES["manual_mode"] = SolaXModbusSensorEntityDescription(
         name="Manual Mode",
@@ -974,6 +986,11 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		name="Earth Detect X3",
 		key="earth_detect_x3",
 	),
+    "ct_meter_setting": SolaXModbusSensorEntityDescription(
+        name="CT Meter Setting",
+        key="ct_meter_setting",
+        entity_registry_enabled_default=False,
+    ),
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",
@@ -1092,6 +1109,6 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 }
 
 
-GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES
+GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES.copy()
 
-GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES
+GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES.copy()

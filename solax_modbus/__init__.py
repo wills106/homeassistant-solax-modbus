@@ -461,8 +461,8 @@ class SolaXModbusHub:
                 inverter_data.registers, byteorder=Endian.Big
             )
             drm_function_enable = decoder.decode_16bit_uint()
-            if   backup_gridcharge_s == 0: self.data["drm_function"] = "Disabled"
-            elif backup_gridcharge_s == 1: self.data["drm_function"] = "Enabled"
+            if   drm_function_enable == 0: self.data["drm_function"] = "Disabled"
+            elif drm_function_enable == 1: self.data["drm_function"] = "Enabled"
             else: self.data["drm_function"] = "Unknown"
 
             decoder.skip_bytes(2)
