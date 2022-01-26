@@ -1109,9 +1109,13 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 
 
 GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES.copy()
-GEN4_X1_SENSOR_TYPES.pop("eps_set_frequency")
-
-
 GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES.copy()
-#GEN4_X3_SENSOR_TYPES.pop("eps_set_frequency")
+
+
+GEN4_X1_EPS_SENSOR_TYPES = X1_EPS_SENSOR_TYPES.copy()
+GEN4_X1_EPS_SENSOR_TYPES.pop("eps_set_frequency")
+GEN4_X3_EPS_SENSOR_TYPES = X3_EPS_SENSOR_TYPES.copy()
+#GEN4_X3_EPS_SENSOR_TYPES.pop("eps_set_frequency")
+
+
 
