@@ -297,9 +297,9 @@ class SolaXModbusHub:
         firmwareversion_manager = decoder.decode_16bit_uint()
         self.data["firmwareversion_manager"] = firmwareversion_manager
         
-	# should be bootloader version ??
-        myaddress = decoder.decode_16bit_uint()
-        self.data["myaddress"] = myaddress
+        # should be bootloader version , not myaddress
+        bootloader_version = decoder.decode_16bit_uint()
+        self.data["bootloader_version"] = bootloader_version
         
         rtc_seconds = decoder.decode_16bit_uint()
         self.data["rtc_seconds"] = rtc_seconds
@@ -318,7 +318,7 @@ class SolaXModbusHub:
             elif charger_use_modes == 1: self.data["charger_use_mode"] = "Feedin Priority"
             elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
             elif charger_use_modes == 3: self.data["charger_use_mode"] = "Manual Mode"
-            else:                        self.data["charger_use_mode"] = "Unknown"
+            else: self.data["charger_use_mode"] = "Unknown"
             manual_mode = decoder.decode_16bit_uint()
             self.data["manual_mode"] = manual_mode
             if   manual_mode == 0: self.data["manual_mode_txt"] = "Stop Charge and Discharge"
@@ -329,7 +329,7 @@ class SolaXModbusHub:
             elif charger_use_modes == 1: self.data["charger_use_mode"] = "Force Time Use"
             elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
             elif charger_use_modes == 3: self.data["charger_use_mode"] = "Feedin Priority"
-            else:                        self.data["charger_use_mode"] = "Unknown"
+            else: self.data["charger_use_mode"] = "Unknown"
             battery_min_capacity = decoder.decode_16bit_uint()
             self.data["battery_min_capacity"] = battery_min_capacity
         
