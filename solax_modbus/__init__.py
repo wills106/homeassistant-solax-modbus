@@ -357,33 +357,33 @@ class SolaXModbusHub:
             decoder.skip_bytes(2)
             tmp = decoder.decode_16bit_uint()
             self.data["selfuse_discharge_min_soc"]  = tmp % 256
-            self.data["selfuse_nightcharge_enable"] = tmp / 256
+            self.data["selfuse_nightcharge_enable"] = tmp >> 8 
             selfuse_nightcharge_upper_soc = decoder.decode_16bit_uint()
             self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
             tmp = decoder.decode_16bit_uint()
             self.data["feedin_nightcharge_upper_soc"] = tmp % 256
-            self.data["feedin_nightcharge_min_soc"] = tmp / 256		
+            self.data["feedin_nightcharge_min_soc"] = tmp >> 8 		
             tmp = decoder.decode_16bit_uint()
             self.data["backup_nightcharge_upper_soc"] = tmp % 256
-            self.data["backup_nightcharge_min_soc"] = tmp / 256	
+            self.data["backup_nightcharge_min_soc"] = tmp >> 8 	
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_1"] = f"{tmp / 256}:{tmp % 256}"
+            self.data["charger_start_time_1"] = f"{tmp >> 8 }:{tmp % 256}"
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_1"] = f"{tmp / 256}:{tmp % 256}"    
+            self.data["charger_end_time_1"] = f"{tmp >> 8 }:{tmp % 256}"    
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_1"] = f"{tmp / 256}:{tmp % 256}"
+            self.data["discharger_start_time_1"] = f"{tmp >> 8 }:{tmp % 256}"
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_1"] = f"{tmp / 256}:{tmp % 256}" 
+            self.data["discharger_end_time_1"] = f"{tmp >>8 }:{tmp % 256}" 
             period2enable = decoder.decode_16bit_uint()
             self.data["charge_period2_enable"] = period2enable 
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_2"] = f"{tmp / 256}:{tmp % 256}"
+            self.data["charger_start_time_2"] = f"{tmp >> 8}:{tmp % 256}"
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_2"] = f"{tmp / 256}:{tmp % 256}"    
+            self.data["charger_end_time_2"] = f"{tmp >> 8 }:{tmp % 256}"    
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_2"] = f"{tmp / 256}:{tmp % 256}"
+            self.data["discharger_start_time_2"] = f"{tmp >> 8}:{tmp % 256}"
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_2"] = f"{tmp / 256}:{tmp % 256}" 			
+            self.data["discharger_end_time_2"] = f"{tmp >> 8 }:{tmp % 256}" 			
             decoder.skip_bytes(42)
         else:
             charger_start_time_1_h = decoder.decode_16bit_uint()        
@@ -416,21 +416,25 @@ class SolaXModbusHub:
             elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Charger Time's"
             else:  self.data["allow_grid_charge"] = "Unknown"
         
+        # do not multiply by 0.1
         export_control_factory_limit = decoder.decode_16bit_uint()
-        self.data["export_control_factory_limit"] = round(export_control_factory_limit * 0.1, 1)
+        self.data["export_control_factory_limit"] = round(export_control_factory_limit, 1)
         
         export_control_user_limit = decoder.decode_16bit_uint()
-        self.data["export_control_user_limit"] = round(export_control_user_limit * 0.1, 1)
+        self.data["export_control_user_limit"] = round(export_control_user_limit, 1)
         
         eps_mutes = decoder.decode_16bit_uint()
         if   eps_mutes == 0: self.data["eps_mute"] = "Off"
         elif eps_mutes == 1: self.data["eps_mute"] = "On"
         else: self.data["eps_mute"] = "Unknown"
         
-        eps_set_frequencys = decoder.decode_16bit_uint()
-        if   eps_set_frequencys == 0: self.data["eps_set_frequency"] = "50Hz"
-        elif eps_set_frequencys == 1: self.data["eps_set_frequency"] = "60Hz"
-        else: self.data["eps_set_frequency"] = "Unknown"
+        if self.read_gen4x1 or self.read_gen4x3:
+            decoder.skip_bytes(2)
+        else:
+            eps_set_frequencys = decoder.decode_16bit_uint()
+            if   eps_set_frequencys == 0: self.data["eps_set_frequency"] = "50Hz"
+            elif eps_set_frequencys == 1: self.data["eps_set_frequency"] = "60Hz"
+            else: self.data["eps_set_frequency"] = "Unknown"
         
         decoder.skip_bytes(2)
         

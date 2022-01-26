@@ -331,6 +331,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	key="battery_type",
     	entity_registry_enabled_default=False,
     ),
+    "battery_charge_float_voltage": SolaXModbusSensorEntityDescription(
+        name="Battery Charge Float Voltage",
+        key="battery_charge_float_voltage",
+        entity_registry_enabled_default=False,
+    ),
     "battery_temperature": SolaXModbusSensorEntityDescription(
     	name="Battery Temperature",
     	key="battery_temperature",
@@ -373,11 +378,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         entity_registry_enabled_default=False,
     ),
     "charger_start_time_1": SolaXModbusSensorEntityDescription(
-    	name="Start Time 1",
+    	name="Charger Start Time 1",
     	key="charger_start_time_1",
     ),
     "charger_end_time_1": SolaXModbusSensorEntityDescription(
-    	name="End Time 1",
+    	name="Scharger End Time 1",
     	key="charger_end_time_1",
     ),
     "charger_start_time_2": SolaXModbusSensorEntityDescription(
@@ -626,6 +631,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="time_count_down",
 		entity_registry_enabled_default=False,
 	),
+    "inverter_rate_power": SolaXModbusSensorEntityDescription(
+        name="Inverter Rated Power",
+        key="inverter_rate_power",
+        entity_registry_enabled_default=False,
+    ),
 	"total_energy_to_grid": SolaXModbusSensorEntityDescription(
 		name="Total Energy To Grid",
 		key="total_energy_to_grid",
@@ -642,23 +652,28 @@ GEN4_SENSOR_TYPES = SENSOR_TYPES.copy()
 GEN4_SENSOR_TYPES.pop("allow_grid_charge")
 GEN4_SENSOR_TYPES.pop("battery_min_capacity")
 GEN4_SENSOR_TYPES.pop("registration_code")
+GEN4_SENSOR_TYPES.pop("eps_set_frequency")
 # add some variables for Gen4
 GEN4_SENSOR_TYPES["selfuse_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescription(
         name="Selfuse Night Charge Upper SOC",
         key="selfuse_nightcharge_upper_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY)
-GEN4_SENSOR_TYPES["selfuse_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
-        name="Selfuse Night Charge Min SOC",
-        key="selfuse_nightcharge_min_soc",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=DEVICE_CLASS_BATTERY)
+#GEN4_SENSOR_TYPES["selfuse_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
+#        name="Selfuse Night Charge Min SOC",
+#        key="selfuse_nightcharge_min_soc",
+#        native_unit_of_measurement=PERCENTAGE,
+#        device_class=DEVICE_CLASS_BATTERY)
 GEN4_SENSOR_TYPES["selfuse_nightcharge_enable"] = SolaXModbusSensorEntityDescription(
         name="Selfuse Night Charge Enable",
         key="selfuse_nightcharge_enable")
 GEN4_SENSOR_TYPES["charge_period2_enable"] = SolaXModbusSensorEntityDescription(
         name="Charge Period2 Enable",
         key="charge_period2_enable",
+        entity_registry_enabled_default=False)
+GEN4_SENSOR_TYPES["selfuse_discharge_min_soc"] = SolaXModbusSensorEntityDescription(
+        name="Selfuse Discharge Min SOC",
+        key="selfuse_discharge_min_soc",
         entity_registry_enabled_default=False)
 GEN4_SENSOR_TYPES["discharger_start_time_1"] = SolaXModbusSensorEntityDescription(
         name="Discharger Start Time 1",
@@ -893,7 +908,7 @@ X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"eps_mute": SolaXModbusSensorEntityDescription(
 		name="EPS Mute",
 		key="eps_mute",
-	),	
+	),
 	"eps_power_r": SolaXModbusSensorEntityDescription(
 		name="EPS Power R",
 		key="eps_power_r",
