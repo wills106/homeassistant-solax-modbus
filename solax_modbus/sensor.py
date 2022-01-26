@@ -7,7 +7,8 @@ from typing import Optional, Dict, Any
 
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES, X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
+from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,9 +80,15 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 device_info,
                 sensor_description,
             )
-            entities.append(sensor)           
+            entities.append(sensor)
+    if hub.read_gen4x1 or hub.read_gen4x3: 
+        TYPES_X1 = GEN4_X1_EPS_SENSOR_TYPES  
+        TYPES_X3 = GEN4_X3_EPS_SENSOR_TYPES
+    else:
+        TYPES_X1 = X1_EPS_SENSOR_TYPES  
+        TYPES_X3 = X3_EPS_SENSOR_TYPES    
     if hub.read_x1_eps == True:
-        for sensor_description in X1_EPS_SENSOR_TYPES.values():
+        for sensor_description in TYPES_X1.values():
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,
@@ -91,7 +98,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
             entities.append(sensor)
             
     if hub.read_x3_eps == True:
-        for sensor_description in X3_EPS_SENSOR_TYPES.values():
+        for sensor_description in TYPES_X3.values():
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,

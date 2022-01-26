@@ -652,7 +652,6 @@ GEN4_SENSOR_TYPES = SENSOR_TYPES.copy()
 GEN4_SENSOR_TYPES.pop("allow_grid_charge")
 GEN4_SENSOR_TYPES.pop("battery_min_capacity")
 GEN4_SENSOR_TYPES.pop("registration_code")
-GEN4_SENSOR_TYPES.pop("eps_set_frequency")
 #GEN4_SENSOR_TYPES.pop("was4777_power_manager")
 #GEN4_SENSOR_TYPES.pop("cloud_control")
 #GEN4_SENSOR_TYPES.pop("global_mppt_function")
@@ -1110,5 +1109,9 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 
 
 GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES.copy()
+GEN4_X1_SENSOR_TYPES.pop("eps_set_frequency")
+
 
 GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES.copy()
+#GEN4_X3_SENSOR_TYPES.pop("eps_set_frequency")
+
