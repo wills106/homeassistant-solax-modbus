@@ -779,7 +779,7 @@ class SolaXModbusHub:
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
                 
         energy_today_to_grid = decoder.decode_16bit_uint()
-        self.data["energy_today_to_grid"] = round(energy_today * 0.1, 1) # better name ?
+        self.data["energy_today_to_grid"] = round(energy_today_to_grid * 0.1, 1) # better name ?
         
         decoder.skip_bytes(2)
         
