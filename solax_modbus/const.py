@@ -519,6 +519,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="myaddress",
 		entity_registry_enabled_default=False,
 	),
+    "bootloader_version": SolaXModbusSensorEntityDescription(
+        name="Bootloader Version",
+        key="bootloader_version",
+        entity_registry_enabled_default=False,
+    ),
 	"modulename": SolaXModbusSensorEntityDescription(
 		name="Module Name",
 		key="modulename",
@@ -674,6 +679,9 @@ GEN4_SENSOR_TYPES["discharger_end_time_2"] = SolaXModbusSensorEntityDescription(
 GEN4_SENSOR_TYPES["manual_mode"] = SolaXModbusSensorEntityDescription(
         name="Manual Mode",
         key="manual_mode")
+GEN4_SENSOR_TYPES["manual_mode_txt"] = SolaXModbusSensorEntityDescription(
+        name="Manual Mode Text",
+        key="manual_mode_txt")
 GEN4_SENSOR_TYPES["feedin_nightcharge_min_soc"] = SolaXModbusSensorEntityDescription(
         name="Feedin Night Charge Min SOC",
         key="feedin_nightcharge_min_soc",
