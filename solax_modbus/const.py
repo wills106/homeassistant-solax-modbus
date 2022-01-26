@@ -519,11 +519,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="lock_state",
 		entity_registry_enabled_default=False,
 	),
-	"myaddress": SolaXModbusSensorEntityDescription(
-		name="My address",
-		key="myaddress",
-		entity_registry_enabled_default=False,
-	),
+	#"myaddress": SolaXModbusSensorEntityDescription(
+	#	name="My address",
+	#	key="myaddress",
+	#	entity_registry_enabled_default=False,
+	#),
     "bootloader_version": SolaXModbusSensorEntityDescription(
         name="Bootloader Version",
         key="bootloader_version",
@@ -1109,13 +1109,24 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 
 
 GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES.copy()
+# remove some variables not available in Gen4
 GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES.copy()
+GEN4_X3_SENSOR_TYPES.pop("earth_detect_x3")
+GEN4_X3_SENSOR_TYPES.pop("grid_service_x3")
 
-
+# remove some variables not available in Gen4
 GEN4_X1_EPS_SENSOR_TYPES = X1_EPS_SENSOR_TYPES.copy()
-GEN4_X1_EPS_SENSOR_TYPES.pop("eps_set_frequency")
+GEN4_X1_EPS_SENSOR_TYPES.pop("eps_set_frequency", None)
+GEN4_X1_EPS_SENSOR_TYPES.pop("eps_auto_restart")
+GEN4_X1_EPS_SENSOR_TYPES.pop("eps_min_esc_soc")
+GEN4_X1_EPS_SENSOR_TYPES.pop("eps_min_esc_voltage")
+
+# remove some variables not available in Gen4
 GEN4_X3_EPS_SENSOR_TYPES = X3_EPS_SENSOR_TYPES.copy()
-#GEN4_X3_EPS_SENSOR_TYPES.pop("eps_set_frequency")
+GEN4_X3_EPS_SENSOR_TYPES.pop("eps_set_frequency", None)
+GEN4_X3_EPS_SENSOR_TYPES.pop("eps_auto_restart")
+GEN4_X3_EPS_SENSOR_TYPES.pop("eps_min_esc_soc")
+GEN4_X3_EPS_SENSOR_TYPES.pop("eps_min_esc_voltage")
 
 
 
