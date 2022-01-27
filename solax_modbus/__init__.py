@@ -744,7 +744,7 @@ class SolaXModbusHub:
         feedin_power = decoder.decode_16bit_int() #0x046
         feedin_power_msb = decoder.decode_16bit_uint()
         self.data["feedin_power"] = feedin_power       
-        if   feedin_power > 0: elf.data["grid_export"] = feedin_power
+        if   feedin_power > 0: self.data["grid_export"] = feedin_power
         else: self.data["grid_export"] = 0
         if   feedin_power < 0: self.data["grid_import"] = abs(feedin_power)
         else: self.data["grid_import"] = 0 
