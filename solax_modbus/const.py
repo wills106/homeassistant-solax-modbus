@@ -329,7 +329,7 @@ SELECT_TYPES_G4 = [
             }
         ],
         ["Manual Mode Select",
-            "manual_mode_select",
+            "manual_mode_txt",
             0x20,
             {   0: "Stop Charge and Discharge",
                 1: "Force Charge",
