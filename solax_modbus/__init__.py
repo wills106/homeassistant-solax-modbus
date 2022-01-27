@@ -416,12 +416,13 @@ class SolaXModbusHub:
             elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Charger Time's"
             else:  self.data["allow_grid_charge"] = "Unknown"
         
-        # do not multiply by 0.1
+        if self.read_gen2x1 or self.read_gen3x1 or self.read_gen3x3: factor = 0.1 # documentation not correct for Gen2 and Gen3
+        else: factor = 1 
         export_control_factory_limit = decoder.decode_16bit_uint()
-        self.data["export_control_factory_limit"] = round(export_control_factory_limit, 1)
-        
+        self.data["export_control_factory_limit"] = round(export_control_factory_limit*factor, 1)
+        if self.read_gen2x1: factor = 10 # different scaling for Gen2 user limit ??
         export_control_user_limit = decoder.decode_16bit_uint()
-        self.data["export_control_user_limit"] = round(export_control_user_limit, 1)
+        self.data["export_control_user_limit"] = round(export_control_user_limit*factor, 1)
         
         eps_mutes = decoder.decode_16bit_uint()
         if   eps_mutes == 0: self.data["eps_mute"] = "Off"
