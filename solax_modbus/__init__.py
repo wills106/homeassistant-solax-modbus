@@ -320,10 +320,10 @@ class SolaXModbusHub:
             elif charger_use_modes == 3: self.data["charger_use_mode"] = "Manual Mode"
             else: self.data["charger_use_mode"] = "Unknown"
             manual_mode = decoder.decode_16bit_uint()
-            self.data["manual_mode"] = manual_mode
-            if   manual_mode == 0: self.data["manual_mode_txt"] = "Stop Charge and Discharge"
-            elif manual_mode == 1: self.data["manual_mode_txt"] = "Force Charge"
-            elif manual_mode == 2: self.data["manual_mode_txt"] = "Force Discharge"
+            self.data["manual_mode_int"] = manual_mode
+            if   manual_mode == 0: self.data["manual_mode"] = "Stop Charge and Discharge"
+            elif manual_mode == 1: self.data["manual_mode"] = "Force Charge"
+            elif manual_mode == 2: self.data["manual_mode"] = "Force Discharge"
         else:
             if   charger_use_modes == 0: self.data["charger_use_mode"] = "Self Use Mode"
             elif charger_use_modes == 1: self.data["charger_use_mode"] = "Force Time Use"
