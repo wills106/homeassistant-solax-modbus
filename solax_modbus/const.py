@@ -193,17 +193,6 @@ NUMBER_TYPES_G4 = [
                 "unit": ELECTRIC_CURRENT_AMPERE,
             }
         ],
-        ["Export Control Factory Limit",
-            "export_control_factory_limit",
-            0x41,
-            "i",
-            {
-                "min": 0,
-                "max": 60000,
-                "step": 500,
-                "unit": POWER_WATT,
-            }
-         ],
         ["Export Control User Limit",
             "export_control_user_limit", 
             0x42,
@@ -214,7 +203,7 @@ NUMBER_TYPES_G4 = [
                 "step": 500,
                 "unit": POWER_WATT,
             }
-         ],
+        ],
         ["Selfuse Discharge Min SOC",
             "selfuse_discharge_min_soc",
             0x61,
@@ -225,7 +214,7 @@ NUMBER_TYPES_G4 = [
                 "step": 1,
                 "unit": PERCENTAGE,
             }
-         ],
+        ],
         ["Selfuse Nightcharge Upper SOC",
             "selfuse_nightcharge_upper_soc", 
             0x63,
@@ -236,7 +225,7 @@ NUMBER_TYPES_G4 = [
                 "step": 1,
                 "unit": PERCENTAGE,
             }
-         ],
+        ],
         ["Feedin Nightcharge Upper SOC",
             "feedin_nightcharge_upper_soc", 
             0x64,
@@ -258,7 +247,7 @@ NUMBER_TYPES_G4 = [
                 "step": 1,
                 "unit": PERCENTAGE,
             }
-         ],
+        ],
         ["Backup Nightcharge Upper SOC",
             "backup_nightcharge_upper_soc", 
             0x66,
@@ -269,7 +258,7 @@ NUMBER_TYPES_G4 = [
                 "step": 1,
                 "unit": PERCENTAGE,
             }
-         ],
+        ],
         ["Backup Discharge Min SOC",
             "backup_discharge_min_soc",
             0x67,
@@ -280,8 +269,7 @@ NUMBER_TYPES_G4 = [
                 "step": 1,
                 "unit": PERCENTAGE,
             }
-         ]
-
+        ]
         #["ForceTime Period 1 Max Capacity",
         #    "forcetime_period_1_max_capacity",
         #    0xA4,
