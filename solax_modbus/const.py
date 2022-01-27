@@ -318,8 +318,8 @@ SELECT_TYPES = [
         ],
 ]
 SELECT_TYPES_G4 = [
-	["Run Mode Select",
-	    "run_mode_select",
+	["Charger Use Mode",
+	    "charger_use_mode",
 	    0x1F,
             {
                 0: "Self Use Mode",
