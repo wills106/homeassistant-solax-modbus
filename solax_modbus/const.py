@@ -489,7 +489,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		entity_registry_enabled_default=False,
 	),
     "energy_today": SolaXModbusSensorEntityDescription(
-    	name="Today's Yield to Grid",
+    	name="Today's Yield",
     	key="energy_today_to_grid",
     	native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
@@ -504,8 +504,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"export_control_user_limit": SolaXModbusSensorEntityDescription(
 		name="Export Control User Limit",
 		key="export_control_user_limit",
-		native_unit_of_measurement=POWER_WATT,
-		entity_registry_enabled_default=False,
+		native_unit_of_measurement=POWER_WATT
     ),
     "feedin_power": SolaXModbusSensorEntityDescription(
     	name="Measured Power",
