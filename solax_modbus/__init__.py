@@ -356,34 +356,34 @@ class SolaXModbusHub:
         if self.read_gen4x1 or self.read_gen4x3:
             decoder.skip_bytes(2)
             tmp = decoder.decode_16bit_uint()
-            self.data["selfuse_discharge_min_soc"]  = tmp % 256
-            self.data["selfuse_nightcharge_enable"] = tmp >> 8 
+            self.data["selfuse_discharge_min_soc"]  = tmp >> 8
+            self.data["selfuse_nightcharge_enable"] = tmp % 256 
             selfuse_nightcharge_upper_soc = decoder.decode_16bit_uint()
             self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
             tmp = decoder.decode_16bit_uint()
-            self.data["feedin_nightcharge_upper_soc"] = tmp % 256
-            self.data["feedin_nightcharge_min_soc"] = tmp >> 8 		
+            self.data["feedin_nightcharge_upper_soc"] = tmp >> 8
+            self.data["feedin_nightcharge_min_soc"] = tmp % 256	
             tmp = decoder.decode_16bit_uint()
-            self.data["backup_nightcharge_upper_soc"] = tmp % 256
-            self.data["backup_nightcharge_min_soc"] = tmp >> 8 	
+            self.data["backup_nightcharge_upper_soc"] = tmp >> 8
+            self.data["backup_nightcharge_min_soc"] = tmp % 256 	
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_1"] = f"{tmp >> 8 }:{tmp % 256}"
+            self.data["charger_start_time_1"] = f"{tmp % 256 }:{tmp >> 8}"
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_1"] = f"{tmp >> 8 }:{tmp % 256}"    
+            self.data["charger_end_time_1"] = f"{tmp % 256 }:{tmp >> 8}"    
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_1"] = f"{tmp >> 8 }:{tmp % 256}"
+            self.data["discharger_start_time_1"] = f"{tmp % 256 }:{tmp >> 8}"
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_1"] = f"{tmp >>8 }:{tmp % 256}" 
+            self.data["discharger_end_time_1"] = f"{tmp % 256 }:{tmp >> 8}" 
             period2enable = decoder.decode_16bit_uint()
             self.data["charge_period2_enable"] = period2enable 
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_2"] = f"{tmp >> 8}:{tmp % 256}"
+            self.data["charger_start_time_2"] = f"{tmp % 256 }:{tmp >> 8}"
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_2"] = f"{tmp >> 8 }:{tmp % 256}"    
+            self.data["charger_end_time_2"] = f"{tmp % 256 }:{tmp >> 8 }"    
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_2"] = f"{tmp >> 8}:{tmp % 256}"
+            self.data["discharger_start_time_2"] = f"{tmp % 256 }:{tmp >> 8 }"
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_2"] = f"{tmp >> 8 }:{tmp % 256}" 			
+            self.data["discharger_end_time_2"] = f"{tmp % 256 }:{tmp >> 8 }" 			
             decoder.skip_bytes(42)
         else:
             charger_start_time_1_h = decoder.decode_16bit_uint()        
