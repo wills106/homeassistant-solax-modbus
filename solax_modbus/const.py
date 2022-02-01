@@ -336,6 +336,20 @@ SELECT_TYPES_G4 = [
                 2: "Force Discharge",
             }
         ],
+        ["Selfuse Night Charge Enable",
+            "selfuse_nightcharge_enable",
+            0x62,
+            {   0: "Disabled",
+                1: "Enabled",
+            }
+        ],
+        ["Charge and Discharge Period2 Enable",
+            "charge_period2_enable",
+            0x6C,
+            {   0: "Disabled",
+                1: "Enabled",
+            }
+        ],
 ]
 
 @dataclass
@@ -459,7 +473,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	key="charger_start_time_1",
     ),
     "charger_end_time_1": SolaXModbusSensorEntityDescription(
-    	name="Scharger End Time 1",
+    	name="Charger End Time 1",
     	key="charger_end_time_1",
     ),
     "charger_start_time_2": SolaXModbusSensorEntityDescription(

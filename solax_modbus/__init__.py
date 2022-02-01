@@ -357,7 +357,9 @@ class SolaXModbusHub:
             decoder.skip_bytes(2)
             tmp = decoder.decode_16bit_uint()
             self.data["selfuse_discharge_min_soc"]  = tmp >> 8
-            self.data["selfuse_nightcharge_enable"] = tmp % 256 
+            if   tmp % 256 == 0: self.data["selfuse_nightcharge_enable"] = "Disabled"
+            elif tmp % 256 == 1: self.data["selfuse_nightcharge_enable"] = "Enabled"
+            else:    self.data["selfuse_nightcharge_enable"] = tmp % 256 
             selfuse_nightcharge_upper_soc = decoder.decode_16bit_uint()
             self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
             tmp = decoder.decode_16bit_uint()
