@@ -2,7 +2,7 @@
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
-# DO NOT USE THIS FORK CODE YET !!!! Work in progress - 
+# ATTENTION: Work in progress - only tested for X3, Gen4 - Use at your own risk !!!!
  
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
