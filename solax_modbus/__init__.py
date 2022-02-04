@@ -60,13 +60,11 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
     }
 )
 
-_LOGGER.info("solax schema prepared")
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.Schema({cv.slug: SOLAX_MODBUS_SCHEMA})}, extra=vol.ALLOW_EXTRA
 )
 
-_LOGGER.info("solax schema created")
 
 PLATFORMS = ["number", "select", "sensor"]
 
@@ -76,7 +74,6 @@ async def async_setup(hass, config):
     hass.data[DOMAIN] = {}
     _LOGGER.info("solax data %d", hass.data)
     return True
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
@@ -124,6 +121,11 @@ async def async_unload_entry(hass, entry):
     hass.data[DOMAIN].pop(entry.data["name"])
     return True
 
+
+def Gen4Timestring(numb):
+    h = numb % 256
+    m = numb >> 8
+    return f"{h:02d}:{m:02d}"
 
 class SolaXModbusHub:
     """Thread safe wrapper class for pymodbus."""
@@ -369,23 +371,23 @@ class SolaXModbusHub:
             self.data["backup_nightcharge_upper_soc"] = tmp >> 8
             self.data["backup_nightcharge_min_soc"] = tmp % 256 	
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_1"] = f"{tmp % 256 }:{tmp >> 8}"
+            self.data["charger_start_time_1"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_1"] = f"{tmp % 256 }:{tmp >> 8}"    
+            self.data["charger_end_time_1"] = Gen4Timestring(tmp)  
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_1"] = f"{tmp % 256 }:{tmp >> 8}"
+            self.data["discharger_start_time_1"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_1"] = f"{tmp % 256 }:{tmp >> 8}" 
+            self.data["discharger_end_time_1"] = Gen4Timestring(tmp) 
             period2enable = decoder.decode_16bit_uint()
             self.data["charge_period2_enable"] = period2enable 
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_start_time_2"] = f"{tmp % 256 }:{tmp >> 8}"
+            self.data["charger_start_time_2"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
-            self.data["charger_end_time_2"] = f"{tmp % 256 }:{tmp >> 8 }"    
+            self.data["charger_end_time_2"] = Gen4Timestring(tmp)    
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_start_time_2"] = f"{tmp % 256 }:{tmp >> 8 }"
+            self.data["discharger_start_time_2"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
-            self.data["discharger_end_time_2"] = f"{tmp % 256 }:{tmp >> 8 }" 			
+            self.data["discharger_end_time_2"] = Gen4Timestring(tmp) 			
             decoder.skip_bytes(42)
         else:
             charger_start_time_1_h = decoder.decode_16bit_uint()        

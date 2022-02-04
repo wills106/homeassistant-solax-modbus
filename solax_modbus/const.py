@@ -294,6 +294,42 @@ NUMBER_TYPES_G4 = [
         #],
 ]
 
+TIME_TYPES_G2 = [] # not yet implemented
+TIME_TYPES_G3 = [] # not yet implemented
+TIME_TYPES_G4 = [
+        [   "Charger Start Time 1",
+            "charger_start_time_1",
+            0x68,
+        ],
+        [   "Charger End Time 1",
+            "charger_end_time_1",
+            0x69,
+        ],
+        [   "Disharger Start Time 1",
+            "discharger_start_time_1",
+            0x6A,
+        ],
+        [   "Disharger End Time 1",
+            "discharger_end_time_1",
+            0x6B,
+        ], 
+        [   "Charger Start Time 2",
+            "charger_start_time_2",
+            0x6D,
+        ],
+        [   "Charger End Time 2",
+            "charger_end_time_2",
+            0x6E,
+        ],
+        [   "Disharger Start Time 2",
+            "discharger_start_time_2",
+            0x6F,
+        ],
+        [   "Disharger End Time 2",
+            "discharger_end_time_2",
+            0x70,
+        ], 
+]
 
 SELECT_TYPES = [
 	["Run Mode Select",
@@ -477,11 +513,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	key="charger_end_time_1",
     ),
     "charger_start_time_2": SolaXModbusSensorEntityDescription(
-    	name="Start Time 2",
+    	name="Charger Start Time 2",
     	key="charger_start_time_2",
     ),
     "charger_end_time_2": SolaXModbusSensorEntityDescription(
-    	name="End Time 2",
+    	name="Charger End Time 2",
     	key="charger_end_time_2",
     ),
     "charger_use_mode": SolaXModbusSensorEntityDescription(
@@ -965,6 +1001,13 @@ X1_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
     ),
+    "eps_yield_today": SolaXModbusSensorEntityDescription(
+        name="EPS Yield Today",
+        key="eps_yield_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        #state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
 }
 X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"eps_auto_restart": SolaXModbusSensorEntityDescription(
@@ -1065,6 +1108,13 @@ X3_EPS_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="eps_voltage_t",
 		native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
+    ),
+    "eps_yield_today": SolaXModbusSensorEntityDescription(
+        name="EPS Yield Today",
+        key="eps_yield_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        #state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
 }
 GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
