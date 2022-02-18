@@ -156,4 +156,4 @@ Fixed House Load showing Zero when charging from the Grid. Should also fix House
 - Add support for serial Modbus RTU connection (needed as the Gen4 modbus is not accessible over TCPIP)
 I am using a low-cost 2€ usb-to-RS485 adapter. By default Gen4 device is set to 19200 baud.
 
-https://github.com/infradom/homsassistant-solax-modbus/blob/main/images/setup-screen-gen4.png
+![screenshot] (https://github.com/infradom/homsassistant-solax-modbus/blob/main/images/setup-screen-gen4.png)
