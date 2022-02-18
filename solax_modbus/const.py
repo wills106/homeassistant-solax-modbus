@@ -296,7 +296,7 @@ NUMBER_TYPES_G4 = [
 
 TIME_TYPES_G2 = [] # not yet implemented
 TIME_TYPES_G3 = [] # not yet implemented
-TIME_TYPES_G4 = [
+TIME_TYPES_G4 = [  # not yet used in this version
         [   "Charger Start Time 1",
             "charger_start_time_1",
             0x68,
