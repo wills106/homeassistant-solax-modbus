@@ -2,9 +2,11 @@
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
+# ATTENTION: Work in progress - only tested for X3, Gen4 - Use at your own risk !!!!
+ 
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
-
+ 
 # Installation
 Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
@@ -148,3 +150,9 @@ Corrected spelling mistakes
 
 
 Fixed House Load showing Zero when charging from the Grid. Should also fix House Load showing zero when Battery is empty.
+
+## Version xxx
+- Add support for X3 Gen4 (X1 Gen4 should work also, but completely untested)
+- Add support for serial Modbus RTU connection (needed as the Gen4 modbus is not accessible over TCPIP)
+I am using a low-cost 2€ usb-to-RS485 adapter. By default Gen4 device is set to 19200 baud.
+![setup-screen-gen4](https://user-images.githubusercontent.com/11804014/154648472-c7c53269-0618-4580-bbc3-b17c7a16105c.png)

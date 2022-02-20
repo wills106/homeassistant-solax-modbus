@@ -1,4 +1,4 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, NUMBER_TYPES_G2, NUMBER_TYPES_G3
+from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, NUMBER_TYPES_G2, NUMBER_TYPES_G3, NUMBER_TYPES_G4
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -35,6 +35,20 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     
     if hub.read_gen2x1 == True:
     	for number_info in NUMBER_TYPES_G2:
+            number = SolaXModbusNumber(
+                hub_name,
+                hub,
+                device_info,
+                number_info[0],
+                number_info[1],
+                number_info[2],
+                number_info[3],
+                number_info[4],
+                number_info[5] if len(number_info) > 5 else None,
+            )
+            entities.append(number)
+    elif hub.read_gen4x1 or hub.read_gen4x3:
+        for number_info in NUMBER_TYPES_G4:
             number = SolaXModbusNumber(
                 hub_name,
                 hub,
