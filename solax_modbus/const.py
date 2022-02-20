@@ -433,9 +433,9 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
-    "battery_min_capacity": SolaXModbusSensorEntityDescription(
+    "battery_minimum_capacity": SolaXModbusSensorEntityDescription(
     	name="Battery Minimum Capacity",
-    	key="battery_min_capacity",
+    	key="battery_minimum_capacity",
     	native_unit_of_measurement=PERCENTAGE,
     ),
     "battery_output_energy_today": SolaXModbusSensorEntityDescription(
@@ -776,7 +776,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 GEN4_SENSOR_TYPES = SENSOR_TYPES.copy()
 # on Gen4, some variables are not available
 GEN4_SENSOR_TYPES.pop("allow_grid_charge")
-GEN4_SENSOR_TYPES.pop("battery_min_capacity")
+GEN4_SENSOR_TYPES.pop("battery_minimum_capacity")
 GEN4_SENSOR_TYPES.pop("registration_code")
 GEN4_SENSOR_TYPES.pop("normal_runtime")
 

@@ -158,3 +158,6 @@ Fixed House Load showing Zero when charging from the Grid. Should also fix House
 I am using a low-cost 2€ usb-to-RS485 adapter. By default Gen4 device is set to 19200 baud.
 ![setup-screen-gen4](https://user-images.githubusercontent.com/11804014/154648472-c7c53269-0618-4580-bbc3-b17c7a16105c.png)
 - If you are trying this on a non Hybrid (X1 Air, X1 Mini, X1 Boost) start off without setting any of the tick boxes and see what values you have.
+
+## Version 0.4.1
+- number.solax_battery_minimum_capacity now survives restart of HA

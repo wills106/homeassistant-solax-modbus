@@ -332,8 +332,8 @@ class SolaXModbusHub:
             elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
             elif charger_use_modes == 3: self.data["charger_use_mode"] = "Feedin Priority"
             else: self.data["charger_use_mode"] = "Unknown"
-            battery_min_capacity = decoder.decode_16bit_uint()
-            self.data["battery_min_capacity"] = battery_min_capacity
+            battery_minimum_capacity = decoder.decode_16bit_uint()
+            self.data["battery_minimum_capacity"] = battery_minimum_capacity
         
         battery_types = decoder.decode_16bit_uint()        
         if battery_types == 0:
