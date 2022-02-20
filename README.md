@@ -1,8 +1,6 @@
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V51QQOL)
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
-
-# ATTENTION: Work in progress - only tested for X3, Gen4 - Use at your own risk !!!!
  
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
@@ -16,7 +14,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 1. ~~Tick boxes in configflow have no Text.~~ - Fixed!
 2. ~~Only supports reading at the moment., writing to registers not net implemented.~~ Write support for Run Mode, Charge from Grid Mode, Min Battery Capacity & Charge / Discharge rate of battery
 3. ~~Gen3 X3 Not yet implemented.~~ Gen3 X3 - Supported.
-4. Only supports Modbus over TCP. Serial / RS485 not yet implemented.
+4. ~~Only supports Modbus over TCP. Serial / RS485 not yet implemented.
 5. ~~The sensors do not support the new "Energy" Dashboard in 2021.08.x and onwards.~~ Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
 
@@ -151,8 +149,12 @@ Corrected spelling mistakes
 
 Fixed House Load showing Zero when charging from the Grid. Should also fix House Load showing zero when Battery is empty.
 
-## Version xxx
+## Version 0.4.0
+
+# ATTENTION: Gen 4 isWork in progress - only tested for X3, Gen4 X1 not tested - Use at your own risk !!!!
+- Great thanks to @infradom for help adding in Serial Modbus and the Gen 4
 - Add support for X3 Gen4 (X1 Gen4 should work also, but completely untested)
 - Add support for serial Modbus RTU connection (needed as the Gen4 modbus is not accessible over TCPIP)
 I am using a low-cost 2€ usb-to-RS485 adapter. By default Gen4 device is set to 19200 baud.
 ![setup-screen-gen4](https://user-images.githubusercontent.com/11804014/154648472-c7c53269-0618-4580-bbc3-b17c7a16105c.png)
+- If you are trying this on a non Hybrid (X1 Air, X1 Mini, X1 Boost) start off without setting any of the tick boxes and see what values you have.
