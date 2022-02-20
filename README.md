@@ -207,6 +207,7 @@ Gen2 X1
 Gen2 & Gen3
 - select.solax_run_mode_select now select.solax_charger_use_mode
 - select.solax_grid_charge_select now select.solax_allow_grid_charge
+
 Changed response from sensor.solax_allow_grid_charge
 - "Forbidden"
 - "Charger Time 1"
@@ -218,6 +219,7 @@ to
 - "Period 1 Allowed",
 - "Period 2 Allowed",
 - "Both Allowed
+
 Now matches the state of select.solax_allow_grid_charge
 - select.solax_charger_use_mode & select.solax_allow_grid_charge survies a restart of HA and also responds to changes made through the SolaX Cloud portal
 
