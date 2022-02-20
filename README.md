@@ -17,6 +17,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 4. ~~Only supports Modbus over TCP. Serial / RS485 not yet implemented.~~ Serial / RS485 now supported.
 5. ~~The sensors do not support the new "Energy" Dashboard in 2021.08.x and onwards.~~ Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
+7. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
 
 ## Version 0.0.2
 <details>
@@ -85,7 +86,8 @@ Removed Optional Sensors - Now form part of the main Sensor Group, but disabled 
 Updated Energy Dashboard compatibility for 2021.9x Version of Home Assistant
 
 Renamed "Input Energy Charge Today" & "Output Energy Charge Today" to "Battery Input Energy Today" & "Battery Output Energy Today" Now compatible with the Energy Dashboard
-
+</details>
+ 
 ## Version 0.3.0
 <details>
   <summary>Click to expand!</summary>
@@ -183,7 +185,7 @@ Fixed House Load showing Zero when charging from the Grid. Should also fix House
 
 ## Version 0.4.0
 
-# ATTENTION: Gen 4 isWork in progress - only tested for X3, Gen4 X1 not tested - Use at your own risk !!!!
+# ATTENTION: Gen4 is Work in progress - only tested for X3, Gen4 X1 not tested - Use at your own risk !!!!
 Great thanks to @infradom for help adding in Serial Modbus and the Gen 4
 - Add support for X3 Gen4 (X1 Gen4 should work also, but completely untested)
 - Add support for serial Modbus RTU connection (needed as the Gen4 modbus is not accessible over TCPIP)
