@@ -18,6 +18,21 @@ After reboot of Home-Assistant, this integration can be configured through the i
 5. ~~The sensors do not support the new "Energy" Dashboard in 2021.08.x and onwards.~~ Sensors now support the new "Energy" Dashboard in 2021.08.x and onwards. (Gen3 X1 & X3 only, Gen 2 doesn't support it unfortunately. Look at [solar_bits.yaml](https://github.com/wills106/homeassistant-config/blob/master/packages/solar_bits.yaml) for how to setup the Integration - Integration)
 6. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time.
 7. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
+8. You need to manually add select and number entries to your lovelace card.
+
+Gen2 & 3
+
+- select.solax_charger_use_mode
+- select.solax_allow_grid_charge
+- number.solax_battery_charge_max_current
+- number.solax_battery_discharge_max_current
+- number.solax_battery_minimum_capacity
+
+Gen3 Only
+- number.solax_forcetime_period_1_max_capacity
+- number.solax_forcetime_period_2_max_capacity
+
+Gen4 ?
 
 ## Version 0.0.2
 <details>
