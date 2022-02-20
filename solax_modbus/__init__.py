@@ -344,10 +344,10 @@ class SolaXModbusHub:
           self.data["battery_type"] = "Unknown"
         
         battery_charge_float_voltage = decoder.decode_16bit_uint()
-        self.data["battery_charge_float_voltage"] = round(battery_charge_float_voltage * 0.1, 1)
+        self.data["battery_charge_float_voltage"] = round(battery_charge_float_voltage * mult, 1)
         
         battery_discharge_cut_off_voltage = decoder.decode_16bit_uint()
-        self.data["battery_discharge_cut_off_voltage"] = round(battery_discharge_cut_off_voltage * 0.1, 1)
+        self.data["battery_discharge_cut_off_voltage"] = round(battery_discharge_cut_off_voltage * mult, 1)
         
         battery_charge_max_current = decoder.decode_16bit_uint()
         self.data["battery_charge_max_current"] = round(battery_charge_max_current * mult, 1)
@@ -414,17 +414,17 @@ class SolaXModbusHub:
             self.data["registration_code"] = str(registration_code)
         
             allow_grid_charges = decoder.decode_16bit_uint()
-            if   allow_grid_charges == 0: self.data["allow_grid_charge"] = "Forbidden"
-            elif allow_grid_charges == 1: self.data["allow_grid_charge"] = "Charger Time 1"
-            elif allow_grid_charges == 2: self.data["allow_grid_charge"] = "Charger Time 2"
-            elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Charger Time's"
+            if   allow_grid_charges == 0: self.data["allow_grid_charge"] = "Both Forbidden"
+            elif allow_grid_charges == 1: self.data["allow_grid_charge"] = "Period 1 Allowed"
+            elif allow_grid_charges == 2: self.data["allow_grid_charge"] = "Period 2 Allowed"
+            elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Allowed"
             else:  self.data["allow_grid_charge"] = "Unknown"
         
         if self.read_gen2x1 or self.read_gen3x1 or self.read_gen3x3: factor = 0.1 # documentation not correct for Gen2 and Gen3
         else: factor = 1 
         export_control_factory_limit = decoder.decode_16bit_uint()
         self.data["export_control_factory_limit"] = round(export_control_factory_limit*factor, 1)
-        if self.read_gen2x1: factor = 10 # different scaling for Gen2 user limit ??
+        # if self.read_gen2x3: factor = 10 # different scaling for Gen2 X3 user limit ??
         export_control_user_limit = decoder.decode_16bit_uint()
         self.data["export_control_user_limit"] = round(export_control_user_limit*factor, 1)
         

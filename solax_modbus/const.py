@@ -332,8 +332,8 @@ TIME_TYPES_G4 = [  # not yet used in this version
 ]
 
 SELECT_TYPES = [
-	["Run Mode Select",
-	    "run_mode_select",
+	["Charger Use Mode",
+	    "charger_use_mode",
 	    0x1F,
 	    {
 	        0: "Self Use Mode",
@@ -342,8 +342,8 @@ SELECT_TYPES = [
             3: "Feedin Priority",
         }
 	],
-        ["Grid Charge Select",
-            "grid_charge_select",
+        ["Allow Grid Charge",
+            "allow_grid_charge",
             0x40,
             {
                 0: "Both Forbidden",
@@ -396,6 +396,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     "allow_grid_charge": SolaXModbusSensorEntityDescription(
         name="Allow Grid Charge",
         key="allow_grid_charge",
+        entity_registry_enabled_default=False,
     ),
     "battery_capacity_charge": SolaXModbusSensorEntityDescription(
     	name="Battery Capacity",
@@ -407,6 +408,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		name="Battery Charge Max Current",
 		key="battery_charge_max_current",
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+		entity_registry_enabled_default=False,
 	),
 	"battery_current_charge": SolaXModbusSensorEntityDescription(
 		name="Battery Current Charge",
@@ -424,6 +426,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		name="Battery Discharge Max Current",
 		key="battery_discharge_max_current",
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+		entity_registry_enabled_default=False,
 	),
     "battery_input_energy_today": SolaXModbusSensorEntityDescription(
 		name="Battery Input Energy Today",
@@ -437,6 +440,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	name="Battery Minimum Capacity",
     	key="battery_minimum_capacity",
     	native_unit_of_measurement=PERCENTAGE,
+    	entity_registry_enabled_default=False,
     ),
     "battery_output_energy_today": SolaXModbusSensorEntityDescription(
 		name="Battery Output Energy Today",
@@ -523,6 +527,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     "charger_use_mode": SolaXModbusSensorEntityDescription(
     	name="Charger Use Mode",
     	key="charger_use_mode",
+    	entity_registry_enabled_default=False,
     ),
     "consumed_energy_total": SolaXModbusSensorEntityDescription(
 		name="Consumed Energy Total",
