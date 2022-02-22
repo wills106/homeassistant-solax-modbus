@@ -8,9 +8,10 @@ Support Modbus over RS485 & TCP
 You can have multiple instances of this Integration
 
 Supports:
-Gen2 Hybrid
-Gen3 Hybrid
-Gen4 Hybrid
+
+- Gen2 Hybrid
+- Gen3 Hybrid
+- Gen4 Hybrid
 
 Gen2, Gen3 & Gen4
 
