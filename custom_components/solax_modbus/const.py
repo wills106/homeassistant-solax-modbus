@@ -559,7 +559,8 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"export_control_user_limit": SolaXModbusSensorEntityDescription(
 		name="Export Control User Limit",
 		key="export_control_user_limit",
-		native_unit_of_measurement=POWER_WATT
+		native_unit_of_measurement=POWER_WATT,
+		entity_registry_enabled_default=False,
     ),
     "feedin_power": SolaXModbusSensorEntityDescription(
     	name="Measured Power",
@@ -910,11 +911,13 @@ GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	name="Forcetime Period 1 Maximum Capacity",
     	key="forcetime_period_1_max_capacity",
     	native_unit_of_measurement=PERCENTAGE,
+    	entity_registry_enabled_default=False,
     ),
     "forcetime_period_2_max_capacity": SolaXModbusSensorEntityDescription(
     	name="Forcetime Period 2 Maximum Capacity",
     	key="forcetime_period_2_max_capacity",
     	native_unit_of_measurement=PERCENTAGE,
+    	entity_registry_enabled_default=False,
     ),
     "global_mppt_function": SolaXModbusSensorEntityDescription(
 		name="Global MPPT Function",

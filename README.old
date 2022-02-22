@@ -244,3 +244,9 @@ Set the following to be hidden as default due to them being duplicates of select
 - sensor.solax_battery_discharge_max_current
 - sensor.solax_battery_minimum_capacity
 - sensor.solax_charger_use_mode
+
+## Version 0.4.3
+Set the following to be hidden as default due to them being duplicates of number entries
+- sensor.solax_export_control_user_limit
+- sensor.solax_forcetime_period_1_maximum_capacity
+- sensor.solax_forcetime_period_2_maximum_capacity
