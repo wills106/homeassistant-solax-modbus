@@ -5,7 +5,8 @@
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
 Support Modbus over RS485 & TCP
-You can have multiple instances of this Integration
+
+You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
 Supports:
 
@@ -53,6 +54,8 @@ Non Hybrid Models ie Solar PV only
 # Installation
 Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
+
+You can manually add this repository to your HACS setup by using "Custom repositories"
 
 # Known Issues
 
