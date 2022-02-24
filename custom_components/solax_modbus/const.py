@@ -294,6 +294,38 @@ NUMBER_TYPES_G4 = [
         #],
 ]
 
+TIME_OPTIONS = {
+    0: "00:00",
+    3840: "00:15",
+    7680: "00:30",
+    11520: "00:45",
+    1: "01:00",
+    3841: "01:15",
+    7681: "01:30",
+    11521: "01:45",
+    2: "02:00",
+    3842: "02:15",
+    7682: "02:30",
+    11522: "02:45",
+    3: "03:00",
+    3843: "03:15",
+    7683: "03:39",
+    11523: "03:45",
+    4: "04:00",
+    3844: "04:15",
+    7684: "04:30",
+    11524: "04:45",
+    5: "05:00",
+    3845: "05:15",
+    7685: "05:30",
+    11525: "05:45",
+    6: "06:00",
+    3846: "06:15",
+    7686: "06:30",
+    11526: "06:45",
+    
+}
+
 TIME_TYPES_G2 = [] # not yet implemented
 TIME_TYPES_G3 = [] # not yet implemented
 TIME_TYPES_G4 = [  # not yet used in this version
@@ -352,6 +384,26 @@ SELECT_TYPES = [
                 3: "Both Allowed",
             }
         ],
+	["Charger Start Time 1",
+	    "charger_start_time_1",
+	    0x26,
+	    TIME_OPTIONS
+	],
+	["Charger End Time 1",
+	    "charger_end_time_1",
+	    0x27,
+	    TIME_OPTIONS
+	],
+	["Charger Start Time 2",
+	    "charger_start_time_2",
+	    0x2A,
+	    TIME_OPTIONS
+	],
+	["Charger End Time 2",
+	    "charger_end_time_2",
+	    0x2B,
+	    TIME_OPTIONS
+	],
 ]
 SELECT_TYPES_G4 = [
 	["Charger Use Mode",
