@@ -323,7 +323,173 @@ TIME_OPTIONS = {
     3846: "06:15",
     7686: "06:30",
     11526: "06:45",
-    
+    7: "07:00",
+    3847: "07:15",
+    7687: "07:30",
+    11527: "07:45",
+    8: "08:00",
+    3848: "08:15",
+    7688: "08:30",
+    11528: "08:45",
+    9: "09:00",
+    3849: "09:15",
+    7689: "09:30",
+    11529: "09:45",
+    10: "10:00",
+    3850: "10:15",
+    7690: "10:30",
+    11530: "10:45",
+    11: "11:00",
+    3851: "11:15",
+    7691: "11:30",
+    11531: "11:45",
+    12: "12:00",
+    3852: "12:15",
+    7692: "12:30",
+    11532: "12:45",
+    13: "13:00",
+    3853: "13:15",
+    7693: "13:30",
+    11533: "13:45",
+    14: "14:00",
+    3854: "14:15",
+    7694: "14:30",
+    11534: "14:45",
+    15: "15:00",
+    3855: "15:15",
+    7695: "15:30",
+    11535: "15:45",
+    16: "16:00",
+    3856: "16:15",
+    7696: "16:30",
+    11536: "16:45",
+    17: "17:00",
+    3857: "17:15",
+    7697: "17:30",
+    11537: "17:45",
+    18: "18:00",
+    3858: "18:15",
+    7698: "18:30",
+    11538: "18:45",
+    19: "19:00",
+    3859: "19:15",
+    7699: "19:30",
+    11539: "19:45",
+    20: "20:00",
+    3860: "20:15",
+    7700: "20:30",
+    11540: "20:45",
+    21: "21:00",
+    3861: "21:15",
+    7701: "21:30",
+    11541: "21:45",
+    22: "22:00",
+    3862: "22:15",
+    7702: "22:30",
+    11542: "22:45",
+    23: "23:00",
+    3863: "23:15",
+    7703: "23:30",
+    11543: "23:45",  
+}
+
+TIME_OPTIONS_GEN4 = {
+    0: "00:00",
+    15: "00:15",
+    30: "00:30",
+    45: "00:45",
+    256: "01:00",
+    271: "01:15",
+    286: "01:30",
+    301: "01:45",
+    512: "02:00",
+    527: "02:15",
+    542: "02:30",
+    557: "02:45",
+    768: "03:00",
+    783: "03:15",
+    798: "03:30",
+    813: "03:45",
+    1024: "04:00",
+    1039: "04:15",
+    1054: "04:30",
+    1069: "04:45",
+    1280: "05:00",
+    1295: "05:15",
+    1310: "05:30",
+    1325: "05:45",
+    1536: "06:00",
+    1551: "06:15",
+    1566: "06:30",
+    1581: "06:45",
+    1792: "07:00",
+    1807: "07:15",
+    1822: "07:30",
+    1837: "07:45",
+    2048: "08:00",
+    2063: "08:15",
+    2078: "08:30",
+    2093: "08:45",
+    2304: "09:00",
+    2319: "09:15",
+    2334: "09:30",
+    2349: "09:45",
+    2560: "10:00",
+    2575: "10:15",
+    2590: "10:30",
+    2605: "10:45",
+    2816: "11:00",
+    2831: "11:15",
+    2846: "11:30",
+    2861: "11:45",
+    3072: "12:00",
+    3087: "12:15",
+    3132: "12:30",
+    3117: "12:45",
+    3328: "13:00",
+    3343: "13:15",
+    3358: "13:30",
+    3373: "13:45",
+    3584: "14:00",
+    3599: "14:15",
+    3614: "14:30",
+    3629: "14:45",
+    3840: "15:00",
+    3855: "15:15",
+    3870: "15:30",
+    3885: "15:45",
+    4096: "16:00",
+    4111: "16:15",
+    4126: "16:30",
+    4141: "16:45",
+    4352: "17:00",
+    4367: "17:15",
+    4382: "17:30",
+    4397: "17:45",
+    4608: "18:00",
+    4623: "18:15",
+    4638: "18:30",
+    4653: "18:45",
+    4864: "19:00",
+    4879: "19:15",
+    4894: "19:30",
+    4909: "19:45",
+    5120: "20:00",
+    5135: "20:15",
+    5150: "20:30",
+    5165: "20:45",
+    5376: "21:00",
+    5391: "21:15",
+    5406: "21:30",
+    5421: "21:45",
+    5632: "22:00",
+    5647: "22:15",
+    5662: "22:30",
+    5677: "22:45",
+    5888: "23:00",
+    5903: "23:15",
+    5918: "23:30",
+    5933: "23:45",
 }
 
 TIME_TYPES_G2 = [] # not yet implemented
@@ -437,6 +603,46 @@ SELECT_TYPES_G4 = [
             {   0: "Disabled",
                 1: "Enabled",
             }
+        ],
+        [   "Charger Start Time 1",
+            "charger_start_time_1",
+            0x68,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Charger End Time 1",
+            "charger_end_time_1",
+            0x69,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Disharger Start Time 1",
+            "discharger_start_time_1",
+            0x6A,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Disharger End Time 1",
+            "discharger_end_time_1",
+            0x6B,
+            TIME_OPTIONS_GEN4
+        ], 
+        [   "Charger Start Time 2",
+            "charger_start_time_2",
+            0x6D,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Charger End Time 2",
+            "charger_end_time_2",
+            0x6E,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Disharger Start Time 2",
+            "discharger_start_time_2",
+            0x6F,
+            TIME_OPTIONS_GEN4
+        ],
+        [   "Disharger End Time 2",
+            "discharger_end_time_2",
+            0x70,
+            TIME_OPTIONS_GEN4
         ],
 ]
 
@@ -910,7 +1116,6 @@ GEN4_SENSOR_TYPES["backup_nightcharge_upper_soc"] = SolaXModbusSensorEntityDescr
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY)
 
-
 GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"backup_charge_end": SolaXModbusSensorEntityDescription(
 		name="Backup Charge End",
@@ -1304,12 +1509,10 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	),
 }
 
-
 GEN4_X1_SENSOR_TYPES = GEN3_X1_SENSOR_TYPES.copy()
 GEN4_X1_SENSOR_TYPES.pop("was4777_power_manager", None)
 GEN4_X1_SENSOR_TYPES.pop("cloud_control", None)
 GEN4_X1_SENSOR_TYPES.pop("global_mppt_function", None)
-
 
 # remove some variables not available in Gen4
 GEN4_X3_SENSOR_TYPES = GEN3_X3_SENSOR_TYPES.copy()
@@ -1323,14 +1526,9 @@ GEN4_X1_EPS_SENSOR_TYPES.pop("eps_auto_restart", None)
 GEN4_X1_EPS_SENSOR_TYPES.pop("eps_min_esc_soc", None)
 GEN4_X1_EPS_SENSOR_TYPES.pop("eps_min_esc_voltage", None)
 
-
-
 # remove some variables not available in Gen4
 GEN4_X3_EPS_SENSOR_TYPES = X3_EPS_SENSOR_TYPES.copy()
 GEN4_X3_EPS_SENSOR_TYPES.pop("eps_set_frequency", None)
 GEN4_X3_EPS_SENSOR_TYPES.pop("eps_auto_restart")
 GEN4_X3_EPS_SENSOR_TYPES.pop("eps_min_esc_soc")
 GEN4_X3_EPS_SENSOR_TYPES.pop("eps_min_esc_voltage")
-
-
-
