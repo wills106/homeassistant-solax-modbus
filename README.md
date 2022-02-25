@@ -16,7 +16,9 @@ Supports:
 
 Gen2, Gen3 & Gen4
 
+- Battery Awaken
 - Charge / Discharge rate of battery
+- Charger Start / End times
 - Charger Use Mode
 
 Gen2 & Gen3
@@ -40,6 +42,7 @@ Gen4
 - Backup Nightcharge Upper SOC
 - Charge / Discharge rate of battery
 - Charge and Discharge Period2 Enable
+- Discharger Start / End time
 - Export Control User Limit
 - Feedin Discharge Min SOC
 - Feedin Nightcharge Upper SOC
@@ -65,8 +68,13 @@ You can manually add this repository to your HACS setup by using "Custom reposit
 
 Gen2, Gen3 & Gen4
 
+- button.solax_battery_awaken
 - number.solax_battery_charge_max_current
 - number.solax_battery_discharge_max_current
+- select.solax_charger_end_time_1
+- select.solax_charger_end_time_2
+- select.solax_charger_start_time_1
+- select.solax_charger_start_time_2
 - select.solax_charger_use_mode
 
 Gen2 & Gen3
@@ -89,5 +97,9 @@ Gen4
 - number.solax_selfuse_discharge_min_soc
 - number.solax_selfuse_nightcharge_upper_soc
 - select.solax_charge_and_discharge_period2_enable
+- select.solax_discharger_end_time_1
+- select.solax_discharger_end_time_2
+- select.solax_discharger_start_time_1
+- select.solax_discharger_start_time_2
 - select.solax_manual_mode_select
 - select.solax_selfuse_night_charge_enable
