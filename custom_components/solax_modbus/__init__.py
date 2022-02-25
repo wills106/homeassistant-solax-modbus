@@ -66,7 +66,7 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-PLATFORMS = ["number", "select", "sensor"] 
+PLATFORMS = ["button", "number", "select", "sensor"] 
 
 
 async def async_setup(hass, config):

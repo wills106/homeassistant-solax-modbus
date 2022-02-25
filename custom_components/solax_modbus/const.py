@@ -50,20 +50,16 @@ DEFAULT_READ_GEN4X3 = False
 DEFAULT_READ_X1_EPS = False
 DEFAULT_READ_X3_EPS = False
 
-NUMBER_TYPES = [
-  #  ["Battery Minimum Capacity",
-  #      "battery_minimum_capacity",
-  #      0x20,
-  #      "i",
-  #      {
-  #	        "min": 0,
-  #          "max": 99,
-  #          "step": 1,
-  #          "unit": PERCENTAGE,
-  #      },
-  #      "battery_capacity_charge"
-  #  ],
+BUTTON_TYPES = [
+    ["Battery Awaken",
+        "battery_awaken",
+        0x56,
+        1,
+    ],
 ]
+
+NUMBER_TYPES = []
+
 NUMBER_TYPES_G2 = [
         ["Battery Minimum Capacity",
             "battery_minimum_capacity",
