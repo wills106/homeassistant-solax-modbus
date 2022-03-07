@@ -573,7 +573,7 @@ SELECT_TYPES_G4 = [
 	    0x1F,
             {
                 0: "Self Use Mode",
-                1: "Feed-in Priority",
+                1: "Feedin Priority",
                 2: "Back Up Mode",
                 3: "Manual Mode",
             }
