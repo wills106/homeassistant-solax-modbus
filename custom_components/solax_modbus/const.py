@@ -155,18 +155,6 @@ NUMBER_TYPES_G3 = [
         ],
 ]
 NUMBER_TYPES_G4 = [
-        #["Battery Minimum Capacity",
-        #    "battery_minimum_capacity",
-        #    0x20,
-        #    "i",
-        #    {
-        #       "min": 0,
-        #        "max": 99,
-        #        "step": 1,
-        #        "unit": PERCENTAGE,
-        #    },
-        #   "battery_capacity_charge"
-        #],
         ["Battery Charge Max Currrent",
             "battery_charge_max_current",
             0x24,
@@ -266,28 +254,6 @@ NUMBER_TYPES_G4 = [
                 "unit": PERCENTAGE,
             }
         ]
-        #["ForceTime Period 1 Max Capacity",
-        #    "forcetime_period_1_max_capacity",
-        #    0xA4,
-        #    "i",
-        #    {
-        #        "min": 5,
-        #        "max": 100,
-        #        "step": 1,
-        #        "unit": PERCENTAGE,
-        #    }
-        # ],
-        #["ForceTime Period 2 Max Capacity",
-        #    "forcetime_period_2_max_capacity",
-        #    0xA5,
-        #    "i",
-        #    {
-        #        "min": 5,
-        #        "max": 100,
-        #        "step": 1,
-        #        "unit": PERCENTAGE,
-        #    }
-        #],
 ]
 
 TIME_OPTIONS = {
@@ -748,6 +714,7 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     "bms_connect_state": SolaXModbusSensorEntityDescription(
     	name="BMS Connect State", 
     	key="bms_connect_state",
+    	entity_registry_enabled_default=False,
     ),
     "bms_discharge_max_current": SolaXModbusSensorEntityDescription(
 		name="BMS Discharge Max Current",
@@ -765,18 +732,22 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     "charger_start_time_1": SolaXModbusSensorEntityDescription(
     	name="Charger Start Time 1",
     	key="charger_start_time_1",
+    	entity_registry_enabled_default=False,
     ),
     "charger_end_time_1": SolaXModbusSensorEntityDescription(
     	name="Charger End Time 1",
     	key="charger_end_time_1",
+    	entity_registry_enabled_default=False,
     ),
     "charger_start_time_2": SolaXModbusSensorEntityDescription(
     	name="Charger Start Time 2",
     	key="charger_start_time_2",
+    	entity_registry_enabled_default=False,
     ),
     "charger_end_time_2": SolaXModbusSensorEntityDescription(
     	name="Charger End Time 2",
     	key="charger_end_time_2",
+    	entity_registry_enabled_default=False,
     ),
     "charger_use_mode": SolaXModbusSensorEntityDescription(
     	name="Charger Use Mode",
@@ -905,11 +876,6 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="lock_state",
 		entity_registry_enabled_default=False,
 	),
-	#"myaddress": SolaXModbusSensorEntityDescription(
-	#	name="My address",
-	#	key="myaddress",
-	#	entity_registry_enabled_default=False,
-	#),
     "bootloader_version": SolaXModbusSensorEntityDescription(
         name="Bootloader Version",
         key="bootloader_version",
@@ -1116,14 +1082,17 @@ GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"backup_charge_end": SolaXModbusSensorEntityDescription(
 		name="Backup Charge End",
 		key="backup_charge_end",
+		entity_registry_enabled_default=False,
 	),
 	"backup_charge_start": SolaXModbusSensorEntityDescription(
 		name="Backup Charge Start",
 		key="backup_charge_start",
+		entity_registry_enabled_default=False,
 	),
 	"backup_gridcharge": SolaXModbusSensorEntityDescription(
 		name="Backup Gridcharge",
 		key="backup_gridcharge",
+		entity_registry_enabled_default=False,
 	),
 	"cloud_control": SolaXModbusSensorEntityDescription(
 		name="Cloud Control",

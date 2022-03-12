@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import threading
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Optional
 
 import homeassistant.helpers.config_validation as cv
@@ -299,20 +299,19 @@ class SolaXModbusHub:
         firmwareversion_manager = decoder.decode_16bit_uint()
         self.data["firmwareversion_manager"] = firmwareversion_manager
         
-        # should be bootloader version , not myaddress
         bootloader_version = decoder.decode_16bit_uint()
         self.data["bootloader_version"] = bootloader_version
         
-        rtc_seconds = decoder.decode_16bit_uint()
-        self.data["rtc_seconds"] = rtc_seconds
+        rtc_seconds = str(decoder.decode_16bit_uint())
+        rtc_minutes = str(decoder.decode_16bit_uint())
+        rtc_hours = str(decoder.decode_16bit_uint())
+        rtc_days = str(decoder.decode_16bit_uint())
+        rtc_months = str(decoder.decode_16bit_uint())
+        rtc_years = str(decoder.decode_16bit_uint())
         
-        rtc_minutes = decoder.decode_16bit_uint()
-        rtc_hours = decoder.decode_16bit_uint()
-        rtc_days = decoder.decode_16bit_uint()
-        rtc_months = decoder.decode_16bit_uint()
-        rtc_years = decoder.decode_16bit_uint()
+        date_string = f"{rtc_days.zfill(2)}/{rtc_months.zfill(2)}/{rtc_years.zfill(2)} {rtc_hours.zfill(2)}:{rtc_minutes.zfill(2)}:{rtc_seconds.zfill(2)}"
         
-        self.data["rtc"] = f"{rtc_hours}:{rtc_minutes}:{rtc_seconds} {rtc_days}/{rtc_months}/{rtc_years}"
+        self.data["rtc"] = datetime.strptime(date_string, '%d/%m/%y %H:%M:%S')
         
         charger_use_modes = decoder.decode_16bit_uint()
         if self.read_gen4x1 or self.read_gen4x3:
@@ -775,10 +774,6 @@ class SolaXModbusHub:
         
         eps_power = decoder.decode_16bit_uint()
         self.data["eps_power"] = eps_power
-        
-        # error in original code ?
-        #eps_current = decoder.decode_16bit_uint() 
-        #self.data["eps_current"] = round(eps_current * 0.1, 1)
         
         eps_frequency = decoder.decode_16bit_uint()
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
