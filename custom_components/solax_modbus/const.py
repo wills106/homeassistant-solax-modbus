@@ -17,6 +17,7 @@ from homeassistant.const import (
     ELECTRIC_CURRENT_MILLIAMPERE,
     ELECTRIC_POTENTIAL_VOLT,
     ENERGY_KILO_WATT_HOUR,
+    ENERGY_MEGA_WATT_HOUR,
     FREQUENCY_HERTZ,
     PERCENTAGE,
     POWER_VOLT_AMPERE,
@@ -754,9 +755,9 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	key="charger_use_mode",
     	entity_registry_enabled_default=False,
     ),
-    "consumed_energy_total": SolaXModbusSensorEntityDescription(
-		name="Consumed Energy Total",
-		key="consumed_energy_total",
+    "grid_import_total": SolaXModbusSensorEntityDescription(
+		name="Grid Import Total",
+		key="grid_import_total",
 		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
@@ -768,9 +769,9 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="dc_fault_val",
 		entity_registry_enabled_default=False,
 	),
-    "energy_today": SolaXModbusSensorEntityDescription(
+    "today_yield": SolaXModbusSensorEntityDescription(
     	name="Today's Yield",
-    	key="energy_today_to_grid",
+    	key="today_yield",
     	native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
@@ -786,6 +787,15 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="export_control_user_limit",
 		native_unit_of_measurement=POWER_WATT,
 		entity_registry_enabled_default=False,
+    ),
+    "grid_export_total": SolaXModbusSensorEntityDescription(
+		name="Grid Export Total",
+		key="grid_export_total",
+		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
     ),
     "feedin_power": SolaXModbusSensorEntityDescription(
     	name="Measured Power",
@@ -978,6 +988,24 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
     ),
+        "e_charge_today": SolaXModbusSensorEntityDescription(
+    	name="E Charge Today",
+    	key="e_charge_today",
+    	native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+    ),
+    "e_charge_total": SolaXModbusSensorEntityDescription(
+    	name="E Charge Total",
+    	key="e_charge_total",
+    	native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+    ),
     "time_count_down": SolaXModbusSensorEntityDescription(
 		name="Time Count Down",
 		key="time_count_down",
@@ -988,10 +1016,10 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         key="inverter_rate_power",
         entity_registry_enabled_default=False,
     ),
-	"total_energy_to_grid": SolaXModbusSensorEntityDescription(
-		name="Total Energy To Grid",
-		key="total_energy_to_grid",
-		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+	"total_yield": SolaXModbusSensorEntityDescription(
+		name="Total Yield",
+		key="total_yield",
+		native_unit_of_measurement=ENERGY_MEGA_WATT_HOUR,
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
@@ -1360,14 +1388,6 @@ GEN3_X3_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	"export_energy_today": SolaXModbusSensorEntityDescription(
 		name="Today's Export Energy",
 		key="export_energy_today",
-		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        icon="mdi:solar-power",
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
-    ),
-    "feedin_energy_total": SolaXModbusSensorEntityDescription(
-		name="Feedin Energy Total",
-		key="feedin_energy_total",
 		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,

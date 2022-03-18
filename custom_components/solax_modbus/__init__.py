@@ -614,7 +614,7 @@ class SolaXModbusHub:
             return False
 
         decoder = BinaryPayloadDecoder.fromRegisters(
-            realtime_data.registers, byteorder=Endian.Big
+            realtime_data.registers, Endian.Big, wordorder=Endian.Little
         )
 
         inverter_voltage = decoder.decode_16bit_uint()
@@ -753,17 +753,12 @@ class SolaXModbusHub:
         if   feedin_power < 0: self.data["grid_import"] = abs(feedin_power)
         else: self.data["grid_import"] = 0 
         self.data["house_load"] = inverter_load - feedin_power
-
         
-        #decoder.skip_bytes(2)
-        feedin_energy_total =  decoder.decode_16bit_int()
-        feedin_energy_total_msb =  decoder.decode_16bit_int()
-        self.data["feedin_energy_total"] = round(feedin_energy_total * 0.01, 1)
-
-        consumed_energy_total = decoder.decode_16bit_uint()
-        consumed_energy_total_msb = decoder.decode_16bit_uint()
-        self.data["consumed_energy_total"] = round(consumed_energy_total * 0.01, 1)
-        #decoder.skip_bytes(2)
+        grid_export_total =  decoder.decode_32bit_int()
+        self.data["grid_export_total"] = round(grid_export_total * 0.01, 2)
+        
+        grid_import_total = decoder.decode_32bit_uint()
+        self.data["grid_import_total"] = round(grid_import_total * 0.01, 2)
         
         #0x04C
         eps_volatge = decoder.decode_16bit_uint()
@@ -778,19 +773,16 @@ class SolaXModbusHub:
         eps_frequency = decoder.decode_16bit_uint()
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
                 
-        energy_today_to_grid = decoder.decode_16bit_uint()
-        self.data["energy_today_to_grid"] = round(energy_today_to_grid * 0.1, 1) # better name ?
+        today_yield = decoder.decode_16bit_uint()
+        self.data["today_yield"] = round(today_yield * 0.1, 1)
         
         decoder.skip_bytes(2)
         
-        #0x052
-        total_energy_to_grid = decoder.decode_16bit_uint()
-        total_energy_to_grid_msb = decoder.decode_16bit_uint()
+        total_yield = decoder.decode_32bit_uint()
         if (self.read_gen4x1 or self.read_gen4x3): 
-            self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.1, 1)
+            self.data["total_yield"] = round(total_yield * 0.1, 1)
         else:
-            self.data["total_energy_to_grid"] = round(total_energy_to_grid * 0.001, 1)
-        #decoder.skip_bytes(2)
+            self.data["total_yield"] = round(total_yield * 0.0001, 2)
         
         lock_states = decoder.decode_16bit_uint()
         if   lock_states == 0: self.data["lock_state"] = "Locked"
@@ -807,7 +799,7 @@ class SolaXModbusHub:
             return False
 
         decoder = BinaryPayloadDecoder.fromRegisters(
-            realtime_data.registers, byteorder=Endian.Big
+            realtime_data.registers, Endian.Big, wordorder=Endian.Little
         )
         
         bus_volt = decoder.decode_16bit_uint()
@@ -931,15 +923,11 @@ class SolaXModbusHub:
         if (self.read_gen4x1 or self.read_gen4x3): #0x08C
             decoder.skip_bytes(4)
         else: 
-            normal_runtime = decoder.decode_16bit_int()
-            normal_runtime_msb = decoder.decode_16bit_int()
+            normal_runtime = decoder.decode_32bit_int()
             self.data["normal_runtime"] = round(normal_runtime * 0.1, 1)
-            #decoder.skip_bytes(2)
         
-        eps_yield_total = decoder.decode_16bit_uint()
-        eps_yield_total_msb = decoder.decode_16bit_uint()
+        eps_yield_total = decoder.decode_32bit_uint()
         self.data["eps_yield_total"] = round(eps_yield_total * 0.1, 1)
-        #decoder.skip_bytes(2)
         
         eps_yield_today = decoder.decode_16bit_uint()
         self.data["eps_yield_today"] = round(eps_yield_today * 0.1, 1)
@@ -947,28 +935,21 @@ class SolaXModbusHub:
         e_charge_today = decoder.decode_16bit_uint()
         self.data["e_charge_today"] = e_charge_today
         
-        e_charge_total = decoder.decode_16bit_uint()
-        e_charge_total_msb = decoder.decode_16bit_uint()
-        self.data["e_charge_total"] = e_charge_total
-        #decoder.skip_bytes(2)
+        e_charge_total = decoder.decode_32bit_uint()
+        self.data["e_charge_total"] = round(e_charge_total * 0.1, 2)
         
-        solar_energy_total = decoder.decode_16bit_uint()
-        solar_energy_total_msb = decoder.decode_16bit_uint()
+        solar_energy_total = decoder.decode_32bit_uint()
         self.data["solar_energy_total"] = round(solar_energy_total * 0.1, 1)
-        #decoder.skip_bytes(2)
         
         solar_energy_today = decoder.decode_16bit_uint()
         self.data["solar_energy_today"] = round(solar_energy_today * 0.1, 1)
         
         decoder.skip_bytes(2)
         
-        export_energy_today = decoder.decode_16bit_uint()
-        export_energy_today_msb = decoder.decode_16bit_uint()
+        export_energy_today = decoder.decode_32bit_uint()
         self.data["export_energy_today"] = round(export_energy_today * 0.01, 2)
-        #decoder.skip_bytes(2)
         
-        import_energy_today = decoder.decode_16bit_uint()
-        import_energy_today_msb = decoder.decode_16bit_uint()
+        import_energy_today = decoder.decode_32bit_uint()
         self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
         
         return True
