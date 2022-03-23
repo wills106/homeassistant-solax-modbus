@@ -60,17 +60,27 @@ Non Hybrid Models ie Solar PV only
 Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
 
-You can manually add this repository to your HACS setup by using "Custom repositories"
+You can add this custom_component directly through HACS, if you have HACS installed on your Home Assistant instance.
+
+Any manual updates / HACS updates require a restart of Home Assistant to take effect.
+
+<B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
+- If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
 
 # Known Issues
 
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
-3. You need to manually add select and number entries to your lovelace card if you manually control your front end.
+3. Please check the Todo List under discussions for other known issues and what's being worked on.
+4. You need to manually add select and number entries to your lovelace card if you manually control your front end.
 
 Gen2, Gen3 & Gen4
 
+<details>
+  <summary>Entities to manually add</summary>
+
 - button.solax_battery_awaken
+- button.solax_unlock_inverter
 - number.solax_battery_charge_max_current
 - number.solax_battery_discharge_max_current
 - select.solax_charger_end_time_1
@@ -79,16 +89,32 @@ Gen2, Gen3 & Gen4
 - select.solax_charger_start_time_2
 - select.solax_charger_use_mode
 
+</details>
+ 
 Gen2 & Gen3
 
+<details>
+  <summary>Entities to manually add</summary>
+ 
 - number.solax_battery_minimum_capacity
 - select.solax_allow_grid_charge
 
+</details>
+ 
 Gen3
+
+<details>
+  <summary>Entities to manually add</summary>
+
 - number.solax_forcetime_period_1_max_capacity
 - number.solax_forcetime_period_2_max_capacity
 
+</details>
+
 Gen4
+
+<details>
+  <summary>Entities to manually add</summary>
 
 - number.solax_backup_discharge_min_soc
 - number.solax_backup_nightcharge_upper_soc
@@ -105,3 +131,5 @@ Gen4
 - select.solax_discharger_start_time_2
 - select.solax_manual_mode_select
 - select.solax_selfuse_night_charge_enable
+
+</details>
