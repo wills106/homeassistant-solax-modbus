@@ -57,10 +57,19 @@ Untested:
 Non Hybrid Models ie Solar PV only
  
 # Installation
-Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
-After reboot of Home-Assistant, this integration can be configured through the integration setup UI
+
+<B>Prefered Option</B>
 
 You can add this custom_component directly through HACS, if you have HACS installed on your Home Assistant instance.
+
+<B>Alternatively</B>
+
+Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
+You may end up with prerelease code that doesn't function as expected.
+
+<B>Post Instalation</B>
+
+After reboot of Home-Assistant, this integration can be configured through the integration setup UI
 
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
 
