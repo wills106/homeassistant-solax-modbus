@@ -1,7 +1,7 @@
 {
   "domain": "solax_modbus",
   "name": "SolaX Inverter Modbus",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "documentation": "https://github.com/wills106/homsassistant-solax-modbus",
   "issue_tracker": "https://github.com/wills106/homsassistant-solax-modbus/issues",
   "requirements": ["pymodbus>=2.5.3"],

@@ -397,7 +397,13 @@ class SolaXModbusHub:
             charger_end_time_1_m = str(decoder.decode_16bit_uint())
             self.data["charger_end_time_1"] = f"{charger_end_time_1_h.zfill(2)}:{charger_end_time_1_m.zfill(2)}"
         
-            decoder.skip_bytes(8)
+            discharger_start_time_1_h = str(decoder.decode_16bit_uint())        
+            discharger_start_time_1_m = str(decoder.decode_16bit_uint())        
+            self.data["discharger_start_time_1"] = f"{discharger_start_time_1_h.zfill(2)}:{discharger_start_time_1_m.zfill(2)}"
+        
+            discharger_end_time_1_h = str(decoder.decode_16bit_uint())
+            discharger_end_time_1_m = str(decoder.decode_16bit_uint())
+            self.data["discharger_end_time_1"] = f"{discharger_end_time_1_h.zfill(2)}:{discharger_end_time_1_m.zfill(2)}"
         
             charger_start_time_2_h = str(decoder.decode_16bit_uint())
             charger_start_time_2_m = str(decoder.decode_16bit_uint())
@@ -407,7 +413,15 @@ class SolaXModbusHub:
             charger_end_time_2_m = str(decoder.decode_16bit_uint())
             self.data["charger_end_time_2"] = f"{charger_end_time_2_h.zfill(2)}:{charger_end_time_2_m.zfill(2)}"
         
-            decoder.skip_bytes(34)
+            discharger_start_time_2_h = str(decoder.decode_16bit_uint())        
+            discharger_start_time_2_m = str(decoder.decode_16bit_uint())        
+            self.data["discharger_start_time_2"] = f"{discharger_start_time_2_h.zfill(2)}:{discharger_start_time_2_m.zfill(2)}"
+        
+            discharger_end_time_2_h = str(decoder.decode_16bit_uint())
+            discharger_end_time_2_m = str(decoder.decode_16bit_uint())
+            self.data["discharger_end_time_2"] = f"{discharger_end_time_2_h.zfill(2)}:{discharger_end_time_2_m.zfill(2)}"
+        
+            decoder.skip_bytes(26)
         
             registration_code = decoder.decode_string(10).decode("ascii")
             self.data["registration_code"] = str(registration_code)

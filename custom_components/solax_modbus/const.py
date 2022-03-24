@@ -57,6 +57,11 @@ BUTTON_TYPES = [
         0x56,
         1,
     ],
+    ["Unlock Inverter",
+        "unlock_inverter",
+        0x00,
+        2014,
+    ],
 ]
 
 NUMBER_TYPES = []
@@ -533,7 +538,28 @@ SELECT_TYPES = [
 	    0x2B,
 	    TIME_OPTIONS
 	],
+	["Discharger Start Time 1",
+	    "discharger_start_time_1",
+	    0x28,
+	    TIME_OPTIONS
+	],
+	["Discharger End Time 1",
+	    "discharger_end_time_1",
+	    0x29,
+	    TIME_OPTIONS
+	],
+	["Discharger Start Time 2",
+	    "discharger_start_time_2",
+	    0x2C,
+	    TIME_OPTIONS
+	],
+	["Discharger End Time 2",
+	    "discharger_end_time_2",
+	    0x2D,
+	    TIME_OPTIONS
+	],
 ]
+
 SELECT_TYPES_G4 = [
 	["Charger Use Mode",
 	    "charger_use_mode",
@@ -649,27 +675,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
 		entity_registry_enabled_default=False,
 	),
-    "battery_input_energy_today": SolaXModbusSensorEntityDescription(
-		name="Battery Input Energy Today",
-		key="input_energy_charge_today",
-		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        icon="mdi:solar-power",
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
-    ),
     "battery_minimum_capacity": SolaXModbusSensorEntityDescription(
     	name="Battery Minimum Capacity",
     	key="battery_minimum_capacity",
     	native_unit_of_measurement=PERCENTAGE,
     	entity_registry_enabled_default=False,
-    ),
-    "battery_output_energy_today": SolaXModbusSensorEntityDescription(
-		name="Battery Output Energy Today",
-		key="output_energy_charge_today",
-		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        icon="mdi:solar-power",
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     "battery_power_charge": SolaXModbusSensorEntityDescription(
     	name="Battery Power Charge",
@@ -769,6 +779,26 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="dc_fault_val",
 		entity_registry_enabled_default=False,
 	),
+	"discharger_start_time_1": SolaXModbusSensorEntityDescription(
+    	name="Discharger Start Time 1",
+    	key="discharger_start_time_1",
+    	entity_registry_enabled_default=False,
+    ),
+    "discharger_end_time_1": SolaXModbusSensorEntityDescription(
+    	name="Discharger End Time 1",
+    	key="discharger_end_time_1",
+    	entity_registry_enabled_default=False,
+    ),
+    "discharger_start_time_2": SolaXModbusSensorEntityDescription(
+    	name="Discharger Start Time 2",
+    	key="discharger_start_time_2",
+    	entity_registry_enabled_default=False,
+    ),
+    "discharger_end_time_2": SolaXModbusSensorEntityDescription(
+    	name="Discharger End Time 2",
+    	key="discharger_end_time_2",
+    	entity_registry_enabled_default=False,
+    ),
     "today_yield": SolaXModbusSensorEntityDescription(
     	name="Today's Yield",
     	key="today_yield",
@@ -1122,6 +1152,22 @@ GEN3_X1_SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 		key="backup_gridcharge",
 		entity_registry_enabled_default=False,
 	),
+	"battery_input_energy_today": SolaXModbusSensorEntityDescription(
+		name="Battery Input Energy Today",
+		key="input_energy_charge_today",
+		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    "battery_output_energy_today": SolaXModbusSensorEntityDescription(
+		name="Battery Output Energy Today",
+		key="output_energy_charge_today",
+		native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
 	"cloud_control": SolaXModbusSensorEntityDescription(
 		name="Cloud Control",
 		key="cloud_control",
