@@ -107,6 +107,10 @@ Gen2 & Gen3
  
 - number.solax_battery_minimum_capacity
 - select.solax_allow_grid_charge
+- select.solax_discharger_start_time_1
+- select.solax_discharger_end_time_1
+- select.solax_discharger_start_time_2
+- select.solax_discharger_end_time_2
 
 </details>
  
