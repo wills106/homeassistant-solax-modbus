@@ -55,7 +55,17 @@ Gen4
 
 Untested:
 Non Hybrid Models ie Solar PV only
- 
+
+# Documentation
+
+For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
+
+Some of the topics that will be covered (WIP):
+
+- Gen2 & Gen3 Modes of Opperation
+- Gen4 Modes of Operation
+- Gen4 Connection methods
+
 # Installation
 
 <B>Prefered Option</B>
