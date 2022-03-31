@@ -358,10 +358,11 @@ TIME_OPTIONS = {
     23: "23:00",
     3863: "23:15",
     7703: "23:30",
-    11543: "23:45",  
+    11543: "23:45", 
+    15127: "23:59", # default value for Gen4 discharger_end_time_1 , maybe not a default for Gen2,Gen3
 }
 
-TIME_OPTIONS_GEN4 = {
+TIME_OPTIONS_GEN4 = { 
     0: "00:00",
     15: "00:15",
     30: "00:30",
@@ -458,44 +459,10 @@ TIME_OPTIONS_GEN4 = {
     5903: "23:15",
     5918: "23:30",
     5933: "23:45",
+    5947: "23:59", # default value for discharger_end_time1
 }
 
-TIME_TYPES_G2 = [] # not yet implemented
-TIME_TYPES_G3 = [] # not yet implemented
-TIME_TYPES_G4 = [  # not yet used in this version
-        [   "Charger Start Time 1",
-            "charger_start_time_1",
-            0x68,
-        ],
-        [   "Charger End Time 1",
-            "charger_end_time_1",
-            0x69,
-        ],
-        [   "Disharger Start Time 1",
-            "discharger_start_time_1",
-            0x6A,
-        ],
-        [   "Disharger End Time 1",
-            "discharger_end_time_1",
-            0x6B,
-        ], 
-        [   "Charger Start Time 2",
-            "charger_start_time_2",
-            0x6D,
-        ],
-        [   "Charger End Time 2",
-            "charger_end_time_2",
-            0x6E,
-        ],
-        [   "Disharger Start Time 2",
-            "discharger_start_time_2",
-            0x6F,
-        ],
-        [   "Disharger End Time 2",
-            "discharger_end_time_2",
-            0x70,
-        ], 
-]
+
 
 SELECT_TYPES = [
 	["Charger Use Mode",
@@ -603,12 +570,12 @@ SELECT_TYPES_G4 = [
             0x69,
             TIME_OPTIONS_GEN4
         ],
-        [   "Disharger Start Time 1",
+        [   "Discharger Start Time 1",
             "discharger_start_time_1",
             0x6A,
             TIME_OPTIONS_GEN4
         ],
-        [   "Disharger End Time 1",
+        [   "Discharger End Time 1",
             "discharger_end_time_1",
             0x6B,
             TIME_OPTIONS_GEN4
@@ -623,12 +590,12 @@ SELECT_TYPES_G4 = [
             0x6E,
             TIME_OPTIONS_GEN4
         ],
-        [   "Disharger Start Time 2",
+        [   "Discharger Start Time 2",
             "discharger_start_time_2",
             0x6F,
             TIME_OPTIONS_GEN4
         ],
-        [   "Disharger End Time 2",
+        [   "Discharger End Time 2",
             "discharger_end_time_2",
             0x70,
             TIME_OPTIONS_GEN4
