@@ -378,7 +378,9 @@ class SolaXModbusHub:
             tmp = decoder.decode_16bit_uint()
             self.data["discharger_end_time_1"] = Gen4Timestring(tmp) 
             period2enable = decoder.decode_16bit_uint()
-            self.data["charge_period2_enable"] = period2enable 
+            if   period2enable == 0: self.data["charge_period2_enable"] = "Disabled"
+            elif period2enable == 1: self.data["charge_period2_enable"] = "Enabled"
+            else: self.data["charge_period2_enable"] = "Unknown"
             tmp = decoder.decode_16bit_uint()
             self.data["charger_start_time_2"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
