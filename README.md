@@ -57,26 +57,43 @@ Gen4
 
 Untested:
 Non Hybrid Models ie Solar PV only
- 
+
+# Documentation
+
+For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
+
+Some of the topics that will be covered (WIP):
+
+- Gen2 & Gen3 Modes of Operation
+- Gen4 Modes of Operation
+- Gen4 Connection methods
+
 # Installation
 
-<B>Prefered Option</B>
+<B>Preferred Option</B>
 
 You can add this custom_component directly through HACS, if you have HACS installed on your Home Assistant instance.
 
 <B>Alternatively</B>
 
-Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.
-You may end up with prerelease code that doesn't function as expected.
+Download the zip / tar.gz from the release page.
+- Extract the contents of solax_modbus into to your home-assistant config/custom_components folder.
 
-<B>Post Instalation</B>
+If you manually clone the repository you may end up mid code update!
+
+~~Copy the folder and contents of solax_modbus into to your home-assistant config/custom_components folder.~~
+
+
+<B>Post Installation</B>
 
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
 
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
+- Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
 
 <B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
 - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
+- Might need performing again following a full Power Cycle
 
 # Known Issues
 
