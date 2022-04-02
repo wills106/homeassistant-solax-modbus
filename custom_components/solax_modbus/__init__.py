@@ -724,10 +724,9 @@ class SolaXModbusHub:
         self.data["battery_capacity_charge"] = battery_capacity_charge
         
         output_energy_charge_lsb = decoder.decode_16bit_uint()
-        self.data["output_energy_charge_lsb"] = round(output_energy_charge_lsb * 0.1, 1)
-        
+        #self.data["output_energy_charge_lsb"] = round(output_energy_charge_lsb * 0.1, 1)
         output_energy_charge_msb = decoder.decode_16bit_uint()
-        self.data["output_energy_charge_msb"] = round(output_energy_charge_msb * 0.1, 1)
+        self.data["output_energy_charge"] = round((output_energy_charge_msb *256*256 + output_energy_charge_lsb) * 0.1, 1)
         
         if (self.read_gen4x1 or self.read_gen4x3): 
             decoder.skip_bytes(2)
@@ -739,10 +738,9 @@ class SolaXModbusHub:
         self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
         
         input_energy_charge_lsb = decoder.decode_16bit_uint()
-        self.data["input_energy_charge_lsb"] = round(input_energy_charge_lsb * 0.1, 1)
-        
+        #self.data["input_energy_charge_lsb"] = round(input_energy_charge_lsb * 0.1, 1) 
         input_energy_charge_msb = decoder.decode_16bit_uint()
-        self.data["input_energy_charge_msb"] = round(input_energy_charge_msb * 0.1, 1)
+        self.data["input_energy_charge"] = round((input_energy_charge_msb * 256*256 + input_energy_charge_lsb) * 0.1, 1)
 
         input_energy_charge_today = decoder.decode_16bit_uint()
         self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
