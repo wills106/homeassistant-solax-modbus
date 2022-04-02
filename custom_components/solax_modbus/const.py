@@ -648,12 +648,23 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
     	native_unit_of_measurement=PERCENTAGE,
     	entity_registry_enabled_default=False,
     ),
+    "battery_package_number": SolaXModbusSensorEntityDescription(
+    	name="Battery Package Number",
+    	key="battery_package_number",
+    	entity_registry_enabled_default=False,
+    ),
     "battery_power_charge": SolaXModbusSensorEntityDescription(
     	name="Battery Power Charge",
     	key="battery_power_charge",
     	native_unit_of_measurement=POWER_WATT,
     	device_class=DEVICE_CLASS_POWER,
     	state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    "battery_soh": SolaXModbusSensorEntityDescription(
+    	name="Battery State of Health",
+    	key="battery_soh",
+    	native_unit_of_measurement=PERCENTAGE,
+    	entity_registry_enabled_default=False,
     ),
     "battery_type": SolaXModbusSensorEntityDescription(
     	name="Battery Type",
