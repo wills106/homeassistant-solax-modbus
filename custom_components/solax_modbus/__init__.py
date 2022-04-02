@@ -734,22 +734,32 @@ class SolaXModbusHub:
             bms_warning_lsb = decoder.decode_16bit_uint()
             self.data["bms_warning_lsb"] = bms_warning_lsb
         
-        output_energy_charge_today = decoder.decode_16bit_uint()
-        self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
+        if (self.read_gen2x1):
+            input_energy_charge_lsb = decoder.decode_16bit_uint()
+            input_energy_charge_msb = decoder.decode_16bit_uint()
+            self.data["input_energy_charge"] = round((input_energy_charge_msb * 256*256 + input_energy_charge_lsb) * 0.1, 1)
+            
+            battery_package_number = decoder.decode_16bit_uint()
+            self.data["battery_package_number"] = battery_package_number
+            
+            battery_soh = decoder.decode_16bit_uint()
+            self.data["battery_soh"] = battery_soh
+        else:
+            output_energy_charge_today = decoder.decode_16bit_uint()
+            self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
         
-        input_energy_charge_lsb = decoder.decode_16bit_uint()
-        #self.data["input_energy_charge_lsb"] = round(input_energy_charge_lsb * 0.1, 1) 
-        input_energy_charge_msb = decoder.decode_16bit_uint()
-        self.data["input_energy_charge"] = round((input_energy_charge_msb * 256*256 + input_energy_charge_lsb) * 0.1, 1)
+            input_energy_charge_lsb = decoder.decode_16bit_uint()
+            input_energy_charge_msb = decoder.decode_16bit_uint()
+            self.data["input_energy_charge"] = round((input_energy_charge_msb * 256*256 + input_energy_charge_lsb) * 0.1, 1)
 
-        input_energy_charge_today = decoder.decode_16bit_uint()
-        self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
+            input_energy_charge_today = decoder.decode_16bit_uint()
+            self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
-        bms_charge_max_current = decoder.decode_16bit_uint()
-        self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
+            bms_charge_max_current = decoder.decode_16bit_uint()
+            self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
         
-        bms_discharge_max_current = decoder.decode_16bit_uint()
-        self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
+            bms_discharge_max_current = decoder.decode_16bit_uint()
+            self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
         
         if (self.read_gen4x1 or self.read_gen4x3): #0x026
             decoder.skip_bytes(64)
