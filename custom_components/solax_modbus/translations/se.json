@@ -7,6 +7,7 @@
           "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern; for RS485 use localhost",
           "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
           "port": "TCP-port för anslutning till SolaX Power Invertern; for RS485 not relevant",
+          "read_modbus_addr": "The modbus address of the Power Inverter",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
           "read_gen2_x1": "SolaX Gen2 X1",

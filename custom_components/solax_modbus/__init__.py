@@ -20,6 +20,7 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    CONF_MODBUS_ADDR,
     CONF_SERIAL,
     CONF_SERIAL_PORT,
     CONF_READ_GEN2X1,
@@ -38,6 +39,7 @@ from .const import (
     DEFAULT_READ_X3_EPS,
     DEFAULT_SERIAL,
     DEFAULT_SERIAL_PORT,
+    DEFAULT_MODBUS_ADDR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,6 +49,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_PORT): cv.string,
+        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): cv.positive_int,
         vol.Required(CONF_SERIAL,      default=DEFAULT_SERIAL): cv.boolean,
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
         vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
@@ -81,6 +84,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     host = entry.data[CONF_HOST]
     name = entry.data[CONF_NAME]
     port = entry.data[CONF_PORT]
+    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, None)
+    if modbus_addr == None: 
+        modbus_addr = DEFAULT_MODBUS_ADDR
+        _LOGGER.warning(f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}")
     serial = entry.data[CONF_SERIAL]
     serial_port = entry.data[CONF_SERIAL_PORT]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
@@ -95,7 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
     _LOGGER.info("solax serial port %s %s", serial_port, serial)
 
-    hub = SolaXModbusHub(hass, name, host, port, serial, serial_port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, serial, serial_port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -136,6 +143,7 @@ class SolaXModbusHub:
         name,
         host,
         port,
+        modbus_addr,
         serial,
         serial_port,
         scan_interval,
@@ -156,6 +164,7 @@ class SolaXModbusHub:
             self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
         self._name = name
+        self._modbus_addr = modbus_addr
         self.read_gen2x1 = read_gen2x1
         self.read_gen3x1 = read_gen3x1
         self.read_gen3x3 = read_gen3x3
@@ -248,8 +257,7 @@ class SolaXModbusHub:
             return True
 
     def read_modbus_holding_registers_0(self):
-
-        inverter_data = self.read_holding_registers(unit=1, address=0x0, count=21)
+        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x0, count=21)
 
         if inverter_data.isError():
             return False
@@ -276,7 +284,7 @@ class SolaXModbusHub:
         else:
             mult = 0.1
 
-        inverter_data = self.read_holding_registers(unit=1, address=0x7d, count=64)
+        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x7d, count=64)
 
         if inverter_data.isError():
             return False
@@ -472,7 +480,7 @@ class SolaXModbusHub:
 
     def read_modbus_holding_registers_2(self):
         if (self.read_gen4x1 or self.read_gen4x3):
-            inverter_data = self.read_holding_registers(unit=1, address=0x102, count=20)
+            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x102, count=20)
 
             if inverter_data.isError():
                 return False
@@ -499,7 +507,7 @@ class SolaXModbusHub:
             elif machine_type == 3: self.data["machine_type"] = "X3"
             else: self.data["machine_type"] = machine_type
         else:
-            inverter_data = self.read_holding_registers(unit=1, address=0xfd, count=25)
+            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xfd, count=25)
 
             if inverter_data.isError():
                 return False
@@ -624,7 +632,7 @@ class SolaXModbusHub:
         else:
             mult = 0.1
         
-        realtime_data = self.read_input_registers(unit=1, address=0x0, count=86)
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x0, count=86)
 
         if realtime_data.isError():
             return False
@@ -817,7 +825,7 @@ class SolaXModbusHub:
     
     def read_modbus_input_registers_1(self):
 
-        realtime_data = self.read_input_registers(unit=1, address=0x66, count=54)
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x66, count=54)
 
         if realtime_data.isError():
             return False

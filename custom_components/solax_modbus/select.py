@@ -1,4 +1,4 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES, SELECT_TYPES_G4
+from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES, SELECT_TYPES_G4, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -10,7 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     hub_name = entry.data[CONF_NAME]
     hub = hass.data[DOMAIN][hub_name]["hub"]
-
+    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
         "name": hub_name,
@@ -23,6 +23,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             select = SolaXModbusSelect(
                 hub_name,
                 hub,
+                modbus_addr,
                 device_info,
                 select_info[0],
                 select_info[1],
@@ -35,6 +36,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             select = SolaXModbusSelect(
                 hub_name,
                 hub,
+                modbus_addr,
                 device_info,
                 select_info[0],
                 select_info[1],
@@ -58,6 +60,7 @@ class SolaXModbusSelect(SelectEntity):
     def __init__(self,
                  platform_name,
                  hub,
+                 modbus_addr,
                  device_info,
                  name,
                  key,
@@ -67,6 +70,7 @@ class SolaXModbusSelect(SelectEntity):
         """Initialize the selector."""
         self._platform_name = platform_name
         self._hub = hub
+        self._modbus_addr = modbus_addr
         self._device_info = device_info
         self._name = name
         self._key = key
@@ -107,7 +111,7 @@ class SolaXModbusSelect(SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the select option."""
-        self._hub.write_register(unit=1, address=self._register, payload=get_payload(self._option_dict, option))
+        self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=get_payload(self._option_dict, option))
 
         self._hub.data[self._key] = option
         self.async_write_ha_state()
