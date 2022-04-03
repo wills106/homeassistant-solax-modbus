@@ -271,7 +271,7 @@ class SolaXModbusHub:
 
     def read_modbus_holding_registers_1(self):
 
-        inverter_data = self.read_holding_registers(unit=1, address=0x318, count=6)
+        inverter_data = self.read_holding_registers(unit=1, address=0x85, count=6)
 
         if inverter_data.isError():
             return False
@@ -295,8 +295,8 @@ class SolaXModbusHub:
         return True
 
     def read_modbus_input_registers_0(self):
-        
-        realtime_data = self.read_input_registers(unit=1, address=0x400, count=16)
+    	
+        realtime_data = self.read_input_registers(unit=1, address=0x0, count=29)
 
         if realtime_data.isError():
             return False
@@ -304,58 +304,63 @@ class SolaXModbusHub:
         decoder = BinaryPayloadDecoder.fromRegisters(
             realtime_data.registers, Endian.Big, wordorder=Endian.Little
         )
-        
-        pv_voltage_1 = decoder.decode_16bit_uint()
-        self.data["pv_voltage_1"] = round(pv_voltage_1 * 0.1, 1)
-        
-        pv_voltage_2 = decoder.decode_16bit_uint()
-        self.data["pv_voltage_2"] = round(pv_voltage_2 * 0.1, 1)
-        
-        pv_current_1 = decoder.decode_16bit_uint()
-        self.data["pv_current_1"] = round(pv_current_1 * 0.1, 1)
-        
-        pv_current_2 = decoder.decode_16bit_uint()
-        self.data["pv_current_2"] = round(pv_current_2 * 0.1, 1)
 
-        r_inverter_voltage = decoder.decode_16bit_uint()
-        self.data["r_inverter_voltage"] = round(r_inverter_voltage * 0.1, 1)
+        inverter_voltage = decoder.decode_16bit_uint()
+        self.data["inverter_voltage"] = round(inverter_voltage * 0.1, 1)
         
-        s_inverter_voltage = decoder.decode_16bit_uint()
-        self.data["s_inverter_voltage"] = round(s_inverter_voltage * 0.1, 1)
+        inverter_current = decoder.decode_16bit_int()
+        self.data["inverter_current"] = round(inverter_current * 0.1, 1)
+                
+        inverter_load = decoder.decode_16bit_int()
+        self.data["inverter_load"] = inverter_load
         
-        t_inverter_voltage = decoder.decode_16bit_uint()
-        self.data["t_inverter_voltage"] = round(t_inverter_voltage * 0.1, 1)
+        decoder.skip_bytes(8)
         
-        r_grid_frequency = decoder.decode_16bit_uint()
-        self.data["r_grid_frequency"] = round(r_grid_frequency * 0.01, 2)
-        
-        s_grid_frequency = decoder.decode_16bit_uint()
-        self.data["s_grid_frequency"] = round(s_grid_frequency * 0.01, 2)
-        
-        t_grid_frequency = decoder.decode_16bit_uint()
-        self.data["t_grid_frequency"] = round(t_grid_frequency * 0.01, 2)
-        
-        r_inverter_current = decoder.decode_16bit_int()
-        self.data["r_inverter_current"] = round(r_inverter_current * 0.1, 1)
-        
-        s_inverter_current = decoder.decode_16bit_int()
-        self.data["s_inverter_current"] = round(s_inverter_current * 0.1, 1)
-        
-        t_inverter_current = decoder.decode_16bit_int()
-        self.data["t_inverter_current"] = round(t_inverter_current * 0.1, 1)
+        grid_frequency = decoder.decode_16bit_uint()
+        self.data["grid_frequency"] = round(grid_frequency * 0.01, 2)
         
         inverter_temperature = decoder.decode_16bit_int()
         self.data["inverter_temperature"] = inverter_temperature
         
-        inverter_load = decoder.decode_16bit_int()
-        self.data["inverter_load"] = inverter_load
-        
         run_modes = decoder.decode_16bit_uint()
-        if run_modes == 0: self.data["run_mode"] = "Waiting"
+        if   run_modes == 0: self.data["run_mode"] = "Waiting"
         elif run_modes == 1: self.data["run_mode"] = "Checking"
         elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
         elif run_modes == 3: self.data["run_mode"] = "Off Mode"
         elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
+        elif run_modes == 5: self.data["run_mode"] = "Update Mode"
+        elif run_modes == 6: self.data["run_mode"] = "EPS Check Mode"
+        elif run_modes == 7: self.data["run_mode"] = "EPS Mode"
+        elif run_modes == 8: self.data["run_mode"] = "Self Test"
+        elif run_modes == 9: self.data["run_mode"] = "Idle Mode"
         else: self.data["run_mode"] = "Unknown"
-
+        
+        decoder.skip_bytes(18)
+        
+        time_count_down = decoder.decode_16bit_uint()
+        self.data["time_count_down"] = round(time_count_down * 0.001, 0)
+        
+        battery_voltage_charge = decoder.decode_16bit_int()
+        self.data["battery_voltage_charge"] = round(battery_voltage_charge * 0.1, 1)
+        
+        battery_current_charge = decoder.decode_16bit_int()
+        self.data["battery_current_charge"] = round(battery_current_charge * 0.1, 1)
+        
+        battery_power_charge = decoder.decode_16bit_int()
+        self.data["battery_power_charge"] = battery_power_charge
+        
+        bms_connect_states = decoder.decode_16bit_uint()
+        if   bms_connect_states == 0: self.data["bms_connect_state"] = "Disconnected"
+        elif bms_connect_states == 1: self.data["bms_connect_state"] = "Connected"
+        else: self.data["bms_connect_state"] = "Unknown"
+        
+        battery_temperature = decoder.decode_16bit_int()
+        self.data["battery_temperature"] = battery_temperature
+        
+        decoder.skip_bytes(6)
+        
+        #0x01C
+        battery_capacity_charge = decoder.decode_16bit_uint()
+        self.data["battery_capacity_charge"] = battery_capacity_charge
+        
         return True
