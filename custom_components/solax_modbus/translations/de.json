@@ -7,7 +7,7 @@
           "host": "Die IP Adresse des SolaX Power Wechselrichter Modbus Geräts;für serielle Verbindung: localhost",
           "name": "Das Präfix, das für die SolaX Power Wechselrichter Sensoren verwendet werden soll",
           "port": "Der TCP Port über den die Verbindung zum SolaX Power Wechselrichter hergestellt wird;für serielle Verbindung ignorieren",
-          "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts
+          "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
           "read_serial" : "Serieller RS485 Port (Hostname auf localhost setzen)",
           "read_serial_port": "Name des seriellen Ports",
           "read_gen2_x1": "SolaX Gen2 X1",
