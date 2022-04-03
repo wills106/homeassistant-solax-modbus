@@ -7,6 +7,7 @@
           "host": "Het ip-adres van uw SolaX Power-omvormer modbus apparaat; voor serieel: localhost",
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
           "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer; voor RS485: niet relevant",
+          "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
           "read_gen2_x1": "SolaX Gen2 X1",

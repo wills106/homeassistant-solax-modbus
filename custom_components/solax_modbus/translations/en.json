@@ -7,6 +7,7 @@
           "host": "The ip-address of your SolaX Power Inverter modbus device;for serial, localhost",
           "name": "The prefix to be used for your SolaX Power Inverter sensors",
           "port": "The TCP port on which to connect to the SolaX Power Inverter;for serial ignore",
+          "read_modbus_addr": "The modbus address of the Inverter",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
           "read_gen2_x1": "SolaX Gen2 X1",

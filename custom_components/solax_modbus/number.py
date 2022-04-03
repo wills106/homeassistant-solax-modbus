@@ -1,4 +1,4 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, NUMBER_TYPES_G2, NUMBER_TYPES_G3, NUMBER_TYPES_G4
+from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, NUMBER_TYPES_G2, NUMBER_TYPES_G3, NUMBER_TYPES_G4, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -10,7 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     hub_name = entry.data[CONF_NAME]
     hub = hass.data[DOMAIN][hub_name]["hub"]
-
+    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
         "name": hub_name,
@@ -23,6 +23,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         number = SolaXModbusNumber(
             hub_name,
             hub,
+            modbus_addr,
             device_info,
             number_info[0],
             number_info[1],
@@ -38,6 +39,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             number = SolaXModbusNumber(
                 hub_name,
                 hub,
+                modbus_addr,
                 device_info,
                 number_info[0],
                 number_info[1],
@@ -52,6 +54,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             number = SolaXModbusNumber(
                 hub_name,
                 hub,
+                modbus_addr,
                 device_info,
                 number_info[0],
                 number_info[1],
@@ -66,6 +69,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             number = SolaXModbusNumber(
                 hub_name,
                 hub,
+                modbus_addr,
                 device_info,
                 number_info[0],
                 number_info[1],
@@ -85,6 +89,7 @@ class SolaXModbusNumber(NumberEntity):
     def __init__(self,
                  platform_name,
                  hub,
+                 modbus_addr,
                  device_info,
                  name,
                  key,
@@ -96,6 +101,7 @@ class SolaXModbusNumber(NumberEntity):
         """Initialize the number."""
         self._platform_name = platform_name
         self._hub = hub
+        self._modbus_addr = modbus_addr
         self._device_info = device_info
         self._name = name
         self._key = key
@@ -158,7 +164,7 @@ class SolaXModbusNumber(NumberEntity):
         elif self._fmt == "f":
             payload = int(value * mult)
 
-        self._hub.write_register(unit=1, address=self._register, payload=payload)
+        self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
 
         self._hub.data[self._key] = value
         self.async_write_ha_state()

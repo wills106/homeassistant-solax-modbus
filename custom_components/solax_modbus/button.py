@@ -1,4 +1,4 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, BUTTON_TYPES
+from .const import ATTR_MANUFACTURER, DOMAIN, BUTTON_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from homeassistant.components.button import PLATFORM_SCHEMA, ButtonEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -9,6 +9,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     hub_name = entry.data[CONF_NAME]
+    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     device_info = {
@@ -23,6 +24,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         button = SolaXModbusButton(
             hub_name,
             hub,
+            modbus_addr,
             device_info,
             button_info[0],
             button_info[1],
@@ -40,6 +42,7 @@ class SolaXModbusButton(ButtonEntity):
     def __init__(self,
                  platform_name,
                  hub,
+                 modbus_addr,
                  device_info,
                  name,
                  key,
@@ -49,6 +52,7 @@ class SolaXModbusButton(ButtonEntity):
         """Initialize the button."""
         self._platform_name = platform_name
         self._hub = hub
+        self._modbus_addr = modbus_addr,
         self._device_info = device_info
         self._name = name
         self._key = key
@@ -67,4 +71,4 @@ class SolaXModbusButton(ButtonEntity):
     async def async_press(self) -> None:
         """Write the button value."""
 
-        self._hub.write_register(unit=1, address=self._register, payload=self._value)
+        self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=self._value)
