@@ -55,20 +55,47 @@ DEFAULT_READ_X3_EPS = False
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
 
-SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {  
-    "r_grid_frequency": SolaXModbusSensorEntityDescription(
-    	name="R Inverter Frequency",
-    	key="r_grid_frequency",
-    	native_unit_of_measurement=FREQUENCY_HERTZ,
+SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
+    "battery_capacity_charge": SolaXModbusSensorEntityDescription(
+    	name="Battery Capacity",
+    	key="battery_capacity_charge",
+    	native_unit_of_measurement=PERCENTAGE,
+    	device_class=DEVICE_CLASS_BATTERY,
     ),
-    "s_grid_frequency": SolaXModbusSensorEntityDescription(
-    	name="S Inverter Frequency",
-    	key="s_grid_frequency",
-    	native_unit_of_measurement=FREQUENCY_HERTZ,
+    "battery_current_charge": SolaXModbusSensorEntityDescription(
+	name="Battery Current Charge",
+	key="battery_current_charge",
+	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
     ),
-    "t_grid_frequency": SolaXModbusSensorEntityDescription(
-    	name="T Inverter Frequency",
-    	key="t_grid_frequency",
+    "battery_power_charge": SolaXModbusSensorEntityDescription(
+    	name="Battery Power Charge",
+    	key="battery_power_charge",
+    	native_unit_of_measurement=POWER_WATT,
+    	device_class=DEVICE_CLASS_POWER,
+    	state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    "battery_voltage_charge": SolaXModbusSensorEntityDescription(
+	name="Battery Voltage Charge",
+	key="battery_voltage_charge",
+	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+    ),
+    "battery_temperature": SolaXModbusSensorEntityDescription(
+    	name="Battery Temperature",
+    	key="battery_temperature",
+    	native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=DEVICE_CLASS_TEMPERATURE,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    "bms_connect_state": SolaXModbusSensorEntityDescription(
+    	name="BMS Connect State", 
+    	key="bms_connect_state",
+    	entity_registry_enabled_default=False,
+    ),
+    "grid_frequency": SolaXModbusSensorEntityDescription(
+    	name="Inverter Frequency",
+    	key="grid_frequency",
     	native_unit_of_measurement=FREQUENCY_HERTZ,
     ),
     "inverter_load": SolaXModbusSensorEntityDescription(
@@ -78,39 +105,15 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),    
-    "r_inverter_voltage": SolaXModbusSensorEntityDescription(
-    	name="R Inverter Voltage",
-    	key="r_inverter_voltage",
+    "inverter_voltage": SolaXModbusSensorEntityDescription(
+    	name="Inverter Voltage",
+    	key="inverter_voltage",
     	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
     ),
-    "s_inverter_voltage": SolaXModbusSensorEntityDescription(
-    	name="S Inverter Voltage",
-    	key="s_inverter_voltage",
-    	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-    ),
-    "t_inverter_voltage": SolaXModbusSensorEntityDescription(
-    	name="T Inverter Voltage",
-    	key="t_inverter_voltage",
-    	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-    ),
-    "r_inverter_current": SolaXModbusSensorEntityDescription(
-    	name="R Inverter Current",
-    	key="r_inverter_current",
-    	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-    "s_inverter_current": SolaXModbusSensorEntityDescription(
-    	name="S Inverter Current",
-    	key="s_inverter_current",
-    	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-    "t_inverter_current": SolaXModbusSensorEntityDescription(
-    	name="T Inverter Current",
-    	key="t_inverter_current",
+    "inverter_current": SolaXModbusSensorEntityDescription(
+    	name="Inverter Current",
+    	key="inverter_current",
     	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
     ),
@@ -121,29 +124,9 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         device_class=DEVICE_CLASS_TEMPERATURE,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
-    "pv_current_1": SolaXModbusSensorEntityDescription(
-    	name="PV Current 1",
-    	key="pv_current_1",
-    	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-    "pv_current_2": SolaXModbusSensorEntityDescription(
-    	name="PV Current 2",
-    	key="pv_current_2",
-    	native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
-        device_class=DEVICE_CLASS_CURRENT,
-    ),
-    "pv_voltage_1": SolaXModbusSensorEntityDescription(
-    	name="PV Voltage 1",
-    	key="pv_voltage_1",
-    	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
-    ),
-    "pv_voltage_2": SolaXModbusSensorEntityDescription(
-    	name="PV Voltage 2",
-    	key="pv_voltage_2",
-    	native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
-        device_class=DEVICE_CLASS_VOLTAGE,
+    "rtc": SolaXModbusSensorEntityDescription(
+	name="RTC",
+	key="rtc",
     ),
     "run_mode": SolaXModbusSensorEntityDescription(
     	name="Run Mode",
@@ -153,8 +136,9 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
 	name="Series Number",
 	key="seriesnumber",
     ),
-    "rtc": SolaXModbusSensorEntityDescription(
-	name="RTC",
-	key="rtc",
+    "time_count_down": SolaXModbusSensorEntityDescription(
+	name="Time Count Down",
+	key="time_count_down",
+	entity_registry_enabled_default=False,
     ),
 }
