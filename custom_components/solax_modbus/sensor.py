@@ -7,8 +7,10 @@ from typing import Optional, Dict, Any
 
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES, GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
-from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES # GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
+#from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,6 +19,17 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub_name = entry.data[CONF_NAME]
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
+    # replade following block by scanning on serial number
+    if hub.read_gen2x1: hub._invertertype = GEN2 | X1
+    if hub.read_gen3x1: hub._invertertype = GEN3 | X1
+    if hub.read_gen4x1: hub._invertertype = GEN4 | X1
+    if hub.read_gen3x3: hub._invertertype = GEN3 | X3
+    if hub.read_gen4x3: hub._invertertype = GEN4 | X3
+    if hub.read_x1_eps: hub._invertertype = hub._invertertype | EPS
+    if hub.read_x3_eps: hub._invertertype = hub._invertertype | EPS
+    hub._invertertype = hub._invertertype | HYBRID  # adapt for AC model
+    # end of block
+
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
         "name": hub_name,
@@ -24,27 +37,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     }
 
     entities = []
-    if hub.read_gen4x1 or hub.read_gen4x3:
-        for sensor_description in GEN4_SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-    else:    
-        for sensor_description in SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
 
-    if hub.read_gen3x1 == True:
-        for sensor_description in GEN3_X1_SENSOR_TYPES.values():
+    for sensor_description in SENSOR_TYPES.values():
+        if matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes):
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,
@@ -52,63 +47,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 sensor_description,
             )
             entities.append(sensor)
-            
-    if hub.read_gen3x3 == True:
-        for sensor_description in GEN3_X3_SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-    if hub.read_gen4x1 == True:
-        for sensor_description in GEN4_X1_SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-            
-    if hub.read_gen4x3 == True:
-        for sensor_description in GEN4_X3_SENSOR_TYPES.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-    if hub.read_gen4x1 or hub.read_gen4x3: 
-        TYPES_X1 = GEN4_X1_EPS_SENSOR_TYPES  
-        TYPES_X3 = GEN4_X3_EPS_SENSOR_TYPES
-    else:
-        TYPES_X1 = X1_EPS_SENSOR_TYPES  
-        TYPES_X3 = X3_EPS_SENSOR_TYPES    
-    if hub.read_x1_eps == True:
-        for sensor_description in TYPES_X1.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-            
-    if hub.read_x3_eps == True:
-        for sensor_description in TYPES_X3.values():
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                sensor_description,
-            )
-            entities.append(sensor)
-
     async_add_entities(entities)
     return True
+
 
 
 class SolaXModbusSensor(SensorEntity):
