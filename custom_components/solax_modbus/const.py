@@ -1189,6 +1189,11 @@ SENSOR_TYPES: dict[str, list[SolaXModbusSensorEntityDescription]] = {
         entity_registry_enabled_default=False,
         allowedtypes = GEN4,
     ),
+    "selfuse_discharge_min_soc": SolaXModbusSensorEntityDescription(
+        name="Selfuse Discharge Min SOC",
+        key="selfuse_discharge_min_soc",
+        allowedtypes = GEN4,
+    ),
     "shadow_fix_enable": SolaXModbusSensorEntityDescription(
         name="Shadow Fix Function Level",
         key="shadow_fix_enable",
