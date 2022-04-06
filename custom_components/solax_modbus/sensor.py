@@ -38,7 +38,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     entities = []
 
-    for sensor_description in SENSOR_TYPES.values():
+    for sensor_description in SENSOR_TYPES:
         if matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes):
             sensor = SolaXModbusSensor(
                 hub_name,
