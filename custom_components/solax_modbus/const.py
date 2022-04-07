@@ -31,7 +31,10 @@ from homeassistant.const import (
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
 within a group, the bits in an entitydeclaration will be interpreted as OR
-between groups, an AND condition is applied, so all gruoups must match """
+between groups, an AND condition is applied, so all gruoups must match
+example: GEN3 | GEN4 | X1 | X3 | EPS 
+means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+"""
 
 GEN_GROUP_BITS = 0x00FF # inverter generation bits
 GEN2             = 0x0002
