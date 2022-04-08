@@ -1,4 +1,6 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, NUMBER_TYPES_G2, NUMBER_TYPES_G3, NUMBER_TYPES_G4, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
+from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
+#from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
+from .const import matchInverterWithMask, SolaxModbusNumberEntityDescription
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -20,64 +22,8 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = []
     
     for number_info in NUMBER_TYPES:
-        number = SolaXModbusNumber(
-            hub_name,
-            hub,
-            modbus_addr,
-            device_info,
-            number_info[0],
-            number_info[1],
-            number_info[2],
-            number_info[3],
-            number_info[4],
-            number_info[5] if len(number_info) > 5 else None,
-        )
-        entities.append(number)
-    
-    if hub.read_gen2x1 == True:
-    	for number_info in NUMBER_TYPES_G2:
-            number = SolaXModbusNumber(
-                hub_name,
-                hub,
-                modbus_addr,
-                device_info,
-                number_info[0],
-                number_info[1],
-                number_info[2],
-                number_info[3],
-                number_info[4],
-                number_info[5] if len(number_info) > 5 else None,
-            )
-            entities.append(number)
-    elif hub.read_gen4x1 or hub.read_gen4x3:
-        for number_info in NUMBER_TYPES_G4:
-            number = SolaXModbusNumber(
-                hub_name,
-                hub,
-                modbus_addr,
-                device_info,
-                number_info[0],
-                number_info[1],
-                number_info[2],
-                number_info[3],
-                number_info[4],
-                number_info[5] if len(number_info) > 5 else None,
-            )
-            entities.append(number)
-    else:
-    	for number_info in NUMBER_TYPES_G3:
-            number = SolaXModbusNumber(
-                hub_name,
-                hub,
-                modbus_addr,
-                device_info,
-                number_info[0],
-                number_info[1],
-                number_info[2],
-                number_info[3],
-                number_info[4],
-                number_info[5] if len(number_info) > 5 else None,
-            )
+        if matchInverterWithMask(hub._invertertype,number_info.allowedtypes):
+            number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info )
             entities.append(number)
         
     async_add_entities(entities)
@@ -91,27 +37,22 @@ class SolaXModbusNumber(NumberEntity):
                  hub,
                  modbus_addr,
                  device_info,
-                 name,
-                 key,
-                 register,
-                 fmt,
-                 attrs,
-                 state
+                 number_info
     ) -> None:
         """Initialize the number."""
         self._platform_name = platform_name
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._device_info = device_info
-        self._name = name
-        self._key = key
-        self._register = register
-        self._fmt = fmt
-        self._attr_min_value = attrs["min"]
-        self._attr_max_value = attrs["max"]
-        self._attr_step = attrs["step"]
-        self._attr_unit_of_measurement = attrs["unit"]
-        self._state = state
+        self._name = number_info.name
+        self._key = number_info.key
+        self._register = number_info.register
+        self._fmt = number_info.fmt
+        self._attr_min_value = number_info.min_value
+        self._attr_max_value = number_info.max_value
+        self._attr_step = number_info.step
+        self._attr_unit_of_measurement = number_info.unit_of_measurement
+        self._state = number_info.state
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
