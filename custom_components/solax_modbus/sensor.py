@@ -10,7 +10,7 @@ import homeassistant.util.dt as dt_util
 from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES # GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
 #from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
 from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
-from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,17 +18,6 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities):
     hub_name = entry.data[CONF_NAME]
     hub = hass.data[DOMAIN][hub_name]["hub"]
-
-    # replade following block by scanning on serial number
-    if hub.read_gen2x1: hub._invertertype = GEN2 | X1
-    if hub.read_gen3x1: hub._invertertype = GEN3 | X1
-    if hub.read_gen4x1: hub._invertertype = GEN4 | X1
-    if hub.read_gen3x3: hub._invertertype = GEN3 | X3
-    if hub.read_gen4x3: hub._invertertype = GEN4 | X3
-    if hub.read_x1_eps: hub._invertertype = hub._invertertype | EPS
-    if hub.read_x3_eps: hub._invertertype = hub._invertertype | EPS
-    hub._invertertype = hub._invertertype | HYBRID  # adapt for AC model
-    # end of block
 
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},

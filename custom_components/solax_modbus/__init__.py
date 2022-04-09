@@ -16,6 +16,7 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
 
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -99,10 +100,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
+
+    # replade following block by scanning on serial number
+    if read_gen2x1: invertertype = GEN2 | X1
+    if read_gen3x1: invertertype = GEN3 | X1
+    if read_gen4x1: invertertype = GEN4 | X1
+    if read_gen3x3: invertertype = GEN3 | X3
+    if read_gen4x3: invertertype = GEN4 | X3
+    if read_x1_eps: invertertype = invertertype | EPS
+    if read_x3_eps: invertertype = invertertype | EPS
+    invertertype = invertertype | HYBRID  # adapt for AC model
+    # end of block
+
+
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
     _LOGGER.info("solax serial port %s %s", serial_port, serial)
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, serial, serial_port, scan_interval, read_gen2x1, read_gen3x1, read_gen3x3, read_gen4x1, read_gen4x3, read_x1_eps, read_x3_eps)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, serial, serial_port, scan_interval, invertertype)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
@@ -147,13 +161,7 @@ class SolaXModbusHub:
         serial,
         serial_port,
         scan_interval,
-        read_gen2x1=False,
-        read_gen3x1=False,
-        read_gen3x3=False,
-        read_gen4x1=False,
-        read_gen4x3=False,
-        read_x1_eps=False,
-        read_x3_eps=False,
+        invertertype
     ):
         """Initialize the Modbus hub."""
         _LOGGER.info("solax modbushub creation")
@@ -165,13 +173,7 @@ class SolaXModbusHub:
         self._lock = threading.Lock()
         self._name = name
         self._modbus_addr = modbus_addr
-        self.read_gen2x1 = read_gen2x1
-        self.read_gen3x1 = read_gen3x1
-        self.read_gen3x3 = read_gen3x3
-        self.read_gen4x1 = read_gen4x1
-        self.read_gen4x3 = read_gen4x3
-        self.read_x1_eps = read_x1_eps
-        self.read_x3_eps = read_x3_eps
+        self._invertertype = invertertype
         self.read_serial = serial
         self.read_serial_port = serial_port
         self._scan_interval = timedelta(seconds=scan_interval)
@@ -279,7 +281,7 @@ class SolaXModbusHub:
 
     def read_modbus_holding_registers_1(self):
     	
-        if self.read_gen2x1 == True:
+        if self._invertertype & GEN2:
             mult = 0.01
         else:
             mult = 0.1
@@ -322,7 +324,7 @@ class SolaXModbusHub:
         self.data["rtc"] = datetime.strptime(date_string, '%d/%m/%y %H:%M:%S')
         
         charger_use_modes = decoder.decode_16bit_uint()
-        if self.read_gen4x1 or self.read_gen4x3:
+        if self._invertertype & GEN4:
             if   charger_use_modes == 0: self.data["charger_use_mode"] = "Self Use Mode"
             elif charger_use_modes == 1: self.data["charger_use_mode"] = "Feedin Priority"
             elif charger_use_modes == 2: self.data["charger_use_mode"] = "Back Up Mode"
@@ -362,7 +364,7 @@ class SolaXModbusHub:
         battery_discharge_max_current = decoder.decode_16bit_uint()
         self.data["battery_discharge_max_current"] = round(battery_discharge_max_current * mult, 1)
         
-        if self.read_gen4x1 or self.read_gen4x3:
+        if self._invertertype & GEN4:
             decoder.skip_bytes(2)
             tmp = decoder.decode_16bit_uint()
             self.data["selfuse_discharge_min_soc"]  = tmp >> 8
@@ -443,7 +445,7 @@ class SolaXModbusHub:
             elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Allowed"
             else:  self.data["allow_grid_charge"] = "Unknown"
         
-        if self.read_gen2x1 or self.read_gen3x1 or self.read_gen3x3: factor = 0.1 # documentation not correct for Gen2 and Gen3
+        if self._invertertype & (GEN2 | GEN3) : factor = 0.1 # documentation not correct for Gen2 and Gen3
         else: factor = 1 
         export_control_factory_limit = decoder.decode_16bit_uint()
         self.data["export_control_factory_limit"] = round(export_control_factory_limit*factor, 1)
@@ -456,7 +458,7 @@ class SolaXModbusHub:
         elif eps_mutes == 1: self.data["eps_mute"] = "On"
         else: self.data["eps_mute"] = "Unknown"
         
-        if self.read_gen4x1 or self.read_gen4x3:
+        if self._invertertype & GEN4: 
             decoder.skip_bytes(2)
         else:
             eps_set_frequencys = decoder.decode_16bit_uint()
@@ -479,7 +481,7 @@ class SolaXModbusHub:
         return True
 
     def read_modbus_holding_registers_2(self):
-        if (self.read_gen4x1 or self.read_gen4x3):
+        if self._invertertype & GEN4:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x102, count=20)
 
             if inverter_data.isError():
@@ -571,7 +573,7 @@ class SolaXModbusHub:
         meter_2_id = decoder.decode_16bit_uint()
         self.data["meter_2_id"] = meter_2_id
 
-        if (self.read_gen4x1 or self.read_gen4x3):
+        if self._invertertype & GEN4:
             decoder.skip_bytes(12)
         else:         
             power_control_timeout = decoder.decode_16bit_uint()
@@ -599,7 +601,7 @@ class SolaXModbusHub:
         elif disch_cut_off_point_different_s == 1: self.data["disch_cut_off_point_different"] = "Enabled"
         else: self.data["disch_cut_off_point_different"] = "Unknown"
         
-        if (self.read_gen4x1 or self.read_gen4x3): 
+        if self._invertertype & GEN4: 
             decoder.skip_bytes(2)
 
             disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
@@ -627,7 +629,7 @@ class SolaXModbusHub:
 
     def read_modbus_input_registers_0(self):
     	
-        if self.read_gen2x1 == True:
+        if self._invertertype & GEN2:
             mult = 0.01
         else:
             mult = 0.1
@@ -669,7 +671,7 @@ class SolaXModbusHub:
         self.data["inverter_temperature"] = inverter_temperature
         
         run_modes = decoder.decode_16bit_uint()
-        if (self.read_gen4x1 or self.read_gen4x3): 
+        if self._invertertype & GEN4:
             if   run_modes == 0: self.data["run_mode"] = "Waiting"
             elif run_modes == 1: self.data["run_mode"] = "Checking"
             elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
@@ -736,13 +738,13 @@ class SolaXModbusHub:
         output_energy_charge_msb = decoder.decode_16bit_uint()
         self.data["output_energy_charge"] = round((output_energy_charge_msb *256*256 + output_energy_charge_lsb) * 0.1, 1)
         
-        if (self.read_gen4x1 or self.read_gen4x3): 
+        if self._invertertype & GEN4: 
             decoder.skip_bytes(2)
         else:
             bms_warning_lsb = decoder.decode_16bit_uint()
             self.data["bms_warning_lsb"] = bms_warning_lsb
         
-        if (self.read_gen2x1):
+        if self._invertertype & GEN2:
             input_energy_charge_lsb = decoder.decode_16bit_uint()
             input_energy_charge_msb = decoder.decode_16bit_uint()
             self.data["input_energy_charge"] = round((input_energy_charge_msb * 256*256 + input_energy_charge_lsb) * 0.1, 1)
@@ -769,7 +771,7 @@ class SolaXModbusHub:
             bms_discharge_max_current = decoder.decode_16bit_uint()
             self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
         
-        if (self.read_gen4x1 or self.read_gen4x3): #0x026
+        if self._invertertype & GEN4:  #0x026
             decoder.skip_bytes(64)
         else:
             bms_warning_msb = decoder.decode_16bit_uint()
@@ -811,7 +813,7 @@ class SolaXModbusHub:
         decoder.skip_bytes(2)
         
         total_yield = decoder.decode_32bit_uint()
-        if (self.read_gen4x1 or self.read_gen4x3): 
+        if self._invertertype & GEN4:
             self.data["total_yield"] = round(total_yield * 0.1, 1)
         else:
             self.data["total_yield"] = round(total_yield * 0.0001, 2)
@@ -952,7 +954,7 @@ class SolaXModbusHub:
         #decoder.skip_bytes(2)
         
         
-        if (self.read_gen4x1 or self.read_gen4x3): #0x08C
+        if self._invertertype & GEN4: #0x08C
             decoder.skip_bytes(4)
         else: 
             normal_runtime = decoder.decode_32bit_int()
