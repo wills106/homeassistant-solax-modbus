@@ -52,7 +52,7 @@ class SolaXModbusButton(ButtonEntity):
         """Initialize the button."""
         self._platform_name = platform_name
         self._hub = hub
-        self._modbus_addr = modbus_addr,
+        self._modbus_addr = modbus_addr #, comma removed by @infradom
         self._device_info = device_info
         self._name = name
         self._key = key
