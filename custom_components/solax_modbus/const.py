@@ -7,6 +7,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.button import ButtonEntityDescription
 
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -101,18 +102,32 @@ DEFAULT_READ_GEN4X3 = False
 DEFAULT_READ_X1_EPS = False
 DEFAULT_READ_X3_EPS = False
 
+
+# ================================= Button Declarations ============================================================
+
+@dataclass
+class SolaxModbusButtonEntityDescription(ButtonEntityDescription):
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    register: int = None
+    command: int = None
+
+
 BUTTON_TYPES = [
-    ["Battery Awaken",
-        "battery_awaken",
-        0x56,
-        1,
-    ],
-    ["Unlock Inverter",
-        "unlock_inverter",
-        0x00,
-        2014,
-    ],
+    SolaxModbusButtonEntityDescription( name = "Battery Awaken",
+        key = "battery_awaken",
+        register = 0x56,
+        command = 1,
+        allowedtypes = ALLDEFAULT,
+    ),
+    SolaxModbusButtonEntityDescription( name = "Unlock Inverter",
+        key = "unlock_inverter",
+        register = 0x00,
+        command = 2014,
+        allowedtypes = ALLDEFAULT,
+    ),
 ]
+
+# ================================= Number Declarations ============================================================
 
 @dataclass
 class SolaxModbusNumberEntityDescription(NumberEntityDescription):
@@ -284,6 +299,9 @@ NUMBER_TYPES = [
         allowedtypes = GEN4,
     ),
 ]
+
+# ================================= Select Declarations ============================================================
+
 
 TIME_OPTIONS = {
     0: "00:00",
@@ -651,6 +669,9 @@ SELECT_TYPES = [
         allowedtypes = GEN4, 
     ),
 ]
+
+
+# ================================= Sennsor Declarations ============================================================
 
 @dataclass
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):

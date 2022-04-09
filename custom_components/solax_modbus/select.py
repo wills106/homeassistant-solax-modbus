@@ -1,6 +1,6 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
 #from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from .const import matchInverterWithMask, SolaxModbusNumberEntityDescription
+from .const import matchInverterWithMask
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback

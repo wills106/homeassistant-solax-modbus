@@ -1,6 +1,6 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
-#from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from .const import matchInverterWithMask, SolaxModbusNumberEntityDescription
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
+from .const import matchInverterWithMask
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -95,7 +95,7 @@ class SolaXModbusNumber(NumberEntity):
     async def async_set_value(self, value: float) -> None:
         """Change the number value."""
         
-        if self._hub.read_gen2x1 == True:
+        if self._hub._invertertype & GEN2:
             mult = 100
         else:
             mult = 10
