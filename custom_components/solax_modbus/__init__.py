@@ -765,11 +765,11 @@ class SolaXModbusHub:
             input_energy_charge_today = decoder.decode_16bit_uint()
             self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
-            bms_charge_max_current = decoder.decode_16bit_uint()
-            self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
+        bms_charge_max_current = decoder.decode_16bit_uint()
+        self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
         
-            bms_discharge_max_current = decoder.decode_16bit_uint()
-            self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
+        bms_discharge_max_current = decoder.decode_16bit_uint()
+        self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
         
         if self._invertertype & GEN4:  #0x026
             decoder.skip_bytes(64)
