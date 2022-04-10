@@ -754,7 +754,6 @@ class SolaXModbusHub:
             
             battery_soh = decoder.decode_16bit_uint()
             self.data["battery_soh"] = battery_soh
-            decoder.skip_bytes(4) # this statement may not be on the correct place, please verify with gen2 manual
         else: #0x20
             output_energy_charge_today = decoder.decode_16bit_uint()
             self.data["output_energy_charge_today"] = round(output_energy_charge_today * 0.1, 1)
@@ -766,11 +765,11 @@ class SolaXModbusHub:
             input_energy_charge_today = decoder.decode_16bit_uint()
             self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
-            bms_charge_max_current = decoder.decode_16bit_uint()
-            self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
+        bms_charge_max_current = decoder.decode_16bit_uint()
+        self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
         
-            bms_discharge_max_current = decoder.decode_16bit_uint()
-            self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
+        bms_discharge_max_current = decoder.decode_16bit_uint()
+        self.data["bms_discharge_max_current"] = round(bms_discharge_max_current * 0.1, 1)
         
         if self._invertertype & GEN4:  #0x026
             decoder.skip_bytes(64)
@@ -807,7 +806,7 @@ class SolaXModbusHub:
         
         eps_frequency = decoder.decode_16bit_uint()
         self.data["eps_frequency"] = round(eps_frequency * 0.01, 2)
-        
+
         today_yield = decoder.decode_16bit_uint()
         self.data["today_yield"] = round(today_yield * 0.1, 1)
         
