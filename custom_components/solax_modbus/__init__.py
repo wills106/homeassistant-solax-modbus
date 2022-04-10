@@ -824,6 +824,12 @@ class SolaXModbusHub:
         else: self.data["lock_state"] = "Unknown"
         
         return True
+
+####
+#
+# The following Registers don't exist on Gen2, so make them only readable on Gen3 & Gen4?
+#
+####
     
     def read_modbus_input_registers_1(self):
 
