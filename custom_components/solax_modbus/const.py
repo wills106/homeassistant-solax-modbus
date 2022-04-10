@@ -802,6 +802,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),
+    # Gen 3 & Gen4 only
     SolaXModbusSensorEntityDescription(
         name="BMS Charge Max Current",
         key="bms_charge_max_current",
@@ -809,12 +810,14 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),
+    # Gen3 & Gen4 only, this is a different sensors on Gen2
     SolaXModbusSensorEntityDescription(
         name="BMS Connect State", 
         key="bms_connect_state",
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),
+    # Gen3 & Gen4 only
     SolaXModbusSensorEntityDescription(
         name="BMS Discharge Max Current",
         key="bms_discharge_max_current",
@@ -1153,7 +1156,17 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN3 | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Total Solar Energy",
+        key="solar_energy_total_gen2",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="E Charge Today",
@@ -1308,6 +1321,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
+    # cloud_control should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Cloud Control",
         key="cloud_control",
@@ -1378,24 +1392,28 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
+    # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Machine Style",
         key="machine_style",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | GEN3 | GEN4,
     ),
+    # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter 1 id",
         key="meter_1_id",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | GEN3 | GEN4,
     ),
+    # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter 2 id",
         key="meter_2_id",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | GEN3 | GEN4,
     ),
+    # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter Function",
         key="meter_function",

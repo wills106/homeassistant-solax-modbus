@@ -508,6 +508,13 @@ class SolaXModbusHub:
             if   machine_type == 1: self.data["machine_type"] = "X1"
             elif machine_type == 3: self.data["machine_type"] = "X3"
             else: self.data["machine_type"] = machine_type
+        
+        ####
+        #
+        # This else: is Gen3 only, registers do not exist on Gen2
+        #
+        ####
+
         else:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xfd, count=25)
 
@@ -624,7 +631,7 @@ class SolaXModbusHub:
         if   ct_meter_setting_s == 0: self.data["ct_meter_setting"] = "Meter"
         elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
         else: self.data["ct_meter_setting"] = "Unknown"
-        
+        # There are a further 29 registers after this on the Gen4
         return True
 
     def read_modbus_input_registers_0(self):
@@ -719,6 +726,7 @@ class SolaXModbusHub:
         battery_power_charge = decoder.decode_16bit_int()
         self.data["battery_power_charge"] = battery_power_charge
         
+        # On Gen2 this is TemperatureBoard_Charge1 not bms_connect_state
         bms_connect_states = decoder.decode_16bit_uint()
         if   bms_connect_states == 0: self.data["bms_connect_state"] = "Disconnected"
         elif bms_connect_states == 1: self.data["bms_connect_state"] = "Connected"
@@ -727,6 +735,7 @@ class SolaXModbusHub:
         battery_temperature = decoder.decode_16bit_int()
         self.data["battery_temperature"] = battery_temperature
         
+        # These skipped registers do something on Gen2 & Gen4 but they are different between them
         decoder.skip_bytes(6)
         
         #0x01C
@@ -765,6 +774,9 @@ class SolaXModbusHub:
             input_energy_charge_today = decoder.decode_16bit_uint()
             self.data["input_energy_charge_today"] = round(input_energy_charge_today * 0.1, 1)
         
+        # Next two registers are Gen3 & Gen4 only
+
+
         bms_charge_max_current = decoder.decode_16bit_uint()
         self.data["bms_charge_max_current"] = round(bms_charge_max_current * 0.1, 1)
         
@@ -774,6 +786,7 @@ class SolaXModbusHub:
         if self._invertertype & GEN4:  #0x026
             decoder.skip_bytes(64)
         else:
+            # Not exposed in const.py
             bms_warning_msb = decoder.decode_16bit_uint()
             self.data["bms_warning_msb"] = bms_warning_msb
         
@@ -824,6 +837,15 @@ class SolaXModbusHub:
         else: self.data["lock_state"] = "Unknown"
         
         return True
+
+####
+#
+# The following Registers don't exist on Gen2, so make them readable only on the Gen3 & Gen4?
+#
+# Gen2 does have registers from 0x55 to 0x75 though. Some that might be of interest 0x57 - 59, also the unit32 at 0x70 might serve as a replacement
+# for the Missing Solar PV for Energy Dashboard as the Gen2 doesn't have today_s_solar_energy
+#
+####
     
     def read_modbus_input_registers_1(self):
 
@@ -869,12 +891,18 @@ class SolaXModbusHub:
         grid_current_s = decoder.decode_16bit_int()
         self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
         
-        # @todo Rename variable.
-        grid_power_s = decoder.decode_16bit_int()
-        self.data["grid_power_s"] = round(grid_power_s, 1)
+        # Hopefully add Solar Yield for Gen2 Energy Dashboard
+        if self._invertertype & GEN2:
+            solar_energy_total_gen2 =  decoder.decode_32bit_int()
+            self.data["solar_energy_total_gen2"] = round(solar_energy_total_gen2 * 0.1, 2)
+
+        else:
+            # @todo Rename variable.
+            grid_power_s = decoder.decode_16bit_int()
+            self.data["grid_power_s"] = round(grid_power_s, 1)
         
-        grid_frequency_s = decoder.decode_16bit_uint()
-        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
+            grid_frequency_s = decoder.decode_16bit_uint()
+            self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
         
         grid_voltage_t = decoder.decode_16bit_uint()
         self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)
@@ -985,5 +1013,5 @@ class SolaXModbusHub:
         
         import_energy_today = decoder.decode_32bit_uint()
         self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
-        
+        # Is there anything of interest on Gen3 from 0x9c - 0xcd & on Gen4 0x9c - 0x120
         return True
