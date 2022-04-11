@@ -22,7 +22,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = []
     
     for number_info in NUMBER_TYPES:
-        if matchInverterWithMask(hub._invertertype,number_info.allowedtypes):
+        if matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info )
             entities.append(number)
         
@@ -50,6 +50,9 @@ class SolaXModbusNumber(NumberEntity):
         self._fmt = number_info.fmt
         self._attr_min_value = number_info.min_value
         self._attr_max_value = number_info.max_value
+        if number_info.max_exceptions:
+            for (prefix, value,) in number_info.max_exceptions: 
+                if hub.seriesnumber.startswith(prefix): self._attr_max_value = value
         self._attr_step = number_info.step
         self._attr_unit_of_measurement = number_info.unit_of_measurement
         self._state = number_info.state
