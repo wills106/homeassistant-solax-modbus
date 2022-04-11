@@ -120,30 +120,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     invertertype = 0
 
     # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith('L50E'):  invertertype = GEN2 | X1 # Gen2 X1 SK-TL
-    elif seriesnumber.startswith('U50E'):  invertertype = GEN2 | X1 # Gen2 X1 SK-SU
-    elif seriesnumber.startswith('H1E5'):  invertertype = GEN3 | X1 # Gen3 X1 Early
-    elif seriesnumber.startswith('HUE5'):  invertertype = GEN3 | X1 # Gen3 X1 Late
-    elif seriesnumber.startswith('XAC36'):  invertertype = GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
-    elif seriesnumber.startswith('H3UE'):  invertertype = GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('F3E'):  invertertype = GEN3 | X3 # RetroFit
-    elif seriesnumber.startswith('H34T'):  invertertype = GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('H450'):  invertertype = GEN4 | X1 # Gen4 X1
+    if   seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL
+    elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU
+    elif seriesnumber.startswith('H1E5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
+    elif seriesnumber.startswith('HUE5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
+    elif seriesnumber.startswith('XAC36'): invertertype = GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
+    elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+    elif seriesnumber.startswith('F3E'):   invertertype = HYBRID | GEN3 | X3 # RetroFit
+    elif seriesnumber.startswith('H34T'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
+    elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1
     # add cases here
     #
     #
     else: 
         _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
 
-
-    # remove following block by scanning on serial number in the block above
-    if read_gen2x1: invertertype = GEN2 | X1
-    if read_gen3x1: invertertype = GEN3 | X1
-    if read_gen4x1: invertertype = GEN4 | X1
-    if read_gen3x3: invertertype = GEN3 | X3
-    if read_gen4x3: invertertype = GEN4 | X3
-    invertertype = invertertype | HYBRID  # adapt for AC model
-    # end of block
 
     if read_x1_eps: invertertype = invertertype | EPS # replace by single flag
     if read_x3_eps: invertertype = invertertype | EPS # replace by single flag
