@@ -136,8 +136,8 @@ BUTTON_TYPES = [
 MAX_CURRENTS = [
     ('L50E',  100 ), # Gen2 X1 SK-TL
     ('U50',    50 ), # Gen2 X1 SK-SU
-    ('F3E,    25 ), # RetroFit X3
-    ('H3UE,    25 ), # Gen3 X3
+    ('F3E',    25 ), # RetroFit X3
+    ('H3UE',    25 ), # Gen3 X3
     ('H34',    25 ), # Gen4 X3
     ('H450',   30 ), # Gen4 X1
     ### All known Inverters added
