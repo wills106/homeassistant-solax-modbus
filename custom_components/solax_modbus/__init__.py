@@ -117,23 +117,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.info(f"serial number = {seriesnumber}")
 
     invertertype = 0
+    max_value = 20 # safe default
 
     # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith(''):     invertertype = 0 # please adapt
-    elif seriesnumber.startswith('H34'):  invertertype = GEN4 | X3
-    else: _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
-    # replace following block by scanning on serial number in the block above
+    if seriesnumber.startswith('L50E'):
+        invertertype = GEN2 | X1
+        max_charge   = 100
+    elif seriesnumber.startswith('U50E'):
+        invertertype = GEN2 | X1
+        max_charge   = 50
+    elif seriesnumber.startswith('H34T'):  
+        invertertype = GEN4 | X3
+        max_charge = 25
+    # add cases here
+    #
+    #
+    else: 
+        _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+
+
+    # remove following block by scanning on serial number in the block above
     if read_gen2x1: invertertype = GEN2 | X1
     if read_gen3x1: invertertype = GEN3 | X1
     if read_gen4x1: invertertype = GEN4 | X1
     if read_gen3x3: invertertype = GEN3 | X3
     if read_gen4x3: invertertype = GEN4 | X3
-    if read_x1_eps: invertertype = invertertype | EPS
-    if read_x3_eps: invertertype = invertertype | EPS
     invertertype = invertertype | HYBRID  # adapt for AC model
     # end of block
 
+    if read_x1_eps: invertertype = invertertype | EPS # replace by single flag
+    if read_x3_eps: invertertype = invertertype | EPS # replace by single flag
     hub.invertertype = invertertype
+    hub.max_charge = max_charge
     for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
@@ -187,6 +202,7 @@ class SolaXModbusHub:
         self._name = name
         self._modbus_addr = modbus_addr
         self._invertertype = 0
+        self._max_charge = 20 # safe default
         self.read_serial = serial
         self.read_serial_port = serial_port
         self._scan_interval = timedelta(seconds=scan_interval)
@@ -235,6 +251,14 @@ class SolaXModbusHub:
     @invertertype.setter
     def invertertype(self, newtype):
         self._invertertype = newtype
+
+    @property
+    def max_charge(self):
+        return self._max_charge
+
+    @max_charge.setter
+    def max_charge(self, newvalue):
+        self._max_charge = newvalue
 
     @property
     def name(self):
