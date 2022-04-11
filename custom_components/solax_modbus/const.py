@@ -1196,7 +1196,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes== GEN3 | GEN4,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="E Charge Total",
@@ -1206,7 +1206,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes== GEN3 | GEN4,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Time Count Down",
