@@ -134,11 +134,13 @@ BUTTON_TYPES = [
 # ================================= Number Declarations ============================================================
 
 MAX_CURRENTS = [
-    ('L50E',  100 ),
-    ('U50',    50 ),
-    ('H34',    25 ),
-    ('H450',   30 ),
-    ### pleease complete this list
+    ('L50E',  100 ), # Gen2 X1 SK-TL
+    ('U50',    50 ), # Gen2 X1 SK-SU
+    ('F3E,    25 ), # RetroFit X3
+    ('H3UE,    25 ), # Gen3 X3
+    ('H34',    25 ), # Gen4 X3
+    ('H450',   30 ), # Gen4 X1
+    ### All known Inverters added
 ]
 
 @dataclass
@@ -598,25 +600,25 @@ SELECT_TYPES = [
         key = "discharger_start_time_1",
         register = 0x28,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, 
+        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 1",
         key = "discharger_end_time_1",
         register = 0x29,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, 
+        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 2",
         key = "discharger_start_time_2",
         register = 0x2C,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, 
+        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 2",
         key = "discharger_end_time_2",
         register = 0x2D,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, 
+        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Selfuse Night Charge Enable",
         key = "selfuse_nightcharge_enable",
@@ -817,7 +819,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Battery Volt Fault Val",
         key="battery_volt_fault_val",
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN3 | GEN4,
     ),
     # Gen 3 & Gen4 only
     SolaXModbusSensorEntityDescription(
@@ -894,7 +896,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="DC Fault Val",
         key="dc_fault_val",
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Discharger Start Time 1",
@@ -1073,7 +1075,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="normal_runtime",
         native_unit_of_measurement=TIME_HOURS,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT & ~GEN4,
+        allowedtypes=GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         name="Overload Fault Val",
@@ -1163,8 +1165,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        allowedtypes=ALLDEFAULT,
-        blacklist=('U50EC',)
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Total Solar Energy",
@@ -1183,8 +1184,9 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        entity_registry_enabled_default=False,
+        entity_registry_enabled_default=True,
         allowedtypes= GEN2,
+        blacklist=('U50EC',)
     ),
     SolaXModbusSensorEntityDescription(
         name="E Charge Today",
@@ -1194,7 +1196,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes== GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="E Charge Total",
@@ -1204,7 +1206,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes== GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Time Count Down",
@@ -1627,7 +1629,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         #state_class=STATE_CLASS_TOTAL_INCREASING,
-        allowedtypes = X1 | X3 | GEN2 | GEN3 | GEN4 | EPS,
+        allowedtypes = X1 | X3 | GEN3 | GEN4 | EPS,
     ),
 
     # transferred from X3_EPS_SENSOR_TYPES
@@ -1656,7 +1658,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="EPS Mode Runtime",
         key="eps_mode_runtime",
-        allowedtypes = X3 | GEN2 | GEN3 | GEN4 | EPS,
+        allowedtypes = X3 | GEN3 | GEN4 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="EPS Power R",
