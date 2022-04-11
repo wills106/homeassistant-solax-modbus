@@ -114,21 +114,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
     else: decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
     seriesnumber = decoder.decode_string(14).decode("ascii")
+    hub.seriesnumber = seriesnumber
     _LOGGER.info(f"serial number = {seriesnumber}")
 
     invertertype = 0
-    max_value = 20 # safe default
 
     # derive invertertupe from seriiesnumber
-    if seriesnumber.startswith('L50E'):
-        invertertype = GEN2 | X1
-        max_charge   = 100
-    elif seriesnumber.startswith('U50E'):
-        invertertype = GEN2 | X1
-        max_charge   = 50
-    elif seriesnumber.startswith('H34T'):  
-        invertertype = GEN4 | X3
-        max_charge = 25
+    if   seriesnumber.startswith('L50E'):  invertertype = GEN2 | X1
+    elif seriesnumber.startswith('U50E'):  invertertype = GEN2 | X1
+    elif seriesnumber.startswith('H34T'):  invertertype = GEN4 | X3
+    elif seriesnumber.startswith('H450'):  invertertype = GEN4 | X1
     # add cases here
     #
     #
@@ -148,7 +143,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if read_x1_eps: invertertype = invertertype | EPS # replace by single flag
     if read_x3_eps: invertertype = invertertype | EPS # replace by single flag
     hub.invertertype = invertertype
-    hub.max_charge = max_charge
     for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
@@ -202,7 +196,7 @@ class SolaXModbusHub:
         self._name = name
         self._modbus_addr = modbus_addr
         self._invertertype = 0
-        self._max_charge = 20 # safe default
+        self._seriesnumber = 'still unknown'
         self.read_serial = serial
         self.read_serial_port = serial_port
         self._scan_interval = timedelta(seconds=scan_interval)
@@ -253,12 +247,12 @@ class SolaXModbusHub:
         self._invertertype = newtype
 
     @property
-    def max_charge(self):
-        return self._max_charge
+    def seriesnumber(self):
+        return self._seriesnumber
 
-    @max_charge.setter
-    def max_charge(self, newvalue):
-        self._max_charge = newvalue
+    @seriesnumber.setter
+    def seriesnumber(self, nr):
+        self._seriesnumber = nr
 
     @property
     def name(self):

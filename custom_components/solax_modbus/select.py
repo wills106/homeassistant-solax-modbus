@@ -21,7 +21,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     
     entities = []
     for select_info in SELECT_TYPES:
-        if matchInverterWithMask(hub._invertertype, select_info.allowedtypes):
+        if matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
             select = SolaXModbusSelect( hub_name, hub, modbus_addr, device_info, select_info)
             entities.append(select)
         

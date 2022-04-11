@@ -62,13 +62,17 @@ EPS              = 0x1000
 ALLDEFAULT = HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 # maybe need to remove AC from default
 
 
-def matchInverterWithMask (inverterspec, entitymask):
+def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
     # returns true if the entity needs to be created for an inverter
     genmatch = ((inverterspec & entitymask & GEN_GROUP_BITS) != 0) or (entitymask & GEN_GROUP_BITS == 0)
     xmatch   = ((inverterspec & entitymask & X13_GROUP_BITS) != 0) or (entitymask & X13_GROUP_BITS == 0)
     hybmatch = ((inverterspec & entitymask & HYB_GROUP_BITS) != 0) or (entitymask & HYB_GROUP_BITS == 0)
     epsmatch = ((inverterspec & entitymask & EPS_GROUP_BITS) != 0) or (entitymask & EPS_GROUP_BITS == 0)
-    return genmatch and xmatch and hybmatch and epsmatch
+    blacklisted = False
+    if blacklist:
+        for start in blacklist: 
+            if serialnumber.startswith(start) : blacklisted = True
+    return (genmatch and xmatch and hybmatch and epsmatch) and not blacklisted
 
 """
 end of bitmask handling code
@@ -110,7 +114,7 @@ class SolaxModbusButtonEntityDescription(ButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     command: int = None
-
+    blacklist: dict = None # none or dict with structure { 'xxxx': True }
 
 BUTTON_TYPES = [
     SolaxModbusButtonEntityDescription( name = "Battery Awaken",
@@ -135,6 +139,8 @@ class SolaxModbusNumberEntityDescription(NumberEntityDescription):
     register: int = None
     fmt: str = None
     state: str = None
+    max_exceptions: dict = None  #  None or dict with structue { 'U50EC' : 40 } 
+    blacklist: dict = None # none or dict with structure { 'xxxx': True }
 
 NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription( name = "Battery Minimum Capacity",
@@ -153,10 +159,13 @@ NUMBER_TYPES = [
         register = 0x24,
         fmt = "f",
         min_value = 0,
-        max_value = 50,
+        max_value = 50, # default
         step = 0.1,
         unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
         allowedtypes = GEN2,
+        max_exceptions = { 
+            'L50E'   : 100,
+        }
     ),
     SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
         key = "battery_charge_max_current",
@@ -508,7 +517,7 @@ class SolaxModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     options: dict = None
-
+    blacklist: dict = None # none or dict with structure { 'xxxx': True }
 
 SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
@@ -677,6 +686,7 @@ SELECT_TYPES = [
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    blacklist: dict = None # None or dict with structure {"U50EC": True, }
 
 
 
@@ -1147,6 +1157,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes=ALLDEFAULT,
+        blacklist={'U50EC': True,}
     ),
     SolaXModbusSensorEntityDescription(
         name="Total Solar Energy",
@@ -1368,20 +1379,20 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="forcetime_period_1_max_capacity",
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         name="Forcetime Period 2 Maximum Capacity",
         key="forcetime_period_2_max_capacity",
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         name="Global MPPT Function",
         key="global_mppt_function",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3,
+        allowedtypes= X1 | X3 | GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         name="Today's Import Energy",
@@ -1397,40 +1408,40 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Machine Style",
         key="machine_style",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter 1 id",
         key="meter_1_id",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter 2 id",
         key="meter_2_id",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Meter Function",
         key="meter_function",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Power Control Timeout",
         key="power_control_timeout",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="wAS4777 Power Manager",
         key="was4777_power_manager",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3,
+        allowedtypes= X1 | X3 |  GEN3,
     ),
 
 
