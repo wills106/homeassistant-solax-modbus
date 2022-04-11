@@ -51,8 +51,8 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_min_value = number_info.min_value
         self._attr_max_value = number_info.max_value
         if number_info.max_exceptions:
-            for start in number_info.max_exceptions: # normally empty dict
-                if hub.invertertype.startswith(start): self._attr_max_value = number_info.max_exception[start]
+            for (prefix, value,) in number_info.max_exceptions: 
+                if hub.seriesnumber.startswith(prefix): self._attr_max_value = value
         self._attr_step = number_info.step
         self._attr_unit_of_measurement = number_info.unit_of_measurement
         self._state = number_info.state

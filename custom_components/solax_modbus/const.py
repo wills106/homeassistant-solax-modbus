@@ -114,7 +114,7 @@ class SolaxModbusButtonEntityDescription(ButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     command: int = None
-    blacklist: dict = None # none or dict with structure { 'xxxx': True }
+    blacklist: dict = None # none or list of serial number prefixees
 
 BUTTON_TYPES = [
     SolaxModbusButtonEntityDescription( name = "Battery Awaken",
@@ -133,6 +133,14 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
+MAX_CURRENTS = [
+    ('L50E',  100 ),
+    ('U50',    50 ),
+    ('H34',    25 ),
+    ('H450',   30 ),
+    ### pleease complete this list
+]
+
 @dataclass
 class SolaxModbusNumberEntityDescription(NumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
@@ -140,7 +148,7 @@ class SolaxModbusNumberEntityDescription(NumberEntityDescription):
     fmt: str = None
     state: str = None
     max_exceptions: dict = None  #  None or dict with structue { 'U50EC' : 40 } 
-    blacklist: dict = None # none or dict with structure { 'xxxx': True }
+    blacklist: dict = None # None or list of serial number prefixes like 
 
 NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription( name = "Battery Minimum Capacity",
@@ -159,64 +167,63 @@ NUMBER_TYPES = [
         register = 0x24,
         fmt = "f",
         min_value = 0,
-        max_value = 50, # default
+        max_value = 20, # default (new default, was 50)
         step = 0.1,
         unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN2,
-        max_exceptions = { 
-            'L50E'   : 100,
-        }
+        allowedtypes = GEN2 | GEN3 | GEN4,
+        max_exceptions = MAX_CURRENTS,
     ),
-    SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
-        key = "battery_charge_max_current",
-        register = 0x24,
-        fmt = "f",
-        min_value = 0,
-        max_value = 20,
-        step = 0.1,
-        unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN3,
-    ),
-    SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
-        key = "battery_charge_max_current",
-        register = 0x24,
-        fmt = "f",
-        min_value = 0,
-        max_value = 25,
-        step = 0.1,
-        unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN4,
-    ),
-    SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
+    #SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
+    #    key = "battery_charge_max_current",
+    #    register = 0x24,
+    #    fmt = "f",
+    #    min_value = 0,
+    #    max_value = 20,
+    #    step = 0.1,
+    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+    #    allowedtypes = GEN3,
+    #),
+    #SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
+    #    key = "battery_charge_max_current",
+    #    register = 0x24,
+    #    fmt = "f",
+    #    min_value = 0,
+    #    max_value = 25,
+    #    step = 0.1,
+    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+    #    allowedtypes = GEN4,
+    #),
+    SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", 
         key = "battery_discharge_max_current",
         register = 0x25,
         fmt = "f",
         min_value = 0,
-        max_value = 50,
+        max_value = 20, # universal default
         step = 0.1,
         unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN2,
+        allowedtypes = GEN2 | GEN3 | GEN4,
+        max_exceptions = MAX_CURRENTS,
     ),
-    SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
-        key = "battery_discharge_max_current",
-        register = 0x25,
-        fmt = "f",
-        min_value = 0,
-        max_value = 20,
-        step = 0.1,
-        unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN3,
-    ),
-    SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
-        key = "battery_discharge_max_current",
-        register = 0x25,
-        fmt = "f",
-        min_value = 0,
-        max_value = 25,
-        step = 0.1,
-        unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        allowedtypes = GEN4,
-    ),
+    #SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
+    #    key = "battery_discharge_max_current",
+    #    register = 0x25,
+    #    fmt = "f",
+    #    min_value = 0,
+    #    max_value = 20,
+    #    step = 0.1,
+    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+    #    allowedtypes = GEN3,
+    #),
+    #SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
+    #    key = "battery_discharge_max_current",
+    #    register = 0x25,
+    #    fmt = "f",
+    #    min_value = 0,
+    #    max_value = 25,
+    #    step = 0.1,
+    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+    #    allowedtypes = GEN4,
+    #),
     SolaxModbusNumberEntityDescription( name = "ForceTime Period 1 Max Capacity",
         key ="forcetime_period_1_max_capacity",
         register = 0xA4,
@@ -517,7 +524,7 @@ class SolaxModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     options: dict = None
-    blacklist: dict = None # none or dict with structure { 'xxxx': True }
+    blacklist: dict = None # none or list of serial number prefixes
 
 SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
@@ -686,7 +693,7 @@ SELECT_TYPES = [
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    blacklist: dict = None # None or dict with structure {"U50EC": True, }
+    blacklist: dict = None # None or list of serial number prefixes
 
 
 
@@ -1157,7 +1164,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes=ALLDEFAULT,
-        blacklist={'U50EC': True,}
+        blacklist=('U50EC',)
     ),
     SolaXModbusSensorEntityDescription(
         name="Total Solar Energy",
