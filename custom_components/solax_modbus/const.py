@@ -59,7 +59,7 @@ EPS_GROUP_BITS = 0x1000  # EPS flag
 EPS              = 0x1000
 
 
-ALLDEFAULT = HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 # maybe need to remove AC from default
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 
 def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -114,7 +114,7 @@ class SolaxModbusButtonEntityDescription(ButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     command: int = None
-    blacklist: dict = None # none or list of serial number prefixees
+    blacklist: list = None # none or list of serial number prefixees
 
 BUTTON_TYPES = [
     SolaxModbusButtonEntityDescription( name = "Battery Awaken",
@@ -149,8 +149,8 @@ class SolaxModbusNumberEntityDescription(NumberEntityDescription):
     register: int = None
     fmt: str = None
     state: str = None
-    max_exceptions: dict = None  #  None or dict with structue { 'U50EC' : 40 } 
-    blacklist: dict = None # None or list of serial number prefixes like 
+    max_exceptions: list = None  #  None or dict with structue { 'U50EC' : 40 } 
+    blacklist: list = None # None or list of serial number prefixes like 
 
 NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription( name = "Battery Minimum Capacity",
@@ -526,7 +526,7 @@ class SolaxModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     options: dict = None
-    blacklist: dict = None # none or list of serial number prefixes
+    blacklist: list = None # none or list of serial number prefixes
 
 SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
@@ -695,7 +695,7 @@ SELECT_TYPES = [
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    blacklist: dict = None # None or list of serial number prefixes
+    blacklist: list = None # None or list of serial number prefixes
 
 
 
@@ -704,7 +704,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Allow Grid Charge",
         key="allow_grid_charge",
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN2 | GEN3 #ALLDEFAULT & ~GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
@@ -745,7 +745,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="battery_minimum_capacity",
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN2 | GEN3 #ALLDEFAULT & ~GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Package Number",
@@ -1064,12 +1064,12 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),
-    SolaXModbusSensorEntityDescription(
-        name="Module Name",
-        key="modulename",
-        entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
-    ),
+    #SolaXModbusSensorEntityDescription(
+    #    name="Module Name",
+    #    key="modulename",
+    #    entity_registry_enabled_default=False,
+    #    allowedtypes=ALLDEFAULT,
+    #),
     SolaXModbusSensorEntityDescription(
         name="Normal Runtime",
         key="normal_runtime",
@@ -1088,14 +1088,14 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="pv_current_1",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 2",
         key="pv_current_2",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 1",
@@ -1103,7 +1103,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 2",
@@ -1111,21 +1111,21 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",
         key="pv_voltage_1",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
         key="pv_voltage_2",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Total Power",
@@ -1133,13 +1133,13 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="Registration Code",
         key="registration_code",
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN2 | GEN3, #ALLDEFAULT & ~GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="RTC",

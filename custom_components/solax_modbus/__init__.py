@@ -124,7 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU
     elif seriesnumber.startswith('H1E5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
     elif seriesnumber.startswith('HUE5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
-    elif seriesnumber.startswith('XAC36'): invertertype = GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
+    elif seriesnumber.startswith('XAC36'): invertertype = AC | GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
     elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('F3E'):   invertertype = HYBRID | GEN3 | X3 # RetroFit
     elif seriesnumber.startswith('H34T'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
@@ -293,7 +293,7 @@ class SolaXModbusHub:
             return True
 
     def read_modbus_holding_registers_0(self):
-        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x0, count=21)
+        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x0, count=7) # was 21
 
         if inverter_data.isError():
             return False
@@ -304,12 +304,10 @@ class SolaXModbusHub:
 
         seriesnumber = decoder.decode_string(14).decode("ascii")
         self.data["seriesnumber"] = str(seriesnumber)
-
-        factoryname = decoder.decode_string(14).decode("ascii")
-        self.data["factoryname"] = str(factoryname)
-
-        modulename = decoder.decode_string(14).decode("ascii")
-        self.data["modulename"] = str(modulename)
+        #factoryname = decoder.decode_string(14).decode("ascii")
+        #self.data["factoryname"] = str(factoryname)
+        #modulename = decoder.decode_string(14).decode("ascii")
+        #self.data["modulename"] = str(modulename)
 
         return True
 
@@ -620,36 +618,47 @@ class SolaXModbusHub:
             power_control_timeout = decoder.decode_16bit_uint()
             self.data["power_control_timeout"] = power_control_timeout
         
-            eps_auto_restart_s = decoder.decode_16bit_uint()
-            if   eps_auto_restart_s == 0: self.data["eps_auto_restart"] = "Disabled"
-            elif eps_auto_restart_s == 1: self.data["eps_auto_restart"] = "Enabled"
-            else:  self.data["eps_auto_restart"] = "Unknown"
+            if (self.invertertype & AC) == 0: # 0x010C only for hybrid
+                eps_auto_restart_s = decoder.decode_16bit_uint()
+                if   eps_auto_restart_s == 0: self.data["eps_auto_restart"] = "Disabled"
+                elif eps_auto_restart_s == 1: self.data["eps_auto_restart"] = "Enabled"
+                else:  self.data["eps_auto_restart"] = "Unknown"
         
-            eps_min_esc_voltage = decoder.decode_16bit_uint()
-            self.data["eps_min_esc_voltage"] = eps_min_esc_voltage
+                eps_min_esc_voltage = decoder.decode_16bit_uint()
+                self.data["eps_min_esc_voltage"] = eps_min_esc_voltage
+
+                eps_min_esc_soc = decoder.decode_16bit_uint()
+                self.data["eps_min_esc_soc"] = eps_min_esc_soc
+            
+                # 0x010F for hybrid, 0x010C for AC
+                forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
+                self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
         
-            eps_min_esc_soc = decoder.decode_16bit_uint()
-            self.data["eps_min_esc_soc"] = eps_min_esc_soc
+                forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
+                self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
+            else: # AC Model - may need more reworking ...
+                 # 0x010F for hybrid, 0x010C for AC
+                forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
+                self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
         
-            forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
-            self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
-        
-            forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
-            self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
-        
-        disch_cut_off_point_different_s = decoder.decode_16bit_uint()
+                forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
+                self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
+                decoder.skip_bytes(6) 
+
+
+        disch_cut_off_point_different_s = decoder.decode_16bit_uint() 
         if   disch_cut_off_point_different_s == 0: self.data["disch_cut_off_point_different"] = "Disabled"
         elif disch_cut_off_point_different_s == 1: self.data["disch_cut_off_point_different"] = "Enabled"
         else: self.data["disch_cut_off_point_different"] = "Unknown"
         
-        if self.invertertype & GEN4: 
+        if self.invertertype & GEN4: #0x0112
             decoder.skip_bytes(2)
 
             disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
             self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
 
             decoder.skip_bytes(2)
-        else:
+        else: # 0x0112
             disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
             self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
         
