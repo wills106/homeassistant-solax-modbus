@@ -129,6 +129,12 @@ BUTTON_TYPES = [
         command = 2014,
         allowedtypes = ALLDEFAULT,
     ),
+    SolaxModbusButtonEntityDescription( name = "Unlock Inverter - Advanced",
+        key = "unlock_inverter_advanced",
+        register = 0x00,
+        command = 6868,
+        allowedtypes = ALLDEFAULT,
+    ),
 ]
 
 # ================================= Number Declarations ============================================================
@@ -951,6 +957,13 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        allowedtypes=ALLDEFAULT,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Group Read Test",
+        key="group_read_test",
+        icon="mdi:solar-power",
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),

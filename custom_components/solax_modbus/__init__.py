@@ -286,7 +286,7 @@ class SolaXModbusHub:
     def read_modbus_data(self):
  	
         try:
-            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1()
+            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")   
 
@@ -883,6 +883,7 @@ class SolaXModbusHub:
         lock_states = decoder.decode_16bit_uint()
         if   lock_states == 0: self.data["lock_state"] = "Locked"
         elif lock_states == 1: self.data["lock_state"] = "Unlocked"
+        elif lock_states == 2: self.data["lock_state"] = "Unlocked - Advanced"
         else: self.data["lock_state"] = "Unknown"
         
         return True
@@ -1063,4 +1064,43 @@ class SolaXModbusHub:
         import_energy_today = decoder.decode_32bit_uint()
         self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
         # Is there anything of interest on Gen3 from 0x9c - 0xcd & on Gen4 0x9c - 0x120
+        return True
+    
+    def read_modbus_input_registers_2(self):
+
+        if self.invertertype & GEN2:
+            mult = 0.01
+        else:
+            mult = 0.1
+
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x1DD, count=33)
+
+        if realtime_data.isError():
+            return False
+
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            realtime_data.registers, Endian.Big, wordorder=Endian.Little
+        )
+        
+        system_inverter_number = decoder.decode_16bit_uint()
+        self.data["system_inverter_number"] = system_inverter_number
+
+        decoder.skip_bytes(40)
+
+        pv_group_power_1 = decoder.decode_32bit_uint()
+        self.data["pv_group_power_1"] = pv_group_power_1
+
+        pv_group_power_2 = decoder.decode_32bit_uint()
+        self.data["pv_group_power_2"] = pv_group_power_2
+
+        decoder.skip_bytes(8)
+
+        battery_group_power_charge = decoder.decode_32bit_int()
+        self.data["battery_group_power_charge"] = battery_group_power_charge
+
+        battery_group_current_charge = decoder.decode_32bit_int()
+        self.data["battery_group_current_charge"] = round(battery_group_current_charge * mult, 1)
+
+        self.data["group_read_test"] = f"{system_inverter_number}:{pv_group_power_1}W:{pv_group_power_2}W:{battery_group_power_charge}W:{battery_group_current_charge}A"
+
         return True
