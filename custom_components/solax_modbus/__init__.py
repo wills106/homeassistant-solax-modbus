@@ -618,7 +618,7 @@ class SolaXModbusHub:
             power_control_timeout = decoder.decode_16bit_uint()
             self.data["power_control_timeout"] = power_control_timeout
         
-            if (self.invertertype & AC) == 0: # 0x010C only for hybrid
+            if (self.invertertype & HYBRID): # 0x010C only for hybrid
                 eps_auto_restart_s = decoder.decode_16bit_uint()
                 if   eps_auto_restart_s == 0: self.data["eps_auto_restart"] = "Disabled"
                 elif eps_auto_restart_s == 1: self.data["eps_auto_restart"] = "Enabled"
@@ -630,51 +630,57 @@ class SolaXModbusHub:
                 eps_min_esc_soc = decoder.decode_16bit_uint()
                 self.data["eps_min_esc_soc"] = eps_min_esc_soc
             
-                # 0x010F for hybrid, 0x010C for AC
+                # 0x010F for hybrid
                 forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
                 self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
         
                 forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
                 self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
-            else: # AC Model - may need more reworking ...
-                 # 0x010F for hybrid, 0x010C for AC
+            elif (self.invertertype & AC): # AC Model - may need more reworking ...
+                 # 0x010C for AC
                 forcetime_period_1_max_capacity = decoder.decode_16bit_uint()
                 self.data["forcetime_period_1_max_capacity"] = forcetime_period_1_max_capacity
         
                 forcetime_period_2_max_capacity = decoder.decode_16bit_uint()
                 self.data["forcetime_period_2_max_capacity"] = forcetime_period_2_max_capacity
-                decoder.skip_bytes(6) 
 
+                ct_meter_setting_s = decoder.decode_16bit_uint()
+                if   ct_meter_setting_s == 0: self.data["ct_meter_setting"] = "Meter"
+                elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
+                else: self.data["ct_meter_setting"] = "Unknown"
+                decoder.skip_bytes(4) 
+            else: _LOGGER.error("must be either HYBRID or AC")
 
-        disch_cut_off_point_different_s = decoder.decode_16bit_uint() 
-        if   disch_cut_off_point_different_s == 0: self.data["disch_cut_off_point_different"] = "Disabled"
-        elif disch_cut_off_point_different_s == 1: self.data["disch_cut_off_point_different"] = "Enabled"
-        else: self.data["disch_cut_off_point_different"] = "Unknown"
+        if (self.invertertype & HYBRID): # 0X0111 hybrid models only, does not exist on AC
+            disch_cut_off_point_different_s = decoder.decode_16bit_uint() 
+            if   disch_cut_off_point_different_s == 0: self.data["disch_cut_off_point_different"] = "Disabled"
+            elif disch_cut_off_point_different_s == 1: self.data["disch_cut_off_point_different"] = "Enabled"
+            else: self.data["disch_cut_off_point_different"] = "Unknown"
         
-        if self.invertertype & GEN4: #0x0112
-            decoder.skip_bytes(2)
+            if self.invertertype & GEN4: #0x0112
+                decoder.skip_bytes(2)
 
-            disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
-            self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
+                disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
+                self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
 
-            decoder.skip_bytes(2)
-        else: # 0x0112
-            disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
-            self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
+                decoder.skip_bytes(2)
+            else: # 0x0112
+                disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
+                self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
         
-            disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
-            self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
+                disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
+                self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
         
-            earth_detect_x3_s = decoder.decode_16bit_uint()
-            if   earth_detect_x3_s == 0:  self.data["earth_detect_x3"] = "Disabled"
-            elif earth_detect_x3_s == 1:  self.data["earth_detect_x3"] = "Enabled"
-            else:  self.data["earth_detect_x3"] = "Unknown"
+                earth_detect_x3_s = decoder.decode_16bit_uint()
+                if   earth_detect_x3_s == 0:  self.data["earth_detect_x3"] = "Disabled"
+                elif earth_detect_x3_s == 1:  self.data["earth_detect_x3"] = "Enabled"
+                else:  self.data["earth_detect_x3"] = "Unknown"
         
-        ct_meter_setting_s = decoder.decode_16bit_uint()
-        if   ct_meter_setting_s == 0: self.data["ct_meter_setting"] = "Meter"
-        elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
-        else: self.data["ct_meter_setting"] = "Unknown"
-        # There are a further 29 registers after this on the Gen4
+            ct_meter_setting_s = decoder.decode_16bit_uint()
+            if   ct_meter_setting_s == 0: self.data["ct_meter_setting"] = "Meter"
+            elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
+            else: self.data["ct_meter_setting"] = "Unknown"
+            # There are a further 29 registers after this on the Gen4
         return True
 
     def read_modbus_input_registers_0(self):
