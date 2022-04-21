@@ -857,8 +857,10 @@ class SolaXModbusHub:
         total_yield = decoder.decode_32bit_uint()
         if self.invertertype & GEN4:
             self.data["total_yield"] = round(total_yield * 0.1, 1)
-        else:
+        elif self.invertertype & GEN3:
             self.data["total_yield"] = round(total_yield * 0.0001, 2)
+        else:
+            self.data["total_yield"] = round(total_yield * 0.000001, 2)
         
         lock_states = decoder.decode_16bit_uint()
         if   lock_states == 0: self.data["lock_state"] = "Locked"
