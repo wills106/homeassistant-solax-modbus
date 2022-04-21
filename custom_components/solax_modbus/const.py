@@ -884,7 +884,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Export Control Factory Limit",
@@ -1131,6 +1131,15 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Today's Solar Energy",
+        key="today_yield",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        allowedtypes= GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Total Solar Energy",
         key="solar_energy_total",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
@@ -1141,8 +1150,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Total Solar Energy",
-        key="solar_energy_total_gen2",
+        name="Today's Yield",
+        key="today_s_yield_gen2",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
