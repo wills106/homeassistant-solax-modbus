@@ -737,7 +737,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=ALLDEFAULT,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Battery Input Energy",
+        name="Battery Input Energy Total",
         key="input_energy_charge",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:solar-power",
@@ -747,7 +747,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=ALLDEFAULT,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Battery Output Energy",
+        name="Battery Output Energy Total",
         key="output_energy_charge",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:solar-power",
@@ -1027,12 +1027,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
     ),
-    #SolaXModbusSensorEntityDescription(
-    #    name="Module Name",
-    #    key="modulename",
-    #    entity_registry_enabled_default=False,
-    #    allowedtypes=ALLDEFAULT,
-    #),
     SolaXModbusSensorEntityDescription(
         name="Normal Runtime",
         key="normal_runtime",
