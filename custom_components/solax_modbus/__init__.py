@@ -923,8 +923,8 @@ class SolaXModbusHub:
         
         # Hopefully add Solar Yield for Gen2 Energy Dashboard
         if self.invertertype & GEN2:
-            solar_energy_total_gen2 =  decoder.decode_32bit_int()
-            self.data["solar_energy_total_gen2"] = round(solar_energy_total_gen2 * 0.1, 2)
+            today_s_yield_gen2 =  decoder.decode_32bit_int()
+            self.data["today_s_yield_gen2"] = round(today_s_yield_gen2 * 0.1, 2)
 
         else:
             # @todo Rename variable.
