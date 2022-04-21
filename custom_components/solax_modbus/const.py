@@ -51,7 +51,7 @@ X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1               = 0x0100
 X3               = 0x0200
 
-HYB_GROUP_BITS = 0x0C00 # hybrid or AC flags
+HYB_GROUP_BITS = 0x0C000 # hybrid or AC flags
 HYBRID           = 0x0400
 AC               = 0x0800
 
@@ -84,11 +84,6 @@ DEFAULT_NAME = "SolaX"
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
-CONF_READ_GEN2X1 = "read_gen2_x1"
-CONF_READ_GEN3X1 = "read_gen3_x1"
-CONF_READ_GEN3X3 = "read_gen3_x3"
-CONF_READ_GEN4X1 = "read_gen4_x1"
-CONF_READ_GEN4X3 = "read_gen4_x3"
 CONF_READ_X1_EPS = "read_x1_eps"
 CONF_READ_X3_EPS = "read_x3_eps"
 CONF_MODBUS_ADDR = "read_modbus_addr"
@@ -98,11 +93,6 @@ CONF_SolaX_HUB   = "solax_hub"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_SERIAL      = False
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
-DEFAULT_READ_GEN2X1 = False
-DEFAULT_READ_GEN3X1 = False
-DEFAULT_READ_GEN3X3 = False
-DEFAULT_READ_GEN4X1 = False
-DEFAULT_READ_GEN4X3 = False
 DEFAULT_READ_X1_EPS = False
 DEFAULT_READ_X3_EPS = False
 
@@ -181,26 +171,6 @@ NUMBER_TYPES = [
         allowedtypes = GEN2 | GEN3 | GEN4,
         max_exceptions = MAX_CURRENTS,
     ),
-    #SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
-    #    key = "battery_charge_max_current",
-    #    register = 0x24,
-    #    fmt = "f",
-    #    min_value = 0,
-    #    max_value = 20,
-    #    step = 0.1,
-    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-    #    allowedtypes = GEN3,
-    #),
-    #SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
-    #    key = "battery_charge_max_current",
-    #    register = 0x24,
-    #    fmt = "f",
-    #    min_value = 0,
-    #    max_value = 25,
-    #    step = 0.1,
-    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-    #    allowedtypes = GEN4,
-    #),
     SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", 
         key = "battery_discharge_max_current",
         register = 0x25,
@@ -212,26 +182,6 @@ NUMBER_TYPES = [
         allowedtypes = GEN2 | GEN3 | GEN4,
         max_exceptions = MAX_CURRENTS,
     ),
-    #SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
-    #    key = "battery_discharge_max_current",
-    #    register = 0x25,
-    #    fmt = "f",
-    #    min_value = 0,
-    #    max_value = 20,
-    #    step = 0.1,
-    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-    #    allowedtypes = GEN3,
-    #),
-    #SolaxModbusNumberEntityDescription( name = "Battery Discharge Max Current", # multiple versions depending on GEN
-    #    key = "battery_discharge_max_current",
-    #    register = 0x25,
-    #    fmt = "f",
-    #    min_value = 0,
-    #    max_value = 25,
-    #    step = 0.1,
-    #    unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-    #    allowedtypes = GEN4,
-    #),
     SolaxModbusNumberEntityDescription( name = "ForceTime Period 1 Max Capacity",
         key ="forcetime_period_1_max_capacity",
         register = 0xA4,

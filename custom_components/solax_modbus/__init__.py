@@ -24,18 +24,8 @@ from .const import (
     CONF_MODBUS_ADDR,
     CONF_SERIAL,
     CONF_SERIAL_PORT,
-    CONF_READ_GEN2X1,
-    CONF_READ_GEN3X1,
-    CONF_READ_GEN3X3,
-    CONF_READ_GEN4X1,
-    CONF_READ_GEN4X3,
     CONF_READ_X1_EPS,
     CONF_READ_X3_EPS,
-    DEFAULT_READ_GEN2X1,
-    DEFAULT_READ_GEN3X1,
-    DEFAULT_READ_GEN3X3,
-    DEFAULT_READ_GEN4X1,
-    DEFAULT_READ_GEN4X3,
     DEFAULT_READ_X1_EPS,
     DEFAULT_READ_X3_EPS,
     DEFAULT_SERIAL,
@@ -53,11 +43,6 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): cv.positive_int,
         vol.Required(CONF_SERIAL,      default=DEFAULT_SERIAL): cv.boolean,
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
-        vol.Optional(CONF_READ_GEN2X1, default=DEFAULT_READ_GEN2X1): cv.boolean,
-        vol.Optional(CONF_READ_GEN3X1, default=DEFAULT_READ_GEN3X1): cv.boolean,
-        vol.Optional(CONF_READ_GEN3X3, default=DEFAULT_READ_GEN3X3): cv.boolean,
-        vol.Optional(CONF_READ_GEN4X1, default=DEFAULT_READ_GEN4X1): cv.boolean,
-        vol.Optional(CONF_READ_GEN4X3, default=DEFAULT_READ_GEN4X3): cv.boolean,
         vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
         vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
@@ -92,11 +77,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     serial = entry.data[CONF_SERIAL]
     serial_port = entry.data[CONF_SERIAL_PORT]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
-    read_gen2x1 = entry.data.get(CONF_READ_GEN2X1, False)
-    read_gen3x1 = entry.data.get(CONF_READ_GEN3X1, False)
-    read_gen3x3 = entry.data.get(CONF_READ_GEN3X3, False)
-    read_gen4x1 = entry.data.get(CONF_READ_GEN4X1, False)
-    read_gen4x3 = entry.data.get(CONF_READ_GEN4X3, False)
     read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
     read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
 
