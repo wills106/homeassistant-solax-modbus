@@ -88,9 +88,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     seriesnumber = 'unknown'
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
     if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
-    else: decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-    seriesnumber = decoder.decode_string(14).decode("ascii")
-    hub.seriesnumber = seriesnumber
+    else: 
+        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+        seriesnumber = decoder.decode_string(14).decode("ascii")
+        hub.seriesnumber = seriesnumber
     _LOGGER.info(f"serial number = {seriesnumber}")
 
     invertertype = 0
