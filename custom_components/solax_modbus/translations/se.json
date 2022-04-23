@@ -10,8 +10,7 @@
           "read_modbus_addr": "The modbus address of the Power Inverter",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
-          "read_x1_eps": "X1 EPS",
-          "read_x3_eps": "X3 EPS",
+          "read_eps": "EPS",
           "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
         }
       }

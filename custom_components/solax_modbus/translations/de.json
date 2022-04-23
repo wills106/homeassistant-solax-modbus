@@ -10,8 +10,7 @@
           "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
           "read_serial" : "Serieller RS485 Port (Hostname auf localhost setzen)",
           "read_serial_port": "Name des seriellen Ports",
-          "read_x1_eps": "X1 EPS",
-          "read_x3_eps": "X3 EPS",
+          "read_eps": "EPS",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
         }
       }

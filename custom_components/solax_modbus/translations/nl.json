@@ -10,8 +10,7 @@
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
-          "read_x1_eps": "X1 EPS",
-          "read_x3_eps": "X3 EPS",
+          "read_eps": "EPS",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
         }
       }
