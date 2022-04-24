@@ -158,6 +158,17 @@ NUMBER_TYPES = [
         state = "battery_capacity_charge",
         allowedtypes = GEN2 | GEN3,
     ),
+    SolaxModbusNumberEntityDescription( name = "Battery Minimum Capacity - Grid-tied",
+        key = "battery_minimum_capacity_gridtied",
+        register = 0xa7,
+        fmt = "i",
+        min_value = 28,
+        max_value = 99,
+        step = 1,
+        unit_of_measurement = PERCENTAGE,
+        state = "battery_minimum_capacity_gridtied",
+        allowedtypes = HYBRID | GEN3,
+    ),
     SolaxModbusNumberEntityDescription( name = "Battery Charge Max Current", # multiple versions depending on GEN
         key = "battery_charge_max_current",
         register = 0x24,
@@ -554,25 +565,25 @@ SELECT_TYPES = [
         key = "discharger_start_time_1",
         register = 0x28,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
+        allowedtypes = GEN2, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 1",
         key = "discharger_end_time_1",
         register = 0x29,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
+        allowedtypes = GEN2, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 2",
         key = "discharger_start_time_2",
         register = 0x2C,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
+        allowedtypes = GEN2, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 2",
         key = "discharger_end_time_2",
         register = 0x2D,
         options = TIME_OPTIONS,
-        allowedtypes = GEN2 | GEN3, # Probably remove Gen3 in future, not in Doc's
+        allowedtypes = GEN2, # Probably remove Gen3 in future, not in Doc's
     ),
     SolaxModbusSelectEntityDescription( name = "Selfuse Night Charge Enable",
         key = "selfuse_nightcharge_enable",
@@ -695,11 +706,25 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=ALLDEFAULT,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Battery Install Capacity",
+        key="battery_install_capacity",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN3,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Battery Minimum Capacity",
         key="battery_minimum_capacity",
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 #ALLDEFAULT & ~GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Minimum Capacity - Grid-tied",
+        key="battery_minimum_capacity_gridtied",
+        native_unit_of_measurement=PERCENTAGE,
+        entity_registry_enabled_default=False,
+        allowedtypes= HYBRID | GEN3, 
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Package Number",
@@ -990,6 +1015,11 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
         allowedtypes=ALLDEFAULT,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Inverter Model Number",
+        key="inverter_model_number",
+        allowedtypes= GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Power",

@@ -524,7 +524,7 @@ class SolaXModbusHub:
         ####
 
         else:
-            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xfd, count=25)
+            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xe8, count=46)
 
             if inverter_data.isError():
                 return False
@@ -532,6 +532,14 @@ class SolaXModbusHub:
             decoder = BinaryPayloadDecoder.fromRegisters(
                 inverter_data.registers, byteorder=Endian.Big
             )
+            
+            battery_install_capacity = decoder.decode_16bit_uint()
+            self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
+            
+            inverter_model_number = decoder.decode_string(20).decode("ascii")
+            self.data["inverter_model_number"] = str(inverter_model_number)
+            
+            decoder.skip_bytes(20)
         
             backup_gridcharge_s = decoder.decode_16bit_uint()
             if   backup_gridcharge_s == 0: self.data["backup_gridcharge"] = "Disabled"
@@ -641,8 +649,8 @@ class SolaXModbusHub:
 
                 decoder.skip_bytes(2)
             else: # 0x0112
-                disch_cut_off_capacity_grid_mode = decoder.decode_16bit_uint()
-                self.data["disch_cut_off_capacity_grid_mode"] = disch_cut_off_capacity_grid_mode
+                battery_minimum_capacity_gridtied = decoder.decode_16bit_uint()
+                self.data["battery_minimum_capacity_gridtied"] = battery_minimum_capacity_gridtied
         
                 disch_cut_off_voltage_grid_mode = decoder.decode_16bit_uint()
                 self.data["disch_cut_off_voltage_grid_mode"] = round(disch_cut_off_voltage_grid_mode * 0.1, 1)
