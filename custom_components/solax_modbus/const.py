@@ -51,7 +51,7 @@ X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1               = 0x0100
 X3               = 0x0200
 
-HYB_GROUP_BITS = 0x0C000 # hybrid or AC flags
+HYB_GROUP_BITS = 0x0C00 # hybrid or AC flags
 HYBRID           = 0x0400
 AC               = 0x0800
 
