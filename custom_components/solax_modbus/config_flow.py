@@ -15,13 +15,11 @@ from .const import (
     DEFAULT_SERIAL_PORT,
     DEFAULT_MODBUS_ADDR,
 	DOMAIN,
-	CONF_READ_X1_EPS,
-	CONF_READ_X3_EPS,
+	CONF_READ_EPS,
     CONF_SERIAL,
     CONF_SERIAL_PORT,
     CONF_MODBUS_ADDR,
-	DEFAULT_READ_X1_EPS,
-	DEFAULT_READ_X3_EPS,
+	DEFAULT_READ_EPS,
 )
 
 DATA_SCHEMA = vol.Schema(
@@ -32,8 +30,7 @@ DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_SERIAL, default=DEFAULT_SERIAL): bool,
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): str,
-        vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): bool,
-        vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): bool,
+        vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
     }
 )

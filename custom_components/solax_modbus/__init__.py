@@ -24,10 +24,8 @@ from .const import (
     CONF_MODBUS_ADDR,
     CONF_SERIAL,
     CONF_SERIAL_PORT,
-    CONF_READ_X1_EPS,
-    CONF_READ_X3_EPS,
-    DEFAULT_READ_X1_EPS,
-    DEFAULT_READ_X3_EPS,
+    CONF_READ_EPS,
+    DEFAULT_READ_EPS,
     DEFAULT_SERIAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_MODBUS_ADDR,
@@ -43,8 +41,7 @@ SOLAX_MODBUS_SCHEMA = vol.Schema(
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): cv.positive_int,
         vol.Required(CONF_SERIAL,      default=DEFAULT_SERIAL): cv.boolean,
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
-        vol.Optional(CONF_READ_X1_EPS, default=DEFAULT_READ_X1_EPS): cv.boolean,
-        vol.Optional(CONF_READ_X3_EPS, default=DEFAULT_READ_X3_EPS): cv.boolean,
+        vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): cv.boolean,
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
     }
 )
@@ -77,8 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     serial = entry.data[CONF_SERIAL]
     serial_port = entry.data[CONF_SERIAL_PORT]
     scan_interval = entry.data[CONF_SCAN_INTERVAL]
-    read_x1_eps = entry.data.get(CONF_READ_X1_EPS, False)
-    read_x3_eps = entry.data.get(CONF_READ_X3_EPS, False)
+    read_eps = entry.data.get(CONF_READ_EPS, False)
 
 
     _LOGGER.debug("Setup %s.%s", DOMAIN, name)
@@ -90,11 +86,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # read serial number
     seriesnumber = 'unknown'
-    inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=21)
+    inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
     if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
-    else: decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-    seriesnumber = decoder.decode_string(14).decode("ascii")
-    hub.seriesnumber = seriesnumber
+    else: 
+        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+        seriesnumber = decoder.decode_string(14).decode("ascii")
+        hub.seriesnumber = seriesnumber
     _LOGGER.info(f"serial number = {seriesnumber}")
 
     invertertype = 0
@@ -115,9 +112,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     else: 
         _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
 
+    if read_eps: invertertype = invertertype | EPS 
 
-    if read_x1_eps: invertertype = invertertype | EPS # replace by single flag
-    if read_x3_eps: invertertype = invertertype | EPS # replace by single flag
     hub.invertertype = invertertype
     for component in PLATFORMS:
         hass.async_create_task(

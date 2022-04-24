@@ -84,8 +84,7 @@ DEFAULT_NAME = "SolaX"
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
-CONF_READ_X1_EPS = "read_x1_eps"
-CONF_READ_X3_EPS = "read_x3_eps"
+CONF_READ_EPS    = "read_eps"
 CONF_MODBUS_ADDR = "read_modbus_addr"
 CONF_SERIAL      = "read_serial"
 CONF_SERIAL_PORT = "read_serial_port"
@@ -93,8 +92,7 @@ CONF_SolaX_HUB   = "solax_hub"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_SERIAL      = False
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
-DEFAULT_READ_X1_EPS = False
-DEFAULT_READ_X3_EPS = False
+DEFAULT_READ_EPS = False
 
 
 # ================================= Button Declarations ============================================================

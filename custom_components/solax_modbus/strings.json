@@ -10,13 +10,7 @@
           "read_modbus_addr": "The modbus address of the Inverter",
           "read_serial" : "RS485 Serial Port (set hostname to localhost)",
           "read_serial_port": "Serial port name",
-          "read_gen2_x1": "SolaX Gen2 X1",
-          "read_gen3_x1": "SolaX Gen3 X1",
-          "read_gen3_x3": "SolaX Gen3 X3",
-          "read_gen4_x1": "SolaX Gen4 X1",
-          "read_gen4_x3": "SolaX Gen4 X3",
-          "read_x1_eps": "X1 EPS",
-          "read_x3_eps": "X3 EPS",
+          "read_eps": "EPS",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       }
