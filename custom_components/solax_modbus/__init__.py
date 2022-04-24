@@ -523,7 +523,7 @@ class SolaXModbusHub:
         #
         ####
 
-        elif self.invertertype & GEN3:
+        else:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xe8, count=46)
 
             if inverter_data.isError():
@@ -532,12 +532,16 @@ class SolaXModbusHub:
             decoder = BinaryPayloadDecoder.fromRegisters(
                 inverter_data.registers, byteorder=Endian.Big
             )
+            if (self.invertertype & AC | GEN2 ):
+                
+                decoder.skip_bytes(22)
             
-            battery_install_capacity = decoder.decode_16bit_uint()
-            self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
+            else:
+                battery_install_capacity = decoder.decode_16bit_uint()
+                self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
             
-            inverter_model_number = decoder.decode_string(20).decode("ascii")
-            self.data["inverter_model_number"] = str(inverter_model_number)
+                inverter_model_number = decoder.decode_string(20).decode("ascii")
+                self.data["inverter_model_number"] = str(inverter_model_number)
             
             decoder.skip_bytes(20)
         
