@@ -1172,6 +1172,16 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Total Solar Energy",
+        key="total_yield",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Today's Yield",
         key="today_s_yield_gen2",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
@@ -1222,7 +1232,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes=GEN3 | GEN4,
     ),
 
 
