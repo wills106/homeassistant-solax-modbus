@@ -578,8 +578,6 @@ class SolaXModbusHub:
             elif grid_service_x3_s == 1: self.data["grid_service_x3"] = "Enabled"
             else: self.data["grid_service_x3"] = "Unknown"
         
-        else:
-        
         #0x0106
         phase_power_balance_x3_s = decoder.decode_16bit_uint()
         if   phase_power_balance_x3_s == 0: self.data["phase_power_balance_x3"] = "Disabled"
