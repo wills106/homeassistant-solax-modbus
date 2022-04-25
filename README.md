@@ -90,7 +90,7 @@ Any manual updates / HACS updates require a restart of Home Assistant to take ef
 - Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
 
 If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}"
-Please see #26 providing the details asked for.
+Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modbus/discussions/26) providing the details asked for.
 
 <B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
 - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
