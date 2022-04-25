@@ -13,7 +13,7 @@ You can have multiple instances of this Integration, just change the default Pre
 Supports:
 
 - Gen2 Hybrid
-- Gen3 Hybrid
+- Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
 
 Gen2, Gen3 & Gen4
@@ -29,7 +29,7 @@ Gen2 & Gen3
 - Charge periods in Force Time Use Mode
 - Min Battery Capacity
 
-Gen3 & Gen4
+Gen2, Gen3 & Gen4
 
 - Sensors support the "Energy" Dashboard in 2021.08.x and onwards.
 
@@ -88,6 +88,9 @@ After reboot of Home-Assistant, this integration can be configured through the i
 
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
 - Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
+
+If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}"
+Please see #26 providing the details asked for.
 
 <B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
 - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
