@@ -103,6 +103,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('HUE5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late 5kW
     elif seriesnumber.startswith('XRE3'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 3.0 & 3.7kW?
     elif seriesnumber.startswith('XAC36'): invertertype = AC | GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
+    elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Might still fail Serial check as serial possibly at 0x300
     elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
