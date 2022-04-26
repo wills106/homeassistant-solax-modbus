@@ -52,13 +52,13 @@ X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1               = 0x0100
 X3               = 0x0200
 
-HYB_GROUP_BITS = 0x0C00 # hybrid or AC flags
-HYBRID           = 0x0400
-PV               = 0x0600 # Needs further work on PV Only Inverters
+HYB_GROUP_BITS = 0x1C00 # hybrid or AC or PV flags
+PV               = 0x0400 # Needs further work on PV Only Inverters
 AC               = 0x0800
+HYBRID           = 0x1000
 
-EPS_GROUP_BITS = 0x1000  # EPS flag
-EPS              = 0x1000
+EPS_GROUP_BITS = 0x8000  # EPS flag
+EPS              = 0x8000
 
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
