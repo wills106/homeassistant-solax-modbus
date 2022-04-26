@@ -46,6 +46,7 @@ GEN_GROUP_BITS = 0x00FF # inverter generation bits
 GEN2             = 0x0002
 GEN3             = 0x0004
 GEN4             = 0x0008
+#MIC             = 0x0010 Might be needed if it turns out the MIC uses different registers to the GenX
 
 X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1               = 0x0100
@@ -53,6 +54,7 @@ X3               = 0x0200
 
 HYB_GROUP_BITS = 0x0C00 # hybrid or AC flags
 HYBRID           = 0x0400
+PV               = 0x0600 # Needs further work on PV Only Inverters
 AC               = 0x0800
 
 EPS_GROUP_BITS = 0x1000  # EPS flag
@@ -131,9 +133,13 @@ MAX_CURRENTS = [
     ('L50E',  100 ), # Gen2 X1 SK-TL
     ('U50',    50 ), # Gen2 X1 SK-SU
     ('F3E',    25 ), # RetroFit X3
+    ('H3DE',    25 ), # Gen3 X3 might need changing?
+    ('H3PE',    25 ), # Gen3 X3 might need changing?
     ('H3UE',    25 ), # Gen3 X3
-    ('H34',    25 ), # Gen4 X3
     ('H450',   30 ), # Gen4 X1
+    ('H460',   25 ), # Gen4 X1 might need changing to 30?
+    ('H475',   25 ), # Gen4 X1 might need changing to 30?
+    ('H34',    25 ), # Gen4 X3
     ### All known Inverters added
 ]
 
