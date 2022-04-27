@@ -736,7 +736,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Battery Package Number",
         key="battery_package_number",
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Power Charge",
@@ -751,7 +751,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="battery_soh",
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes=ALLDEFAULT,
+        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Type",
@@ -1025,6 +1025,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Inverter Model Number",
         key="inverter_model_number",
+        entity_registry_enabled_default=False,
         allowedtypes= GEN3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1079,14 +1080,14 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="pv_current_1",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 2",
         key="pv_current_2",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 1",
@@ -1094,7 +1095,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 2",
@@ -1102,21 +1103,21 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",
         key="pv_voltage_1",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
         key="pv_voltage_2",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Total Power",
@@ -1124,7 +1125,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="Registration Code",
@@ -1368,7 +1369,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Discharge Cut Off Capacity Grid Mode",
         key="disch_cut_off_capacity_grid_mode",
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= X1 | GEN4,
         entity_registry_enabled_default=False,
     ),
     SolaXModbusSensorEntityDescription(
