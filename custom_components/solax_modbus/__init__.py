@@ -16,7 +16,7 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
 
-from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -103,6 +103,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('HUE5'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late 5kW
     elif seriesnumber.startswith('XRE3'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 3.0 & 3.7kW?
     elif seriesnumber.startswith('XAC36'): invertertype = AC | GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
+    elif seriesnumber.startswith('XM3'):  invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
     elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Might still fail Serial check as serial possibly at 0x300
     elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
