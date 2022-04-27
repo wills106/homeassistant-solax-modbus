@@ -1366,24 +1366,17 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Discharge Cut Off Capacity Grid Mode",
-        key="disch_cut_off_capacity_grid_mode",
-        native_unit_of_measurement=PERCENTAGE,
-        allowedtypes= X1 | GEN4,
-        entity_registry_enabled_default=False,
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Discharge Cut Off Point Different",
         key="disch_cut_off_point_different",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Discharge Cut Off Voltage Grid Mode",
         key="disch_cut_off_voltage_grid_mode",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Today's Export Energy",
