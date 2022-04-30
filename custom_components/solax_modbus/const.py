@@ -139,7 +139,8 @@ MAX_CURRENTS = [
     ('H450',   30 ), # Gen4 X1
     ('H460',   25 ), # Gen4 X1 might need changing to 30?
     ('H475',   25 ), # Gen4 X1 might need changing to 30?
-    ('H34',    25 ), # Gen4 X3
+    ('H34B',    30 ), # Gen4 X3 B
+    ('H34B',    25 ), # Gen4 X3 T
     ### All known Inverters added
 ]
 
