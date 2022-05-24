@@ -130,6 +130,10 @@ BUTTON_TYPES = [
 # ================================= Number Declarations ============================================================
 
 MAX_CURRENTS = [
+    ('L30E',  100 ), # Gen2 X1 SK-TL
+    ('U30',    50 ), # Gen2 X1 SK-SU
+    ('L37E',  100 ), # Gen2 X1 SK-TL
+    ('U37',    50 ), # Gen2 X1 SK-SU
     ('L50E',  100 ), # Gen2 X1 SK-TL
     ('U50',    50 ), # Gen2 X1 SK-SU
     ('F3E',    25 ), # RetroFit X3

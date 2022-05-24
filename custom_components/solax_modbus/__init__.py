@@ -97,8 +97,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     invertertype = 0
 
     # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL
-    elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU
+    if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
+    elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
+    elif seriesnumber.startswith('L37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+    elif seriesnumber.startswith('U37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+    elif seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
+    elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
     elif seriesnumber.startswith('H1E'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
     elif seriesnumber.startswith('HCC'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
     elif seriesnumber.startswith('HUE'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
