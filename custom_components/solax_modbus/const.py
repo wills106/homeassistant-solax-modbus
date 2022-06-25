@@ -1299,8 +1299,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
      ),
     SolaXModbusSensorEntityDescription(
-        name="Feedin Night Charge Min SOC",
-        key="feedin_nightcharge_min_soc",
+        name="Feedin Discharge Min SOC",
+        key="feedin_discharge_min_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
@@ -1313,8 +1313,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
      ),
     SolaXModbusSensorEntityDescription(
-        name="Backup Night Charge Min SOC",
-        key="backup_nightcharge_min_soc",
+        name="Backup Discharge Min SOC",
+        key="backup_discharge_min_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
