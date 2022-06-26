@@ -140,9 +140,10 @@ MAX_CURRENTS = [
     ('H3DE',    25 ), # Gen3 X3 might need changing?
     ('H3PE',    25 ), # Gen3 X3 might need changing?
     ('H3UE',    25 ), # Gen3 X3
-    ('H450',   30 ), # Gen4 X1
-    ('H460',   25 ), # Gen4 X1 might need changing to 30?
-    ('H475',   25 ), # Gen4 X1 might need changing to 30?
+    ('H437',   30 ), # Gen4 X1 3.7kW
+    ('H450',   30 ), # Gen4 X1 5kW
+    ('H460',   30 ), # Gen4 X1 6kW
+    ('H475',   30 ), # Gen4 X1 7.5kW
     ('H34B',    30 ), # Gen4 X3 B
     ('H34T',    25 ), # Gen4 X3 T
     ### All known Inverters added
