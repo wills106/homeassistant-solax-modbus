@@ -396,10 +396,10 @@ class SolaXModbusHub:
             self.data["selfuse_nightcharge_upper_soc"] = selfuse_nightcharge_upper_soc
             tmp = decoder.decode_16bit_uint()
             self.data["feedin_nightcharge_upper_soc"] = tmp >> 8
-            self.data["feedin_nightcharge_min_soc"] = tmp % 256	
+            self.data["feedin_discharge_min_soc"] = tmp % 256	
             tmp = decoder.decode_16bit_uint()
             self.data["backup_nightcharge_upper_soc"] = tmp >> 8
-            self.data["backup_nightcharge_min_soc"] = tmp % 256 	
+            self.data["backup_discharge_min_soc"] = tmp % 256 	
             tmp = decoder.decode_16bit_uint()
             self.data["charger_start_time_1"] = Gen4Timestring(tmp)
             tmp = decoder.decode_16bit_uint()
