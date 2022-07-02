@@ -149,13 +149,22 @@ MAX_CURRENTS = [
     ### All known Inverters added
 ]
 
+EXPORT_LIMIT_SCALE_EXCEPTIONS = [
+    ('H34', 10), # assuming all Gen4s 
+    ('H4', 10 ), # assuming all Gen4s
+]
+
+
+
 @dataclass
 class SolaxModbusNumberEntityDescription(NumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     register: int = None
     fmt: str = None
+    scale: float = 1 
     state: str = None
-    max_exceptions: list = None  #  None or dict with structue { 'U50EC' : 40 } 
+    max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
+    scale_exceptions: list = None #
     blacklist: list = None # None or list of serial number prefixes like 
 
 NUMBER_TYPES = [
@@ -229,6 +238,7 @@ NUMBER_TYPES = [
         fmt = "i",
         min_value = 0,
         max_value = 60000,
+        scale = 10, # GEN4 scale
         step = 500,
         unit_of_measurement = POWER_WATT,
         allowedtypes = GEN4,
@@ -681,6 +691,8 @@ SELECT_TYPES = [
 class SolaXModbusSensorEntityDescription(SensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    scale: float = 1
+    scale_exceptions: list = None
     blacklist: list = None # None or list of serial number prefixes
 
 
@@ -943,6 +955,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         entity_registry_enabled_default=False,
         allowedtypes=ALLDEFAULT,
+        scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Export Total",
