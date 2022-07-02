@@ -238,10 +238,11 @@ NUMBER_TYPES = [
         fmt = "i",
         min_value = 0,
         max_value = 60000,
-        scale = 10, # GEN4 scale
+        scale = 1, # GEN 2,3 scale
         step = 500,
         unit_of_measurement = POWER_WATT,
-        allowedtypes = GEN4,
+        scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
+        allowedtypes = GEN2 | GEN3 | GEN4 ,
     ),
     SolaxModbusNumberEntityDescription( name = "Selfuse Discharge Min SOC",
         key ="selfuse_discharge_min_soc",
