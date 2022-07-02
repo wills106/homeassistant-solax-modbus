@@ -56,6 +56,10 @@ class SolaXModbusSensor(SensorEntity):
         self._attr_device_info = device_info
         self._hub = hub
         self.entity_description: SolaXModbusSensorEntityDescription = description
+        self._attr_scale = description.scale
+        if description.scale_exceptions:
+            for (prefix, value,) in description.scale_exceptions: 
+                if hub.seriesnumber.startswith(prefix): self._attr_scale = value
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -70,8 +74,8 @@ class SolaXModbusSensor(SensorEntity):
 
     @callback
     def _update_state(self):
-        if self._key in self._hub.data:
-            self._state = self._hub.data[self._key]
+        if self.entity_description.key in self._hub.data:
+            self._state = self._hub.data[self.entity_description.key]
 
     @property
     def name(self):
@@ -86,7 +90,7 @@ class SolaXModbusSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         return (
-        	self._hub.data[self.entity_description.key]
+        	self._hub.data[self.entity_description.key]*self._attr_scale
         	if self.entity_description.key in self._hub.data
         	else None
         )
