@@ -55,7 +55,7 @@ class SolaXModbusNumber(NumberEntity):
             for (prefix, value,) in number_info.max_exceptions: 
                 if hub.seriesnumber.startswith(prefix): self._attr_max_value = value
         if number_info.scale_exceptions:
-            for (prefix, value,) in number_info.max_exceptions: 
+            for (prefix, value,) in number_info.scale_exceptions: 
                 if hub.seriesnumber.startswith(prefix): self._attr_scale = value
         self._attr_step = number_info.step
         self._attr_unit_of_measurement = number_info.unit_of_measurement
