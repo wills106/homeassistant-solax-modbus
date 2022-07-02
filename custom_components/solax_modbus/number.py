@@ -116,5 +116,5 @@ class SolaXModbusNumber(NumberEntity):
 
         self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
 
-        self._hub.data[self._key] = value
+        self._hub.data[self._key] = value/self._attr_scale
         self.async_write_ha_state()
