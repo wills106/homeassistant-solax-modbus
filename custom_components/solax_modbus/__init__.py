@@ -468,13 +468,11 @@ class SolaXModbusHub:
             elif allow_grid_charges == 3: self.data["allow_grid_charge"] = "Both Allowed"
             else:  self.data["allow_grid_charge"] = "Unknown"
         
-        if self.invertertype & (GEN2 | GEN3) : factor = 0.1 # documentation not correct for Gen2 and Gen3
-        else: factor = 1 
+        # Scaling was made up, thinking it actually represented the limits
         export_control_factory_limit = decoder.decode_16bit_uint()
-        self.data["export_control_factory_limit"] = round(export_control_factory_limit*factor, 1)
-        # if self.read_gen2x3: factor = 10 # different scaling for Gen2 X3 user limit ??
+        self.data["export_control_factory_limit"] = export_control_factory_limit
         export_control_user_limit = decoder.decode_16bit_uint()
-        self.data["export_control_user_limit"] = round(export_control_user_limit*factor, 1)
+        self.data["export_control_user_limit"] = export_control_user_limit
         
         eps_mutes = decoder.decode_16bit_uint()
         if   eps_mutes == 0: self.data["eps_mute"] = "Off"
@@ -565,13 +563,17 @@ class SolaXModbusHub:
             elif backup_gridcharge_s == 1: self.data["backup_gridcharge"] = "Enabled"
             else: self.data["backup_gridcharge"] = "Unknown"
         
-            backup_charge_start_h = decoder.decode_16bit_uint()        
-            backup_charge_start_m = decoder.decode_16bit_uint()
-            self.data["backup_charge_start"] = f"{backup_charge_start_h}:{backup_charge_start_m}"
+            backup_charge_start_h = str(decoder.decode_16bit_uint())
+            self.data["backup_charge_start_h"] = backup_charge_start_h
+            backup_charge_start_m = str(decoder.decode_16bit_uint())
+            self.data["backup_charge_start_m"] = backup_charge_start_m
+            self.data["backup_charge_start"] = f"{backup_charge_start_h.zfill(2)}:{backup_charge_start_m.zfill(2)}"
         
-            backup_charge_end_h = decoder.decode_16bit_uint()        
-            backup_charge_end_m = decoder.decode_16bit_uint()
-            self.data["backup_charge_end"] = f"{backup_charge_end_h}:{backup_charge_end_m}"
+            backup_charge_end_h = str(decoder.decode_16bit_uint())
+            self.data["backup_charge_end_h"] = backup_charge_end_h
+            backup_charge_end_m = str(decoder.decode_16bit_uint())
+            self.data["backup_charge_end_m"] = backup_charge_end_m
+            self.data["backup_charge_end"] = f"{backup_charge_end_h.zfill(2)}:{backup_charge_end_m.zfill(2)}"
         
             was4777_power_manager_s = decoder.decode_16bit_uint()
             if   was4777_power_manager_s == 0: self.data["was4777_power_manager"] = "Disabled"

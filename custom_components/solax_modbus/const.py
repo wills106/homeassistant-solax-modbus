@@ -27,6 +27,7 @@ from homeassistant.const import (
     POWER_WATT,
     TEMP_CELSIUS,
     TIME_HOURS,
+    TIME_MINUTES,
 )
 
 
@@ -152,6 +153,7 @@ MAX_CURRENTS = [
 EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H34', 10), # assuming all Gen4s 
     ('H4', 10 ), # assuming all Gen4s
+#    ('H1E', 10 ), # assuming all Gen4s
 ]
 
 
@@ -303,6 +305,46 @@ NUMBER_TYPES = [
         step = 1,
         unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
+    ),
+    SolaxModbusNumberEntityDescription( name = "Backup Charge Start Hours",
+        key = "backup_charge_start_h", 
+        register = 0x95,
+        fmt = "i",
+        min_value = 0,
+        max_value = 23,
+        step = 1,
+        unit_of_measurement = TIME_HOURS,
+        allowedtypes = GEN3,
+    ),
+    SolaxModbusNumberEntityDescription( name = "Backup Charge Start Minutes",
+        key = "backup_charge_start_m",
+        register = 0x96,
+        fmt = "i",
+        min_value = 0,
+        max_value = 59,
+        step = 1,
+        unit_of_measurement = TIME_MINUTES,
+        allowedtypes = GEN3,
+    ),
+    SolaxModbusNumberEntityDescription( name = "Backup Charge End Hours",
+        key = "backup_charge_end_h", 
+        register = 0x97,
+        fmt = "i",
+        min_value = 0,
+        max_value = 23,
+        step = 1,
+        unit_of_measurement = TIME_HOURS,
+        allowedtypes = GEN3,
+    ),
+    SolaxModbusNumberEntityDescription( name = "Backup Charge End Minutes",
+        key = "backup_charge_end_m",
+        register = 0x98,
+        fmt = "i",
+        min_value = 0,
+        max_value = 59,
+        step = 1,
+        unit_of_measurement = TIME_MINUTES,
+        allowedtypes = GEN3,
     ),
 ]
 
@@ -559,6 +601,15 @@ SELECT_TYPES = [
                 3: "Both Allowed",
             },
         allowedtypes = GEN2 | GEN3, 
+    ),
+    SolaxModbusSelectEntityDescription( name = "Backup Grid Charge",
+        key = "backup_gridcharge",
+        register = 0x94,
+        options =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = GEN3, 
     ),
     SolaxModbusSelectEntityDescription( name = "Charger Start Time 1",
         key = "charger_start_time_1",
