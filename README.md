@@ -6,7 +6,9 @@
 
 # homsassistant-solax-modbus
 SolaX Power Modbus custom_component for Home Assistant
+
 Support Modbus over RS485 & TCP
+**(Pocket LAN / Pocket WiFi does not provide a Modbus connection)**
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
