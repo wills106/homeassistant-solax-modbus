@@ -503,7 +503,7 @@ class SolaXModbusHub:
 
     def read_modbus_holding_registers_2(self):
         if self.invertertype & GEN4:
-            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x102, count=20)
+            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x102, count=49)
 
             if inverter_data.isError():
                 return False
@@ -536,7 +536,7 @@ class SolaXModbusHub:
         #
         ####
 
-        else:
+        elif self.invertertype & GEN3:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xe8, count=46)
 
             if inverter_data.isError():
@@ -545,16 +545,13 @@ class SolaXModbusHub:
             decoder = BinaryPayloadDecoder.fromRegisters(
                 inverter_data.registers, byteorder=Endian.Big
             )
-            if (self.invertertype & AC | GEN2 ):
-                
-                decoder.skip_bytes(22)
             
-            else:
-                battery_install_capacity = decoder.decode_16bit_uint()
-                self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
+            battery_install_capacity = decoder.decode_16bit_uint()
+            self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
+            _LOGGER.info(f"Capacity = {battery_install_capacity}")
             
-                inverter_model_number = decoder.decode_string(20).decode("ascii")
-                self.data["inverter_model_number"] = str(inverter_model_number)
+            inverter_model_number = decoder.decode_string(20).decode("ascii")
+            self.data["inverter_model_number"] = str(inverter_model_number)
             
             decoder.skip_bytes(20)
         
@@ -686,6 +683,117 @@ class SolaXModbusHub:
             elif ct_meter_setting_s == 1: self.data["ct_meter_setting"] = "CT"
             else: self.data["ct_meter_setting"] = "Unknown"
             # There are a further 29 registers after this on the Gen4
+        
+        if self.invertertype & GEN4:
+            fvrt_function_s = decoder.decode_16bit_uint()
+            if   fvrt_function_s == 0:  self.data["fvrt_function"] = "Disabled"
+            elif fvrt_function_s == 1:  self.data["fvrt_function"] = "Enabled"
+            else:  self.data["fvrt_function"] = "Unknown"
+            
+            fvrt_vac_upper = decoder.decode_16bit_uint()
+            self.data["fvrt_vac_upper"] = round(fvrt_vac_upper * 0.1, 1)
+            
+            fvrt_vac_lower = decoder.decode_16bit_uint()
+            self.data["fvrt_vac_lower"] = round(fvrt_vac_lower * 0.1, 1)
+            
+            decoder.skip_bytes(4)
+            
+            pv_connection_mode = decoder.decode_16bit_uint()
+            self.data["pv_connection_mode"] = pv_connection_mode
+            
+            shutdown_s = decoder.decode_16bit_uint()
+            if   shutdown_s == 0:  self.data["shutdown"] = "Disabled"
+            elif shutdown_s == 1:  self.data["shutdown"] = "Enabled"
+            else:  self.data["shutdown"] = "Unknown"
+            
+            microgrid_s = decoder.decode_16bit_uint()
+            if   microgrid_s == 0:  self.data["microgrid"] = "Disabled"
+            elif microgrid_s == 1:  self.data["microgrid"] = "Enabled"
+            else:  self.data["microgrid"] = "Unknown"
+            
+            selfuse_mode_backup_s = decoder.decode_16bit_uint()
+            if   selfuse_mode_backup_s == 0:  self.data["selfuse_mode_backup"] = "Disabled"
+            elif selfuse_mode_backup_s == 1:  self.data["selfuse_mode_backup"] = "Enabled"
+            else:  self.data["selfuse_mode_backup"] = "Unknown"
+            
+            selfuse_backup_soc = decoder.decode_16bit_uint()
+            self.data["selfuse_backup_soc"] = selfuse_backup_soc
+            
+            lease_mode_enable_s = decoder.decode_16bit_uint()
+            if   lease_mode_enable_s == 0:  self.data["lease_mode_enable"] = "Disabled"
+            elif lease_mode_enable_s == 1:  self.data["lease_mode_enable"] = "Enabled"
+            else:  self.data["lease_mode_enable"] = "Unknown"
+            
+            device_lock_flag_s = decoder.decode_16bit_uint()
+            if   device_lock_flag_s == 0:  self.data["device_lock_flag"] = "Disabled"
+            elif device_lock_flag_s == 1:  self.data["device_lock_flag"] = "Enabled"
+            else:  self.data["device_lock_flag"] = "Unknown"
+            
+            manual_mode_control_s = decoder.decode_16bit_uint()
+            if   manual_mode_control_s == 0:  self.data["manual_mode_control"] = "Off"
+            elif manual_mode_control_s == 1:  self.data["manual_mode_control"] = "On"
+            else:  self.data["manual_mode_control"] = "Unknown"
+            
+            feedin_on_power = decoder.decode_16bit_uint()
+            self.data["feedin_on_power"] = feedin_on_power
+            
+            switch_on_soc = decoder.decode_16bit_uint()
+            self.data["switch_on_soc"] = switch_on_soc
+            
+            consume_off_power = decoder.decode_16bit_uint()
+            self.data["consume_off_power"] = consume_off_power
+            
+            switch_off_soc = decoder.decode_16bit_uint()
+            self.data["switch_off_soc"] = switch_off_soc
+            
+            minimum_per_on_signal = decoder.decode_16bit_uint()
+            self.data["minimum_per_on_signal"] = minimum_per_on_signal
+            
+            minimum_per_day_on = decoder.decode_16bit_uint()
+            self.data["minimum_per_day_on"] = minimum_per_day_on
+            
+            schedule_s = decoder.decode_16bit_uint()
+            if   schedule_s == 0:  self.data["schedule"] = "Disabled"
+            elif schedule_s == 1:  self.data["schedule"] = "Enabled"
+            else:  self.data["schedule"] = "Unknown"
+            
+            tmp = decoder.decode_16bit_uint()
+            self.data["p1_start_time"] = Gen4Timestring(tmp)
+            
+            tmp = decoder.decode_16bit_uint()
+            self.data["p1_stop_time"] = Gen4Timestring(tmp)
+            
+            tmp = decoder.decode_16bit_uint()
+            self.data["p2_start_time"] = Gen4Timestring(tmp)
+            
+            tmp = decoder.decode_16bit_uint()
+            self.data["p2_stop_time"] = Gen4Timestring(tmp)
+            
+            work_mode_s = decoder.decode_16bit_uint()
+            if   work_mode_s == 0:  self.data["work_mode"] = "Disabled"
+            elif work_mode_s == 1:  self.data["work_mode"] = "Manual"
+            elif work_mode_s == 2:  self.data["work_mode"] = "Smart Save"
+            else:  self.data["work_mode"] = "Unknown"
+            
+            dry_contact_mode_s = decoder.decode_16bit_uint()
+            if   dry_contact_mode_s == 0:  self.data["dry_contact_mode"] = "Load Management"
+            elif dry_contact_mode_s == 1:  self.data["dry_contact_mode"] = "Generator Control"
+            else:  self.data["dry_contact_mode"] = "Unknown"
+            
+            parallel_setting_s = decoder.decode_16bit_uint()
+            if   parallel_setting_s == 0:  self.data["parallel_setting"] = "Free"
+            elif parallel_setting_s == 1:  self.data["parallel_setting"] = "master"
+            elif parallel_setting_s == 2:  self.data["parallel_setting"] = "Slave"
+            else:  self.data["parallel_setting"] = "Unknown"
+            
+            external_generation_s = decoder.decode_16bit_uint()
+            if   external_generation_s == 0:  self.data["external_generation"] = "Disabled"
+            elif external_generation_s == 1:  self.data["external_generation"] = "Enabled"
+            else:  self.data["external_generation"] = "Unknown"
+            
+            external_generation_max_charge = decoder.decode_16bit_uint()
+            self.data["external_generation_max_charge"] = external_generation_max_charge
+        
         return True
 
     def read_modbus_input_registers_0(self):
