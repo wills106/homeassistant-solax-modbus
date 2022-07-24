@@ -284,7 +284,7 @@ class SolaXModbusHub:
             return True
 
     def read_modbus_holding_registers_0(self):
-        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x0, count=7) # was 21
+        inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x300, count=7) # was 21
 
         if inverter_data.isError():
             return False
