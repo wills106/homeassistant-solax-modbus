@@ -110,8 +110,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('XAC'): invertertype = AC | GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
     elif seriesnumber.startswith('XB3'):  invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
     elif seriesnumber.startswith('XM3'):  invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
-    elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Might still fail Serial check as serial possibly at 0x300
-    elif seriesnumber.startswith('MU80'):  invertertype = PV | GEN3 | X3 # MIC X3 Might still fail Serial check as serial possibly at 0x300
     elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
@@ -121,6 +119,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
+    elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('PM51'):  invertertype = PV | GEN3 | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MU80'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
     #
@@ -295,10 +296,6 @@ class SolaXModbusHub:
 
         seriesnumber = decoder.decode_string(14).decode("ascii")
         self.data["seriesnumber"] = str(seriesnumber)
-        #factoryname = decoder.decode_string(14).decode("ascii")
-        #self.data["factoryname"] = str(factoryname)
-        #modulename = decoder.decode_string(14).decode("ascii")
-        #self.data["modulename"] = str(modulename)
 
         return True
 
@@ -536,7 +533,7 @@ class SolaXModbusHub:
         #
         ####
 
-        elif self.invertertype & GEN3:
+        else:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0xe8, count=46)
 
             if inverter_data.isError():
@@ -545,13 +542,16 @@ class SolaXModbusHub:
             decoder = BinaryPayloadDecoder.fromRegisters(
                 inverter_data.registers, byteorder=Endian.Big
             )
+            if self.invertertype & GEN2:
+                
+                decoder.skip_bytes(22)
             
-            battery_install_capacity = decoder.decode_16bit_uint()
-            self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
-            _LOGGER.info(f"Capacity = {battery_install_capacity}")
+            else:
+                battery_install_capacity = decoder.decode_16bit_uint()
+                self.data["battery_install_capacity"] = round(battery_install_capacity * 0.1, 1)
             
-            inverter_model_number = decoder.decode_string(20).decode("ascii")
-            self.data["inverter_model_number"] = str(inverter_model_number)
+                inverter_model_number = decoder.decode_string(20).decode("ascii")
+                self.data["inverter_model_number"] = str(inverter_model_number)
             
             decoder.skip_bytes(20)
         
