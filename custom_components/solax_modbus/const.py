@@ -849,6 +849,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         entity_registry_enabled_default=False,
         allowedtypes= GEN3,
+        blacklist=('XRE',)
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Minimum Capacity",
@@ -1160,6 +1161,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="inverter_model_number",
         entity_registry_enabled_default=False,
         allowedtypes= GEN3,
+        blacklist=('XRE',)
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Power",
@@ -1862,4 +1864,3 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     ),
 
 ]
-
