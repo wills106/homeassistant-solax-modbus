@@ -1862,3 +1862,4 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         allowedtypes = X3 | GEN2 | GEN3 | GEN4 | EPS,
     ),
+]
