@@ -230,7 +230,7 @@ NUMBER_TYPES = [
         native_max_value = 99,
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
-        state = "battery_capacity_charge",
+        state = "battery_minimum_capacity",
         allowedtypes = GEN2 | GEN3,
     ),
     SolaxModbusNumberEntityDescription( name = "Battery Minimum Capacity - Grid-tied",
