@@ -96,6 +96,3 @@ class SolaXModbusSensor(SensorEntity):
         else: # strings and other data types cannot be scaled
             if self.entity_description.key in self._hub.data:
                 return self._hub.data[self.entity_description.key]
-            
-            
-            #else None
