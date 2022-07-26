@@ -89,8 +89,13 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return (
-        	self._hub.data[self.entity_description.key]*self._attr_scale
-        	if self.entity_description.key in self._hub.data
-        	else None
-        )
+        if self._attr_scale != 1:
+            if self.entity_description.key in self._hub.data:
+                return self._hub.data[self.entity_description.key]*self._attr_scale
+            
+        else: # strings and other data types cannot be scaled
+            if self.entity_description.key in self._hub.data:
+                return self._hub.data[self.entity_description.key]
+            
+            
+            #else None
