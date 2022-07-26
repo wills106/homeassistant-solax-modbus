@@ -54,6 +54,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 PLATFORMS = ["button", "number", "select", "sensor"] 
 
+seriesnumber = 'unknown'
 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
@@ -84,8 +85,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
-    # read serial number
-    seriesnumber = 'unknown'
+    # read serial number - changed seriesnumber to global to allow filtering
+    global seriesnumber
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
     if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
     else: 
@@ -543,6 +544,10 @@ class SolaXModbusHub:
                 inverter_data.registers, byteorder=Endian.Big
             )
             if self.invertertype & GEN2:
+                
+                decoder.skip_bytes(22)
+            
+            elif seriesnumber.startswith('XRE'):
                 
                 decoder.skip_bytes(22)
             
