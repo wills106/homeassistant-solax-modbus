@@ -864,6 +864,7 @@ class SolaXModbusHub:
             elif run_modes == 7: self.data["run_mode"] = "EPS Mode"
             elif run_modes == 8: self.data["run_mode"] = "Self Test"
             elif run_modes == 9: self.data["run_mode"] = "Idle Mode"
+            elif run_modes == 10: self.data["run_mode"] = "Standby"
             else: self.data["run_mode"] = "Unknown"
         
         pv_power_1 = decoder.decode_16bit_uint()
@@ -1160,7 +1161,7 @@ class SolaXModbusHub:
         self.data["eps_yield_today"] = round(eps_yield_today * 0.1, 1)
         
         e_charge_today = decoder.decode_16bit_uint()
-        self.data["e_charge_today"] = e_charge_today
+        self.data["e_charge_today"] = round(e_charge_today * 0.1, 2)
         
         e_charge_total = decoder.decode_32bit_uint()
         self.data["e_charge_total"] = round(e_charge_total * 0.1, 2)
