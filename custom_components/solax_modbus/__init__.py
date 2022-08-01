@@ -88,16 +88,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
-    if inverter_data.isError():
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
-        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-        seriesnumber = decoder.decode_string(14).decode("ascii")
-        hub.seriesnumber = seriesnumber
-    elif inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
+    if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
     else: 
         decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
+        
+        if seriesnumber == unknown:
+            inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
+            decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+            seriesnumber = decoder.decode_string(14).decode("ascii")
+            hub.seriesnumber = seriesnumber
+            
     _LOGGER.info(f"serial number = {seriesnumber}")
 
     invertertype = 0
@@ -125,9 +127,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
+    #elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
     #elif seriesnumber.startswith('PM51'):  invertertype = PV | GEN3 | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
+    #elif seriesnumber.startswith('MU80'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
     #
