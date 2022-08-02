@@ -93,14 +93,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
+        _LOGGER.error(f"serial number test1 = {seriesnumber}")
         
         if seriesnumber == 'unknown':
+            _LOGGER.error(f"serial number test2 start of 0x300 loop")
             inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
             decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
             seriesnumber = decoder.decode_string(14).decode("ascii")
             hub.seriesnumber = seriesnumber
-            
-    _LOGGER.info(f"serial number = {seriesnumber}")
+            _LOGGER.error(f"serial number test3 = {seriesnumber}")
+        
+        else:
+            _LOGGER.error(f"serial number test4 = {seriesnumber}")
 
     invertertype = 0
 
