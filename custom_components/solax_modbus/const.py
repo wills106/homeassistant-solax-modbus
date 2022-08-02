@@ -47,7 +47,7 @@ GEN_GROUP_BITS = 0x00FF # inverter generation bits
 GEN2             = 0x0002
 GEN3             = 0x0004
 GEN4             = 0x0008
-#MIC             = 0x0010 Might be needed if it turns out the MIC uses different registers to the GenX
+MIC              = 0x0010 # Might be needed if it turns out the MIC uses different registers to the GenX
 
 X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1               = 0x0100
@@ -153,52 +153,55 @@ MAX_CURRENTS = [
 MAX_EXPORT = [
     ('L30E',    3000 ), # Gen2 X1 SK-TL
     ('U30',     3000 ), # Gen2 X1 SK-SU
-    ('L37E',    3680 ), # Gen2 X1 SK-TL
-    ('U37',     3680 ), # Gen2 X1 SK-SU
+    ('L37E',    3700 ), # Gen2 X1 SK-TL
+    ('U37',     3700 ), # Gen2 X1 SK-SU
     ('L50E',    4600 ), # Gen2 X1 SK-TL
     ('U50',     4600 ), # Gen2 X1 SK-SU
-    ('H1E30',   3000 ), # Gen3 X1
-    ('H1E37',   3680 ), # Gen3 X1
-    ('H1E46',   4600 ), # Gen3 X1
-    ('H1E5',    5000 ), # Gen3 X1
-    ('HCC30',   3000 ), # Gen3 X1
-    ('HCC37',   3680 ), # Gen3 X1
-    ('HCC46',   4600 ), # Gen3 X1
-    ('HCC5',    5000 ), # Gen3 X1
-    ('HUE30',   3000 ), # Gen3 X1
-    ('HUE37',   3680 ), # Gen3 X1
-    ('HUE46',   4600 ), # Gen3 X1
-    ('HUE5',    5000 ), # Gen3 X1
-    ('XRE30',   3000 ), # Gen3 X1
-    ('XRE37',   3680 ), # Gen3 X1
-    ('XRE46',   4600 ), # Gen3 X1
-    ('XRE5',    5000 ), # Gen3 X1
-    ('F3E6',    6000 ), # RetroFit X3
-    ('F3E8',    8000 ), # RetroFit X3
-    ('F3E10',  10000 ), # RetroFit X3
+    ('H1E30',   5000 ), # Gen3 X1
+    ('H1E37',   5000 ), # Gen3 X1
+    ('H1E46',   6000 ), # Gen3 X1
+    ('H1E5',    6000 ), # Gen3 X1
+    ('HCC30',   5000 ), # Gen3 X1
+    ('HCC37',   5000 ), # Gen3 X1
+    ('HCC46',   6000 ), # Gen3 X1
+    ('HCC5',    6000 ), # Gen3 X1
+    ('HUE30',   5000 ), # Gen3 X1
+    ('HUE37',   5000 ), # Gen3 X1
+    ('HUE46',   6000 ), # Gen3 X1
+    ('HUE5',    6000 ), # Gen3 X1
+    ('XRE30',   5000 ), # Gen3 X1
+    ('XRE37',   5000 ), # Gen3 X1
+    ('XRE46',   6000 ), # Gen3 X1
+    ('XRE5',    6000 ), # Gen3 X1
+    ('F3E6',    9000 ), # RetroFit X3
+    ('F3E8',   12000 ), # RetroFit X3
     ('F3E10',  15000 ), # RetroFit X3
-    ('H3DE06',  6000 ), # Gen3 X3
-    ('H3DE08',  8000 ), # Gen3 X3
-    ('H3DE10', 10000 ), # Gen3 X3
-    ('H3PE06',  6000 ), # Gen3 X3
-    ('H3PE08',  8000 ), # Gen3 X3
-    ('H3PE10', 10000 ), # Gen3 X3
-    ('H3UE06',  6000 ), # Gen3 X3
-    ('H3UE08',  8000 ), # Gen3 X3
-    ('H3UE10', 10000 ), # Gen3 X3
-    ('H430',    3000 ), # Gen4 X1 3kW?
-    ('H437',    3680 ), # Gen4 X1 3.7kW
-    ('H450',    5000 ), # Gen4 X1 5kW
-    ('H460',    6000 ), # Gen4 X1 6kW
-    ('H475',    7500 ), # Gen4 X1 7.5kW
-    ('H34B05',  5000 ), # Gen4 X3 B
-    ('H34B08',  8000 ), # Gen4 X3 B
-    ('H34B12', 12000 ), # Gen4 X3 B
-    ('H34B15', 15000 ), # Gen4 X3 B
-    ('H34T05',  5000 ), # Gen4 X3 T
-    ('H34T08',  8000 ), # Gen4 X3 T
-    ('H34T12', 12000 ), # Gen4 X3 T
-    ('H34T15', 15000 ), # Gen4 X3 T
+    ('F3E15',  16500 ), # RetroFit X3
+    ('H3DE05', 10000 ), # Gen3 X3
+    ('H3DE06', 12000 ), # Gen3 X3
+    ('H3DE08', 14000 ), # Gen3 X3
+    ('H3DE10', 15000 ), # Gen3 X3
+    ('H3PE05', 10000 ), # Gen3 X3
+    ('H3PE06', 12000 ), # Gen3 X3
+    ('H3PE08', 14000 ), # Gen3 X3
+    ('H3PE10', 15000 ), # Gen3 X3
+    ('H3UE05', 10000 ), # Gen3 X3
+    ('H3UE06', 12000 ), # Gen3 X3
+    ('H3UE08', 14000 ), # Gen3 X3
+    ('H3UE10', 15000 ), # Gen3 X3
+    ('H430',    6300 ), # Gen4 X1 3kW?
+    ('H437',    7300 ), # Gen4 X1 3.7kW
+    ('H450',    9200 ), # Gen4 X1 5kW
+    ('H460',    9200 ), # Gen4 X1 6kW
+    ('H475',    9200 ), # Gen4 X1 7.5kW
+    ('H34B05',  7500 ), # Gen4 X3 B
+    ('H34B08', 12000 ), # Gen4 X3 B
+    ('H34B12', 15000 ), # Gen4 X3 B
+    ('H34B15', 16500 ), # Gen4 X3 B
+    ('H34T05',  7500 ), # Gen4 X3 T
+    ('H34T08', 12000 ), # Gen4 X3 T
+    ('H34T12', 15000 ), # Gen4 X3 T
+    ('H34T15', 16500 ), # Gen4 X3 T
     ### All known Inverters added
 ]
 
@@ -293,7 +296,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 2500,
         scale = 1, # GEN 2,3 scale
-        native_step = 500,
+        native_step = 100,
         native_unit_of_measurement = POWER_WATT,
         scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         allowedtypes = GEN2 | GEN3 | GEN4 ,

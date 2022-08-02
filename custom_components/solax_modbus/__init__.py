@@ -16,7 +16,7 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
 
-from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV, MIC
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -88,12 +88,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
-    if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
+    if inverter_data.isError():
+        #_LOGGER.error(f"Start search at 0x300")
+        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
+        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+        seriesnumber = decoder.decode_string(14).decode("ascii")
+        hub.seriesnumber = seriesnumber
+        #_LOGGER.error(f"serial number test1 = {seriesnumber}")
+    elif inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
     else: 
         decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
-    _LOGGER.info(f"serial number = {seriesnumber}")
+        #_LOGGER.error(f"serial number test2 = {seriesnumber}")
+            
 
     invertertype = 0
 
@@ -120,9 +128,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('PM51'):  invertertype = PV | GEN3 | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = PV | GEN3 | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC10'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC20'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('PM51'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MU80'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
     #
@@ -277,13 +286,20 @@ class SolaXModbusHub:
             return self._client.write_register(address, payload, **kwargs)
 
     def read_modbus_data(self):
- 	
-        try:
-            return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2()
-        except ConnectionException as ex:
-            _LOGGER.error("Reading data failed! Inverter is offline.")   
+        
+        if self.invertertype & MIC:
+            try:
+                return self.read_modbus_input_registers_mic()
+            except ConnectionException as ex:
+                _LOGGER.error("Reading data failed! Inverter is offline.")
+                
+        else:
+            try:
+                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2()
+            except ConnectionException as ex:
+                _LOGGER.error("Reading data failed! Inverter is offline.")
 
-            return True
+        return True
 
     def read_modbus_holding_registers_0(self):
         inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=0x0, count=7) # was 21
@@ -1223,5 +1239,100 @@ class SolaXModbusHub:
         self.data["battery_group_current_charge"] = round(battery_group_current_charge * mult, 1)
 
         self.data["group_read_test"] = f"{system_inverter_number}:{pv_group_power_1}W:{pv_group_power_2}W:{battery_group_power_charge}W:{battery_group_current_charge}A"
+
+        return True
+
+    def read_modbus_input_registers_mic(self):
+
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x400, count=53)
+
+        if realtime_data.isError():
+            return False
+
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            realtime_data.registers, Endian.Big, wordorder=Endian.Little
+        )
+        
+        pv_voltage_1 = decoder.decode_16bit_uint()
+        self.data["pv_voltage_1"] = round(pv_voltage_1 * 0.1, 1)
+        
+        pv_voltage_2 = decoder.decode_16bit_uint()
+        self.data["pv_voltage_2"] = round(pv_voltage_2 * 0.1, 1)
+        
+        pv_current_1 = decoder.decode_16bit_uint()
+        self.data["pv_current_1"] = round(pv_current_1 * 0.1, 1)
+        
+        pv_current_2 = decoder.decode_16bit_uint()
+        self.data["pv_current_2"] = round(pv_current_2 * 0.1, 1)
+        
+        grid_voltage_r = decoder.decode_16bit_uint()
+        self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
+        
+        grid_voltage_s = decoder.decode_16bit_uint()
+        self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)
+        
+        grid_voltage_t = decoder.decode_16bit_uint()
+        self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)
+        
+        grid_frequency_r = decoder.decode_16bit_uint()
+        self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 1)
+        
+        grid_frequency_s = decoder.decode_16bit_uint()
+        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
+        
+        grid_frequency_t = decoder.decode_16bit_uint()
+        self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 1)
+        
+        grid_current_r = decoder.decode_16bit_uint()
+        self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
+        
+        grid_current_s = decoder.decode_16bit_uint()
+        self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
+        
+        grid_current_t = decoder.decode_16bit_uint()
+        self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
+        
+        inverter_temperature = decoder.decode_16bit_uint()
+        self.data["inverter_temperature"] = inverter_temperature
+        
+        output_power = decoder.decode_16bit_uint()
+        self.data[" output_power"] =  output_power
+        
+        run_modes = decoder.decode_16bit_uint()
+        if   run_modes == 0: self.data["run_mode"] = "Waiting"
+        elif run_modes == 1: self.data["run_mode"] = "Checking"
+        elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
+        elif run_modes == 3: self.data["run_mode"] = "Fault"
+        elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
+        else: self.data["run_mode"] = "Unknown"
+        
+        output_power_phase_r = decoder.decode_16bit_uint()
+        self.data[" output_power_phase_r"] =  output_power_phase_r
+        
+        output_power_phase_s = decoder.decode_16bit_uint()
+        self.data[" output_power_phase_s"] =  output_power_phase_s
+        
+        output_power_phase_t = decoder.decode_16bit_uint()
+        self.data[" output_power_phase_t"] =  output_power_phase_t
+        
+        decoder.skip_bytes(2)
+        
+        pv_power_1 = decoder.decode_16bit_uint()
+        self.data["pv_power_1"] = pv_power_1
+        
+        pv_power_2 = decoder.decode_16bit_uint()
+        self.data["pv_power_2"] = pv_power_2
+        
+        self.data["pv_total_power"] = pv_power_1 + pv_power_2
+        
+        decoder.skip_bytes(26)
+        
+        today_yield = decoder.decode_32bit_uint()
+        self.data["today_yield"] = round(today_yield * 0.001, 2)
+        
+        total_yield = decoder.decode_32bit_uint()
+        self.data["total_yield"] = round(total_yield * 0.001, 2)
+        
+        decoder.skip_bytes(28)
 
         return True
