@@ -88,23 +88,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
-    if inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
-    else: 
+    if inverter_data.isError():
+        _LOGGER.error(f"Start search at 0x300")
+        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
         decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
         _LOGGER.error(f"serial number test1 = {seriesnumber}")
-        
-        if seriesnumber == 'unknown':
-            _LOGGER.error(f"serial number test2 start of 0x300 loop")
-            inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
-            decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-            seriesnumber = decoder.decode_string(14).decode("ascii")
-            hub.seriesnumber = seriesnumber
-            _LOGGER.error(f"serial number test3 = {seriesnumber}")
-        
-        else:
-            _LOGGER.error(f"serial number test4 = {seriesnumber}")
+    elif inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
+    else: 
+        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+        seriesnumber = decoder.decode_string(14).decode("ascii")
+        hub.seriesnumber = seriesnumber
+        _LOGGER.error(f"serial number test2 = {seriesnumber}")
 
     invertertype = 0
 
