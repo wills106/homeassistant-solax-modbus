@@ -189,7 +189,7 @@ class SolaXModbusHub:
         _LOGGER.info("solax modbushub creation")
         self._hass = hass
         if serial: # serial
-            self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
+            self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=9600, parity='N', stopbits=1, bytesize=8, timeout=3)
         else:
             self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
