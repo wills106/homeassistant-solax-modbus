@@ -44,22 +44,22 @@ An entity can be declared multiple times (with different bitmasks) if the parame
 """
 
 GEN_GROUP_BITS = 0x00FF # inverter generation bits
-GEN2             = 0x0002
-GEN3             = 0x0004
-GEN4             = 0x0008
-MIC              = 0x0010 # Might be needed if it turns out the MIC uses different registers to the GenX
+GEN2           = 0x0002
+GEN3           = 0x0004
+GEN4           = 0x0008
 
 X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
-X1               = 0x0100
-X3               = 0x0200
+X1             = 0x0100
+X3             = 0x0200
 
-HYB_GROUP_BITS = 0x1C00 # hybrid or AC or PV flags
-PV               = 0x0400 # Needs further work on PV Only Inverters
-AC               = 0x0800
-HYBRID           = 0x1000
+HYB_GROUP_BITS = 0x3C00 # hybrid or AC or PV flags
+PV             = 0x0400 # Needs further work on PV Only Inverters
+AC             = 0x0800
+HYBRID         = 0x1000
+MIC            = 0x2000
 
-EPS_GROUP_BITS = 0x8000  # EPS flag
-EPS              = 0x8000
+EPS_GROUP_BITS = 0x8000 # EPS flag
+EPS            = 0x8000
 
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
@@ -1070,7 +1070,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        allowedtypes= GEN3 | GEN4 | MIC,
+        allowedtypes= GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Export Control Factory Limit",
@@ -1123,7 +1123,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes= GEN2 | GEN3 | GEN4 | MIC,
+        allowedtypes= GEN2 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Feedin On Power",
@@ -1383,7 +1383,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes=HYBRID | MIC | PV,
+        allowedtypes= HYBRID | MIC | PV,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 2",
@@ -1568,7 +1568,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=GEN3 | GEN4 | MIC,
+        allowedtypes=GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Work Mode",
@@ -1805,7 +1805,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Measured Power S",
@@ -1813,7 +1813,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Measured Power T",
@@ -1821,28 +1821,28 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Current R",
         key="grid_current_r",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Current S",
         key="grid_current_s",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Current T",
         key="grid_current_t",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Mode Runtime",
@@ -1884,21 +1884,21 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="grid_voltage_r",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Voltage S",
         key="grid_voltage_s",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Voltage T",
         key="grid_voltage_t",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        allowedtypes = X3 | GEN3 | GEN4 | MIC,
+        allowedtypes = X3 | GEN3 | GEN4 | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Phase Power Balance X3",

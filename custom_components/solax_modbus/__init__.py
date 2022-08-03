@@ -132,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
     elif seriesnumber.startswith('MC10'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
     elif seriesnumber.startswith('MC20'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('PM51'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MP15'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
     elif seriesnumber.startswith('MU80'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
