@@ -91,12 +91,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if inverter_data.isError():
         #_LOGGER.error(f"Start search at 0x300")
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
-        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-        seriesnumber = decoder.decode_string(14).decode("ascii")
-        hub.seriesnumber = seriesnumber
-        #_LOGGER.error(f"serial number test1 = {seriesnumber}")
-    elif inverter_data.isError():   _LOGGER.error("cannot perform initial read for serial number")
-    else: 
+        if inverter_data.is_error():
+            _LOGGER.error("cannot perform initial read for serial number")
+        else:
+            decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Little )
+            seriesnumber = decoder.decode_string(14).decode("ascii")
+            hub.seriesnumber = seriesnumber
+            #_LOGGER.error(f"serial number test1 = {seriesnumber}")
+    else:
         decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
@@ -740,15 +742,15 @@ class SolaXModbusHub:
             selfuse_backup_soc = decoder.decode_16bit_uint()
             self.data["selfuse_backup_soc"] = selfuse_backup_soc
             
-            lease_mode_enable_s = decoder.decode_16bit_uint()
-            if   lease_mode_enable_s == 0:  self.data["lease_mode_enable"] = "Disabled"
-            elif lease_mode_enable_s == 1:  self.data["lease_mode_enable"] = "Enabled"
-            else:  self.data["lease_mode_enable"] = "Unknown"
+            lease_mode_s = decoder.decode_16bit_uint()
+            if   lease_mode_s == 0:  self.data["lease_mode"] = "Disabled"
+            elif lease_mode_s == 1:  self.data["lease_mode"] = "Enabled"
+            else:  self.data["lease_mode"] = "Unknown"
             
-            device_lock_flag_s = decoder.decode_16bit_uint()
-            if   device_lock_flag_s == 0:  self.data["device_lock_flag"] = "Disabled"
-            elif device_lock_flag_s == 1:  self.data["device_lock_flag"] = "Enabled"
-            else:  self.data["device_lock_flag"] = "Unknown"
+            device_lock_s = decoder.decode_16bit_uint()
+            if   device_lock_s == 0:  self.data["device_lock"] = "Disabled"
+            elif device_lock_s == 1:  self.data["device_lock"] = "Enabled"
+            else:  self.data["device_lock"] = "Unknown"
             
             manual_mode_control_s = decoder.decode_16bit_uint()
             if   manual_mode_control_s == 0:  self.data["manual_mode_control"] = "Off"
@@ -770,8 +772,8 @@ class SolaXModbusHub:
             minimum_per_on_signal = decoder.decode_16bit_uint()
             self.data["minimum_per_on_signal"] = minimum_per_on_signal
             
-            minimum_per_day_on = decoder.decode_16bit_uint()
-            self.data["minimum_per_day_on"] = minimum_per_day_on
+            maximum_per_day_on = decoder.decode_16bit_uint()
+            self.data["maximum_per_day_on"] = maximum_per_day_on
             
             schedule_s = decoder.decode_16bit_uint()
             if   schedule_s == 0:  self.data["schedule"] = "Disabled"
@@ -1296,7 +1298,7 @@ class SolaXModbusHub:
         self.data["inverter_temperature"] = inverter_temperature
         
         output_power = decoder.decode_16bit_uint()
-        self.data[" output_power"] =  output_power
+        self.data["feedin_power"] = output_power
         
         run_modes = decoder.decode_16bit_uint()
         if   run_modes == 0: self.data["run_mode"] = "Waiting"
@@ -1307,13 +1309,13 @@ class SolaXModbusHub:
         else: self.data["run_mode"] = "Unknown"
         
         output_power_phase_r = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_r"] =  output_power_phase_r
+        self.data["feedin_power_r"] = output_power_phase_r
         
         output_power_phase_s = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_s"] =  output_power_phase_s
+        self.data["feedin_power_s"] = output_power_phase_s
         
         output_power_phase_t = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_t"] =  output_power_phase_t
+        self.data["feedin_power_t"] = output_power_phase_t
         
         decoder.skip_bytes(2)
         
