@@ -93,7 +93,14 @@ From 0.6.0 the Configuration is split into separate views.
 
 <img src="https://user-images.githubusercontent.com/18155231/182888120-dc7d844c-9a77-4ec6-9391-8cb7c32374f5.png" width=50% height=50%>
 
+TCP
+
 <img src="https://user-images.githubusercontent.com/18155231/182889165-2b304b6d-f548-4551-a34c-d190ff510992.png" width=40% height=40%>
+
+Serial
+
+<img src="https://user-images.githubusercontent.com/18155231/182894989-e9767f7b-6c5e-482d-bc6e-8c2c7b8f9445.png" width=40% height=40%>
+
 
 
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
