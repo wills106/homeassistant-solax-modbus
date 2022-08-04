@@ -89,6 +89,13 @@ If you manually clone the repository you may end up mid code update!
 
 After reboot of Home-Assistant, this integration can be configured through the integration setup UI
 
+From 0.6.0 the Configuration is split into separate views.
+
+<img src="https://user-images.githubusercontent.com/18155231/182888120-dc7d844c-9a77-4ec6-9391-8cb7c32374f5.png" width=50% height=50%>
+
+<img src="https://user-images.githubusercontent.com/18155231/182889165-2b304b6d-f548-4551-a34c-d190ff510992.png" width=40% height=40%>
+
+
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
 - Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
 
