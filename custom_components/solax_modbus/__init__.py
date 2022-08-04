@@ -196,7 +196,7 @@ class SolaXModbusHub:
         scan_interval
     ):
         """Initialize the Modbus hub."""
-        _LOGGER.info("solax modbushub creation")
+        _LOGGER.info(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
         self._hass = hass
         if (interface == "serial"): 
             self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=baudrate, parity='N', stopbits=1, bytesize=8, timeout=3)
