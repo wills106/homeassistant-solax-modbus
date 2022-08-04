@@ -781,16 +781,16 @@ class SolaXModbusHub:
             else:  self.data["schedule"] = "Unknown"
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p1_start_time"] = Gen4Timestring(tmp)
+            self.data["work_start_time_1"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p1_stop_time"] = Gen4Timestring(tmp)
+            self.data["work_end_time_1"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p2_start_time"] = Gen4Timestring(tmp)
+            self.data["work_start_time_2"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p2_stop_time"] = Gen4Timestring(tmp)
+            self.data["work_end_time_2"] = Gen4Timestring(tmp)
             
             work_mode_s = decoder.decode_16bit_uint()
             if   work_mode_s == 0:  self.data["work_mode"] = "Disabled"
@@ -805,7 +805,7 @@ class SolaXModbusHub:
             
             parallel_setting_s = decoder.decode_16bit_uint()
             if   parallel_setting_s == 0:  self.data["parallel_setting"] = "Free"
-            elif parallel_setting_s == 1:  self.data["parallel_setting"] = "master"
+            elif parallel_setting_s == 1:  self.data["parallel_setting"] = "Master"
             elif parallel_setting_s == 2:  self.data["parallel_setting"] = "Slave"
             else:  self.data["parallel_setting"] = "Unknown"
             
