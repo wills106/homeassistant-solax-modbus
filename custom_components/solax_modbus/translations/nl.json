@@ -4,19 +4,66 @@
       "user": {
         "title": "Definieer uw SolaX Power Inverter modbus-verbinding",
         "data": {
-          "host": "Het ip-adres van uw SolaX Power-omvormer modbus apparaat; voor serieel: localhost",
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
-          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de SolaX Power-omvormer; voor RS485: niet relevant",
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
-          "read_serial" : "RS485 Serial Port (set hostname to localhost)",
-          "read_serial_port": "Serial port name",
+          "interface" : "Interface",
           "read_eps": "EPS",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+        }
+      },
+      "serial": {
+        "title": "Seriele Poort Parameters",
+        "data": {
+          "read_serial_port": "Naam van de seriele poort",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "Het ip-address van uw SolaX Power Inverter of modbus-tcp adapter",
+          "port": "De TCP port voor SolaX Inverter of Modbus adapter"
         }
       }
     },
     "error": {
+      "already_configured": "Apparaat is al geconfigureerd",
+      "invalid_host": "Ongeldig host IP address"
+    },
+    "abort": {
       "already_configured": "Apparaat is al geconfigureerd"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Definieer uw SolaX Power Inverter modbus-verbinding",
+        "data": {
+          "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
+          "read_modbus_addr": "Het modbus address van de Power-omvormer",
+          "interface" : "Interface",
+          "read_eps": "EPS",
+          "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+        }
+      },
+      "serial": {
+        "title": "Seriele Poort Parameters",
+        "data": {
+          "read_serial_port": "Naam van de seriele poort",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "Het ip-address van uw SolaX Power Inverter of modbus-tcp adapter",
+          "port": "De TCP port voor SolaX Inverter of Modbus adapter"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Apparaat is al geconfigureerd",
+      "invalid_host": "Ongeldig host IP address"
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"

@@ -22,39 +22,29 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     CONF_MODBUS_ADDR,
-    CONF_SERIAL,
+    CONF_INTERFACE,
     CONF_SERIAL_PORT,
     CONF_READ_EPS,
+    CONF_BAUDRATE,
     DEFAULT_READ_EPS,
-    DEFAULT_SERIAL,
+    DEFAULT_INTERFACE,
     DEFAULT_SERIAL_PORT,
     DEFAULT_MODBUS_ADDR,
+    DEFAULT_PORT,
+    DEFAULT_BAUDRATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-SOLAX_MODBUS_SCHEMA = vol.Schema(
-    {
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_PORT): cv.string,
-        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): cv.positive_int,
-        vol.Required(CONF_SERIAL,      default=DEFAULT_SERIAL): cv.boolean,
-        vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): cv.string,
-        vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): cv.boolean,
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
-    }
-)
-
-
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.Schema({cv.slug: SOLAX_MODBUS_SCHEMA})}, extra=vol.ALLOW_EXTRA
-)
-
-
 PLATFORMS = ["button", "number", "select", "sensor"] 
 
 seriesnumber = 'unknown'
+
+async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update listener, called when the config entry options are changed."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
@@ -64,29 +54,45 @@ async def async_setup(hass, config):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
-    _LOGGER.info("solax setup")
-    host = entry.data[CONF_HOST]
-    name = entry.data[CONF_NAME]
-    port = entry.data[CONF_PORT]
-    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, None)
+    _LOGGER.info(f"solax setup entries - data: {entry.data}, options: {entry.options}")
+    config = entry.options
+    if not config:
+        _LOGGER.warning('Solax: using old style config entries, recreating the integration will resolve this')
+        config = entry.data
+    name = config[CONF_NAME] 
+    host = config.get(CONF_HOST, None)
+    port = config.get(CONF_PORT, DEFAULT_PORT)
+    modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     if modbus_addr == None: 
         modbus_addr = DEFAULT_MODBUS_ADDR
         _LOGGER.warning(f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}")
-    serial = entry.data[CONF_SERIAL]
-    serial_port = entry.data[CONF_SERIAL_PORT]
-    scan_interval = entry.data[CONF_SCAN_INTERVAL]
-    read_eps = entry.data.get(CONF_READ_EPS, False)
+    interface = config.get(CONF_INTERFACE, None)
+    if not interface: # legacy parameter name was read_serial, this block can be removed later
+        if config.get("read_serial", False): interface = "serial"
+        else: interface = "tcp"
+    serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
+    baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
+    scan_interval = config[CONF_SCAN_INTERVAL]
+    read_eps = config.get(CONF_READ_EPS, False)
 
 
-    _LOGGER.debug("Setup %s.%s", DOMAIN, name)
-    _LOGGER.info("solax serial port %s %s", serial_port, serial)
+    _LOGGER.debug(f"Setup {DOMAIN}.{name}")
+    _LOGGER.info(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, serial, serial_port, scan_interval)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval)
     """Register the hub."""
     hass.data[DOMAIN][name] = {"hub": hub}
 
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
+
+    seriesnumber                       = hub._read_serialnr(0x0,   Endian.Big)
+    if not seriesnumber:  seriesnumber = hub._read_serialnr(0x300, Endian.Little)
+    if not seriesnumber: 
+        _LOGGER.error(f"cannot find serial number, even not for MIC")
+        seriesnumber = "unknown"
+
+    """
     inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
     if inverter_data.isError():
         #_LOGGER.error(f"Start search at 0x300")
@@ -103,7 +109,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         seriesnumber = decoder.decode_string(14).decode("ascii")
         hub.seriesnumber = seriesnumber
         #_LOGGER.error(f"serial number test2 = {seriesnumber}")
-            
+    """        
+
 
     invertertype = 0
 
@@ -130,10 +137,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MC20'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MP15'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC10'):  invertertype = MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC20'):  invertertype = MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MP15'):  invertertype = MIC | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MU80'):  invertertype = MIC | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
     #
@@ -147,6 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
+    entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
 async def async_unload_entry(hass, entry):
@@ -162,7 +170,8 @@ async def async_unload_entry(hass, entry):
     if not unload_ok:
         return False
 
-    hass.data[DOMAIN].pop(entry.data["name"])
+    hass.data[DOMAIN].pop(entry.data.get("name", None), None ) , # for legacy compatibility, this line can be removed later
+    hass.data[DOMAIN].pop(entry.options["name"])
     return True
 
 
@@ -181,15 +190,16 @@ class SolaXModbusHub:
         host,
         port,
         modbus_addr,
-        serial,
+        interface,
         serial_port,
+        baudrate,
         scan_interval
     ):
         """Initialize the Modbus hub."""
         _LOGGER.info("solax modbushub creation")
         self._hass = hass
-        if serial: # serial
-            self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=19200, parity='N', stopbits=1, bytesize=8, timeout=3)
+        if (interface == "serial"): 
+            self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=baudrate, parity='N', stopbits=1, bytesize=8, timeout=3)
         else:
             self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
@@ -197,8 +207,9 @@ class SolaXModbusHub:
         self._modbus_addr = modbus_addr
         self._invertertype = 0
         self._seriesnumber = 'still unknown'
-        self.read_serial = serial
+        self.interface = interface
         self.read_serial_port = serial_port
+        self._baudrate = int(baudrate)
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
         self._sensors = []
@@ -268,6 +279,20 @@ class SolaXModbusHub:
         """Connect client."""
         with self._lock:
             self._client.connect()
+
+
+    def _read_serialnr(self, address, byteorder):
+        res = None
+        try:
+            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=address, count=7)
+            if not inverter_data.isError(): 
+                decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=byteorder )
+                res = decoder.decode_string(14).decode("ascii")
+                self._seriesnumber = res
+        except: pass
+        if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
+        return res
+
 
     def read_holding_registers(self, unit, address, count):
         """Read holding registers."""

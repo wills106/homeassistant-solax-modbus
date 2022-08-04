@@ -4,19 +4,66 @@
       "user": {
         "title": "Definiert die SolaX Power Wechselrichter Modbus-Verbindung",
         "data": {
-          "host": "Die IP Adresse des SolaX Power Wechselrichter Modbus Geräts;für serielle Verbindung: localhost",
           "name": "Das Präfix, das für die SolaX Power Wechselrichter Sensoren verwendet werden soll",
-          "port": "Der TCP Port über den die Verbindung zum SolaX Power Wechselrichter hergestellt wird;für serielle Verbindung ignorieren",
           "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
-          "read_serial" : "Serieller RS485 Port (Hostname auf localhost setzen)",
-          "read_serial_port": "Name des seriellen Ports",
+          "interface" : "Schnittstelle",
           "read_eps": "EPS",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
+        }
+      },
+      "serial": {
+        "title": "Serielle Schnittstelle",
+        "data": {
+          "read_serial_port": "Name ses seriellen Ports",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Schnittstelle",
+        "data": {
+          "host": "Die IP Adresse des SolaX Power Wechselrichters oder Modbus Geräts",
+          "port": "Der TCP Port über den die Verbindung zum SolaX Power Wechselrichter hergestellt wird"
         }
       }
     },
     "error": {
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "invalid_host": "IP Addresse invalid"
+    },
+    "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Definiert die SolaX Power Wechselrichter Modbus-Verbindung",
+        "data": {
+          "name": "Das Präfix, das für die SolaX Power Wechselrichter Sensoren verwendet werden soll",
+          "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
+          "interface" : "Schnittstelle",
+          "read_eps": "EPS",
+          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
+        }
+      },
+      "serial": {
+        "title": "Serielle Schnittstelle",
+        "data": {
+          "read_serial_port": "Name ses seriellen Ports",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Schnittstelle",
+        "data": {
+          "host": "Die IP Adresse des SolaX Power Wechselrichters oder Modbus Geräts",
+          "port": "Der TCP Port über den die Verbindung zum SolaX Power Wechselrichter hergestellt wird"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "invalid_host": "IP Addresse invalid"
     },
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"

@@ -4,19 +4,66 @@
       "user": {
         "title": "Define your SolaX Power Inverter modbus-connection",
         "data": {
-          "host": "The ip-address of your SolaX Power Inverter modbus device;for serial, localhost",
           "name": "The prefix to be used for your SolaX Power Inverter sensors",
-          "port": "The TCP port on which to connect to the SolaX Power Inverter;for serial ignore",
           "read_modbus_addr": "The modbus address of the Inverter",
-          "read_serial" : "RS485 Serial Port (set hostname to localhost)",
-          "read_serial_port": "Serial port name",
+          "interface" : "Interface",
           "read_eps": "EPS",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
+        }
+      },
+      "serial": {
+        "title": "Serial Interface Parameters",
+        "data": {
+          "read_serial_port": "Serial port name",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "The ip-address of your SolaX Power Inverter or Modbus Interface",
+          "port": "The TCP port on which to connect to the SolaX Power Inverter"
         }
       }
     },
     "error": {
+      "already_configured": "Device is already configured",
+      "invalid_host": "Invalid host IP address"
+    },
+    "abort": {
       "already_configured": "Device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Define your SolaX Power Inverter modbus-connection",
+        "data": {
+          "name": "The prefix to be used for your SolaX Power Inverter sensors",
+          "read_modbus_addr": "The modbus address of the Inverter",
+          "interface" : "Interface",
+          "read_eps": "EPS",
+          "scan_interval": "The polling frequency of the modbus registers in seconds"
+        }
+      },
+      "serial": {
+        "title": "Serial Interface Parameters",
+        "data": {
+          "read_serial_port": "Serial port name",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "The ip-address of your SolaX Power Inverter or Modbus Interface",
+          "port": "The TCP port on which to connect to the SolaX Power Inverter"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Device is already configured",
+      "invalid_host": "Invalid host IP address"
     },
     "abort": {
       "already_configured": "Device is already configured"

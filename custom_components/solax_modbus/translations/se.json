@@ -4,19 +4,66 @@
       "user": {
         "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter",
         "data": {
-          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern; for RS485 use localhost",
           "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
-          "port": "TCP-port för anslutning till SolaX Power Invertern; for RS485 not relevant",
           "read_modbus_addr": "The modbus address of the Power Inverter",
-          "read_serial" : "RS485 Serial Port (set hostname to localhost)",
-          "read_serial_port": "Serial port name",
+          "interface" : "Interface",
           "read_eps": "EPS",
           "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
+        }
+      },
+      "serial": {
+        "title": "Serial Port Parameters",
+        "data": {
+          "read_serial_port": "Name of the serial port",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern",
+          "port": "TCP-port för anslutning till SolaX Power Invertern"
         }
       }
     },
     "error": {
+      "already_configured": "Enheten är redan konfigurerad",
+      "invalid_host": "Invalid host IP address"
+    },
+    "abort": {
       "already_configured": "Enheten är redan konfigurerad"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Inställningarna för anslutningen via modbus till SolaX Power Inverter",
+        "data": {
+          "name": "Prefix för namnsättning av sensorerna på SolaX Power Invertern",
+          "read_modbus_addr": "The modbus address of the Power Inverter",
+          "interface" : "Interface",
+          "read_eps": "EPS",
+          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
+        }
+      },
+      "serial": {
+        "title": "Serial Port Parameters",
+        "data": {
+          "read_serial_port": "Name of the serial port",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parameters",
+        "data": {
+          "host": "Ip-adressen för modbus-enheten på SolaX Power Invertern",
+          "port": "TCP-port för anslutning till SolaX Power Invertern"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Enheten är redan konfigurerad",
+      "invalid_host": "Invalid host IP address"
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"

@@ -10,8 +10,12 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
-    hub_name = entry.data[CONF_NAME]
-    modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
+    if entry.data: # old style - remove soon
+        hub_name = entry.data[CONF_NAME]
+        modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
+    else: # new style
+        hub_name = entry.options[CONF_NAME]
+        modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     device_info = {

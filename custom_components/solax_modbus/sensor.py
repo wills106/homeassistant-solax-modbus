@@ -16,7 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    hub_name = entry.data[CONF_NAME]
+    if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
+    else: hub_name = entry.options[CONF_NAME] # new format
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     device_info = {

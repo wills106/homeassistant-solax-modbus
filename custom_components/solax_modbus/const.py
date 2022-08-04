@@ -43,23 +43,24 @@ means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
-GEN_GROUP_BITS = 0x00FF # inverter generation bits
+
 GEN2           = 0x0002
 GEN3           = 0x0004
 GEN4           = 0x0008
+ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4
 
-X13_GROUP_BITS = 0x0300 # X1 or X3 model flags
 X1             = 0x0100
 X3             = 0x0200
+ALL_X_GROUP    = X1 | X3
 
-HYB_GROUP_BITS = 0x3C00 # hybrid or AC or PV flags
 PV             = 0x0400 # Needs further work on PV Only Inverters
 AC             = 0x0800
 HYBRID         = 0x1000
 MIC            = 0x2000
+ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
 
-EPS_GROUP_BITS = 0x8000 # EPS flag
 EPS            = 0x8000
+ALL_EPS_GROUP      = EPS
 
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
@@ -67,10 +68,10 @@ ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 |
 
 def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
     # returns true if the entity needs to be created for an inverter
-    genmatch = ((inverterspec & entitymask & GEN_GROUP_BITS) != 0) or (entitymask & GEN_GROUP_BITS == 0)
-    xmatch   = ((inverterspec & entitymask & X13_GROUP_BITS) != 0) or (entitymask & X13_GROUP_BITS == 0)
-    hybmatch = ((inverterspec & entitymask & HYB_GROUP_BITS) != 0) or (entitymask & HYB_GROUP_BITS == 0)
-    epsmatch = ((inverterspec & entitymask & EPS_GROUP_BITS) != 0) or (entitymask & EPS_GROUP_BITS == 0)
+    genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+    xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
+    hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
+    epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
     blacklisted = False
     if blacklist:
         for start in blacklist: 
@@ -89,13 +90,15 @@ DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
 CONF_READ_EPS    = "read_eps"
 CONF_MODBUS_ADDR = "read_modbus_addr"
-CONF_SERIAL      = "read_serial"
+CONF_INTERFACE   = "interface"
 CONF_SERIAL_PORT = "read_serial_port"
 CONF_SolaX_HUB   = "solax_hub"
+CONF_BAUDRATE    = "baudrate"
 ATTR_MANUFACTURER = "SolaX Power"
-DEFAULT_SERIAL      = False
+DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
 DEFAULT_READ_EPS = False
+DEFAULT_BAUDRATE = "19200"
 
 
 # ================================= Button Declarations ============================================================
