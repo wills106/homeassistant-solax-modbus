@@ -748,8 +748,8 @@ class SolaXModbusHub:
             else:  self.data["lease_mode"] = "Unknown"
             
             device_lock_s = decoder.decode_16bit_uint()
-            if   device_lock_s == 0:  self.data["device_lock"] = "Disabled"
-            elif device_lock_s == 1:  self.data["device_lock"] = "Enabled"
+            if   device_lock_s == 0:  self.data["device_lock"] = "Unlock"
+            elif device_lock_s == 1:  self.data["device_lock"] = "Lock"
             else:  self.data["device_lock"] = "Unknown"
             
             manual_mode_control_s = decoder.decode_16bit_uint()
