@@ -85,11 +85,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
+
     seriesnumber                       = hub._read_serialnr(0x0,   Endian.Big)
     if not seriesnumber:  seriesnumber = hub._read_serialnr(0x300, Endian.Little)
     if not seriesnumber: 
         _LOGGER.error(f"cannot find serial number, even not for MIC")
         seriesnumber = "unknown"
+
+    """
+    inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
+    if inverter_data.isError():
+        #_LOGGER.error(f"Start search at 0x300")
+        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
+        if inverter_data.is_error():
+            _LOGGER.error("cannot perform initial read for serial number")
+        else:
+            decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Little )
+            seriesnumber = decoder.decode_string(14).decode("ascii")
+            hub.seriesnumber = seriesnumber
+            #_LOGGER.error(f"serial number test1 = {seriesnumber}")
+    else:
+        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
+        seriesnumber = decoder.decode_string(14).decode("ascii")
+        hub.seriesnumber = seriesnumber
+        #_LOGGER.error(f"serial number test2 = {seriesnumber}")
+    """        
+
 
     invertertype = 0
 
@@ -118,7 +139,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
     elif seriesnumber.startswith('MC10'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
     elif seriesnumber.startswith('MC20'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('PM51'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MP15'):  invertertype = PV | MIC | X3 # MIC X3 MP15 Serial Inverted!
     elif seriesnumber.startswith('MU80'):  invertertype = PV | MIC | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
@@ -745,15 +766,15 @@ class SolaXModbusHub:
             selfuse_backup_soc = decoder.decode_16bit_uint()
             self.data["selfuse_backup_soc"] = selfuse_backup_soc
             
-            lease_mode_enable_s = decoder.decode_16bit_uint()
-            if   lease_mode_enable_s == 0:  self.data["lease_mode_enable"] = "Disabled"
-            elif lease_mode_enable_s == 1:  self.data["lease_mode_enable"] = "Enabled"
-            else:  self.data["lease_mode_enable"] = "Unknown"
+            lease_mode_s = decoder.decode_16bit_uint()
+            if   lease_mode_s == 0:  self.data["lease_mode"] = "Disabled"
+            elif lease_mode_s == 1:  self.data["lease_mode"] = "Enabled"
+            else:  self.data["lease_mode"] = "Unknown"
             
-            device_lock_flag_s = decoder.decode_16bit_uint()
-            if   device_lock_flag_s == 0:  self.data["device_lock_flag"] = "Disabled"
-            elif device_lock_flag_s == 1:  self.data["device_lock_flag"] = "Enabled"
-            else:  self.data["device_lock_flag"] = "Unknown"
+            device_lock_s = decoder.decode_16bit_uint()
+            if   device_lock_s == 0:  self.data["device_lock"] = "Unlock"
+            elif device_lock_s == 1:  self.data["device_lock"] = "Lock"
+            else:  self.data["device_lock"] = "Unknown"
             
             manual_mode_control_s = decoder.decode_16bit_uint()
             if   manual_mode_control_s == 0:  self.data["manual_mode_control"] = "Off"
@@ -775,8 +796,8 @@ class SolaXModbusHub:
             minimum_per_on_signal = decoder.decode_16bit_uint()
             self.data["minimum_per_on_signal"] = minimum_per_on_signal
             
-            minimum_per_day_on = decoder.decode_16bit_uint()
-            self.data["minimum_per_day_on"] = minimum_per_day_on
+            maximum_per_day_on = decoder.decode_16bit_uint()
+            self.data["maximum_per_day_on"] = maximum_per_day_on
             
             schedule_s = decoder.decode_16bit_uint()
             if   schedule_s == 0:  self.data["schedule"] = "Disabled"
@@ -784,16 +805,16 @@ class SolaXModbusHub:
             else:  self.data["schedule"] = "Unknown"
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p1_start_time"] = Gen4Timestring(tmp)
+            self.data["work_start_time_1"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p1_stop_time"] = Gen4Timestring(tmp)
+            self.data["work_end_time_1"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p2_start_time"] = Gen4Timestring(tmp)
+            self.data["work_start_time_2"] = Gen4Timestring(tmp)
             
             tmp = decoder.decode_16bit_uint()
-            self.data["p2_stop_time"] = Gen4Timestring(tmp)
+            self.data["work_end_time_2"] = Gen4Timestring(tmp)
             
             work_mode_s = decoder.decode_16bit_uint()
             if   work_mode_s == 0:  self.data["work_mode"] = "Disabled"
@@ -808,7 +829,7 @@ class SolaXModbusHub:
             
             parallel_setting_s = decoder.decode_16bit_uint()
             if   parallel_setting_s == 0:  self.data["parallel_setting"] = "Free"
-            elif parallel_setting_s == 1:  self.data["parallel_setting"] = "master"
+            elif parallel_setting_s == 1:  self.data["parallel_setting"] = "Master"
             elif parallel_setting_s == 2:  self.data["parallel_setting"] = "Slave"
             else:  self.data["parallel_setting"] = "Unknown"
             
@@ -1301,7 +1322,7 @@ class SolaXModbusHub:
         self.data["inverter_temperature"] = inverter_temperature
         
         output_power = decoder.decode_16bit_uint()
-        self.data[" output_power"] =  output_power
+        self.data["feedin_power"] = output_power
         
         run_modes = decoder.decode_16bit_uint()
         if   run_modes == 0: self.data["run_mode"] = "Waiting"
@@ -1312,13 +1333,13 @@ class SolaXModbusHub:
         else: self.data["run_mode"] = "Unknown"
         
         output_power_phase_r = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_r"] =  output_power_phase_r
+        self.data["feedin_power_r"] = output_power_phase_r
         
         output_power_phase_s = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_s"] =  output_power_phase_s
+        self.data["feedin_power_s"] = output_power_phase_s
         
         output_power_phase_t = decoder.decode_16bit_uint()
-        self.data[" output_power_phase_t"] =  output_power_phase_t
+        self.data["feedin_power_t"] = output_power_phase_t
         
         decoder.skip_bytes(2)
         
