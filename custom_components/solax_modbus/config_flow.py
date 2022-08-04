@@ -88,7 +88,7 @@ def _validate_host(data: Any) -> Any:
         _LOOGGER.warning("valid IP address? Trying to validate it in another way")
         disallowed = re.compile(r"[^a-zA-Z\d\-]")
         res = all(x and not disallowed.search(x) for x in host.split("."))
-        if not res: raise SchemaFlowError("invalid IP address") from e
+        if not res: raise SchemaFlowError("invalid_host") from e
     _LOGGER.info(f"validating host: returning data: {data}")
     return data
     """
@@ -113,7 +113,7 @@ CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
 }
 
 OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-    "init":   SchemaFlowFormStep(SERIAL_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
+    "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
     "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
     "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
 }
