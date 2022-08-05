@@ -47,7 +47,8 @@ An entity can be declared multiple times (with different bitmasks) if the parame
 GEN2           = 0x0002
 GEN3           = 0x0004
 GEN4           = 0x0008
-ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4
+GEN1MIC        = 0x0010
+ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN1MIC
 
 X1             = 0x0100
 X3             = 0x0200
@@ -60,7 +61,7 @@ MIC            = 0x2000
 ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
 
 EPS            = 0x8000
-ALL_EPS_GROUP      = EPS
+ALL_EPS_GROUP  = EPS
 
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 

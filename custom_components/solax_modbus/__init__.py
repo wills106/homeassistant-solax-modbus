@@ -16,7 +16,7 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
 
-from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV, MIC, ALL_GEN_GROUP
+from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV, MIC, GEN1MIC
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -137,10 +137,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = MIC | ALL_GEN_GRP | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MC20'):  invertertype = MIC | ALL_GEN_GRP | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('PM51'):  invertertype = MIC | ALL_GEN_GRP | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = MIC | ALL_GEN_GRP | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN1MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN1MIC | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('PM51'):  invertertype = MIC | GEN1MIC | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN1MIC | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
     #
