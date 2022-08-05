@@ -1627,7 +1627,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Run Mode",
         key="run_mode",
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes=ALLDEFAULT,
     ),
     SolaXModbusSensorEntityDescription(
         name="Schedule",
