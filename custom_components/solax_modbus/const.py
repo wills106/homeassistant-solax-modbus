@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.helpers.entity import EntityCategory
 
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -699,6 +700,8 @@ class SolaxModbusSelectEntityDescription(SelectEntityDescription):
     register: int = None
     options: dict = None
     blacklist: list = None # none or list of serial number prefixes
+    #category: EntityCategory = EntityCategory.CONFIG
+
 
 SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Allow Grid Charge",

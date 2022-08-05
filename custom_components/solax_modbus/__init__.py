@@ -86,8 +86,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
 
-    seriesnumber                       = hub._read_serialnr(0x0,   Endian.Big)
-    if not seriesnumber:  seriesnumber = hub._read_serialnr(0x300, Endian.Little)
+    seriesnumber                       = hub._read_serialnr(0x0,   swapbytes = False)
+    if not seriesnumber:  seriesnumber = hub._read_serialnr(0x300, swapbytes = True) # bug in endian.Little decoding?
     if not seriesnumber: 
         _LOGGER.error(f"cannot find serial number, even not for MIC")
         seriesnumber = "unknown"
@@ -139,7 +139,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
     elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
     elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('PM51'):  invertertype = MIC | GEN | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN | X3 # MIC X3 MP15 Serial Inverted!
     elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
     # add cases here
     #
@@ -281,16 +281,21 @@ class SolaXModbusHub:
             self._client.connect()
 
 
-    def _read_serialnr(self, address, byteorder):
+    def _read_serialnr(self, address, swapbytes):
         res = None
         try:
             inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=address, count=7)
             if not inverter_data.isError(): 
-                decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=byteorder )
+                decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big)
                 res = decoder.decode_string(14).decode("ascii")
+                if swapbytes: 
+                    ba = bytearray(res,"ascii") # convert to bytearray for swapping
+                    ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
+                    res = str(ba, "ascii") # convert back to string
                 self._seriesnumber = res
         except: pass
         if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
+        _LOGGER.info(f"Read Solax serial number: {res}, swapped: {swapbytes}")
         return res
 
 
