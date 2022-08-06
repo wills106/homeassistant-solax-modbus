@@ -7,7 +7,8 @@
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "interface" : "Interface",
-          "read_eps": "EPS",
+          "read_eps": "Noodstroom optie (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
         }
       },
@@ -42,7 +43,8 @@
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw SolaX Power-sensoren",
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "interface" : "Interface",
-          "read_eps": "EPS",
+          "read_eps": "Noodstroom Optie (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
         }
       },

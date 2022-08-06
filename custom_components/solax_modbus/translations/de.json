@@ -7,7 +7,8 @@
           "name": "Das Präfix, das für die SolaX Power Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
-          "read_eps": "EPS",
+          "read_eps": "Notstromschalter (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
         }
       },
@@ -42,7 +43,8 @@
           "name": "Das Präfix, das für die SolaX Power Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des SolaX Power Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
-          "read_eps": "EPS",
+          "read_eps": "Notstromschalter (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
         }
       },
