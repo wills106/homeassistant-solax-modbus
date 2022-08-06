@@ -48,12 +48,11 @@ class SolaXModbusButton(ButtonEntity):
         self._platform_name = platform_name
         self._hub = hub
         self._modbus_addr = modbus_addr
-        self._device_info = device_info
+        self._attr_device_info = device_info
         self._name = button_info.name
         self._key = button_info.key
         self._register = button_info.register
         self._command = button_info.command
-
 
     @property
     def name(self) -> str:
@@ -66,4 +65,5 @@ class SolaXModbusButton(ButtonEntity):
 
     async def async_press(self) -> None:
         """Write the button value."""
+        _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
         self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
