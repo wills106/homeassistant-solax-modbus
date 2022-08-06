@@ -1359,11 +1359,11 @@ class SolaXModbusHub:
         
         decoder.skip_bytes(26)
         
-        today_yield = decoder.decode_32bit_uint()
-        self.data["today_yield"] = round(today_yield * 0.001, 2)
-        
         total_yield = decoder.decode_32bit_uint()
         self.data["total_yield"] = round(total_yield * 0.001, 2)
+        
+        today_yield = decoder.decode_32bit_uint()
+        self.data["today_yield"] = round(today_yield * 0.001, 2)
         
         decoder.skip_bytes(28)
 
