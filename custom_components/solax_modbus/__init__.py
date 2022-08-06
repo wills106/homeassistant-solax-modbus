@@ -16,7 +16,7 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadDecoder
 
-from .const import GEN, GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, PV, MIC
+from .const import GEN, GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, DCB, PV, MIC
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -25,8 +25,10 @@ from .const import (
     CONF_INTERFACE,
     CONF_SERIAL_PORT,
     CONF_READ_EPS,
+    CONF_READ_DCB,
     CONF_BAUDRATE,
     DEFAULT_READ_EPS,
+    DEFAULT_READ_DCB,
     DEFAULT_INTERFACE,
     DEFAULT_SERIAL_PORT,
     DEFAULT_MODBUS_ADDR,
@@ -73,7 +75,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
     baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
     scan_interval = config[CONF_SCAN_INTERVAL]
-    read_eps = config.get(CONF_READ_EPS, False)
+    read_eps = config.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+    read_dcb = config.get(CONF_READ_DCB, DEFAULT_READ_DCB)
 
 
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
@@ -92,28 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.error(f"cannot find serial number, even not for MIC")
         seriesnumber = "unknown"
 
-    """
-    inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x0, count=7)
-    if inverter_data.isError():
-        #_LOGGER.error(f"Start search at 0x300")
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=0x300, count=7)
-        if inverter_data.is_error():
-            _LOGGER.error("cannot perform initial read for serial number")
-        else:
-            decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Little )
-            seriesnumber = decoder.decode_string(14).decode("ascii")
-            hub.seriesnumber = seriesnumber
-            #_LOGGER.error(f"serial number test1 = {seriesnumber}")
-    else:
-        decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big )
-        seriesnumber = decoder.decode_string(14).decode("ascii")
-        hub.seriesnumber = seriesnumber
-        #_LOGGER.error(f"serial number test2 = {seriesnumber}")
-    """        
-
-
     invertertype = 0
-
     # derive invertertupe from seriiesnumber
     if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
     elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
@@ -148,6 +130,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
 
     if read_eps: invertertype = invertertype | EPS 
+    if read_dcb: invertertype = invertertype | DCB
 
     hub.invertertype = invertertype
     for component in PLATFORMS:

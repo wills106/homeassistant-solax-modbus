@@ -7,7 +7,8 @@
           "name": "The prefix to be used for your SolaX Power Inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
-          "read_eps": "EPS",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       },
@@ -43,7 +44,8 @@
           "name": "The prefix to be used for your SolaX Power Inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
-          "read_eps": "EPS",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       },

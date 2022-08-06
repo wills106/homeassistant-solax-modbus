@@ -28,11 +28,13 @@ from .const import (
     DEFAULT_BAUDRATE,
 	DOMAIN,
 	CONF_READ_EPS,
+    CONF_READ_DCB,
     CONF_INTERFACE,
     CONF_SERIAL_PORT,
     CONF_MODBUS_ADDR,
     CONF_BAUDRATE,
 	DEFAULT_READ_EPS,
+    DEFAULT_READ_DCB,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,6 +60,7 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
+        vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
     } )
 
 SERIAL_SCHEMA = vol.Schema( {

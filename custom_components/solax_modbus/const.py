@@ -63,6 +63,9 @@ ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
 EPS            = 0x8000
 ALL_EPS_GROUP  = EPS
 
+DCB            = 0x10000 # dry contact box - gen4
+ALL_DCB_GROUP  = DCB
+
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
@@ -73,11 +76,12 @@ def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevan
     xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
     hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
     epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
+    dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
     blacklisted = False
     if blacklist:
         for start in blacklist: 
             if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch) and not blacklisted
+    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
 
 """
 end of bitmask handling code
@@ -90,6 +94,7 @@ DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
 CONF_READ_EPS    = "read_eps"
+CONF_READ_DCB    = "read_dcb"
 CONF_MODBUS_ADDR = "read_modbus_addr"
 CONF_INTERFACE   = "interface"
 CONF_SERIAL_PORT = "read_serial_port"
@@ -99,6 +104,7 @@ ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
 DEFAULT_READ_EPS = False
+DEFAULT_READ_DCB = False
 DEFAULT_BAUDRATE = "19200"
 
 
@@ -123,12 +129,14 @@ BUTTON_TYPES = [
         register = 0x00,
         command = 2014,
         allowedtypes = ALLDEFAULT,
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusButtonEntityDescription( name = "Unlock Inverter - Advanced",
         key = "unlock_inverter_advanced",
         register = 0x00,
         command = 6868,
         allowedtypes = ALLDEFAULT,
+        entity_category = EntityCategory.CONFIG,
     ),
 ]
 
@@ -427,7 +435,7 @@ NUMBER_TYPES = [
         native_max_value = 1200,
         native_step = 5,
         native_unit_of_measurement = TIME_MINUTES,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
     SolaxModbusNumberEntityDescription( name = "Minimum Per On Signal",
         key ="minimum_per_on_signal",
@@ -437,7 +445,7 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         native_unit_of_measurement = TIME_MINUTES,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
     SolaxModbusNumberEntityDescription( name = "Selfuse Backup SOC",
         key ="selfuse_backup_soc",
@@ -477,7 +485,7 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
     SolaxModbusNumberEntityDescription( name = "Switch On SOC",
         key = "switch_on_soc", 
@@ -487,7 +495,7 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
 ]
 
@@ -827,6 +835,7 @@ SELECT_TYPES = [
                 1: "Lock",
             },
         allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 1",
         key = "discharger_end_time_1",
@@ -891,7 +900,7 @@ SELECT_TYPES = [
                 0: "Load Management",
                 1: "Generator Control",
             },
-        allowedtypes = GEN4, 
+        allowedtypes = GEN4 | DCB, 
     ),
     SolaxModbusSelectEntityDescription( name = "External Generation",
         key = "external_generation",
@@ -936,10 +945,11 @@ SELECT_TYPES = [
         register = 0xC6,
         options =  {
                 0: "Free",
-                1: "Maser",
+                1: "Master",
                 2: "Slave",
             },
         allowedtypes = GEN4, 
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusSelectEntityDescription( name = "Schedule",
         key = "schedule",
@@ -948,7 +958,7 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = GEN4, 
+        allowedtypes = GEN4 | DCB, 
     ),
     SolaxModbusSelectEntityDescription( name = "Selfuse Mode Backup",
         key = "selfuse_mode_backup",
@@ -972,14 +982,14 @@ SELECT_TYPES = [
         key = "work_end_time_1",
         register = 0xBF,
         options = TIME_OPTIONS_GEN4,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusSelectEntityDescription( name = "Work End Time 2",
         key = "work_end_time_2",
         register = 0xC1,
         options = TIME_OPTIONS_GEN4,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusSelectEntityDescription( name = "Work Mode",
@@ -990,20 +1000,20 @@ SELECT_TYPES = [
                 1: "Manual",
                 2: "Smart Save",
             },
-        allowedtypes = GEN4, 
+        allowedtypes = GEN4 | DCB, 
     ),
     SolaxModbusSelectEntityDescription( name = "Work Start Time 1",
         key = "work_start_time_1",
         register = 0xBE,
         options = TIME_OPTIONS_GEN4,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusSelectEntityDescription( name = "Work Start Time 2",
         key = "work_start_time_2",
         register = 0xC0,
         options = TIME_OPTIONS_GEN4,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
     ),
 ]
@@ -1549,28 +1559,28 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="P1 Start Time",
-        key="p1_start_time",
+        name="Work Start Time 1",
+        key="work_start_time_1",
         entity_registry_enabled_default=False,
-        allowedtypes=GEN4,
+        allowedtypes=GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
-        name="P1 Stop Time",
-        key="p1_stop_time",
+        name="Work Stop Time 1",
+        key="work_stop_time_1",
         entity_registry_enabled_default=False,
-        allowedtypes=GEN4,
+        allowedtypes=GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
-        name="P2 Start Time",
-        key="p2_start_time",
+        name="Work Start Time 2",
+        key="work_start_time_2",
         entity_registry_enabled_default=False,
-        allowedtypes=GEN4,
+        allowedtypes=GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
-        name="P2 Stop Time",
-        key="p2_stop_time",
+        name="Work Stop Time 2",
+        key="work_stop_time_2",
         entity_registry_enabled_default=False,
-        allowedtypes=GEN4,
+        allowedtypes=GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
         name="Parallel Setting",
@@ -1796,7 +1806,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Work Mode",
         key="work_mode",
         entity_registry_enabled_default=False,
-        allowedtypes=GEN4,
+        allowedtypes=GEN4 | DCB,
     ),
 
 
