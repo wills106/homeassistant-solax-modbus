@@ -14,7 +14,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
-from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 
 from .const import GEN, GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, DCB, PV, MIC
 from .const import (
@@ -298,7 +298,11 @@ class SolaXModbusHub:
         """Write registers."""
         with self._lock:
             kwargs = {"unit": unit} if unit else {}
-            return self._client.write_register(address, payload, **kwargs)
+            builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            builder.reset()
+            builder.add_16bit_int(payload)
+            payload = builder.to_registers()
+            return self._client.write_register(address, payload[0], **kwargs)
 
     def read_modbus_data(self):
         
@@ -485,7 +489,15 @@ class SolaXModbusHub:
             discharger_end_time_2_m = str(decoder.decode_16bit_uint())
             self.data["discharger_end_time_2"] = f"{discharger_end_time_2_h.zfill(2)}:{discharger_end_time_2_m.zfill(2)}"
         
-            decoder.skip_bytes(26)
+            decoder.skip_bytes(8)
+            
+            modbus_power_control_s = decoder.decode_16bit_uint()
+            if   modbus_power_control_s == 0: self.data["modbus_power_control"] = "Disabled"
+            elif modbus_power_control_s == 1: self.data["modbus_power_control"] = "Total"
+            elif modbus_power_control_s == 2: self.data["modbus_power_control"] = "Split Phase"
+            else:  self.data["modbus_power_control"] = "Unknown"
+            
+            decoder.skip_bytes(16)
         
             registration_code = decoder.decode_string(10).decode("ascii")
             self.data["registration_code"] = str(registration_code)
@@ -653,8 +665,12 @@ class SolaXModbusHub:
         if self.invertertype & GEN4:
             decoder.skip_bytes(12)
         else:         
-            power_control_timeout = decoder.decode_16bit_uint()
-            self.data["power_control_timeout"] = power_control_timeout
+            export_duration = decoder.decode_16bit_uint()
+            if export_duration == 4: self.data["export_duration"] = "Default"
+            elif export_duration == 900: self.data["export_duration"] = "15 Minutes"
+            elif export_duration == 1800: self.data["export_duration"] = "30 Minutes"
+            elif export_duration == 3600: self.data["export_duration"] = "60 Minutes"
+            else: self.data["export_duration"] = export_duration
         
             if (self.invertertype & HYBRID): # 0x010C only for hybrid
                 eps_auto_restart_s = decoder.decode_16bit_uint()
@@ -1051,7 +1067,7 @@ class SolaXModbusHub:
     
     def read_modbus_input_registers_1(self):
 
-        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x66, count=54)
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x66, count=56)
 
         if realtime_data.isError():
             return False
@@ -1216,6 +1232,13 @@ class SolaXModbusHub:
         import_energy_today = decoder.decode_32bit_uint()
         self.data["import_energy_today"] = round(import_energy_today * 0.01, 2)
         # Is there anything of interest on Gen3 from 0x9c - 0xcd & on Gen4 0x9c - 0x120
+        
+        if self.invertertype & GEN4: #0x09C
+            decoder.skip_bytes(4)
+        else: 
+            grid_export_limit = decoder.decode_32bit_int()
+            self.data["grid_export_limit"] = grid_export_limit
+        
         return True
     
     def read_modbus_input_registers_2(self):
