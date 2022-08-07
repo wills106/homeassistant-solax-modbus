@@ -1313,13 +1313,13 @@ class SolaXModbusHub:
         self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)
         
         grid_frequency_r = decoder.decode_16bit_uint()
-        self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 1)
+        self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 2)
         
         grid_frequency_s = decoder.decode_16bit_uint()
-        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 1)
+        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 2)
         
         grid_frequency_t = decoder.decode_16bit_uint()
-        self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 1)
+        self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 2)
         
         grid_current_r = decoder.decode_16bit_uint()
         self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
@@ -1366,7 +1366,7 @@ class SolaXModbusHub:
         decoder.skip_bytes(26)
         
         total_yield = decoder.decode_32bit_uint()
-        self.data["total_yield"] = round(total_yield * 0.001, 2)
+        self.data["total_yield"] = round(total_yield * 0.0001, 2)
         
         today_yield = decoder.decode_32bit_uint()
         self.data["today_yield"] = round(today_yield * 0.001, 2)
