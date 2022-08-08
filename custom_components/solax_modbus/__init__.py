@@ -1292,50 +1292,21 @@ class SolaXModbusHub:
         )
         
         pv_voltage_1 = decoder.decode_16bit_uint()
-        self.data["pv_voltage_1"] = round(pv_voltage_1 * 0.1, 1)
-        
         pv_voltage_2 = decoder.decode_16bit_uint()
-        self.data["pv_voltage_2"] = round(pv_voltage_2 * 0.1, 1)
-        
         pv_current_1 = decoder.decode_16bit_uint()
-        self.data["pv_current_1"] = round(pv_current_1 * 0.1, 1)
-        
         pv_current_2 = decoder.decode_16bit_uint()
-        self.data["pv_current_2"] = round(pv_current_2 * 0.1, 1)
-        
         grid_voltage_r = decoder.decode_16bit_uint()
-        self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
-        
         grid_voltage_s = decoder.decode_16bit_uint()
-        self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)
-        
         grid_voltage_t = decoder.decode_16bit_uint()
-        self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)
-        
         grid_frequency_r = decoder.decode_16bit_uint()
-        self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 2)
-        
         grid_frequency_s = decoder.decode_16bit_uint()
-        self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 2)
-        
         grid_frequency_t = decoder.decode_16bit_uint()
-        self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 2)
-        
         grid_current_r = decoder.decode_16bit_uint()
-        self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
-        
         grid_current_s = decoder.decode_16bit_uint()
-        self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
-        
         grid_current_t = decoder.decode_16bit_uint()
-        self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
-        
         inverter_temperature = decoder.decode_16bit_uint()
-        self.data["inverter_temperature"] = inverter_temperature
-        
         output_power = decoder.decode_16bit_uint()
-        self.data["feedin_power"] = output_power
-        
+
         run_modes = decoder.decode_16bit_uint()
         if   run_modes == 0: self.data["run_mode"] = "Waiting"
         elif run_modes == 1: self.data["run_mode"] = "Checking"
@@ -1345,32 +1316,40 @@ class SolaXModbusHub:
         else: self.data["run_mode"] = "Unknown"
         
         output_power_phase_r = decoder.decode_16bit_uint()
-        self.data["feedin_power_r"] = output_power_phase_r
-        
         output_power_phase_s = decoder.decode_16bit_uint()
-        self.data["feedin_power_s"] = output_power_phase_s
-        
         output_power_phase_t = decoder.decode_16bit_uint()
-        self.data["feedin_power_t"] = output_power_phase_t
-        
-        decoder.skip_bytes(2)
-        
+        decoder.skip_bytes(2) 
         pv_power_1 = decoder.decode_16bit_uint()
-        self.data["pv_power_1"] = pv_power_1
-        
         pv_power_2 = decoder.decode_16bit_uint()
-        self.data["pv_power_2"] = pv_power_2
-        
-        self.data["pv_total_power"] = pv_power_1 + pv_power_2
-        
         decoder.skip_bytes(26)
-        
         total_yield = decoder.decode_32bit_uint()
-        self.data["total_yield"] = round(total_yield * 0.0001, 2)
-        
         today_yield = decoder.decode_32bit_uint()
-        self.data["today_yield"] = round(today_yield * 0.001, 2)
-        
         decoder.skip_bytes(28)
+        
+        if run_modes != 0:
+            self.data["pv_voltage_1"] = round(pv_voltage_1 * 0.1, 1)
+            self.data["pv_voltage_2"] = round(pv_voltage_2 * 0.1, 1)
+            self.data["pv_current_1"] = round(pv_current_1 * 0.1, 1)
+            self.data["pv_current_2"] = round(pv_current_2 * 0.1, 1)
+            self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
+            self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)    
+            self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)  
+            self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 2)
+            self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 2)
+            self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 2)
+            self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
+            self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
+            self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
+            self.data["inverter_temperature"] = inverter_temperature
+            self.data["feedin_power"] = output_power
+
+            self.data["feedin_power_r"] = output_power_phase_r
+            self.data["feedin_power_s"] = output_power_phase_s
+            self.data["feedin_power_t"] = output_power_phase_t
+            self.data["pv_power_1"] = pv_power_1
+            self.data["pv_power_2"] = pv_power_2
+            self.data["pv_total_power"] = pv_power_1 + pv_power_2
+            self.data["total_yield"] = round(total_yield * 0.0001, 2)
+            self.data["today_yield"] = round(today_yield * 0.001, 2)
 
         return True
