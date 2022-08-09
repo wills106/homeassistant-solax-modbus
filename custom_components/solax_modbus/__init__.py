@@ -1298,7 +1298,7 @@ class SolaXModbusHub:
         decoder = BinaryPayloadDecoder.fromRegisters(
             runmode_data.registers, Endian.Big, wordorder=Endian.Little
         )
-        run_mode = decoder.decode_16bit_uint()
+        run_modes = decoder.decode_16bit_uint()
 
         if run_modes == 0:
             self.data["run_mode"] = "Waiting"
