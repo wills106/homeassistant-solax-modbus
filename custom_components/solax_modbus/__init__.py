@@ -601,7 +601,17 @@ class SolaXModbusHub:
                 inverter_model_number = decoder.decode_string(20).decode("ascii")
                 self.data["inverter_model_number"] = str(inverter_model_number)
             
-            decoder.skip_bytes(20)
+            if self.invertertype & GEN2:
+                
+                decoder.skip_bytes(18)
+                
+                grid_service_s = decoder.decode_16bit_uint()
+                if   grid_service_s == 0: self.data["grid_service"] = "Disabled"
+                elif grid_service_s == 1: self.data["grid_service"] = "Enabled"
+                else: self.data["grid_service"] = "Unknown"
+                
+            else:
+                decoder.skip_bytes(20)
         
             backup_gridcharge_s = decoder.decode_16bit_uint()
             if   backup_gridcharge_s == 0: self.data["backup_gridcharge"] = "Disabled"
