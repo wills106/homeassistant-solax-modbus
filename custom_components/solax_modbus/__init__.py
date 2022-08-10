@@ -1054,9 +1054,9 @@ class SolaXModbusHub:
         if self.invertertype & GEN4:
             self.data["total_yield"] = round(total_yield * 0.1, 1)
         elif self.invertertype & GEN3:
-            self.data["total_yield"] = round(total_yield * 0.0001, 2)
+            self.data["total_yield"] = round(total_yield * 0.1, 2)
         else:
-            self.data["total_yield"] = round(total_yield * 0.000001, 2)
+            self.data["total_yield"] = round(total_yield * 0.001, 2)
         
         lock_states = decoder.decode_16bit_uint()
         if   lock_states == 0: self.data["lock_state"] = "Locked"
@@ -1292,72 +1292,62 @@ class SolaXModbusHub:
 
     def read_modbus_input_registers_mic(self):
 
-        runmode_data = self.read_input_registers(unit=self._modbus_addr, address=0x40F, count=1) # read run mode first
 
-        if runmode_data.isError(): return False
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x400, count=53)
+
+        if realtime_data.isError():
+            return False
+
         decoder = BinaryPayloadDecoder.fromRegisters(
-            runmode_data.registers, Endian.Big, wordorder=Endian.Little
+            realtime_data.registers, Endian.Big, wordorder=Endian.Little
         )
+        
+        pv_voltage_1 = decoder.decode_16bit_uint()
+        pv_voltage_2 = decoder.decode_16bit_uint()
+        pv_current_1 = decoder.decode_16bit_uint()
+        pv_current_2 = decoder.decode_16bit_uint()
+        grid_voltage_r = decoder.decode_16bit_uint()
+        grid_voltage_s = decoder.decode_16bit_uint()
+        grid_voltage_t = decoder.decode_16bit_uint()
+        grid_frequency_r = decoder.decode_16bit_uint()
+        grid_frequency_s = decoder.decode_16bit_uint()
+        grid_frequency_t = decoder.decode_16bit_uint()
+        grid_current_r = decoder.decode_16bit_uint()
+        grid_current_s = decoder.decode_16bit_uint()
+        grid_current_t = decoder.decode_16bit_uint()
+        inverter_temperature = decoder.decode_16bit_uint()
+        output_power = decoder.decode_16bit_uint()
+
         run_modes = decoder.decode_16bit_uint()
-
-        if run_modes == 0:
-            self.data["run_mode"] = "Waiting"
-        else: # read the full data block
-            realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x400, count=53)
-
-            if realtime_data.isError():
-                return False
-
-            decoder = BinaryPayloadDecoder.fromRegisters(
-                realtime_data.registers, Endian.Big, wordorder=Endian.Little
-            )
+        if   run_modes == 0: self.data["run_mode"] = "Waiting"
+        elif run_modes == 1: self.data["run_mode"] = "Checking"
+        elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
+        elif run_modes == 3: self.data["run_mode"] = "Fault"
+        elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
+        else: self.data["run_mode"] = "Unknown"
         
-            pv_voltage_1 = decoder.decode_16bit_uint()
-            pv_voltage_2 = decoder.decode_16bit_uint()
-            pv_current_1 = decoder.decode_16bit_uint()
-            pv_current_2 = decoder.decode_16bit_uint()
-            grid_voltage_r = decoder.decode_16bit_uint()
-            grid_voltage_s = decoder.decode_16bit_uint()
-            grid_voltage_t = decoder.decode_16bit_uint()
-            grid_frequency_r = decoder.decode_16bit_uint()
-            grid_frequency_s = decoder.decode_16bit_uint()
-            grid_frequency_t = decoder.decode_16bit_uint()
-            grid_current_r = decoder.decode_16bit_uint()
-            grid_current_s = decoder.decode_16bit_uint()
-            grid_current_t = decoder.decode_16bit_uint()
-            inverter_temperature = decoder.decode_16bit_uint()
-            output_power = decoder.decode_16bit_uint()
+        output_power_phase_r = decoder.decode_16bit_uint()
+        output_power_phase_s = decoder.decode_16bit_uint()
+        output_power_phase_t = decoder.decode_16bit_uint()
+        decoder.skip_bytes(2) 
+        pv_power_1 = decoder.decode_16bit_uint()
+        pv_power_2 = decoder.decode_16bit_uint()
+        decoder.skip_bytes(26)
+        total_yield = decoder.decode_32bit_uint()
+        today_yield = decoder.decode_32bit_uint()
+        decoder.skip_bytes(28)
 
-            run_modes = decoder.decode_16bit_uint()
-            if   run_modes == 0: self.data["run_mode"] = "Waiting"
-            elif run_modes == 1: self.data["run_mode"] = "Checking"
-            elif run_modes == 2: self.data["run_mode"] = "Normal Mode"
-            elif run_modes == 3: self.data["run_mode"] = "Fault"
-            elif run_modes == 4: self.data["run_mode"] = "Permanent Fault Mode"
-            else: self.data["run_mode"] = "Unknown"
-        
-            output_power_phase_r = decoder.decode_16bit_uint()
-            output_power_phase_s = decoder.decode_16bit_uint()
-            output_power_phase_t = decoder.decode_16bit_uint()
-            decoder.skip_bytes(2) 
-            pv_power_1 = decoder.decode_16bit_uint()
-            pv_power_2 = decoder.decode_16bit_uint()
-            decoder.skip_bytes(26)
-            total_yield = decoder.decode_32bit_uint()
-            today_yield = decoder.decode_32bit_uint()
-            decoder.skip_bytes(28)
-
-            #if run_modes != 0:
+        if run_modes > 0: # not in sleep mode 
             self.data["pv_voltage_1"] = round(pv_voltage_1 * 0.1, 1)
             self.data["pv_voltage_2"] = round(pv_voltage_2 * 0.1, 1)
             self.data["pv_current_1"] = round(pv_current_1 * 0.1, 1)
             self.data["pv_current_2"] = round(pv_current_2 * 0.1, 1)
-            self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
-            self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)    
-            self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)  
-            self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 2)
-            self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 2)
-            self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 2)
+            #self.data["grid_voltage_r"] = round(grid_voltage_r * 0.1, 1)
+            #self.data["grid_voltage_s"] = round(grid_voltage_s * 0.1, 1)    
+            #self.data["grid_voltage_t"] = round(grid_voltage_t * 0.1, 1)  
+            #self.data["grid_frequency_r"] = round(grid_frequency_r * 0.01, 2)
+            #self.data["grid_frequency_s"] = round(grid_frequency_s * 0.01, 2)
+            #self.data["grid_frequency_t"] = round(grid_frequency_t * 0.01, 2)
             self.data["grid_current_r"] = round(grid_current_r * 0.1, 1)
             self.data["grid_current_s"] = round(grid_current_s * 0.1, 1)
             self.data["grid_current_t"] = round(grid_current_t * 0.1, 1)
@@ -1370,7 +1360,7 @@ class SolaXModbusHub:
             self.data["pv_power_1"] = pv_power_1
             self.data["pv_power_2"] = pv_power_2
             self.data["pv_total_power"] = pv_power_1 + pv_power_2
-            self.data["total_yield"] = round(total_yield * 0.000001, 2)
+            #self.data["total_yield"] = round(total_yield * 0.001, 2)
             self.data["today_yield"] = round(today_yield * 0.001, 2)
 
         return True
