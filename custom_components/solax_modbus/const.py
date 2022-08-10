@@ -253,6 +253,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = TIME_HOURS,
         allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusNumberEntityDescription( name = "Backup Charge End Minutes",
         key = "backup_charge_end_m",
@@ -263,6 +264,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = TIME_MINUTES,
         allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusNumberEntityDescription( name = "Backup Charge Start Hours",
         key = "backup_charge_start_h", 
@@ -273,6 +275,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = TIME_HOURS,
         allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusNumberEntityDescription( name = "Backup Charge Start Minutes",
         key = "backup_charge_start_m",
@@ -283,6 +286,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = TIME_MINUTES,
         allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
     ),
     SolaxModbusNumberEntityDescription( name = "Backup Discharge Min SOC",
         key = "backup_discharge_min_soc",
@@ -1125,6 +1129,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         entity_registry_enabled_default=False,
         allowedtypes= GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
         blacklist=('XRE',)
     ),
     SolaXModbusSensorEntityDescription(
@@ -1167,6 +1172,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="battery_type",
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Charge Float Voltage",
@@ -1201,6 +1207,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_TEMPERATURE,
         state_class=STATE_CLASS_MEASUREMENT,
         allowedtypes= GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Voltage Charge",
@@ -1530,6 +1537,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="inverter_model_number",
         entity_registry_enabled_default=False,
         allowedtypes= GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
         blacklist=('XRE',)
     ),
     SolaXModbusSensorEntityDescription(
@@ -1718,6 +1726,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="rtc",
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Run Mode",
@@ -1797,7 +1806,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        entity_registry_enabled_default=False,
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1817,7 +1825,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        entity_registry_enabled_default=True,
         allowedtypes= GEN2,
         blacklist=('U50EC',)
     ),
@@ -1860,7 +1867,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        entity_registry_enabled_default=False,
         allowedtypes=GEN3 | GEN4 | GEN | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1992,6 +1998,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="ct_meter_setting",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Discharge Cut Off Point Different",
@@ -2050,6 +2057,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="machine_style",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
@@ -2057,6 +2065,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="meter_1_id",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
@@ -2064,6 +2073,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="meter_2_id",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     # Should be X3 as well?
     SolaXModbusSensorEntityDescription(
@@ -2071,6 +2081,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="meter_function",
         entity_registry_enabled_default=False,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Export Duration",
