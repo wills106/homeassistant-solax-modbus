@@ -955,7 +955,7 @@ SELECT_TYPES = [
         allowedtypes = GEN4, 
     ),
     SolaxModbusSelectEntityDescription( name = "Grid Service",
-        key = "Grid Service",
+        key = "grid_service",
         register = 0x92,
         options =  {
                 0: "Disabled",
