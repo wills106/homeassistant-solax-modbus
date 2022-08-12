@@ -954,15 +954,6 @@ SELECT_TYPES = [
             },
         allowedtypes = GEN4, 
     ),
-    SolaxModbusSelectEntityDescription( name = "Grid Service",
-        key = "grid_service",
-        register = 0x92,
-        options =  {
-                0: "Disabled",
-                1: "Enabled",
-            },
-        allowedtypes = GEN2, 
-    ),
     SolaxModbusSelectEntityDescription( name = "Lease Mode",
         key = "lease_mode",
         register = 0xB4,
@@ -1399,12 +1390,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Grid Service",
-        key="grid_service",
-        entity_registry_enabled_default=False,
-        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="Group Read Test",
