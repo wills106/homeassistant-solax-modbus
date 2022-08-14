@@ -20,5 +20,18 @@ A clear and concise description of what the bug is.
 Detailed Error Log, if you press on the individual error further information is displayed.
 This is the content we need, the description alone doesn't provide enough context.
 
+If there are no log's showing for SolaX try the following depending on your language settings, you can find the full logs under:
+
+Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
+
+Now the full logs are loaded. If you scroll down, you will see them.
+Once the full logs are shown, you can either use the search function in your browser to search for “solax” related entries or use the search entry field on top of the page.
+
+Search for
+
+solax
+
+and report us the logs. Make sure to replace sensitive information by xxxx (if any)
+
 **Additional context**
 Add any other context about the problem here.
