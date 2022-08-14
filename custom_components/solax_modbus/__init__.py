@@ -311,12 +311,16 @@ class SolaXModbusHub:
                 return self.read_modbus_input_registers_mic()
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
+            except Exception as ex:
+                _LOGGER.exception("Something went wrong reading from modbus")
                 
         else:
             try:
                 return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2()
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
+            except Exception as ex:
+                _LOGGER.exception("Something went wrong reading from modbus")
 
         return True
 
