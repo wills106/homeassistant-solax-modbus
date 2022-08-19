@@ -369,8 +369,7 @@ class SolaXModbusHub:
         firmwareversion_manager = decoder.decode_16bit_uint()
         self.data["firmwareversion_manager"] = firmwareversion_manager
         
-        bootloader_version = decoder.decode_16bit_uint()
-        self.data["bootloader_version"] = bootloader_version
+        decoder.skip_bytes(2)
         
         rtc_seconds = str(decoder.decode_16bit_uint())
         rtc_minutes = str(decoder.decode_16bit_uint())
@@ -670,11 +669,7 @@ class SolaXModbusHub:
         elif meter_function_s == 1: self.data["meter_function"] = "Enabled"
         else: self.data["meter_function"] = "Unknown"
           
-        meter_1_id = decoder.decode_16bit_uint()
-        self.data["meter_1_id"] = meter_1_id
-        
-        meter_2_id = decoder.decode_16bit_uint()
-        self.data["meter_2_id"] = meter_2_id
+        decoder.skip_bytes(4)
 
         if self.invertertype & GEN4:
             decoder.skip_bytes(12)
