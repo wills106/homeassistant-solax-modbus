@@ -18,10 +18,10 @@ Supports:
 - Gen2 Hybrid
 - Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
+- X3 MIC / MIC PRO (Limited set of entities available)
 
 Gen2, Gen3 & Gen4
 
-- Battery Awaken
 - Charge / Discharge rate of battery
 - Charger Start / End times
 - Charger Use Mode
@@ -30,6 +30,7 @@ Gen2 & Gen3
 
 - Allow Grid Charge
 - Charge periods in Force Time Use Mode
+- Force Discharge into Grid
 - Min Battery Capacity
 
 Gen2, Gen3 & Gen4
