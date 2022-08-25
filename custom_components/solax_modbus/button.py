@@ -29,7 +29,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     for button_info in BUTTON_TYPES:
         if matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
             button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
-        entities.append(button)
+            entities.append(button)
 
     async_add_entities(entities)
     return True
