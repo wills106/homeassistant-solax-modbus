@@ -169,6 +169,7 @@ MAX_CURRENTS = [
     ('H450',   30 ), # Gen4 X1 5kW
     ('H460',   30 ), # Gen4 X1 6kW
     ('H475',   30 ), # Gen4 X1 7.5kW
+    ('H34A',    30 ), # Gen4 X3 A
     ('H34B',    30 ), # Gen4 X3 B
     ('H34T',    25 ), # Gen4 X3 T
     ### All known Inverters added
@@ -218,12 +219,19 @@ MAX_EXPORT = [
     ('H450',    9200 ), # Gen4 X1 5kW
     ('H460',    9200 ), # Gen4 X1 6kW
     ('H475',    9200 ), # Gen4 X1 7.5kW
+    ('H34A05',  7500 ), # Gen4 X3 A
+    ('H34A08', 12000 ), # Gen4 X3 A
+    ('H34A10', 15000 ), # Gen4 X3 A
+    ('H34A12', 15000 ), # Gen4 X3 A
+    ('H34A15', 16500 ), # Gen4 X3 A
     ('H34B05',  7500 ), # Gen4 X3 B
     ('H34B08', 12000 ), # Gen4 X3 B
+    ('H34B10', 15000 ), # Gen4 X3 B
     ('H34B12', 15000 ), # Gen4 X3 B
     ('H34B15', 16500 ), # Gen4 X3 B
     ('H34T05',  7500 ), # Gen4 X3 T
     ('H34T08', 12000 ), # Gen4 X3 T
+    ('H34T10', 15000 ), # Gen4 X3 T
     ('H34T12', 15000 ), # Gen4 X3 T
     ('H34T15', 16500 ), # Gen4 X3 T
     ### All known Inverters added

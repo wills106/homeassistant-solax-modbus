@@ -1,12 +1,15 @@
 {
   "domain": "solax_modbus",
   "name": "SolaX Inverter Modbus",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "documentation": "https://github.com/wills106/homsassistant-solax-modbus",
   "issue_tracker": "https://github.com/wills106/homsassistant-solax-modbus/issues",
   "requirements": ["pymodbus>=2.5.3"],
   "dependencies": [],
   "codeowners": ["@wills106"],
   "config_flow": true,
-  "iot_class": "local_polling"
+  "iot_class": "local_polling",
+  "supported_brands": {
+    "qcells_modbus": "Qcells Q.Volt"
+  }
 }

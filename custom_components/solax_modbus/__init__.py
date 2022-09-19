@@ -113,6 +113,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
     elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+    elif seriesnumber.startswith('F3D'):   invertertype = HYBRID | GEN3 | X3 # RetroFit
     elif seriesnumber.startswith('F3E'):   invertertype = HYBRID | GEN3 | X3 # RetroFit
     elif seriesnumber.startswith('H43'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
     elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
