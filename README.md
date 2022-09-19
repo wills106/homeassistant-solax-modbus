@@ -18,6 +18,7 @@ Supports:
 - Gen2 Hybrid
 - Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
+  - Qcells Q.VOLT HYB-G3-3P
 - X3 MIC / MIC PRO (Limited set of entities available)
 
 Gen2, Gen3 & Gen4
