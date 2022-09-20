@@ -107,7 +107,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('HCC'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
     elif seriesnumber.startswith('HUE'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
     elif seriesnumber.startswith('XRE'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-    elif seriesnumber.startswith('PRI5'): invertertype = AC | GEN3 | X1 # RetroFit
     elif seriesnumber.startswith('XAC'): invertertype = AC | GEN3 | X1 # Needs adapting to AC Only in future, as no PV Sensors
     elif seriesnumber.startswith('XB3'):  invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
     elif seriesnumber.startswith('XM3'):  invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
@@ -120,6 +119,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
     elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
+    elif seriesnumber.startswith('PRI5'): invertertype = AC | GEN4 | X1 # RetroFit
     elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
     elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
     elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
