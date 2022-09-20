@@ -161,6 +161,7 @@ MAX_CURRENTS = [
     ('U37',    50 ), # Gen2 X1 SK-SU
     ('L50E',  100 ), # Gen2 X1 SK-TL
     ('U50',    50 ), # Gen2 X1 SK-SU
+    ('F3D',    35 ), # RetroFit X3
     ('F3E',    25 ), # RetroFit X3
     ('H3DE',    25 ), # Gen3 X3 might need changing?
     ('H3PE',    25 ), # Gen3 X3 might need changing?
