@@ -87,8 +87,8 @@ def _validate_host(data: Any) -> Any:
     try:
         if ipaddress.ip_address(host).version == (4 or 6):  pass
     except Exception as e:
-        _LOOGGER.warning(e, exc_info = True)
-        _LOOGGER.warning("valid IP address? Trying to validate it in another way")
+        _LOGGER.warning(e, exc_info = True)
+        _LOGGER.warning("valid IP address? Trying to validate it in another way")
         disallowed = re.compile(r"[^a-zA-Z\d\-]")
         res = all(x and not disallowed.search(x) for x in host.split("."))
         if not res: raise SchemaFlowError("invalid_host") from e
