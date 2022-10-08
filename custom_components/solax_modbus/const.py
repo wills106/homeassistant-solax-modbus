@@ -1578,7 +1578,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x46,
         register_type = REG_INPUT,
-        unit = REGISTER_S16
+        unit = REGISTER_S16,
         allowedtypes= GEN2 | GEN3 | GEN4 | GEN | HYBRID | MIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1682,7 +1682,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x4A,
         register_type = REG_INPUT,
-        unit = REGISTER_U32
+        unit = REGISTER_U32,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:home-import-outline",
     ),
@@ -1694,7 +1694,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x48,
         register_type = REG_INPUT,
-        unit = REGISTER_S32 #Shouldn't this be UINT?
+        unit = REGISTER_S32, #Shouldn't this be UINT?
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:home-export-outline",
     ),
