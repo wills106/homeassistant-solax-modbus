@@ -1179,9 +1179,9 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     scale: float = 1
     scale_exceptions: list = None
     blacklist: list = None
-    register: int = None
+    register: int = -1 # initialize with invalid register
     rounding: int = 2
-    register_type: int = None # EGISTER_HOLDING or REGISTER_INPUT
+    register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT
     unit: int = None # e.g. REGISTER_U16
     order16: int = None # Endian.Big or Endian.Little
     order32: int = None

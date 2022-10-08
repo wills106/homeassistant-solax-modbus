@@ -9,6 +9,7 @@ import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES # GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
 #from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import REG_INPUT, REG_HOLDING
 from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
 
 
@@ -27,6 +28,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     }
 
     entities = []
+    holdingRegs = {}
+    inputRegs = {}
 
     for sensor_description in SENSOR_TYPES:
         if matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
@@ -37,7 +40,19 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 sensor_description,
             )
             entities.append(sensor)
+            if sensor_description.register < 0: _LOGGER.warning(f"entity without modbus register address found: {sensor_description.key}")
+            else:
+                if sensor_description.register_type == REG_HOLDING:
+                    if sensor_description.register in holdingRegs: _LOGGER.warning(f"holding register already used: {sensor_description.register:x} {sensor_description.key}")
+                    else:  holdingRegs[sensor_description.register] = sensor_description
+                elif sensor_description.register_type == REG_INPUT:
+                    if sensor_description.register in inputRegs: _LOGGER.warning(f"input register already declared: {sensor_description.register:x} {sensor_description.key}")
+                    else:  inputRegs[sensor_description.register] = sensor_description
+                else: _LOGGER.warning(f"entity declaration without register_type found: {sensor_description.key}")
     async_add_entities(entities)
+    hass.data[DOMAIN][hub_name]["holdingRegs"] = holdingRegs
+    hass.data[DOMAIN][hub_name]["inputRegs"] = inputRegs
+    _LOGGER.info(f"sorted holding registers: {holdingRegs} \nsorted input registers {inputRegs}")
     return True
 
 
