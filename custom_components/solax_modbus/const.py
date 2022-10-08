@@ -1183,19 +1183,22 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 2
     register_type: int = None # EGISTER_HOLDING or REGISTER_INPUT
     unit: int = None # e.g. REGISTER_U16
-    order: int =None # Endian.Big or Endian.Little
+    order16: int = None # Endian.Big or Endian.Little
+    order32: int = None
 
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes SolaX Power Modbus sensor entities."""
-    order: int = Endian.Big
+    order16: int = Endian.Big
+    order32: int = Endian.Little
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Power Modbus sensor entities."""
-    order: int = Endian.Little
+    order16: int = Endian.Big
+    order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
