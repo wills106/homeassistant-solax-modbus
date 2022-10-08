@@ -9,6 +9,8 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
+from pymodbus.payload import Endian
+
 
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -249,7 +251,6 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4', 10 ), # assuming all Gen4s
 #    ('H1E', 10 ), # assuming all Gen4s
 ]
-
 
 
 @dataclass
@@ -1163,14 +1164,42 @@ SELECT_TYPES = [
 
 
 # ================================= Sennsor Declarations ============================================================
+REG_HOLDING = 1
+REG_INPUT   = 2
+REGISTER_U16 = "uint16"
+REGISTER_U32 = "uint32"
+REGISTER_S16 = "int16"
+REGISTER_S32 = "int32"
+REGISTER_U8L = "int8"
 
 @dataclass
-class SolaXModbusSensorEntityDescription(SensorEntityDescription):
-    """A class that describes SolaX Power Modbus sensor entities."""
-    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+class BaseModbusSensorEntityDescription(SensorEntityDescription):
+    """ base class for modbus sensor declarations """
+    allowedtypes: int = ALLDEFAULT
     scale: float = 1
     scale_exceptions: list = None
-    blacklist: list = None # None or list of serial number prefixes
+    blacklist: list = None
+    register: int = None
+    rounding: int = 2
+    register_type: int = None # EGISTER_HOLDING or REGISTER_INPUT
+    unit: int = None # e.g. REGISTER_U16
+    order: int =None # Endian.Big or Endian.Little
+
+@dataclass
+class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
+    """A class that describes SolaX Power Modbus sensor entities."""
+    order: int = Endian.Big
+    unit: int = REGISTER_U16
+    register_type: int = REG_HOLDING
+
+@dataclass
+class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
+    """A class that describes Sofar Power Modbus sensor entities."""
+    order: int = Endian.Little
+    unit: int = REGISTER_U16
+    register_type: int= REG_HOLDING
+
+
 
 
 SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [ 
