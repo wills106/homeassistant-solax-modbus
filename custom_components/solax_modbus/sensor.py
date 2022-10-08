@@ -50,9 +50,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     else:  inputRegs[sensor_description.register] = sensor_description
                 else: _LOGGER.warning(f"entity declaration without register_type found: {sensor_description.key}")
     async_add_entities(entities)
+    holdingRegs = dict(sorted(holdingRegs.items()))
+    inputRegs = dict(sorted(inputRegs.items()))
     hass.data[DOMAIN][hub_name]["holdingRegs"] = holdingRegs
     hass.data[DOMAIN][hub_name]["inputRegs"] = inputRegs
-    _LOGGER.info(f"sorted holding registers: {holdingRegs} \nsorted input registers {inputRegs}")
+    for reg in holdingRegs: _LOGGER.info(f"holdingReg 0x{reg:02x}: {holdingRegs[reg]}")
+    for reg in inputRegs: _LOGGER.info(f"inputReg 0x{reg:02x}: {inputRegs[reg]}")
     return True
 
 
