@@ -65,8 +65,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     }
 
     entities = []
-    holdingRegs = {}
-    inputRegs  = {}
+    holdingRegs  = {}
+    inputRegs    = {}
+    computedRegs = {}
     holdingOrder16 = {} # all entities should have the same order
     inputOrder16   = {} # all entities should have the same order
     holdingOrder32 = {} # all entities should have the same order
@@ -81,7 +82,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 sensor_description,
             )
             entities.append(sensor)
-            if sensor_description.register < 0: _LOGGER.warning(f"entity without modbus register address found: {sensor_description.key}")
+            if (sensor_description.register < 0): # entity without modbus address
+                if sensor_description.value_function:
+                    computedRegs[sensor_description.key] = sensor_description
+                else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {sensor_description.key}")
             else:
                 if sensor_description.register_type == REG_HOLDING:
                     if sensor_description.register in holdingRegs: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
@@ -106,9 +110,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # split in blocks and store results
     hub.holdingBlocks = splitInBlocks(holdingRegs)
     hub.inputBlocks = splitInBlocks(inputRegs)
+    hub.computedRegs = computedRegs
 
     _LOGGER.info(f"holdingBlocks: {hub.holdingBlocks}")
     _LOGGER.info(f"inputBlocks: {hub.inputBlocks}")
+    _LOGGER.info(f"computedRegs: {hub.computedRegs}")
     return True
 
 
@@ -161,10 +167,17 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if self._attr_scale != 1:
+        if self.entity_description.key in self._hub.data:
+            return self._hub.data[self.entity_description.key]
+        """
+        if self._attr_scale != 1 and not ((type(self._attr_scale) is dict) or callable(self._attr_scale)):
+            # is this extra scaling still needed ??
             if self.entity_description.key in self._hub.data:
                 return self._hub.data[self.entity_description.key]*self._attr_scale
             
         else: # strings and other data types cannot be scaled
             if self.entity_description.key in self._hub.data:
                 return self._hub.data[self.entity_description.key]
+        """
+  
+

@@ -325,7 +325,7 @@ class SolaXModbusHub:
                 
         else:
             try:
-                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2() and self.read_modbus_input_registers_all()
+                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2() #and self.read_modbus_input_registers_all()
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
             except Exception as ex:
@@ -872,33 +872,42 @@ class SolaXModbusHub:
         return True
 
     
+    def read_modbus_block(self, block):
+        if self.cyclecount <5: _LOGGER.info(f"modbus block start: {block.start} end: {block.end}  len: {block.end - block.start}")
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
+        if realtime_data.isError(): return False
+        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
+        prevreg = block.start
+        for reg in block.regs:
+            if (reg - prevreg) > 0: 
+                decoder.skip_bytes((reg-prevreg) * 2)
+                if self.cyclecount < 5: _LOGGER.info(f"skipping bytes {(reg-prevreg) * 2}")
+            descr = block.descriptions[reg] 
+            if self.cyclecount <5: _LOGGER.info(f"treating register 0x{reg:02x} : {descr.key}")
+            val = 0
+            if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
+            elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
+            elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
+            elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
+            else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+            if type(descr.scale) is dict: # translate int to string 
+                self.newdata[descr.key] = descr.scale.get(val, "Unknown")
+            elif callable(descr.scale):  # function to call ?
+                self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
+            else: # apply simple numeric scaling and rounding
+                self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
+            if descr.unit in [REGISTER_S32, REGISTER_U32]: prevreg = reg + 2
+            else: prevreg = reg + 1
+
     def read_modbus_input_registers_all(self):
+        for block in self.holdingBlocks:
+            pass
+            #self.read_modbus_block(block)
         for block in self.inputBlocks:
-            if self.cyclecount <5: _LOGGER.info(f"modbus block start: {block.start} end: {block.end}  len: {block.end - block.start}")
-            realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
-            if realtime_data.isError(): return False
-            decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
-            prevreg = block.start
-            for reg in block.regs:
-                if (reg - prevreg) > 0: 
-                    decoder.skip_bytes((reg-prevreg) * 2)
-                    if self.cyclecount < 5: _LOGGER.info(f"skipping bytes {(reg-prevreg) * 2}")
-                descr = block.descriptions[reg]
-                if self.cyclecount <5: _LOGGER.info(f"treating register 0x{reg:02x} : {descr.key}")
-                val = 0
-                if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
-                elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
-                elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
-                elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
-                else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
-                if type(descr.scale) is dict: # translate int to string 
-                    self.newdata[descr.key] = descr.scale.get(val, "Unknown")
-                elif callable(descr.scale):  # function to call ?
-                    self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
-                else: # apply simple numeric scaling and rounding
-                    self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
-                if descr.unit in [REGISTER_S32, REGISTER_U32]: prevreg = reg + 2
-                else: prevreg = reg + 1
+            self.read_modbus_block(block)
+        for reg in self.computedRegs:
+            descr = self.computedRegs[reg]
+            self.newdata[descr.key] = descr.value_function(0, descr, self.newdata )
         # temporary code: compare new with old
         self.cyclecount = self.cyclecount+1
         if self.cyclecount < 5: # avoid excess amount of logging
