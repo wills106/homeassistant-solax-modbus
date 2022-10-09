@@ -84,13 +84,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
             if sensor_description.register < 0: _LOGGER.warning(f"entity without modbus register address found: {sensor_description.key}")
             else:
                 if sensor_description.register_type == REG_HOLDING:
-                    if sensor_description.register in holdingRegs: _LOGGER.warning(f"holding register already used: {sensor_description.register:x} {sensor_description.key}")
+                    if sensor_description.register in holdingRegs: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         holdingRegs[sensor_description.register] = sensor_description
                         holdingOrder16[sensor_description.order16] = True
                         holdingOrder32[sensor_description.order32] = True
                 elif sensor_description.register_type == REG_INPUT:
-                    if sensor_description.register in inputRegs: _LOGGER.warning(f"input register already declared: {sensor_description.register:x} {sensor_description.key}")
+                    if sensor_description.register in inputRegs: _LOGGER.warning(f"input register already declared: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         inputRegs[sensor_description.register] = sensor_description
                         inputOrder16[sensor_description.order16] = True
