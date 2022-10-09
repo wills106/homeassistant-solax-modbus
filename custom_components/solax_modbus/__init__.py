@@ -84,7 +84,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval)
     """Register the hub."""
-    hass.data[DOMAIN][name] = {"hub": hub}
+    hass.data[DOMAIN][name] = {
+        "hub": hub, 
+        "inputRegs": {},   # indexed and sorted by register address
+        "holdingRegs": {}, # indexed and sorted by register address
+    }
 
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
@@ -864,6 +868,14 @@ class SolaXModbusHub:
         
         return True
 
+    """
+    def read_modbus_input_registers_all(self):
+        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x0, count=86)
+        if realtime_data.isError(): return False
+        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, Endian.Big, wordorder=Endian.Little)
+        XXXXX
+    """
+    
     def read_modbus_input_registers_0(self):
     	
         if self.invertertype & GEN2:
