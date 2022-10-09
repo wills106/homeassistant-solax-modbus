@@ -2094,7 +2094,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
-        register = 0x94,
+        register = 0x96,
         register_type = REG_INPUT,
         allowedtypes= GEN3 | GEN4,
     ),
