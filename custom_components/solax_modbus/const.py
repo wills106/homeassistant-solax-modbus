@@ -1721,8 +1721,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 2,
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1799,7 +1797,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register = 0x0,
         scale = 0.1,
         register_type = REG_INPUT,
-        scale = 0.1,
         rounding = 1,
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
@@ -1811,7 +1808,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register = 0x1,
         scale = 0.1,
         register_type = REG_INPUT,
-        scale = 0.1,
         rounding = 1,
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
@@ -2023,7 +2019,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.1,
         #register = 0x400 #MIC
         register_type = REG_INPUT,
-        scale = 0.1,
         rounding = 1,
         allowedtypes=HYBRID | PV,
     ),
@@ -2036,7 +2031,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.1,
         #register = 0x401 #MIC
         register_type = REG_INPUT,
-        scale = 0.1,
         rounding = 1,
         allowedtypes=HYBRID | PV,
     ),
@@ -2273,7 +2267,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register = 0x91,
         register_type = REG_INPUT,
         scale = 0.1,
-        round = 2,
+        rounding = 2,
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2299,7 +2293,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.001,
         rounding = 0,
         register_type = REG_INPUT,
-        scale = 0.001,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:timer",
     ),
@@ -2898,7 +2891,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_S32,
         scale = 0.1,
-        roundind = 1,
+        rounding = 1,
         allowedtypes = X3 | GEN3 | GEN4 | EPS,
         icon="mdi:timer",
     ),
@@ -3004,7 +2997,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         rounding = 2,
         allowedtypes= MIC,
     ),
-    SolaXMIcModbusSensorEntityDescription(
+    SolaXMicModbusSensorEntityDescription(
         name="Inverter Frequency S",
         key="grid_frequency_s",
         native_unit_of_measurement=FREQUENCY_HERTZ,
