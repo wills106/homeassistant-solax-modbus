@@ -1468,6 +1468,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
         register = 0x4A,
+        unit = REGISTER_U32,
         register_type = REG_INPUT,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:home-import-outline",
