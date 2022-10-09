@@ -16,7 +16,7 @@ from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
-
+INVALID_START = 99999
 
 @dataclass
 class block():
@@ -27,8 +27,8 @@ class block():
     descriptions: dict = None
 
 def splitInBlocks( descriptions ):
-    start = None
-    end = None
+    start = INVALID_START
+    end = 0
     blocks = []
     for reg in descriptions:
         if descriptions[reg].newblock or ((reg - start) > 120): 
@@ -37,7 +37,7 @@ def splitInBlocks( descriptions ):
                 blocks.append(newblock)
             else: _LOGGER(f"newblock declaration found for empty block")
         else: 
-            if start == None: start = reg
+            if start == INVALID_START: start = reg
             if descriptions[reg].unit in (REGISTER_S32, REGISTER_U32):  end = reg + 2
             else: end = reg + 1
     return blocks
@@ -93,23 +93,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # check for consistency
     if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
     if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-    #minHolding = None
-    #minInput   = None
-    #maxHolding = None
-    #maxInput   = None
     holdingBlocks = splitInBlocks(holdingRegs)
     inputBlocks = splitInBlocks(inputRegs)
-    """
-    for reg in holdingRegs:
-        if holdingRegs[reg].newblock : 
-        if not minHolding: minHolding = reg
-        maxHolding = reg
-        _LOGGER.info(f"holdingReg 0x{reg:02x}: {holdingRegs[reg]}")
-    for reg in inputRegs:
-        if not minInput: minInput = reg
-        maxInput = reg
-        _LOGGER.info(f"inputReg 0x{reg:02x}: {inputRegs[reg]}")
-    """
     # store results
     hass.data[DOMAIN][hub_name]["holdingBlocks"] = holdingBlocks
     hass.data[DOMAIN][hub_name]["inputBlocks"]   = inputBlocks
