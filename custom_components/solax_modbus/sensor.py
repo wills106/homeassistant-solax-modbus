@@ -22,8 +22,8 @@ INVALID_START = 99999
 class block():
     start: int = None # start address of the block
     end: int = None # end address of the block
-    order16 = None # byte endian for 16bit registers
-    order32 = None # word endian for 32bit registers
+    order16: int = None # byte endian for 16bit registers
+    order32: int = None # word endian for 32bit registers
     descriptions: dict = None
 
 def splitInBlocks( descriptions ):
@@ -33,13 +33,18 @@ def splitInBlocks( descriptions ):
     for reg in descriptions:
         if descriptions[reg].newblock or ((reg - start) > 120): 
             if ((end - start) > 0): 
-                newblock = block(start = start, end = end, order16 = descriptions[first].order16, order32 = descriptions[first].order32, descriptions = descriptions)
+                newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions)
                 blocks.append(newblock)
+                start = INVALID_START
+                end = 0
             else: _LOGGER(f"newblock declaration found for empty block")
         else: 
             if start == INVALID_START: start = reg
             if descriptions[reg].unit in (REGISTER_S32, REGISTER_U32):  end = reg + 2
             else: end = reg + 1
+    if ((end-start)>0): # close last block
+        newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions)
+        blocks.append(newblock)
     return blocks
 
 
@@ -98,6 +103,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # store results
     hass.data[DOMAIN][hub_name]["holdingBlocks"] = holdingBlocks
     hass.data[DOMAIN][hub_name]["inputBlocks"]   = inputBlocks
+    _LOGGER.info(f"holdingBlocks: {holdingBlocks}")
+    _LOGGER.info(f"inputBlocks: {inputBlocks}")
     return True
 
 
