@@ -2699,7 +2699,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         #state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x74,
         register_type = REG_INPUT,
-        unit = REGISTER_U32
+        unit = REGISTER_U32,
         allowedtypes = GEN2 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2710,7 +2710,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         #state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x8E,
         register_type = REG_INPUT,
-        unit = REGISTER_U32
+        unit = REGISTER_U32,
         allowedtypes = GEN3 | GEN4 | EPS,
     ),
 
