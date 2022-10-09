@@ -3220,6 +3220,11 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         name="Run Mode",
         key="run_mode", # Need add the actual modes!
         register = 0x40F,
+        scale = { 0: "Waiting",
+                  1: "Checking",
+                  2: "Normal Mode",
+                  3: "Fault",
+                  4: "Permanent Fault Mode", },
         register_type = REG_INPUT,
         allowedtypes= MIC,
         icon="mdi:run",
