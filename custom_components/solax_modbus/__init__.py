@@ -892,9 +892,10 @@ class SolaXModbusHub:
                 else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
                 if type(descr.scale) is dict: # translate int to string 
                     self.newdata[descr.key] = descr.scale.get(val, "Unknown")
+                else if callable(descr.scale): # call a function to compute the result
+                    self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
                 else:
-                    # this code should become more customizable
-                    self.newdata[descr.key] = round(val*descr.scale, descr.rounding) # replace this by a customizable function call
+                    self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
                 if descr.unit in [REGISTER_S32, REGISTER_U32]: prevreg = reg + 2
                 else: prevreg = reg + 1
         _LOGGER.info(f"newdata: {self.newdata}")
