@@ -35,6 +35,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_BAUDRATE,
 )
+from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,8 +87,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Register the hub."""
     hass.data[DOMAIN][name] = {
         "hub": hub, 
-        "inputRegs": {},   # indexed and sorted by register address
-        "holdingRegs": {}, # indexed and sorted by register address
     }
 
     # read serial number - changed seriesnumber to global to allow filtering
@@ -203,6 +202,8 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensors = []
         self.data = {}
+        self.inputBlocks = []
+        self.holdingBlocks = []
         _LOGGER.info("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -868,14 +869,30 @@ class SolaXModbusHub:
         
         return True
 
-    """
-    def read_modbus_input_registers_all(self):
-        realtime_data = self.read_input_registers(unit=self._modbus_addr, address=0x0, count=86)
-        if realtime_data.isError(): return False
-        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, Endian.Big, wordorder=Endian.Little)
-        XXXXX
-    """
     
+    def read_modbus_input_registers_all(self):
+        for block in self.inputBlocks:
+            realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.start - block.end)
+            if realtime_data.isError(): return False
+            decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
+            prevreg = block.start
+            for reg in block.regs:
+                if (reg - prevreg) > 0: decoder.skip_bytes((reg-prevreg) * 2)
+                descr = descriptions[rec]
+                val = 0
+                if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint
+                elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int
+                elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint
+                elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int
+                else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+                if type(desc.scale) is dict: # translate int to string 
+                    self.data[descr.key] = descr.scale.get(val, "Unknown")
+                else:
+                    # this code should become more customizable
+                    self.data[descr.key] = round(val*descr.scale, descr.rounding) # replace this by a customizable function call
+                prevreg = reg
+    
+
     def read_modbus_input_registers_0(self):
     	
         if self.invertertype & GEN2:

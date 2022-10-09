@@ -2,7 +2,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 
 
@@ -24,26 +24,31 @@ class block():
     end: int = None # end address of the block
     order16: int = None # byte endian for 16bit registers
     order32: int = None # word endian for 32bit registers
-    descriptions: dict = None
+    descriptions: Any = None
+    regs: Any = None # sorted list of registers used in this block
+
 
 def splitInBlocks( descriptions ):
     start = INVALID_START
     end = 0
     blocks = []
+    curblockregs = []
     for reg in descriptions:
         if descriptions[reg].newblock or ((reg - start) > 120): 
             if ((end - start) > 0): 
-                newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions)
+                newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                 blocks.append(newblock)
                 start = INVALID_START
                 end = 0
-            else: _LOGGER(f"newblock declaration found for empty block")
+                curblockregs = []
+            else: _LOGGER.warning(f"newblock declaration found for empty block")
         else: 
             if start == INVALID_START: start = reg
             if descriptions[reg].unit in (REGISTER_S32, REGISTER_U32):  end = reg + 2
             else: end = reg + 1
+            curblockregs.append(reg)
     if ((end-start)>0): # close last block
-        newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions)
+        newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
         blocks.append(newblock)
     return blocks
 
@@ -98,13 +103,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # check for consistency
     if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
     if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-    holdingBlocks = splitInBlocks(holdingRegs)
-    inputBlocks = splitInBlocks(inputRegs)
-    # store results
-    hass.data[DOMAIN][hub_name]["holdingBlocks"] = holdingBlocks
-    hass.data[DOMAIN][hub_name]["inputBlocks"]   = inputBlocks
-    _LOGGER.info(f"holdingBlocks: {holdingBlocks}")
-    _LOGGER.info(f"inputBlocks: {inputBlocks}")
+    # split in blocks and store results
+    hub.holdingBlocks = splitInBlocks(holdingRegs)
+    hub.inputBlocks = splitInBlocks(inputRegs)
+
+    _LOGGER.info(f"holdingBlocks: {hub.holdingBlocks}")
+    _LOGGER.info(f"inputBlocks: {hub.inputBlocks}")
     return True
 
 
