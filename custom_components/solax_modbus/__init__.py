@@ -325,7 +325,7 @@ class SolaXModbusHub:
                 
         else:
             try:
-                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2() #and self.read_modbus_input_registers_all()
+                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2() and self.read_modbus_input_registers_all()
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
             except Exception as ex:
@@ -898,13 +898,15 @@ class SolaXModbusHub:
                 self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
             if descr.unit in [REGISTER_S32, REGISTER_U32]: prevreg = reg + 2
             else: prevreg = reg + 1
+        return True
 
     def read_modbus_input_registers_all(self):
+        res = True
         for block in self.holdingBlocks:
             pass
-            #self.read_modbus_block(block)
+            # res = res and self.read_modbus_block(block)
         for block in self.inputBlocks:
-            self.read_modbus_block(block)
+            res = res and self.read_modbus_block(block) 
         for reg in self.computedRegs:
             descr = self.computedRegs[reg]
             self.newdata[descr.key] = descr.value_function(0, descr, self.newdata )
@@ -914,7 +916,7 @@ class SolaXModbusHub:
             _LOGGER.info(f"newdata: {self.newdata}")
             for i in self.newdata:
                 if self.data[i] != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data[i]}")
-    
+        return res
 
     def read_modbus_input_registers_0(self):
     	
