@@ -1185,6 +1185,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     unit: int = None # e.g. REGISTER_U16
     order16: int = None # Endian.Big or Endian.Little
     order32: int = None
+    newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
 
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
