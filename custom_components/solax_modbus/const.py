@@ -166,6 +166,7 @@ MAX_CURRENTS = [
     ('F3D',    35 ), # RetroFit X3
     ('F3E',    25 ), # RetroFit X3
     ('H3DE',    25 ), # Gen3 X3 might need changing?
+    ('H3E1',    25 ), # Gen3 X3
     ('H3PE',    25 ), # Gen3 X3 might need changing?
     ('H3UE',    25 ), # Gen3 X3
     ('H43',   30 ), # Gen4 X1 3 / 3.7kW
