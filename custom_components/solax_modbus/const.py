@@ -1170,6 +1170,7 @@ REGISTER_U16 = "uint16"
 REGISTER_U32 = "uint32"
 REGISTER_S16 = "int16"
 REGISTER_S32 = "int32"
+REGISTER_ULSB16MSB16 = "ulsb16msb16" # probably same as REGISTER_U32
 REGISTER_U8L = "int8"
 
 @dataclass
@@ -1215,6 +1216,20 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_pv_total_power(initval, descr, datadict):
     return datadict['pv_power_1'] + datadict['pv_power_2']
+
+def value_function_grid_import(initval, descr, datadict):
+    val = datadict["feedin_power"]
+    if val<0: return abs(val)
+    else: return 0
+
+def value_function_grid_export(initval, descr, datadict):
+    val = datadict["feedin_power"]
+    if val>0: return val
+    else: return 0
+
+def value_function_house_load(initval, descr, datadict):
+    return datadict['inverter_load'] - datadict['feedin_power']
+
 
 SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [ 
     SolaXModbusSensorEntityDescription(
@@ -1309,6 +1324,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Battery Package Number",
         key="battery_package_number",
+        register = 0x22,
+        register_type=REG_INPUT,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2,
     ),
@@ -1327,6 +1344,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Battery State of Health",
         key="battery_soh",
         icon="mdi:battery-heart",
+        register = 0x23,
+        register_type=REG_INPUT,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2,
@@ -1348,20 +1367,42 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Battery Input Energy Total", # Need revisit these
+        name="Battery Input Energy Total", 
         key="input_energy_charge",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:battery-arrow-up",
+        register = 0x21,
+        register_type=REG_INPUT,
+        scale=0.1,
+        unit = REGISTER_U32, #REGISTER_ULSB16MSB16,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN3 | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Input Energy Total", 
+        key="input_energy_charge",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:battery-arrow-up",
+        register = 0x20,
+        register_type=REG_INPUT,
+        scale=0.1,
+        unit = REGISTER_U32, # REGISTER_ULSB16MSB16,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Output Energy Total", # Need revisit these
         key="output_energy_charge",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:battery-arrow-down",
+        register = 0x1D,
+        register_type=REG_INPUT,
+        scale = 0.1,
+        unit = REGISTER_U32,# REGISTER_ULSB16MSB16,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         entity_registry_enabled_default=False,
@@ -1762,9 +1803,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        # This is:
-        # if   feedin_power < 0: self.data["grid_import"] = abs(feedin_power)
-        # else: self.data["grid_import"] = 0 
+        value_function = value_function_grid_import,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:home-import-outline",
     ),
@@ -1774,15 +1813,14 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        # This is:
-        # if   feedin_power > 0: self.data["grid_export"] = feedin_power
-        # else: self.data["grid_export"] = 0
+        value_function = value_function_grid_export,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
         name="House Load",
         key="house_load",
+        value_function = value_function_house_load,
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
@@ -1923,6 +1961,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Overload Fault Val",
         key="overload_fault_val",
+        register = 0x68,
+        register_type=REG_INPUT,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
         icon="mdi:alert-circle",
@@ -2232,19 +2272,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Total Solar Energy",
-        key="total_yield",
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        icon="mdi:solar-power",
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
-        entity_registry_enabled_default=False,
-        register = 0x52,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes= GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Today's Yield",
         key="today_s_yield_gen2",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
@@ -2315,9 +2342,26 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x52,
+        scale = 0.1,
+        rounding = 2, # was 1 for gen4
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         allowedtypes=GEN3 | GEN4 | GEN | HYBRID,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Total Solar Energy",
+        key="total_yield",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        register = 0x52,
+        scale = 0.001,
+        rounding = 2,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="Work Mode",
@@ -2429,6 +2473,10 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="input_energy_charge_today",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:battery-arrow-up",
+        register = 0x23,
+        register_type=REG_INPUT,
+        scale = 0.1,
+        unit= REGISTER_U16,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
@@ -2438,6 +2486,10 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="output_energy_charge_today",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         icon="mdi:battery-arrow-down",
+        register = 0x20,
+        register_type=REG_INPUT,
+        unit = REGISTER_U16,
+        scale = 0.1,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
@@ -3220,6 +3272,11 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         name="Run Mode",
         key="run_mode", # Need add the actual modes!
         register = 0x40F,
+        scale = { 0: "Waiting",
+                  1: "Checking",
+                  2: "Normal Mode",
+                  3: "Fault",
+                  4: "Permanent Fault Mode", },
         register_type = REG_INPUT,
         allowedtypes= MIC,
         icon="mdi:run",

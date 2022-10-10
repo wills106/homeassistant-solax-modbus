@@ -35,7 +35,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_BAUDRATE,
 )
-from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16
+from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -873,7 +873,8 @@ class SolaXModbusHub:
 
     
     def read_modbus_block(self, block):
-        if self.cyclecount <5: _LOGGER.info(f"modbus block start: {block.start} end: {block.end}  len: {block.end - block.start}")
+        if self.cyclecount <5: 
+            _LOGGER.info(f"modbus block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
         realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
         if realtime_data.isError(): return False
         decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
@@ -889,6 +890,7 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
             elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
             elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
+            elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
             else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
             if type(descr.scale) is dict: # translate int to string 
                 self.newdata[descr.key] = descr.scale.get(val, "Unknown")
@@ -896,7 +898,7 @@ class SolaXModbusHub:
                 self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
             else: # apply simple numeric scaling and rounding
                 self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
-            if descr.unit in [REGISTER_S32, REGISTER_U32]: prevreg = reg + 2
+            if descr.unit in [REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16]: prevreg = reg + 2
             else: prevreg = reg + 1
         return True
 
