@@ -166,7 +166,7 @@ MAX_CURRENTS = [
     ('F3D',    35 ), # RetroFit X3
     ('F3E',    25 ), # RetroFit X3
     ('H3DE',    25 ), # Gen3 X3 might need changing?
-    ('H3E1',    25 ), # Gen3 X3
+    ('H3E',    25 ), # Gen3 X3
     ('H3PE',    25 ), # Gen3 X3 might need changing?
     ('H3UE',    25 ), # Gen3 X3
     ('H43',   30 ), # Gen4 X1 3 / 3.7kW
@@ -215,6 +215,10 @@ MAX_EXPORT = [
     ('H3DE06', 12000 ), # Gen3 X3
     ('H3DE08', 14000 ), # Gen3 X3
     ('H3DE10', 15000 ), # Gen3 X3
+    ('H3E05', 10000 ), # Gen3 X3
+    ('H3E06', 12000 ), # Gen3 X3
+    ('H3E08', 14000 ), # Gen3 X3
+    ('H3E10', 15000 ), # Gen3 X3
     ('H3PE05', 10000 ), # Gen3 X3
     ('H3PE06', 12000 ), # Gen3 X3
     ('H3PE08', 14000 ), # Gen3 X3
