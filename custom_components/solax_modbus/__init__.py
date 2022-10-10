@@ -326,7 +326,14 @@ class SolaXModbusHub:
                 
         else:
             try:
-                return self.read_modbus_holding_registers_0() and self.read_modbus_holding_registers_1() and self.read_modbus_holding_registers_2() and self.read_modbus_input_registers_0() and self.read_modbus_input_registers_1() and self.read_modbus_input_registers_2() and self.read_modbus_input_registers_all()
+                return (self.read_modbus_holding_registers_0() 
+                    and self.read_modbus_holding_registers_1() 
+                    and self.read_modbus_holding_registers_2()
+                    and self.read_modbus_input_registers_0() 
+                    and self.read_modbus_input_registers_1() 
+                    and self.read_modbus_input_registers_2() 
+                    and self.read_modbus_input_registers_all()
+                )
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
             except Exception as ex:
@@ -915,10 +922,11 @@ class SolaXModbusHub:
             self.newdata[descr.key] = descr.value_function(0, descr, self.newdata )
         # temporary code: compare new with old
         self.cyclecount = self.cyclecount+1
+        #for i in self.newdata: self.data[i] = self.newdata[i] # temporary during migration tests
         if self.cyclecount < 5: # avoid excess amount of logging
             _LOGGER.info(f"newdata: {self.newdata}")
             for i in self.newdata:
-                if self.data[i] != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data[i]}")
+                if self.data.get(i) != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data.get(i)}")
         return res
 
     def read_modbus_input_registers_0(self):
