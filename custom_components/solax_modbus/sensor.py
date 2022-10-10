@@ -10,7 +10,7 @@ import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES # GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
 #from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
-from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16
+from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS
 from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
 
 
@@ -44,7 +44,10 @@ def splitInBlocks( descriptions ):
             else: _LOGGER.warning(f"newblock declaration found for empty block")
         else: 
             if start == INVALID_START: start = reg
-            if descriptions[reg].unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16):  end = reg + 2
+            if descriptions[reg].unit in (REGISTER_STR, REGISTER_WORDS,): 
+                if (descriptions[reg].wordcount): end = reg+descriptions[reg].wordcount
+                else: _LOGGER.warning(f"invalid or missing missing wordcount for {description[reg].key}")
+            elif descriptions[reg].unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
             else: end = reg + 1
             curblockregs.append(reg)
     if ((end-start)>0): # close last block

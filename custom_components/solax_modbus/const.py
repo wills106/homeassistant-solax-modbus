@@ -1175,7 +1175,9 @@ REGISTER_U16 = "uint16"
 REGISTER_U32 = "uint32"
 REGISTER_S16 = "int16"
 REGISTER_S32 = "int32"
-REGISTER_ULSB16MSB16 = "ulsb16msb16" # probably same as REGISTER_U32
+REGISTER_ULSB16MSB16 = "ulsb16msb16" # probably same as REGISTER_U32 - suggest to remove later
+REGISTER_STR = "string"  # nr of bytes must be specified in wordcount and is 2*wordcount
+REGISTER_WORDS = "words" # nr or words must be specified in wordcount
 REGISTER_U8L = "int8"
 
 @dataclass
@@ -1193,6 +1195,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     order32: int = None
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     value_function: callable = None #  value = function(initval, descr, datadict)
+    wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
 
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
@@ -1234,6 +1237,11 @@ def value_function_grid_export(initval, descr, datadict):
 
 def value_function_house_load(initval, descr, datadict):
     return datadict['inverter_load'] - datadict['feedin_power']
+
+def value_function_rtc(initval, descr, datadict):
+    (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
+    val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
+    return val
 
 
 SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [ 
@@ -2103,6 +2111,10 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="RTC",
         key="rtc",
+        register = 0x85,
+        unit = REGISTER_WORDS,
+        wordcount = 6,
+        scale = value_function_rtc,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2172,6 +2184,9 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Series Number",
         key="seriesnumber",
+        register=0x00,
+        unit=REGISTER_STR,
+        wordcount=7,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
