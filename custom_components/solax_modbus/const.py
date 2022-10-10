@@ -10,7 +10,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
-
+from datetime import datetime
 
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -1241,7 +1241,7 @@ def value_function_house_load(initval, descr, datadict):
 def value_function_rtc(initval, descr, datadict):
     (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
     val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-    return val
+    return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
 
 
 SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [ 

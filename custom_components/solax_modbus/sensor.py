@@ -42,14 +42,14 @@ def splitInBlocks( descriptions ):
                 end = 0
                 curblockregs = []
             else: _LOGGER.warning(f"newblock declaration found for empty block")
-        else: 
-            if start == INVALID_START: start = reg
-            if descriptions[reg].unit in (REGISTER_STR, REGISTER_WORDS,): 
-                if (descriptions[reg].wordcount): end = reg+descriptions[reg].wordcount
-                else: _LOGGER.warning(f"invalid or missing missing wordcount for {description[reg].key}")
-            elif descriptions[reg].unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
-            else: end = reg + 1
-            curblockregs.append(reg)
+
+        if start == INVALID_START: start = reg
+        if descriptions[reg].unit in (REGISTER_STR, REGISTER_WORDS,): 
+            if (descriptions[reg].wordcount): end = reg+descriptions[reg].wordcount
+            else: _LOGGER.warning(f"invalid or missing missing wordcount for {description[reg].key}")
+        elif descriptions[reg].unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
+        else: end = reg + 1
+        curblockregs.append(reg)
     if ((end-start)>0): # close last block
         newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
         blocks.append(newblock)
