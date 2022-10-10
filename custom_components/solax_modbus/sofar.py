@@ -121,3 +121,4 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         allowedtypes = HYBRID | X3,
     ),
+]
