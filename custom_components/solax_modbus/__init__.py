@@ -63,7 +63,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_BAUDRATE,
 )
-from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS
+from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import setPlugin, getPlugin
 
 
@@ -861,7 +861,27 @@ class SolaXModbusHub:
         
         return True
 
-    
+    def treat_address(self, decoder, descr, initval=0):
+        val = 0
+        if self.cyclecount <5: _LOGGER.info(f"treating register 0x{descr.register:02x} : {descr.key}")
+        if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
+        elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
+        elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
+        elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
+        elif descr.unit == REGISTER_STR: val = str( decoder.decode_string(descr.wordcount*2).decode("ascii") )
+        elif descr.unit == REGISTER_WORDS: val = [decoder.decode_16bit_uint() for val in range(descr.wordcount) ]
+        elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
+        elif descr.unit == REGISTER_U8L: val = initval % 256
+        elif descr.unit == REGISTER_U8H: val = initval >> 8
+        else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+        if type(descr.scale) is dict: # translate int to string 
+            self.newdata[descr.key] = descr.scale.get(val, "Unknown")
+        elif callable(descr.scale):  # function to call ?
+            self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
+        else: # apply simple numeric scaling and rounding if not a list of words
+            try:    self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
+            except: self.newdata[descr.key] = val # probably a REGISTER_WORDS instance
+
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
             _LOGGER.info(f"modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
@@ -875,26 +895,15 @@ class SolaXModbusHub:
                 decoder.skip_bytes((reg-prevreg) * 2)
                 if self.cyclecount < 5: _LOGGER.info(f"skipping bytes {(reg-prevreg) * 2}")
             descr = block.descriptions[reg] 
-            if self.cyclecount <5: _LOGGER.info(f"treating register 0x{reg:02x} : {descr.key}")
-            val = 0
-            if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
-            elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
-            elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
-            elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
-            elif descr.unit == REGISTER_STR: val = str( decoder.decode_string(descr.wordcount*2).decode("ascii") )
-            elif descr.unit == REGISTER_WORDS: val = [decoder.decode_16bit_uint() for val in range(descr.wordcount) ]
-            elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
-            else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
-            if type(descr.scale) is dict: # translate int to string 
-                self.newdata[descr.key] = descr.scale.get(val, "Unknown")
-            elif callable(descr.scale):  # function to call ?
-                self.newdata[descr.key] = descr.scale(val, descr, self.newdata) 
-            else: # apply simple numeric scaling and rounding if not a list of words
-                try:    self.newdata[descr.key] = round(val*descr.scale, descr.rounding) 
-                except: pass
-            if descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,): prevreg = reg + 2
-            elif descr.unit in (REGISTER_STR, REGISTER_WORDS,): prevreg = reg + descr.wordcount
-            else: prevreg = reg + 1
+            if type(descr) is dict: #  set of byte values
+                val = decoder.decode_16bit_uint()
+                for k in descr: self.treat_address(decoder, descr[k], val)
+                prevreg = reg + 1
+            else: # single value
+                self.treat_address(decoder, descr)
+                if descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,): prevreg = reg + 2
+                elif descr.unit in (REGISTER_STR, REGISTER_WORDS,): prevreg = reg + descr.wordcount
+                else: prevreg = reg+1
         return True
 
     def read_modbus_registers_all(self):

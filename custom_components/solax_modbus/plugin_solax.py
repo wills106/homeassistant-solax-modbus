@@ -192,6 +192,15 @@ def value_function_rtc(initval, descr, datadict):
     val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
     return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
 
+def value_function_gen4time(initval, descr, datadict):
+    h = initval % 256
+    m = initval >> 8
+    return f"{h:02d}:{m:02d}"
+
+def value_function_gen23time(initval, descr, datadict):
+    (h,m,) = initval
+    return f"{h:02d}:{m:02d}"
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -1260,6 +1269,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Allow Grid Charge",
         key="allow_grid_charge",
+        register = 0xB4,
+        scale = { 0: "Both Forbidden", 1: "Period 1 Allowed", 2: "Period 2 Allowed", 3: "Both Allowed",},
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3,
         icon="mdi:transmission-tower",
@@ -1371,6 +1382,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Battery Minimum Capacity",
         key="battery_minimum_capacity",
+        register = 0x8C,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3,
@@ -1583,38 +1595,107 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes= GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Charger Start Time 1", # Todo
+        name="Charger Start Time 1", 
         key="charger_start_time_1",
+        register = 0x97,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Charger End Time 1", # Todo
+        name="Charger Start Time 1", 
+        key="charger_start_time_1",
+        register = 0x92,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2 | GEN3,
+        icon="mdi:battery-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charger End Time 1", 
         key="charger_end_time_1",
+        register = 0x98,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Charger Start Time 2", # Todo
+        name="Charger End Time 1", 
+        key="charger_end_time_1",
+        register = 0x94,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2 | GEN3,
+        icon="mdi:battery-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charger Start Time 2", 
         key="charger_start_time_2",
+        register = 0x9C,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Charger End Time 2", # Todo
-        key="charger_end_time_2",
+        name="Charger Start Time 2", 
+        key="charger_start_time_2",
+        register = 0x9A,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN2 | GEN3,
+        icon="mdi:battery-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charger End Time 2",
+        key="charger_end_time_2",
+        register = 0x9D,
+        scale = value_function_gen4time,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN4,
+        icon="mdi:battery-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charger End Time 2",
+        key="charger_end_time_2",
+        register = 0x9C,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2 | GEN3,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
         name="Charger Use Mode",
         key="charger_use_mode",
+        register = 0x8B,
+        scale = { 0: "Self Use Mode",
+            1: "Feedin Priority",
+            2: "Back Up Mode",
+            3: "Manual Mode", },
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
+        allowedtypes= GEN4,
+        icon="mdi:dip-switch",
+    ),
+        SolaXModbusSensorEntityDescription(
+        name="Charger Use Mode",
+        key="charger_use_mode",
+        register = 0x8B,
+        scale = { 0: "Self Use Mode",
+            1: "Force Time Use",
+            2: "Back Up Mode",
+            3: "Feedin Priority", },
+        entity_registry_enabled_default=False,
+        allowedtypes= GEN2 | GEN3,
         icon="mdi:dip-switch",
     ),
     SolaXModbusSensorEntityDescription(
@@ -1660,29 +1741,37 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Discharger Start Time 1", # Todo
+        name="Discharger Start Time 1", 
         key="discharger_start_time_1",
+        register = 0x99,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Discharger End Time 1", # Todo
+        name="Discharger End Time 1", # 
         key="discharger_end_time_1",
+        register = 0x9A,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Discharger Start Time 2", # Todo
+        name="Discharger Start Time 2", 
         key="discharger_start_time_2",
+        register = 0x9E,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN4,
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Discharger End Time 2", # Todo
+        name="Discharger End Time 2",
         key="discharger_end_time_2",
+        register = 0x9F,
+        scale = value_function_gen4time,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN4,
         icon="mdi:battery-clock",
@@ -2191,7 +2280,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3, #ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN2 | GEN3,                   # UNSURE IF THIS IS CORRECT
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -2202,7 +2291,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3, #ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN4,            # | GEN2 | GEN3,   UNSURE IF THIS IS CORRECT
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -2500,6 +2589,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Selfuse Night Charge Upper SOC",
         key="selfuse_nightcharge_upper_soc",
+        register = 0x94,
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes= GEN4,
@@ -2507,17 +2597,24 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Selfuse Night Charge Enable",
         key="selfuse_nightcharge_enable",
+        register = 0x93,
+        unit = REGISTER_U8L,
+        scale = { 0: "Disabled", 1: "Enabled", },
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Charge Period2 Enable",
         key="charge_period2_enable",
+        register = 0x9B,
+        scale = { 0: "Disabled", 1: "Enabled", },
         entity_registry_enabled_default=False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Selfuse Discharge Min SOC",
         key="selfuse_discharge_min_soc",
+        register = 0x93,
+        unit = REGISTER_U8H,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2544,11 +2641,17 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Manual Mode",
         key="manual_mode",
+        register = 0x8C,
+        scale = { 0: "Stop Charge and Discharge",
+                1: "Force Charge",
+                2: "Force Discharge", },
         allowedtypes = GEN4,
      ),
     SolaXModbusSensorEntityDescription(
         name="Feedin Discharge Min SOC",
         key="feedin_discharge_min_soc",
+        register=0x95,
+        unit=REGISTER_U8L,
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
@@ -2556,6 +2659,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Feedin Night Charge Upper SOC",
         key="feedin_nightcharge_upper_soc",
+        register = 0x95,
+        unit = REGISTER_U8H,
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
@@ -2563,6 +2668,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Backup Discharge Min SOC",
         key="backup_discharge_min_soc",
+        register = 0x96,
+        unit = REGISTER_U8L,
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
@@ -2571,6 +2678,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Backup Night Charge Upper SOC",
         key="backup_nightcharge_upper_soc",
+        register = 0x96,
+        unit = REGISTER_U8H,
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         allowedtypes = GEN4,
@@ -3077,7 +3186,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="eps_set_frequency",
         native_unit_of_measurement=FREQUENCY_HERTZ,
         device_class=DEVICE_CLASS_FREQUENCY,
-        register = 0xB7,
+        register = 0xB8,                     # CORRECTED from 0xB7
         scale = { 0: "50Hz",
                   1: "60Hz", },
         allowedtypes = GEN2 | GEN3 | EPS,
