@@ -124,7 +124,7 @@ OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     #Handle a config or options flow for Utility Meter.
 
-    _LOGGER.info(f"starting infradom configflow {DOMAIN} {CONF_NAME}")
+    _LOGGER.info(f"starting configflow - domain = {DOMAIN}")
     config_flow  = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
 

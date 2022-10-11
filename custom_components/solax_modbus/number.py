@@ -1,10 +1,10 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, NUMBER_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
-from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from .const import matchInverterWithMask
+from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
+#from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
+from .const import getPlugin
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,11 +22,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    
+    plugin = getPlugin()
     entities = []
-    
-    for number_info in NUMBER_TYPES:
-        if matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
+    for number_info in plugin.NUMBER_TYPES:
+        if plugin.matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info )
             entities.append(number)
         
@@ -110,18 +109,17 @@ class SolaXModbusNumber(NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
         
-        if self._hub._invertertype & GEN2:
+        """if self._hub._invertertype & GEN2:
             mult = 100
         else:
             mult = 10
-        
+        """
         if self._fmt == "i":
             payload = int(value/self._attr_scale)
         elif self._fmt == "f":
-            payload = int(value * mult/self._attr_scale)
+            payload = int(value/self._attr_scale)
 
         _LOGGER.info(f"writing {self._platform_name} number register {self._register} value {payload}")
         self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
-
         self._hub.data[self._key] = value/self._attr_scale
         self.async_write_ha_state()

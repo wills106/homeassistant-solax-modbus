@@ -4,19 +4,21 @@ from homeassistant.components.sensor import SensorEntity
 import logging
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
-
-
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SENSOR_TYPES # GEN3_X1_SENSOR_TYPES, GEN3_X3_SENSOR_TYPES, GEN4_SENSOR_TYPES, GEN4_X1_SENSOR_TYPES, GEN4_X3_SENSOR_TYPES
-#from .const import X1_EPS_SENSOR_TYPES, X3_EPS_SENSOR_TYPES, GEN4_X1_EPS_SENSOR_TYPES, GEN4_X3_EPS_SENSOR_TYPES, SolaXModbusSensorEntityDescription
+from .const import ATTR_MANUFACTURER, DOMAIN
+from .const import getPlugin
 from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS
-from .const import matchInverterWithMask, SolaXModbusSensorEntityDescription
+from .const import BaseModbusSensorEntityDescription
+from homeassistant.components.sensor import SensorEntityDescription
 
 
 _LOGGER = logging.getLogger(__name__)
 
 INVALID_START = 99999
+
+
+# =================================== sorting and grouping of entities ================================================
 
 @dataclass
 class block():
@@ -55,6 +57,7 @@ def splitInBlocks( descriptions ):
         blocks.append(newblock)
     return blocks
 
+# ========================================================================================================================
 
 async def async_setup_entry(hass, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
@@ -75,9 +78,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     inputOrder16   = {} # all entities should have the same order
     holdingOrder32 = {} # all entities should have the same order
     inputOrder32   = {} # all entities should have the same order
-
-    for sensor_description in SENSOR_TYPES:
-        if matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
+     
+    plugin = getPlugin()
+    for sensor_description in plugin.SENSOR_TYPES:
+        if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,
@@ -130,13 +134,13 @@ class SolaXModbusSensor(SensorEntity):
         platform_name,
         hub,
         device_info,
-        description: SolaXModbusSensorEntityDescription,
+        description: BaseModbusSensorEntityDescription,
     ):
         """Initialize the sensor."""
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
-        self.entity_description: SolaXModbusSensorEntityDescription = description
+        self.entity_description: BaseModbusSensorEntityDescription = description
         self._attr_scale = description.scale
         if description.scale_exceptions:
             for (prefix, value,) in description.scale_exceptions: 
