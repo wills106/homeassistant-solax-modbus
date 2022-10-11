@@ -104,7 +104,7 @@ class SolaXModbusNumber(NumberEntity):
     @property
     def native_value(self) -> float:
         if self._key in self._hub.data:
-            return self._hub.data[self._key]*self._attr_scale
+            return self._hub.data[self._key] #*self._attr_scale
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
@@ -121,5 +121,5 @@ class SolaXModbusNumber(NumberEntity):
 
         _LOGGER.info(f"writing {self._platform_name} number register {self._register} value {payload}")
         self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
-        self._hub.data[self._key] = value/self._attr_scale
+        self._hub.data[self._key] = value #/self._attr_scale
         self.async_write_ha_state()
