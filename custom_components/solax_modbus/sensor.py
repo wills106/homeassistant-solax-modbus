@@ -119,8 +119,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub.inputBlocks = splitInBlocks(inputRegs)
     hub.computedRegs = computedRegs
 
-    _LOGGER.info(f"holdingBlocks: {hub.holdingBlocks}")
-    _LOGGER.info(f"inputBlocks: {hub.inputBlocks}")
+    _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
+    _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
     _LOGGER.info(f"computedRegs: {hub.computedRegs}")
     return True
 
