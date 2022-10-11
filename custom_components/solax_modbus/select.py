@@ -1,10 +1,9 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, SELECT_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
-#from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from .const import matchInverterWithMask
+from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
+from .const import getPlugin
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,10 +21,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    
+    plugin = getPlugin()
     entities = []
-    for select_info in SELECT_TYPES:
-        if matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
+    for select_info in plugin.SELECT_TYPES:
+        if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
             select = SolaXModbusSelect( hub_name, hub, modbus_addr, device_info, select_info)
             entities.append(select)
         

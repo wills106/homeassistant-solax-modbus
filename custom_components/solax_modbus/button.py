@@ -1,10 +1,10 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, BUTTON_TYPES, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import matchInverterWithMask
+from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 
 from homeassistant.components.button import PLATFORM_SCHEMA, ButtonEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
+from .const import getPlugin
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,11 +23,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    
+    plugin = getPlugin()
     entities = []
-    
-    for button_info in BUTTON_TYPES:
-        if matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
+    for button_info in plugin.BUTTON_TYPES:
+        if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
             button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
             entities.append(button)
 

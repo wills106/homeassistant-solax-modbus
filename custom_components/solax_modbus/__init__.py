@@ -4,6 +4,7 @@ import logging
 import threading
 from datetime import datetime, timedelta
 from typing import Optional
+import importlib.util, sys
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -16,7 +17,34 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 
-from .const import GEN, GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS, DCB, PV, MIC
+
+# === REMOVE THIS BLOCK ====================================
+
+GEN            = 0x0001 # base generation for MIC, PV, AC
+GEN2           = 0x0002
+GEN3           = 0x0004
+GEN4           = 0x0008
+ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN
+
+X1             = 0x0100
+X3             = 0x0200
+ALL_X_GROUP    = X1 | X3
+
+PV             = 0x0400 # Needs further work on PV Only Inverters
+AC             = 0x0800
+HYBRID         = 0x1000
+MIC            = 0x2000
+ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
+
+EPS            = 0x8000
+ALL_EPS_GROUP  = EPS
+
+DCB            = 0x10000 # dry contact box - gen4
+ALL_DCB_GROUP  = DCB
+
+# END OF BLOCK =================================================
+
+#from .const import matchInverterWithMask, SENSOR_TYPES, BUTTON_TYPES, NUMBER_TYPES, SELECT_TYPES
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -36,6 +64,8 @@ from .const import (
     DEFAULT_BAUDRATE,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS
+from .const import setPlugin, getPlugin
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,9 +85,30 @@ async def async_setup(hass, config):
     _LOGGER.info("solax data %d", hass.data)
     return True
 
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
     _LOGGER.info(f"solax setup entries - data: {entry.data}, options: {entry.options}")
+
+    # dynamically load desired plugin - TODO: integrate with config_flow entries
+    #plugin = import_module("custom_components/solax_modbus/plugin_solax")
+    plugin_name = "plugin_solax"
+    spec = importlib.util.spec_from_file_location(plugin_name, f"custom_components/solax_modbus/{plugin_name}.py")
+    plugin = importlib.util.module_from_spec(spec)
+    sys.modules[plugin_name] = plugin
+    spec.loader.exec_module(plugin)
+    setPlugin(plugin)
+
+    """
+    matchInverterWithMask = plugin.matchInverterWithMask
+    determineInverterType = plugin.determineInverterType
+    SENSOR_TYPES = plugin.SENSOR_TYPES
+    SELECT_TYPES = plugin.SELECT_TYPES
+    BUTTON_TYPES = plugin.BUTTON_TYPES
+    NUMBER_TYPES = plugin.NUMBER_TYPES """
+    # end of dynamic load
+
     config = entry.options
     if not config:
         _LOGGER.warning('Solax: using old style config entries, recreating the integration will resolve this')
@@ -76,75 +127,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
     baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
     scan_interval = config[CONF_SCAN_INTERVAL]
-    read_eps = config.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-    read_dcb = config.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-
-
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.info(f"solax serial port {serial_port} interface {interface}")
 
     hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval)
     """Register the hub."""
-    hass.data[DOMAIN][name] = {
-        "hub": hub, 
-    }
+    hass.data[DOMAIN][name] = { "hub": hub,  }
 
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
+    plugin.determineInverterType(hub, config)
 
-    seriesnumber                       = hub._read_serialnr(0x0,   swapbytes = False)
-    if not seriesnumber:  seriesnumber = hub._read_serialnr(0x300, swapbytes = True) # bug in endian.Little decoding?
-    if not seriesnumber: 
-        _LOGGER.error(f"cannot find serial number, even not for MIC")
-        seriesnumber = "unknown"
-
-    invertertype = 0
-    # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
-    elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
-    elif seriesnumber.startswith('L37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-    elif seriesnumber.startswith('U37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-    elif seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-    elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-    elif seriesnumber.startswith('H1E'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
-    elif seriesnumber.startswith('HCC'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-    elif seriesnumber.startswith('HUE'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
-    elif seriesnumber.startswith('XRE'):  invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-    elif seriesnumber.startswith('XAC'): invertertype = AC | GEN3 | X1 # X1AC
-    elif seriesnumber.startswith('XB3'):  invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
-    elif seriesnumber.startswith('XM3'):  invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
-    elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3E'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
-    elif seriesnumber.startswith('F3E'):   invertertype = AC | GEN3 | X3 # RetroFit
-    elif seriesnumber.startswith('H43'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
-    elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
-    elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
-    elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
-    elif seriesnumber.startswith('PRI'): invertertype = AC | GEN4 | X1 # RetroFit
-    elif seriesnumber.startswith('H34'):  invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
-    # add cases here
-    #
-    #
-    else: 
-        _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
-
-    if read_eps: invertertype = invertertype | EPS 
-    if read_dcb: invertertype = invertertype | DCB
-
-    hub.invertertype = invertertype
     for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
+
 
 async def async_unload_entry(hass, entry):
     """Unload SolaX mobus entry."""
@@ -156,8 +156,7 @@ async def async_unload_entry(hass, entry):
             ]
         )
     )
-    if not unload_ok:
-        return False
+    if not unload_ok: return False
 
     hass.data[DOMAIN].pop(entry.data.get("name", None), None ) , # for legacy compatibility, this line can be removed later
     hass.data[DOMAIN].pop(entry.options["name"])
@@ -273,24 +272,6 @@ class SolaXModbusHub:
         """Connect client."""
         with self._lock:
             self._client.connect()
-
-
-    def _read_serialnr(self, address, swapbytes):
-        res = None
-        try:
-            inverter_data = self.read_holding_registers(unit=self._modbus_addr, address=address, count=7)
-            if not inverter_data.isError(): 
-                decoder = BinaryPayloadDecoder.fromRegisters( inverter_data.registers, byteorder=Endian.Big)
-                res = decoder.decode_string(14).decode("ascii")
-                if swapbytes: 
-                    ba = bytearray(res,"ascii") # convert to bytearray for swapping
-                    ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
-                    res = str(ba, "ascii") # convert back to string
-                self._seriesnumber = res
-        except: pass
-        if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
-        _LOGGER.info(f"Read Solax serial number: {res}, swapped: {swapbytes}")
-        return res
 
 
     def read_holding_registers(self, unit, address, count):
