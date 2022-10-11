@@ -129,3 +129,4 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
     scale_exceptions: list = None #
     blacklist: list = None # None or list of serial number prefixes like 
+
