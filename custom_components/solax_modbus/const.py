@@ -5,7 +5,9 @@ from homeassistant.components.sensor import (
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
 )
-
+from homeassistant.components.number import NumberEntityDescription
+from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
 from datetime import datetime
@@ -103,3 +105,27 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
 
+@dataclass
+class BaseModbusButtonEntityDescription(ButtonEntityDescription):
+    allowedtypes: int = 0 # overload with ALLDEFAULT from plugin  
+    register: int = None
+    command: int = None
+    blacklist: list = None # none or list of serial number prefixes
+
+@dataclass
+class BaseModbusSelectEntityDescription(SelectEntityDescription):
+    allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
+    register: int = None
+    options: dict = None
+    blacklist: list = None # none or list of serial number prefixes
+
+@dataclass
+class BaseModbusNumberEntityDescription(NumberEntityDescription):
+    allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
+    register: int = None
+    fmt: str = None
+    scale: float = 1 
+    state: str = None
+    max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
+    scale_exceptions: list = None #
+    blacklist: list = None # None or list of serial number prefixes like 
