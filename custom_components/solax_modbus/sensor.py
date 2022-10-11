@@ -8,7 +8,7 @@ import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN
 from .const import getPlugin
-from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS
+from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 
@@ -36,7 +36,8 @@ def splitInBlocks( descriptions ):
     blocks = []
     curblockregs = []
     for reg in descriptions:
-        if descriptions[reg].newblock or ((reg - start) > 100): 
+        descr = descriptions[reg]
+        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > 100)): 
             if ((end - start) > 0): 
                 newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                 blocks.append(newblock)
@@ -46,11 +47,13 @@ def splitInBlocks( descriptions ):
             else: _LOGGER.warning(f"newblock declaration found for empty block")
 
         if start == INVALID_START: start = reg
-        if descriptions[reg].unit in (REGISTER_STR, REGISTER_WORDS,): 
-            if (descriptions[reg].wordcount): end = reg+descriptions[reg].wordcount
-            else: _LOGGER.warning(f"invalid or missing missing wordcount for {description[reg].key}")
-        elif descriptions[reg].unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
-        else: end = reg + 1
+        if type(descr) is dict: end = reg+1 # couple of byte values
+        else:
+            if descr.unit in (REGISTER_STR, REGISTER_WORDS,): 
+                if (descr.wordcount): end = reg+descr.wordcount
+                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr[reg].key}")
+            elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
+            else: end = reg + 1
         curblockregs.append(reg)
     if ((end-start)>0): # close last block
         newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
@@ -95,13 +98,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {sensor_description.key}")
             else:
                 if sensor_description.register_type == REG_HOLDING:
-                    if sensor_description.register in holdingRegs: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
+                    if sensor_description.register in holdingRegs: # duplicate or 2 bytes in one register ?
+                        if sensor_description.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[sensor_description.register].unit in (REGISTER_U8H, REGISTER_U8L,) : 
+                            first = holdingRegs[sensor_description.register]
+                            holdingRegs[sensor_description.register] = { first.unit: first, sensor_description.unit: sensor_description }
+                        else: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         holdingRegs[sensor_description.register] = sensor_description
                         holdingOrder16[sensor_description.order16] = True
                         holdingOrder32[sensor_description.order32] = True
                 elif sensor_description.register_type == REG_INPUT:
-                    if sensor_description.register in inputRegs: _LOGGER.warning(f"input register already declared: 0x{sensor_description.register:x} {sensor_description.key}")
+                    if sensor_description.register in inputRegs: # duplicate or 2 bytes in one register ?
+                        first = inputRegs[sensor_description.register]
+                        inputRegs[sensor_description.register] = { first.unit: first, sensor_description.unit: sensor_description }
+                        _LOGGER.warning(f"input register already declared: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         inputRegs[sensor_description.register] = sensor_description
                         inputOrder16[sensor_description.order16] = True

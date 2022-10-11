@@ -70,7 +70,8 @@ REGISTER_S32 = "int32"
 REGISTER_ULSB16MSB16 = "ulsb16msb16" # probably same as REGISTER_U32 - suggest to remove later
 REGISTER_STR = "string"  # nr of bytes must be specified in wordcount and is 2*wordcount
 REGISTER_WORDS = "words" # nr or words must be specified in wordcount
-REGISTER_U8L = "int8"
+REGISTER_U8L = "int8L"
+REGISTER_U8H = "int8H"
 
 
 # ==================================== plugin access ====================================================================
