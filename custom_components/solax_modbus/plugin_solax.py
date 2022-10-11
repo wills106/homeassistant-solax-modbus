@@ -1358,7 +1358,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register = 0x91,
         scale=0.01,
-        allowedtypes= GEN3 | GEN4,
+        allowedtypes= GEN2,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
