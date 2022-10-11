@@ -102,4 +102,3 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
-
