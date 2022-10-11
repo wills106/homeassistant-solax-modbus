@@ -131,45 +131,29 @@ def determineInverterType(hub, configdict):
 # =================================================================================================
 
 @dataclass
-class SolaxModbusButtonEntityDescription(ButtonEntityDescription):
+class SolaxModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    register: int = None
-    command: int = None
-    blacklist: list = None # none or list of serial number prefixes
-
 
 @dataclass
-class SolaxModbusNumberEntityDescription(NumberEntityDescription):
+class SolaxModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    register: int = None
-    fmt: str = None
-    scale: float = 1 
-    state: str = None
-    max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
-    scale_exceptions: list = None #
-    blacklist: list = None # None or list of serial number prefixes like 
-
 
 @dataclass
-class SolaxModbusSelectEntityDescription(SelectEntityDescription):
+class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    register: int = None
-    options: dict = None
-    blacklist: list = None # none or list of serial number prefixes
-
 
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
-    """A class that describes SolaX Power Modbus sensor entities."""
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     order16: int = Endian.Big
     order32: int = Endian.Little
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
-
 @dataclass
 class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     # A class that describes SolaX Power MIC Modbus sensor entities.
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     order16: int = Endian.Big
     order32: int = Endian.Little
     unit: int = REGISTER_U16
@@ -177,7 +161,7 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 """
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
-    #A class that describes Sofar Modbus sensor entities.
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     order16: int = Endian.Big
     order32: int = Endian.Big
     unit: int = REGISTER_U16
