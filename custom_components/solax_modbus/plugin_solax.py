@@ -1269,6 +1269,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Allow Grid Charge",
         key="allow_grid_charge",
+        register = 0xB4,
+        scale = { 0: "Both Forbidden", 1: "Period 1 Allowed", 2: "Period 2 Allowed", 3: "Both Allowed",},
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3,
         icon="mdi:transmission-tower",
@@ -2278,7 +2280,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3, #ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN2 | GEN3,                   # UNSURE IF THIS IS CORRECT
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -2289,7 +2291,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3, #ALLDEFAULT & ~GEN4,
+        allowedtypes= GEN4,            # | GEN2 | GEN3,   UNSURE IF THIS IS CORRECT
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -3184,7 +3186,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         key="eps_set_frequency",
         native_unit_of_measurement=FREQUENCY_HERTZ,
         device_class=DEVICE_CLASS_FREQUENCY,
-        register = 0xB7,
+        register = 0xB8,                     # CORRECTED from 0xB7
         scale = { 0: "50Hz",
                   1: "60Hz", },
         allowedtypes = GEN2 | GEN3 | EPS,
