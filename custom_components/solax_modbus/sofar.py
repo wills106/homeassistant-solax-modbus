@@ -945,17 +945,296 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 # Electric Power (0x0680-0x06BF)
 #
 ###
+    SofarModbusSensorEntityDescription(
+        name="Solar Generation Today",
+        key="solar_generation_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x684,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Solar Generation Total",
+        key="solar_generation_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x686,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Load Consumption Today",
+        key="load_consumption_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x688,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Load Consumption Total",
+        key="load_consumption_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x68A,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Import Energy Today",
+        key="import_energy_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x68C,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:home-import-outline",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Import Energy Total",
+        key="import_energy_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x68E,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:home-import-outline",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Export Energy Today",
+        key="export_energy_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x690,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:home-export-outline",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Export Energy Total",
+        key="export_energy_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x692,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:home-export-outline",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Battery Input Energy Today",
+        key="battery_input_energy_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x694,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-arrow-up",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Battery Input Energy Total",
+        key="battery_input_energy_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x696,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-arrow-up",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Battery Output Energy Today",
+        key="battery_output_energy_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x698,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-arrow-down",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Battery Output Energy Total",
+        key="battery_Output_energy_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x69A,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-arrow-down",
+    ),
 
 ###
 #
 # Basic Parameter Configuration (0x1000-0x10FF)
 #
 ###
-
+]
 ###
 #
 # Remote Control (0x1100-0x12FF)
 #
 ###
+NUMBER_TYPES = [
+    SofarModbusNumberEntityDescription(
+        name = "Battery Minimum Capacity",
+        key = "battery_minimum_capacity",
+        register = 0x104D,
+        fmt = "i",
+        native_min_value = 1,
+        native_max_value = 90,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-sync",
+    ),
+    SofarModbusNumberEntityDescription(
+        name = "Battery Minimum Capacity OffGrid",
+        key = "battery_minimum_capacity_offgrid",
+        register = 0x104E,
+        fmt = "i",
+        native_min_value = 1,
+        native_max_value = 90,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | X3,
+        icon="mdi:battery-sync",
+    ),
+    SofarModbusNumberEntityDescription(
+        name = "Parallel Address",
+        key = "parallel_address", 
+        register = 0x1037,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 10,
+        native_step = 1,
+        allowedtypes = HYBRID | X3,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    SofarModbusNumberEntityDescription(
+        name = "Time of Use Charge SOC",
+        key = "time_of_use_charge_soc", 
+        register = 0x1124,
+        fmt = "i",
+        native_min_value = 30,
+        native_max_value = 100,
+        native_step = 1,
+        allowedtypes = HYBRID | X3,
+        entity_category = EntityCategory.CONFIG,
+    ),
+]
 
+SELECT_TYPES = [
+    SofarModbusSelectEntityDescription(
+        name = "EPS Control",
+        key = "eps_control",
+        register = 0x1029,
+        options =  {
+                0: "Turn Off",
+                1: "Turn On, Prohibit Cold Start",
+                2: "Turn On, Enable Cold Start",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Battery Active Control", # Not confirmed option
+        key = "battery_active_control",
+        register = 0x102B,
+        options =  {
+                0: "Disable",
+                1: "Enable",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Parallel Control",
+        key = "parallel_control",
+        register = 0x1035,
+        options =  {
+                0: "Disable",
+                1: "Enable",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Parallel Master-Salve",
+        key = "parallel_masterslave",
+        register = 0x1035,
+        options =  {
+                0: "Slave",
+                1: "Master",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Remote Control",
+        key = "remote_control",
+        register = 0x1104,
+        options =  {
+                0: "Off",
+                1: "On",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Charger Use Mode",
+        key = "charger_use_mode",
+        register = 0x1110,
+        options =  {
+                0: "Self Use",
+                1: "Time of Use",
+                2: "Timing Mode",
+                3: "Passive Mode",
+                4: "Peak Cute Mode",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Timing Charge On-Off",
+        key = "timing_charge_onoff",
+        register = 0x1112,
+        options =  {
+                0: "On",
+                1: "Off",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Time of Use On-Off",
+        key = "time_of_use_onoff",
+        register = 0x1121,
+        options =  {
+                0: "Disable",
+                1: "Enable",
+            },
+        allowedtypes = HYBRID | X3,
+    ),
+    # Timing Charge Start
+    # Timing Charge End
+    # Timing Discharge Start
+    # Timing Discharge End
+    # TOU Charge Start
+    # TOU Charge End
 ]
