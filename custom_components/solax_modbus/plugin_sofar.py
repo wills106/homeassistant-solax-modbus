@@ -1279,8 +1279,8 @@ SELECT_TYPES = [
         key = "battery_active_control",
         register = 0x102B,
         options =  {
-                0: "Disable",
-                1: "Enable",
+                0: "Disabled",
+                1: "Enabled",
             },
         allowedtypes = HYBRID | X3,
     ),
@@ -1289,8 +1289,8 @@ SELECT_TYPES = [
         key = "parallel_control",
         register = 0x1035,
         options =  {
-                0: "Disable",
-                1: "Enable",
+                0: "Disabled",
+                1: "Enabled",
             },
         allowedtypes = HYBRID | X3,
     ),
@@ -1342,8 +1342,8 @@ SELECT_TYPES = [
         key = "time_of_use_onoff",
         register = 0x1121,
         options =  {
-                0: "Disable",
-                1: "Enable",
+                0: "Disabled",
+                1: "Enabled",
             },
         allowedtypes = HYBRID | X3,
     ),
