@@ -88,13 +88,21 @@ def _read_serialnr(hub, address, swapbytes):
 
 def determineInverterType(hub, configdict):
     seriesnumber                       = _read_serialnr(hub, 0x445,   swapbytes = False)
-    if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x2001, swapbytes = False) # unknown decoding?
+    if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x2001, swapbytes = False) # Need modify _read_serialnr to also input registers
     if not seriesnumber: 
         _LOGGER.error(f"cannot find serial number, even not for other Inverter")
         seriesnumber = "unknown"
 
-    # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith('S'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
+    # derive invertertype from seriiesnumber
+    if   seriesnumber.startswith('S'):  invertertype = HYBRID | X1 # New Hybrid 20kW
+    elif seriesnumber.startswith('SA1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SB1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SC1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SD1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SF4'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SH1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SL1'):  invertertype = XXX | XXX | X1 # Older
+    elif seriesnumber.startswith('SJ2'):  invertertype = XXX | XXX | X1 # Older
 
     else: 
         invertertype = 0
@@ -105,7 +113,7 @@ def determineInverterType(hub, configdict):
     if read_dcb: invertertype = invertertype | DCB
     hub.invertertype = invertertype
 
-
+# This section needs more work to be like plugin_solax
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
