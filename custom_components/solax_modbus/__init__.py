@@ -55,6 +55,7 @@ from .const import (
     CONF_READ_EPS,
     CONF_READ_DCB,
     CONF_BAUDRATE,
+    CONF_PLUGIN,
     DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_INTERFACE,
@@ -62,6 +63,8 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DEFAULT_PORT,
     DEFAULT_BAUDRATE,
+    DEFAULT_PLUGIN,
+    PLUGIN_PATH,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import setPlugin, getPlugin
@@ -72,6 +75,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["button", "number", "select", "sensor"] 
 
 seriesnumber = 'unknown'
+
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener, called when the config entry options are changed."""
@@ -92,21 +96,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.info(f"solax setup entries - data: {entry.data}, options: {entry.options}")
 
     # dynamically load desired plugin - TODO: integrate with config_flow entries
-    #plugin = import_module("custom_components/solax_modbus/plugin_solax")
-    plugin_name = "plugin_solax"
-    spec = importlib.util.spec_from_file_location(plugin_name, f"custom_components/solax_modbus/{plugin_name}.py")
+    plugin_path = entry.options.get(CONF_PLUGIN, DEFAULT_PLUGIN)
+    plugin_name = plugin_path[len(PLUGIN_PATH)-4:-3]
+    spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
     plugin = importlib.util.module_from_spec(spec)
     sys.modules[plugin_name] = plugin
     spec.loader.exec_module(plugin)
     setPlugin(plugin)
-
-    """
-    matchInverterWithMask = plugin.matchInverterWithMask
-    determineInverterType = plugin.determineInverterType
-    SENSOR_TYPES = plugin.SENSOR_TYPES
-    SELECT_TYPES = plugin.SELECT_TYPES
-    BUTTON_TYPES = plugin.BUTTON_TYPES
-    NUMBER_TYPES = plugin.NUMBER_TYPES """
     # end of dynamic load
 
     config = entry.options
@@ -308,14 +304,14 @@ class SolaXModbusHub:
                 
         else:
             try:
+                #return  self.read_modbus_registers_all()
                 return (self.read_modbus_holding_registers_0() 
                     and self.read_modbus_holding_registers_1() 
                     and self.read_modbus_holding_registers_2()
                     and self.read_modbus_input_registers_0() 
                     and self.read_modbus_input_registers_1() 
                     and self.read_modbus_input_registers_2() 
-                    and self.read_modbus_registers_all()
-                )
+                    and self.read_modbus_registers_all() )   
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
             except Exception as ex:
@@ -918,10 +914,12 @@ class SolaXModbusHub:
         # temporary code: compare new with old
         self.cyclecount = self.cyclecount+1
         #for i in self.newdata: self.data[i] = self.newdata[i] # temporary during migration tests
+        
         if self.cyclecount < 5: # avoid excess amount of logging
             _LOGGER.info(f"newdata: {self.newdata}")
             for i in self.newdata:
                 if self.data.get(i) != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data.get(i)}")
+        
         return res
 
     def read_modbus_input_registers_0(self):
