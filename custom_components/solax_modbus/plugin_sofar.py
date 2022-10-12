@@ -113,6 +113,20 @@ def determineInverterType(hub, configdict):
     if read_dcb: invertertype = invertertype | DCB
     hub.invertertype = invertertype
 
+
+@dataclass
+class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+
+@dataclass
+class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+
+@dataclass
+class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+
+
 # This section needs more work to be like plugin_solax
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
@@ -121,6 +135,10 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
+
+
+
+BUTTON_TYPES = []
 
 SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [ 
 
