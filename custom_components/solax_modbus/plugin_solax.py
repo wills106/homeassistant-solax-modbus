@@ -2857,6 +2857,8 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0x113,
+        scale = 0.1,
+        rounding = 1,
         entity_registry_enabled_default=False,
         allowedtypes= GEN3 | GEN4,
     ),
