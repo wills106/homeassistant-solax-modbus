@@ -94,15 +94,15 @@ def determineInverterType(hub, configdict):
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
-    if   seriesnumber.startswith('S'):  invertertype = HYBRID | X1 # New Hybrid 20kW
-    elif seriesnumber.startswith('SA1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SB1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SC1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SD1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SF4'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SH1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SL1'):  invertertype = XXX | XXX | X1 # Older
-    elif seriesnumber.startswith('SJ2'):  invertertype = XXX | XXX | X1 # Older
+    if   seriesnumber.startswith('SP1ES'):  invertertype = HYBRID | X3 # New Hybrid 20kW
+    elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
+    elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
+    elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
+    elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
+    elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
+    elif seriesnumber.startswith('SH1'):  invertertype = PV | X3 # Older Probably 3phase
+    elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
+    elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
 
     else: 
         invertertype = 0
