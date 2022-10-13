@@ -1854,13 +1854,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Group Read Test",
-        key="group_read_test",
-        icon="mdi:solar-power",
-        entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Measured Power",
         key="feedin_power",
         native_unit_of_measurement=POWER_WATT,
@@ -3651,7 +3644,8 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Total Power",
-        key="pv_power_1 + pv_power_2", # Probably won't work
+        key="pv_total_power",
+        value_function= value_function_pv_total_power,
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
