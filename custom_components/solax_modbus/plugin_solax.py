@@ -1854,13 +1854,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Group Read Test",
-        key="group_read_test",
-        icon="mdi:solar-power",
-        entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3 | GEN4,
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Measured Power",
         key="feedin_power",
         native_unit_of_measurement=POWER_WATT,
@@ -2041,6 +2034,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register = 0x1,
         scale = 0.1,
         register_type = REG_INPUT,
+        unit = REGISTER_S16,
         rounding = 1,
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
@@ -2064,6 +2058,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x2,
         register_type = REG_INPUT,
+        unit = REGISTER_S16,
         allowedtypes= GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2326,7 +2321,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN2 | GEN3,                   # UNSURE IF THIS IS CORRECT
+        allowedtypes= GEN3,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -2337,7 +2332,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
-        allowedtypes= GEN4,            # | GEN2 | GEN3,   UNSURE IF THIS IS CORRECT
+        allowedtypes= GEN3 | GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -2752,17 +2747,25 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
      # transferred fromm GEN3_X1_SENSOR_TYPES, some also from GEN3_X3_SENSOR_TYPES
 
     SolaXModbusSensorEntityDescription(
-        name="Backup Charge End", # Todo
+        name="Backup Charge End",
         key="backup_charge_end",
+        register = 0x100,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= GEN3, # Was this really GEN4?
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Backup Charge Start", # Todo
+        name="Backup Charge Start",
         key="backup_charge_start",
+        register = 0xFE,
+        unit = REGISTER_WORDS,
+        wordcount = 2,
+        scale = value_function_gen23time,
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN3 | GEN4,
+        allowedtypes= GEN3, # Was this really GEN4?
         icon="mdi:battery-clock",
     ),
     SolaXModbusSensorEntityDescription(
@@ -2779,7 +2782,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         name="Backup Gridcharge",
         key="backup_gridcharge",
         entity_registry_enabled_default=False,
-        allowedtypes= X1 | GEN4,
+        allowedtypes= X1 | GEN4, # Was this really GEN4?
         icon="mdi:transmission-tower",
     ),
     SolaXModbusSensorEntityDescription(
@@ -2808,7 +2811,6 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         allowedtypes= X1 | X3 | GEN3 | GEN4,
     ),
-    # cloud_control should be X3 as well?
     SolaXModbusSensorEntityDescription(
         name="Cloud Control",
         key="cloud_control",
@@ -3642,7 +3644,8 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Total Power",
-        key="pv_power_1 + pv_power_2", # Probably won't work
+        key="pv_total_power",
+        value_function= value_function_pv_total_power,
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,

@@ -29,6 +29,7 @@ from homeassistant.const import (
     ENERGY_MEGA_WATT_HOUR,
     FREQUENCY_HERTZ,
     PERCENTAGE,
+    POWER_KILO_WATT,
     POWER_VOLT_AMPERE,
     POWER_WATT,
     TEMP_CELSIUS,
