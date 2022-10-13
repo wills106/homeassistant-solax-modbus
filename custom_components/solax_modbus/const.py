@@ -1,5 +1,5 @@
 
-
+import logging
 from homeassistant.components.sensor import (
     SensorEntityDescription,
     STATE_CLASS_MEASUREMENT,
@@ -79,16 +79,19 @@ REGISTER_U8H = "int8H"
 
 # ==================================== plugin access ====================================================================
 
-glob_plugin = None
+_LOGGER = logging.getLogger(__name__)
+glob_plugin = {}
 
-def setPlugin(plugin):
-    global glob_plugin 
-    glob_plugin = plugin 
+def setPlugin(instancename, plugin):
+    global glob_plugin
+    glob_plugin[instancename] = plugin 
 
-def getPlugin():
-    return glob_plugin
+def getPlugin(instancename):
+    _LOGGER.info(f"getPlugin {instancename} from {glob_plugin}")
+    return glob_plugin.get(instancename)
 
-
+def getPluginName(plugin_path):
+    return plugin_path[len(PLUGIN_PATH)-4:-3]
 
 # =================================== base class for sensor entity descriptions =========================================
 

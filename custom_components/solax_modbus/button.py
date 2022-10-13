@@ -23,7 +23,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    plugin = getPlugin()
+    plugin = getPlugin(hub_name)
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):

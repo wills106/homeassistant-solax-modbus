@@ -67,7 +67,7 @@ from .const import (
     PLUGIN_PATH,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
-from .const import setPlugin, getPlugin
+from .const import setPlugin, getPlugin, getPluginName
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,21 +95,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
     _LOGGER.info(f"solax setup entries - data: {entry.data}, options: {entry.options}")
 
-    # dynamically load desired plugin - TODO: integrate with config_flow entries
-    plugin_path = entry.options.get(CONF_PLUGIN, DEFAULT_PLUGIN)
-    plugin_name = plugin_path[len(PLUGIN_PATH)-4:-3]
-    spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
-    plugin = importlib.util.module_from_spec(spec)
-    sys.modules[plugin_name] = plugin
-    spec.loader.exec_module(plugin)
-    setPlugin(plugin)
-    # end of dynamic load
-
     config = entry.options
     if not config:
         _LOGGER.warning('Solax: using old style config entries, recreating the integration will resolve this')
         config = entry.data
     name = config[CONF_NAME] 
+
+    # dynamically load desired plugin - TODO: integrate with config_flow entries
+    plugin_path = config.get(CONF_PLUGIN, DEFAULT_PLUGIN)
+    plugin_name = getPluginName(plugin_path)
+    if sys.modules.get(plugin_name, False): 
+        _LOGGER.warning(f"plugin {plugin_name} is already loaded - doing nothing - is this ok?")
+    else:
+        spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
+        plugin = importlib.util.module_from_spec(spec)
+        sys.modules[plugin_name] = plugin
+        spec.loader.exec_module(plugin)
+        setPlugin(name, plugin)
+    # end of dynamic load
+
     host = config.get(CONF_HOST, None)
     port = config.get(CONF_PORT, DEFAULT_PORT)
     modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -132,7 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # read serial number - changed seriesnumber to global to allow filtering
     global seriesnumber
-    plugin.determineInverterType(hub, config)
+    getPlugin(name).determineInverterType(hub, config)
 
     for component in PLATFORMS:
         hass.async_create_task(

@@ -82,7 +82,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     holdingOrder32 = {} # all entities should have the same order
     inputOrder32   = {} # all entities should have the same order
      
-    plugin = getPlugin()
+    plugin = getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early - ? might cause problems for users with multiple different inverter types
