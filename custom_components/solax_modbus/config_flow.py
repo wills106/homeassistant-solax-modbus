@@ -17,7 +17,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowFormStep,
     SchemaFlowMenuStep,
 )
-
+from .const import setPlugin, getPlugin, getPluginName
 from .const import (
 	DEFAULT_NAME,
 	DEFAULT_PORT,
@@ -53,8 +53,7 @@ BAUDRATES = [
 ]
 
 
-PLUGINS = [ selector.SelectOptionDict(value=i, label=i[len(PLUGIN_PATH)-4:-3]) for i in glob.glob(PLUGIN_PATH) ]
-
+PLUGINS = [ selector.SelectOptionDict(value=i, label=getPluginName(i)) for i in glob.glob(PLUGIN_PATH) ]
 
 
 INTERFACES = [
@@ -87,7 +86,12 @@ def _validate_base(data: Any) -> Any:
     """Validate config."""
     interface   = data[CONF_INTERFACE]
     modbus_addr = data[CONF_MODBUS_ADDR]
-    _LOGGER.info(f"validating base config: returning data: {data}")
+    name        = data[CONF_NAME]
+    _LOGGER.info(f"validating base config for {name}: pre: {data}")
+    if getPlugin(name) or ((name == DEFAULT_NAME) and (data[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
+        _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
+        data[CONF_NAME] = getPluginName(data[CONF_PLUGIN])
+        raise SchemaFlowError("name_already_used") 
     return data
 
 def _validate_host(data: Any) -> Any:

@@ -22,7 +22,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    plugin = getPlugin()
+    plugin = getPlugin(hub_name)
     entities = []
     for number_info in plugin.NUMBER_TYPES:
         newscale = number_info.scale
