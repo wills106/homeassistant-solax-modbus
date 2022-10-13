@@ -87,7 +87,6 @@ def setPlugin(instancename, plugin):
     glob_plugin[instancename] = plugin 
 
 def getPlugin(instancename):
-    _LOGGER.info(f"getPlugin {instancename} from {glob_plugin}")
     return glob_plugin.get(instancename)
 
 def getPluginName(plugin_path):
