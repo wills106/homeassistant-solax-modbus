@@ -1,6 +1,7 @@
 import ipaddress
 import re
 import logging
+import glob
 from collections.abc import Mapping
 from typing import Any, cast
 
@@ -17,7 +18,6 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowMenuStep,
 )
 
-
 from .const import (
 	DEFAULT_NAME,
 	DEFAULT_PORT,
@@ -33,8 +33,11 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_MODBUS_ADDR,
     CONF_BAUDRATE,
+    CONF_PLUGIN,
 	DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
+    DEFAULT_PLUGIN,
+    PLUGIN_PATH,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +52,11 @@ BAUDRATES = [
     selector.SelectOptionDict(value="115200", label="115200"),
 ]
 
+
+PLUGINS = [ selector.SelectOptionDict(value=i, label=i[len(PLUGIN_PATH)-4:-3]) for i in glob.glob(PLUGIN_PATH) ]
+
+
+
 INTERFACES = [
     selector.SelectOptionDict(value="tcp",    label="TCP / Ethernet"),
     selector.SelectOptionDict(value="serial", label="Serial"),    
@@ -58,6 +66,7 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(selector.SelectSelectorConfig(options=INTERFACES), ),
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
+        vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(selector.SelectSelectorConfig(options=PLUGINS), ),
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,

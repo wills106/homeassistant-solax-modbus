@@ -19,6 +19,7 @@ from homeassistant.const import (
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_FREQUENCY,
     DEVICE_CLASS_POWER,
+    DEVICE_CLASS_POWER_FACTOR,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLTAGE,
     ELECTRIC_CURRENT_AMPERE,
@@ -50,14 +51,15 @@ CONF_INTERFACE   = "interface"
 CONF_SERIAL_PORT = "read_serial_port"
 CONF_SolaX_HUB   = "solax_hub"
 CONF_BAUDRATE    = "baudrate"
+CONF_PLUGIN      = "plugin"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
 DEFAULT_READ_EPS = False
 DEFAULT_READ_DCB = False
 DEFAULT_BAUDRATE = "19200"
-
-
+DEFAULT_PLUGIN   = "custom_components/solax_modbus/plugin_solax.py"
+PLUGIN_PATH      = "custom_components/solax_modbus/plugin_*.py"
 
 # ================================= Definitions for Sennsor Declarations =================================================
 
