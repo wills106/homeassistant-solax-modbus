@@ -891,7 +891,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Off-Grid ActivePower Output L2N",
         key = "offgrid_activepower_output_l2n",
-        native_unit_of_measurement = ENERGY_KILO_WATT,
+        native_unit_of_measurement = POWER_KILO_WATT,
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x527,
         unit = REGISTER_S16,
