@@ -507,7 +507,7 @@ NUMBER_TYPES = [
         scale = 1, # GEN 2,3 scale
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
-        scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
+        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         allowedtypes = GEN2 | GEN3 | GEN4 ,
         max_exceptions = MAX_EXPORT,
         icon="mdi:home-export-outline",
@@ -521,7 +521,7 @@ NUMBER_TYPES = [
         scale = 1, # GEN 2,3 scale
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
-        scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
+        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         allowedtypes = GEN4 ,
         max_exceptions = MAX_EXPORT,
     ),
@@ -1818,7 +1818,7 @@ SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [
         register = 0xB6,
         entity_registry_enabled_default=False,
         allowedtypes= GEN2 | GEN3 | GEN4,
-        scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
+        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
