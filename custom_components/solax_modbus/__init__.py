@@ -74,7 +74,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["button", "number", "select", "sensor"] 
 
-seriesnumber = 'unknown'
+#seriesnumber = 'unknown'
 
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -101,17 +101,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         config = entry.data
     name = config[CONF_NAME] 
 
-    # dynamically load desired plugin - TODO: integrate with config_flow entries
+    # dynamically load desired plugin
     plugin_path = config.get(CONF_PLUGIN, DEFAULT_PLUGIN)
     plugin_name = getPluginName(plugin_path)
-    if sys.modules.get(plugin_name, False): 
-        _LOGGER.warning(f"plugin {plugin_name} is already loaded - doing nothing - is this ok?")
-    else:
-        spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
-        plugin = importlib.util.module_from_spec(spec)
-        sys.modules[plugin_name] = plugin
-        spec.loader.exec_module(plugin)
-        setPlugin(name, plugin)
+    plugin = sys.modules.get(plugin_name, False)
+    if plugin: 
+        _LOGGER.warning(f"plugin {plugin_name} is already loaded - doing it again - is this ok?")
+        del plugin
+    spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
+    plugin = importlib.util.module_from_spec(spec)
+    sys.modules[plugin_name] = plugin
+    spec.loader.exec_module(plugin)
+    setPlugin(name, plugin)
     # end of dynamic load
 
     host = config.get(CONF_HOST, None)
@@ -130,12 +131,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.info(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin_name)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
     # read serial number - changed seriesnumber to global to allow filtering
-    global seriesnumber
+    #global seriesnumber
     getPlugin(name).determineInverterType(hub, config)
 
     for component in PLATFORMS:
@@ -181,7 +182,8 @@ class SolaXModbusHub:
         interface,
         serial_port,
         baudrate,
-        scan_interval
+        scan_interval,
+        plugin_name
     ):
         """Initialize the Modbus hub."""
         _LOGGER.info(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
@@ -207,6 +209,7 @@ class SolaXModbusHub:
         self.inputBlocks = {}
         self.holdingBlocks = {}
         self.computedRegs = {}
+        self.plugin_name = plugin_name
         _LOGGER.info("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -308,14 +311,15 @@ class SolaXModbusHub:
                 
         else:
             try:
-                #return  self.read_modbus_registers_all()
-                return (self.read_modbus_holding_registers_0() 
-                    and self.read_modbus_holding_registers_1() 
-                    and self.read_modbus_holding_registers_2()
-                    and self.read_modbus_input_registers_0() 
-                    and self.read_modbus_input_registers_1() 
-                    and self.read_modbus_input_registers_2() 
-                    and self.read_modbus_registers_all() )   
+                if self.plugin_name == "solax": # remove this part later
+                    return (self.read_modbus_holding_registers_0() 
+                        and self.read_modbus_holding_registers_1() 
+                        and self.read_modbus_holding_registers_2()
+                        and self.read_modbus_input_registers_0() 
+                        and self.read_modbus_input_registers_1() 
+                        and self.read_modbus_input_registers_2() 
+                        and self.read_modbus_registers_all() )   
+                else: return  self.read_modbus_registers_all()
             except ConnectionException as ex:
                 _LOGGER.error("Reading data failed! Inverter is offline.")
             except Exception as ex:
@@ -593,7 +597,7 @@ class SolaXModbusHub:
                 
                 decoder.skip_bytes(22)
             
-            elif seriesnumber.startswith('XRE'):
+            elif self.seriesnumber.startswith('XRE'):
                 
                 decoder.skip_bytes(22)
             
@@ -917,12 +921,13 @@ class SolaXModbusHub:
             self.newdata[descr.key] = descr.value_function(0, descr, self.newdata )
         # temporary code: compare new with old
         self.cyclecount = self.cyclecount+1
-        #for i in self.newdata: self.data[i] = self.newdata[i] # temporary during migration tests
-        
-        if self.cyclecount < 5: # avoid excess amount of logging
-            _LOGGER.info(f"newdata: {self.newdata}")
-            for i in self.newdata:
-                if self.data.get(i) != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data.get(i)}")
+        if self.plugin_name != "solax": # remove this part later and replace all self.newdata with self.data
+            for i in self.newdata: self.data[i] = self.newdata[i] # temporary during migration tests
+        else: # remove this block later
+            if self.cyclecount < 5: # avoid excess amount of logging
+                _LOGGER.info(f"newdata: {self.newdata}")
+                for i in self.newdata:
+                    if self.data.get(i) != self.newdata[i]: _LOGGER.warning(f"new data not equal with old entity {i}: {self.newdata[i]} {self.data.get(i)}")
         
         return res
 
