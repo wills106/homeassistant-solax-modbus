@@ -103,6 +103,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
     elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
     elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
+    #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
 
     else: 
         invertertype = 0
@@ -890,6 +891,18 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x244,
         unit = REGISTER_U32,
         allowedtypes = AC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="PV 1", # Not sure if power?
+        key="pv_1",
+        register = 0x252,
+        allowedtypes=HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="PV 2", # Not sure if power?
+        key="pv_2",
+        register = 0x255,
+        allowedtypes=HYBRID,
     ),
 ###
 #
