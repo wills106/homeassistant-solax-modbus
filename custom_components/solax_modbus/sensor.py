@@ -85,18 +85,19 @@ async def async_setup_entry(hass, entry, async_add_entities):
     plugin = getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
-            # apply scale exceptions early - ? might cause problems for users with multiple different inverter types
-            newscale = sensor_description.scale
-            normal_scale = not ((type(sensor_description.scale) is dict) or callable(sensor_description.scale))
-            if normal_scale and sensor_description.scale_exceptions:
-                for (prefix, value,) in sensor_description.scale_exceptions: 
-                    if hub.seriesnumber.startswith(prefix): newscale = value
+            # apply scale exceptions early 
+            readscale = None
+            #normal_scale = not ((type(sensor_description.scale) is dict) or callable(sensor_description.scale))
+            #if normal_scale and sensor_description.read_scale_exceptions:
+            if sensor_description.read_scale_exceptions:
+                for (prefix, value,) in sensor_description.read_scale_exceptions: 
+                    if hub.seriesnumber.startswith(prefix): readscale = value
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,
                 device_info,
                 sensor_description,
-                newscale,
+                read_scale = readscale,
             )
             entities.append(sensor)
             if (sensor_description.register < 0): # entity without modbus address
@@ -152,24 +153,15 @@ class SolaXModbusSensor(SensorEntity):
         hub,
         device_info,
         description: BaseModbusSensorEntityDescription,
-        newscale
+        read_scale = 1
     ):
         """Initialize the sensor."""
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
         self.entity_description: BaseModbusSensorEntityDescription = description
-        self._attr_scale = newscale
-        """"normal_scale = not ((type(description.scale) is dict) or callable(description.scale))
-        if normal_scale: self._attr_scale = description.scale
-        else: self._attr_scale = 1
-        if description.scale_exceptions:
-            #_LOGGER.info(f"sensor scale exceptions: {hub.seriesnumber}")
-            for (prefix, value,) in description.scale_exceptions: 
-                if hub.seriesnumber.startswith(prefix): 
-                    #_LOGGER.info(f"sensorapplyig scale exceptions: {hub.seriesnumber} {value} normal scale: {normal_scale}")
-                    if normal_scale: self._attr_scale = value
-        """
+        #self._attr_scale = scale
+        self._read_scale = read_scale
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -200,17 +192,9 @@ class SolaXModbusSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key in self._hub.data:
-            return self._hub.data[self.entity_description.key]
-        """
-        if self._attr_scale != 1 and not ((type(self._attr_scale) is dict) or callable(self._attr_scale)):
-            # is this extra scaling still needed ??
-            if self.entity_description.key in self._hub.data:
-                return self._hub.data[self.entity_description.key]*self._attr_scale
-            
-        else: # strings and other data types cannot be scaled
-            if self.entity_description.key in self._hub.data:
-                return self._hub.data[self.entity_description.key]
-        """
+            if self._read_scale: return self._hub.data[self.entity_description.key]*self._read_scale
+            else: return self._hub.data[self.entity_description.key]
+
 
   
 

@@ -99,7 +99,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """ base class for modbus sensor declarations """
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     scale: float = 1 # can be float, dictionary or callable function(initval, descr, datadict)
-    scale_exceptions: list = None
+    read_scale_exceptions: list = None # additional scaling when reading from modbus
     blacklist: list = None
     register: int = -1 # initialize with invalid register
     rounding: int = 1
@@ -129,10 +129,10 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
+    read_scale_exceptions: list = None
     fmt: str = None
     scale: float = 1 
     state: str = None
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
-    scale_exceptions: list = None #
     blacklist: list = None # None or list of serial number prefixes like 
 
