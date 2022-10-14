@@ -5,6 +5,7 @@ import threading
 from datetime import datetime, timedelta
 from typing import Optional
 import importlib.util, sys
+import importlib
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -100,13 +101,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         config = entry.data
     name = config[CONF_NAME] 
 
-    # dynamically load desired plugin
+    # ================== dynamically load desired plugin
     plugin_path = config[CONF_PLUGIN]
     _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
     if not plugin_path: 
         plugin_path = DEFAULT_PLUGIN
         _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
     plugin_name = getPluginName(plugin_path)
+    plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
+    setPlugin(name, plugin)
+    # ====================== end of dynamic load
+
+    """ alternative code for dynamic load:
     plugin = sys.modules.get(plugin_name, False)
     if plugin: 
         _LOGGER.warning(f"plugin {plugin_name} is already loaded - doing it again - is this ok?")
@@ -114,9 +120,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     spec = importlib.util.spec_from_file_location(plugin_name, plugin_path)
     plugin = importlib.util.module_from_spec(spec)
     sys.modules[plugin_name] = plugin
-    spec.loader.exec_module(plugin)
+    spec.loader.exec_module(plugin) 
     setPlugin(name, plugin)
-    # end of dynamic load
+    """
 
     host = config.get(CONF_HOST, None)
     port = config.get(CONF_PORT, DEFAULT_PORT)
