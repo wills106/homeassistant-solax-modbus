@@ -39,19 +39,21 @@ def splitInBlocks( descriptions ):
         descr = descriptions[reg]
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > 100)): 
             if ((end - start) > 0): 
+                _LOGGER.info(f"Starting new block at 0x{reg:x} ")
                 newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                 blocks.append(newblock)
                 start = INVALID_START
                 end = 0
                 curblockregs = []
-            else: _LOGGER.warning(f"newblock declaration found for empty block")
+            else: _LOGGER.info(f"newblock declaration found for empty block")
 
         if start == INVALID_START: start = reg
         if type(descr) is dict: end = reg+1 # couple of byte values
         else:
+            _LOGGER.info(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
             if descr.unit in (REGISTER_STR, REGISTER_WORDS,): 
                 if (descr.wordcount): end = reg+descr.wordcount
-                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr[reg].key}")
+                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
             elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
             else: end = reg + 1
         curblockregs.append(reg)
@@ -137,6 +139,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub.inputBlocks = splitInBlocks(inputRegs)
     hub.computedRegs = computedRegs
 
+    for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+    for i in hub.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
     _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
     _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
     _LOGGER.info(f"computedRegs: {hub.computedRegs}")

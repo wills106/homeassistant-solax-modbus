@@ -84,6 +84,7 @@ def _read_serialnr(hub, address, swapbytes):
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+    #return 'SP1ES2' 
     return res
 
 def determineInverterType(hub, configdict):
