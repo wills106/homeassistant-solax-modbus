@@ -92,7 +92,7 @@ async def async_setup(hass, config):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
-    _LOGGER.info(f"solax setup entries - data: {entry.data}, options: {entry.options}")
+    _LOGGER.info(f"setup entries - data: {entry.data}, options: {entry.options}")
 
     config = entry.options
     if not config:
@@ -101,7 +101,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     name = config[CONF_NAME] 
 
     # dynamically load desired plugin
-    plugin_path = config.get(CONF_PLUGIN, DEFAULT_PLUGIN)
+    plugin_path = config[CONF_PLUGIN]
+    _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
+    if not plugin_path: 
+        plugin_path = DEFAULT_PLUGIN
+        _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
     plugin_name = getPluginName(plugin_path)
     plugin = sys.modules.get(plugin_name, False)
     if plugin: 
