@@ -44,7 +44,6 @@ ALL_DCB_GROUP  = DCB
 
 # END OF BLOCK =================================================
 
-#from .const import matchInverterWithMask, SENSOR_TYPES, BUTTON_TYPES, NUMBER_TYPES, SELECT_TYPES
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -137,6 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # read serial number - changed seriesnumber to global to allow filtering
     #global seriesnumber
+    _LOGGER.info(f"{hub.name}: ready to call plugin to determine inverter type")
     getPlugin(name).determineInverterType(hub, config)
 
     for component in PLATFORMS:

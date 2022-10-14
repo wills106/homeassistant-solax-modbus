@@ -62,6 +62,8 @@ def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevan
 
 # ======================= end of bitmask handling code =============================================
 
+SENSOR_TYPES = []
+
 # ====================== find inverter type and details ===========================================
 
 def _read_serialnr(hub, address, swapbytes):
@@ -82,6 +84,7 @@ def _read_serialnr(hub, address, swapbytes):
     return res
 
 def determineInverterType(hub, configdict):
+    global SENSOR_TYPES
     _LOGGER.info(f"{hub.name}: trying to determine inverter type")
     seriesnumber                       = _read_serialnr(hub, 0x0,   swapbytes = False)
     if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x300, swapbytes = True) # bug in endian.Little decoding?
@@ -128,6 +131,8 @@ def determineInverterType(hub, configdict):
     if read_eps: invertertype = invertertype | EPS 
     if read_dcb: invertertype = invertertype | DCB
     hub.invertertype = invertertype
+    if invertertype & MIC: SENSOR_TYPES = SENSOR_TYPES_MIC
+    else: SENSOR_TYPES = SENSOR_TYPES_MAIN
 
 # =================================================================================================
 
@@ -1265,8 +1270,7 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 
-
-SENSOR_TYPES: list[SolaXModbusSensorEntityDescription] = [ 
+SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [ 
     SolaXModbusSensorEntityDescription(
         name="Allow Grid Charge",
         key="allow_grid_charge",
