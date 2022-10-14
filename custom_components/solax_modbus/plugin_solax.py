@@ -82,6 +82,7 @@ def _read_serialnr(hub, address, swapbytes):
     return res
 
 def determineInverterType(hub, configdict):
+    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
     seriesnumber                       = _read_serialnr(hub, 0x0,   swapbytes = False)
     if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x300, swapbytes = True) # bug in endian.Little decoding?
     if not seriesnumber: 
