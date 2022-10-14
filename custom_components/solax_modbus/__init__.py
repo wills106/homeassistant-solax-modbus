@@ -350,7 +350,7 @@ class SolaXModbusHub:
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
-            _LOGGER.info(f"modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
+            _LOGGER.info(f"{self.name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
         if typ == 'input': realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
         else:              realtime_data = self.read_holding_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
         if realtime_data.isError(): return False
