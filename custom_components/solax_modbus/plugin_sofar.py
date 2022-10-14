@@ -82,15 +82,16 @@ def _read_serialnr(hub, address, swapbytes):
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
     except: pass
-    if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
-    _LOGGER.info(f"Read Sofar serial number: {res}, swapped: {swapbytes}")
+    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
 def determineInverterType(hub, configdict):
-    seriesnumber                       = _read_serialnr(hub, 0x445,   swapbytes = False)
+    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+    seriesnumber                       = _read_serialnr(hub, 0x445,  swapbytes = False)
     if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x2001, swapbytes = False) # Need modify _read_serialnr to also input registers
     if not seriesnumber: 
-        _LOGGER.error(f"cannot find serial number, even not for other Inverter")
+        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
@@ -106,7 +107,7 @@ def determineInverterType(hub, configdict):
 
     else: 
         invertertype = 0
-        _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+        _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
     read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
     read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
     if read_eps: invertertype = invertertype | EPS 
