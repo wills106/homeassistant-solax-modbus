@@ -77,15 +77,15 @@ def _read_serialnr(hub, address, swapbytes):
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
     except: pass
-    if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
-    _LOGGER.info(f"Read Solax serial number: {res}, swapped: {swapbytes}")
+    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
 def determineInverterType(hub, configdict):
     seriesnumber                       = _read_serialnr(hub, 0x0,   swapbytes = False)
     if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x300, swapbytes = True) # bug in endian.Little decoding?
     if not seriesnumber: 
-        _LOGGER.error(f"cannot find serial number, even not for MIC")
+        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
         seriesnumber = "unknown"
 
     # derive invertertupe from seriiesnumber
