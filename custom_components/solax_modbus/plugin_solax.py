@@ -889,7 +889,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Allow Grid Charge",
         key = "allow_grid_charge",
         register = 0x40,
-        options =  {
+        option_dict =  {
                 0: "Both Forbidden",
                 1: "Period 1 Allowed",
                 2: "Period 2 Allowed",
@@ -901,7 +901,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Backup Grid Charge",
         key = "backup_gridcharge",
         register = 0x94,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -911,7 +911,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charge and Discharge Period2 Enable",
         key = "charge_period2_enable",
         register = 0x6C,
-        options = {  
+        option_dict = {  
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -922,7 +922,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger End Time 1",
         key = "charger_end_time_1",
         register = 0x27,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2 | GEN3, 
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -930,7 +930,7 @@ SELECT_TYPES = [
      SolaxModbusSelectEntityDescription( name = "Charger End Time 1",
         key = "charger_end_time_1",
         register = 0x69,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4, 
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -938,7 +938,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger End Time 2",
         key = "charger_end_time_2",
         register = 0x2B,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2 | GEN3, 
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -946,7 +946,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger End Time 2",
         key = "charger_end_time_2",
         register = 0x6E,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -954,7 +954,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Start Time 1",
         key = "charger_start_time_1",
         register = 0x26,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2 | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -962,7 +962,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Start Time 1",
         key = "charger_start_time_1",
         register = 0x68,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -970,7 +970,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Start Time 2",
         key = "charger_start_time_2",
         register = 0x2A,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2 | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -978,7 +978,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Start Time 2",
         key = "charger_start_time_2",
         register = 0x6D,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -986,7 +986,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
         key = "charger_use_mode",
         register = 0x1F,
-        options = {
+        option_dict = {
             0: "Self Use Mode",
             1: "Force Time Use",
             2: "Back Up Mode",
@@ -997,7 +997,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
         key = "charger_use_mode",
         register = 0x1F,
-        options = {
+        option_dict = {
             0: "Self Use Mode",
             1: "Force Time Use",
             2: "Back Up Mode",
@@ -1009,7 +1009,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Charger Use Mode",
         key = "charger_use_mode",
         register = 0x1F,
-        options = {
+        option_dict = {
                 0: "Self Use Mode",
                 1: "Feedin Priority",
                 2: "Back Up Mode",
@@ -1021,7 +1021,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Cloud Control",
         key = "cloud_control",
         register = 0x99,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1031,7 +1031,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Device Lock",
         key = "device_lock",
         register = 0xB5,
-        options =  {
+        option_dict =  {
                 0: "Unlock",
                 1: "Lock",
             },
@@ -1042,7 +1042,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 1",
         key = "discharger_end_time_1",
         register = 0x29,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1050,7 +1050,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 1",
         key = "discharger_end_time_1",
         register = 0x6B,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1058,7 +1058,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 2",
         key = "discharger_end_time_2",
         register = 0x2D,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1066,7 +1066,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger End Time 2",
         key = "discharger_end_time_2",
         register = 0x70,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4, 
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1074,7 +1074,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 1",
         key = "discharger_start_time_1",
         register = 0x28,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1082,7 +1082,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 1",
         key = "discharger_start_time_1",
         register = 0x6A,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1090,7 +1090,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 2",
         key = "discharger_start_time_2",
         register = 0x2C,
-        options = TIME_OPTIONS,
+        option_dict = TIME_OPTIONS,
         allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1098,7 +1098,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Discharger Start Time 2",
         key = "discharger_start_time_2",
         register = 0x6F,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
@@ -1106,7 +1106,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Dry Contact Mode",
         key = "dry_contact_mode",
         register = 0xC3,
-        options =  {
+        option_dict =  {
                 0: "Load Management",
                 1: "Generator Control",
             },
@@ -1116,7 +1116,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Export Duration",
         key = "export_duration",
         register = 0x9F,
-        options =  {
+        option_dict =  {
                 4: "Default",
                 900: "15 Minutes",
                 1800: "30 Minutes",
@@ -1129,7 +1129,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "External Generation",
         key = "external_generation",
         register = 0xC7,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1139,7 +1139,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Lease Mode",
         key = "lease_mode",
         register = 0xB4,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1150,7 +1150,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Manual Mode Select",
         key = "manual_mode",
         register = 0x20,
-        options = {
+        option_dict = {
                 0: "Stop Charge and Discharge",
                 1: "Force Charge",
                 2: "Force Discharge",
@@ -1161,7 +1161,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Manual Mode Control",
         key = "manual_mode_control",
         register = 0xB6,
-        options =  {
+        option_dict =  {
                 0: "Off",
                 1: "On",
             },
@@ -1171,7 +1171,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Parallel Setting",
         key = "parallel_setting",
         register = 0xC6,
-        options =  {
+        option_dict =  {
                 0: "Free",
                 1: "Master",
                 2: "Slave",
@@ -1183,7 +1183,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Phase Power Balance X3",
         key = "phase_power_balance_x3",
         register = 0x9E,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1194,7 +1194,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Schedule",
         key = "schedule",
         register = 0xBD,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1204,7 +1204,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Selfuse Mode Backup",
         key = "selfuse_mode_backup",
         register = 0xC4,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1214,7 +1214,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Selfuse Night Charge Enable",
         key = "selfuse_nightcharge_enable",
         register = 0x62,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1224,7 +1224,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Work End Time 1",
         key = "work_end_time_1",
         register = 0xBF,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:home-clock",
@@ -1232,7 +1232,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Work End Time 2",
         key = "work_end_time_2",
         register = 0xC1,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:home-clock",
@@ -1240,7 +1240,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Work Mode",
         key = "work_mode",
         register = 0xC2,
-        options = {
+        option_dict = {
                 0: "Disabled",
                 1: "Manual",
                 2: "Smart Save",
@@ -1251,7 +1251,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Work Start Time 1",
         key = "work_start_time_1",
         register = 0xBE,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:home-clock",
@@ -1259,7 +1259,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( name = "Work Start Time 2",
         key = "work_start_time_2",
         register = 0xC0,
-        options = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:home-clock",
