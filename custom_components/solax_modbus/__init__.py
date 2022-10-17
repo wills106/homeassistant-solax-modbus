@@ -13,7 +13,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
-from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
+
+_LOGGER = logging.getLogger(__name__)
+try: # pymodbus 3.0.x
+    from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+    UNIT_OR_SLAVE = 'slave'
+    _LOGGER.info("using pymodbus library 3.x")
+except: # pymodbus 2.5.3
+    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
+    UNIT_OR_SLAVE = 'unit'
+    _LOGGER.info("using pymodbus library 2.x")
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
@@ -70,7 +79,7 @@ from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGIS
 from .const import setPlugin, getPlugin, getPluginName
 
 
-_LOGGER = logging.getLogger(__name__)
+
 
 PLATFORMS = ["button", "number", "select", "sensor"] 
 
@@ -278,19 +287,19 @@ class SolaXModbusHub:
     def read_holding_registers(self, unit, address, count):
         """Read holding registers."""
         with self._lock:
-            kwargs = {"unit": unit} if unit else {}
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             return self._client.read_holding_registers(address, count, **kwargs)
     
     def read_input_registers(self, unit, address, count):
         """Read input registers."""
         with self._lock:
-            kwargs = {"unit": unit} if unit else {}
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
     def write_register(self, unit, address, payload):
         """Write registers."""
         with self._lock:
-            kwargs = {"unit": unit} if unit else {}
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
             builder.reset()
             builder.add_16bit_int(payload)
