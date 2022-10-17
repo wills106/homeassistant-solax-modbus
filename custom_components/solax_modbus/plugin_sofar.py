@@ -96,7 +96,8 @@ def determineInverterType(hub, configdict):
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
-    if   seriesnumber.startswith('SP1ES'):  invertertype = HYBRID | X3 # New Hybrid 20kW
+    if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # New Hybrid 20kW
+    elif seriesnumber.startswith('SP1'):  invertertype = PV | X3 | GEN2 # Older Might be single
     elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
@@ -153,8 +154,6 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Serial Number",
         key = "serial_number",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
-        device_class = DEVICE_CLASS_CURRENT,
         register = 0x445,
         unit=REGISTER_STR,
         wordcount=7,
@@ -166,6 +165,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = FREQUENCY_HERTZ,
         device_class = DEVICE_CLASS_FREQUENCY,
         register = 0x484,
+        newblock = True,
         scale = 0.01,
         allowedtypes = HYBRID | X3,
     ),
@@ -635,6 +635,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x504,
+        #newblock = True,
         unit = REGISTER_S16,
         scale = 0.01,
         allowedtypes = HYBRID | X3,
@@ -911,8 +912,9 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x584,
+        newblock = True,
         scale = 0.1,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Current 1",
@@ -921,7 +923,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x585,
         scale = 0.01,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Power 1",
@@ -930,7 +932,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x586,
         scale = 0.01,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Voltage 2",
@@ -939,7 +941,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x587,
         scale = 0.1,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Current 2",
@@ -948,7 +950,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x588,
         scale = 0.01,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Power 2",
@@ -957,7 +959,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x589,
         scale = 0.01,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Voltage 3",
@@ -967,7 +969,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58A,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -977,7 +979,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58B,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Power 3",
@@ -987,7 +989,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58C,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Voltage 4",
@@ -997,7 +999,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58D,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Current 4",
@@ -1007,7 +1009,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58E,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Power 4",
@@ -1017,7 +1019,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x58F,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "PV Total Power",
@@ -1027,7 +1029,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x5C4,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
 ###
 #
@@ -1040,9 +1042,10 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x604,
+        newblock = True,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Current 1",
@@ -1053,7 +1056,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 1",
@@ -1064,7 +1067,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery Temperature 1",
@@ -1075,7 +1078,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x607,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1085,7 +1088,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_BATTERY,
         register = 0x608,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery State of Health 1",
@@ -1093,7 +1096,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x609,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         icon="mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
@@ -1102,7 +1105,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="battery_charge_cycle_1",
         register = 0x60A,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1113,7 +1116,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x60B,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Current 2",
@@ -1124,7 +1127,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 2",
@@ -1135,7 +1138,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery Temperature 2",
@@ -1146,7 +1149,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x60E,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1156,7 +1159,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_BATTERY,
         register = 0x60F,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery State of Health 2",
@@ -1164,7 +1167,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x610,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         icon="mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
@@ -1173,7 +1176,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="battery_charge_cycle_2",
         register = 0x611,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1184,7 +1187,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x612,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Current 3",
@@ -1195,7 +1198,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 3",
@@ -1206,7 +1209,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery Temperature 3",
@@ -1217,7 +1220,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x615,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1227,7 +1230,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_BATTERY,
         register = 0x616,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery State of Health 3",
@@ -1235,7 +1238,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x617,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         icon="mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
@@ -1244,7 +1247,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="battery_charge_cycle_3",
         register = 0x618,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1255,7 +1258,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x619,
         scale = 0.1,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Current 4",
@@ -1266,7 +1269,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 4",
@@ -1277,7 +1280,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery Temperature 4",
@@ -1288,7 +1291,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x61C,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -1298,7 +1301,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_BATTERY,
         register = 0x61D,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery State of Health 4",
@@ -1306,7 +1309,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x61E,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         icon="mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
@@ -1315,15 +1318,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="battery_charge_cycle_4",
         register = 0x61F,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | GEN2,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power Total",
-        key = "Battery_power_total",
+        key = "battery_power_total",
         native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x667,
+        newblock = True,
         unit = REGISTER_S16,
         scale = 0.1,
         allowedtypes = HYBRID | X3,
@@ -1358,6 +1362,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x684,
+        newblock = True,
         unit = REGISTER_U32,
         scale = 0.01,
         allowedtypes = HYBRID | X3,
@@ -1497,10 +1502,73 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 # Basic Parameter Configuration (0x1000-0x10FF)
 #
 ###
-]
+    SofarModbusSensorEntityDescription(
+        name = "EPS Control",
+        key = "eps_control",
+        register = 0x1029,
+        newblock = True,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Battery Active Control",
+        key = "battery_active_control",
+        register = 0x102B,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Parallel Control",
+        key = "parallel_control",
+        register = 0x1035,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Parallel Master-Salve",
+        key = "parallel_masterslave",
+        register = 0x1036,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
 ###
 #
 # Remote Control (0x1100-0x12FF)
+#
+###
+    SofarModbusSensorEntityDescription(
+        name = "Remote Control",
+        key = "remote_control",
+        register = 0x1104,
+        newblock = True,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Charger Use Mode",
+        key = "charger_use_mode",
+        register = 0x1110,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Timing Charge On-Off",
+        key = "timing_charge_onoff",
+        register = 0x1112,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Time of Use On-Off",
+        key = "time_of_use_onoff",
+        register = 0x1121,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | X3,
+    ),
+]
+###
+#
+# Number
 #
 ###
 NUMBER_TYPES = [
@@ -1551,7 +1619,11 @@ NUMBER_TYPES = [
         entity_category = EntityCategory.CONFIG,
     ),
 ]
-
+###
+#
+# Select
+#
+###
 SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name = "EPS Control",
@@ -1587,7 +1659,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name = "Parallel Master-Salve",
         key = "parallel_masterslave",
-        register = 0x1035,
+        register = 0x1036,
         options =  {
                 0: "Slave",
                 1: "Master",
