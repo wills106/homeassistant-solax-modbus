@@ -1629,7 +1629,7 @@ SELECT_TYPES = [
         name = "EPS Control",
         key = "eps_control",
         register = 0x1029,
-        options =  {
+        option_dict =  {
                 0: "Turn Off",
                 1: "Turn On, Prohibit Cold Start",
                 2: "Turn On, Enable Cold Start",
@@ -1640,7 +1640,7 @@ SELECT_TYPES = [
         name = "Battery Active Control", # Not confirmed option
         key = "battery_active_control",
         register = 0x102B,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1650,7 +1650,7 @@ SELECT_TYPES = [
         name = "Parallel Control",
         key = "parallel_control",
         register = 0x1035,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -1660,7 +1660,7 @@ SELECT_TYPES = [
         name = "Parallel Master-Salve",
         key = "parallel_masterslave",
         register = 0x1036,
-        options =  {
+        option_dict =  {
                 0: "Slave",
                 1: "Master",
             },
@@ -1670,7 +1670,7 @@ SELECT_TYPES = [
         name = "Remote Control",
         key = "remote_control",
         register = 0x1104,
-        options =  {
+        option_dict =  {
                 0: "Off",
                 1: "On",
             },
@@ -1680,7 +1680,7 @@ SELECT_TYPES = [
         name = "Charger Use Mode",
         key = "charger_use_mode",
         register = 0x1110,
-        options =  {
+        option_dict =  {
                 0: "Self Use",
                 1: "Time of Use",
                 2: "Timing Mode",
@@ -1693,7 +1693,7 @@ SELECT_TYPES = [
         name = "Timing Charge On-Off",
         key = "timing_charge_onoff",
         register = 0x1112,
-        options =  {
+        option_dict =  {
                 0: "On",
                 1: "Off",
             },
@@ -1703,7 +1703,7 @@ SELECT_TYPES = [
         name = "Time of Use On-Off",
         key = "time_of_use_onoff",
         register = 0x1121,
-        options =  {
+        option_dict =  {
                 0: "Disabled",
                 1: "Enabled",
             },

@@ -122,7 +122,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
-    options: dict = None
+    option_dict: dict = None
     blacklist: list = None # none or list of serial number prefixes
 
 @dataclass
