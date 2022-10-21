@@ -6,6 +6,9 @@
 
 # homsassistant-solax-modbus
 ## Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8
+
+## 0.7.0 Beta x adds in preliminary support for Sofar Solar
+
 SolaX Power Modbus custom_component for Home Assistant
 
 Support Modbus over RS485 & TCP
