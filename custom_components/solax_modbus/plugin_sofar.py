@@ -237,6 +237,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x484,
         newblock = True,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -247,6 +248,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x485,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -257,6 +259,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x486,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -268,6 +271,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x487,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -278,6 +282,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x488,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -288,6 +293,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x489,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -299,6 +305,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x48A,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -308,6 +315,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x48D,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -317,6 +325,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x48E,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -327,6 +336,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x48F,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -337,6 +347,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x490,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -357,6 +368,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x492,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -367,6 +379,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x493,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -377,6 +390,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x494,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -397,6 +411,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x498,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -406,6 +421,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x499,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -416,6 +432,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x49A,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -426,6 +443,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x49B,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -446,6 +464,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x49D,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -456,6 +475,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x49E,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -466,6 +486,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x49F,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -486,6 +507,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4A3,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -495,6 +517,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4A4,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -505,6 +528,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A5,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -515,6 +539,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A6,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -535,6 +560,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4A8,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -545,6 +571,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A9,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -555,6 +582,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4AA,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -575,6 +603,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x4AE,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -584,6 +613,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x4AF,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -593,6 +623,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4B0,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -602,6 +633,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4B1,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -612,6 +644,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B2,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -621,6 +654,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4B3,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -631,6 +665,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B4,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -640,6 +675,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4B5,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -649,6 +685,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4B6,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -659,6 +696,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B7,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -668,6 +706,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x4B8,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -678,6 +717,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B9,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -687,6 +727,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4BA,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -696,6 +737,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4BB,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -705,6 +747,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x4BC,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
 
@@ -722,6 +765,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         #newblock = True,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -732,6 +776,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x505,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | EPS,
     ),
@@ -743,6 +788,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x506,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -752,6 +798,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_FREQUENCY,
         register = 0x507,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -761,6 +808,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x50A,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -771,6 +819,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x50B,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -781,6 +830,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x50C,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -791,6 +841,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x50D,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | EPS,
     ),
@@ -802,6 +853,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x50E,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -811,6 +863,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_POWER,
         register = 0x50F,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -820,6 +873,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x512,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -830,6 +884,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x513,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -840,6 +895,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x514,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -850,6 +906,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x515,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | EPS,
     ),
@@ -861,6 +918,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x516,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -870,6 +928,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_POWER,
         register = 0x517,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -879,6 +938,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x51A,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -889,6 +949,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x51B,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -899,6 +960,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x51C,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -909,6 +971,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x51D,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | EPS,
     ),
@@ -920,6 +983,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x51E,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -929,6 +993,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_POWER,
         register = 0x51F,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -938,6 +1003,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x522,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -948,6 +1014,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x523,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -958,6 +1025,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x524,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -967,6 +1035,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x525,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -977,6 +1046,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x526,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -987,6 +1057,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x527,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | EPS,
     ),
 ###
@@ -1002,6 +1073,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x584,
         newblock = True,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1011,6 +1083,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x585,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1020,6 +1093,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x586,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1029,6 +1103,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x587,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1038,6 +1113,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x588,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1047,6 +1123,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x589,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
     SofarModbusSensorEntityDescription(
@@ -1056,6 +1133,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x58A,
         scale = 0.1,
+        rounding = 1,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1066,6 +1144,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x58B,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1076,6 +1155,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x58C,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1086,6 +1166,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x58D,
         scale = 0.1,
+        rounding = 1,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1096,6 +1177,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x58E,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1106,6 +1188,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x58F,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1116,6 +1199,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x5C4,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1132,6 +1216,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x604,
         newblock = True,
         scale = 0.1,
+        rounding = 1,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1144,6 +1229,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1155,6 +1241,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x606,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1204,6 +1291,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x60B,
         scale = 0.1,
+        rounding = 1,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1215,6 +1303,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x60C,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1226,6 +1315,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x60D,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3,
     ),
@@ -1275,6 +1365,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x612,
         scale = 0.1,
+        rounding = 1,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1286,6 +1377,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x613,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1297,6 +1389,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x614,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1346,6 +1439,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x619,
         scale = 0.1,
+        rounding = 1,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1357,6 +1451,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x61A,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1368,6 +1463,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x61B,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID | X3 | GEN2,
     ),
@@ -1419,6 +1515,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit = REGISTER_S16,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -1454,6 +1551,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -1465,6 +1563,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x686,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -1476,6 +1575,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x688,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -1487,6 +1587,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x68A,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -1498,6 +1599,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x68C,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
         icon="mdi:home-import-outline",
     ),
@@ -1510,6 +1612,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x68E,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
         icon="mdi:home-import-outline",
     ),
@@ -1522,6 +1625,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x690,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
         icon="mdi:home-export-outline",
     ),
@@ -1534,6 +1638,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x692,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
         icon="mdi:home-export-outline",
     ),
@@ -1546,6 +1651,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x694,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
         icon="mdi:battery-arrow-up",
     ),
@@ -1558,6 +1664,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x696,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
         icon="mdi:battery-arrow-up",
     ),
@@ -1570,6 +1677,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x698,
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID | X3,
         icon="mdi:battery-arrow-down",
     ),
@@ -1582,6 +1690,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x69A,
         unit = REGISTER_U32,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID | X3,
         icon="mdi:battery-arrow-down",
     ),

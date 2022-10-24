@@ -168,6 +168,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0x6,
         scale = 0.1,
+        rounding = 1,
         allowedtypes=PV,
     ),
     SofarModbusSensorEntityDescription(
@@ -177,6 +178,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x7,
         scale = 0.01,
+        rounding = 2,
         allowedtypes=PV,
         icon="mdi:current-dc",
     ),
@@ -188,6 +190,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0xA,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= PV | X1,
         icon="mdi:solar-power-variant",
     ),
@@ -198,6 +201,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0xC,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -208,6 +212,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0xD,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -217,6 +222,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_FREQUENCY,
         register = 0xE,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -226,6 +232,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0xF,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -235,6 +242,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x10,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -261,6 +269,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x19,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X1,
     ),
     SofarModbusSensorEntityDescription(
@@ -304,6 +313,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0x8,
         scale = 0.1,
+        rounding = 1,
         allowedtypes=PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -314,6 +324,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x9,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes=PV | X3,
         icon="mdi:current-dc",
     ),
@@ -324,6 +335,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0xA,
         scale = 0.1,
+        rounding = 1,
         allowedtypes=PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -334,6 +346,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0xB,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes=PV | X3,
         icon="mdi:current-dc",
     ),
@@ -345,6 +358,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0xC,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= PV | X3,
         icon="mdi:solar-power-variant",
     ),
@@ -356,6 +370,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0xD,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= PV | X3,
         icon="mdi:solar-power-variant",
     ),
@@ -367,6 +382,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0xE,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= PV | X3,
         icon="mdi:solar-power-variant",
     ),
@@ -377,6 +393,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0xF,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -387,6 +404,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x10,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -396,6 +414,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_FREQUENCY,
         register = 0x11,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -405,6 +424,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x12,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -414,6 +434,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x14,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -423,6 +444,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x14,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -432,6 +454,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x15,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -441,6 +464,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x16,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -450,6 +474,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x17,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -476,6 +501,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_ENERGY,
         register = 0x1C,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = PV | X3,
     ),
     SofarModbusSensorEntityDescription(
@@ -516,6 +542,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x20,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = PV | X3,
     ),
     # End of 3Phase PV
@@ -543,6 +570,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x206,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -553,6 +581,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x207,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -562,6 +591,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x208,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -572,6 +602,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x209,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -581,6 +612,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x20A,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -591,6 +623,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x20B,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -600,6 +633,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_FREQUENCY,
         register = 0x20C,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -611,6 +645,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x20D,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -620,6 +655,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0x20E,
         scale = 0.1,
+        rounding = 1,
         allowedtypes= AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -629,6 +665,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x20F,
         scale = 0.01,
+        rounding = 2,
         unit = REGISTER_S16,
         allowedtypes= AC,
         icon="mdi:current-dc",
@@ -660,6 +697,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x212,
         unit = REGISTER_S16,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -670,6 +708,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x213,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= AC,
     ),
     ####
@@ -685,6 +724,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x215,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -694,6 +734,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 0x216,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -704,6 +745,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x217,
         scale = 0.01,
+        rounding = 2,
         allowedtypes= AC | EPS,
     ),
     SofarModbusSensorEntityDescription(
@@ -714,6 +756,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x218,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -724,6 +767,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x219,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
         icon="mdi:home-export-outline",
     ),
@@ -735,6 +779,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x21A,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
         icon="mdi:home-import-outline",
     ),
@@ -746,6 +791,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x21B,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     #
@@ -806,6 +852,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x230,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -815,6 +862,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x231,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -824,6 +872,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x232,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -833,6 +882,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x233,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -842,6 +892,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 0x234,
         scale = 0.1,
+        rounding = 1,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
@@ -851,6 +902,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 0x235,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = AC,
     ),
     SofarModbusSensorEntityDescription(
