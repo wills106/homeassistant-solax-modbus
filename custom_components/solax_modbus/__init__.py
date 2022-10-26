@@ -28,32 +28,6 @@ from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 
 
-# === REMOVE THIS BLOCK ====================================
-
-GEN            = 0x0001 # base generation for MIC, PV, AC
-GEN2           = 0x0002
-GEN3           = 0x0004
-GEN4           = 0x0008
-ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN
-
-X1             = 0x0100
-X3             = 0x0200
-ALL_X_GROUP    = X1 | X3
-
-PV             = 0x0400 # Needs further work on PV Only Inverters
-AC             = 0x0800
-HYBRID         = 0x1000
-MIC            = 0x2000
-ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
-
-EPS            = 0x8000
-ALL_EPS_GROUP  = EPS
-
-DCB            = 0x10000 # dry contact box - gen4
-ALL_DCB_GROUP  = DCB
-
-# END OF BLOCK =================================================
-
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
@@ -307,25 +281,13 @@ class SolaXModbusHub:
             return self._client.write_register(address, payload[0], **kwargs)
 
     def read_modbus_data(self):
-        
-        if self.invertertype & MIC:
-            try:
-                return self.read_modbus_input_registers_mic()
-            except ConnectionException as ex:
-                _LOGGER.error("Reading data failed! Inverter is offline.")
-            except Exception as ex:
-                _LOGGER.exception("Something went wrong reading from modbus")
-                
-        else:
-            try:
-                self.read_modbus_registers_all()
-            except ConnectionException as ex:
-                _LOGGER.error("Reading data failed! Inverter is offline.")
-            except Exception as ex:
-                _LOGGER.exception("Something went wrong reading from modbus")
-
+        try:
+            self.read_modbus_registers_all()
+        except ConnectionException as ex:
+            _LOGGER.error("Reading data failed! Inverter is offline.")
+        except Exception as ex:
+            _LOGGER.exception("Something went wrong reading from modbus")
         return True
-
 
 
     def treat_address(self, decoder, descr, initval=0):
