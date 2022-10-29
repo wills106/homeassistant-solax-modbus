@@ -9,7 +9,4 @@
   "codeowners": ["@wills106"],
   "config_flow": true,
   "iot_class": "local_polling",
-  "supported_brands": {
-    "qcells_modbus": "Qcells Q.Volt"
-  }
 }
