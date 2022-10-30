@@ -1,10 +1,4 @@
 {
     "name": "SolaX Inverter Modbus",
-    "render_readme": true,
-    "domains": [
-        "button",
-        "number",
-        "sensor",
-        "select"
-    ]
+    "render_readme": true
 }
