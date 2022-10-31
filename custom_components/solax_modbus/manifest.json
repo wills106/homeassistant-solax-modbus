@@ -1,7 +1,6 @@
 {
   "domain": "solax_modbus",
   "name": "SolaX Inverter Modbus",
-  "integration_type": "device",
   "version": "0.7.0",
   "documentation": "https://github.com/wills106/homsassistant-solax-modbus",
   "issue_tracker": "https://github.com/wills106/homsassistant-solax-modbus/issues",
