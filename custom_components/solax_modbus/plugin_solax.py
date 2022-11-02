@@ -178,7 +178,7 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 def value_function_pv_total_power(initval, descr, datadict):
-    return datadict['pv_power_1'] + datadict['pv_power_2']
+    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
 
 def value_function_grid_import(initval, descr, datadict):
     val = datadict["feedin_power"]
