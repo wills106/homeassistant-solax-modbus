@@ -305,7 +305,8 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_U8H: val = initval >> 8
             else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
         except Exception as ex: 
-            _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}", exc_info=True)
+            if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
+            else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         if type(descr.scale) is dict: # translate int to string 
             self.data[descr.key] = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
