@@ -293,16 +293,20 @@ class SolaXModbusHub:
     def treat_address(self, decoder, descr, initval=0):
         val = 0
         if self.cyclecount <5: _LOGGER.info(f"treating register 0x{descr.register:02x} : {descr.key}")
-        if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
-        elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
-        elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
-        elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
-        elif descr.unit == REGISTER_STR: val = str( decoder.decode_string(descr.wordcount*2).decode("ascii") )
-        elif descr.unit == REGISTER_WORDS: val = [decoder.decode_16bit_uint() for val in range(descr.wordcount) ]
-        elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
-        elif descr.unit == REGISTER_U8L: val = initval % 256
-        elif descr.unit == REGISTER_U8H: val = initval >> 8
-        else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+        try:
+            if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
+            elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
+            elif descr.unit == REGISTER_U32: val = decoder.decode_32bit_uint()
+            elif descr.unit == REGISTER_S32: val = decoder.decode_32bit_int()
+            elif descr.unit == REGISTER_STR: val = str( decoder.decode_string(descr.wordcount*2).decode("ascii") )
+            elif descr.unit == REGISTER_WORDS: val = [decoder.decode_16bit_uint() for val in range(descr.wordcount) ]
+            elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
+            elif descr.unit == REGISTER_U8L: val = initval % 256
+            elif descr.unit == REGISTER_U8H: val = initval >> 8
+            else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+        except Exception as ex: 
+            if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
+            else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         if type(descr.scale) is dict: # translate int to string 
             self.data[descr.key] = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
