@@ -3723,6 +3723,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x423,
+        newblock = True,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         scale = 0.001,
