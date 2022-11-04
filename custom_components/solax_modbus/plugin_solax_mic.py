@@ -93,9 +93,9 @@ def determineInverterType(hub, configdict):
 
     # derive invertertupe from seriiesnumber
     if   seriesnumber.startswith('MC10'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
-    elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
-    elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN | X3 # MIC X3 MP15 Serial Inverted!
-    elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN2 | X3 # MIC X3 Serial Inverted?
+    elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN2 | X3 # MIC X3 MP15 Serial Inverted!
+    elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN2 | X3 # MIC X3 Serial Inverted?
     # add cases here
     else: 
         invertertype = 0
@@ -339,6 +339,36 @@ SENSOR_TYPES: list[SolaXMicModbusSensorEntityDescription] = [
         icon="mdi:run",
     ),
     SolaXMicModbusSensorEntityDescription(
+        name="Measured Power R",
+        key="feedin_power_r",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 0x410,
+        register_type = REG_INPUT,
+        allowedtypes = MIC,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="Measured Power S",
+        key="feedin_power_s",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 0x411,
+        register_type = REG_INPUT,
+        allowedtypes = MIC,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="Measured Power T",
+        key="feedin_power_t",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 0x412,
+        register_type = REG_INPUT,
+        allowedtypes = MIC,
+    ),
+    SolaXMicModbusSensorEntityDescription(
         name="PV Power 1",
         key="pv_power_1",
         native_unit_of_measurement=POWER_WATT,
@@ -398,5 +428,40 @@ SENSOR_TYPES: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes= MIC,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="PV Voltage 3",
+        key="pv_voltage_3",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 0x429,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= MIC | GEN,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="PV Current 3",
+        key="pv_current_3",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 0x42A,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= MIC | GEN,
+        icon="mdi:current-dc",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="PV Power 3",
+        key="pv_power_3",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 0x414,
+        newblock = True,
+        register_type = REG_INPUT,
+        allowedtypes= MIC | GEN,
+        icon="mdi:solar-power-variant",
     ),
 ]
