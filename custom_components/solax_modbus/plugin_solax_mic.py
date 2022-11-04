@@ -86,39 +86,13 @@ def _read_serialnr(hub, address, swapbytes):
 def determineInverterType(hub, configdict):
     global SENSOR_TYPES
     _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-    seriesnumber                       = _read_serialnr(hub, 0x0,   swapbytes = False)
-    if not seriesnumber:  seriesnumber = _read_serialnr(hub, 0x300, swapbytes = False) # bug in endian.Little decoding?
+    seriesnumber                       = _read_serialnr(hub, 0x300,   swapbytes = False)
     if not seriesnumber: 
         _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
         seriesnumber = "unknown"
 
     # derive invertertupe from seriiesnumber
-    if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
-    elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
-    elif seriesnumber.startswith('L37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-    elif seriesnumber.startswith('U37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-    elif seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-    elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-    elif seriesnumber.startswith('H1E'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
-    elif seriesnumber.startswith('HCC'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-    elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
-    elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-    elif seriesnumber.startswith('XAC'):   invertertype = AC | GEN3 | X1 # X1AC
-    elif seriesnumber.startswith('XB3'):   invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
-    elif seriesnumber.startswith('XM3'):   invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
-    elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-    elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
-    elif seriesnumber.startswith('F3E'):   invertertype = AC | GEN3 | X3 # RetroFit
-    elif seriesnumber.startswith('H43'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
-    elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
-    elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
-    elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
-    elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
-    elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
+    if   seriesnumber.startswith('MC10'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
     elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
     elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN | X3 # MIC X3 MP15 Serial Inverted!
     elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN | X3 # MIC X3 Serial Inverted?
