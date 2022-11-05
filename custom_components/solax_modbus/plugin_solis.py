@@ -98,7 +98,7 @@ def determineInverterType(hub, configdict):
     if   seriesnumber.startswith('303105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW
     elif seriesnumber.startswith('363105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
     elif seriesnumber.startswith('463105'):  invertertype = HYBRID | X1 # Hybrid Gen5 4.6kW
-    elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kWkW
+    elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
     elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
     #elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
     #elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
@@ -240,6 +240,8 @@ NUMBER_TYPES = [
         icon="mdi:battery-clock",
     ),
 ]
+
+SELECT_TYPES = []
 
 SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [ 
 
