@@ -3766,7 +3766,6 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x42B,
-        newblock = True,
         register_type = REG_INPUT,
         allowedtypes = MIC | GEN,
         icon="mdi:solar-power-variant",
