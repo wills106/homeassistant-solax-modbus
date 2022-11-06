@@ -85,7 +85,7 @@ def determineInverterType(hub, configdict):
     seriesnumber                       = _read_serialnr(hub, 0x0)
     if not seriesnumber:  
         seriesnumber = _read_serialnr(hub, 0x300) # bug in endian.Little decoding?
-        if not seriesnumber.startswith("M"):
+        if seriesnumber and not seriesnumber.startswith("M"):
             ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
             ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
             res = str(ba, "ascii") # convert back to string

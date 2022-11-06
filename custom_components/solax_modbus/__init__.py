@@ -228,7 +228,9 @@ class SolaXModbusHub:
                 self.slowdown = 1 # return to full polling after succesfull cycle
                 for update_callback in self._sensors:
                     update_callback()
-            else: self.slowdown = 10
+            else: 
+                _LOGGER.info(f"assuming sleep mode - slowing down by factor 10")
+                self.slowdown = 10
 
     @property
     def invertertype(self):
@@ -287,7 +289,7 @@ class SolaXModbusHub:
     def read_modbus_data(self):
         res = True
         try:
-            self.read_modbus_registers_all()
+            res = self.read_modbus_registers_all()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")
             res = False
