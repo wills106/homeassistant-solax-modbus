@@ -7,59 +7,76 @@
 # homsassistant-solax-modbus
 ## Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8
 
-## 0.7.0 Beta x adds in preliminary support for Sofar Solar
+## 0.7.0 Beta x adds in preliminary support for Ginlong Solis & Sofar Solar
 
-SolaX Power Modbus custom_component for Home Assistant
+Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
 Support Modbus over RS485 & TCP
-**(Pocket LAN / Pocket WiFi does not provide a Modbus connection)**
+**(Pocket LAN / Pocket WiFi does not provide a Modbus connection in most situations)**
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
 Supports:
 
+Ginlong Solis
+- RHI-nK-48ES-5G (lowercase n indicates Inverter size, ie 6kW
+- Unknown Models
+
+Sofar Solar
+- HYD20KTL
+- Unknown Models
+
+SolaX Power
 - Gen2 Hybrid
 - Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
   - Qcells Q.VOLT HYB-G3-3P
 - X3 MIC / MIC PRO (Limited set of entities available)
 
-Gen2, Gen3 & Gen4
+Indepth Features
 
-- Charge / Discharge rate of battery
-- Charger Start / End times
-- Charger Use Mode
+- <details><summary>SolaX Gen2, Gen3 & Gen4</summary>
 
-Gen2 & Gen3
+  - Charge / Discharge rate of battery
+  - Charger Start / End times
+  - Charger Use Mode
+</details>
 
-- Allow Grid Charge
-- Charge periods in Force Time Use Mode
-- Force Discharge into Grid
-- Min Battery Capacity
+- <details><summary>SolaX Gen2 & Gen3</summary>
 
-Gen2, Gen3 & Gen4
+  - Allow Grid Charge
+  - Charge periods in Force Time Use Mode
+  - Force Discharge into Grid
+  - Min Battery Capacity
+</details>
 
-- Sensors support the "Energy" Dashboard in 2021.08.x and onwards.
+- <details><summary>SolaX Gen2, Gen3 & Gen4</summary>
 
-Gen3
+  - Sensors support the "Energy" Dashboard in 2021.08.x and onwards.
+</details>
 
-- ForceTime Period 1 Max Capacity
-- ForceTime Period 2 Max Capacity
+- <details><summary>SolaX Gen3</summary>
 
-Gen4
+  - ForceTime Period 1 Max Capacity
+  - ForceTime Period 2 Max Capacity
+</details>
 
-- Backup Discharge Min SOC
-- Backup Nightcharge Upper SOC
-- Charge / Discharge rate of battery
-- Charge and Discharge Period2 Enable
-- Discharger Start / End time
-- Export Control User Limit
-- Feedin Discharge Min SOC
-- Feedin Nightcharge Upper SOC
-- Manual Mode Select
-- Selfuse Discharge Min SOC
-- Selfuse Night Charge Enable
-- Selfuse Nightcharge Upper SOC
+- <details><summary>SolaX Gen4</summary>
+
+  - Backup Discharge Min SOC
+  - Backup Nightcharge Upper SOC
+  - Charge / Discharge rate of battery
+  - Charge and Discharge Period2 Enable
+  - Discharger Start / End time
+  - Export Control User Limit
+  - Feedin Discharge Min SOC
+  - Feedin Nightcharge Upper SOC
+  - Manual Mode Select
+  - Selfuse Discharge Min SOC
+  - Selfuse Night Charge Enable
+  - Selfuse Nightcharge Upper SOC
+</details>
+
 
 Untested:
 Non Hybrid Models ie Solar PV only
@@ -96,7 +113,7 @@ After reboot of Home-Assistant, this integration can be configured through the i
 
 From 0.6.0 the Configuration is split into separate views.
 
-<img src="https://user-images.githubusercontent.com/18155231/182888120-dc7d844c-9a77-4ec6-9391-8cb7c32374f5.png" width=50% height=50%>
+<img src="https://user-images.githubusercontent.com/18155231/200254318-265189d5-34e2-459e-9933-cdb05c05977b.png" width=40% height=40%>
 
 TCP
 
