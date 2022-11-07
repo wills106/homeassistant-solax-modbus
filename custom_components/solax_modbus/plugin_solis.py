@@ -650,7 +650,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key="meter_voltage",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
-        register = 330128,
+        register = 33128,
         register_type = REG_INPUT,
         allowedtypes = HYBRID,
     ),
