@@ -187,6 +187,7 @@ class SolaXModbusHub:
         self.data = {}
         #self.newdata = {} # temporary during software migration - please remove later
         self.cyclecount = 0 # temporary - remove later
+        self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
         self.holdingBlocks = {}
         self.computedRegs = {}
@@ -218,14 +219,19 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
+        self.cyclecount = self.cyclecount+1
         if not self._sensors:
             return
+        if (self.cyclecount % self.slowdown) == 0: # only execute once every slowdown count
+            update_result = self.read_modbus_data()
+            if update_result:
+                self.slowdown = 1 # return to full polling after succesfull cycle
+                for update_callback in self._sensors:
+                    update_callback()
+            else: 
+                _LOGGER.info(f"assuming sleep mode - slowing down by factor 10")
+                self.slowdown = 10
 
-        update_result = self.read_modbus_data()
-
-        if update_result:
-            for update_callback in self._sensors:
-                update_callback()
     @property
     def invertertype(self):
         return self._invertertype
@@ -281,13 +287,16 @@ class SolaXModbusHub:
             return self._client.write_register(address, payload[0], **kwargs)
 
     def read_modbus_data(self):
+        res = True
         try:
-            self.read_modbus_registers_all()
+            res = self.read_modbus_registers_all()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")
+            res = False
         except Exception as ex:
             _LOGGER.exception("Something went wrong reading from modbus")
-        return True
+            res = False
+        return res
 
 
     def treat_address(self, decoder, descr, initval=0):
@@ -354,8 +363,6 @@ class SolaXModbusHub:
         for reg in self.computedRegs:
             descr = self.computedRegs[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-        # temporary code: compare new with old
-        self.cyclecount = self.cyclecount+1
         return res
 
 
