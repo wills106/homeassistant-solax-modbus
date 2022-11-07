@@ -11,11 +11,11 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Mandatory details**
-1. Integration version:
-2. HA version:
+1. Integration Version:
+2. HA Version:
 3. Inverter Brand:
 4. Plugin Used:
-5. First 4 digits of Serial:
+5. First 6 digits of Serial:
 6. Connection Method:
 
 **Detailed Error Log**
