@@ -18,11 +18,11 @@ _LOGGER = logging.getLogger(__name__)
 try: # pymodbus 3.0.x
     from pymodbus.client import ModbusTcpClient, ModbusSerialClient
     UNIT_OR_SLAVE = 'slave'
-    _LOGGER.info("using pymodbus library 3.x")
+    _LOGGER.debug("using pymodbus library 3.x")
 except: # pymodbus 2.5.3
     from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
     UNIT_OR_SLAVE = 'unit'
-    _LOGGER.info("using pymodbus library 2.x")
+    _LOGGER.debug("using pymodbus library 2.x")
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
@@ -69,14 +69,14 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
-    _LOGGER.info("solax data %d", hass.data)
+    _LOGGER.debug("solax data %d", hass.data)
     return True
 
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
-    _LOGGER.info(f"setup entries - data: {entry.data}, options: {entry.options}")
+    _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
 
     config = entry.options
     if not config:
@@ -85,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     name = config[CONF_NAME] 
 
     # ================== dynamically load desired plugin
-    _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
+    _LOGGER.debug(f"Ready to load plugin {config[CONF_PLUGIN]}")
     plugin_path = config[CONF_PLUGIN]
     if not plugin_path: _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
     plugin_name = getPluginName(plugin_path)
@@ -109,7 +109,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
     scan_interval = config[CONF_SCAN_INTERVAL]
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
-    _LOGGER.info(f"solax serial port {serial_port} interface {interface}")
+    _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
     hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin_name)
     """Register the hub."""
@@ -117,7 +117,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # read serial number - changed seriesnumber to global to allow filtering
     #global seriesnumber
-    _LOGGER.info(f"{hub.name}: ready to call plugin to determine inverter type")
+    _LOGGER.debug(f"{hub.name}: ready to call plugin to determine inverter type")
     getPlugin(name).determineInverterType(hub, config)
 
     for component in PLATFORMS:
@@ -167,7 +167,7 @@ class SolaXModbusHub:
         plugin_name
     ):
         """Initialize the Modbus hub."""
-        _LOGGER.info(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
+        _LOGGER.debug(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
         self._hass = hass
         if (interface == "serial"): 
             self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=baudrate, parity='N', stopbits=1, bytesize=8, timeout=3)
@@ -192,7 +192,7 @@ class SolaXModbusHub:
         self.holdingBlocks = {}
         self.computedRegs = {}
         self.plugin_name = plugin_name
-        _LOGGER.info("solax modbushub done %s", self.__dict__)
+        _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
     def async_add_solax_modbus_sensor(self, update_callback):
@@ -229,7 +229,7 @@ class SolaXModbusHub:
                 for update_callback in self._sensors:
                     update_callback()
             else: 
-                _LOGGER.info(f"assuming sleep mode - slowing down by factor 10")
+                _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
 
     @property
@@ -301,7 +301,7 @@ class SolaXModbusHub:
 
     def treat_address(self, decoder, descr, initval=0):
         val = 0
-        if self.cyclecount <5: _LOGGER.info(f"treating register 0x{descr.register:02x} : {descr.key}")
+        if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
             elif descr.unit == REGISTER_S16: val = decoder.decode_16bit_int()
@@ -326,7 +326,7 @@ class SolaXModbusHub:
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
-            _LOGGER.info(f"{self.name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
+            _LOGGER.debug(f"{self.name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
         try:
             if typ == 'input': realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
             else:              realtime_data = self.read_holding_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
@@ -341,7 +341,7 @@ class SolaXModbusHub:
         for reg in block.regs:
             if (reg - prevreg) > 0: 
                 decoder.skip_bytes((reg-prevreg) * 2)
-                if self.cyclecount < 5: _LOGGER.info(f"skipping bytes {(reg-prevreg) * 2}")
+                if self.cyclecount < 5: _LOGGER.debug(f"skipping bytes {(reg-prevreg) * 2}")
             descr = block.descriptions[reg] 
             if type(descr) is dict: #  set of byte values
                 val = decoder.decode_16bit_uint()
