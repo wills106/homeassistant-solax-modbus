@@ -134,6 +134,7 @@ class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Modbus sensor entities."""
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     order16: int = Endian.Big
     order32: int = Endian.Big
     unit: int = REGISTER_U16
