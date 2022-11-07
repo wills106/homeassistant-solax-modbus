@@ -95,8 +95,12 @@ def determineInverterType(hub, configdict):
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
-    if   seriesnumber.startswith('123ABC'):  invertertype = HYBRID | X1 # 
-    elif seriesnumber.startswith('ABC123'):  invertertype = HYBRID | X1 # 
+    if   seriesnumber.startswith('303105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW
+    elif seriesnumber.startswith('363105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
+    elif seriesnumber.startswith('463105'):  invertertype = HYBRID | X1 # Hybrid Gen5 4.6kW
+    elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
+    elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
+    elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
 
     else: 
         invertertype = 0
@@ -109,28 +113,379 @@ def determineInverterType(hub, configdict):
 
 
 @dataclass
-class SolisOldModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
+class SolisModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
 @dataclass
-class SolisOldModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
+class SolisModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
 @dataclass
-class SolisOldModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
+class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
 @dataclass
-class SolisOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
+class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Old Modbus sensor entities."""
+    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     order16: int = Endian.Big
     order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
+# ================================= Computed sensor value functions  =================================================
 
+
+def value_function_pv_total_power(initval, descr, datadict):
+    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
+
+def value_function_grid_import(initval, descr, datadict):
+    val = datadict["feedin_power"]
+    if val<0: return abs(val)
+    else: return 0
+
+def value_function_grid_export(initval, descr, datadict):
+    val = datadict["feedin_power"]
+    if val>0: return val
+    else: return 0
+
+def value_function_house_load(initval, descr, datadict):
+    return datadict['inverter_load'] - datadict['feedin_power']
+
+def value_function_rtc(initval, descr, datadict):
+    (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
+    val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
+    return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
+
+def value_function_gen4time(initval, descr, datadict):
+    h = initval % 256
+    m = initval >> 8
+    return f"{h:02d}:{m:02d}"
+
+def value_function_gen23time(initval, descr, datadict):
+    (h,m,) = initval
+    return f"{h:02d}:{m:02d}"
+
+# ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = []
 NUMBER_TYPES = []
 SELECT_TYPES = []
-SENSOR_TYPES: list[SolisOldModbusSensorEntityDescription] = []
+SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
+    SolisModbusSensorEntityDescription(
+        name = "ActivePower",
+        key = "activepower",
+        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        device_class = DEVICE_CLASS_ENERGY,
+        register = 3005,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes = HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Total Power",
+        key="pv_total_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 3007,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+        icon="mdi:solar-power-variant",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation Total",
+        key="power_generation_total",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3009,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation This Month",
+        key="power_generation_this_month",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3011,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation Last Month",
+        key="power_generation_last_month",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3013,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation Today",
+        key="power_generation_today",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3015,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation Yesterday",
+        key="power_generation_yesterday",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3016,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation This Year",
+        key="power_generation_this_year",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3017,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Power Generation Last Year",
+        key="power_generation_last_year",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 3019,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Voltage 1",
+        key="pv_voltage_1",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3022,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Current 1",
+        key="pv_current_1",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3023,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+        icon="mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Voltage 2",
+        key="pv_voltage_2",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3024,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Current 2",
+        key="pv_current_2",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3025,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID,
+        icon="mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Voltage 3",
+        key="pv_voltage_3",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3026,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Current 3",
+        key="pv_current_3",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3027,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+        icon="mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Voltage 4",
+        key="pv_voltage_4",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3028,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="PV Current 4",
+        key="pv_current_4",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3029,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+        icon="mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Voltage",
+        key="inverter_voltage",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3034,
+        scale = 0.1,
+        register_type = REG_INPUT,
+        rounding = 1,
+        allowedtypes= HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Voltage R",
+        key="grid_voltage_r",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3034,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Voltage S",
+        key="grid_voltage_s",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3035,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Voltage T",
+        key="grid_voltage_t",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=DEVICE_CLASS_VOLTAGE,
+        register = 3036,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Current",
+        key="inverter_current",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3037,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes= HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Current R",
+        key="grid_current_r",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3037,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Current S",
+        key="grid_current_s",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3038,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Current T",
+        key="grid_current_t",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 3039,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X3,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Temperature",
+        key="inverter_temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=DEVICE_CLASS_TEMPERATURE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        register = 3042,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Inverter Frequency",
+        key="grid_frequency",
+        native_unit_of_measurement=FREQUENCY_HERTZ,
+        device_class=DEVICE_CLASS_FREQUENCY,
+        register = 3043,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = HYBRID,
+    ),
+]

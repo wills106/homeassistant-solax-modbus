@@ -13,8 +13,10 @@ A clear and concise description of what the bug is.
 **Mandatory details**
 1. Integration version:
 2. HA version:
-3. First 4 digits of Serial:
-4. Connection Method:
+3. Inverter Brand:
+4. Plugin Used:
+5. First 4 digits of Serial:
+6. Connection Method:
 
 **Detailed Error Log**
 Detailed Error Log, if you press on the individual error further information is displayed.
