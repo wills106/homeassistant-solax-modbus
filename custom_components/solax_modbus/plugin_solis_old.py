@@ -100,6 +100,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('463105'):  invertertype = HYBRID | X1 # Hybrid Gen5 4.6kW
     elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
     elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
+    elif seriesnumber.startswith('603122'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
     elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
 
     else: 
