@@ -231,6 +231,7 @@ class SolaXModbusHub:
             else: 
                 _LOGGER.info(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
+                self.data = {} # invalidate datza
 
     @property
     def invertertype(self):
