@@ -179,7 +179,7 @@ def value_function_gen23time(initval, descr, datadict):
 BUTTON_TYPES = []
 
 NUMBER_TYPES = [
-    SolisModbusSensorEntityDescription(
+    SolisModbusNumberEntityDescription(
         name = "Battery ChargeDischarge Current",
         key = "battery_chargedischarge_current",
         register = 43116,
@@ -192,7 +192,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
     ),
-    SolisModbusSensorEntityDescription(
+    SolisModbusNumberEntityDescription(
         name = "Battery Charge Current",
         key = "battery_charge_current",
         register = 43117,
@@ -205,7 +205,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
     ),
-    SolisModbusSensorEntityDescription(
+    SolisModbusNumberEntityDescription(
         name = "Battery Discharge Current",
         key = "battery_discharge_current",
         register = 43118,
@@ -218,7 +218,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
     ),
-    SolisModbusSensorEntityDescription(
+    SolisModbusNumberEntityDescription(
         name = "Timed Charge Current",
         key = "timed_charge_current",
         register = 43141,
@@ -232,7 +232,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
     ),
-    SolisModbusSensorEntityDescription(
+    SolisModbusNumberEntityDescription(
         name = "Timed Discharge Current",
         key = "timed_discharge_current",
         register = 43142,
@@ -1331,6 +1331,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
         register = 43116,
+        newblock = True,
         scale = 0.1,
         rounding = 0,
         allowedtypes = HYBRID,
