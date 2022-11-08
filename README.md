@@ -19,7 +19,8 @@ You can have multiple instances of this Integration, just change the default Pre
 Supports:
 
 Ginlong Solis
-- RHI-nK-48ES-5G (lowercase n indicates Inverter size, ie 6kW
+- RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
+- RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 - Unknown Models
 
 Sofar Solar
