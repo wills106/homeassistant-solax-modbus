@@ -31,6 +31,7 @@ from homeassistant.const import (
     PERCENTAGE,
     POWER_KILO_WATT,
     POWER_VOLT_AMPERE,
+    POWER_VOLT_AMPERE_REACTIVE,
     POWER_WATT,
     TEMP_CELSIUS,
     TIME_HOURS,
