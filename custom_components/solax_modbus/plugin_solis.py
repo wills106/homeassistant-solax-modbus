@@ -727,6 +727,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 33128,
         register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -736,6 +738,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_CURRENT,
         register = 33129,
         register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
         allowedtypes= HYBRID,
     ),
     SolisModbusSensorEntityDescription(
