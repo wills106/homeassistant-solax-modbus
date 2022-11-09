@@ -660,7 +660,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "ActivePower",
         key = "activepower",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = ENERGY_WATT_HOUR,
         device_class = DEVICE_CLASS_ENERGY,
         register = 33079,
         register_type = REG_INPUT,
