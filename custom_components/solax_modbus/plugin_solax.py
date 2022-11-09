@@ -1881,7 +1881,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x46,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes= GEN2 | GEN3 | GEN4 | GEN | HYBRID,
+        allowedtypes= GEN2 | GEN3 | GEN4 | GEN | HYBRID | AC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Feedin On Power",
@@ -3772,5 +3772,3 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
 ]
-
-
