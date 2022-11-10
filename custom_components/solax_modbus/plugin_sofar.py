@@ -1748,15 +1748,19 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Parallel Control",
         key = "parallel_control",
         register = 0x1035,
-        entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | PM,
     ),
     SofarModbusSensorEntityDescription(
         name = "Parallel Master-Salve",
         key = "parallel_masterslave",
         register = 0x1036,
-        entity_registry_enabled_default=False,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | PM,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Parallel Address",
+        key = "parallel_address",
+        register = 0x1037,
+        allowedtypes = HYBRID | X3 | PM,
     ),
 ###
 #
@@ -1831,7 +1835,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 10,
         native_step = 1,
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | PM,
         entity_category = EntityCategory.CONFIG,
     ),
     SofarModbusNumberEntityDescription(
@@ -1881,7 +1885,7 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | PM,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Master-Salve",
@@ -1891,7 +1895,7 @@ SELECT_TYPES = [
                 0: "Slave",
                 1: "Master",
             },
-        allowedtypes = HYBRID | X3,
+        allowedtypes = HYBRID | X3 | PM,
     ),
     SofarModbusSelectEntityDescription(
         name = "Remote Control",
