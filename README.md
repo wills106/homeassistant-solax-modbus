@@ -142,3 +142,4 @@ Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modb
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. **Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8**
+5. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.
