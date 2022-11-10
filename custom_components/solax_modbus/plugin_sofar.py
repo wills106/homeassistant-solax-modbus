@@ -4,7 +4,6 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-#from .const import BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,12 +18,6 @@ example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
-
-####
-#
-# Placeholder for now
-#
-####
 
 GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
@@ -48,6 +41,9 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+PM  = 0x20000
+ALL_PM_GROUP = PM
+
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
@@ -59,11 +55,12 @@ def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevan
     hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
     epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
     dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+    pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
     blacklisted = False
     if blacklist:
         for start in blacklist: 
             if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
 # ======================= end of bitmask handling code =============================================
 
@@ -112,10 +109,11 @@ def determineInverterType(hub, configdict):
         _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
     read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
     read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+    read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
     if read_eps: invertertype = invertertype | EPS 
     if read_dcb: invertertype = invertertype | DCB
+    if read_pm: invertertype = invertertype | PM
     hub.invertertype = invertertype
-
 
 @dataclass
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
@@ -129,8 +127,6 @@ class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
-
-# This section needs more work to be like plugin_solax
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
@@ -141,7 +137,6 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     register_type: int= REG_HOLDING
 
 # ================================= Computed sensor value functions  =================================================
-
 
 def value_function_pv_total_power(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
