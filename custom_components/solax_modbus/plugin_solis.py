@@ -4,7 +4,6 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-#from .const import BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,12 +18,6 @@ example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
-
-####
-#
-# Placeholder for now
-#
-####
 
 GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
@@ -84,7 +77,6 @@ def _read_serialnr(hub, address, swapbytes):
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
-    #return 'SP1ES2' 
     return res
 
 def determineInverterType(hub, configdict):
@@ -122,8 +114,6 @@ class SolisModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
-
-# This section needs more work to be like plugin_Solis
 @dataclass
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Modbus sensor entities."""
@@ -347,12 +337,6 @@ NUMBER_TYPES = [
 SELECT_TYPES = []
 
 SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [ 
-
-###
-#
-# Input Registers
-#
-###
 
     SolisModbusSensorEntityDescription(
         name="Serial Number",
@@ -649,10 +633,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "ActivePower",
-        key = "activepower",
-        native_unit_of_measurement = ENERGY_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        name = "Active Power",
+        key = "active_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33079,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
@@ -750,7 +734,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 33133,
-        #newblock = True,
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
@@ -793,7 +776,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
         device_class = DEVICE_CLASS_VOLTAGE,
         register = 33141,
-        #newblock = True,
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
@@ -843,7 +825,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes = HYBRID,
         icon="mdi:home",
-    ), 
+    ),
     SolisModbusSensorEntityDescription(
         name="Bypass Load",
         key="bypass_load",
@@ -1138,51 +1120,61 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter ActivePower",
         key = "meter_activepower",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33257,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ActivePower R",
-        key = "meter_activepower_r",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        name = "Meter ActivePower L1",
+        key = "meter_activepower_l1",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33257,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ActivePower S",
-        key = "meter_activepower_s",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        name = "Meter ActivePower L2",
+        key = "meter_activepower_l2",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33259,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ActivePower T",
-        key = "meter_activepower_t",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        name = "Meter ActivePower L3",
+        key = "meter_activepower_l3",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33261,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
         name = "Meter ActivePower Total",
         key = "meter_activepower_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33263,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -1196,8 +1188,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ReactivePower R",
-        key = "meter_reactivepower_r",
+        name = "Meter ReactivePower L1",
+        key = "meter_reactivepower_l1",
         native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = DEVICE_CLASS_POWER,
         register = 33265,
@@ -1206,8 +1198,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ReactivePower S",
-        key = "meter_reactivepower_s",
+        name = "Meter ReactivePower L2",
+        key = "meter_reactivepower_l2",
         native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = DEVICE_CLASS_POWER,
         register = 33267,
@@ -1216,8 +1208,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ReactivePower T",
-        key = "meter_reactivepower_t",
+        name = "Meter ReactivePower L3",
+        key = "meter_reactivepower_l3",
         native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = DEVICE_CLASS_POWER,
         register = 33269,
@@ -1246,8 +1238,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ApparentPower R",
-        key = "meter_apparentpower_r",
+        name = "Meter ApparentPower L1",
+        key = "meter_apparentpower_l1",
         native_unit_of_measurement=POWER_VOLT_AMPERE,
         device_class = DEVICE_CLASS_POWER,
         register = 33273,
@@ -1256,8 +1248,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ApparentPower S",
-        key = "meter_apparentpower_s",
+        name = "Meter ApparentPower L2",
+        key = "meter_apparentpower_L2",
         native_unit_of_measurement=POWER_VOLT_AMPERE,
         device_class = DEVICE_CLASS_POWER,
         register = 33275,
@@ -1266,8 +1258,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name = "Meter ApparentPower T",
-        key = "meter_apparentpower_t",
+        name = "Meter ApparentPower L3",
+        key = "meter_apparentpower_l3",
         native_unit_of_measurement=POWER_VOLT_AMPERE,
         device_class = DEVICE_CLASS_POWER,
         register = 33277,
