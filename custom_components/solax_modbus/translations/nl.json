@@ -9,6 +9,7 @@
           "interface" : "Interface",
           "read_eps": "Noodstroom optie (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
         }
@@ -47,6 +48,7 @@
           "interface" : "Interface",
           "read_eps": "Noodstroom Optie (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
         }

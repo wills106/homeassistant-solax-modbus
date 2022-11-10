@@ -9,6 +9,7 @@
           "interface" : "Schnittstelle",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichjter Typ",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
         }
@@ -47,6 +48,7 @@
           "interface" : "Schnittstelle",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
         }
