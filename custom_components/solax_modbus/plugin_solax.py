@@ -123,10 +123,14 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
     elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
     elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-    elif seriesnumber.startswith('MC10'):  invertertype = MIC | GEN | X3 # MIC X3
-    elif seriesnumber.startswith('MC20'):  invertertype = MIC | GEN | X3 # MIC X3
-    elif seriesnumber.startswith('MP15'):  invertertype = MIC | GEN | X3 # MIC X3
-    elif seriesnumber.startswith('MU80'):  invertertype = MIC | GEN | X3 # MIC X3
+    elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
+    elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
+    elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
+    elif seriesnumber.startswith('MU803T'):  invertertype = MIC | GEN | X3 # MIC X3
+    elif seriesnumber.startswith('MC106T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+    elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+    elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+    elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
     #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN3 | X3 # Unknown MIC Pro with PV3 X3
     # add cases here
     else: 
@@ -3623,7 +3627,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Voltage 2",
@@ -3634,7 +3638,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Current 1",
@@ -3645,7 +3649,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:current-dc",
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3657,7 +3661,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:current-dc",
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3669,7 +3673,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Voltage S",
@@ -3680,7 +3684,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Voltage T",
@@ -3691,7 +3695,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Frequency R",
@@ -3703,7 +3707,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Frequency S",
@@ -3714,7 +3718,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Frequency T",
@@ -3725,7 +3729,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Current R",
@@ -3736,7 +3740,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Current S",
@@ -3747,7 +3751,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Current T",
@@ -3758,7 +3762,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Inverter Temperature",
@@ -3768,7 +3772,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x40D,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3780,7 +3784,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register = 0x40E,
         newblock = True,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Run Mode",
@@ -3792,7 +3796,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
                   3: "Fault",
                   4: "Permanent Fault Mode", },
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:run",
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3803,7 +3807,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x410,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Measured Power S",
@@ -3813,7 +3817,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x411,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Measured Power T",
@@ -3823,7 +3827,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x412,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Power 1",
@@ -3833,7 +3837,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x414,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:solar-power-variant",
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3844,7 +3848,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x415,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:solar-power-variant",
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3854,8 +3858,36 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC,
         icon="mdi:solar-power-variant",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="Total Yield",
+        key="total_yield",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x423,
+        newblock = True,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.001,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name="Today's Yield",
+        key="today_yield",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=DEVICE_CLASS_ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+        register = 0x425,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.001,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Total Yield",
@@ -3870,7 +3902,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC | GEN2,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="Today's Yield",
@@ -3883,7 +3915,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC | GEN2,
     ),
     SolaXMicModbusSensorEntityDescription(
         name="PV Voltage 3",
