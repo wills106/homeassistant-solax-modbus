@@ -1061,8 +1061,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name="Meter AC Current L2",
-        key="meter_ac_current_l2",
+        name="Meter AC Current L1",
+        key="meter_ac_current_l1",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
         device_class=DEVICE_CLASS_CURRENT,
         register = 33252,
@@ -1072,8 +1072,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
-        name="Meter AC Voltage L3",
-        key="meter_ac_voltage_l3",
+        name="Meter AC Voltage L2",
+        key="meter_ac_voltage_l2",
         native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
         device_class=DEVICE_CLASS_VOLTAGE,
         register = 33253,
