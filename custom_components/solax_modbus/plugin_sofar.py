@@ -93,9 +93,9 @@ def determineInverterType(hub, configdict):
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
-    if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # New Hybrid 20kW no PV
-    elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # Older Might be single
-    elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X3 | GEN # Not actuall X3, needs changing
+    if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
+    elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
+    elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES, Not actually X3, needs changing
     elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
