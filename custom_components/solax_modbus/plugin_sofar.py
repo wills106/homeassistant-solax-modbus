@@ -182,28 +182,6 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name="Ambient Temperature 1",
-        key="ambient_temperature_1",
-        native_unit_of_measurement=TEMP_CELSIUS,
-        device_class=DEVICE_CLASS_TEMPERATURE,
-        state_class=STATE_CLASS_MEASUREMENT,
-        register = 0x418,
-        unit = REGISTER_S16,
-        allowedtypes = HYBRID,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-    SofarModbusSensorEntityDescription(
-        name="Ambient Temperature 2",
-        key="ambient_temperature_2",
-        native_unit_of_measurement=TEMP_CELSIUS,
-        device_class=DEVICE_CLASS_TEMPERATURE,
-        state_class=STATE_CLASS_MEASUREMENT,
-        register = 0x419,
-        unit = REGISTER_S16,
-        allowedtypes = HYBRID,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-    SofarModbusSensorEntityDescription(
         name="Heatsink Temperature 1",
         key="heatsink_temperature_1",
         native_unit_of_measurement=TEMP_CELSIUS,
