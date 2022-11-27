@@ -340,7 +340,7 @@ SELECT_TYPES = [
         key = "energy_storage_control_switch",
         register = 43110,
         option_dict =  {
-                33: "Spontaneous Mode",
+                33: "Auto Mode",
                 35: "Timed Charge/Discharge",
                 37: "Off-Grid Mode",
                 41: "Battery Awaken",
@@ -738,8 +738,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Active Power",
         key = "meter_active_power",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
         register = 33130,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
@@ -1146,18 +1146,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         allowedtypes = HYBRID | X3,
-    ),
-    SolisModbusSensorEntityDescription(
-        name = "Meter Active Power",
-        key = "meter_active_power",
-        native_unit_of_measurement=POWER_KILO_WATT,
-        device_class=DEVICE_CLASS_POWER,
-        register = 33257,
-        register_type = REG_INPUT,
-        unit = REGISTER_S32,
-        scale = 0.001,
-        rounding = 3,
-        allowedtypes = HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
         name = "Meter Active Power L1",
