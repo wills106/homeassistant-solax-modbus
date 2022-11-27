@@ -19,7 +19,8 @@ You can have multiple instances of this Integration, just change the default Pre
 Supports:
 
 Ginlong Solis
-- RHI-nK-48ES-5G (lowercase n indicates Inverter size, ie 6kW
+- RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
+- RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 - Unknown Models
 
 Sofar Solar
@@ -131,7 +132,7 @@ Any manual updates / HACS updates require a restart of Home Assistant to take ef
 If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}"
 Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modbus/discussions/26) providing the details asked for.
 
-<B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
+<B>Inverter never connected to the Cloud / possibly after a firmware update: (SolaX only)</B>
 - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
 - Might need performing again following a full Power Cycle
 
@@ -141,3 +142,4 @@ Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modb
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. **Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8**
+5. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.

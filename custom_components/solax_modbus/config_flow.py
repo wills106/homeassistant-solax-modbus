@@ -29,6 +29,7 @@ from .const import (
 	DOMAIN,
 	CONF_READ_EPS,
     CONF_READ_DCB,
+    CONF_READ_PM,
     CONF_INTERFACE,
     CONF_SERIAL_PORT,
     CONF_MODBUS_ADDR,
@@ -36,6 +37,7 @@ from .const import (
     CONF_PLUGIN,
 	DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
+    DEFAULT_READ_PM,
     DEFAULT_PLUGIN,
     PLUGIN_PATH,
 )
@@ -69,6 +71,7 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
+        vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
     } )
 
 SERIAL_SCHEMA = vol.Schema( {

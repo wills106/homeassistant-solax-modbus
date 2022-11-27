@@ -9,6 +9,7 @@
           "interface" : "Interface",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
@@ -48,6 +49,7 @@
           "interface" : "Interface",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
