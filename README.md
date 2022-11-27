@@ -132,7 +132,7 @@ Any manual updates / HACS updates require a restart of Home Assistant to take ef
 If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}"
 Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modbus/discussions/26) providing the details asked for.
 
-<B>Inverter never connected to the Cloud / possibly after a firmware update:</B>
+<B>Inverter never connected to the Cloud / possibly after a firmware update: (SolaX only)</B>
 - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button.
 - Might need performing again following a full Power Cycle
 
