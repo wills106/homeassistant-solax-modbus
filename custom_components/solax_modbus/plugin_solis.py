@@ -748,7 +748,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Energy Storage Control Switch",
         key = "energy_storage_control_switch",
-        register = 33130,
+        register = 33132,
         register_type = REG_INPUT,
         allowedtypes = HYBRID,
     ),
