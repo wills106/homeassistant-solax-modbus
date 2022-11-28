@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 import homeassistant.util.dt as dt_util
 
-from .const import ATTR_MANUFACTURER, DOMAIN
+from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
 from .const import getPlugin
 from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import BaseModbusSensorEntityDescription
@@ -102,6 +102,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 read_scale = readscale,
             )
             entities.append(sensor)
+            if sensor_description.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(sensor_description.key)
+            if sensor_description.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(sensor_description.key)
             if (sensor_description.register < 0): # entity without modbus address
                 if sensor_description.value_function:
                     computedRegs[sensor_description.key] = sensor_description

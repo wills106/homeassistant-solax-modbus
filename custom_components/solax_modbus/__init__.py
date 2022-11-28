@@ -192,6 +192,8 @@ class SolaXModbusHub:
         self.holdingBlocks = {}
         self.computedRegs = {}
         self.plugin_name = plugin_name
+        self.sleepzero = [] # sensors that will be set to zero in sleepmode
+        self.sleepnone = [] # sensors that will be cleared in sleepmode
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -231,6 +233,8 @@ class SolaXModbusHub:
             else: 
                 _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
+                for i in self.sleepnone: self.data.pop(i)
+                for i in self.sleepzero: self.data[i] = 0
                 # self.data = {} # invalidate data - do we want this ??
 
     @property

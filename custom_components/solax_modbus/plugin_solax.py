@@ -2315,6 +2315,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes=HYBRID | PV,
         icon="mdi:current-dc",
+        sleepmode=SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 2",
@@ -2327,6 +2328,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes=HYBRID | PV,
         icon="mdi:current-dc",
+        sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 1",
@@ -2338,6 +2340,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes= HYBRID | PV,
         icon="mdi:solar-power-variant",
+        sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 2",
@@ -2349,6 +2352,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
+        sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",
@@ -2360,6 +2364,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         rounding = 1,
         allowedtypes=HYBRID | PV,
+        sleepmode = SLEEPMODE_NONE,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
@@ -2371,6 +2376,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         rounding = 1,
         allowedtypes=HYBRID | PV,
+        sleepmode = SLEEPMODE_NONE,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Total Power",
@@ -2381,6 +2387,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
+        sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="Registration Code Lan",
