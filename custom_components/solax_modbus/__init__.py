@@ -231,6 +231,7 @@ class SolaXModbusHub:
             else: 
                 _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
+                # self.data = {} # invalidate data - do we want this ??
 
     @property
     def invertertype(self):
