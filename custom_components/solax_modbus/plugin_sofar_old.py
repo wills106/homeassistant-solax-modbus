@@ -4,7 +4,6 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-#from .const import BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,12 +18,6 @@ example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
-
-####
-#
-# Placeholder for now
-#
-####
 
 GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
@@ -48,6 +41,9 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+PM  = 0x20000
+ALL_PM_GROUP = PM
+
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
@@ -59,11 +55,12 @@ def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevan
     hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
     epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
     dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+    pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
     blacklisted = False
     if blacklist:
         for start in blacklist: 
             if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
 # ======================= end of bitmask handling code =============================================
 
@@ -81,15 +78,17 @@ def _read_serialnr(hub, address, swapbytes):
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
-    except: pass
-    if not res: _LOGGER.warning(f"reading serial number from address {address} failed; other address may succeed")
-    _LOGGER.info(f"Read Sofar serial number: {res}, swapped: {swapbytes}")
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+    #return 'SP1ES2' 
     return res
 
 def determineInverterType(hub, configdict):
+    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
     seriesnumber                       = _read_serialnr(hub, 0x2001,   swapbytes = False)
     if not seriesnumber: 
-        _LOGGER.error(f"cannot find serial number, even not for other Inverter")
+        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
         seriesnumber = "unknown"
 
     # derive invertertype from seriiesnumber
@@ -108,11 +107,13 @@ def determineInverterType(hub, configdict):
 
     else: 
         invertertype = 0
-        _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+        _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
     read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
     read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+    read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
     if read_eps: invertertype = invertertype | EPS 
     if read_dcb: invertertype = invertertype | DCB
+    if read_pm: invertertype = invertertype | PM
     hub.invertertype = invertertype
 
 
