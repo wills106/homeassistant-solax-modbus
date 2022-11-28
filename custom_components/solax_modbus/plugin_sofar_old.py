@@ -193,7 +193,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
                   2: "Normal Mode",
                   3: "Fault",
                   4: "Permanent Fault Mode", },
-        allowedtypes=ALLDEFAULT,
+        allowedtypes  = PV,
         icon="mdi:run",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -204,7 +204,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x6,
         scale = 0.1,
         rounding = 1,
-        allowedtypes=PV,
+        allowedtypes = PV,
     ),
     SofarOldModbusSensorEntityDescription(
         name="PV Current 1",
@@ -214,7 +214,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x7,
         scale = 0.01,
         rounding = 2,
-        allowedtypes=PV,
+        allowedtypes = PV,
         icon="mdi:current-dc",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -226,7 +226,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0xA,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= PV | X1,
+        allowedtypes = PV | X1,
         icon="mdi:solar-power-variant",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -595,7 +595,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
                   5: "EPS Mode",
                   6: "Fault",
                   7: "Permanent Fault Mode", },
-        allowedtypes=ALLDEFAULT,
+        allowedtypes = AC | HYBRID,
         icon="mdi:run",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -1056,7 +1056,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "battery_minimum_capacity",
         register = 0x104D,
         register_type=REG_INPUT,
-        allowedtypes = AC | HYBRID,
+        allowedtypes = AC,
         icon="mdi:battery-sync",
     ),
 ]
