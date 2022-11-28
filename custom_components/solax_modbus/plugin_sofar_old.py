@@ -1003,8 +1003,9 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
         register = 0x252,
         allowedtypes = HYBRID,
     ),
@@ -1032,8 +1033,9 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 2",
         key = "pv_power_2",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
-        device_class = DEVICE_CLASS_ENERGY,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
         register = 0x255,
         allowedtypes = HYBRID,
     ),
