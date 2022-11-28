@@ -103,6 +103,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
     elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
     elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
+    elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X1 
     #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
 
     else: 
@@ -192,7 +193,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
                   2: "Normal Mode",
                   3: "Fault",
                   4: "Permanent Fault Mode", },
-        allowedtypes=ALLDEFAULT,
+        allowedtypes  = PV,
         icon="mdi:run",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -203,7 +204,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x6,
         scale = 0.1,
         rounding = 1,
-        allowedtypes=PV,
+        allowedtypes = PV,
     ),
     SofarOldModbusSensorEntityDescription(
         name="PV Current 1",
@@ -213,7 +214,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x7,
         scale = 0.01,
         rounding = 2,
-        allowedtypes=PV,
+        allowedtypes = PV,
         icon="mdi:current-dc",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -225,7 +226,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0xA,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= PV | X1,
+        allowedtypes = PV | X1,
         icon="mdi:solar-power-variant",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -594,7 +595,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
                   5: "EPS Mode",
                   6: "Fault",
                   7: "Permanent Fault Mode", },
-        allowedtypes=ALLDEFAULT,
+        allowedtypes = AC | HYBRID,
         icon="mdi:run",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -605,7 +606,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x206,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Current R",
@@ -616,7 +617,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Voltage S",
@@ -626,7 +627,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x208,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Current S",
@@ -637,7 +638,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Voltage T",
@@ -647,7 +648,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x20A,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Current T",
@@ -658,7 +659,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Grid Frequency",
@@ -668,7 +669,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x20C,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Power Charge",
@@ -680,7 +681,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Voltage Charge",
@@ -690,7 +691,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x20E,
         scale = 0.1,
         rounding = 1,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Current Charge",
@@ -701,7 +702,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         unit = REGISTER_S16,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
         icon="mdi:current-dc",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -710,7 +711,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=DEVICE_CLASS_BATTERY,
         register = 0x210,
-        allowedtypes= AC, 
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Temperature",
@@ -719,7 +720,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_TEMPERATURE,
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x211,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -732,7 +733,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="House Load",
@@ -743,7 +744,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x213,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
     ),
     ####
     #
@@ -759,7 +760,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x215,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="EPS Voltage",
@@ -769,7 +770,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x216,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC | EPS,
+        allowedtypes = AC | HYBRID | EPS,
     ),
     SofarOldModbusSensorEntityDescription(
         name="EPS Power",
@@ -780,7 +781,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x217,
         scale = 0.01,
         rounding = 2,
-        allowedtypes= AC | EPS,
+        allowedtypes= AC | HYBRID | EPS,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Generation Today",
@@ -791,7 +792,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x218,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Export Energy Today",
@@ -802,7 +803,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x219,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         icon="mdi:home-export-outline",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -814,7 +815,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x21A,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         icon="mdi:home-import-outline",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -826,7 +827,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x21B,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     #
     SofarOldModbusSensorEntityDescription(
@@ -837,7 +838,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x21C,
         unit = REGISTER_U32,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Export Energy Total",
@@ -847,7 +848,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x21E,
         unit = REGISTER_U32,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         icon="mdi:home-export-outline",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -858,7 +859,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x220,
         unit = REGISTER_U32,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         icon="mdi:home-import-outline",
     ),
     SofarOldModbusSensorEntityDescription(
@@ -869,14 +870,14 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_TOTAL_INCREASING,
         register = 0x222,
         unit = REGISTER_U32,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Charge Cycle",
         key="battery_charge_cycle",
         register = 0x22C,
         entity_registry_enabled_default=False,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -887,7 +888,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x230,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Grid Current R",
@@ -897,7 +898,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x231,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Grid Voltage S",
@@ -907,7 +908,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x232,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Grid Current S",
@@ -917,7 +918,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x233,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Grid Voltage T",
@@ -927,7 +928,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x234,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Grid Current T",
@@ -937,7 +938,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x235,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name="Inverter Inner Temperature ",
@@ -948,7 +949,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x238,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -960,7 +961,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x239,
         unit = REGISTER_S16,
         entity_registry_enabled_default=False,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -968,7 +969,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "generation_time_today",
         native_unit_of_measurement=TIME_MINUTES,
         register = 0x242,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Generation Time Today",
@@ -976,19 +977,67 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=TIME_HOURS,
         register = 0x244,
         unit = REGISTER_U32,
-        allowedtypes = AC,
+        allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
-        name="PV 1", # Not sure if power?
-        key="pv_1",
+        name = "PV Voltage 1",
+        key = "pv_oltage_1",
+        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        device_class = DEVICE_CLASS_VOLTAGE,
+        register = 0x250,
+        newblock = True,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "PV Current 1",
+        key = "pv_current_1",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 0x251,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = HYBRID,
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name = "PV Power 1",
+        key = "pv_power_1",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
         register = 0x252,
-        allowedtypes=HYBRID,
+        allowedtypes = HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
-        name="PV 2", # Not sure if power?
-        key="pv_2",
+        name = "PV Voltage 2",
+        key = "pv_oltage_2",
+        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        device_class = DEVICE_CLASS_VOLTAGE,
+        register = 0x253,
+        newblock = True,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID,
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name = "PV Current 2",
+        key = "pv_current_2",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=DEVICE_CLASS_CURRENT,
+        register = 0x254,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = HYBRID,
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name = "PV Power 2",
+        key = "pv_power_2",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
         register = 0x255,
-        allowedtypes=HYBRID,
+        allowedtypes = HYBRID,
     ),
 ###
 #
