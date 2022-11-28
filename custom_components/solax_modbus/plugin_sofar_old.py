@@ -175,6 +175,8 @@ def value_function_gen23time(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = []
+NUMBER_TYPES = []
+SELECT_TYPES = []
 
 SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [ 
 
