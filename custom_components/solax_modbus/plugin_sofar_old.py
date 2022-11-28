@@ -990,7 +990,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes = HYBRID,
     ),
-    SofarModbusSensorEntityDescription(
+    SofarOldModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
         native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
