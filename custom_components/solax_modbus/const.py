@@ -65,6 +65,10 @@ DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
 DEFAULT_PLUGIN   = "custom_components/solax_modbus/plugin_solax.py"
 PLUGIN_PATH      = "custom_components/solax_modbus/plugin_*.py"
+SLEEPMODE_NONE   = None
+SLEEPMODE_ZERO   = 0
+SLEEPMODE_LAST   = 1
+
 
 # ================================= Definitions for Sennsor Declarations =================================================
 
@@ -114,6 +118,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
+    sleepmode: int = SLEEPMODE_LAST # or SLEEPMODE_ZERO or SLEEPMODE_NONE
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
