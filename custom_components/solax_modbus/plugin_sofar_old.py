@@ -146,6 +146,16 @@ class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 def value_function_pv_power_total(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
 
+def value_function_battery_input(initval, descr, datadict):
+    val = datadict["battery_power_charge"]
+    if val<0: return abs(val)
+    else: return 0
+
+def value_function_battery_output(initval, descr, datadict):
+    val = datadict["battery_power_charge"]
+    if val>0: return val
+    else: return 0
+
 def value_function_grid_import(initval, descr, datadict):
     val = datadict["measured_power"]
     if val<0: return abs(val)
@@ -685,6 +695,26 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         allowedtypes = AC | HYBRID,
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name="Battery Input Energy",
+        key="battery_input_energy",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_battery_input,
+        allowedtypes = AC | HYBRID,
+        icon="mdi:battery-arrow-up",
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name="Battery Output Energy",
+        key="battery_output_energy",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_battery_output,
+        allowedtypes = AC | HYBRID,
+        icon="mdi:battery-arrow-down",
     ),
     SofarOldModbusSensorEntityDescription(
         name="Battery Voltage Charge",
