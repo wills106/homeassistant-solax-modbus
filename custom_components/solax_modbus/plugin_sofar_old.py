@@ -143,21 +143,21 @@ class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ================================= Computed sensor value functions  =================================================
 
 
-def value_function_pv_total_power(initval, descr, datadict):
+def value_function_pv_power_total(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
 
 def value_function_grid_import(initval, descr, datadict):
-    val = datadict["feedin_power"]
+    val = datadict["measured_power"]
     if val<0: return abs(val)
     else: return 0
 
 def value_function_grid_export(initval, descr, datadict):
-    val = datadict["feedin_power"]
+    val = datadict["measured_power"]
     if val>0: return val
     else: return 0
 
 def value_function_house_load(initval, descr, datadict):
-    return datadict['inverter_load'] - datadict['feedin_power']
+    return datadict['inverter_load'] - datadict['measured_power']
 
 def value_function_rtc(initval, descr, datadict):
     (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
@@ -728,7 +728,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     ),
     SofarOldModbusSensorEntityDescription(
         name="Measured Power",
-        key="feedin_power",
+        key="measured_power",
         native_unit_of_measurement=POWER_KILO_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
@@ -737,6 +737,26 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         allowedtypes = AC | HYBRID,
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name="Grid Import",
+        key="grid_import",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_grid_import,
+        allowedtypes = AC | HYBRID,
+        icon="mdi:home-import-outline",
+    ),
+    SofarOldModbusSensorEntityDescription(
+        name="Grid Export",
+        key="grid_export",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_grid_export,
+        allowedtypes = AC | HYBRID,
+        icon="mdi:home-export-outline",
     ),
     SofarOldModbusSensorEntityDescription(
         name="House Load",
@@ -1041,6 +1061,17 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x255,
         allowedtypes = HYBRID,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        value_function= value_function_pv_power_total,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        allowedtypes=HYBRID,
+        icon="mdi:solar-power-variant",
+        sleepmode = SLEEPMODE_ZERO,
     ),
 ###
 #
