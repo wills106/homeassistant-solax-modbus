@@ -1195,8 +1195,8 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon="mdi:dip-switch",
     ),
-    SolaxModbusSelectEntityDescription( name = "PgridBias",
-        key = "pgridbias",
+    SolaxModbusSelectEntityDescription( name = "Pgrid Bias",
+        key = "pgrid_bias",
         register = 0x8D,
         option_dict =  {
                 0: "Disabled",
@@ -2310,8 +2310,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name="PgridBias",
-        key="pgridbias",
+        name="Pgrid Bias",
+        key="pgrid_bias",
         register = 0xB2,
         scale = { 0: "Disabled",
                   1: "Grid",
