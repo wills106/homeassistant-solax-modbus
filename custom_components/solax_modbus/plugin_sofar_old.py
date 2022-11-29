@@ -1062,7 +1062,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x255,
         allowedtypes = HYBRID,
     ),
-    SolaXModbusSensorEntityDescription(
+    SofarOldModbusSensorEntityDescription(
         name="PV Power Total",
         key="pv_power_total",
         value_function= value_function_pv_power_total,
