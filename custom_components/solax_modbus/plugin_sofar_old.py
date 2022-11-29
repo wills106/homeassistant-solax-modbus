@@ -102,7 +102,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
     elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
     elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
-    elif seriesnumber.startswith('ZM1E', 1):  invertertype = HYBRID | X1 
+    elif seriesnumber.startswith('ZM1E', 2):  invertertype = HYBRID | X1 
     #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
 
     else: 
