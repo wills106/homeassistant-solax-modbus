@@ -3364,7 +3364,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Phase Power Balance X3",
         key="phase_power_balance_x3",
-        register = 106,
+        register = 0x106,
         scale = { 0: "Disabled", 1: "Enabled"},
         allowedtypes = X3 | GEN3 | GEN4,
     ),
