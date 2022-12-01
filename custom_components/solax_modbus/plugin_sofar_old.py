@@ -146,12 +146,12 @@ class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 def value_function_pv_power_total(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
 
-def value_function_battery_input(initval, descr, datadict):
+def value_function_battery_output(initval, descr, datadict):
     val = datadict["battery_power_charge"]
     if val<0: return abs(val)
     else: return 0
 
-def value_function_battery_output(initval, descr, datadict):
+def value_function_battery_input(initval, descr, datadict):
     val = datadict["battery_power_charge"]
     if val>0: return val
     else: return 0

@@ -128,6 +128,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
     elif seriesnumber.startswith('MU803T'):  invertertype = MIC | GEN | X3 # MIC X3
     elif seriesnumber.startswith('MC106T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+    elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
     elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
     elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
     elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
