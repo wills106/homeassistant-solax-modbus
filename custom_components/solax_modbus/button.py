@@ -23,13 +23,15 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    plugin = getPlugin(hub_name)
+    plugin = hub.plugin #getPlugin(hub_name)
+    if plugin.__dict__.get('awakeButton'): awakebutton = plugin.awakeButton()
+    else: awakebutton = None
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
             button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
             entities.append(button)
-
+            if button_info.key == awakebutton: hub.awake_button = button
     async_add_entities(entities)
     return True
 
