@@ -140,6 +140,8 @@ async def async_unload_entry(hass, entry):
     hass.data[DOMAIN].pop(entry.options["name"])
     return True
 
+def defaultIsAwake( datadict):
+    return True
 
 def Gen4Timestring(numb):
     h = numb % 256
@@ -182,7 +184,6 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensors = []
         self.data = {}
-        #self.newdata = {} # temporary during software migration - please remove later
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
@@ -196,6 +197,7 @@ class SolaXModbusHub:
         self.plugin = getPlugin(name)
         self.awake_button = None
         self.plugin.determineInverterType(self, config)
+        self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -283,11 +285,10 @@ class SolaXModbusHub:
             kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
+
     def write_register(self, unit, address, payload):
         """Write registers."""
-        awakeplugin = self.plugin.__dict__.get('isAwake')
-        if awakeplugin: awake = self.plugin.isAwake()
-        else: awake = True
+        awake = self.awakeplugin(self.data)
         if awake:
             with self._lock:
                 kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
@@ -320,6 +321,7 @@ class SolaXModbusHub:
 
     def treat_address(self, decoder, descr, initval=0):
         val = 0
+        return_value = None
         if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
@@ -336,12 +338,13 @@ class SolaXModbusHub:
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         if type(descr.scale) is dict: # translate int to string 
-            self.data[descr.key] = descr.scale.get(val, "Unknown")
+            return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
-            self.data[descr.key] = descr.scale(val, descr, self.data) 
+            return_value = descr.scale(val, descr, self.data) 
         else: # apply simple numeric scaling and rounding if not a list of words
-            try:    self.data[descr.key] = round(val*descr.scale, descr.rounding) 
-            except: self.data[descr.key] = val # probably a REGISTER_WORDS instance
+            try:    return_value = round(val*descr.scale, descr.rounding) 
+            except: return_value = val # probably a REGISTER_WORDS instance
+        self.data[descr.key] = return_value
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
@@ -382,7 +385,7 @@ class SolaXModbusHub:
         for reg in self.computedRegs:
             descr = self.computedRegs[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-        if self.writequeue and self.plugin.__dict__.get('isAwake') and self.plugin.isAwake(data):
+        if res and self.writequeue and self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for addr in self.writequeue:

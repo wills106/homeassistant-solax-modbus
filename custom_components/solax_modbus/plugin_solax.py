@@ -149,7 +149,7 @@ def determineInverterType(hub, configdict):
 
 def isAwake(datadict):
     """ determine if inverter is awake based on polled datadict"""
-    return (datadict['use_mode'] =='Normal Mode')
+    return (datadict.get('run_mode', None) == 'Normal Mode')
 
 def wakeupButton():
     """ in order to wake up  the inverter , press this button """
