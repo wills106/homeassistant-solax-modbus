@@ -307,7 +307,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRI | PV,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Apparent Power PCC Total",
