@@ -98,6 +98,7 @@ def determineInverterType(hub, configdict):
     elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
     elif seriesnumber.startswith('SM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES, Not actually X3, needs changing
     elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES 2nd type, Not actually X3, needs changing
+    elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
     elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
@@ -190,7 +191,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x41A,
         unit = REGISTER_S16,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -201,7 +202,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x41B,
         unit = REGISTER_S16,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -212,7 +213,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x420,
         unit = REGISTER_S16,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -223,7 +224,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x421,
         unit = REGISTER_S16,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
@@ -233,7 +234,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit=REGISTER_STR,
         wordcount=7,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
 ###
 #
@@ -249,7 +250,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output Total",
@@ -260,7 +261,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power Output Total",
@@ -272,7 +273,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Apparent Power Output Total",
@@ -283,7 +284,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC Total",
@@ -294,7 +295,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power PCC Total",
@@ -306,7 +307,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRI | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Apparent Power PCC Total",
@@ -317,7 +318,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage L1",
@@ -327,7 +328,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x48D,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current Output L1",
@@ -337,7 +338,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x48E,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output L1",
@@ -348,7 +349,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power Output L1",
@@ -360,7 +361,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor Output L1",
@@ -370,7 +371,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current PCC L1",
@@ -380,7 +381,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x492,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC L1",
@@ -391,7 +392,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power PCC L1",
@@ -403,7 +404,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor PCC L1",
@@ -413,7 +414,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage L2",
@@ -423,7 +424,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x498,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current Output L2",
@@ -433,7 +434,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x499,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output L2",
@@ -444,7 +445,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power Output L2",
@@ -456,7 +457,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor Output L2",
@@ -466,7 +467,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current PCC L2",
@@ -476,7 +477,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x49D,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC L2",
@@ -487,7 +488,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power PCC L2",
@@ -499,7 +500,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor PCC L2",
@@ -509,7 +510,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage L3",
@@ -519,7 +520,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A3,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current Output L3",
@@ -529,7 +530,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A4,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output L3",
@@ -540,7 +541,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power Output L3",
@@ -552,7 +553,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor Output L3",
@@ -562,7 +563,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current PCC L3",
@@ -572,7 +573,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4A8,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC L3",
@@ -583,7 +584,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Reactive Power PCC L3",
@@ -595,7 +596,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Power Factor PCC L3",
@@ -605,7 +606,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.001,
         entity_registry_enabled_default=False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PV Ext",
@@ -615,7 +616,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4AE,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Load Sys",
@@ -625,7 +626,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4AF,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage Phase L1N",
@@ -635,7 +636,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B0,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current Output L1N",
@@ -645,7 +646,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B1,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output L1N",
@@ -656,7 +657,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current PCC L1N",
@@ -666,7 +667,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B3,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC L1N",
@@ -677,7 +678,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage Phase L2N",
@@ -687,7 +688,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B5,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current Output L2N",
@@ -697,7 +698,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B6,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power Output L2N",
@@ -708,7 +709,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Current PCC L2N",
@@ -718,7 +719,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4B8,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Active Power PCC L2N",
@@ -729,7 +730,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage Line L1",
@@ -739,7 +740,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4BA,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage Line L2",
@@ -749,7 +750,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4BB,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name = "Voltage Line L3",
@@ -759,7 +760,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x4BC,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
 
 ###
@@ -1563,7 +1564,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Solar Generation Total",
@@ -1575,7 +1576,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Load Consumption Today",
@@ -1587,7 +1588,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Load Consumption Total",
@@ -1599,7 +1600,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Import Energy Today",
@@ -1611,7 +1612,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         icon="mdi:home-import-outline",
     ),
     SofarModbusSensorEntityDescription(
@@ -1624,7 +1625,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         icon="mdi:home-import-outline",
     ),
     SofarModbusSensorEntityDescription(
@@ -1637,7 +1638,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         icon="mdi:home-export-outline",
     ),
     SofarModbusSensorEntityDescription(
@@ -1650,7 +1651,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         icon="mdi:home-export-outline",
     ),
     SofarModbusSensorEntityDescription(
@@ -1730,19 +1731,19 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Parallel Control",
         key = "parallel_control",
         register = 0x1035,
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
     ),
     SofarModbusSensorEntityDescription(
         name = "Parallel Master-Salve",
         key = "parallel_masterslave",
         register = 0x1036,
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
     ),
     SofarModbusSensorEntityDescription(
         name = "Parallel Address",
         key = "parallel_address",
         register = 0x1037,
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
     ),
 ###
 #
@@ -1817,7 +1818,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 10,
         native_step = 1,
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
         entity_category = EntityCategory.CONFIG,
     ),
     SofarModbusNumberEntityDescription(
@@ -1867,7 +1868,7 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Master-Salve",
@@ -1877,7 +1878,7 @@ SELECT_TYPES = [
                 0: "Slave",
                 1: "Master",
             },
-        allowedtypes = HYBRID | X3 | PM,
+        allowedtypes = HYBRID | PV | X3 | PM,
     ),
     SofarModbusSelectEntityDescription(
         name = "Remote Control",
