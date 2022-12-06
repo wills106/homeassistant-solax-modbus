@@ -1,7 +1,9 @@
 
 import logging
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntityDescription,
+    SensorStateClass,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
 )
