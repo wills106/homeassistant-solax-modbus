@@ -1213,6 +1213,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = POWER_KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x5C4,
+        newblock = True,
         scale = 0.01,
         rounding = 2,
         #entity_registry_enabled_default=False,
