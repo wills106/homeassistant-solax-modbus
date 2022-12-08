@@ -5,14 +5,13 @@
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
 # homsassistant-solax-modbus
-## Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8
 
 ## 0.7.0 Beta x adds in preliminary support for Ginlong Solis & Sofar Solar
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
-Support Modbus over RS485 & TCP
-**(Pocket LAN / Pocket WiFi does not provide a Modbus connection in most situations)**
+### Support Modbus over RS485 & TCP
+**(Pocket LAN / Pocket WiFi does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)** Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
