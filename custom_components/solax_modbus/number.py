@@ -68,6 +68,7 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state
         self.entity_description = number_info
+        self._write_registers = select_info.write_registers
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -118,6 +119,9 @@ class SolaXModbusNumber(NumberEntity):
             payload = int(value/(self._attr_scale*self._read_scale))
 
         _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
-        self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+        if self._write_registers == True:
+            self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
+        else:
+            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         self._hub.data[self._key] = value/self._read_scale
         self.async_write_ha_state()
