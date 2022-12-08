@@ -58,7 +58,7 @@ class SolaXModbusSelect(SelectEntity):
         self._option_dict = select_info.option_dict
         self.entity_description = select_info
         self._attr_options = list(select_info.option_dict.values())
-        self._write_registers = write_registers
+        self._write_registers = select_info.write_registers
 
     async def async_added_to_hass(self):
         """Register callbacks."""
