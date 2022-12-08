@@ -136,7 +136,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     register: int = None
     option_dict: dict = None
     blacklist: list = None # none or list of serial number prefixes
-    write_registers: boolean = False
+    write_registers: bool = False
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -148,5 +148,4 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     state: str = None
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
     blacklist: list = None # None or list of serial number prefixes like
-    write_registers: boolean = False
-
+    write_registers: bool = False
