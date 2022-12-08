@@ -1906,6 +1906,7 @@ SELECT_TYPES = [
                 4: "Peak Cut Mode",
             },
         allowedtypes = HYBRID,
+        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Timing Charge On-Off",

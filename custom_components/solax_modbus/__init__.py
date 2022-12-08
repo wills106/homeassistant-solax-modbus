@@ -305,6 +305,12 @@ class SolaXModbusHub:
                 _LOGGER.info("waking up inverter: pressing awake button")
                 self.write_register(unit=self._modbus_addr, address=self.awake_button._register, payload=self.awake_button._command)
             else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
+    
+    def write_registers(self, unit, address, payload): # Needs adapting for regiater que
+        """Write registers."""
+        with self._lock:
+            kwargs = {"unit": unit} if unit else {}
+            return self._client.write_registers(address, payload, **kwargs)
 
     def read_modbus_data(self):
         res = True

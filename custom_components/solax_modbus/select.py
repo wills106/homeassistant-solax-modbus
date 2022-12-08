@@ -58,6 +58,7 @@ class SolaXModbusSelect(SelectEntity):
         self._option_dict = select_info.option_dict
         self.entity_description = select_info
         self._attr_options = list(select_info.option_dict.values())
+        self._write_registers = write_registers
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -93,7 +94,10 @@ class SolaXModbusSelect(SelectEntity):
         """Change the select option."""
         payload = get_payload(self._option_dict, option)
         _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
-        self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+        if self._write_registers == True:
+            self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
+        else:
+            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
 
         self._hub.data[self._key] = option
         self.async_write_ha_state()
