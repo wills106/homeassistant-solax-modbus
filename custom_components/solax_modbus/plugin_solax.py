@@ -147,6 +147,14 @@ def determineInverterType(hub, configdict):
     if invertertype & MIC: SENSOR_TYPES = SENSOR_TYPES_MIC
     else: SENSOR_TYPES = SENSOR_TYPES_MAIN
 
+def isAwake(datadict):
+    """ determine if inverter is awake based on polled datadict"""
+    return (datadict.get('run_mode', None) == 'Normal Mode')
+
+def wakeupButton():
+    """ in order to wake up  the inverter , press this button """
+    return 'battery_awaken'
+
 # =================================================================================================
 
 @dataclass

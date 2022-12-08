@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.components.button import ButtonEntity
 
 _LOGGER = logging.getLogger(__name__)
 try: # pymodbus 3.0.x
@@ -111,14 +112,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin_name)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin_name, config)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
-
-    # read serial number - changed seriesnumber to global to allow filtering
-    #global seriesnumber
-    _LOGGER.debug(f"{hub.name}: ready to call plugin to determine inverter type")
-    getPlugin(name).determineInverterType(hub, config)
 
     for component in PLATFORMS:
         hass.async_create_task(
@@ -144,6 +140,8 @@ async def async_unload_entry(hass, entry):
     hass.data[DOMAIN].pop(entry.options["name"])
     return True
 
+def defaultIsAwake( datadict):
+    return True
 
 def Gen4Timestring(numb):
     h = numb % 256
@@ -164,7 +162,8 @@ class SolaXModbusHub:
         serial_port,
         baudrate,
         scan_interval,
-        plugin_name
+        plugin_name,
+        config
     ):
         """Initialize the Modbus hub."""
         _LOGGER.debug(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
@@ -185,7 +184,6 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensors = []
         self.data = {}
-        #self.newdata = {} # temporary during software migration - please remove later
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
@@ -194,6 +192,12 @@ class SolaXModbusHub:
         self.plugin_name = plugin_name
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
+        self.writequeue = {} # queue requests when inverter is in sleep mode
+        _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
+        self.plugin = getPlugin(name)
+        self.awake_button = None
+        self.plugin.determineInverterType(self, config)
+        self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -281,15 +285,26 @@ class SolaXModbusHub:
             kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
+
     def write_register(self, unit, address, payload):
         """Write registers."""
-        with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
-            builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
-            builder.reset()
-            builder.add_16bit_int(payload)
-            payload = builder.to_registers()
-            return self._client.write_register(address, payload[0], **kwargs)
+        awake = self.awakeplugin(self.data)
+        if awake:
+            with self._lock:
+                kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+                builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+                builder.reset()
+                builder.add_16bit_int(payload)
+                payload = builder.to_registers()
+                return self._client.write_register(address, payload[0], **kwargs)
+        else:
+            # put request in queue
+            self.writequeue[address] = payload
+            # awaken inverter
+            if self.awake_button: 
+                _LOGGER.info("waking up inverter: pressing awake button")
+                self.write_register(unit=self._modbus_addr, address=self.awake_button._register, payload=self.awake_button._command)
+            else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
 
     def read_modbus_data(self):
         res = True
@@ -306,6 +321,7 @@ class SolaXModbusHub:
 
     def treat_address(self, decoder, descr, initval=0):
         val = 0
+        return_value = None
         if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
@@ -322,12 +338,13 @@ class SolaXModbusHub:
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         if type(descr.scale) is dict: # translate int to string 
-            self.data[descr.key] = descr.scale.get(val, "Unknown")
+            return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
-            self.data[descr.key] = descr.scale(val, descr, self.data) 
+            return_value = descr.scale(val, descr, self.data) 
         else: # apply simple numeric scaling and rounding if not a list of words
-            try:    self.data[descr.key] = round(val*descr.scale, descr.rounding) 
-            except: self.data[descr.key] = val # probably a REGISTER_WORDS instance
+            try:    return_value = round(val*descr.scale, descr.rounding) 
+            except: return_value = val # probably a REGISTER_WORDS instance
+        self.data[descr.key] = return_value
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
@@ -368,7 +385,13 @@ class SolaXModbusHub:
         for reg in self.computedRegs:
             descr = self.computedRegs[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
+        if res and self.writequeue and self.awakeplugin(self.data):
+            # process outstanding write requests
+            _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
+            for addr in self.writequeue:
+                val = self.writequeue.pop(addr)
+                self.write_register(self.modbus_addr, addr, val)
+            self.writequeue = {} # not really needed
         return res
-
 
 
