@@ -1756,7 +1756,23 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Parallel Address",
         key = "parallel_address",
         register = 0x1037,
+        entity_registry_enabled_default=False,
         allowedtypes = HYBRID | PV | X3 | PM,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Battery Minimum Capacity",
+        key = "battery_minimum_capacity",
+        register = 0x104D,
+        newblock = True,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Battery Minimum Capacity OffGrid",
+        key = "battery_minimum_capacity_offgrid",
+        register = 0x104E,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
     ),
 ###
 #
@@ -1836,6 +1852,13 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x1121,
         scale = { 0: "Disabled",
                   1: "Enabled", },
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Time of Use Charge SOC",
+        key = "time_of_use_charge_soc", 
+        register = 0x1124,
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
