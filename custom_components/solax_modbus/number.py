@@ -68,7 +68,7 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state
         self.entity_description = number_info
-        self._write_registers = select_info.write_registers
+        self._write_registers = number_info.write_registers
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""

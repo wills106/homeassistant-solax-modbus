@@ -199,7 +199,7 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 def value_function_pv_total_power(initval, descr, datadict):
-    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
+    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0) + datadict.get('pv_power_3',0)
 
 def value_function_grid_import(initval, descr, datadict):
     val = datadict["measured_power"]
@@ -212,7 +212,9 @@ def value_function_grid_export(initval, descr, datadict):
     else: return 0
 
 def value_function_house_load(initval, descr, datadict):
-    return datadict['inverter_load'] - datadict['measured_power']
+    return (   datadict.get('pv_power_1', 0) +  datadict.get('pv_power_2', 0) + datadict.get('pv_power_3', 0)
+             - datadict['battery_power_charge'] 
+             - datadict['measured_power'] )
 
 def value_function_rtc(initval, descr, datadict):
     try:

@@ -1,6 +1,5 @@
 
 import logging
-from xmlrpc.client import boolean
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
