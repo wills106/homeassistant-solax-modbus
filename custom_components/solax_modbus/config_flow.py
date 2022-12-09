@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_PORT,
                                  CONF_SCAN_INTERVAL,)
+from homeassistant.const import (MAJOR_VERSION, MINOR_VERSION, )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
@@ -111,32 +112,71 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
         if not res: raise SchemaFlowError("invalid_host") from e
     _LOGGER.info(f"validating host: returning data: {user_input}")
     return user_input
-    """
-    # use an id that is more than the IP address, for compatibilityu reasons, only do this with non-default settings
-    if ( (port != DEFAULT_PORT) or (modbus_addr != DEFAULT_MODBUS_ADDR) ):  hostid = f"{host}_{port}_{modbus_addr}"
-    else: hostid = host
-    if self._host_in_configuration_exists(hostid):
-        errors[CONF_HOST] = "already_configured"
-    elif not host_valid(user_input[CONF_HOST]) and not serial:
-        errors[CONF_HOST] = "invalid host IP"
-    else:
-        await self.async_set_unique_id(hostid) #user_input[CONF_HOST])
-    """
 
 async def _next_step(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
 
-CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-    "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
-    "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-    "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
-}
+# remove soon please
+def _old_validate_base(data: Any) -> Any:
+    """Validate config."""
+    interface   = data[CONF_INTERFACE]
+    modbus_addr = data[CONF_MODBUS_ADDR]
+    name        = data[CONF_NAME]
+    _LOGGER.info(f"validating base config for {name}: pre: {data}")
+    if getPlugin(name) or ((name == DEFAULT_NAME) and (data[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
+        _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
+        data[CONF_NAME] = getPluginName(data[CONF_PLUGIN])
+        raise SchemaFlowError("name_already_used") 
+    return data
 
-OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-    "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
-    "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-    "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
-}
+# remove soon please
+def _old_validate_host(data: Any) -> Any:
+    port        = data[CONF_PORT]
+    host        = data[CONF_HOST]
+    try:
+        if ipaddress.ip_address(host).version == (4 or 6):  pass
+    except Exception as e:
+        _LOGGER.warning(e, exc_info = True)
+        _LOGGER.warning("valid IP address? Trying to validate it in another way")
+        disallowed = re.compile(r"[^a-zA-Z\d\-]")
+        res = all(x and not disallowed.search(x) for x in host.split("."))
+        if not res: raise SchemaFlowError("invalid_host") from e
+    _LOGGER.info(f"validating host: returning data: {data}")
+    return data
+
+# remove soon please
+def _old_next_step(data: Any) -> str:
+    return data[CONF_INTERFACE] # eitheer "tcp" or "serial"
+
+
+if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)): 
+    _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
+        "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
+        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
+        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
+    }
+    OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
+        "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
+        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
+        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
+    }
+
+else: # for older versions - REMOVE SOON
+    _LOGGER.warning(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
+        "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_old_validate_base, next_step = _old_next_step),
+        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
+        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_old_validate_host),
+    }
+    OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
+        "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_old_validate_base, next_step = _old_next_step),
+        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
+        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_old_validate_host),
+    }
+
+
+
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     #Handle a config or options flow for Utility Meter.
@@ -151,62 +191,4 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
         # Return config entry title
         return cast(str, options[CONF_NAME]) if CONF_NAME in options else ""
 
-"""
 
-def host_valid(host):
-    # Return True if hostname or IP address is valid
-    try:
-        if ipaddress.ip_address(host).version == (4 or 6):
-            return True
-    except ValueError:
-        disallowed = re.compile(r"[^a-zA-Z\d\-]")
-        return all(x and not disallowed.search(x) for x in host.split("."))
-
-
-@callback
-def solax_modbus_entries(hass: HomeAssistant):
-    #Return the hosts already configured.
-    return set(
-        entry.data[CONF_HOST] for entry in hass.config_entries.async_entries(DOMAIN)
-    )
-
-
-class SolaXModbusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    #SolaX Modbus configflow.
-
-    VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
-
-    def _host_in_configuration_exists(self, host) -> bool:
-        #Return True if host exists in configuration.
-        if host in solax_modbus_entries(self.hass):
-            return True
-        return False
-
-    async def async_step_user(self, user_input=None):
-        #Handle the initial step.
-        errors = {}
-
-        if user_input is not None:
-            host = user_input[CONF_HOST]
-            serial = user_input[CONF_SERIAL]
-            modbus_addr = user_input[CONF_MODBUS_ADDR]
-            port = user_input[CONF_PORT]
-            # use an id that is more than the IP address, for compatibilityu reasons, only do this with non-default settings
-            if ( (port != DEFAULT_PORT) or (modbus_addr != DEFAULT_MODBUS_ADDR) ):  hostid = f"{host}_{port}_{modbus_addr}"
-            else: hostid = host
-            if self._host_in_configuration_exists(hostid):
-                errors[CONF_HOST] = "already_configured"
-            elif not host_valid(user_input[CONF_HOST]) and not serial:
-                errors[CONF_HOST] = "invalid host IP"
-            else:
-                await self.async_set_unique_id(hostid) #user_input[CONF_HOST])
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=user_input[CONF_NAME], data=user_input
-                )
-
-        return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
-        )
-"""
