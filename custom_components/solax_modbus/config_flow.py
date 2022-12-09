@@ -12,6 +12,7 @@ from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_PORT,
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
+    SchemaCommonFlowHandler,
     SchemaConfigFlowHandler,
     SchemaFlowError,
     SchemaFlowFormStep,
@@ -85,21 +86,21 @@ TCP_SCHEMA = vol.Schema( {
     } )
 
 
-def _validate_base(data: Any) -> Any:
+async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any] :
     """Validate config."""
-    interface   = data[CONF_INTERFACE]
-    modbus_addr = data[CONF_MODBUS_ADDR]
-    name        = data[CONF_NAME]
-    _LOGGER.info(f"validating base config for {name}: pre: {data}")
-    if getPlugin(name) or ((name == DEFAULT_NAME) and (data[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
+    interface   = user_input[CONF_INTERFACE]
+    modbus_addr = user_input[CONF_MODBUS_ADDR]
+    name        = user_input[CONF_NAME]
+    _LOGGER.info(f"validating base config for {name}: pre: {user_input}")
+    if getPlugin(name) or ((name == DEFAULT_NAME) and (user_input[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
         _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
-        data[CONF_NAME] = getPluginName(data[CONF_PLUGIN])
+        user_input[CONF_NAME] = getPluginName(user_input[CONF_PLUGIN])
         raise SchemaFlowError("name_already_used") 
-    return data
+    return user_input
 
-def _validate_host(data: Any) -> Any:
-    port        = data[CONF_PORT]
-    host        = data[CONF_HOST]
+async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> Any:
+    port        = user_input[CONF_PORT]
+    host        = user_input[CONF_HOST]
     try:
         if ipaddress.ip_address(host).version == (4 or 6):  pass
     except Exception as e:
@@ -108,8 +109,8 @@ def _validate_host(data: Any) -> Any:
         disallowed = re.compile(r"[^a-zA-Z\d\-]")
         res = all(x and not disallowed.search(x) for x in host.split("."))
         if not res: raise SchemaFlowError("invalid_host") from e
-    _LOGGER.info(f"validating host: returning data: {data}")
-    return data
+    _LOGGER.info(f"validating host: returning data: {user_input}")
+    return user_input
     """
     # use an id that is more than the IP address, for compatibilityu reasons, only do this with non-default settings
     if ( (port != DEFAULT_PORT) or (modbus_addr != DEFAULT_MODBUS_ADDR) ):  hostid = f"{host}_{port}_{modbus_addr}"
@@ -122,8 +123,8 @@ def _validate_host(data: Any) -> Any:
         await self.async_set_unique_id(hostid) #user_input[CONF_HOST])
     """
 
-def _next_step(data: Any) -> str:
-    return data[CONF_INTERFACE] # eitheer "tcp" or "serial"
+async def _next_step(user_input: Any) -> str:
+    return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
 
 CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
     "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
