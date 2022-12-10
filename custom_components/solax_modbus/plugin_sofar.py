@@ -142,7 +142,16 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES = [
+    SofarModbusButtonEntityDescription(
+        name = "Timing Control",
+        key = "timing_control",
+        register = 0x111F,
+        command = 1,
+        allowedtypes = HYBRID,
+        icon="mdi:battery-clock",
+    ),
+]
 
 SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [ 
 
@@ -1836,7 +1845,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         #entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
-    )
+    ),
     SofarModbusSensorEntityDescription(
         name="Discharger Power", 
         key="discharger_power",
@@ -1846,7 +1855,14 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         #entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
-    )
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Timing Control",
+        key = "timeing_control", 
+        register = 0x111F,
+        #entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
     SofarModbusSensorEntityDescription(
         name = "Time of Use ID",
         key = "time_of_use_id",
