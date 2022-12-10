@@ -6,7 +6,7 @@
 
 # homsassistant-solax-modbus
 
-## 0.7.0 Beta x adds in preliminary support for Ginlong Solis & Sofar Solar
+## 2022.12.1 adds in support for Ginlong Solis & Sofar Solar Inverters, some aspects are still in development.
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
@@ -23,7 +23,8 @@ Ginlong Solis
 - Unknown Models
 
 Sofar Solar
-- HYD20KTL
+- HYDxxKTL-3P (plugin_sofar)
+- HYDxxxxES (plugin_sofar_old)
 - Unknown Models
 
 SolaX Power
