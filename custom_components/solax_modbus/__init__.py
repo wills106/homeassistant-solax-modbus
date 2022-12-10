@@ -237,7 +237,7 @@ class SolaXModbusHub:
             else: 
                 _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
-                for i in self.sleepnone: self.data.pop(i)
+                for i in self.sleepnone: self.data.pop(i, None)
                 for i in self.sleepzero: self.data[i] = 0
                 # self.data = {} # invalidate data - do we want this ??
 
@@ -326,7 +326,6 @@ class SolaXModbusHub:
 
 
     def treat_address(self, decoder, descr, initval=0):
-        val = 0
         return_value = None
         if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
@@ -339,10 +338,13 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_ULSB16MSB16: val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint()*256*256
             elif descr.unit == REGISTER_U8L: val = initval % 256
             elif descr.unit == REGISTER_U8H: val = initval >> 8
-            else: _LOGGER.warning(f"undefinded unit for entity {descr.key}")
+            else: 
+                _LOGGER.warning(f"undefinded unit for entity {descr.key} - setting value to zero")
+                val = 0
         except Exception as ex: 
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
+            val = 0
         if type(descr.scale) is dict: # translate int to string 
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
