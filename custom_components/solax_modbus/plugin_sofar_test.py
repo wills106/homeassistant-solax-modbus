@@ -96,8 +96,6 @@ def determineInverterType(hub, configdict):
     if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
     elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
     elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
-    elif seriesnumber.startswith('SM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES, Not actually X3, needs changing
-    elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES 2nd type, Not actually X3, needs changing
     elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
     elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
     elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
@@ -1752,9 +1750,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key = "remote_control",
         register = 0x1104,
         newblock = True,
-        scale = { 0: "Off",
-                  1: "On", },
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
@@ -1773,20 +1769,14 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Timing ID",
         key = "timing_id",
         register = 0x1111,
-        scale = { 0: "0",
-                  1: "1",
-                  2: "2", 
-                  3: "3", },
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
         name = "Timing Charge On-Off",
         key = "timing_charge_onoff",
         register = 0x1112,
-        scale = { 0: "On",
-                  1: "Off", },
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
@@ -1829,24 +1819,14 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Time of Use ID",
         key = "time_of_use_id",
         register = 0x1120,
-        scale = { 0: "0",
-                  1: "1",
-                  2: "2", 
-                  3: "3",
-                  4: "4",
-                  5: "5",
-                  6: "6",
-                  7: "7", },
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
         name = "Time of Use On-Off",
         key = "time_of_use_onoff",
         register = 0x1121,
-        scale = { 0: "Disabled",
-                  1: "Enabled", },
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
