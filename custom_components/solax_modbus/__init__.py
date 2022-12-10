@@ -49,6 +49,7 @@ from .const import (
     DEFAULT_BAUDRATE,
     DEFAULT_PLUGIN,
     PLUGIN_PATH,
+    SLEEPMODE_LASTAWAKE,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import setPlugin, getPlugin, getPluginName
@@ -352,7 +353,7 @@ class SolaXModbusHub:
         else: # apply simple numeric scaling and rounding if not a list of words
             try:    return_value = round(val*descr.scale, descr.rounding) 
             except: return_value = val # probably a REGISTER_WORDS instance
-        self.data[descr.key] = return_value
+        if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 

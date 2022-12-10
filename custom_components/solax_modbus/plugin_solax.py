@@ -3610,6 +3610,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3621,6 +3622,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3632,6 +3634,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3644,6 +3647,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3655,6 +3659,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3666,6 +3671,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3811,6 +3817,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.001,
         rounding = 2,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC | GEN,
     ),
     SolaXMicModbusSensorEntityDescription(
@@ -3839,6 +3846,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = MIC | GEN2,
     ),
     SolaXMicModbusSensorEntityDescription(

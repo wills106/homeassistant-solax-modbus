@@ -68,8 +68,9 @@ DEFAULT_BAUDRATE = "19200"
 DEFAULT_PLUGIN   = "custom_components/solax_modbus/plugin_solax.py"
 PLUGIN_PATH      = "custom_components/solax_modbus/plugin_*.py"
 SLEEPMODE_NONE   = None
-SLEEPMODE_ZERO   = 0
-SLEEPMODE_LAST   = 1
+SLEEPMODE_ZERO   = 0 # when no communication at all
+SLEEPMODE_LAST   = 1 # when no communication at all
+SLEEPMODE_LASTAWAKE = 2 # when still responding but register must be ignored when not awake
 
 
 # ================================= Definitions for Sennsor Declarations =================================================
