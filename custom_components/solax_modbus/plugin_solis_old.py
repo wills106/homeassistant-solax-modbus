@@ -134,39 +134,6 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
-# ================================= Computed sensor value functions  =================================================
-
-
-def value_function_pv_total_power(initval, descr, datadict):
-    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
-
-def value_function_grid_import(initval, descr, datadict):
-    val = datadict["feedin_power"]
-    if val<0: return abs(val)
-    else: return 0
-
-def value_function_grid_export(initval, descr, datadict):
-    val = datadict["feedin_power"]
-    if val>0: return val
-    else: return 0
-
-def value_function_house_load(initval, descr, datadict):
-    return datadict['inverter_load'] - datadict['feedin_power']
-
-def value_function_rtc(initval, descr, datadict):
-    (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
-    val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-    return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
-
-def value_function_gen4time(initval, descr, datadict):
-    h = initval % 256
-    m = initval >> 8
-    return f"{h:02d}:{m:02d}"
-
-def value_function_gen23time(initval, descr, datadict):
-    (h,m,) = initval
-    return f"{h:02d}:{m:02d}"
-
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = []

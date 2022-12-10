@@ -140,41 +140,19 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
-# ================================= Computed sensor value functions  =================================================
-
-def value_function_pv_total_power(initval, descr, datadict):
-    return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0)
-
-def value_function_grid_import(initval, descr, datadict):
-    val = datadict["feedin_power"]
-    if val<0: return abs(val)
-    else: return 0
-
-def value_function_grid_export(initval, descr, datadict):
-    val = datadict["feedin_power"]
-    if val>0: return val
-    else: return 0
-
-def value_function_house_load(initval, descr, datadict):
-    return datadict['inverter_load'] - datadict['feedin_power']
-
-def value_function_rtc(initval, descr, datadict):
-    (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
-    val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-    return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
-
-def value_function_gen4time(initval, descr, datadict):
-    h = initval % 256
-    m = initval >> 8
-    return f"{h:02d}:{m:02d}"
-
-def value_function_gen23time(initval, descr, datadict):
-    (h,m,) = initval
-    return f"{h:02d}:{m:02d}"
-
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES = [
+    SofarModbusButtonEntityDescription(
+        name = "Timing Control",
+        key = "timing_control",
+        register = 0x111F,
+        command = 1,
+        allowedtypes = HYBRID,
+        write_registers = True,
+        icon="mdi:battery-clock",
+    ),
+]
 
 SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [ 
 
@@ -1208,8 +1186,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | PV | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "PV Total Power",
-        key = "pv_total_power",
+        name = "PV Power Total",
+        key = "pv_power_total",
         native_unit_of_measurement = POWER_KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x5C4,
@@ -1802,11 +1780,24 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing Charge On-Off",
-        key = "timing_charge_onoff",
+        name = "Timing ID",
+        key = "timing_id",
+        register = 0x1111,
+        scale = { 0: "0",
+                  1: "1",
+                  2: "2", 
+                  3: "3", },
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Timing Charge",
+        key = "timing_charge",
         register = 0x1112,
-        scale = { 0: "On",
-                  1: "Off", },
+        scale = { 0: "Disabled",
+                  1: "Charging Enabled",
+                  2: "Discharging Enabled",
+                  4: "Charging / Discharging Enabled", },
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
@@ -1814,7 +1805,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Charger Start Time", 
         key="charger_start_time",
         register = 0x1113,
-        scale = value_function_gen4time,
+        scale = value_function_sofartime,
         entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
         icon="mdi:battery-clock",
@@ -1823,7 +1814,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Charger End Time", 
         key="charger_end_time",
         register = 0x1114,
-        scale = value_function_gen4time,
+        scale = value_function_sofartime,
         entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
         icon="mdi:battery-clock",
@@ -1832,7 +1823,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Discharger Start Time", 
         key="discharger_start_time",
         register = 0x1115,
-        scale = value_function_gen4time,
+        scale = value_function_sofartime,
         entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
         icon="mdi:battery-clock",
@@ -1841,10 +1832,52 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Discharger End Time", 
         key="discharger_end_time",
         register = 0x1116,
-        scale = value_function_gen4time,
+        scale = value_function_sofartime,
         entity_registry_enabled_default=False,
         allowedtypes= HYBRID,
         icon="mdi:battery-clock",
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Charger Power", 
+        key="charger_power",
+        native_unit_of_measurement = POWER_WATT,
+        device_class = SensorDeviceClass.POWER,
+        register = 0x1117,
+        unit = REGISTER_U32,
+        #entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Discharger Power", 
+        key="discharger_power",
+        native_unit_of_measurement = POWER_WATT,
+        device_class = SensorDeviceClass.POWER,
+        register = 0x1119,
+        unit = REGISTER_U32,
+        #entity_registry_enabled_default=False,
+        allowedtypes= HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Timing Control",
+        key = "timeing_control", 
+        register = 0x111F,
+        #entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Time of Use ID",
+        key = "time_of_use_id",
+        register = 0x1120,
+        scale = { 0: "0",
+                  1: "1",
+                  2: "2", 
+                  3: "3",
+                  4: "4",
+                  5: "5",
+                  6: "6",
+                  7: "7", },
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
         name = "Time of Use On-Off",
@@ -2099,12 +2132,27 @@ SELECT_TYPES = [
         write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
-        name = "Timing Charge On-Off",
-        key = "timing_charge_onoff",
+        name = "Timing ID",
+        key = "timing_id",
+        register = 0x1111,
+        option_dict =  {
+                0: "0",
+                1: "1",
+                2: "2",
+                3: "3",
+            },
+        allowedtypes = HYBRID,
+        write_registers = True,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Timing Charge",
+        key = "timing_charge",
         register = 0x1112,
         option_dict =  {
-                0: "On",
-                1: "Off",
+                0: "Disabled",
+                1: "Charging Enabled",
+                2: "Discharging Enabled",
+                4: "Charging / Discharging Enabled",
             },
         allowedtypes = HYBRID,
         write_registers = True,
@@ -2112,7 +2160,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription( name = "Charger Start Time",
         key = "charger_start_time",
         register = 0x1113,
-        option_dict = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
         write_registers = True,
         entity_category = EntityCategory.CONFIG,
@@ -2121,7 +2169,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription( name = "Charger End Time",
         key = "charger_end_time",
         register = 0x1114,
-        option_dict = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
         write_registers = True,
         entity_category = EntityCategory.CONFIG,
@@ -2130,7 +2178,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription( name = "Discharger Start Time",
         key = "discharger_start_time",
         register = 0x1115,
-        option_dict = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
         write_registers = True,
         entity_category = EntityCategory.CONFIG,
@@ -2139,7 +2187,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription( name = "Discharger End Time",
         key = "discharger_end_time",
         register = 0x1116,
-        option_dict = TIME_OPTIONS_GEN4,
+        option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
         write_registers = True,
         entity_category = EntityCategory.CONFIG,

@@ -6,7 +6,7 @@
 
 # homsassistant-solax-modbus
 
-## 0.7.0 Beta x adds in preliminary support for Ginlong Solis & Sofar Solar
+## 2022.12.1 adds in support for Ginlong Solis & Sofar Solar Inverters, some aspects are still in development.
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
@@ -23,7 +23,8 @@ Ginlong Solis
 - Unknown Models
 
 Sofar Solar
-- HYD20KTL
+- HYDxxKTL-3P (plugin_sofar)
+- HYDxxxxES (plugin_sofar_old)
 - Unknown Models
 
 SolaX Power
@@ -142,3 +143,4 @@ Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modb
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. **Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8**
 5. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.
+6. If you try and reconfigure and existing Integration instance you get "Name was already used or was invalid" You need to remove the Integration from the Integration Page, restart HA and reconfigure the Integration with your new settings. If you retain the same name any dashboards will continue as normal.
