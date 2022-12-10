@@ -3823,6 +3823,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement=POWER_WATT,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
+        entity_registry_enabled_default=False,
         allowedtypes = MIC,
         icon="mdi:solar-power-variant",
     ),
