@@ -3817,6 +3817,16 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXMicModbusSensorEntityDescription(
+        name="PV Total Power",
+        key="pv_total_power",
+        value_function= value_function_pv_power_total,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        allowedtypes = MIC,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXMicModbusSensorEntityDescription(
         name="Total Yield",
         key="total_yield",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
