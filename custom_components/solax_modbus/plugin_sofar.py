@@ -2108,8 +2108,8 @@ SELECT_TYPES = [
         write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
-        name = "Timing Charge On-Off",
-        key = "timing_charge_onoff",
+        name = "Timing Charge",
+        key = "timing_charge",
         register = 0x1112,
         option_dict =  {
                 0: "Disabled",
