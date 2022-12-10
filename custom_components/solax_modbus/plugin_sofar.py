@@ -149,6 +149,7 @@ BUTTON_TYPES = [
         register = 0x111F,
         command = 1,
         allowedtypes = HYBRID,
+        write_registers = True,
         icon="mdi:battery-clock",
     ),
 ]

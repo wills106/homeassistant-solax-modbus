@@ -128,6 +128,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     register: int = None
     command: int = None
     blacklist: list = None # none or list of serial number prefixes
+    write_registers: bool = False
 
 @dataclass
 class BaseModbusSelectEntityDescription(SelectEntityDescription):

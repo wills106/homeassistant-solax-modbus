@@ -287,7 +287,7 @@ class SolaXModbusHub:
 
 
     def write_register(self, unit, address, payload):
-        """Write registers."""
+        """Write register."""
         awake = self.awakeplugin(self.data)
         if awake:
             with self._lock:
