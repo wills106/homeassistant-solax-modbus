@@ -2172,6 +2172,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Total Power",
+        key="pv_total_power",
+        value_function= value_function_pv_power_total,
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID | PV,
+        icon="mdi:solar-power-variant",
+        sleepmode = SLEEPMODE_ZERO,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Registration Code Lan",
         key="registration_code_lan",
         register=0xAF,

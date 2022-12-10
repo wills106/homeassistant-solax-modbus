@@ -70,6 +70,6 @@ class SolaXModbusButton(ButtonEntity):
         """Write the button value."""
         _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
         if self._write_registers == True:
-            self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
+            self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=self._command)
         else:
-            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
