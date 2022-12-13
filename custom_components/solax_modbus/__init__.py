@@ -286,25 +286,26 @@ class SolaXModbusHub:
             kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
+    def _lowlevel_write_register(self, unit, address, payload):
+        with self._lock:
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            builder.reset()
+            builder.add_16bit_int(payload)
+            payload = builder.to_registers()
+            return self._client.write_register(address, payload[0], **kwargs)
 
     def write_register(self, unit, address, payload):
         """Write register."""
         awake = self.awakeplugin(self.data)
-        if awake:
-            with self._lock:
-                kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
-                builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
-                builder.reset()
-                builder.add_16bit_int(payload)
-                payload = builder.to_registers()
-                return self._client.write_register(address, payload[0], **kwargs)
+        if awake: return self._lowlevel_write_register(unit, address, payload)
         else:
             # put request in queue
             self.writequeue[address] = payload
             # awaken inverter
             if self.awake_button: 
                 _LOGGER.info("waking up inverter: pressing awake button")
-                self.write_register(unit=self._modbus_addr, address=self.awake_button.register, payload=self.awake_button.command)
+                return self._lowlevel_write_register(unit=self._modbus_addr, address=self.awake_button.register, payload=self.awake_button.command)
             else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
     
     def write_registers(self, unit, address, payload): # Needs adapting for regiater que
