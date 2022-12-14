@@ -95,10 +95,8 @@ class SolaXModbusSelect(SelectEntity):
         payload = get_payload(self._option_dict, option)
         _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
         if self._write_registers == True:
-            _LOGGER.error(f"write registers is true")
             self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
         else:
-            _LOGGER.error(f"write registers is false")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
 
         self._hub.data[self._key] = option
