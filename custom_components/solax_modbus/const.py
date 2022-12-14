@@ -166,6 +166,18 @@ def value_function_battery_input(initval, descr, datadict):
     if val>0: return val
     else: return 0
 
+def value_function_battery_output_solis(initval, descr, datadict):
+    inout = datadict["battery_charge_direction"]
+    val = datadict["battery_power"]
+    if inout == 1: return abs(val)
+    else: return 0
+
+def value_function_battery_input_solis(initval, descr, datadict):
+    inout = datadict["battery_charge_direction"]
+    val = datadict["battery_power"]
+    if inout == 0: return val
+    else: return 0
+
 def value_function_grid_import(initval, descr, datadict):
     val = datadict["measured_power"]
     if val<0: return abs(val)
