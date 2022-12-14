@@ -745,8 +745,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name="Battery Charge Direction",
         key="battery_charge_direction",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=DEVICE_CLASS_BATTERY,
         register = 33135,
         register_type = REG_INPUT,
         #entity_registry_enabled_default=False,
