@@ -747,7 +747,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key="battery_charge_direction",
         register = 33135,
         register_type = REG_INPUT,
-        #entity_registry_enabled_default=False,
+        entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -845,7 +845,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 33149,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        #entity_registry_enabled_default=False,
+        entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
         icon="mdi:home",
     ),
