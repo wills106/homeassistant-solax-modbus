@@ -214,6 +214,11 @@ def value_function_sofartime(initval, descr, datadict):
     h = initval >> 8
     return f"{h:02d}:{m:02d}"
 
+def value_function_firmware(initval, descr, datadict):
+    m = initval % 256
+    h = initval >> 8
+    return f"{h}.{m:02d}"
+
 # ================================= Computed Time Values =================================================
 
 TIME_OPTIONS = {

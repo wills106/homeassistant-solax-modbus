@@ -1058,6 +1058,263 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [ 
+    ###
+    #
+    # Holding
+    #
+    ###
+    
+    # Gen3 BMS
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery Installed",
+        key="bms_battery_installed",
+        register = 0x180,
+        scale = 0.5,
+        rounding = 0,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Master Version",
+        key="bms_master_version",
+        register = 0x181,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 1 Version",
+        key="bms_battery_1_version",
+        register = 0x182,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 2 Version",
+        key="bms_battery_2_version",
+        register = 0x184,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 3 Version",
+        key="bms_battery_3_version",
+        register = 0x186,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 4 Version",
+        key="bms_battery_4_version",
+        register = 0x188,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3 | X3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Master Serial Number",
+        key="bms_master_serial_number",
+        register=0x18A,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 1 Serial Number",
+        key="bms_battery_1_serial_number",
+        register=0x191,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 2 Serial Number",
+        key="bms_battery_2_serial_number",
+        register=0x198,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 3 Serial Number",
+        key="bms_battery_3_serial_number",
+        register=0x19F,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 4 Serial Number",
+        key="bms_battery_4_serial_number",
+        register=0x206,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN3 | X3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    # Gen4 BMS
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery Installed",
+        key="bms_battery_installed",
+        register = 0x200,
+        scale = 0.5,
+        rounding = 0,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Master Version",
+        key="bms_master_version",
+        register = 0x201,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 1 Version",
+        key="bms_battery_1_version",
+        register = 0x202,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 2 Version",
+        key="bms_battery_2_version",
+        register = 0x204,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 3 Version",
+        key="bms_battery_3_version",
+        register = 0x206,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 4 Version",
+        key="bms_battery_4_version",
+        register = 0x208,
+        scale = value_function_firmware,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4 | X3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Master Serial Number",
+        key="bms_master_serial_number",
+        register=0x20A,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 1 Serial Number",
+        key="bms_battery_1_serial_number",
+        register=0x211,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 2 Serial Number",
+        key="bms_battery_2_serial_number",
+        register=0x218,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 3 Serial Number",
+        key="bms_battery_3_serial_number",
+        register=0x21F,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Battery 4 Serial Number",
+        key="bms_battery_4_serial_number",
+        register=0x226,
+        unit=REGISTER_STR,
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID | AC | GEN4 | X3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+
+
+    ###
+    #
+    # Input
+    #
+    ###
+
+
+
+    ###
+    #
+    # Needs sorting into Register Order
+    #
+    ###
+
+    
     SolaXModbusSensorEntityDescription(
         name="Allow Grid Charge",
         key="allow_grid_charge",
