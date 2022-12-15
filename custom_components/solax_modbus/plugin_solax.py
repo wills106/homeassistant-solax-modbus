@@ -1357,6 +1357,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register = 0x26,
         register_type = REG_INPUT,
+        unit = REGISTER_U32,
         #scale = 0.1,
         #rounding = 1,
         allowedtypes= GEN4,
