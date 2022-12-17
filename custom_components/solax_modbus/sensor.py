@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
-from .const import getPlugin
+from .const import getPlugin, getPluginName
 from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
@@ -30,14 +30,19 @@ class block():
     regs: Any = None # sorted list of registers used in this block
 
 
-def splitInBlocks( descriptions ):
+def splitInBlocks( descriptions, plugin_name ):
     start = INVALID_START
     end = 0
     blocks = []
     curblockregs = []
+    plugin_name = plugin_name
+    if plugin_name == 'solis':
+        block_size = 50
+    else:
+        block_size = 100
     for reg in descriptions:
         descr = descriptions[reg]
-        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > 100)): 
+        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
             if ((end - start) > 0): 
                 _LOGGER.info(f"Starting new block at 0x{reg:x} ")
                 newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
@@ -68,6 +73,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
     else: hub_name = entry.options[CONF_NAME] # new format
     hub = hass.data[DOMAIN][hub_name]["hub"]
+
 
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
@@ -137,8 +143,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
     if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
     # split in blocks and store results
-    hub.holdingBlocks = splitInBlocks(holdingRegs)
-    hub.inputBlocks = splitInBlocks(inputRegs)
+    plugin_name = str(plugin).split("plugin_")[-1].split(".")[0]
+    hub.holdingBlocks = splitInBlocks(holdingRegs, plugin_name)
+    hub.inputBlocks = splitInBlocks(inputRegs, plugin_name)
     hub.computedRegs = computedRegs
 
     for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
