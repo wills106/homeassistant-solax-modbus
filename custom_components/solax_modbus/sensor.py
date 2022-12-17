@@ -37,7 +37,7 @@ def splitInBlocks( descriptions, plugin_name ):
     curblockregs = []
     plugin_name = plugin_name
     if plugin_name == 'solis':
-        block_size = 50
+        block_size = 48 # Solis max is 50, but still unstable
     else:
         block_size = 100
     for reg in descriptions:
