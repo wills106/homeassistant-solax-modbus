@@ -103,6 +103,31 @@ def getPlugin(instancename):
 def getPluginName(plugin_path):
     return plugin_path[len(PLUGIN_PATH)-4:-3]
 
+
+
+# ==================================== plugin base class ====================================================================
+
+@dataclass
+class plugin_base:
+    plugin_name: str
+    SENSOR_TYPES: list[SensorEntityDescription]
+    BUTTON_TYPES: list[ButtonEntityDescription]
+    NUMBER_TYPES: list[NumberEntityDescription]
+    SELECT_TYPES: list[SelectEntityDescription]
+    block_size: int = 100
+
+    def isAwake(self, datadict): 
+        return True # always awake by default
+
+    def wakeupButton(self):
+        return None # no wakeup button
+
+    def determineInverterType(self, hub, configdict): 
+        return 0
+
+    def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
+        return False
+
 # =================================== base class for sensor entity descriptions =========================================
 
 @dataclass

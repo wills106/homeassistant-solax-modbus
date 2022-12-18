@@ -45,18 +45,7 @@ ALL_DCB_GROUP  = DCB
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 
-def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
-    # returns true if the entity needs to be created for an inverter
-    genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
-    xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
-    hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
-    epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
-    dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
-    blacklisted = False
-    if blacklist:
-        for start in blacklist: 
-            if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+
 
 # ======================= end of bitmask handling code =============================================
 
@@ -78,28 +67,6 @@ def _read_serialnr(hub, address, swapbytes):
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
-
-def determineInverterType(hub, configdict):
-    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-    seriesnumber                       = _read_serialnr(hub, 33004,  swapbytes = False)
-    if not seriesnumber: 
-        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
-        seriesnumber = "unknown"
-
-    # derive invertertype from seriiesnumber
-    if seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model
-    elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model
-    elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92
-    #elif seriesnumber.startswith('abc123'):  invertertype = PV | X3 # Comment
-
-    else: 
-        invertertype = 0
-        _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-    read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-    read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-    if read_eps: invertertype = invertertype | EPS 
-    if read_dcb: invertertype = invertertype | DCB
-    hub.invertertype = invertertype
 
 
 @dataclass
@@ -1493,3 +1460,66 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),  
 ]
+
+
+
+# ============================ plugin declaration =================================================
+
+@dataclass
+class solis_plugin(plugin_base):
+    
+    """
+    def isAwake(self, datadict):
+        return (datadict.get('run_mode', None) == 'Normal Mode')
+
+    def wakeupButton(self):
+        return 'battery_awaken'
+    """
+
+
+    def determineInverterType(self, hub, configdict):
+        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        seriesnumber                       = _read_serialnr(hub, 33004,  swapbytes = False)
+        if not seriesnumber: 
+            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            seriesnumber = "unknown"
+
+        # derive invertertype from seriiesnumber
+        if seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model
+        elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model
+        elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92
+        #elif seriesnumber.startswith('abc123'):  invertertype = PV | X3 # Comment
+
+        else: 
+            invertertype = 0
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        if read_eps: invertertype = invertertype | EPS 
+        if read_dcb: invertertype = invertertype | DCB
+        return invertertype
+
+    def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
+        # returns true if the entity needs to be created for an inverter
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+        xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
+        hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
+        epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
+        dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        blacklisted = False
+        if blacklist:
+            for start in blacklist: 
+                if serialnumber.startswith(start) : blacklisted = True
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+
+
+
+plugin_instance = solis_plugin(
+    plugin_name = 'solis', 
+    SENSOR_TYPES = SENSOR_TYPES,
+    NUMBER_TYPES = NUMBER_TYPES,
+    BUTTON_TYPES = BUTTON_TYPES,
+    SELECT_TYPES = SELECT_TYPES, 
+    block_size = 48,
+    )
+

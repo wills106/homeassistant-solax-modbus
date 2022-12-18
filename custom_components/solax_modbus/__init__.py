@@ -176,7 +176,7 @@ class SolaXModbusHub:
         self._lock = threading.Lock()
         self._name = name
         self._modbus_addr = modbus_addr
-        self._invertertype = 0
+        #self._invertertype = 0
         self._seriesnumber = 'still unknown'
         self.interface = interface
         self.read_serial_port = serial_port
@@ -195,10 +195,10 @@ class SolaXModbusHub:
         self.sleepnone = [] # sensors that will be cleared in sleepmode
         self.writequeue = {} # queue requests when inverter is in sleep mode
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
-        self.plugin = getPlugin(name)
+        self.plugin = getPlugin(name).plugin_instance
         self.awake_button = None
-        self.plugin.determineInverterType(self, config)
-        self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
+        self._invertertype = self.plugin.determineInverterType(self, config)
+        #self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -297,13 +297,14 @@ class SolaXModbusHub:
 
     def write_register(self, unit, address, payload):
         """Write register."""
-        awake = self.awakeplugin(self.data)
+        #awake = self.awakeplugin(self.data)
+        awake = self.plugin.isAwake(self.data)
         if awake: return self._lowlevel_write_register(unit, address, payload)
         else:
             # put request in queue
             self.writequeue[address] = payload
             # awaken inverter
-            if self.awake_button: 
+            if self.awake_button:
                 _LOGGER.info("waking up inverter: pressing awake button")
                 return self._lowlevel_write_register(unit=self._modbus_addr, address=self.awake_button.register, payload=self.awake_button.command)
             else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
@@ -354,7 +355,9 @@ class SolaXModbusHub:
         else: # apply simple numeric scaling and rounding if not a list of words
             try:    return_value = round(val*descr.scale, descr.rounding) 
             except: return_value = val # probably a REGISTER_WORDS instance
-        if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
+        #if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
+        if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data): self.data[descr.key] = return_value
+
 
     def read_modbus_block(self, block, typ):
         if self.cyclecount <5: 
@@ -395,7 +398,7 @@ class SolaXModbusHub:
         for reg in self.computedRegs:
             descr = self.computedRegs[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-        if res and self.writequeue and self.awakeplugin(self.data):
+        if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for addr in self.writequeue:

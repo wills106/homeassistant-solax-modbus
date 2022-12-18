@@ -52,19 +52,6 @@ ALL_DCB_GROUP  = DCB
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 
-def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
-    # returns true if the entity needs to be created for an inverter
-    genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
-    xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
-    hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
-    epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
-    dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
-    blacklisted = False
-    if blacklist:
-        for start in blacklist: 
-            if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
-
 # ======================= end of bitmask handling code =============================================
 
 # ====================== find inverter type and details ===========================================
@@ -86,32 +73,6 @@ def _read_serialnr(hub, address, swapbytes):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     #return 'SP1ES2' 
     return res
-
-def determineInverterType(hub, configdict):
-    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-    seriesnumber                       = _read_serialnr(hub, 3061,  swapbytes = False)
-    if not seriesnumber: 
-        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
-        seriesnumber = "unknown"
-
-    # derive invertertype from seriiesnumber
-    if   seriesnumber.startswith('303105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW
-    elif seriesnumber.startswith('363105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
-    elif seriesnumber.startswith('463105'):  invertertype = HYBRID | X1 # Hybrid Gen5 4.6kW
-    elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
-    elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
-    elif seriesnumber.startswith('603122'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
-    elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
-
-    else: 
-        invertertype = 0
-        _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-    read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-    read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-    if read_eps: invertertype = invertertype | EPS 
-    if read_dcb: invertertype = invertertype | DCB
-    hub.invertertype = invertertype
-
 
 @dataclass
 class SolisModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
@@ -457,3 +418,73 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
 ]
+
+
+# ============================ plugin declaration =================================================
+
+@dataclass
+class solis_plugin(plugin_base):
+    
+    """
+    def isAwake(self, datadict):
+        return (datadict.get('run_mode', None) == 'Normal Mode')
+
+    def wakeupButton(self):
+        return 'battery_awaken'
+    """
+
+
+
+
+
+    def determineInverterType(self, hub, configdict):
+        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        seriesnumber                       = _read_serialnr(hub, 3061,  swapbytes = False)
+        if not seriesnumber: 
+            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            seriesnumber = "unknown"
+
+        # derive invertertype from seriiesnumber
+        if   seriesnumber.startswith('303105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW
+        elif seriesnumber.startswith('363105'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
+        elif seriesnumber.startswith('463105'):  invertertype = HYBRID | X1 # Hybrid Gen5 4.6kW
+        elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
+        elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
+        elif seriesnumber.startswith('603122'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
+        elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
+
+        else: 
+            invertertype = 0
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        if read_eps: invertertype = invertertype | EPS 
+        if read_dcb: invertertype = invertertype | DCB
+        #hub.invertertype = invertertype
+        return invertertype
+
+
+
+    def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
+        # returns true if the entity needs to be created for an inverter
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+        xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
+        hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
+        epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
+        dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        blacklisted = False
+        if blacklist:
+            for start in blacklist: 
+                if serialnumber.startswith(start) : blacklisted = True
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+
+
+
+plugin_instance = solis_plugin(
+    plugin_name = 'solis', 
+    SENSOR_TYPES = SENSOR_TYPES,
+    NUMBER_TYPES = NUMBER_TYPES,
+    BUTTON_TYPES = BUTTON_TYPES,
+    SELECT_TYPES = SELECT_TYPES, 
+    block_size = 48,
+    )

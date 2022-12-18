@@ -21,11 +21,11 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    plugin = getPlugin(hub_name)
+    plugin = hub.plugin #getPlugin(hub_name)
     entities = []
     for select_info in plugin.SELECT_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
-            select = SolaXModbusSelect( hub_name, hub, modbus_addr, device_info, select_info)
+            select = SolaXModbusSelect(hub_name, hub, modbus_addr, device_info, select_info)
             entities.append(select)
         
     async_add_entities(entities)
