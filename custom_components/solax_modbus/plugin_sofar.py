@@ -2073,7 +2073,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 @dataclass
-class solis_plugin(plugin_base):
+class sofar_plugin(plugin_base):
     
     """
     def isAwake(self, datadict):
