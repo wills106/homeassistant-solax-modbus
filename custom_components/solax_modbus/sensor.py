@@ -30,16 +30,11 @@ class block():
     regs: Any = None # sorted list of registers used in this block
 
 
-def splitInBlocks( descriptions, plugin_name ):
+def splitInBlocks( descriptions, block_size ):
     start = INVALID_START
     end = 0
     blocks = []
     curblockregs = []
-    plugin_name = plugin_name
-    if plugin_name == 'solis':
-        block_size = 48 # Solis max is 50, but still unstable
-    else:
-        block_size = 100
     for reg in descriptions:
         descr = descriptions[reg]
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
@@ -90,7 +85,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     holdingOrder32 = {} # all entities should have the same order
     inputOrder32   = {} # all entities should have the same order
      
-    plugin = getPlugin(hub_name)
+    plugin = hub.plugin #getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early 
@@ -143,9 +138,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
     if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
     # split in blocks and store results
-    plugin_name = str(plugin).split("plugin_")[-1].split(".")[0]
-    hub.holdingBlocks = splitInBlocks(holdingRegs, plugin_name)
-    hub.inputBlocks = splitInBlocks(inputRegs, plugin_name)
+    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size)
+    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size)
     hub.computedRegs = computedRegs
 
     for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")

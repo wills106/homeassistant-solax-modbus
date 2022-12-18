@@ -48,20 +48,6 @@ ALL_PM_GROUP = PM
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 
-def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
-    # returns true if the entity needs to be created for an inverter
-    genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
-    xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
-    hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
-    epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
-    dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
-    pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
-    blacklisted = False
-    if blacklist:
-        for start in blacklist: 
-            if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
-
 # ======================= end of bitmask handling code =============================================
 
 # ====================== find inverter type and details ===========================================
@@ -84,38 +70,6 @@ def _read_serialnr(hub, address, swapbytes):
     #return 'SP1ES2' 
     return res
 
-def determineInverterType(hub, configdict):
-    _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-    seriesnumber                       = _read_serialnr(hub, 0x2001,   swapbytes = False)
-    if not seriesnumber: 
-        _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
-        seriesnumber = "unknown"
-
-    # derive invertertype from seriiesnumber
-    if seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
-    elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
-    elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SH1'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
-    elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
-    elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
-    elif seriesnumber.startswith('ZE1E', 2):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
-    elif seriesnumber.startswith('ZM1E', 2):  invertertype = HYBRID | X1 # 3.6kW HYDxxxxES
-    #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
-
-    else: 
-        invertertype = 0
-        _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-    read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-    read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-    read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-    if read_eps: invertertype = invertertype | EPS 
-    if read_dcb: invertertype = invertertype | DCB
-    if read_pm: invertertype = invertertype | PM
-    hub.invertertype = invertertype
 
 
 @dataclass
@@ -1083,3 +1037,73 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
     ),
 ]
+
+
+@dataclass
+class sofar_plugin(plugin_base):
+    
+    """
+    def isAwake(self, datadict):
+        return (datadict.get('run_mode', None) == 'Normal Mode')
+
+    def wakeupButton(self):
+        return 'battery_awaken'
+    """
+
+    def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
+        # returns true if the entity needs to be created for an inverter
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+        xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
+        hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
+        epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
+        dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
+        blacklisted = False
+        if blacklist:
+            for start in blacklist: 
+                if serialnumber.startswith(start) : blacklisted = True
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
+
+    def determineInverterType(self hub, configdict):
+        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        seriesnumber                       = _read_serialnr(hub, 0x2001,   swapbytes = False)
+        if not seriesnumber: 
+            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            seriesnumber = "unknown"
+
+        # derive invertertype from seriiesnumber
+        if seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SH1'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
+        elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
+        elif seriesnumber.startswith('ZE1E', 2):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
+        elif seriesnumber.startswith('ZM1E', 2):  invertertype = HYBRID | X1 # 3.6kW HYDxxxxES
+        #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
+
+        else: 
+            invertertype = 0
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+        if read_eps: invertertype = invertertype | EPS 
+        if read_dcb: invertertype = invertertype | DCB
+        if read_pm: invertertype = invertertype | PM
+        return invertertype
+
+
+
+plugin_instance = sofar_plugin(
+    plugin_name = 'sofar', 
+    SENSOR_TYPES = SENSOR_TYPES,
+    NUMBER_TYPES = NUMBER_TYPES,
+    BUTTON_TYPES = BUTTON_TYPES,
+    SELECT_TYPES = SELECT_TYPES, 
+    block_size = 100,
+    )

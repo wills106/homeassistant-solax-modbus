@@ -23,9 +23,11 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    plugin = hub.plugin #getPlugin(hub_name)
-    if plugin.__dict__.get('wakeupButton'): awakebutton = plugin.wakeupButton()
-    else: awakebutton = None
+    awakebutton = hub.plugin.wakeupButton()
+    #plugin = hub.plugin #getPlugin(hub_name)
+    plugin = hub.plugin
+    #if plugin.__dict__.get('wakeupButton'): awakebutton = plugin.wakeupButton()
+    #else: awakebutton = None
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):

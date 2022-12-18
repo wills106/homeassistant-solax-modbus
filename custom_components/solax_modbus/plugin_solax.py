@@ -8,6 +8,23 @@ from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
 
+
+
+
+def _read_serialnr(hub, address):
+    res = None
+    try:
+        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        if not inverter_data.isError(): 
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
+            res = decoder.decode_string(14).decode("ascii")
+            hub.seriesnumber = res    
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
+    return res
+
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
@@ -49,19 +66,6 @@ ALL_PM_GROUP = PM
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 
-def matchInverterWithMask (inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
-    # returns true if the entity needs to be created for an inverter
-    genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
-    xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
-    hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
-    epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
-    dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
-    pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
-    blacklisted = False
-    if blacklist:
-        for start in blacklist: 
-            if serialnumber.startswith(start) : blacklisted = True
-    return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
 # ======================= end of bitmask handling code =============================================
 
@@ -69,19 +73,7 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
-    res = None
-    try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
-        if not inverter_data.isError(): 
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
-            res = decoder.decode_string(14).decode("ascii")
-            hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
-    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
-    return res
-
+"""
 def determineInverterType(hub, configdict):
     global SENSOR_TYPES
     _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -149,13 +141,13 @@ def determineInverterType(hub, configdict):
     else: SENSOR_TYPES = SENSOR_TYPES_MAIN
 
 def isAwake(datadict):
-    """ determine if inverter is awake based on polled datadict"""
+    # determine if inverter is awake based on polled datadict
     return (datadict.get('run_mode', None) == 'Normal Mode')
 
 def wakeupButton():
-    """ in order to wake up  the inverter , press this button """
+    # in order to wake up  the inverter , press this button
     return 'battery_awaken'
-
+"""
 # =================================================================================================
 
 @dataclass
@@ -4255,3 +4247,110 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
 ]
+
+
+
+
+# ============================ plugin declaration =================================================
+
+@dataclass
+class solax_plugin(plugin_base):
+    
+    def isAwake(self, datadict):
+        """ determine if inverter is awake based on polled datadict"""
+        return (datadict.get('run_mode', None) == 'Normal Mode')
+
+    def wakeupButton(self):
+        """ in order to wake up  the inverter , press this button """
+        return 'battery_awaken'
+
+    def determineInverterType(self, hub, configdict):
+        #global SENSOR_TYPES
+        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        seriesnumber                       = _read_serialnr(hub, 0x0)
+        if not seriesnumber:  
+            seriesnumber = _read_serialnr(hub, 0x300) # bug in endian.Little decoding?
+            if seriesnumber and not seriesnumber.startswith("M"):
+                ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
+                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
+                res = str(ba, "ascii") # convert back to string
+                seriesnumber = res
+        if not seriesnumber: 
+            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
+            seriesnumber = "unknown"
+
+        # derive invertertupe from seriiesnumber
+        if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
+        elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
+        elif seriesnumber.startswith('L37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+        elif seriesnumber.startswith('U37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+        elif seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
+        elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
+        elif seriesnumber.startswith('H1E'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
+        elif seriesnumber.startswith('HCC'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
+        elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
+        elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
+        elif seriesnumber.startswith('XAC'):   invertertype = AC | GEN3 | X1 # X1AC
+        elif seriesnumber.startswith('XB3'):   invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
+        elif seriesnumber.startswith('XM3'):   invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
+        elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+        elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+        elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+        elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+        elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
+        elif seriesnumber.startswith('F3E'):   invertertype = AC | GEN3 | X3 # RetroFit
+        elif seriesnumber.startswith('H43'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
+        elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
+        elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
+        elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
+        elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
+        elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
+        elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MU802T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MU803T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC106T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN3 | X3 # Unknown MIC Pro with PV3 X3
+        # add cases here
+        else: 
+            invertertype = 0
+            _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+        if read_eps: invertertype = invertertype | EPS 
+        if read_dcb: invertertype = invertertype | DCB
+        if read_pm: invertertype = invertertype | PM
+
+        if invertertype & MIC: self.SENSOR_TYPES = SENSOR_TYPES_MIC
+        #else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
+        return invertertype
+
+    def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
+        # returns true if the entity needs to be created for an inverter
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+        xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
+        hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
+        epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
+        dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
+        blacklisted = False
+        if blacklist:
+            for start in blacklist: 
+                if serialnumber.startswith(start) : blacklisted = True
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
+
+
+plugin_instance = solax_plugin(
+    plugin_name = 'solax', 
+    SENSOR_TYPES = SENSOR_TYPES_MAIN,
+    NUMBER_TYPES = NUMBER_TYPES,
+    BUTTON_TYPES = BUTTON_TYPES,
+    SELECT_TYPES = SELECT_TYPES, 
+    block_size = 100,
+    )
