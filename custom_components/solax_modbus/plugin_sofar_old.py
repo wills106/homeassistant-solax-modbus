@@ -1064,7 +1064,7 @@ class sofar_plugin(plugin_base):
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
-    def determineInverterType(self hub, configdict):
+    def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber                       = _read_serialnr(hub, 0x2001,   swapbytes = False)
         if not seriesnumber: 
