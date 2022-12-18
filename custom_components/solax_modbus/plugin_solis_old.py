@@ -20,12 +20,6 @@ means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
-####
-#
-# Placeholder for now
-#
-####
-
 GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
 GEN3           = 0x0004
@@ -419,11 +413,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
 ]
 
-
 # ============================ plugin declaration =================================================
 
 @dataclass
-class solis_plugin(plugin_base):
+class solis_old_plugin(plugin_base):
     
     """
     def isAwake(self, datadict):
@@ -432,10 +425,6 @@ class solis_plugin(plugin_base):
     def wakeupButton(self):
         return 'battery_awaken'
     """
-
-
-
-
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -463,8 +452,6 @@ class solis_plugin(plugin_base):
         #hub.invertertype = invertertype
         return invertertype
 
-
-
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
@@ -478,10 +465,8 @@ class solis_plugin(plugin_base):
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
 
-
-
-plugin_instance = solis_plugin(
-    plugin_name = 'solis', 
+plugin_instance = solis_old_plugin(
+    plugin_name = 'solis_old', 
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

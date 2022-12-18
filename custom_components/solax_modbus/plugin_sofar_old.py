@@ -44,9 +44,7 @@ ALL_DCB_GROUP  = DCB
 PM  = 0x20000
 ALL_PM_GROUP = PM
 
-
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
-
 
 # ======================= end of bitmask handling code =============================================
 
@@ -70,7 +68,7 @@ def _read_serialnr(hub, address, swapbytes):
     #return 'SP1ES2' 
     return res
 
-
+# =================================================================================================
 
 @dataclass
 class SofarOldModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
@@ -84,8 +82,6 @@ class SofarOldModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 class SofarOldModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
 
-
-# This section needs more work to be like plugin_solax
 @dataclass
 class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
@@ -1040,7 +1036,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
 
 
 @dataclass
-class sofar_plugin(plugin_base):
+class sofar_old_plugin(plugin_base):
     
     """
     def isAwake(self, datadict):
@@ -1099,8 +1095,8 @@ class sofar_plugin(plugin_base):
 
 
 
-plugin_instance = sofar_plugin(
-    plugin_name = 'sofar', 
+plugin_instance = sofar_old_plugin(
+    plugin_name = 'sofar_old', 
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

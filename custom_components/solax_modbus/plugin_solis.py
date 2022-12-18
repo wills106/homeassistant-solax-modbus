@@ -41,11 +41,7 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
-
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
-
-
-
 
 # ======================= end of bitmask handling code =============================================
 
@@ -68,6 +64,7 @@ def _read_serialnr(hub, address, swapbytes):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
+# =================================================================================================
 
 @dataclass
 class SolisModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
@@ -93,6 +90,8 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = []
+
+# ================================= Number Declarations ============================================================
 
 NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
@@ -268,6 +267,8 @@ NUMBER_TYPES = [
     ),
 ]
 
+# ================================= Select Declarations ============================================================
+
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
         name = "Energy Storage Control Switch",
@@ -284,6 +285,8 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
 ]
+
+# ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [ 
 
