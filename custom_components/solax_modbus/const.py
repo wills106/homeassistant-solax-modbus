@@ -75,8 +75,9 @@ SLEEPMODE_LASTAWAKE = 2 # when still responding but register must be ignored whe
 
 # ================================= Definitions for Sennsor Declarations =================================================
 
-REG_HOLDING = 1
-REG_INPUT   = 2
+REG_HOLDING = 1  # modbus holding register
+REG_INPUT   = 2  # modbus input register
+#REG_DATA    = 3  # local data storage register, no direct modbus relation
 REGISTER_U16 = "uint16"
 REGISTER_U32 = "uint32"
 REGISTER_S16 = "int16"
@@ -86,6 +87,9 @@ REGISTER_STR = "string"  # nr of bytes must be specified in wordcount and is 2*w
 REGISTER_WORDS = "words" # nr or words must be specified in wordcount
 REGISTER_U8L = "int8L"
 REGISTER_U8H = "int8H"
+WRITE_SINGLE_MODBUS = 1 # use write_single_modbus command
+WRITE_MULTI_MODBUS  = 2 # use write_multiple modbus command
+WRITE_DATA_LOCAL    = 3 # write only to local data storage (not persistent)
 
 
 # ==================================== plugin access ====================================================================
@@ -115,6 +119,8 @@ class plugin_base:
     NUMBER_TYPES: list[NumberEntityDescription]
     SELECT_TYPES: list[SelectEntityDescription]
     block_size: int = 100
+    order16: int = None # Endian.Big or Endian.Little
+    order32: int = None
 
     def isAwake(self, datadict): 
         return True # always awake by default
@@ -139,7 +145,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     blacklist: list = None
     register: int = -1 # initialize with invalid register
     rounding: int = 1
-    register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT
+    register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
     order16: int = None # Endian.Big or Endian.Little
     order32: int = None
@@ -154,7 +160,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     register: int = None
     command: int = None
     blacklist: list = None # none or list of serial number prefixes
-    write_registers: bool = False
+    write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
 
 @dataclass
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
@@ -162,7 +168,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     register: int = None
     option_dict: dict = None
     blacklist: list = None # none or list of serial number prefixes
-    write_registers: bool = False
+    write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -174,7 +181,9 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     state: str = None
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
     blacklist: list = None # None or list of serial number prefixes like
-    write_registers: bool = False
+    write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
+    unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
 
 # ================================= Computed sensor value functions  =================================================
 

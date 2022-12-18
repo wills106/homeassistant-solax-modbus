@@ -84,8 +84,8 @@ class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Old Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Big
+    #order16: int = Endian.Big
+    #order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -472,4 +472,6 @@ plugin_instance = solis_old_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 48,
+    order16 = Endian.Big,
+    order32 = Endian.Big,
     )

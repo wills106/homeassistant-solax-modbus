@@ -82,8 +82,8 @@ class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Little
+    #order16: int = Endian.Big
+    #order32: int = Endian.Little
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
@@ -91,8 +91,8 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     # A class that describes SolaX Power MIC Modbus sensor entities.
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Little
+    #order16: int = Endian.Big
+    #order32: int = Endian.Little
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
@@ -237,6 +237,39 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
 
 
 NUMBER_TYPES = [
+    ###
+    #
+    # Data registers (without direct modbus link)
+    #
+    ###
+
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Active Power",
+        key="remotecontrol_active_power",
+        unit=REGISTER_S32,
+        allowedtypes= GEN4,
+        initvalue = 0,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Reactive Power",
+        key="remotecontrol_reactive_power",
+        unit=REGISTER_S32,
+        allowedtypes= GEN4,
+        initvalue = 0,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Duration",
+        key="remotecontrol_duration",
+        unit=REGISTER_U16,
+        allowedtypes= GEN4,
+        icon="mdi:home-clock",
+        initvalue = 30, # seconds
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    
+
     SolaxModbusNumberEntityDescription( name = "Backup Charge End Hours",
         key = "backup_charge_end_h", 
         register = 0x97,
@@ -967,6 +1000,7 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [ 
+
     ###
     #
     # Holding
@@ -4270,4 +4304,6 @@ plugin_instance = solax_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
+    order16 = Endian.Big,
+    order32 = Endian.Little,
     )

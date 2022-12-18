@@ -86,8 +86,8 @@ class SofarOldModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Big
+    #order16: int = Endian.Big
+    #order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -1102,4 +1102,6 @@ plugin_instance = sofar_old_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
+    order16 = Endian.Big,
+    order32 = Endian.Big,
     )

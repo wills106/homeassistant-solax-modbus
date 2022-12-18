@@ -24,8 +24,8 @@ INVALID_START = 99999
 class block():
     start: int = None # start address of the block
     end: int = None # end address of the block
-    order16: int = None # byte endian for 16bit registers
-    order32: int = None # word endian for 32bit registers
+    #order16: int = None # byte endian for 16bit registers
+    #order32: int = None # word endian for 32bit registers
     descriptions: Any = None
     regs: Any = None # sorted list of registers used in this block
 
@@ -40,7 +40,8 @@ def splitInBlocks( descriptions, block_size ):
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
             if ((end - start) > 0): 
                 _LOGGER.info(f"Starting new block at 0x{reg:x} ")
-                newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+                #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+                newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
                 blocks.append(newblock)
                 start = INVALID_START
                 end = 0
@@ -58,7 +59,8 @@ def splitInBlocks( descriptions, block_size ):
             else: end = reg + 1
         curblockregs.append(reg)
     if ((end-start)>0): # close last block
-        newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+        newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
         blocks.append(newblock)
     return blocks
 
@@ -80,10 +82,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     holdingRegs  = {}
     inputRegs    = {}
     computedRegs = {}
-    holdingOrder16 = {} # all entities should have the same order
-    inputOrder16   = {} # all entities should have the same order
-    holdingOrder32 = {} # all entities should have the same order
-    inputOrder32   = {} # all entities should have the same order
+    #holdingOrder16 = {} # all entities should have the same order
+    #inputOrder16   = {} # all entities should have the same order
+    #holdingOrder32 = {} # all entities should have the same order
+    #inputOrder32   = {} # all entities should have the same order
      
     plugin = hub.plugin #getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
@@ -118,8 +120,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         else: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         holdingRegs[sensor_description.register] = sensor_description
-                        holdingOrder16[sensor_description.order16] = True
-                        holdingOrder32[sensor_description.order32] = True
+                        #holdingOrder16[sensor_description.order16] = True
+                        #holdingOrder32[sensor_description.order32] = True
                 elif sensor_description.register_type == REG_INPUT:
                     if sensor_description.register in inputRegs: # duplicate or 2 bytes in one register ?
                         first = inputRegs[sensor_description.register]
@@ -127,16 +129,16 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         _LOGGER.warning(f"input register already declared: 0x{sensor_description.register:x} {sensor_description.key}")
                     else:
                         inputRegs[sensor_description.register] = sensor_description
-                        inputOrder16[sensor_description.order16] = True
-                        inputOrder32[sensor_description.order32] = True
+                        #inputOrder16[sensor_description.order16] = True
+                        #inputOrder32[sensor_description.order32] = True
                 else: _LOGGER.warning(f"entity declaration without register_type found: {sensor_description.key}")
     async_add_entities(entities)
     # sort the registers for this type of inverter
     holdingRegs = dict(sorted(holdingRegs.items()))
     inputRegs   = dict(sorted(inputRegs.items()))
     # check for consistency
-    if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-    if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
+    #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
+    #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
     # split in blocks and store results
     hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size)
     hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size)
