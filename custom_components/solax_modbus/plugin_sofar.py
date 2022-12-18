@@ -73,21 +73,24 @@ def _read_serialnr(hub, address, swapbytes):
 @dataclass
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    write_method = WRITE_MULTI_MODBUS
 
 @dataclass
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    write_method = WRITE_MULTI_MODBUS
 
 @dataclass
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    write_method = WRITE_MULTI_MODBUS
 
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Big
+    #order16: int = Endian.Big
+    #order32: int = Endian.Big
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -100,7 +103,6 @@ BUTTON_TYPES = [
         register = 0x111F,
         command = 1,
         allowedtypes = HYBRID,
-        write_registers = True,
         icon="mdi:battery-clock",
     ),
 ]
@@ -119,7 +121,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
         icon="mdi:battery-sync",
-        write_registers = True,
     ),
     SofarModbusNumberEntityDescription(
         name = "Battery Minimum Capacity OffGrid",
@@ -131,7 +132,6 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
-        write_registers = True,
         icon="mdi:battery-sync",
     ),
     SofarModbusNumberEntityDescription(
@@ -143,7 +143,6 @@ NUMBER_TYPES = [
         native_max_value = 10,
         native_step = 1,
         allowedtypes = HYBRID | PV | X3 | PM,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
     ),
     SofarModbusNumberEntityDescription(
@@ -155,7 +154,6 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         allowedtypes = HYBRID,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
     ),
 ]
@@ -173,7 +171,6 @@ SELECT_TYPES = [
                 2: "Turn On, Enable Cold Start",
             },
         allowedtypes = HYBRID | X3 | EPS,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Battery Active Control", # Not confirmed option
@@ -184,7 +181,6 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Control",
@@ -195,7 +191,6 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID | PV | X3 | PM,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Master-Salve",
@@ -206,7 +201,6 @@ SELECT_TYPES = [
                 1: "Master",
             },
         allowedtypes = HYBRID | PV | X3 | PM,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Remote Control",
@@ -217,7 +211,6 @@ SELECT_TYPES = [
                 1: "On",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Charger Use Mode",
@@ -231,7 +224,6 @@ SELECT_TYPES = [
                 4: "Peak Cut Mode",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Timing ID",
@@ -244,7 +236,6 @@ SELECT_TYPES = [
                 3: "3",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription(
         name = "Timing Charge",
@@ -257,14 +248,12 @@ SELECT_TYPES = [
                 4: "Charging / Discharging Enabled",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     SofarModbusSelectEntityDescription( name = "Charger Start Time",
         key = "charger_start_time",
         register = 0x1113,
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
     ),
@@ -273,7 +262,6 @@ SELECT_TYPES = [
         register = 0x1114,
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
     ),
@@ -282,7 +270,6 @@ SELECT_TYPES = [
         register = 0x1115,
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
     ),
@@ -291,7 +278,6 @@ SELECT_TYPES = [
         register = 0x1116,
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID,
-        write_registers = True,
         entity_category = EntityCategory.CONFIG,
         icon="mdi:battery-clock",
     ),
@@ -304,7 +290,6 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID,
-        write_registers = True,
     ),
     # Timing Charge Start
     # Timing Charge End
@@ -2132,10 +2117,12 @@ class sofar_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
 plugin_instance = sofar_plugin(
-    plugin_name = 'sofar', 
+    plugin_name = 'sofar',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
+    order16 = Endian.Big,
+    order32 = Endian.Big,
     )

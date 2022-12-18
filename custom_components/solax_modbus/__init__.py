@@ -289,7 +289,8 @@ class SolaXModbusHub:
     def _lowlevel_write_register(self, unit, address, payload):
         with self._lock:
             kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
-            builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            #builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
             payload = builder.to_registers()
@@ -371,7 +372,8 @@ class SolaXModbusHub:
         if realtime_data.isError():
             if self.slowdown == 1: _LOGGER.error(f"{self.name} error reading {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
             return False
-        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
+        #decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
+        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, self.plugin.order16, wordorder=self.plugin.order32)
         prevreg = block.start
         for reg in block.regs:
             if (reg - prevreg) > 0: 

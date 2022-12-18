@@ -68,7 +68,7 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state
         self.entity_description = number_info
-        self._write_registers = number_info.write_registers
+        self._write_method = number_info.write_method
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -110,6 +110,8 @@ class SolaXModbusNumber(NumberEntity):
         if self._key in self._hub.data: 
             if self._read_scale: return self._hub.data[self._key]*self._read_scale
             else: return self._hub.data[self._key]
+        else: 
+            return self.entity_description.initvalue
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
@@ -118,10 +120,13 @@ class SolaXModbusNumber(NumberEntity):
         elif self._fmt == "f":
             payload = int(value/(self._attr_scale*self._read_scale))
 
-        _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
-        if self._write_registers == True:
+        if self._write_method == WRITE_MULTI_MODBUS:
+            _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
-        else:
+        elif self._write_method == WRITE_SINGLE_MODBUS:
+            _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+        else: 
+            pass # so nothing, just store in hub.data
         self._hub.data[self._key] = value/self._read_scale
         self.async_write_ha_state()

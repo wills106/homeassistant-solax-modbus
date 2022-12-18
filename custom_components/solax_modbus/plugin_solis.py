@@ -1524,5 +1524,7 @@ plugin_instance = solis_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 48,
+    order16 = Endian.Big,
+    order32 = Endian.Big,
     )
 
