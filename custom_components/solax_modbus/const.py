@@ -39,6 +39,7 @@ from homeassistant.const import (
     TEMP_CELSIUS,
     TIME_HOURS,
     TIME_MINUTES,
+    TIME_SECONDS,
 )
 
 
@@ -88,9 +89,9 @@ REGISTER_WORDS = "words" # nr or words must be specified in wordcount
 REGISTER_U8L = "int8L"
 REGISTER_U8H = "int8H"
 WRITE_SINGLE_MODBUS       = 1 # use write_single_modbus command
-WRITE_MULTI_MODBUS        = 2 # use write_multiple modbus command
-WRITE_MULTISINGLE_MODBUS  = 3 # use write_mutiple modbus command for single register
-WRITE_DATA_LOCAL          = 4 # write only to local data storage (not persistent)
+WRITE_MULTISINGLE_MODBUS  = 2 # use write_mutiple modbus command for single register
+WRITE_DATA_LOCAL          = 3 # write only to local data storage (not persistent)
+WRITE_MULTI_MODBUS        = 4 # use write_multiple modbus command
 
 
 # ==================================== plugin access ====================================================================

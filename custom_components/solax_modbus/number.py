@@ -1,4 +1,5 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR 
+from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
+from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
 #from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
