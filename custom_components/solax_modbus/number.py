@@ -120,9 +120,9 @@ class SolaXModbusNumber(NumberEntity):
         elif self._fmt == "f":
             payload = int(value/(self._attr_scale*self._read_scale))
 
-        if self._write_method == WRITE_MULTI_MODBUS:
+        if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
-            self._hub.write_registers(unit=self._modbus_addr, address=self._register, payload=payload)
+            self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)

@@ -87,9 +87,10 @@ REGISTER_STR = "string"  # nr of bytes must be specified in wordcount and is 2*w
 REGISTER_WORDS = "words" # nr or words must be specified in wordcount
 REGISTER_U8L = "int8L"
 REGISTER_U8H = "int8H"
-WRITE_SINGLE_MODBUS = 1 # use write_single_modbus command
-WRITE_MULTI_MODBUS  = 2 # use write_multiple modbus command
-WRITE_DATA_LOCAL    = 3 # write only to local data storage (not persistent)
+WRITE_SINGLE_MODBUS       = 1 # use write_single_modbus command
+WRITE_MULTI_MODBUS        = 2 # use write_multiple modbus command
+WRITE_MULTISINGLE_MODBUS  = 3 # use write_mutiple modbus command for single register
+WRITE_DATA_LOCAL          = 4 # write only to local data storage (not persistent)
 
 
 # ==================================== plugin access ====================================================================
@@ -147,8 +148,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
-    order16: int = None # Endian.Big or Endian.Little
-    order32: int = None
+    #order16: int = None # Endian.Big or Endian.Little
+    #order32: int = None
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
