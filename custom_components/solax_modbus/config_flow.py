@@ -76,6 +76,17 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
     } )
 
+OPTION_SCHEMA = vol.Schema( {
+        vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(selector.SelectSelectorConfig(options=INTERFACES), ),
+        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
+        vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(selector.SelectSelectorConfig(options=PLUGINS), ),
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
+        vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
+        vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
+    } )
+
+
 SERIAL_SCHEMA = vol.Schema( {
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): str,
         vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): selector.SelectSelector(selector.SelectSelectorConfig(options=BAUDRATES), ),
@@ -157,7 +168,7 @@ if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)):
         "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
+        "init":   SchemaFlowFormStep(OPTION_SCHEMA, next_step = _next_step),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
         "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
     }
