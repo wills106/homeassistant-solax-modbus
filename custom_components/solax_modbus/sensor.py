@@ -142,13 +142,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # split in blocks and store results
     hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size)
     hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size)
-    hub.computedRegs = computedRegs
+    hub.computedSensors = computedRegs
 
     for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
     for i in hub.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
     _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
     _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
-    _LOGGER.info(f"computedRegs: {hub.computedRegs}")
+    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
     return True
 
 
