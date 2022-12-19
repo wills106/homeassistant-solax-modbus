@@ -96,9 +96,50 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
+
+# ====================================== Computed value functions  =================================================
+
+def value_function_remotecontrol_trigger(initval, descr, datadict):
+    p1 = datadict.get('remotecontrol_power_control') 
+    p2 = datadict.get('remotecontrol_set_type') 
+    p3 = datadict.get('remotecontrol_active_power')
+    p4 = datadict.get('remotecontrol_reactive_power')
+    p5 = datadict.get('remotecontrol_duration')
+    ap_up = datadict.get('active_power_upper')
+    ap_lo = datadict.get('active_power_lower')
+    reap_up = datadict.get('reactive_power_upper')
+    reap_lo = datadict.get('reactive_power_lower')
+    if not (p1 in ("Disabled", "Enable Power Control", )): 
+        _LOGGER.warning("Remote_control_trigger: Only Power Control is currently supported - Setting Disabled")
+        p1 = "Disabled"
+    if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
+         and (ap_up != None) and (ap_lo != None) and (reap_up != None) and (reap_lo != None) ):
+        res = { 'remotecontrol_power_control': p1,
+                'remotecontrol_set_type': p2,
+                'remotecontrol_active_power':   max(min(ap_up, p3),   ap_lo),
+                'remotecontrol_reactive_power': max(min(reap_up, p4), reap_lo),
+                'remotecontrol_duration': p5,
+               }
+        _LOGGER.debug(f"Evaluated remotecontrol_trigger: clamped values: {res}")
+        return res
+    _LOGGER.error(f"value function remotecontrol_trigger failed - descr: {descr} datadict:{datadict}")
+    return None
+
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SolaxModbusButtonEntityDescription( 
+        name = "Remotecontrol Trigger",
+        key = "remotecontrol_trigger",
+        register = 0x7C,
+        #command = 0,
+        allowedtypes = HYBRID | GEN4,
+        write_method = WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function = value_function_remotecontrol_trigger,
+        autorepeat= "remotecontrol_autorepeat_duration"
+    ),
     SolaxModbusButtonEntityDescription( name = "Battery Awaken",
         key = "battery_awaken",
         register = 0x56,
@@ -246,20 +287,20 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Active Power",
         key="remotecontrol_active_power",
-        unit=REGISTER_S32,
-        allowedtypes= GEN4,
+        allowedtypes= HYBRID | GEN4,
         native_min_value = -5000,
         native_max_value = 5000,
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
         initvalue = 0,
+        unit=REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Reactive Power",
         key="remotecontrol_reactive_power",
         unit=REGISTER_S32,
-        allowedtypes= GEN4,
+        allowedtypes= HYBRID | GEN4,
         native_min_value = -4000,
         native_max_value = 4000,
         native_step = 100,
@@ -273,11 +314,28 @@ NUMBER_TYPES = [
         unit=REGISTER_U16,
         allowedtypes= GEN4,
         icon="mdi:home-clock",
-        initvalue = 30, # seconds
+        initvalue = 20, # seconds
+        native_min_value = 10,
+        native_max_value = 360,
+        native_step = 1,
+        fmt = "i",
         native_unit_of_measurement = TIME_SECONDS,
         write_method = WRITE_DATA_LOCAL,
     ),
-    
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Autorepeat Duration",
+        key="remotecontrol_autorepeat_duration",
+        unit=REGISTER_U16,
+        allowedtypes= GEN4,
+        icon="mdi:home-clock",
+        initvalue = 0, # seconds - 
+        native_min_value = 0,
+        native_max_value = 3600,
+        native_step = 60,
+        fmt = "i",
+        native_unit_of_measurement = TIME_SECONDS,
+        write_method = WRITE_DATA_LOCAL,
+    ),
 
     SolaxModbusNumberEntityDescription( name = "Backup Charge End Hours",
         key = "backup_charge_end_h", 
@@ -615,6 +673,46 @@ NUMBER_TYPES = [
 # ================================= Select Declarations ============================================================
 
 SELECT_TYPES = [
+
+###
+#
+#  Data only select types
+#
+###
+    SolaxModbusSelectEntityDescription( 
+        name = "Remotecontrol Power Control",
+        key = "remotecontrol_power_control",
+        unit=REGISTER_U16,
+        write_method = WRITE_DATA_LOCAL,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enable Power Control",
+                2: "Enable Quantity Control",
+                3: "Enable SOC Target Control",
+            },
+        allowedtypes = HYBRID | GEN4,
+        initvalue = "Disabled",
+        icon="mdi:transmission-tower",
+    ),
+    SolaxModbusSelectEntityDescription( 
+        name = "Remotecontrol Set Type",
+        key = "remotecontrol_set_type",
+        unit=REGISTER_U16,
+        write_method = WRITE_DATA_LOCAL,
+        option_dict =  {
+                1: "Set",
+                2: "Update",
+            },
+        allowedtypes = HYBRID | GEN4,
+        initvalue = "Set",
+        icon="mdi:transmission-tower",
+    ),    
+###
+#
+#  Normal select types
+#
+###
+
     SolaxModbusSelectEntityDescription( name = "Allow Grid Charge",
         key = "allow_grid_charge",
         register = 0x40,

@@ -32,6 +32,9 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 if hub.seriesnumber.startswith(prefix): readscale = value
         if plugin.matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info, readscale)
+            if number_info.write_method==WRITE_DATA_LOCAL: 
+                hub.data[number_info.key] = number_info.initvalue
+                hub.writeLocals[number_info.key] = number_info
             entities.append(number)
         
     async_add_entities(entities)
@@ -127,7 +130,9 @@ class SolaXModbusNumber(NumberEntity):
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
-        else: 
+        elif self._write_method == WRITE_DATA_LOCAL:
+            _LOGGER.warning(f"*** local data written {self._key}: {value}")
             pass # so nothing, just store in hub.data
         self._hub.data[self._key] = value/self._read_scale
+        _LOGGER.warning(f"*** local data written {self._key}: {self._hub.data[self._key]}")
         self.async_write_ha_state()
