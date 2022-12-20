@@ -163,15 +163,19 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     command: int = None
     blacklist: list = None # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    value_function: callable = None #  value = function(initval, descr, datadict)
+    autorepeat: str = None  # if not None: name of entity that contains autorepeat duration in seconds
 
 @dataclass
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
     option_dict: dict = None
+    reverse_option_dict: dict = None # autocomputed
     blacklist: list = None # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
+    unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):

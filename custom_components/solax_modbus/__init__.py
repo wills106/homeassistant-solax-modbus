@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 #import importlib.util, sys
 import importlib
+from time import time
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -189,7 +190,10 @@ class SolaXModbusHub:
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
         self.holdingBlocks = {}
-        self.computedRegs = {}
+        self.computedSensors = {}
+        self.computedButtons = {}
+        self.repeatUntil = {} # for buttons with autorepeat
+        self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.plugin_name = plugin_name
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
@@ -311,14 +315,42 @@ class SolaXModbusHub:
             else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
     
     def write_registers_single(self, unit, address, payload): # Needs adapting for regiater que
-        """Write registers."""
+        """Write registers multi, but write only one register of type 16bit"""
         with self._lock:
             kwargs = {"unit": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
             payload = builder.to_registers()
-            return self._client.write_register(address, payload, **kwargs)
+            return self._client.write_registers(address, payload, **kwargs)
+
+    def write_registers_multi(self, unit, address, payload): # Needs adapting for regiater que
+        """Write registers."""
+        with self._lock:
+            kwargs = {"unit": unit} if unit else {}
+            builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
+            builder.reset()
+            if isinstance(payload, dict):
+                for (key, value,) in payload.items():
+                    descr = self.writeLocals[key]
+                    if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
+                    elif callable(descr.scale):  # function to call ?
+                        value = descr.scale(value, descr, self.data) 
+                    else: # apply simple numeric scaling and rounding if not a list of words
+                        try:    value = value*descr.scale
+                        except: _LOGGER.error(f"cannot treat payload scale {value} {descr}")
+                    value = int(value)
+                    if   descr.unit == REGISTER_U16: builder.add_16bit_uint(value)
+                    elif descr.unit == REGISTER_S16: builder.add_16bit_int(value)
+                    elif descr.unit == REGISTER_U32: builder.add_32bit_uint(value)
+                    elif descr.unit == REGISTER_S32: builder.add_32bit_int(value)
+                    else: _LOGGER.error(f"unsupported unit type: {descr.unit} for {descr.key}")
+                payload = builder.to_registers()
+                _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
+                return self._client.write_registers(address, payload, **kwargs)
+            else: 
+                _LOGGER.error(f"write_registers_multi expects a dictionary 0x{address:02x} payload: {payload}")
+                return None
 
     def read_modbus_data(self):
         res = True
@@ -401,9 +433,16 @@ class SolaXModbusHub:
             res = res and self.read_modbus_block(block, 'holding')
         for block in self.inputBlocks:
             res = res and self.read_modbus_block(block, 'input') 
-        for reg in self.computedRegs:
-            descr = self.computedRegs[reg]
+        for reg in self.computedSensors:
+            descr = self.computedSensors[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
+        """
+        for reg in self.computedButtons:
+            descr = self.computedButtons[reg]
+            if descr.autorepeat:
+                duration = self.data[descr.autorepeat]
+                if duration != 0:
+                     self.data[descr.key] = descr.value_function(0, descr, self.data ) """
         if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
@@ -411,6 +450,14 @@ class SolaXModbusHub:
                 val = self.writequeue.pop(addr)
                 self.write_register(self.modbus_addr, addr, val)
             self.writequeue = {} # not really needed
+        ts = time()
+        for (k,v,) in self.repeatUntil.items(): 
+            if ts < v: 
+                buttondescr = self.computedButtons[k]
+                payload = buttondescr.value_function(0, buttondescr, self.data)
+                _LOGGER.debug(f"ready to repeat button {k} data: {payload}")
+                self.write_registers_multi(unit=self._modbus_addr, address=buttondescr.register, payload=payload)
+            #else: self.repeatUntil.pop(k) # autorepeat button activation expired
         return res
 
 

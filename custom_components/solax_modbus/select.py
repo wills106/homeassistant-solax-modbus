@@ -27,6 +27,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     for select_info in plugin.SELECT_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
             select = SolaXModbusSelect(hub_name, hub, modbus_addr, device_info, select_info)
+            if select_info.write_method==WRITE_DATA_LOCAL: 
+                hub.data[select_info.key] = select_info.initvalue
+                hub.writeLocals[select_info.key] = select_info
+                select_info.reverse_option_dict = {v: k for k, v in select_info.option_dict.items()}
             entities.append(select)
         
     async_add_entities(entities)
