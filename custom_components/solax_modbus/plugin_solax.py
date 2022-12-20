@@ -1222,7 +1222,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                 1: "Force Charge",
                 2: "Force Discharge", },
         allowedtypes = GEN4,
-     ),
+    ),
     SolaXModbusSensorEntityDescription(
         name="Battery Type",
         key="battery_type",
@@ -1363,7 +1363,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_U8H,
         native_unit_of_measurement=PERCENTAGE,
         allowedtypes = GEN4,
-     ),
+    ),
     SolaXModbusSensorEntityDescription(
         name="Feedin Discharge Min SOC",
         key="feedin_discharge_min_soc",
@@ -1371,7 +1371,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_U8L,
         native_unit_of_measurement=PERCENTAGE,
         allowedtypes = GEN4,
-     ),
+    ),
     SolaXModbusSensorEntityDescription(
         name="Discharger Start Time 1", 
         key="discharger_start_time_1",
@@ -1391,7 +1391,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         allowedtypes = GEN4,
         icon="mdi:battery-sync",
-     ),
+    ),
      SolaXModbusSensorEntityDescription(
         name="Backup Discharge Min SOC",
         key="backup_discharge_min_soc",
@@ -1400,7 +1400,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         allowedtypes = GEN4,
         icon="mdi:battery-sync",
-     ),
+    ),
     SolaXModbusSensorEntityDescription(
         name="Charger Start Time 1", 
         key="charger_start_time_1",
