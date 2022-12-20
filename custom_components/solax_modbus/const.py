@@ -233,6 +233,9 @@ def value_function_house_load(initval, descr, datadict):
              - datadict['battery_power_charge'] 
              - datadict['measured_power'] )
 
+def value_function_house_load_alt(initval, descr, datadict):
+    return ( datadict['inverter_load'] - datadict['measured_power'] )
+
 def value_function_rtc(initval, descr, datadict):
     try:
         (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
