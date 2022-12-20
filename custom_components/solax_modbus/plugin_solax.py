@@ -138,6 +138,20 @@ BUTTON_TYPES = [
         value_function = value_function_remotecontrol_trigger,
         autorepeat= "remotecontrol_autorepeat_duration"
     ),
+    SolaxModbusButtonEntityDescription( name = "System On",
+        key = "system_on",
+        register = 0x1C,
+        command = 1,
+        allowedtypes = GEN4,
+        icon="mdi:battery-clock",
+    ),
+    SolaxModbusButtonEntityDescription( name = "System Off",
+        key = "system_off",
+        register = 0x1C,
+        command = 0,
+        allowedtypes = GEN4,
+        icon="mdi:battery-clock",
+    ),
     SolaxModbusButtonEntityDescription( name = "Battery Awaken",
         key = "battery_awaken",
         register = 0x56,
@@ -286,8 +300,8 @@ NUMBER_TYPES = [
         name="Remotecontrol Active Power",
         key="remotecontrol_active_power",
         allowedtypes= HYBRID | GEN4,
-        native_min_value = -5000,
-        native_max_value = 5000,
+        native_min_value = -6000,
+        native_max_value = 6000,
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
         initvalue = 0,
@@ -328,8 +342,8 @@ NUMBER_TYPES = [
         icon="mdi:home-clock",
         initvalue = 0, # seconds - 
         native_min_value = 0,
-        native_max_value = 3600,
-        native_step = 60,
+        native_max_value = 14400,
+        native_step = 300,
         fmt = "i",
         native_unit_of_measurement = TIME_SECONDS,
         write_method = WRITE_DATA_LOCAL,
@@ -3993,7 +4007,8 @@ class solax_plugin(plugin_base):
     
     def isAwake(self, datadict):
         """ determine if inverter is awake based on polled datadict"""
-        return (datadict.get('run_mode', None) == 'Normal Mode')
+        return True
+        #return (datadict.get('run_mode', None) == 'Normal Mode')
 
     def wakeupButton(self):
         """ in order to wake up  the inverter , press this button """

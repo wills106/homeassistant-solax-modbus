@@ -448,7 +448,7 @@ class SolaXModbusHub:
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for addr in self.writequeue:
                 val = self.writequeue.pop(addr)
-                self.write_register(self.modbus_addr, addr, val)
+                self.write_register(self._modbus_addr, addr, val)
             self.writequeue = {} # not really needed
         ts = time()
         for (k,v,) in self.repeatUntil.items(): 
