@@ -108,7 +108,7 @@ def value_function_remotecontrol_trigger(initval, descr, datadict):
     ap_lo = datadict.get('active_power_lower')
     reap_up = datadict.get('reactive_power_upper')
     reap_lo = datadict.get('reactive_power_lower')
-    if not (p1 in ("Disabled", "Enable Power Control", )): 
+    if not (p1 in ("Disabled", "Enabled Power Control", )): 
         _LOGGER.warning("Remote_control_trigger: Only Power Control is currently supported - Setting Disabled")
         p1 = "Disabled"
     if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
