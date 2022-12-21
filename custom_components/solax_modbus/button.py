@@ -24,21 +24,17 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
     }
-    awakebutton = hub.plugin.wakeupButton()
-    #plugin = hub.plugin #getPlugin(hub_name)
     plugin = hub.plugin
-    #if plugin.__dict__.get('wakeupButton'): awakebutton = plugin.wakeupButton()
-    #else: awakebutton = None
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
             button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
             entities.append(button)
-            if button_info.key == awakebutton: hub.awake_button = button_info
+            if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
             if button_info.value_function: hub.computedButtons[button_info.key] = button_info
             elif button_info.command == None: _LOGGER.warning(f"button without command and without value_function found: {button_info.key}")
     async_add_entities(entities)
-    _LOGGER.info(f"hub.awake button: {hub.awake_button}")
+    _LOGGER.info(f"hub.wakeuButton: {hub.wakeupButton}")
     return True
 
 class SolaXModbusButton(ButtonEntity):
