@@ -1017,10 +1017,10 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Serial Number",
         key = "serial_number",
-        register = 0x2001,
+        register = 0x2002,
         register_type=REG_INPUT,
         unit=REGISTER_STR,
-        wordcount=7,
+        wordcount=6,
         allowedtypes = ALLDEFAULT,
     ),
     SofarOldModbusSensorEntityDescription(
