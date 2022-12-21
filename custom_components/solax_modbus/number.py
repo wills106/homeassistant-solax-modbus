@@ -131,8 +131,7 @@ class SolaXModbusNumber(NumberEntity):
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
-            _LOGGER.warning(f"*** local data written {self._key}: {value}")
+            _LOGGER.info(f"*** local data written {self._key}: {value}")
             pass # so nothing, just store in hub.data
         self._hub.data[self._key] = value/self._read_scale
-        _LOGGER.warning(f"*** local data written {self._key}: {self._hub.data[self._key]}")
         self.async_write_ha_state()

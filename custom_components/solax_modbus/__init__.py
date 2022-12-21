@@ -200,7 +200,7 @@ class SolaXModbusHub:
         self.writequeue = {} # queue requests when inverter is in sleep mode
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
         self.plugin = getPlugin(name).plugin_instance
-        self.awake_button = None
+        self.wakeupButton = None
         self._invertertype = self.plugin.determineInverterType(self, config)
         #self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
@@ -306,13 +306,16 @@ class SolaXModbusHub:
         awake = self.plugin.isAwake(self.data)
         if awake: return self._lowlevel_write_register(unit, address, payload)
         else:
-            # put request in queue
+            # try to write anyway - could be a command that inverter responds to while asleep
+            res = self._lowlevel_write_register(unit, address, payload)
+            # put request in queue, in order to repeat it when inverter wakes up
             self.writequeue[address] = payload
-            # awaken inverter
-            if self.awake_button:
+            # wake up inverter
+            if self.wakeupButton:
                 _LOGGER.info("waking up inverter: pressing awake button")
-                return self._lowlevel_write_register(unit=self._modbus_addr, address=self.awake_button.register, payload=self.awake_button.command)
+                return self._lowlevel_write_register(unit=self._modbus_addr, address=self.wakeupButton.register, payload=self.wakeupButton.command)
             else: _LOGGER.warning("cannot wakeup inverter: no awake button found")
+            return res
     
     def write_registers_single(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
@@ -436,20 +439,14 @@ class SolaXModbusHub:
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-        """
-        for reg in self.computedButtons:
-            descr = self.computedButtons[reg]
-            if descr.autorepeat:
-                duration = self.data[descr.autorepeat]
-                if duration != 0:
-                     self.data[descr.key] = descr.value_function(0, descr, self.data ) """
+       
         if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
-            for addr in self.writequeue:
-                val = self.writequeue.pop(addr)
+            for addr in self.writequeue.keys():
+                val = self.writequeue.get(addr)
                 self.write_register(self._modbus_addr, addr, val)
-            self.writequeue = {} # not really needed
+            self.writequeue = {} # make sure we do not write multiple times
         ts = time()
         for (k,v,) in self.repeatUntil.items(): 
             if ts < v: 
@@ -457,7 +454,6 @@ class SolaXModbusHub:
                 payload = buttondescr.value_function(0, buttondescr, self.data)
                 _LOGGER.debug(f"ready to repeat button {k} data: {payload}")
                 self.write_registers_multi(unit=self._modbus_addr, address=buttondescr.register, payload=payload)
-            #else: self.repeatUntil.pop(k) # autorepeat button activation expired
         return res
 
 

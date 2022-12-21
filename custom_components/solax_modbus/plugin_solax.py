@@ -4007,8 +4007,7 @@ class solax_plugin(plugin_base):
     
     def isAwake(self, datadict):
         """ determine if inverter is awake based on polled datadict"""
-        return True
-        #return (datadict.get('run_mode', None) == 'Normal Mode')
+        return (datadict.get('run_mode', None) == 'Normal Mode')
 
     def wakeupButton(self):
         """ in order to wake up  the inverter , press this button """
