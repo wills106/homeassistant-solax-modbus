@@ -53,10 +53,10 @@ ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 |
 def _read_serialnr(hub, address, swapbytes):
     res = None
     try:
-        inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=7)
+        inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError(): 
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
-            res = decoder.decode_string(14).decode("ascii")
+            res = decoder.decode_string(12).decode("ascii")
             if swapbytes: 
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
@@ -64,8 +64,7 @@ def _read_serialnr(hub, address, swapbytes):
             hub.seriesnumber = res    
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
-    #return 'SP1ES2' 
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}") 
     return res
 
 # =================================================================================================
@@ -1062,7 +1061,7 @@ class sofar_old_plugin(plugin_base):
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x2001,   swapbytes = False)
+        seriesnumber                       = _read_serialnr(hub, 0x2002,   swapbytes = False)
         if not seriesnumber: 
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
             seriesnumber = "unknown"
@@ -1077,9 +1076,9 @@ class sofar_old_plugin(plugin_base):
         elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
-        elif seriesnumber.startswith('SE1'):  invertertype = AC # Storage Inverter 1 or 3phase?
-        elif seriesnumber.startswith('ZE1E', 2):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
-        elif seriesnumber.startswith('ZM1E', 2):  invertertype = HYBRID | X1 # 3.6kW HYDxxxxES
+        elif seriesnumber.startswith('SE1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
+        elif seriesnumber.startswith('ZE1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
+        elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X1 # 3.6kW HYDxxxxES
         #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
 
         else: 
