@@ -19,7 +19,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowFormStep,
     SchemaFlowMenuStep,
 )
-from .const import setPlugin, getPlugin, getPluginName
+
 from .const import (
 	DEFAULT_NAME,
 	DEFAULT_PORT,
@@ -42,9 +42,28 @@ from .const import (
     DEFAULT_READ_PM,
     DEFAULT_PLUGIN,
     PLUGIN_PATH,
+    # PLUGIN_PATH_OLDSTYLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# ############################# plugin aux functions #################################################
+
+"""
+glob_plugin = {}
+
+def setPlugin(instancename, plugin):
+    global glob_plugin
+    glob_plugin[instancename] = plugin 
+
+def getPlugin(instancename):
+    return glob_plugin.get(instancename) """
+
+def getPluginName(plugin_path):
+    return plugin_path[len(PLUGIN_PATH)-4:-3]
+
+
+# ####################################################################################################
 
 BAUDRATES = [
     selector.SelectOptionDict(value="9600",   label="9600"),
@@ -57,7 +76,7 @@ BAUDRATES = [
 ]
 
 
-PLUGINS = [ selector.SelectOptionDict(value=i, label=getPluginName(i)) for i in glob.glob(PLUGIN_PATH) ]
+PLUGINS = [ selector.SelectOptionDict(value=getPluginName(i), label=getPluginName(i)) for i in glob.glob(PLUGIN_PATH) ]
 
 
 INTERFACES = [
@@ -99,14 +118,26 @@ TCP_SCHEMA = vol.Schema( {
 
 
 async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any] :
+    _LOGGER.info(f"validating base: {user_input}")
     """Validate config."""
     interface   = user_input[CONF_INTERFACE]
     modbus_addr = user_input[CONF_MODBUS_ADDR]
     name        = user_input[CONF_NAME]
+    pluginconf_name = user_input[CONF_PLUGIN]
+
+    # convert old style to new style plugin name here - Remove later after a breaking upgrade
+    if pluginconf_name.startswith("custom_components") or pluginconf_name.startswith("/config") or pluginconf_name.startswith("plugin_"):
+        newpluginname = pluginconf_name.split('plugin_', 1)[1][:-3] #getPluginName(pluginconf_name)
+        _LOGGER.warning(f"converting old style plugin name {pluginconf_name} to new style: {newpluginname} ")
+        user_input[CONF_PLUGIN] = newpluginname
+        pluginconf_name = newpluginname
+    # end of conversion
+
     _LOGGER.info(f"validating base config for {name}: pre: {user_input}")
-    if getPlugin(name) or ((name == DEFAULT_NAME) and (user_input[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
+    #if getPlugin(name) or ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)): 
+    if ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)): 
         _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
-        user_input[CONF_NAME] = getPluginName(user_input[CONF_PLUGIN])
+        user_input[CONF_NAME] = user_input[CONF_PLUGIN] # getPluginName(user_input[CONF_PLUGIN])
         raise SchemaFlowError("name_already_used") 
     return user_input
 
@@ -126,10 +157,10 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
 
 async def _next_step(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
-
+"""
 # remove soon please
 def _old_validate_base(data: Any) -> Any:
-    """Validate config."""
+    #Validate config.
     interface   = data[CONF_INTERFACE]
     modbus_addr = data[CONF_MODBUS_ADDR]
     name        = data[CONF_NAME]
@@ -158,7 +189,7 @@ def _old_validate_host(data: Any) -> Any:
 # remove soon please
 def _old_next_step(data: Any) -> str:
     return data[CONF_INTERFACE] # eitheer "tcp" or "serial"
-
+"""
 
 if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)): 
     _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
@@ -174,7 +205,8 @@ if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)):
     }
 
 else: # for older versions - REMOVE SOON
-    _LOGGER.warning(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    _LOGGER.error(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    """
     CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_old_validate_base, next_step = _old_next_step),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
@@ -185,6 +217,7 @@ else: # for older versions - REMOVE SOON
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
         "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_old_validate_host),
     }
+    """
 
 
 

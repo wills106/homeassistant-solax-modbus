@@ -14,6 +14,7 @@ from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
 from datetime import datetime
 from dataclasses import dataclass
+import pathlib
 
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -66,8 +67,10 @@ DEFAULT_READ_EPS = False
 DEFAULT_READ_DCB = False
 DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
-DEFAULT_PLUGIN   = "custom_components/solax_modbus/plugin_solax.py"
-PLUGIN_PATH      = "custom_components/solax_modbus/plugin_*.py"
+#DEFAULT_PLUGIN   = "/config/custom_components/solax_modbus/plugin_solax.py"
+DEFAULT_PLUGIN        = "solax"
+#PLUGIN_PATH           = "/config/custom_components/solax_modbus/plugin_*.py"
+PLUGIN_PATH = f"{pathlib.Path(__file__).parent.absolute()}/plugin_*.py"
 SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
 SLEEPMODE_LAST   = 1 # when no communication at all
@@ -94,9 +97,14 @@ WRITE_DATA_LOCAL          = 3 # write only to local data storage (not persistent
 WRITE_MULTI_MODBUS        = 4 # use write_multiple modbus command
 
 
+_LOGGER = logging.getLogger(__name__)
+
 # ==================================== plugin access ====================================================================
 
-_LOGGER = logging.getLogger(__name__)
+
+
+
+"""
 glob_plugin = {}
 
 def setPlugin(instancename, plugin):
@@ -107,9 +115,10 @@ def getPlugin(instancename):
     return glob_plugin.get(instancename)
 
 def getPluginName(plugin_path):
+    _LOGGER.error(f"get plugin name: path: {plugin_path} name: {plugin_path[len(PLUGIN_PATH)-4:-3]}")
     return plugin_path[len(PLUGIN_PATH)-4:-3]
 
-
+"""
 
 # ==================================== plugin base class ====================================================================
 

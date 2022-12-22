@@ -49,11 +49,11 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_BAUDRATE,
     DEFAULT_PLUGIN,
-    PLUGIN_PATH,
+    #PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
-from .const import setPlugin, getPlugin, getPluginName
+#from .const import setPlugin, getPlugin, getPluginName
 
 
 
@@ -88,13 +88,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     name = config[CONF_NAME] 
 
     # ================== dynamically load desired plugin
-    _LOGGER.debug(f"Ready to load plugin {config[CONF_PLUGIN]}")
-    plugin_path = config[CONF_PLUGIN]
-    if not plugin_path: _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
-    plugin_name = getPluginName(plugin_path)
-    plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
-    if not plugin: _LOGGER.error(f"could not import plugin {plugin_name}")
-    setPlugin(name, plugin)
+    _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
+    plugin_name = config[CONF_PLUGIN]
+    # convert old style to new style plugin name here - Remove later after a breaking upgrade
+    if plugin_name.startswith("custom_components") or plugin_name.startswith("/config") or plugin_name.startswith("plugin_"):
+        plugin_name = plugin_name.split('plugin_', 1)[1][:-3] 
+        _LOGGER.warning(f"converting old style plugin name {config[CONF_PLUGIN]} to new style short name {plugin_name}")
+    # end of conversion
+
+    if not plugin_name: _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
+    else: 
+        _LOGGER.info(f"trying to load plugin - plugin_name: {plugin_name}")
+        plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
+        if not plugin: _LOGGER.error(f"could not import plugin {plugin_name}")
+
     # ====================== end of dynamic load
 
 
@@ -114,7 +121,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin_name, config)
+    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin, config)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
@@ -164,7 +171,7 @@ class SolaXModbusHub:
         serial_port,
         baudrate,
         scan_interval,
-        plugin_name,
+        plugin,
         config
     ):
         """Initialize the Modbus hub."""
@@ -194,12 +201,12 @@ class SolaXModbusHub:
         self.computedButtons = {}
         self.repeatUntil = {} # for buttons with autorepeat
         self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
-        self.plugin_name = plugin_name
+        #self.plugin_name = plugin_name
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
         self.writequeue = {} # queue requests when inverter is in sleep mode
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
-        self.plugin = getPlugin(name).plugin_instance
+        self.plugin = plugin.plugin_instance #getPlugin(name).plugin_instance
         self.wakeupButton = None
         self._invertertype = self.plugin.determineInverterType(self, config)
         #self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)

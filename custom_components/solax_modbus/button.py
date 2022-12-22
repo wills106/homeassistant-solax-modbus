@@ -4,7 +4,6 @@ from homeassistant.components.button import PLATFORM_SCHEMA, ButtonEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
-from .const import getPlugin
 from time import time
 import logging
 

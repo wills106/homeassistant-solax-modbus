@@ -4,7 +4,6 @@ from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
-from .const import getPlugin
 import logging
 
 _LOGGER = logging.getLogger(__name__)
