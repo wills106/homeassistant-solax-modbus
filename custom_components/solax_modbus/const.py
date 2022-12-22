@@ -1,5 +1,6 @@
 
 import logging
+import pathlib
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
@@ -66,8 +67,8 @@ DEFAULT_READ_EPS = False
 DEFAULT_READ_DCB = False
 DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
-DEFAULT_PLUGIN   = "custom_components/solax_modbus/plugin_solax.py"
-PLUGIN_PATH      = "custom_components/solax_modbus/plugin_*.py"
+DEFAULT_PLUGIN   = f"{pathlib.Path(__file__).parent.absolute()}/plugin_solax.py"
+PLUGIN_PATH      = f"{pathlib.Path(__file__).parent.absolute()}/plugin_*.py"
 SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
 SLEEPMODE_LAST   = 1 # when no communication at all
