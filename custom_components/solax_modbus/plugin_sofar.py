@@ -107,7 +107,18 @@ def value_function_timingmode(initval, descr, datadict):
     p8 = datadict.get('timing_discharge_power')
     if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
          and (p6!= None) and (p7!= None) and (p8!= None) ):
-    _LOGGER.error(f"value function timing failed - descr: {descr} datadict:{datadict}")
+        res = { 'timing_id': p1,
+                'timing_charge': p2,
+                'timing_charger_start_time': p3,
+                'timing_charger_end_time': p4,
+                'timing_discharger_start_time': p5,
+                'timing_discharger_end_time': p6,
+                'timing_charge_power': p7,
+                'timing_discharge_power': p8,
+               }
+        _LOGGER.debug(f"Evaluated timingmode_trigger: clamped values: {res}")
+        return res
+    _LOGGER.error(f"value function timingmode failed - descr: {descr} datadict:{datadict}")
     return None
 
 # ================================= Button Declarations ============================================================
