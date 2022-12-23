@@ -87,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         config = entry.data
     name = config[CONF_NAME] 
 
-    # ================== dynamically load desired plugin
+    # ================== dynamically load desired plugin =======================================================
     _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
     plugin_name = config[CONF_PLUGIN]
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
@@ -101,9 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.info(f"trying to load plugin - plugin_name: {plugin_name}")
         plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
         if not plugin: _LOGGER.error(f"could not import plugin {plugin_name}")
-
-    # ====================== end of dynamic load
-
+    # ====================== end of dynamic load ==============================================================
 
     host = config.get(CONF_HOST, None)
     port = config.get(CONF_PORT, DEFAULT_PORT)

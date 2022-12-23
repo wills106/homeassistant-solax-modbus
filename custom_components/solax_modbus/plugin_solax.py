@@ -98,7 +98,7 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
-def value_function_remotecontrol_trigger(initval, descr, datadict):
+def value_function_remotecontrol_recompute(initval, descr, datadict):
     p1 = datadict.get('remotecontrol_power_control') 
     p2 = datadict.get('remotecontrol_set_type') 
     p3 = datadict.get('remotecontrol_active_power')
@@ -108,11 +108,15 @@ def value_function_remotecontrol_trigger(initval, descr, datadict):
     ap_lo = datadict.get('active_power_lower')
     reap_up = datadict.get('reactive_power_upper')
     reap_lo = datadict.get('reactive_power_lower')
-    if not (p1 in ("Disabled", "Enabled Power Control", )): 
-        _LOGGER.warning("Remote_control_trigger: Only Power Control is currently supported - Setting Disabled")
-        p1 = "Disabled"
     if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
          and (ap_up != None) and (ap_lo != None) and (reap_up != None) and (reap_lo != None) ):
+        if not (p1 in ("Disabled", "Enabled Power Control", "Enabled Grid Control" )): 
+            _LOGGER.warning("Remote_control_trigger: Only Power Control or Grid Control is currently supported - Setting Disabled")
+            p1 = "Disabled"
+        if p1 == "Enabled Grid Control": # alternative computation for Power Control
+            # subtract house load
+            p3 = p3 - (datadict['inverter_load'] - datadict['measured_power'])
+            p1 = "Enabled Power Control"
         res = { 'remotecontrol_power_control': p1,
                 'remotecontrol_set_type': p2,
                 'remotecontrol_active_power':   max(min(ap_up, p3),   ap_lo),
@@ -135,7 +139,7 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID | GEN4,
         write_method = WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function = value_function_remotecontrol_trigger,
+        value_function = value_function_remotecontrol_recompute,
         autorepeat= "remotecontrol_autorepeat_duration"
     ),
     SolaxModbusButtonEntityDescription( name = "System On",
@@ -701,10 +705,11 @@ SELECT_TYPES = [
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict =  {
-                0: "Disabled",
-                1: "Enabled Power Control",
-                2: "Enabled Quantity Control",
-                3: "Enabled SOC Target Control",
+                 0: "Disabled",
+                 1: "Enabled Power Control", # battery charge level in absense of PV
+                11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
+               # 2: "Enabled Quantity Control",
+               # 3: "Enabled SOC Target Control",
             },
         allowedtypes = HYBRID | GEN4,
         initvalue = "Disabled",
@@ -722,7 +727,8 @@ SELECT_TYPES = [
         allowedtypes = HYBRID | GEN4,
         initvalue = "Set",
         icon="mdi:transmission-tower",
-    ),    
+    ), 
+
 ###
 #
 #  Normal select types
