@@ -361,7 +361,7 @@ class SolaXModbusHub:
                     elif descr.unit == REGISTER_S32: builder.add_32bit_int(value)
                     else: _LOGGER.error(f"unsupported unit type: {descr.unit} for {descr.key}")
                 payload = builder.to_registers()
-                _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
+                _LOGGER.warning(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
                 return self._client.write_registers(address, payload, **kwargs)
             else: 
                 _LOGGER.error(f"write_registers_multi expects a dictionary 0x{address:02x} payload: {payload}")
