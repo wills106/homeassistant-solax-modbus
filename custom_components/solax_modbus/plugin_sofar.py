@@ -97,29 +97,15 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_timingmode(initval, descr, datadict):
-    p1 = datadict.get('timing_id') 
-    p2 = datadict.get('timing_charge') 
-    p3 = datadict.get('timing_charger_start_time')
-    p4 = datadict.get('timing_charger_end_time')
-    p5 = datadict.get('timing_discharger_start_time')
-    p6 = datadict.get('timing_discharger_end_time')
-    p7 = datadict.get('timing_charge_power')
-    p8 = datadict.get('timing_discharge_power')
-    if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
-         and (p6!= None) and (p7!= None) and (p8!= None) ):
-        res = { 'timing_id': p1,
-                'timing_charge': p2,
-                'timing_charger_start_time': p3,
-                'timing_charger_end_time': p4,
-                'timing_discharger_start_time': p5,
-                'timing_discharger_end_time': p6,
-                'timing_charge_power': p7,
-                'timing_discharge_power': p8,
-               }
-        _LOGGER.debug(f"Evaluated timingmode_trigger: clamped values: {res}")
-        return res
-    _LOGGER.error(f"value function timingmode failed - descr: {descr} datadict:{datadict}")
-    return None
+    return  { 'timing_id': datadict.get('timing_id', datadict.get('ro_timing_id')),
+              'timing_charge': datadict.get('timing_charge', datadict.get('ro_timing_charge')),
+              'timing_charge_start_time': datadict.get('timing_charge_start_time', datadict.get('ro_timing_charge_start_time')) ,
+              'timing_charge_end_time': datadict.get('timing_charge_end_time', datadict.get('ro_timing_charge_end_time')),
+              'timing_discharge_start_time': datadict.get('timing_discharge_start_time', datadict.get('ro_timing_discharge_start_time')),
+              'timing_discharge_end_time': datadict.get('timing_discharge_end_time', datadict.get('ro_timing_discharge_end_time')),
+              'timing_charge_power': datadict.get('timing_charge_power', datadict.get('ro_timing_charge_power')),
+              'timing_discharge_power': datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')),
+            }
 
 # ================================= Button Declarations ============================================================
 
@@ -258,16 +244,16 @@ SELECT_TYPES = [
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict =  {
-                0: "Disabled",
-                1: "Charging Enabled",
-                2: "Discharging Enabled",
-                3: "Charging / Discharging Enabled",
+                0: "Enabled - Charging & Discharging",
+                1: "Enabled - Charging ",
+                2: "Enabled - Discharging",
+                3: "Disabled",
             },
         allowedtypes = HYBRID,
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Charger Start Time",
-        key = "timing_charger_start_time",
+        name = "Timing Charge Start Time",
+        key = "timing_charge_start_time",
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict = TIME_OPTIONS,
@@ -276,8 +262,8 @@ SELECT_TYPES = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Charger End Time",
-        key = "timing_charger_end_time",
+        name = "Timing Charge End Time",
+        key = "timing_charge_end_time",
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict = TIME_OPTIONS,
@@ -286,8 +272,8 @@ SELECT_TYPES = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Discharger Start Time",
-        key = "timing_discharger_start_time",
+        name = "Timing Discharge Start Time",
+        key = "timing_discharge_start_time",
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict = TIME_OPTIONS,
@@ -296,8 +282,8 @@ SELECT_TYPES = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Discharger End Time",
-        key = "timing_discharger_end_time",
+        name = "Timing Discharge End Time",
+        key = "timing_discharge_end_time",
         unit=REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict = TIME_OPTIONS,
@@ -2045,16 +2031,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "RO Timing Charge",
         key = "ro_timing_charge",
         register = 0x1112,
-        scale = { 0: "Disabled",
-                  1: "Charging Enabled",
-                  2: "Discharging Enabled",
-                  4: "Charging / Discharging Enabled", },
+        scale = { 0: "Enabled - Charging & Discharging",
+                  1: "Enabled - Charging",
+                  2: "Enabled - Discharging",
+                  4: "Disabled", },
         entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Charger Start Time", 
-        key="ro_timing_charger_start_time",
+        name="RO Timing Charge Start Time", 
+        key="ro_timing_charge_start_time",
         register = 0x1113,
         scale = value_function_sofartime,
         entity_registry_enabled_default=False,
@@ -2062,8 +2048,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Charger End Time", 
-        key="ro_timing_charger_end_time",
+        name="RO Timing Charge End Time", 
+        key="ro_timing_charge_end_time",
         register = 0x1114,
         scale = value_function_sofartime,
         entity_registry_enabled_default=False,
@@ -2071,8 +2057,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Discharger Start Time", 
-        key="ro_timing_discharger_start_time",
+        name="RO Timing Discharge Start Time", 
+        key="ro_timing_discharge_start_time",
         register = 0x1115,
         scale = value_function_sofartime,
         entity_registry_enabled_default=False,
@@ -2080,8 +2066,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Discharger End Time", 
-        key="ro_timing_discharger_end_time",
+        name="RO Timing Discharge End Time", 
+        key="ro_timing_discharge_end_time",
         register = 0x1116,
         scale = value_function_sofartime,
         entity_registry_enabled_default=False,
@@ -2089,8 +2075,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Charger Power", 
-        key="ro_timing_charger_power",
+        name="RO Timing Charge Power", 
+        key="ro_timing_charge_power",
         native_unit_of_measurement = POWER_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x1117,
@@ -2099,8 +2085,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes= HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name="RO Timing Discharger Power", 
-        key="ro_timing_discharger_power",
+        name="RO Timing Discharge Power", 
+        key="ro_timing_discharge_power",
         native_unit_of_measurement = POWER_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x1119,
