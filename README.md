@@ -4,7 +4,7 @@
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
-# homsassistant-solax-modbus
+# homeassistant-solax-modbus
 
 ## 2022.12.1 adds in support for Ginlong Solis & Sofar Solar Inverters, some aspects are still in development.
 
