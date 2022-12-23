@@ -114,6 +114,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             _LOGGER.warning("Remote_control_trigger: Only Power Control or Grid Control is currently supported - Setting Disabled")
             p1 = "Disabled"
         if p1 == "Enabled Grid Control": # alternative computation for Power Control
+            # subtract house load
             p3 = p3 - (datadict['inverter_load'] - datadict['measured_power'])
             p1 = "Enabled Power Control"
         res = { 'remotecontrol_power_control': p1,
