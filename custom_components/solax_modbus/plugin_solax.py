@@ -708,8 +708,8 @@ SELECT_TYPES = [
                  0: "Disabled",
                  1: "Enabled Power Control", # battery charge level in absense of PV
                 11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
-                 2: "Enabled Quantity Control",
-                 3: "Enabled SOC Target Control",
+               # 2: "Enabled Quantity Control",
+               # 3: "Enabled SOC Target Control",
             },
         allowedtypes = HYBRID | GEN4,
         initvalue = "Disabled",
