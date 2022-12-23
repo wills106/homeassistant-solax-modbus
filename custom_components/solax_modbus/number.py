@@ -32,7 +32,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         if plugin.matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info, readscale)
             if number_info.write_method==WRITE_DATA_LOCAL: 
-                hub.data[number_info.key] = number_info.initvalue
+                if (number_info.initvalue) != None: hub.data[number_info.key] = number_info.initvalue
                 hub.writeLocals[number_info.key] = number_info
             entities.append(number)
         

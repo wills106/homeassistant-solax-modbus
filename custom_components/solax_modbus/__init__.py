@@ -75,32 +75,39 @@ async def async_setup(hass, config):
     _LOGGER.debug("solax data %d", hass.data)
     return True
 
+# Example migration function
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating from version %s", config_entry.version)
+    if config_entry.version == 1:
+        new = {**config_entry.options}
+        # TODO: modify Config Entry data
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new)
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
     _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
-
     config = entry.options
-    if not config:
-        _LOGGER.warning('Using old style config entries, recreating the integration will resolve this')
-        config = entry.data
     name = config[CONF_NAME] 
-
-    # ================== dynamically load desired plugin =======================================================
-    _LOGGER.info(f"Ready to load plugin {config[CONF_PLUGIN]}")
     plugin_name = config[CONF_PLUGIN]
+
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
     if plugin_name.startswith("custom_components") or plugin_name.startswith("/config") or plugin_name.startswith("plugin_"):
+        new = {**config}
         plugin_name = plugin_name.split('plugin_', 1)[1][:-3] 
         _LOGGER.warning(f"converting old style plugin name {config[CONF_PLUGIN]} to new style short name {plugin_name}")
+        new[CONF_PLUGIN] = plugin_name
+        hass.config_entries.async_update_entry(entry, options=new)
     # end of conversion
 
-    if not plugin_name: _LOGGER.error(f"plugin path invalid, using default {DEFAULT_PLUGIN}; config dict: {config}")
-    else: 
-        _LOGGER.info(f"trying to load plugin - plugin_name: {plugin_name}")
-        plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
-        if not plugin: _LOGGER.error(f"could not import plugin {plugin_name}")
+    # ================== dynamically load desired plugin =======================================================
+    _LOGGER.info(f"trying to load plugin - plugin_name: {plugin_name}")
+    plugin = importlib.import_module(f".plugin_{plugin_name}", 'custom_components.solax_modbus') 
+    if not plugin: _LOGGER.error(f"could not import plugin with name: {plugin_name}")
     # ====================== end of dynamic load ==============================================================
 
     host = config.get(CONF_HOST, None)
