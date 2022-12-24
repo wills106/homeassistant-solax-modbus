@@ -99,8 +99,9 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
-    power_control  = datadict.get('remotecontrol_power_control', "Disabled") 
-    set_type       = datadict.get('remotecontrol_set_type', "Set") 
+    power_control  = datadict.get('remotecontrol_power_control', "Disabled")
+    set_type       = datadict.get('remotecontrol_set_type', "Set")
+    #set_type       = "Set" if (datadict.get('modbus_power_control', "Disabled") == "Disabled") else "Update" # did not work 
     target         = datadict.get('remotecontrol_active_power', 0)
     reactive_power = datadict.get('remotecontrol_reactive_power', 0)
     rc_duration    = datadict.get('remotecontrol_duration', 20)

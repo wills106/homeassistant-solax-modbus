@@ -341,7 +341,20 @@ class SolaXModbusHub:
             return self._client.write_registers(address, payload, **kwargs)
 
     def write_registers_multi(self, unit, address, payload): # Needs adapting for regiater que
-        """Write registers."""
+        """Write registers multi.
+        unit is the modbus address of the device that will be writen to
+        address us the start register address
+        payload is a dictionary 
+          - in which the keys are select or number entity keys names
+          - the values are the values that will be encoded according to the spec of that entity
+        The payload dictionary will be converted to a modbus payload with the proper encoding and written 
+        to modbus device with address=unit
+        All register descriptions referenced in the payload must be consecutive (without leaving holes)
+        32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
+        Special case: a payload dictionary entry STOP_AUTOREPEAT : entity_descr
+          - will stop the autorepeat for that entity
+          - and will be ignored further 
+        """
         stop_autorepeat_decr = payload.pop(STOP_AUTOREPEAT, None)
         if stop_autorepeat_decr: self.repeatUntil[stop_autorepeat_decr.key] = 0 # set autorepeat duration expired 
         with self._lock:
@@ -364,7 +377,8 @@ class SolaXModbusHub:
                     elif descr.unit == REGISTER_S32: builder.add_32bit_int(value)
                     else: _LOGGER.error(f"unsupported unit type: {descr.unit} for {descr.key}")
                 payload = builder.to_registers()
-                _LOGGER.warning(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
+                # for easier debugging, make next line a _LOGGER.info line
+                _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
                 return self._client.write_registers(address, payload, **kwargs)
             else: 
                 _LOGGER.error(f"write_registers_multi expects a dictionary 0x{address:02x} payload: {payload}")
