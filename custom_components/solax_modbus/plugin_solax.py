@@ -99,34 +99,28 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
-    p1 = datadict.get('remotecontrol_power_control') 
-    p2 = datadict.get('remotecontrol_set_type') 
-    p3 = datadict.get('remotecontrol_active_power')
-    p4 = datadict.get('remotecontrol_reactive_power')
-    p5 = datadict.get('remotecontrol_duration')
-    ap_up = datadict.get('active_power_upper')
-    ap_lo = datadict.get('active_power_lower')
-    reap_up = datadict.get('reactive_power_upper')
-    reap_lo = datadict.get('reactive_power_lower')
-    if ( (p1!=None) and (p2!=None) and (p3!=None) and (p4!=None) and (p5!=None)
-         and (ap_up != None) and (ap_lo != None) and (reap_up != None) and (reap_lo != None) ):
-        if not (p1 in ("Disabled", "Enabled Power Control", "Enabled Grid Control" )): 
-            _LOGGER.warning("Remote_control_trigger: Only Power Control or Grid Control is currently supported - Setting Disabled")
-            p1 = "Disabled"
-        if p1 == "Enabled Grid Control": # alternative computation for Power Control
-            # subtract house load
-            p3 = p3 - (datadict['inverter_load'] - datadict['measured_power'])
-            p1 = "Enabled Power Control"
-        res = { 'remotecontrol_power_control': p1,
-                'remotecontrol_set_type': p2,
-                'remotecontrol_active_power':   max(min(ap_up, p3),   ap_lo),
-                'remotecontrol_reactive_power': max(min(reap_up, p4), reap_lo),
-                'remotecontrol_duration': p5,
-               }
-        _LOGGER.debug(f"Evaluated remotecontrol_trigger: clamped values: {res}")
-        return res
-    _LOGGER.error(f"value function remotecontrol_trigger failed - descr: {descr} datadict:{datadict}")
-    return None
+    power_control  = datadict.get('remotecontrol_power_control', "Disabled") 
+    set_type       = datadict.get('remotecontrol_set_type', "Set") 
+    target         = datadict.get('remotecontrol_active_power', 0)
+    reactive_power = datadict.get('remotecontrol_reactive_power', 0)
+    rc_duration    = datadict.get('remotecontrol_duration', 20)
+    ap_up          = datadict.get('active_power_upper', 0)
+    ap_lo          = datadict.get('active_power_lower', 0)
+    reap_up        = datadict.get('reactive_power_upper', 0)
+    reap_lo        = datadict.get('reactive_power_lower', 0)
+    if power_control == "Enabled Grid Control": # alternative computation for Power Control
+        target = target - (datadict['inverter_load'] - datadict['measured_power']) # subtract house load
+        power_control = "Enabled Power Control"
+    elif power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
+    res = { 'remotecontrol_power_control':  power_control,
+            'remotecontrol_set_type':       set_type,
+            'remotecontrol_active_power':   max(min(ap_up, target),   ap_lo),
+            'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
+            'remotecontrol_duration':       rc_duration,
+           }
+    if (power_control == "Disabled"):  res[STOP_AUTOREPEAT] = descr
+    _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
+    return res
 
 # ================================= Button Declarations ============================================================
 

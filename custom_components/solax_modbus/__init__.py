@@ -51,6 +51,7 @@ from .const import (
     DEFAULT_PLUGIN,
     #PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
+    STOP_AUTOREPEAT,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 #from .const import setPlugin, getPlugin, getPluginName
@@ -341,6 +342,8 @@ class SolaXModbusHub:
 
     def write_registers_multi(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers."""
+        stop_autorepeat_decr = payload.pop(STOP_AUTOREPEAT, None)
+        if stop_autorepeat_decr: self.repeatUntil[stop_autorepeat_decr.key] = 0 # set autorepeat duration expired 
         with self._lock:
             kwargs = {"unit": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)

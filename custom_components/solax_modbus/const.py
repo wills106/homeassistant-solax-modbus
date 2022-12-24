@@ -75,6 +75,7 @@ SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
 SLEEPMODE_LAST   = 1 # when no communication at all
 SLEEPMODE_LASTAWAKE = 2 # when still responding but register must be ignored when not awake
+STOP_AUTOREPEAT  = "_stop_autorepeat"
 
 
 # ================================= Definitions for Sennsor Declarations =================================================
