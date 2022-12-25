@@ -51,12 +51,8 @@ from .const import (
     DEFAULT_PLUGIN,
     #PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
-    STOP_AUTOREPEAT,
 )
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
-#from .const import setPlugin, getPlugin, getPluginName
-
-
 
 
 PLATFORMS = ["button", "number", "select", "sensor"] 
@@ -190,7 +186,6 @@ class SolaXModbusHub:
         self._lock = threading.Lock()
         self._name = name
         self._modbus_addr = modbus_addr
-        #self._invertertype = 0
         self._seriesnumber = 'still unknown'
         self.interface = interface
         self.read_serial_port = serial_port
@@ -198,16 +193,14 @@ class SolaXModbusHub:
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
         self._sensors = []
-        self.data = {}
+        self.data = { "_repeatUntil": {}} # _repeatuntil contains button autorepeat expiry times
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
         self.holdingBlocks = {}
         self.computedSensors = {}
         self.computedButtons = {}
-        self.repeatUntil = {} # for buttons with autorepeat
         self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
-        #self.plugin_name = plugin_name
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
         self.writequeue = {} # queue requests when inverter is in sleep mode
@@ -215,7 +208,7 @@ class SolaXModbusHub:
         self.plugin = plugin.plugin_instance #getPlugin(name).plugin_instance
         self.wakeupButton = None
         self._invertertype = self.plugin.determineInverterType(self, config)
-        #self.awakeplugin = self.plugin.__dict__.get('isAwake', defaultIsAwake)
+        self._lastts = 0  # timestamp of last polling cycle
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     @callback
@@ -351,12 +344,7 @@ class SolaXModbusHub:
         to modbus device with address=unit
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
-        Special case: a payload dictionary entry STOP_AUTOREPEAT : entity_descr
-          - will stop the autorepeat for that entity
-          - and will be ignored further 
         """
-        stop_autorepeat_decr = payload.pop(STOP_AUTOREPEAT, None)
-        if stop_autorepeat_decr: self.repeatUntil[stop_autorepeat_decr.key] = 0 # set autorepeat duration expired 
         with self._lock:
             kwargs = {"unit": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
@@ -476,13 +464,14 @@ class SolaXModbusHub:
                 val = self.writequeue.get(addr)
                 self.write_register(self._modbus_addr, addr, val)
             self.writequeue = {} # make sure we do not write multiple times
-        ts = time()
-        for (k,v,) in self.repeatUntil.items(): 
-            if ts < v: 
+        self.last_ts = time()
+        for (k,v,) in self.data['_repeatUntil'].items(): 
+            if self.last_ts < v: 
                 buttondescr = self.computedButtons[k]
                 payload = buttondescr.value_function(0, buttondescr, self.data)
                 _LOGGER.debug(f"ready to repeat button {k} data: {payload}")
                 self.write_registers_multi(unit=self._modbus_addr, address=buttondescr.register, payload=payload)
         return res
+
 
 

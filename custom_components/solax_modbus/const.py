@@ -67,22 +67,18 @@ DEFAULT_READ_EPS = False
 DEFAULT_READ_DCB = False
 DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
-#DEFAULT_PLUGIN   = "/config/custom_components/solax_modbus/plugin_solax.py"
 DEFAULT_PLUGIN        = "solax"
-#PLUGIN_PATH           = "/config/custom_components/solax_modbus/plugin_*.py"
 PLUGIN_PATH = f"{pathlib.Path(__file__).parent.absolute()}/plugin_*.py"
 SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
 SLEEPMODE_LAST   = 1 # when no communication at all
 SLEEPMODE_LASTAWAKE = 2 # when still responding but register must be ignored when not awake
-STOP_AUTOREPEAT  = "_stop_autorepeat"
 
 
-# ================================= Definitions for Sennsor Declarations =================================================
+# ================================= Definitions for Sensor Declarations =================================================
 
 REG_HOLDING = 1  # modbus holding register
 REG_INPUT   = 2  # modbus input register
-#REG_DATA    = 3  # local data storage register, no direct modbus relation
 REGISTER_U16 = "uint16"
 REGISTER_U32 = "uint32"
 REGISTER_S16 = "int16"
@@ -100,26 +96,7 @@ WRITE_MULTI_MODBUS        = 4 # use write_multiple modbus command
 
 _LOGGER = logging.getLogger(__name__)
 
-# ==================================== plugin access ====================================================================
 
-
-
-
-"""
-glob_plugin = {}
-
-def setPlugin(instancename, plugin):
-    global glob_plugin
-    glob_plugin[instancename] = plugin 
-
-def getPlugin(instancename):
-    return glob_plugin.get(instancename)
-
-def getPluginName(plugin_path):
-    _LOGGER.error(f"get plugin name: path: {plugin_path} name: {plugin_path[len(PLUGIN_PATH)-4:-3]}")
-    return plugin_path[len(PLUGIN_PATH)-4:-3]
-
-"""
 
 # ==================================== plugin base class ====================================================================
 
@@ -159,8 +136,6 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
-    #order16: int = None # Endian.Big or Endian.Little
-    #order32: int = None
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
@@ -200,6 +175,19 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
+
+
+# ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
+
+def autorepeat_set(datadict, entitykey, value):
+    datadict['_repeatUntil'][entitykey] = value
+
+def autorepeat_stop(datadict, entitykey):
+    datadict['_repeatUntil'][entitykey] = 0
+
+def autorepeat_remaining(datadict, entitykey, timestamp):
+    remaining = datadict['_repeatUntil'].get(entitykey,0) - timestamp
+    return int(remaining) if remaining >0 else 0
 
 # ================================= Computed sensor value functions  =================================================
 

@@ -5,6 +5,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from custom_components.solax_modbus.const import *
+from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -119,9 +120,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
             'remotecontrol_duration':       rc_duration,
            }
-    if (power_control == "Disabled"):  res[STOP_AUTOREPEAT] = descr
+    if (power_control == "Disabled"): autorepeat_stop(datadict, descr.key)
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
+
+def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
+    return autorepeat_remaining(datadict, 'remotecontrol_trigger', time())
 
 # ================================= Button Declarations ============================================================
 
@@ -3642,6 +3646,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
         sleepmode = SLEEPMODE_ZERO,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remotecontrol Autorepeat Remaining",
+        key="remotecontrol_autorepeat_remaining",
+        native_unit_of_measurement=TIME_SECONDS,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_remotecontrol_autorepeat_remaining,
+        allowedtypes= GEN4,
+        icon="mdi:home-clock",
     ),
 ]
 
