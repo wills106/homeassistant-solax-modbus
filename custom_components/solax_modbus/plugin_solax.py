@@ -5,6 +5,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from custom_components.solax_modbus.const import *
+from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,8 +100,9 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
-    power_control  = datadict.get('remotecontrol_power_control', "Disabled") 
-    set_type       = datadict.get('remotecontrol_set_type', "Set") 
+    power_control  = datadict.get('remotecontrol_power_control', "Disabled")
+    set_type       = datadict.get('remotecontrol_set_type', "Set")
+    #set_type       = "Set" if (datadict.get('modbus_power_control', "Disabled") == "Disabled") else "Update" # did not work 
     target         = datadict.get('remotecontrol_active_power', 0)
     reactive_power = datadict.get('remotecontrol_reactive_power', 0)
     rc_duration    = datadict.get('remotecontrol_duration', 20)
@@ -111,6 +113,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     if power_control == "Enabled Grid Control": # alternative computation for Power Control
         target = target - (datadict['inverter_load'] - datadict['measured_power']) # subtract house load
         power_control = "Enabled Power Control"
+    if power_control == "Enabled Battery Control": # alternative computation for Power Control
+        target = target - datadict['pv_power_total'] # subtract house load and pv
+        power_control = "Enabled Power Control"
     elif power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     res = { 'remotecontrol_power_control':  power_control,
             'remotecontrol_set_type':       set_type,
@@ -118,9 +123,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
             'remotecontrol_duration':       rc_duration,
            }
-    if (power_control == "Disabled"):  res[STOP_AUTOREPEAT] = descr
+    if (power_control == "Disabled"): autorepeat_stop(datadict, descr.key)
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
+
+def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
+    return autorepeat_remaining(datadict, 'remotecontrol_trigger', time())
 
 # ================================= Button Declarations ============================================================
 
@@ -702,6 +710,7 @@ SELECT_TYPES = [
                  0: "Disabled",
                  1: "Enabled Power Control", # battery charge level in absense of PV
                 11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
+                12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
                # 2: "Enabled Quantity Control",
                # 3: "Enabled SOC Target Control",
             },
@@ -3641,6 +3650,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
         sleepmode = SLEEPMODE_ZERO,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remotecontrol Autorepeat Remaining",
+        key="remotecontrol_autorepeat_remaining",
+        native_unit_of_measurement=TIME_SECONDS,
+        state_class=STATE_CLASS_MEASUREMENT,
+        value_function = value_function_remotecontrol_autorepeat_remaining,
+        allowedtypes= GEN4,
+        icon="mdi:home-clock",
     ),
 ]
 

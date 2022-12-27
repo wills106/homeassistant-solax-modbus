@@ -1,5 +1,6 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS
+from .const import autorepeat_set
 from homeassistant.components.button import PLATFORM_SCHEMA, ButtonEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -79,7 +80,7 @@ class SolaXModbusButton(ButtonEntity):
         elif self._write_method == WRITE_MULTI_MODBUS:
             if self.button_info.autorepeat:
                 duration = self._hub.data.get(self.button_info.autorepeat, 0)
-                self._hub.repeatUntil[self.button_info.key] = time() + duration - 0.5
+                autorepeat_set(self._hub.data, self.button_info.key, time() + duration - 0.5 )
             if self.button_info.value_function:
                 res = self.button_info.value_function(0, self.button_info, self._hub.data )
                 self._hub.write_registers_multi(unit=self._modbus_addr, address=self._register, payload=res)
