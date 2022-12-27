@@ -113,6 +113,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     if power_control == "Enabled Grid Control": # alternative computation for Power Control
         target = target - (datadict['inverter_load'] - datadict['measured_power']) # subtract house load
         power_control = "Enabled Power Control"
+    if power_control == "Enabled Battery Control": # alternative computation for Power Control
+        target = target - datadict['pv_power_total'] # subtract house load and pv
+        power_control = "Enabled Power Control"
     elif power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     res = { 'remotecontrol_power_control':  power_control,
             'remotecontrol_set_type':       set_type,
@@ -707,6 +710,7 @@ SELECT_TYPES = [
                  0: "Disabled",
                  1: "Enabled Power Control", # battery charge level in absense of PV
                 11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
+                12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
                # 2: "Enabled Quantity Control",
                # 3: "Enabled SOC Target Control",
             },
