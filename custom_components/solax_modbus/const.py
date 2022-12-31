@@ -171,6 +171,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     scale: float = 1 
     state: str = None
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
+    min_exceptions_minus: list = None # same structure as max_exceptions, values are applied with a minus
     blacklist: list = None # None or list of serial number prefixes like
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities

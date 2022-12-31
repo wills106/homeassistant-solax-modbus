@@ -32,7 +32,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         if plugin.matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, number_info, readscale)
             if number_info.write_method==WRITE_DATA_LOCAL: 
-                if (number_info.initvalue) != None: hub.data[number_info.key] = number_info.initvalue
+                #if (number_info.initvalue) != None: hub.data[number_info.key] = number_info.initvalue
                 hub.writeLocals[number_info.key] = number_info
             entities.append(number)
         
@@ -67,6 +67,9 @@ class SolaXModbusNumber(NumberEntity):
         if number_info.max_exceptions:
             for (prefix, native_value,) in number_info.max_exceptions: 
                 if hub.seriesnumber.startswith(prefix): self._attr_native_max_value = native_value
+        if number_info.min_exceptions_minus:
+            for (prefix, native_value,) in number_info.min_exceptions_minus: 
+                if hub.seriesnumber.startswith(prefix): self._attr_native_min_value = -native_value
         self._attr_native_step = number_info.native_step
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state
@@ -113,8 +116,16 @@ class SolaXModbusNumber(NumberEntity):
         if self._key in self._hub.data: 
             if self._read_scale: return self._hub.data[self._key]*self._read_scale
             else: return self._hub.data[self._key]
-        else: 
-            return self.entity_description.initvalue
+        else: # first time initialize
+            #return self.entity_description.initvalue
+            if self.entity_description.initvalue == None: return None
+            else: 
+                res = self.entity_description.initvalue
+                if self._attr_native_max_value != None: res = min(res, self._attr_native_max_value)
+                if self._attr_native_min_value != None: res = max(res, self._attr_native_min_value)
+                self._hub.data[self._key] = res
+                return res
+
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
