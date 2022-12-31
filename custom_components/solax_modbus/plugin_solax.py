@@ -99,20 +99,10 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
-    """
-    elif power_control == "Enabled Peak Shaving": # alternative computation for power control
-        export_limit   = datadict.get('remotecontrol_export_limit', 20000)
-        import_limit   = datadict.get('remotecontrol_import_limit', 20000)
-        inverter_load  = datadict.get('inverter_load')
-        houseload      = datadict.get(inverter_load) - datadict.get('measured_power')
-        _LOGGER.error(f"*** exportlimit={export_limit} importlimit={import_limit} houseload={houseload}")
-        ap_target = target -  min(max(houseload, - import_limit), export_limit) 
-        power_control = "Enabled Power Control" """
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
-    set_type       = datadict.get('remotecontrol_set_type', "Set")
-    #set_type       = "Set" if (datadict.get('modbus_power_control', "Disabled") == "Disabled") else "Update" # did not work 
+    set_type       = datadict.get('remotecontrol_set_type', "Set") # other options did not work
     target         = datadict.get('remotecontrol_active_power', 0)
     reactive_power = datadict.get('remotecontrol_reactive_power', 0)
     rc_duration    = datadict.get('remotecontrol_duration', 20)
@@ -136,8 +126,8 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     old_ap_target = ap_target
     ap_target = min(ap_target,  import_limit - houseload)
     ap_target = max(ap_target, -export_limit - houseload)
-    if old_ap_target != ap_target:
-        _LOGGER.info(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
+    if  old_ap_target != ap_target: 
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     res = { 'remotecontrol_power_control':  power_control,
             'remotecontrol_set_type':       set_type,
             'remotecontrol_active_power':   max(min(ap_up, ap_target),   ap_lo),
@@ -760,7 +750,6 @@ SELECT_TYPES = [
                  1: "Enabled Power Control", # battery charge level in absense of PV
                 11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
                 12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
-                #13: "Enabled Peak Shaving", # variation of battery Control with limitation of peaks on grid import/export
                # 2: "Enabled Quantity Control",
                # 3: "Enabled SOC Target Control",
             },

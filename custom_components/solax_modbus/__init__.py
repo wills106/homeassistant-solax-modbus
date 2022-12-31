@@ -7,6 +7,7 @@ from typing import Optional
 #import importlib.util, sys
 import importlib
 from time import time
+import json
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -209,7 +210,32 @@ class SolaXModbusHub:
         self.wakeupButton = None
         self._invertertype = self.plugin.determineInverterType(self, config)
         self._lastts = 0  # timestamp of last polling cycle
+        self.localsUpdated = False
+        self.localsLoaded = False
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
+
+
+    # save and load local data entity values to make them persistent
+    DATAFORMAT_VERSION = 1
+
+    def saveLocalData(self):
+        tosave = { '_version': self.DATAFORMAT_VERSION }
+        for desc in self.writeLocals:  tosave[desc] = self.data.get(desc) 
+        with open(f'{self.name}_data.json', 'w') as fp: json.dump(tosave, fp)
+        self.localsUpdated = False
+        _LOGGER.info(f"saved modified persistent date: {tosave}")
+
+    def loadLocalData(self):
+        try: fp = open(f'{self.name}_data.json') 
+        except: pass
+        else: 
+            loaded = json.load(fp)
+            if loaded.get('_version') == self.DATAFORMAT_VERSION:
+                for desc in self.writeLocals: self.data[desc] = loaded.get(desc)
+            else: _LOGGER.warning(f"local persistent data lost - please reinitialize {self.writeLocals.keys()}")
+            fp.close()
+        self.localsLoaded = True
+    # end of save and load section
 
     @callback
     def async_add_solax_modbus_sensor(self, update_callback):
@@ -456,7 +482,8 @@ class SolaXModbusHub:
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-       
+        if self.localsUpdated: self.saveLocalData() 
+        if not self.localsLoaded: self.loadLocalData()
         if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
