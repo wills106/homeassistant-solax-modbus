@@ -221,12 +221,12 @@ class SolaXModbusHub:
     def saveLocalData(self):
         tosave = { '_version': self.DATAFORMAT_VERSION }
         for desc in self.writeLocals:  tosave[desc] = self.data.get(desc) 
-        with open(f'{self.name}_data.json', 'w') as fp: json.dump(tosave, fp)
+        with open(self._hass.config.path(f'{self.name}_data.json'), 'w') as fp: json.dump(tosave, fp)
         self.localsUpdated = False
         _LOGGER.info(f"saved modified persistent date: {tosave}")
 
     def loadLocalData(self):
-        try: fp = open(f'{self.name}_data.json') 
+        try: fp = open(self._hass.config.path(f'{self.name}_data.json'))
         except: pass
         else: 
             loaded = json.load(fp)
