@@ -130,7 +130,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     elif power_control == "Enabled Battery Control": # alternative computation for Power Control
         ap_target = target - datadict['pv_power_total'] # subtract house load and pv
         power_control = "Enabled Power Control"
-    elif power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
+    elif 
+        ap_target = target
+        power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
     ap_target = min(ap_target,  import_limit - houseload)
     ap_target = max(ap_target, -export_limit - houseload)
