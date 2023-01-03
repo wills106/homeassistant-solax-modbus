@@ -105,7 +105,8 @@ class SolaXModbusSelect(SelectEntity):
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
-        else:
-            pass
+        elif self._write_method == WRITE_DATA_LOCAL:
+            _LOGGER.info(f"*** local data written {self._key}: {payload}")
+            self._hub.localsUpdated = True # mark to save permanently
         self._hub.data[self._key] = option
         self.async_write_ha_state()

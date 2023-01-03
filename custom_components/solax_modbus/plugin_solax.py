@@ -99,10 +99,19 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return { REGISTER_U16: now.second,
+             REGISTER_U16: now.minute,
+             REGISTER_U16: now.hour,
+             REGISTER_U16: now.day,
+             REGISTER_U16: now.month,
+             REGISTER_U16: now.year % 100,
+           }
+
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
-    set_type       = datadict.get('remotecontrol_set_type', "Set")
-    #set_type       = "Set" if (datadict.get('modbus_power_control', "Disabled") == "Disabled") else "Update" # did not work 
+    set_type       = datadict.get('remotecontrol_set_type', "Set") # other options did not work
     target         = datadict.get('remotecontrol_active_power', 0)
     reactive_power = datadict.get('remotecontrol_reactive_power', 0)
     rc_duration    = datadict.get('remotecontrol_duration', 20)
@@ -110,16 +119,27 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     ap_lo          = datadict.get('active_power_lower', 0)
     reap_up        = datadict.get('reactive_power_upper', 0)
     reap_lo        = datadict.get('reactive_power_lower', 0)
-    if power_control == "Enabled Grid Control": # alternative computation for Power Control
-        target = target - (datadict['inverter_load'] - datadict['measured_power']) # subtract house load
+    export_limit   = datadict.get('remotecontrol_export_limit', 20000)
+    import_limit   = datadict.get('remotecontrol_import_limit', 20000)
+    houseload      = datadict['inverter_load'] - datadict['measured_power']
+    if   power_control == "Enabled Power Control": 
+        ap_target = target
+    elif power_control == "Enabled Grid Control": # alternative computation for Power Control
+        ap_target = target - houseload # subtract house load
         power_control = "Enabled Power Control"
-    if power_control == "Enabled Battery Control": # alternative computation for Power Control
-        target = target - datadict['pv_power_total'] # subtract house load and pv
+    elif power_control == "Enabled Battery Control": # alternative computation for Power Control
+        ap_target = target - datadict['pv_power_total'] # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
+    old_ap_target = ap_target
+    ap_target = min(ap_target,  import_limit - houseload)
+    ap_target = max(ap_target, -export_limit - houseload)
+    #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
+    if  old_ap_target != ap_target: 
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     res = { 'remotecontrol_power_control':  power_control,
             'remotecontrol_set_type':       set_type,
-            'remotecontrol_active_power':   max(min(ap_up, target),   ap_lo),
+            'remotecontrol_active_power':   max(min(ap_up, ap_target),   ap_lo),
             'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
             'remotecontrol_duration':       rc_duration,
            }
@@ -133,6 +153,16 @@ def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SolaxModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 0x00,
+        #command = 0,
+        allowedtypes = HYBRID | GEN4 | GEN3,
+        write_method = WRITE_MULTI_MODBUS,
+        icon="mdi:home-clock",
+        value_function = value_function_sync_rtc,
+    ),
     SolaxModbusButtonEntityDescription( 
         name = "Remotecontrol Trigger",
         key = "remotecontrol_trigger",
@@ -307,10 +337,12 @@ NUMBER_TYPES = [
         key="remotecontrol_active_power",
         allowedtypes= HYBRID | GEN4,
         native_min_value = -6000,
-        native_max_value = 6000,
+        native_max_value = 30000,
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
         initvalue = 0,
+        #max_exceptions = MAX_EXPORT,
+        min_exceptions_minus = MAX_EXPORT, # negative
         unit=REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
@@ -348,10 +380,36 @@ NUMBER_TYPES = [
         icon="mdi:home-clock",
         initvalue = 0, # seconds - 
         native_min_value = 0,
-        native_max_value = 14400,
-        native_step = 300,
+        native_max_value = 18000,
+        native_step = 600,
         fmt = "i",
         native_unit_of_measurement = TIME_SECONDS,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Import Limit",
+        key="remotecontrol_import_limit",
+        allowedtypes= HYBRID | GEN4,
+        native_min_value = 0,
+        native_max_value = 30000, # overwritten by MAX_EXPORT
+        #max_exceptions = MAX_EXPORT,
+        native_step = 100,
+        native_unit_of_measurement = POWER_WATT,
+        initvalue = 20000, # will be reduced to MAX
+        unit=REGISTER_S32,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Export Limit",
+        key="remotecontrol_export_limit",
+        allowedtypes= HYBRID | GEN4,
+        native_min_value = 0,
+        native_max_value = 30000, #overwritten by MAX_EXPORT
+        #max_exceptions = MAX_EXPORT,
+        native_step = 100,
+        native_unit_of_measurement = POWER_WATT,
+        initvalue = 20000, # will be reduced to MAX
+        unit=REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
     ###
@@ -3414,6 +3472,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x110,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charge Discharge Power",
+        key="charge_discharge_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        entity_registry_enabled_default=False,
+        register = 0x114,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
         allowedtypes = GEN4,

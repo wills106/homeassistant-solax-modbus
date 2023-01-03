@@ -7,6 +7,7 @@ from typing import Optional
 #import importlib.util, sys
 import importlib
 from time import time
+import json
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -209,7 +210,32 @@ class SolaXModbusHub:
         self.wakeupButton = None
         self._invertertype = self.plugin.determineInverterType(self, config)
         self._lastts = 0  # timestamp of last polling cycle
+        self.localsUpdated = False
+        self.localsLoaded = False
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
+
+
+    # save and load local data entity values to make them persistent
+    DATAFORMAT_VERSION = 1
+
+    def saveLocalData(self):
+        tosave = { '_version': self.DATAFORMAT_VERSION }
+        for desc in self.writeLocals:  tosave[desc] = self.data.get(desc) 
+        with open(self._hass.config.path(f'{self.name}_data.json'), 'w') as fp: json.dump(tosave, fp)
+        self.localsUpdated = False
+        _LOGGER.info(f"saved modified persistent date: {tosave}")
+
+    def loadLocalData(self):
+        try: fp = open(self._hass.config.path(f'{self.name}_data.json'))
+        except: pass
+        else: 
+            loaded = json.load(fp)
+            if loaded.get('_version') == self.DATAFORMAT_VERSION:
+                for desc in self.writeLocals: self.data[desc] = loaded.get(desc)
+            else: _LOGGER.warning(f"local persistent data lost - please reinitialize {self.writeLocals.keys()}")
+            fp.close()
+        self.localsLoaded = True
+    # end of save and load section
 
     @callback
     def async_add_solax_modbus_sensor(self, update_callback):
@@ -338,8 +364,8 @@ class SolaXModbusHub:
         unit is the modbus address of the device that will be writen to
         address us the start register address
         payload is a dictionary 
-          - in which the keys are select or number entity keys names
-          - the values are the values that will be encoded according to the spec of that entity
+          - in which the keys are select or number entity keys names or alternatively REGISTER_xx type declarations
+          - the values are the values that will be encoded according to the spec of that entity 
         The payload dictionary will be converted to a modbus payload with the proper encoding and written 
         to modbus device with address=unit
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
@@ -351,19 +377,22 @@ class SolaXModbusHub:
             builder.reset()
             if isinstance(payload, dict):
                 for (key, value,) in payload.items():
-                    descr = self.writeLocals[key]
-                    if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
-                    elif callable(descr.scale):  # function to call ?
-                        value = descr.scale(value, descr, self.data) 
-                    else: # apply simple numeric scaling and rounding if not a list of words
-                        try:    value = value*descr.scale
-                        except: _LOGGER.error(f"cannot treat payload scale {value} {descr}")
-                    value = int(value)
-                    if   descr.unit == REGISTER_U16: builder.add_16bit_uint(value)
-                    elif descr.unit == REGISTER_S16: builder.add_16bit_int(value)
-                    elif descr.unit == REGISTER_U32: builder.add_32bit_uint(value)
-                    elif descr.unit == REGISTER_S32: builder.add_32bit_int(value)
-                    else: _LOGGER.error(f"unsupported unit type: {descr.unit} for {descr.key}")
+                    if key.startswith("_"): typ = key
+                    else:    
+                        descr = self.writeLocals[key]
+                        if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
+                        elif callable(descr.scale):  # function to call ?
+                            value = descr.scale(value, descr, self.data) 
+                        else: # apply simple numeric scaling and rounding if not a list of words
+                            try:    value = value*descr.scale
+                            except: _LOGGER.error(f"cannot treat payload scale {value} {descr}")
+                        value = int(value)
+                        typ = descr.unit
+                    if   typ == REGISTER_U16: builder.add_16bit_uint(value)
+                    elif typ == REGISTER_S16: builder.add_16bit_int(value)
+                    elif typ == REGISTER_U32: builder.add_32bit_uint(value)
+                    elif typ == REGISTER_S32: builder.add_32bit_int(value)
+                    else: _LOGGER.error(f"unsupported unit type: {typ} for {key}")
                 payload = builder.to_registers()
                 # for easier debugging, make next line a _LOGGER.info line
                 _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
@@ -456,7 +485,8 @@ class SolaXModbusHub:
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-       
+        if self.localsUpdated: self.saveLocalData() 
+        if not self.localsLoaded: self.loadLocalData()
         if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
