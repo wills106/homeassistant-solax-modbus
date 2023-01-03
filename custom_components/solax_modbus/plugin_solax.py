@@ -113,7 +113,6 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     export_limit   = datadict.get('remotecontrol_export_limit', 20000)
     import_limit   = datadict.get('remotecontrol_import_limit', 20000)
     houseload      = datadict['inverter_load'] - datadict['measured_power']
-    ap_target      = target # default for "enabled power control mode"
     if   power_control == "Enabled Power Control": 
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
@@ -126,6 +125,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     old_ap_target = ap_target
     ap_target = min(ap_target,  import_limit - houseload)
     ap_target = max(ap_target, -export_limit - houseload)
+    #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     res = { 'remotecontrol_power_control':  power_control,
@@ -3453,6 +3453,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         register = 0x110,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Charge Discharge Power",
+        key="charge_discharge_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        entity_registry_enabled_default=False,
+        register = 0x114,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
         allowedtypes = GEN4,
