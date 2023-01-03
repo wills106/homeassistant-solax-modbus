@@ -364,8 +364,8 @@ class SolaXModbusHub:
         unit is the modbus address of the device that will be writen to
         address us the start register address
         payload is a dictionary 
-          - in which the keys are select or number entity keys names
-          - the values are the values that will be encoded according to the spec of that entity
+          - in which the keys are select or number entity keys names or alternatively REGISTER_xx type declarations
+          - the values are the values that will be encoded according to the spec of that entity 
         The payload dictionary will be converted to a modbus payload with the proper encoding and written 
         to modbus device with address=unit
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
@@ -377,19 +377,22 @@ class SolaXModbusHub:
             builder.reset()
             if isinstance(payload, dict):
                 for (key, value,) in payload.items():
-                    descr = self.writeLocals[key]
-                    if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
-                    elif callable(descr.scale):  # function to call ?
-                        value = descr.scale(value, descr, self.data) 
-                    else: # apply simple numeric scaling and rounding if not a list of words
-                        try:    value = value*descr.scale
-                        except: _LOGGER.error(f"cannot treat payload scale {value} {descr}")
-                    value = int(value)
-                    if   descr.unit == REGISTER_U16: builder.add_16bit_uint(value)
-                    elif descr.unit == REGISTER_S16: builder.add_16bit_int(value)
-                    elif descr.unit == REGISTER_U32: builder.add_32bit_uint(value)
-                    elif descr.unit == REGISTER_S32: builder.add_32bit_int(value)
-                    else: _LOGGER.error(f"unsupported unit type: {descr.unit} for {descr.key}")
+                    if key.startswith("_"): typ = key
+                    else:    
+                        descr = self.writeLocals[key]
+                        if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
+                        elif callable(descr.scale):  # function to call ?
+                            value = descr.scale(value, descr, self.data) 
+                        else: # apply simple numeric scaling and rounding if not a list of words
+                            try:    value = value*descr.scale
+                            except: _LOGGER.error(f"cannot treat payload scale {value} {descr}")
+                        value = int(value)
+                        typ = descr.unit
+                    if   typ == REGISTER_U16: builder.add_16bit_uint(value)
+                    elif typ == REGISTER_S16: builder.add_16bit_int(value)
+                    elif typ == REGISTER_U32: builder.add_32bit_uint(value)
+                    elif typ == REGISTER_S32: builder.add_32bit_int(value)
+                    else: _LOGGER.error(f"unsupported unit type: {typ} for {key}")
                 payload = builder.to_registers()
                 # for easier debugging, make next line a _LOGGER.info line
                 _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")

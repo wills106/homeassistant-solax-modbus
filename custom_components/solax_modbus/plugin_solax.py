@@ -99,6 +99,15 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return { REGISTER_U16: now.second,
+             REGISTER_U16: now.minute,
+             REGISTER_U16: now.hour,
+             REGISTER_U16: now.day,
+             REGISTER_U16: now.month,
+             REGISTER_U16: now.year % 100,
+           }
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
@@ -144,6 +153,16 @@ def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SolaxModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 0x00,
+        #command = 0,
+        allowedtypes = HYBRID | GEN4 | GEN3,
+        write_method = WRITE_MULTI_MODBUS,
+        icon="mdi:home-clock",
+        value_function = value_function_sync_rtc,
+    ),
     SolaxModbusButtonEntityDescription( 
         name = "Remotecontrol Trigger",
         key = "remotecontrol_trigger",
