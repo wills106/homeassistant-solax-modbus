@@ -160,7 +160,7 @@ BUTTON_TYPES = [
         key = "sync_rtc",
         register = 0x00,
         #command = 0,
-        allowedtypes = HYBRID | GEN4 | GEN3,
+        allowedtypes = AC | HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function = value_function_sync_rtc,
@@ -2302,7 +2302,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         rounding = 1,
         allowedtypes=HYBRID | PV,
-        sleepmode = SLEEPMODE_NONE,
+        #sleepmode = SLEEPMODE_NONE,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
@@ -2314,7 +2314,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         rounding = 1,
         allowedtypes=HYBRID | PV,
-        sleepmode = SLEEPMODE_NONE,
+        #sleepmode = SLEEPMODE_NONE,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 1",
@@ -2326,7 +2326,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes=HYBRID | PV,
         icon="mdi:current-dc",
-        sleepmode=SLEEPMODE_ZERO,
+        #sleepmode=SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 2",
@@ -2339,7 +2339,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes=HYBRID | PV,
         icon="mdi:current-dc",
-        sleepmode = SLEEPMODE_ZERO,
+        #sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Frequency",
@@ -2412,7 +2412,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes= HYBRID | PV,
         icon="mdi:solar-power-variant",
-        sleepmode = SLEEPMODE_ZERO,
+        #sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 2",
@@ -2424,7 +2424,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
-        sleepmode = SLEEPMODE_ZERO,
+        #sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="Time Count Down",
@@ -3721,7 +3721,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=STATE_CLASS_MEASUREMENT,
         allowedtypes=HYBRID | PV,
         icon="mdi:solar-power-variant",
-        sleepmode = SLEEPMODE_ZERO,
+        #sleepmode = SLEEPMODE_ZERO,
     ),
     SolaXModbusSensorEntityDescription(
         name="Remotecontrol Autorepeat Remaining",
