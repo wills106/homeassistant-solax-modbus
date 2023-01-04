@@ -101,12 +101,12 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
-    return { REGISTER_U16: now.second,
-             REGISTER_U16: now.minute,
-             REGISTER_U16: now.hour,
-             REGISTER_U16: now.day,
-             REGISTER_U16: now.month,
-             REGISTER_U16: now.year % 100,
+    return { REGISTER_U16+':sec'  : now.second,
+             REGISTER_U16+':min'  : now.minute,
+             REGISTER_U16+':hour' : now.hour,
+             REGISTER_U16+':day'  : now.day,
+             REGISTER_U16+':month': now.month,
+             REGISTER_U16+':year' : now.year % 100,
            }
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):

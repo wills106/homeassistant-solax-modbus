@@ -364,7 +364,7 @@ class SolaXModbusHub:
         unit is the modbus address of the device that will be writen to
         address us the start register address
         payload is a dictionary 
-          - in which the keys are select or number entity keys names or alternatively REGISTER_xx type declarations
+          - in which the keys are select or number entity keys names or alternatively REGISTER_xx+':name' type declarations
           - the values are the values that will be encoded according to the spec of that entity 
         The payload dictionary will be converted to a modbus payload with the proper encoding and written 
         to modbus device with address=unit
@@ -377,7 +377,7 @@ class SolaXModbusHub:
             builder.reset()
             if isinstance(payload, dict):
                 for (key, value,) in payload.items():
-                    if key.startswith("_"): typ = key
+                    if key.startswith("_"): typ = key.split(':')[0] # remove irrelevant name part
                     else:    
                         descr = self.writeLocals[key]
                         if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
