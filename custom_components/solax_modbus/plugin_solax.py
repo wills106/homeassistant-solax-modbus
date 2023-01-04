@@ -119,7 +119,6 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     ap_lo          = datadict.get('active_power_lower', 0)
     reap_up        = datadict.get('reactive_power_upper', 0)
     reap_lo        = datadict.get('reactive_power_lower', 0)
-    export_limit   = datadict.get('remotecontrol_export_limit', 20000)
     import_limit   = datadict.get('remotecontrol_import_limit', 20000)
     houseload      = datadict['inverter_load'] - datadict['measured_power']
     if   power_control == "Enabled Power Control": 
@@ -135,7 +134,6 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
     ap_target = min(ap_target,  import_limit - houseload)
-    ap_target = max(ap_target, -export_limit - houseload)
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
@@ -394,19 +392,6 @@ NUMBER_TYPES = [
         allowedtypes= HYBRID | GEN4,
         native_min_value = 0,
         native_max_value = 30000, # overwritten by MAX_EXPORT
-        #max_exceptions = MAX_EXPORT,
-        native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
-        initvalue = 20000, # will be reduced to MAX
-        unit=REGISTER_S32,
-        write_method = WRITE_DATA_LOCAL,
-    ),
-    SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Export Limit",
-        key="remotecontrol_export_limit",
-        allowedtypes= HYBRID | GEN4,
-        native_min_value = 0,
-        native_max_value = 30000, #overwritten by MAX_EXPORT
         #max_exceptions = MAX_EXPORT,
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
