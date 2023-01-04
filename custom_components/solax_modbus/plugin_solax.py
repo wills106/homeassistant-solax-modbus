@@ -240,7 +240,8 @@ MAX_CURRENTS = [
     ('H450',   30 ), # Gen4 X1 5kW
     ('H460',   30 ), # Gen4 X1 6kW
     ('H475',   30 ), # Gen4 X1 7.5kW
-    ('PRI5',   30 ), # Gen4 X1 RetroFit 5kWh
+    ('PRE',   30 ), # Gen4 X1 RetroFit
+    ('PRI',   30 ), # Gen4 X1 RetroFit
     ('H34A',    30 ), # Gen4 X3 A
     ('H34B',    30 ), # Gen4 X3 B
     ('H34T',    25 ), # Gen4 X3 T
@@ -299,6 +300,7 @@ MAX_EXPORT = [
     ('H450',    9200 ), # Gen4 X1 5kW
     ('H460',    9200 ), # Gen4 X1 6kW
     ('H475',    9200 ), # Gen4 X1 7.5kW
+    ('PRE5',    9200 ), # Gen4 X1 RetroFit 5kW
     ('PRI5',    9200 ), # Gen4 X1 RetroFit 5kW
     ('H34A05',  7500 ), # Gen4 X3 A
     ('H34A08', 12000 ), # Gen4 X3 A
@@ -4127,6 +4129,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
         elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
         elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
+        elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
         elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
