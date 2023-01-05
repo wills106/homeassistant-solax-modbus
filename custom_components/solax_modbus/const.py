@@ -7,7 +7,10 @@ from homeassistant.components.sensor import (
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
 )
-from homeassistant.components.number import NumberEntityDescription
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntityDescription,
+)
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
