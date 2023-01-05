@@ -452,10 +452,10 @@ class SolaXModbusHub:
             if typ == 'input': realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
             else:              realtime_data = self.read_holding_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
         except Exception as ex:
-            if self.slowdown == 1: _LOGGER.error(f"{str(ex)}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
+            if self.slowdown == 1: _LOGGER.info(f"{str(ex)}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
             return False
         if realtime_data.isError():
-            if self.slowdown == 1: _LOGGER.error(f"{self.name} error reading {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
+            if self.slowdown == 1: _LOGGER.info(f"{self.name} error reading {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
             return False
         #decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
         decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, self.plugin.order16, wordorder=self.plugin.order32)
