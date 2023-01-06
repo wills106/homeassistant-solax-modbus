@@ -136,7 +136,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     ap_target = min(ap_target,  import_limit - houseload)
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
-        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload}")
     res = { 'remotecontrol_power_control':  power_control,
             'remotecontrol_set_type':       set_type,
             'remotecontrol_active_power':   max(min(ap_up, ap_target),   ap_lo),
