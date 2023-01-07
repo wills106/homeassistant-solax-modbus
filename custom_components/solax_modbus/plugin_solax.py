@@ -4345,14 +4345,15 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
         elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC502T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU802T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU803T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC106T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
