@@ -251,6 +251,7 @@ MAX_CURRENTS = [
     ('H34A',    30 ), # Gen4 X3 A
     ('H34B',    30 ), # Gen4 X3 B
     ('H34T',    25 ), # Gen4 X3 T
+    ('H34T',    25 ), # Gen4 X3 T
     ### All known Inverters added
 ]
 
@@ -318,6 +319,11 @@ MAX_EXPORT = [
     ('H34B10', 15000 ), # Gen4 X3 B
     ('H34B12', 15000 ), # Gen4 X3 B
     ('H34B15', 16500 ), # Gen4 X3 B
+    ('H34C05',  7500 ), # Gen4 X3 C
+    ('H34C08', 12000 ), # Gen4 X3 C
+    ('H34C10', 15000 ), # Gen4 X3 C
+    ('H34C12', 15000 ), # Gen4 X3 C
+    ('H34C15', 16500 ), # Gen4 X3 C
     ('H34T05',  7500 ), # Gen4 X3 T
     ('H34T08', 12000 ), # Gen4 X3 T
     ('H34T10', 15000 ), # Gen4 X3 T
