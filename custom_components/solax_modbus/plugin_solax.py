@@ -250,7 +250,7 @@ MAX_CURRENTS = [
     ('PRI',   30 ), # Gen4 X1 RetroFit
     ('H34A',    30 ), # Gen4 X3 A
     ('H34B',    30 ), # Gen4 X3 B
-    ('H34T',    25 ), # Gen4 X3 T
+    ('H34C',    25 ), # Gen4 X3 C
     ('H34T',    25 ), # Gen4 X3 T
     ### All known Inverters added
 ]
