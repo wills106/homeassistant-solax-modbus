@@ -860,6 +860,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -893,6 +894,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -1489,10 +1491,11 @@ class solis_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model
-        elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model
+        if seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW 48v
         elif seriesnumber.startswith('160F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW 48v
         elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92
+        elif seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model
+        elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model
         #elif seriesnumber.startswith('abc123'):  invertertype = PV | X3 # Comment
 
         else: 
