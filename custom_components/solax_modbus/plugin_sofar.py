@@ -398,7 +398,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x41A,
         newblock = True,
         unit = REGISTER_S16,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
