@@ -83,7 +83,7 @@ class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 @dataclass
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS 
 
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
