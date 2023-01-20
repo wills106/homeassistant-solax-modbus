@@ -97,21 +97,21 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_passivemode(initval, descr, datadict):
-    return  { REGISTER_S32+':x': 0,
-              REGISTER_S32+':y': datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), 
-              REGISTER_S32+':z': datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')),
-            }
+    return  [ (REGISTER_S32, 0, ),
+              (REGISTER_S32, datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), ), 
+              (REGISTER_S32, datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), ),
+            ]
 
 def value_function_timingmode(initval, descr, datadict):
-    return  { 'timing_id': datadict.get('timing_id', datadict.get('ro_timing_id')),
-              'timing_charge': datadict.get('timing_charge', datadict.get('ro_timing_charge')),
-              'timing_charge_start_time': datadict.get('timing_charge_start_time', datadict.get('ro_timing_charge_start_time')) ,
-              'timing_charge_end_time': datadict.get('timing_charge_end_time', datadict.get('ro_timing_charge_end_time')),
-              'timing_discharge_start_time': datadict.get('timing_discharge_start_time', datadict.get('ro_timing_discharge_start_time')),
-              'timing_discharge_end_time': datadict.get('timing_discharge_end_time', datadict.get('ro_timing_discharge_end_time')),
-              'timing_charge_power': datadict.get('timing_charge_power', datadict.get('ro_timing_charge_power')),
-              'timing_discharge_power': datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')),
-            }
+    return  [ ('timing_id', datadict.get('timing_id', datadict.get('ro_timing_id')), ),
+              ('timing_charge', datadict.get('timing_charge', datadict.get('ro_timing_charge')), ),
+              ('timing_charge_start_time', datadict.get('timing_charge_start_time', datadict.get('ro_timing_charge_start_time')), ),
+              ('timing_charge_end_time', datadict.get('timing_charge_end_time', datadict.get('ro_timing_charge_end_time')), ),
+              ('timing_discharge_start_time', datadict.get('timing_discharge_start_time', datadict.get('ro_timing_discharge_start_time')), ),
+              ('timing_discharge_end_time', datadict.get('timing_discharge_end_time', datadict.get('ro_timing_discharge_end_time')), ),
+              ('timing_charge_power', datadict.get('timing_charge_power', datadict.get('ro_timing_charge_power')), ),
+              ('timing_discharge_power', datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')), ),
+            ]
 
 # ================================= Button Declarations ============================================================
 

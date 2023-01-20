@@ -101,13 +101,13 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
-    return { REGISTER_U16+':sec'  : now.second,
-             REGISTER_U16+':min'  : now.minute,
-             REGISTER_U16+':hour' : now.hour,
-             REGISTER_U16+':day'  : now.day,
-             REGISTER_U16+':month': now.month,
-             REGISTER_U16+':year' : now.year % 100,
-           }
+    return [ (REGISTER_U16, now.second, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.year % 100, ),
+           ]
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
@@ -138,12 +138,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload}")
-    res = { 'remotecontrol_power_control':  power_control,
-            'remotecontrol_set_type':       set_type,
-            'remotecontrol_active_power':   max(min(ap_up, ap_target),   ap_lo),
-            'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
-            'remotecontrol_duration':       rc_duration,
-           }
+    res =  [ ('remotecontrol_power_control',  power_control, ),
+             ('remotecontrol_set_type',       set_type, ),
+             ('remotecontrol_active_power',   max(min(ap_up, ap_target),   ap_lo), ),
+             ('remotecontrol_reactive_power', max(min(reap_up, reactive_power), reap_lo), ),
+             ('remotecontrol_duration',       rc_duration, ),
+           ]
     if (power_control == "Disabled"): autorepeat_stop(datadict, descr.key)
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
