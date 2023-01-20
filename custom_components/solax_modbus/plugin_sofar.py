@@ -96,6 +96,12 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+def value_function_passivemode(initval, descr, datadict):
+    return  { REGISTER_S32+':x': 0,
+              REGISTER_S32+':y': datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), 
+              REGISTER_S32+':z': datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')),
+            }
+
 def value_function_timingmode(initval, descr, datadict):
     return  { 'timing_id': datadict.get('timing_id', datadict.get('ro_timing_id')),
               'timing_charge': datadict.get('timing_charge', datadict.get('ro_timing_charge')),
@@ -110,6 +116,14 @@ def value_function_timingmode(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SofarModbusButtonEntityDescription( 
+        name = "Passive Mode Battery Charge/Discharge",
+        key = "update_charge_discharge_times",
+        register = 0x1187,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        value_function = value_function_passivemode,
+    ),
     SofarModbusButtonEntityDescription(
         name = "Timing Control",
         key = "timing_control",
@@ -141,6 +155,18 @@ NUMBER_TYPES = [
     #
     ###
     SofarModbusNumberEntityDescription(
+        name = "Passive Mode Battery Power",
+        key = "passive_mode_battery_power",
+        allowedtypes= HYBRID,
+        native_min_value = -6000,
+        native_max_value = 6000,
+        native_step = 100,
+        native_unit_of_measurement = POWER_WATT,
+        initvalue = 0,
+        unit=REGISTER_S32,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SofarModbusNumberEntityDescription(
         name="Timing Charge Power",
         key="timing_charge_power",
         allowedtypes= HYBRID,
@@ -163,7 +189,7 @@ NUMBER_TYPES = [
         initvalue = 0,
         unit=REGISTER_U32,
         write_method = WRITE_DATA_LOCAL,
-    ),
+    ), 
     ###
     #
     #  Normal number types
@@ -2135,6 +2161,38 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key = "time_of_use_charge_soc", 
         register = 0x1124,
         entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Passive Mode Timeout",
+        key = "passive_mode_timeout",
+        register = 0x1184,
+        entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RO Passive Mode Gdes",
+        key = "ro_passive_mode_gdes",
+        unit=REGISTER_S32,
+        register = 0x1187,
+        #entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RO Passive Mode Battery Power",
+        key = "ro_passive_mode_battery_power",
+        unit=REGISTER_S32,
+        register = 0x1189,
+        #entity_registry_enabled_default=False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RO Passive Mode Upper",
+        key = "ro_passive_mode_upper",
+        unit=REGISTER_S32,
+        register = 0x1189,
+        #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
 ]
