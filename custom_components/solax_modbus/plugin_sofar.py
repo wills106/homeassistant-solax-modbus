@@ -98,8 +98,8 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_passivemode(initval, descr, datadict):
     return  [ (REGISTER_S32, 0, ),
-              (REGISTER_S32, datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), ), 
-              (REGISTER_S32, datadict.get('passive_mode_battery_power', datadict.get('ro_passive_mode_battery_power')), ),
+              (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
+              (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
             ]
 
 def value_function_timingmode(initval, descr, datadict):
@@ -158,10 +158,11 @@ NUMBER_TYPES = [
         name = "Passive Mode Battery Power",
         key = "passive_mode_battery_power",
         allowedtypes= HYBRID,
-        native_min_value = -6000,
-        native_max_value = 6000,
+        native_min_value = -15000,
+        native_max_value = 15000,
         native_step = 100,
         native_unit_of_measurement = POWER_WATT,
+        device_class = NumberDeviceClass.POWER,
         initvalue = 0,
         unit=REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
@@ -2129,6 +2130,15 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Timing Control",
         key = "timeing_control", 
         register = 0x111F,
+        scale = { 0: "0",
+                  1: "1",
+                  2: "2", 
+                  3: "3",
+                  65531: "FFFB",
+                  65532: "FFFC",
+                  65533: "FFFD",
+                  65534: "FFFE",
+                  65535: "FFFF", },
         #entity_registry_enabled_default=False,
         allowedtypes = HYBRID,
     ),
