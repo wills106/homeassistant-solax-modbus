@@ -101,13 +101,13 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
-    return { REGISTER_U16+':sec'  : now.second,
-             REGISTER_U16+':min'  : now.minute,
-             REGISTER_U16+':hour' : now.hour,
-             REGISTER_U16+':day'  : now.day,
-             REGISTER_U16+':month': now.month,
-             REGISTER_U16+':year' : now.year % 100,
-           }
+    return [ (REGISTER_U16, now.second, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.year % 100, ),
+           ]
 
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
@@ -138,12 +138,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload}")
-    res = { 'remotecontrol_power_control':  power_control,
-            'remotecontrol_set_type':       set_type,
-            'remotecontrol_active_power':   max(min(ap_up, ap_target),   ap_lo),
-            'remotecontrol_reactive_power': max(min(reap_up, reactive_power), reap_lo),
-            'remotecontrol_duration':       rc_duration,
-           }
+    res =  [ ('remotecontrol_power_control',  power_control, ),
+             ('remotecontrol_set_type',       set_type, ),
+             ('remotecontrol_active_power',   max(min(ap_up, ap_target),   ap_lo), ),
+             ('remotecontrol_reactive_power', max(min(reap_up, reactive_power), reap_lo), ),
+             ('remotecontrol_duration',       rc_duration, ),
+           ]
     if (power_control == "Disabled"): autorepeat_stop(datadict, descr.key)
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
@@ -3598,7 +3598,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Reactive Power Target",
         key = "reactive_power_target",
         native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x104,
         register_type = REG_INPUT,
@@ -3620,7 +3620,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Reactive Power Real",
         key = "reactive_power_real",
         native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x108,
         register_type = REG_INPUT,
@@ -3667,7 +3667,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Reactive Power Upper",
         key = "reactive_power_upper",
         native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10E,
         register_type = REG_INPUT,
@@ -3678,7 +3678,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Reactive Power Lower",
         key = "reactive_power_lower",
         native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x110,
         register_type = REG_INPUT,
@@ -3749,8 +3749,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Reactive or ApparentPower L1",
         key = "pm_reactive_or_apparentpower_l1",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x1E6,
         register_type = REG_INPUT,
         allowedtypes = GEN3 | GEN4 | PM,
@@ -3758,8 +3758,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Reactive or ApparentPower L2",
         key = "pm_reactive_or_apparentpower_l2",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE, 
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x1E8,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
@@ -3768,8 +3768,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Reactive or ApparentPower L3",
         key = "pm_reactive_or_apparentpower_l3",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.POWER,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE, 
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x1EA,
         register_type = REG_INPUT,
         unit = REGISTER_S32,

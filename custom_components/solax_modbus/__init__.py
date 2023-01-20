@@ -363,10 +363,10 @@ class SolaXModbusHub:
         """Write registers multi.
         unit is the modbus address of the device that will be writen to
         address us the start register address
-        payload is a dictionary 
-          - in which the keys are select or number entity keys names or alternatively REGISTER_xx+':name' type declarations
+        payload is a list of duples containing 
+          - a select or number entity keys names or alternatively REGISTER_xx type declarations
           - the values are the values that will be encoded according to the spec of that entity 
-        The payload dictionary will be converted to a modbus payload with the proper encoding and written 
+        The list of tuples will be converted to a modbus payload with the proper encoding and written 
         to modbus device with address=unit
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
@@ -375,9 +375,9 @@ class SolaXModbusHub:
             kwargs = {"unit": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
-            if isinstance(payload, dict):
-                for (key, value,) in payload.items():
-                    if key.startswith("_"): typ = key.split(':')[0] # remove irrelevant name part
+            if isinstance(payload, list):
+                for (key, value,) in payload:
+                    if key.startswith("_"): typ = key 
                     else:    
                         descr = self.writeLocals[key]
                         if hasattr(descr, 'reverse_option_dict'): value = descr.reverse_option_dict[value] # string to int
@@ -398,7 +398,7 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
                 return self._client.write_registers(address, payload, **kwargs)
             else: 
-                _LOGGER.error(f"write_registers_multi expects a dictionary 0x{address:02x} payload: {payload}")
+                _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
                 return None
 
     def read_modbus_data(self):

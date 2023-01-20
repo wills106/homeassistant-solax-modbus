@@ -34,6 +34,7 @@ from homeassistant.const import (
     TIME_HOURS,
     TIME_MINUTES,
     TIME_SECONDS,
+    UnitOfApparentPower,
 )
 
 
