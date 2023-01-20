@@ -363,7 +363,7 @@ class SolaXModbusHub:
         """Write registers multi.
         unit is the modbus address of the device that will be writen to
         address us the start register address
-        payload is a list of duples containing 
+        payload is a list of tuples containing 
           - a select or number entity keys names or alternatively REGISTER_xx type declarations
           - the values are the values that will be encoded according to the spec of that entity 
         The list of tuples will be converted to a modbus payload with the proper encoding and written 
