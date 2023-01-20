@@ -73,12 +73,12 @@ def _read_serialnr(hub, address, swapbytes):
 @dataclass
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS 
 
 @dataclass
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS 
 
 @dataclass
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
