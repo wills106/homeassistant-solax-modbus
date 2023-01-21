@@ -18,23 +18,16 @@ from dataclasses import dataclass
 import pathlib
 
 from homeassistant.const import (
-    ELECTRIC_CURRENT_AMPERE,
-    ELECTRIC_CURRENT_MILLIAMPERE,
-    ELECTRIC_POTENTIAL_VOLT,
-    ENERGY_KILO_WATT_HOUR,
-    ENERGY_MEGA_WATT_HOUR,
-    ENERGY_WATT_HOUR,
-    FREQUENCY_HERTZ,
     PERCENTAGE,
-    POWER_KILO_WATT,
-    POWER_VOLT_AMPERE,
     POWER_VOLT_AMPERE_REACTIVE,
-    POWER_WATT,
-    TEMP_CELSIUS,
-    TIME_HOURS,
-    TIME_MINUTES,
-    TIME_SECONDS,
     UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfTime,
 )
 
 

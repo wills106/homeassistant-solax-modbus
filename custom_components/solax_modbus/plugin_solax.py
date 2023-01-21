@@ -354,18 +354,18 @@ NUMBER_TYPES = [
         native_min_value = -6000,
         native_max_value = 30000,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         initvalue = 0,
         #max_exceptions = MAX_EXPORT,
         min_exceptions_minus = MAX_EXPORT, # negative
-        unit=REGISTER_S32,
+        unit = REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Reactive Power",
         key = "remotecontrol_reactive_power",
-        unit=REGISTER_S32,
+        unit = REGISTER_S32,
         allowedtypes = HYBRID | GEN4,
         native_min_value = -4000,
         native_max_value = 4000,
@@ -378,7 +378,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Duration",
         key = "remotecontrol_duration",
-        unit=REGISTER_U16,
+        unit = REGISTER_U16,
         allowedtypes = GEN4,
         icon = "mdi:home-clock",
         initvalue = 20, # seconds
@@ -386,13 +386,13 @@ NUMBER_TYPES = [
         native_max_value = 360,
         native_step = 1,
         fmt = "i",
-        native_unit_of_measurement = TIME_SECONDS,
+        native_unit_of_measurement = UnitOfTime.SECONDS,
         write_method = WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Autorepeat Duration",
         key = "remotecontrol_autorepeat_duration",
-        unit=REGISTER_U16,
+        unit = REGISTER_U16,
         allowedtypes = GEN4,
         icon = "mdi:home-clock",
         initvalue = 0, # seconds - 
@@ -400,7 +400,7 @@ NUMBER_TYPES = [
         native_max_value = 18000,
         native_step = 600,
         fmt = "i",
-        native_unit_of_measurement = TIME_SECONDS,
+        native_unit_of_measurement = UnitOfTime.SECONDS,
         write_method = WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
@@ -411,10 +411,10 @@ NUMBER_TYPES = [
         native_max_value = 30000, # overwritten by MAX_EXPORT
         #max_exceptions = MAX_EXPORT,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         initvalue = 20000, # will be reduced to MAX
-        unit=REGISTER_S32,
+        unit = REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
     ###
@@ -430,7 +430,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 23,
         native_step = 1,
-        native_unit_of_measurement = TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         allowedtypes = HYBRID | AC | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
@@ -443,7 +443,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 59,
         native_step = 1,
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         allowedtypes = HYBRID | AC | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
@@ -456,7 +456,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 23,
         native_step = 1,
-        native_unit_of_measurement = TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         allowedtypes = HYBRID | AC | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
@@ -469,7 +469,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 59,
         native_step = 1,
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         allowedtypes = HYBRID | AC | GEN3,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
@@ -533,7 +533,7 @@ NUMBER_TYPES = [
         native_max_value = 20, # default (new default, was 50)
         native_step = 0.1,
         scale = 0.1,
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID | AC | GEN3 | GEN4,
         max_exceptions = MAX_CURRENTS,
@@ -548,7 +548,7 @@ NUMBER_TYPES = [
         native_max_value = 20, # default (new default, was 50)
         native_step = 0.1,
         scale = 0.01,
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID | GEN2,
         max_exceptions = MAX_CURRENTS,
@@ -563,7 +563,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 20, # universal default
         native_step = 0.1,
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID | AC | GEN3 | GEN4,
         max_exceptions = MAX_CURRENTS,
@@ -578,7 +578,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 20, # universal default
         native_step = 0.1,
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID | GEN2,
         max_exceptions = MAX_CURRENTS,
@@ -592,7 +592,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 8000,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         allowedtypes = HYBRID | AC | GEN4,
     ),
@@ -605,7 +605,7 @@ NUMBER_TYPES = [
         native_max_value = 2500,
         scale = 1,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         allowedtypes = HYBRID | AC | GEN2 | GEN3 | GEN4,
@@ -621,7 +621,7 @@ NUMBER_TYPES = [
         native_max_value = 2500,
         scale = 1,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
         allowedtypes = HYBRID | AC | GEN4,
@@ -657,7 +657,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 8000,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         allowedtypes = HYBRID | AC | GEN4,
     ),
@@ -693,7 +693,7 @@ NUMBER_TYPES = [
         native_min_value = -6000,
         native_max_value = 6000,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         allowedtypes = HYBRID | AC | GEN3,
         icon = "mdi:home-export-outline",
@@ -706,7 +706,7 @@ NUMBER_TYPES = [
         native_min_value = -5000,
         native_max_value = 0,
         native_step = 100,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         allowedtypes = HYBRID | GEN2,
         icon = "mdi:home-export-outline",
@@ -719,7 +719,7 @@ NUMBER_TYPES = [
         native_min_value = 5,
         native_max_value = 1200,
         native_step = 5,
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         allowedtypes = HYBRID | AC | GEN4 | DCB,
     ),
     SolaxModbusNumberEntityDescription(
@@ -730,7 +730,7 @@ NUMBER_TYPES = [
         native_min_value = 5,
         native_max_value = 100,
         native_step = 1,
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         allowedtypes = HYBRID | AC | GEN4 | DCB,
     ),
     SolaxModbusNumberEntityDescription(
@@ -806,7 +806,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( 
         name = "Remotecontrol Power Control",
         key = "remotecontrol_power_control",
-        unit=REGISTER_U16,
+        unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict =  {
                  0: "Disabled",
@@ -823,7 +823,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription( 
         name = "Remotecontrol Set Type",
         key = "remotecontrol_set_type",
-        unit=REGISTER_U16,
+        unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
         option_dict =  {
                 1: "Set",
@@ -1281,8 +1281,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Series Number",
         key = "seriesnumber",
-        register=0x00,
-        unit=REGISTER_STR,
+        register = 0x00,
+        unit = REGISTER_STR,
         wordcount=7,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3 | GEN4,
@@ -1402,7 +1402,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Charge Float Voltage",
         key = "battery_charge_float_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x8E,
         scale = 0.01,
@@ -1412,7 +1412,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Charge Float Voltage",
         key = "battery_charge_float_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x8E,
         scale = 0.1,
@@ -1422,7 +1422,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Discharge Cut Off Voltage",
         key = "battery_discharge_cut_off_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x8F,
         scale = 0.01,
@@ -1432,7 +1432,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Discharge Cut Off Voltage",
         key = "battery_discharge_cut_off_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x8F,
         scale = 0.1,
@@ -1442,7 +1442,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Charge Max Current",
         key = "battery_charge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         register = 0x90,
         scale = 0.01,
         allowedtypes = GEN2,
@@ -1451,7 +1451,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Charge Max Current",
         key = "battery_charge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         register = 0x90,
         scale = 0.1,
         allowedtypes = GEN3 | GEN4,
@@ -1460,7 +1460,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Discharge Max Current",
         key = "battery_discharge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default = False,
         register = 0x91,
         scale = 0.01,
@@ -1470,7 +1470,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Discharge Max Current",
         key = "battery_discharge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default = False,
         register = 0x91,
         scale = 0.1,
@@ -1532,8 +1532,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Feedin Discharge Min SOC",
         key = "feedin_discharge_min_soc",
-        register=0x95,
-        unit=REGISTER_U8L,
+        register = 0x95,
+        unit = REGISTER_U8L,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
     ),
@@ -1715,8 +1715,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Registration Code Pocket",
         key = "registration_code_pocket",
-        register=0xAA,
-        unit=REGISTER_STR,
+        register = 0xAA,
+        unit = REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN3 | GEN4,
@@ -1726,8 +1726,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Registration Code Lan",
         key = "registration_code_lan",
-        register=0xAF,
-        unit=REGISTER_STR,
+        register = 0xAF,
+        unit = REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN3,
@@ -1759,7 +1759,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Export Control Factory Limit",
         key = "export_control_factory_limit",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0xB5,
         entity_registry_enabled_default = False,
@@ -1769,7 +1769,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Export Control User Limit",
         key = "export_control_user_limit",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0xB6,
         entity_registry_enabled_default = False,
@@ -1788,7 +1788,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Set Frequency",
         key = "eps_set_frequency",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xB8,
         scale = { 0: "50Hz",
@@ -1798,7 +1798,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Rated Power",
         key = "inverter_rate_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0xBA,
         entity_registry_enabled_default = False,
@@ -1819,7 +1819,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Install Capacity",
         key = "battery_install_capacity",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         entity_registry_enabled_default = False,
         register = 0xE8,
@@ -1833,8 +1833,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Model Number",
         key = "inverter_model_number",
-        register=0xE9,
-        unit=REGISTER_STR,
+        register = 0xE9,
+        unit = REGISTER_STR,
         wordcount=10,
         allowedtypes = GEN3,
         entity_registry_enabled_default = False,
@@ -2095,7 +2095,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Discharge Cut Off Voltage Grid Mode",
         key = "disch_cut_off_voltage_grid_mode",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x113,
         scale = 0.1,
@@ -2134,7 +2134,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "FVRT Vac Upper",
         key = "fvrt_vac_upper",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x117,
         scale = 0.1,
@@ -2145,7 +2145,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "FVRT Vac Lower",
         key = "fvrt_vac_lower",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x118,
         scale = 0.1,
@@ -2235,7 +2235,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Consume Off Power",
         key = "consume_off_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x125,
@@ -2253,7 +2253,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Minimum Per On Signal",
         key = "minimum_per_on_signal",
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         register = 0x127,
         entity_registry_enabled_default = False,
         allowedtypes =GEN4,
@@ -2351,7 +2351,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "External Generation Max Charge",
         key = "external_generation_max_charge",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x132,
         entity_registry_enabled_default = False,
@@ -2365,7 +2365,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage",
         key = "inverter_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x0,
         scale = 0.1,
@@ -2376,7 +2376,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current",
         key = "inverter_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1,
         scale = 0.1,
@@ -2388,7 +2388,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power",
         key = "inverter_load",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x2,
@@ -2399,7 +2399,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x3,
         scale = 0.1,
@@ -2410,7 +2410,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Voltage 2",
         key = "pv_voltage_2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x4,
         scale = 0.1,
@@ -2421,7 +2421,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x5,
         scale = 0.1,
@@ -2432,7 +2432,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Current 2",
         key = "pv_current_2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x6,
         register_type = REG_INPUT,
@@ -2444,7 +2444,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency",
         key = "grid_frequency",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x7,
         scale = 0.01,
@@ -2455,7 +2455,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Temperature",
         key = "inverter_temperature",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x8,
@@ -2505,7 +2505,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xA,
@@ -2516,7 +2516,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PV Power 2",
         key = "pv_power_2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xB,
@@ -2538,7 +2538,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Voltage Charge",
         key = "battery_voltage_charge",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x14,
         scale = 0.01,
@@ -2549,7 +2549,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Voltage Charge",
         key = "battery_voltage_charge",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x14,
         scale = 0.1,
@@ -2560,7 +2560,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Current Charge",
         key = "battery_current_charge",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x15,
         scale = 0.01,
@@ -2572,7 +2572,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Current Charge",
         key = "battery_current_charge",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x15,
         scale = 0.1,
@@ -2584,7 +2584,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Power Charge",
         key = "battery_power_charge",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x16,
@@ -2595,7 +2595,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Temperature Board Charge",
         key = "temperature_board_charge",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x17,
@@ -2618,7 +2618,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Temperature",
         key = "battery_temperature",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x18,
@@ -2630,7 +2630,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Temperature Boost Charge",
         key = "temperature_boost_charge",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x19,
@@ -2651,12 +2651,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Output Energy Total", # Need revisit these
         key = "output_energy_charge",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         icon = "mdi:battery-arrow-down",
         register = 0x1D,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         scale = 0.1,
         unit = REGISTER_U32,# REGISTER_ULSB16MSB16,
         entity_registry_enabled_default = False,
@@ -2665,12 +2665,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Input Energy Total", 
         key = "input_energy_charge",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         icon = "mdi:battery-arrow-up",
         register = 0x20,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         scale = 0.1,
         unit = REGISTER_U32, # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default = False,
@@ -2679,12 +2679,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Output Energy Today", # Need revisit this
         key = "output_energy_charge_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         icon = "mdi:battery-arrow-down",
         register = 0x20,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         unit = REGISTER_U16,
         scale = 0.1,
         allowedtypes = GEN3 | GEN4,
@@ -2692,12 +2692,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Input Energy Total", 
         key = "input_energy_charge",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         icon = "mdi:battery-arrow-up",
         register = 0x21,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         scale = 0.1,
         unit = REGISTER_U32, #REGISTER_ULSB16MSB16,
         entity_registry_enabled_default = False,
@@ -2707,7 +2707,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Battery Package Number",
         key = "battery_package_number",
         register = 0x22,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
     ),
@@ -2716,7 +2716,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "battery_soh",
         icon = "mdi:battery-heart",
         register = 0x23,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
@@ -2724,20 +2724,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Input Energy Today", # Need revisit this
         key = "input_energy_charge_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         icon = "mdi:battery-arrow-up",
         register = 0x23,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         scale = 0.1,
-        unit= REGISTER_U16,
+        unit =  REGISTER_U16,
         allowedtypes = GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name = "BMS Charge Max Current",
         key = "bms_charge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default = False,
         register = 0x24,
         register_type = REG_INPUT,
@@ -2749,7 +2749,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "BMS Discharge Max Current",
         key = "bms_discharge_max_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default = False,
         register = 0x25,
         register_type = REG_INPUT,
@@ -2761,7 +2761,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "BMS Battery Capacity",
         key = "bms_battery_capacity",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         entity_registry_enabled_default = False,
         register = 0x26,
@@ -2772,7 +2772,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Measured Power",
         key = "measured_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x46,
@@ -2783,7 +2783,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Grid Export Total",
         key = "grid_export_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default = False,
@@ -2798,7 +2798,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Grid Import Total",
         key = "grid_import_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default = False,
@@ -2813,7 +2813,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Voltage",
         key = "eps_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x4C,
         register_type = REG_INPUT,
@@ -2824,7 +2824,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Current",
         key = "eps_current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x4D,
         register_type = REG_INPUT,
@@ -2835,7 +2835,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power",
         key = "eps_power",
-        native_unit_of_measurement=POWER_VOLT_AMPERE,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
         register = 0x4E,
         register_type = REG_INPUT,
         allowedtypes = X1 | GEN2 | GEN3 | GEN4 | EPS,
@@ -2843,7 +2843,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Frequency",
         key = "eps_frequency",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x4F,
         register_type = REG_INPUT,
@@ -2854,7 +2854,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Solar Energy",
         key = "today_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2868,7 +2868,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Yield",
         key = "today_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x50,
@@ -2880,7 +2880,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "total_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2895,7 +2895,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Total Yield",
         key = "total_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2921,7 +2921,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Bus Volt",
         key = "bus_volt",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         entity_registry_enabled_default = False,
         register = 0x66,
@@ -2933,7 +2933,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "DC Fault Val",
         key = "dc_fault_val",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         entity_registry_enabled_default = False,
         register = 0x67,
@@ -2946,7 +2946,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Overload Fault Val",
         key = "overload_fault_val",
         register = 0x68,
-        register_type=REG_INPUT,
+        register_type = REG_INPUT,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3 | GEN4,
         icon = "mdi:alert-circle",
@@ -2954,7 +2954,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery Volt Fault Val",
         key = "battery_volt_fault_val",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x69,
         register_type = REG_INPUT,
@@ -2966,7 +2966,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
         key = "grid_voltage_l1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x6A,
         register_type = REG_INPUT,
@@ -2977,7 +2977,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L1",
         key = "grid_current_l1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x6B,
         register_type = REG_INPUT,
@@ -2989,7 +2989,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L1",
         key = "grid_power_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x6C,
@@ -3000,7 +3000,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
         key = "grid_frequency_l1",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x6D,
         register_type = REG_INPUT,
@@ -3011,7 +3011,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
         key = "grid_voltage_l2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x6E,
         register_type = REG_INPUT,
@@ -3022,7 +3022,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L2",
         key = "grid_current_l2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x6F,
         register_type = REG_INPUT,
@@ -3034,7 +3034,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Yield",
         key = "today_s_yield_gen2",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3049,7 +3049,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L2",
         key = "grid_power_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x70,
@@ -3060,7 +3060,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
         key = "grid_frequency_l2",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x71,
         register_type = REG_INPUT,
@@ -3071,7 +3071,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
         key = "grid_voltage_l3",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x72,
         register_type = REG_INPUT,
@@ -3082,7 +3082,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L3",
         key = "grid_current_l3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x73,
         register_type = REG_INPUT,
@@ -3094,7 +3094,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L3",
         key = "grid_power_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x74,
@@ -3105,7 +3105,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
         key = "grid_frequency_l3",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x75,
         register_type = REG_INPUT,
@@ -3116,7 +3116,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Voltage L1",
         key = "eps_voltage_l1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x76,
         register_type = REG_INPUT,
@@ -3127,7 +3127,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Current L1",
         key = "eps_current_l1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x77,
         register_type = REG_INPUT,
@@ -3138,7 +3138,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power Active L1",
         key = "eps_power_active_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x78,
@@ -3148,7 +3148,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power L1",
         key = "eps_power_l1",
-        native_unit_of_measurement=POWER_VOLT_AMPERE,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
         register = 0x79,
         register_type = REG_INPUT,
         allowedtypes = X3 | GEN2 | GEN3 | GEN4 | EPS,
@@ -3156,7 +3156,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Voltage L2",
         key = "eps_voltage_l2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x7A,
         register_type = REG_INPUT,
@@ -3167,7 +3167,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Current L2",
         key = "eps_current_l2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x7B,
         register_type = REG_INPUT,
@@ -3178,7 +3178,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power Active L2",
         key = "eps_power_active_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x7C,
@@ -3188,7 +3188,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power L2",
         key = "eps_power_l2",
-        native_unit_of_measurement=POWER_VOLT_AMPERE,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
         register = 0x7D,
         register_type = REG_INPUT,
         allowedtypes = X3 | GEN2 | GEN3 | GEN4 | EPS,
@@ -3196,7 +3196,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Voltage L3",
         key = "eps_voltage_l3",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x7E,
         register_type = REG_INPUT,
@@ -3207,7 +3207,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Current L3",
         key = "eps_current_l3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x7F,
         register_type = REG_INPUT,
@@ -3218,7 +3218,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power Active L3",
         key = "eps_power_active_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x80,
@@ -3228,7 +3228,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Power L3",
         key = "eps_power_l3",
-        native_unit_of_measurement=POWER_VOLT_AMPERE,
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
         register = 0x81,
         register_type = REG_INPUT,
         allowedtypes = X3 | GEN2 | GEN3 | GEN4 | EPS,
@@ -3236,7 +3236,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L1",
         key = "measured_power_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x82,
@@ -3247,7 +3247,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L2",
         key = "measured_power_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x84,
@@ -3258,7 +3258,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L3",
         key = "measured_power_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x86,
@@ -3269,7 +3269,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Grid Mode Runtime",
         key = "grid_mode_runtime",
-        native_unit_of_measurement=TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         register = 0x88,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
@@ -3292,7 +3292,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Normal Runtime",
         key = "normal_runtime",
-        native_unit_of_measurement=TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
         register = 0x8C,
         register_type = REG_INPUT,
@@ -3305,7 +3305,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Yield Total",
         key = "eps_yield_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x8E,
         register_type = REG_INPUT,
@@ -3317,7 +3317,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Yield Total",
         key = "eps_yield_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x8E,
         register_type = REG_INPUT,
@@ -3327,7 +3327,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Yield Today",
         key = "eps_yield_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x90,
         register_type = REG_INPUT,
@@ -3338,7 +3338,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "E Charge Today",
         key = "e_charge_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3352,7 +3352,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "E Charge Total",
         key = "e_charge_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3367,7 +3367,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "solar_energy_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3381,7 +3381,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Solar Energy",
         key = "solar_energy_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3394,7 +3394,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Export Energy",
         key = "export_energy_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         allowedtypes = GEN3 | GEN4,
@@ -3408,7 +3408,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Today's Import Energy",
         key = "import_energy_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x9A,
@@ -3432,7 +3432,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Measured Power",
         key = "meter_2_measured_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xA8,
@@ -3444,7 +3444,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Export Total",
         key = "meter_2_export_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0xAA,
@@ -3459,7 +3459,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Import Total",
         key = "meter_2_import_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0xAC,
@@ -3474,7 +3474,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Export Today",
         key = "meter_2_export_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0xAE,
@@ -3489,7 +3489,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Import Today",
         key = "meter_2_import_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0xB0,
@@ -3504,7 +3504,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Measured Power L1",
         key = "meter_2_measured_power_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xB2,
@@ -3516,7 +3516,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Measured Power L2",
         key = "meter_2_measured_power_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xB4,
@@ -3528,7 +3528,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Meter 2 Measured Power L3",
         key = "meter_2_measured_power_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xB6,
@@ -3586,7 +3586,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Active Power Target",
         key = "active_power_target",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x102,
@@ -3597,7 +3597,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Target",
         key = "reactive_power_target",
-        native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x104,
@@ -3608,7 +3608,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Active Power Real",
         key = "active_power_real",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x106,
@@ -3619,7 +3619,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Real",
         key = "reactive_power_real",
-        native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x108,
@@ -3630,7 +3630,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Active Power Upper",
         key = "active_power_upper",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10A,
@@ -3641,7 +3641,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Active Power Lower",
         key = "active_power_lower",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10C,
@@ -3653,7 +3653,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "EPS Min Esc Voltage",
         key = "eps_min_esc_voltage",
         register = 0x10D,
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         allowedtypes = GEN3 | HYBRID | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -3666,7 +3666,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Upper",
         key = "reactive_power_upper",
-        native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10E,
@@ -3677,7 +3677,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Lower",
         key = "reactive_power_lower",
-        native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x110,
@@ -3688,7 +3688,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Charge Discharge Power",
         key = "charge_discharge_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default = False,
@@ -3700,7 +3700,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Feedin On Power",
         key = "feedin_on_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x123,
@@ -3710,7 +3710,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
      SolaXModbusSensorEntityDescription(
         name = "PM Inverter Count",
         key = "pm_inverter_count",
-        register=0x1DD,
+        register = 0x1DD,
         register_type = REG_INPUT,
         allowedtypes = GEN3 | GEN4 | PM,
         entity_registry_enabled_default = False,
@@ -3720,7 +3720,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM ActivePower L1",
         key = "pm_activepower_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x1E0,
         register_type = REG_INPUT,
@@ -3729,7 +3729,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM ActivePower L2",
         key = "pm_activepower_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x1E2,
         register_type = REG_INPUT,
@@ -3739,7 +3739,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM ActivePower L3",
         key = "pm_activepower_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x1E4,
         register_type = REG_INPUT,
@@ -3778,7 +3778,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Inverter Current L1",
         key = "pm__current_l1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1EC,
         register_type = REG_INPUT,
@@ -3790,7 +3790,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Inverter Current L2",
         key = "pm__current_l2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1EE,
         register_type = REG_INPUT,
@@ -3802,7 +3802,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Inverter Current L3",
         key = "pm__current_l3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1F0,
         register_type = REG_INPUT,
@@ -3814,7 +3814,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM PV Power 1",
         key = "pm_pv_power_1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1F2,
@@ -3826,7 +3826,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM PV Power 2",
         key = "pm_pv_power_2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1F4,
@@ -3838,7 +3838,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM PV Current 1",
         key = "pm_pv_current_1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1F6,
         register_type = REG_INPUT,
@@ -3851,7 +3851,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM PV Current 2",
         key = "pm_pv_current_2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1F8,
         register_type = REG_INPUT,
@@ -3864,7 +3864,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Battery Power Charge",
         key = "pm_battery_power_charge",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1FA,
@@ -3875,7 +3875,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "PM Battery Current Charge",
         key = "pm_battery_current_charge",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1FC,
         scale = 0.01,
@@ -3892,7 +3892,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_grid_export,
@@ -3902,7 +3902,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Grid Import",
         key = "grid_import",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_grid_import,
@@ -3913,7 +3913,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "House Load",
         key = "house_load",
         value_function = value_function_house_load,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = GEN2 | GEN3 | GEN4,
@@ -3923,7 +3923,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "PV Power Total",
         key = "pv_power_total",
         value_function= value_function_pv_power_total,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes =HYBRID | PV,
@@ -3932,7 +3932,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Remotecontrol Autorepeat Remaining",
         key = "remotecontrol_autorepeat_remaining",
-        native_unit_of_measurement=TIME_SECONDS,
+        native_unit_of_measurement = UnitOfTime.SECONDS,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_remotecontrol_autorepeat_remaining,
         allowedtypes = GEN4,
@@ -3945,7 +3945,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x400,
         register_type = REG_INPUT,
@@ -3956,7 +3956,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Voltage 2",
         key = "pv_voltage_2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x401,
         register_type = REG_INPUT,
@@ -3967,7 +3967,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x402,
         register_type = REG_INPUT,
@@ -3979,7 +3979,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Current 2",
         key = "pv_current_2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x403,
         register_type = REG_INPUT,
@@ -3991,7 +3991,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
         key = "grid_voltage_l1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x404,
         register_type = REG_INPUT,
@@ -4003,7 +4003,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
         key = "grid_voltage_l2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x405,
         register_type = REG_INPUT,
@@ -4015,7 +4015,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
         key = "grid_voltage_l3",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x406,
         register_type = REG_INPUT,
@@ -4027,7 +4027,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
         key = "grid_frequency_l1",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x407,
         newblock = True,
@@ -4040,7 +4040,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
         key = "grid_frequency_l2",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x408,
         register_type = REG_INPUT,
@@ -4052,7 +4052,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
         key = "grid_frequency_l3",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x409,
         register_type = REG_INPUT,
@@ -4064,7 +4064,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L1",
         key = "grid_current_l1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40A,
         register_type = REG_INPUT,
@@ -4075,7 +4075,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L2",
         key = "grid_current_l2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40B,
         register_type = REG_INPUT,
@@ -4086,7 +4086,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L3",
         key = "grid_current_l3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40C,
         register_type = REG_INPUT,
@@ -4097,7 +4097,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Temperature",
         key = "inverter_temperature",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x40D,
@@ -4108,7 +4108,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power",
         key = "measured_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x40E,
@@ -4132,7 +4132,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L1",
         key = "measured_power_l1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x410,
@@ -4142,7 +4142,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L2",
         key = "measured_power_l2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
@@ -4152,7 +4152,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L3",
         key = "measured_power_l3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x412,
@@ -4162,7 +4162,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x414,
@@ -4173,7 +4173,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Power 2",
         key = "pv_power_2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x415,
@@ -4185,7 +4185,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         name = "PV Power Total",
         key = "pv_power_total",
         value_function= value_function_pv_power_total,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = MIC,
@@ -4195,7 +4195,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         name = "PV Total Power",
         key = "pv_total_power",
         value_function= value_function_pv_power_total,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default = False,
@@ -4205,7 +4205,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Total Yield",
         key = "total_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4221,7 +4221,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Today's Yield",
         key = "today_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x425,
@@ -4234,7 +4234,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Total Yield",
         key = "total_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4250,7 +4250,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "Today's Yield",
         key = "today_yield",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x425,
@@ -4263,7 +4263,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Voltage 3",
         key = "pv_voltage_3",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x429,
         register_type = REG_INPUT,
@@ -4274,7 +4274,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Current 3",
         key = "pv_current_3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x42A,
         register_type = REG_INPUT,
@@ -4286,7 +4286,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
     SolaXMicModbusSensorEntityDescription(
         name = "PV Power 3",
         key = "pv_power_3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x42B,

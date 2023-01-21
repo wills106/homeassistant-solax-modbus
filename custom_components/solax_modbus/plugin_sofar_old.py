@@ -119,7 +119,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x6,
         scale = 0.1,
@@ -129,7 +129,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x7,
         scale = 0.01,
@@ -140,7 +140,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power",
         key = "pv_power",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xA,
@@ -152,7 +152,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ActivePower",
         key = "activepower",
-        native_unit_of_measurement = POWER_KILO_WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0xC,
         scale = 0.01,
@@ -173,7 +173,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Frequency",
         key = "grid_frequency",
-        native_unit_of_measurement = FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         device_class = SensorDeviceClass.FREQUENCY,
         register = 0xE,
         scale = 0.01,
@@ -183,7 +183,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage",
         key = "voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xF,
         scale = 0.1,
@@ -193,7 +193,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current",
         key = "current",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x10,
         scale = 0.01,
@@ -203,7 +203,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Total Production",
         key = "total_production",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x15,
         unit = REGISTER_U32,
@@ -212,7 +212,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Total Time",
         key = "total_time",
-        native_unit_of_measurement = TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         register = 0x17,
         unit = REGISTER_U32,
         allowedtypes = PV | X1,
@@ -220,7 +220,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Today Production",
         key = "today_production",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x19,
         scale = 0.01,
@@ -230,14 +230,14 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Today Time",
         key = "today_time",
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         register = 0x1A,
         allowedtypes = PV | X1,
     ),
      SofarOldModbusSensorEntityDescription(
         name = "Inverter Heatsink Temperature ",
         key = "inverter_heatsink_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1B,
@@ -249,7 +249,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Inverter Inner Temperature ",
         key = "inverter_inner_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1C,
@@ -264,7 +264,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Voltage 2",
         key = "pv_voltage_2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x8,
         scale = 0.1,
@@ -274,7 +274,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Current 2",
         key = "pv_current_2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x9,
         unit = REGISTER_S16,
@@ -286,7 +286,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Voltage 3",
         key = "pv_voltage_3",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xA,
         scale = 0.1,
@@ -296,7 +296,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Current 3",
         key = "pv_current_3",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0xB,
         unit = REGISTER_S16,
@@ -308,43 +308,43 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xC,
         scale = 0.01,
         rounding = 2,
-        allowedtypes =  PV | X3,
+        allowedtypes = PV | X3,
         icon = "mdi:solar-power-variant",
     ),
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 2",
         key = "pv_power_2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xD,
         scale = 0.01,
         rounding = 2,
-        allowedtypes =  PV | X3,
+        allowedtypes = PV | X3,
         icon = "mdi:solar-power-variant",
     ),
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 3",
         key = "pv_power_3",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xE,
         scale = 0.01,
         rounding = 2,
-        allowedtypes =  PV | X3,
+        allowedtypes = PV | X3,
         icon = "mdi:solar-power-variant",
     ),
     SofarOldModbusSensorEntityDescription(
         name = "ActivePower",
         key = "activepower",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0xF,
         scale = 0.01,
@@ -365,7 +365,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Frequency",
         key = "grid_frequency",
-        native_unit_of_measurement = FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         device_class = SensorDeviceClass.FREQUENCY,
         register = 0x11,
         scale = 0.01,
@@ -375,7 +375,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage R",
         key = "voltage_r",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x12,
         scale = 0.1,
@@ -385,7 +385,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current R",
         key = "current_r",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x14,
         scale = 0.01,
@@ -395,7 +395,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage S",
         key = "voltage_s",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x14,
         scale = 0.1,
@@ -405,7 +405,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current S",
         key = "current_s",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x15,
         scale = 0.01,
@@ -415,7 +415,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage T",
         key = "voltage_t",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x16,
         scale = 0.1,
@@ -425,7 +425,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current T",
         key = "current_t",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x17,
         scale = 0.01,
@@ -435,7 +435,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Total Production",
         key = "total_production",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x18,
         unit = REGISTER_U32,
@@ -444,7 +444,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Total Time",
         key = "total_time",
-        native_unit_of_measurement = TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         register = 0x1A,
         unit = REGISTER_U32,
         allowedtypes = PV | X3,
@@ -452,7 +452,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Today Production",
         key = "today_production",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         register = 0x1C,
         scale = 0.01,
@@ -462,14 +462,14 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Today Time",
         key = "today_time",
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         register = 0x1D,
         allowedtypes = PV | X3,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Inverter Heatsink Temperature ",
         key = "inverter_heatsink_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1E,
@@ -481,7 +481,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Inverter Inner Temperature ",
         key = "inverter_inner_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1F,
@@ -493,7 +493,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Bus Voltage",
         key = "bus_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x20,
         scale = 0.1,
@@ -521,7 +521,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage R",
         key = "voltage_r",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x206,
         scale = 0.1,
@@ -531,7 +531,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current R",
         key = "current_r",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x207,
         unit = REGISTER_S16,
@@ -542,7 +542,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage S",
         key = "voltage_s",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x208,
         scale = 0.1,
@@ -552,7 +552,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current S",
         key = "current_s",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x209,
         unit = REGISTER_S16,
@@ -563,7 +563,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Voltage T",
         key = "voltage_t",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x20A,
         scale = 0.1,
@@ -573,7 +573,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Current T",
         key = "current_t",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x20B,
         unit = REGISTER_S16,
@@ -584,7 +584,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Frequency",
         key = "grid_frequency",
-        native_unit_of_measurement = FREQUENCY_HERTZ,
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
         device_class = SensorDeviceClass.FREQUENCY,
         register = 0x20C,
         scale = 0.01,
@@ -594,7 +594,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Power Charge",
         key = "battery_power_charge",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x20D,
@@ -606,7 +606,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Input Energy",
         key = "battery_input_energy",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_battery_input,
@@ -616,7 +616,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Output Energy",
         key = "battery_output_energy",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_battery_output,
@@ -626,7 +626,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Voltage Charge",
         key = "battery_voltage_charge",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x20E,
         scale = 0.1,
@@ -636,7 +636,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Current Charge",
         key = "battery_current_charge",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x20F,
         scale = 0.01,
@@ -656,7 +656,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Battery Temperature",
         key = "battery_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x211,
@@ -666,7 +666,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Measured Power",
         key = "measured_power",
-        native_unit_of_measurement = POWER_KILO_WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x212,
@@ -678,7 +678,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Import",
         key = "grid_import",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_grid_import,
@@ -688,7 +688,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_grid_export,
@@ -698,7 +698,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "House Load",
         key = "house_load",
-        native_unit_of_measurement = POWER_KILO_WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x213,
@@ -714,7 +714,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Generation Power",
         key = "generation_power",
-        native_unit_of_measurement = POWER_KILO_WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x215,
@@ -725,7 +725,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "EPS Voltage",
         key = "eps_voltage",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x216,
         scale = 0.1,
@@ -735,18 +735,18 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "EPS Power",
         key = "eps_power",
-        native_unit_of_measurement = POWER_KILO_WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x217,
         scale = 0.01,
         rounding = 2,
-        allowedtypes =  AC | HYBRID | EPS,
+        allowedtypes = AC | HYBRID | EPS,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Generation Today",
         key = "generation_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x218,
@@ -757,7 +757,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Export Energy Today",
         key = "export_energy_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x219,
@@ -769,7 +769,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Import Energy Today",
         key = "import_energy_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x21A,
@@ -781,7 +781,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Consumption Today",
         key = "consumption_today",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x21B,
@@ -793,7 +793,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Generation Total",
         key = "generation_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x21C,
@@ -803,7 +803,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Export Energy Total",
         key = "export_energy_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x21E,
@@ -814,7 +814,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Import Energy Total",
         key = "import_energy_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x220,
@@ -825,7 +825,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Consumption Total",
         key = "consumption_total",
-        native_unit_of_measurement = ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x222,
@@ -842,7 +842,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Voltage R",
         key = "grid_voltage_r",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x230,
         scale = 0.1,
@@ -852,7 +852,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Current R",
         key = "grid_current_r",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x231,
         scale = 0.01,
@@ -862,7 +862,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Voltage S",
         key = "grid_voltage_s",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x232,
         scale = 0.1,
@@ -872,7 +872,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Current S",
         key = "grid_current_s",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x233,
         scale = 0.01,
@@ -882,7 +882,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Voltage T",
         key = "grid_voltage_t",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x234,
         scale = 0.1,
@@ -892,7 +892,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Grid Current T",
         key = "grid_current_t",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x235,
         scale = 0.01,
@@ -902,7 +902,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Inverter Inner Temperature ",
         key = "inverter_inner_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x238,
@@ -913,7 +913,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Inverter Heatsink Temperature ",
         key = "inverter_heatsink_temperature",
-        native_unit_of_measurement = TEMP_CELSIUS,
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x239,
@@ -924,14 +924,14 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "Generation Time Today",
         key = "generation_time_today",
-        native_unit_of_measurement = TIME_MINUTES,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
         register = 0x242,
         allowedtypes = AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
         name = "Generation Time Today",
         key = "generation_time_today",
-        native_unit_of_measurement = TIME_HOURS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         register = 0x244,
         unit = REGISTER_U32,
         allowedtypes = AC | HYBRID,
@@ -939,7 +939,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_oltage_1",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x250,
         newblock = True,
@@ -950,7 +950,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x251,
         scale = 0.01,
@@ -960,7 +960,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x252,
@@ -970,7 +970,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Voltage 2",
         key = "pv_oltage_2",
-        native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x253,
         newblock = True,
@@ -981,7 +981,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Current 2",
         key = "pv_current_2",
-        native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x254,
         scale = 0.01,
@@ -991,7 +991,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power 2",
         key = "pv_power_2",
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x255,
@@ -1002,7 +1002,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         name = "PV Power Total",
         key = "pv_power_total",
         value_function= value_function_pv_power_total,
-        native_unit_of_measurement = POWER_WATT,
+        native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = HYBRID,
