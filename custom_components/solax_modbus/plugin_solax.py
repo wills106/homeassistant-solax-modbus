@@ -127,8 +127,14 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
         ap_target = target - houseload # subtract house load
         power_control = "Enabled Power Control"
+    elif power_control == "Enabled Self Use": # alternative computation for Power Control
+        ap_target = 0 - houseload # subtract house load
+        power_control = "Enabled Power Control"
     elif power_control == "Enabled Battery Control": # alternative computation for Power Control
         ap_target = target - datadict['pv_power_total'] # subtract house load and pv
+        power_control = "Enabled Power Control"
+    elif power_control == "Enabled Feedin Priority": # alternative computation for Power Control
+        ap_target = 0 - datadict['pv_power_total'] # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
@@ -813,6 +819,8 @@ SELECT_TYPES = [
                  1: "Enabled Power Control", # battery charge level in absense of PV
                 11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
                 12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
+                110: "Enabled Self Use",  # variation of Grid Control with fixed target 0
+                120: "Enabled Feedin Priority", # variation of Battery Control with fixed target 0
                # 2: "Enabled Quantity Control",
                # 3: "Enabled SOC Target Control",
             },
