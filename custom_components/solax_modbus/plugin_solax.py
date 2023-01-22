@@ -120,7 +120,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     reap_up        = datadict.get('reactive_power_upper', 0)
     reap_lo        = datadict.get('reactive_power_lower', 0)
     import_limit   = datadict.get('remotecontrol_import_limit', 20000)
-    #houseload      = datadict['inverter_load'] - datadict['measured_power']
+    houseload_net  = datadict['inverter_load'] - datadict['measured_power']
     houseload      = datadict.get('pv_power_1', 0) + datadict.get('pv_power_2', 0) + datadict.get('pv_power_3', 0) - datadict['battery_power_charge'] - datadict['measured_power']
     if   power_control == "Enabled Power Control": 
         ap_target = target
@@ -128,13 +128,13 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         ap_target = target - houseload # subtract house load
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Self Use": # alternative computation for Power Control
-        ap_target = 0 - houseload # subtract house load
+        ap_target = 0 - houseload_net # subtract house load
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Battery Control": # alternative computation for Power Control
         ap_target = target - datadict['pv_power_total'] # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Feedin Priority": # alternative computation for Power Control
-        ap_target = 0 - datadict['pv_power_total'] # subtract house load and pv
+        ap_target = 0 - houseload_net - datadict['pv_power_total'] # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
