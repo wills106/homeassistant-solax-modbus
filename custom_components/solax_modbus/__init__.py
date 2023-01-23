@@ -227,7 +227,8 @@ class SolaXModbusHub:
 
     def loadLocalData(self):
         try: fp = open(self._hass.config.path(f'{self.name}_data.json'))
-        except: _LOGGER.error(f"cannot open config file {self.name}_data.json, will retry later")
+        except:
+            if self.cyclecount > 5: self.localsLoaded=True  # retry a couple of polling cycles - then assume non-existent"
         else: 
             loaded = json.load(fp)
             if loaded.get('_version') == self.DATAFORMAT_VERSION:
