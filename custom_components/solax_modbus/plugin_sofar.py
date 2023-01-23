@@ -98,9 +98,9 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_passivemode(initval, descr, datadict):
     res = [ (REGISTER_S32, 0, ),
-              (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
-              (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
-            ]
+            (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
+            (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
+          ]
     _LOGGER.warning(f"* debug output: passivemode returning {res}")
     return res
 
@@ -1131,7 +1131,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Off-Grid LoadPeakRatio L1",
         key = "offgrid_loadpeakratio_l1",
         native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x50F,
         scale = 0.01,
         rounding = 2,
@@ -1196,7 +1196,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Off-Grid LoadPeakRatio L2",
         key = "offgrid_loadpeakratio_l2",
         native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x517,
         scale = 0.01,
         rounding = 2,
@@ -1261,7 +1261,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Off-Grid LoadPeakRatio L3",
         key = "offgrid_loadpeakratio_l3",
         native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
-        device_class = SensorDeviceClass.POWER,
+        device_class = SensorDeviceClass.APPARENT_POWER,
         register = 0x51F,
         scale = 0.01,
         rounding = 2,
