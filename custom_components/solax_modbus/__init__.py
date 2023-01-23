@@ -227,14 +227,14 @@ class SolaXModbusHub:
 
     def loadLocalData(self):
         try: fp = open(self._hass.config.path(f'{self.name}_data.json'))
-        except: pass
+        except: _LOGGER.error(f"cannot open config file {self.name}_data.json, will retry later")
         else: 
             loaded = json.load(fp)
             if loaded.get('_version') == self.DATAFORMAT_VERSION:
                 for desc in self.writeLocals: self.data[desc] = loaded.get(desc)
             else: _LOGGER.warning(f"local persistent data lost - please reinitialize {self.writeLocals.keys()}")
             fp.close()
-        self.localsLoaded = True
+            self.localsLoaded = True
     # end of save and load section
 
     @callback
