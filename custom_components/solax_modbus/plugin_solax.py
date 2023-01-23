@@ -136,7 +136,8 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         ap_target = target - pv # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Feedin Priority": # alternative computation for Power Control
-        ap_target = 0 - houseload_nett - pv # subtract house load and pv
+        if pv > houseload_nett:  ap_target = 0 - houseload_nett - pv # subtract house load and pv
+        else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
