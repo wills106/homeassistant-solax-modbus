@@ -120,30 +120,32 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     reap_up        = datadict.get('reactive_power_upper', 0)
     reap_lo        = datadict.get('reactive_power_lower', 0)
     import_limit   = datadict.get('remotecontrol_import_limit', 20000)
-    houseload_net  = datadict['inverter_load'] - datadict['measured_power']
-    houseload      = datadict.get('pv_power_1', 0) + datadict.get('pv_power_2', 0) + datadict.get('pv_power_3', 0) - datadict['battery_power_charge'] - datadict['measured_power']
+    meas           = datadict.get('measured_power', 0)
+    pv             = datadict.get('pv_power_total', 0)
+    houseload_nett = datadict.get('inverter_load', 0) - meas
+    houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
     if   power_control == "Enabled Power Control": 
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
-        ap_target = target - houseload # subtract house load
+        ap_target = target - houseload_brut # subtract house load
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Self Use": # alternative computation for Power Control
-        ap_target = 0 - houseload_net # subtract house load
+        ap_target = 0 - houseload_nett # subtract house load
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Battery Control": # alternative computation for Power Control
-        ap_target = target - datadict['pv_power_total'] # subtract house load and pv
+        ap_target = target - pv # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Feedin Priority": # alternative computation for Power Control
-        ap_target = 0 - houseload_net - datadict['pv_power_total'] # subtract house load and pv
+        ap_target = 0 - houseload_nett - pv # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
-    ap_target = min(ap_target,  import_limit - houseload)
+    ap_target = min(ap_target,  import_limit - houseload_brutt)
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
-        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload}")
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brutt}")
     res =  [ ('remotecontrol_power_control',  power_control, ),
              ('remotecontrol_set_type',       set_type, ),
              ('remotecontrol_active_power',   max(min(ap_up, ap_target),   ap_lo), ),
