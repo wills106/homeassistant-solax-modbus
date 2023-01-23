@@ -97,12 +97,10 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_passivemode(initval, descr, datadict):
-    res = [ (REGISTER_S32, 0, ),
+    return [ (REGISTER_S32, 0, ),
             (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
             (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
-          ]
-    _LOGGER.warning(f"*** debug output: passivemode returning {res}")
-    return res
+           ]
 
 def value_function_timingmode(initval, descr, datadict):
     return  [ ('timing_id', datadict.get('timing_id', datadict.get('ro_timing_id')), ),
