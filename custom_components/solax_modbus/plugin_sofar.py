@@ -97,7 +97,7 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_passivemode(initval, descr, datadict):
-    res  [ (REGISTER_S32, 0, ),
+    res = [ (REGISTER_S32, 0, ),
               (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
               (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
             ]
