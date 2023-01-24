@@ -119,7 +119,7 @@ def value_function_timingmode(initval, descr, datadict):
 BUTTON_TYPES = [
     SofarModbusButtonEntityDescription( 
         name = "Passive Mode Battery Charge/Discharge",
-        key = "update_charge_discharge_times",
+        key = "passive_mode_battery_charge_discharge",
         register = 0x1187,
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
