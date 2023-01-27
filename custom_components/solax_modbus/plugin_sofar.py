@@ -388,6 +388,7 @@ SELECT_TYPES = [
                 4: "Peak Cut Mode",
             },
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Time of Use On-Off",
