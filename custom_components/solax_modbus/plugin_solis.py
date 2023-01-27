@@ -116,6 +116,14 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
+MAX_CURRENTS = [
+    ('0602',  62.5 ), # 3kW 48v
+    ('160F',  62.5 ), # 3.6kW 48v
+    ('1031',  100 ), # 5kW 48v
+    ('6031',  100 ), # 6kW 48v
+    ('6031',  25 ), # 10kW HV
+]
+
 NUMBER_TYPES = [
     ###
     #
@@ -252,12 +260,13 @@ NUMBER_TYPES = [
         register = 43116,
         fmt = "f",
         native_min_value = 0,
-        native_max_value = 70,
+        native_max_value = 20,
         native_step = 1,
         scale = 0.1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID,
+        max_exceptions = MAX_CURRENTS,
         entity_category = EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
@@ -266,12 +275,13 @@ NUMBER_TYPES = [
         register = 43117,
         fmt = "f",
         native_min_value = 0,
-        native_max_value = 70,
+        native_max_value = 20,
         native_step = 1,
         scale = 0.1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID,
+        max_exceptions = MAX_CURRENTS,
         entity_category = EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
@@ -280,12 +290,13 @@ NUMBER_TYPES = [
         register = 43118,
         fmt = "f",
         native_min_value = 0,
-        native_max_value = 70,
+        native_max_value = 20,
         native_step = 1,
         scale = 0.1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID,
+        max_exceptions = MAX_CURRENTS,
         entity_category = EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
@@ -294,12 +305,13 @@ NUMBER_TYPES = [
         register = 43141,
         fmt = "f",
         native_min_value = 0,
-        native_max_value = 70,
+        native_max_value = 20,
         native_step = 1,
         scale = 0.1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID,
+        max_exceptions = MAX_CURRENTS,
         entity_category = EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
@@ -308,12 +320,13 @@ NUMBER_TYPES = [
         register = 43142,
         fmt = "f",
         native_min_value = 0,
-        native_max_value = 70,
+        native_max_value = 20,
         native_step = 1,
         scale = 0.1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = NumberDeviceClass.CURRENT,
         allowedtypes = HYBRID,
+        max_exceptions = MAX_CURRENTS,
         entity_category = EntityCategory.CONFIG,
     ),
 ]
@@ -739,6 +752,13 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "energy_storage_control_switch",
         register = 33132,
         register_type = REG_INPUT,
+        scale = {  
+                33: "Auto Mode", 
+                35: "Timed Charge/Discharge", 
+                37: "Off-Grid Mode", 
+                41: "Battery Awaken", 
+                43: "Battery Awaken + Timed Charge/Discharge", 
+                },
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -1542,11 +1562,11 @@ class solis_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW 48v
-        elif seriesnumber.startswith('160F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW 48v
-        elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92
-        elif seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model
-        elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model
+        if seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
+        elif seriesnumber.startswith('160F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92 10kW - HV
+        elif seriesnumber.startswith('6031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3105 / 3122 Model 6kW - 48V
+        elif seriesnumber.startswith('1031'):  invertertype = HYBRID | X1 # Hybrid Gen5 3104 Model 5kW - 48V
         #elif seriesnumber.startswith('abc123'):  invertertype = PV | X3 # Comment
 
         else: 
