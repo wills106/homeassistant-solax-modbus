@@ -2475,7 +2475,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x8,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes =ALLDEFAULT,
+        allowedtypes = ALLDEFAULT,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2494,7 +2494,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   9: "Idle Mode",
                  10: "Standby", },
         register_type = REG_INPUT,
-        allowedtypes =GEN2 | GEN3,
+        allowedtypes = GEN2 | GEN3,
         icon = "mdi:run",
     ),
     SolaXModbusSensorEntityDescription(
@@ -2513,7 +2513,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   9: "Idle Mode",
                  10: "Standby", },
         register_type = REG_INPUT,
-        allowedtypes =GEN4,
+        allowedtypes = GEN4,
         icon = "mdi:run",
     ),
     SolaXModbusSensorEntityDescription(
