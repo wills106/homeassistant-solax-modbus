@@ -389,6 +389,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RTC",
         key = "rtc",
         register = 33022,
+        register_type = REG_INPUT,
         unit = REGISTER_WORDS,
         wordcount = 6,
         scale = value_function_rtc_ymd,
