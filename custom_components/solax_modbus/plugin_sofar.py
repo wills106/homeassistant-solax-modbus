@@ -114,6 +114,16 @@ def value_function_timingmode(initval, descr, datadict):
               ('timing_discharge_power', datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')), ),
             ]
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+           ]
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -124,6 +134,15 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
+    ),
+    SofarModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 0x1004,
+        allowedtypes = HYBRID | PV,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:home-clock",
+        value_function = value_function_sync_rtc,
     ),
     SofarModbusButtonEntityDescription(
         name = "Timing Control",
@@ -497,6 +516,18 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RTC",
+        key = "rtc",
+        register = 0x42C,
+        unit = REGISTER_WORDS,
+        wordcount = 6,
+        scale = value_function_rtc_ymd,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | PV,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:clock",
     ),
     SofarModbusSensorEntityDescription(
         name = "Serial Number",

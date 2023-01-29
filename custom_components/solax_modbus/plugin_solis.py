@@ -100,9 +100,28 @@ def value_function_timingmode(initval, descr, datadict):
               ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
             ]
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+           ]
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SolisModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 43000,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:home-clock",
+        value_function = value_function_sync_rtc,
+    ),
     SolisModbusButtonEntityDescription( 
         name = "Update Charge/Discharge Times",
         key = "update_charge_discharge_times",
@@ -365,6 +384,18 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "RTC",
+        key = "rtc",
+        register = 33022,
+        unit = REGISTER_WORDS,
+        wordcount = 6,
+        scale = value_function_rtc_ymd,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:clock",
     ),
     SolisModbusSensorEntityDescription(
         name = "Power Generation Total",

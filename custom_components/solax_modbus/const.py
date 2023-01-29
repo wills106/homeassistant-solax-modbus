@@ -228,7 +228,14 @@ def value_function_rtc(initval, descr, datadict):
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
     except: pass
-    
+
+def value_function_rtc_ymd(initval, descr, datadict):
+    try:
+        (rtc_years, rtc_months, rtc_days, rtc_hours, rtc_minutes, rtc_seconds, ) = initval
+        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
+        return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
+    except: pass
+
 def value_function_gen4time(initval, descr, datadict):
     h = initval % 256
     m = initval >> 8
