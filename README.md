@@ -22,6 +22,24 @@ Ginlong Solis
 - RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 - Unknown Models
 
+Growatt:
+
+Untested Models:
+
+ - AC Battery Storage:
+   - SPA
+  
+ - Hybrid:
+   - SPH
+   - TL-XH
+  
+ - PV Only:
+   - MAC
+   - MAX
+   - MID
+   - TL-X
+
+
 Sofar Solar
 - HYDxxKTL-3P (plugin_sofar)
 - HYDxxxxES (plugin_sofar_old)
