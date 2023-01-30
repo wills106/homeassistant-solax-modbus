@@ -1854,6 +1854,7 @@ class growatt_plugin(plugin_base):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber                       = _read_serialnr(hub, 23)
         if not seriesnumber:
+            _LOGGER.info(f"{hub.name}: trying alternative location")
             seriesnumber                       = _read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
@@ -1899,7 +1900,7 @@ plugin_instance = growatt_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
-    block_size = 48,
+    block_size = 100,
     order16 = Endian.Big,
     order32 = Endian.Big,
     )
