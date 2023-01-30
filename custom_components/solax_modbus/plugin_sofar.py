@@ -1582,7 +1582,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x607,
         unit = REGISTER_S16,
         #entity_registry_enabled_default =  False,
-        allowedtypes = HYBRID | GEN,
+        allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
