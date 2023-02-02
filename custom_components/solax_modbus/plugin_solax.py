@@ -250,6 +250,7 @@ MAX_CURRENTS = [
     ('F3E',    25 ), # RetroFit X3
     ('H3DE',    25 ), # Gen3 X3 might need changing?
     ('H3E',    25 ), # Gen3 X3
+    ('H3LE',    25 ), # Gen3 X3
     ('H3PE',    25 ), # Gen3 X3 might need changing?
     ('H3UE',    25 ), # Gen3 X3
     ('H43',   30 ), # Gen4 X1 3 / 3.7kW
@@ -304,6 +305,10 @@ MAX_EXPORT = [
     ('H3E06', 12000 ), # Gen3 X3
     ('H3E08', 14000 ), # Gen3 X3
     ('H3E10', 15000 ), # Gen3 X3
+    ('H3LE05', 10000 ), # Gen3 X3
+    ('H3LE06', 12000 ), # Gen3 X3
+    ('H3LE08', 14000 ), # Gen3 X3
+    ('H3LE10', 15000 ), # Gen3 X3
     ('H3PE05', 10000 ), # Gen3 X3
     ('H3PE06', 12000 ), # Gen3 X3
     ('H3PE08', 14000 ), # Gen3 X3
@@ -4354,6 +4359,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('XM3'):   invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
         elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+        elif seriesnumber.startswith('H3LE'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
