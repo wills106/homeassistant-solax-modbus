@@ -4344,12 +4344,12 @@ class solax_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
-        if   seriesnumber.startswith('L30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
-        elif seriesnumber.startswith('U30E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
-        elif seriesnumber.startswith('L37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-        elif seriesnumber.startswith('U37E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-        elif seriesnumber.startswith('L50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-        elif seriesnumber.startswith('U50E'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
+        if   seriesnumber.startswith('L30'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
+        elif seriesnumber.startswith('U30'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
+        elif seriesnumber.startswith('L37'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3.7kW Untested
+        elif seriesnumber.startswith('U37'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+        elif seriesnumber.startswith('L50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 5kW
+        elif seriesnumber.startswith('U50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
         elif seriesnumber.startswith('H1E'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
         elif seriesnumber.startswith('HCC'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
         elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
@@ -4383,6 +4383,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MC215T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
