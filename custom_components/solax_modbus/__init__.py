@@ -353,7 +353,7 @@ class SolaXModbusHub:
     def write_registers_single(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
         with self._lock:
-            kwargs = {"unit": unit} if unit else {}
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
@@ -373,7 +373,7 @@ class SolaXModbusHub:
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         with self._lock:
-            kwargs = {"unit": unit} if unit else {}
+            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             if isinstance(payload, list):
