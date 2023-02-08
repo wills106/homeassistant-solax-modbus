@@ -6,6 +6,10 @@
 
 # homeassistant-solax-modbus
 
+**To use Integration 2023.01.x and later you need to be on HA 2023.01.1 or later.**
+
+**For installs on earlier Home Assistant versions please use Integration 2022.12.x**
+
 ## 2022.12.1 adds in support for Ginlong Solis & Sofar Solar Inverters, some aspects are still in development.
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
@@ -21,6 +25,24 @@ Ginlong Solis
 - RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
 - RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 - Unknown Models
+
+Growatt:
+
+Untested Models:
+
+ - AC Battery Storage:
+   - SPA
+  
+ - Hybrid:
+   - SPH
+   - TL-XH
+  
+ - PV Only:
+   - MAC
+   - MAX
+   - MID
+   - TL-X
+
 
 Sofar Solar
 - HYDxxKTL-3P (plugin_sofar)
@@ -141,6 +163,4 @@ Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modb
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
-4. **Release 0.5.9 onwards is only compatible with Home Asisstant 2022.07 onwards. For Home Assistant installation prior to 2022.07 please use Release 0.5.8**
-5. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.
-6. If you try and reconfigure and existing Integration instance you get "Name was already used or was invalid" You need to remove the Integration from the Integration Page, restart HA and reconfigure the Integration with your new settings. If you retain the same name any dashboards will continue as normal.
+4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.
