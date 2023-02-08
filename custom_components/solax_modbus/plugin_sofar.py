@@ -114,6 +114,16 @@ def value_function_timingmode(initval, descr, datadict):
               ('timing_discharge_power', datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')), ),
             ]
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+           ]
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -124,6 +134,15 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
+    ),
+    SofarModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 0x1004,
+        allowedtypes = HYBRID | PV,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:home-clock",
+        value_function = value_function_sync_rtc,
     ),
     SofarModbusButtonEntityDescription(
         name = "Timing Control",
@@ -208,6 +227,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
         icon = "mdi:battery-sync",
     ),
     SofarModbusNumberEntityDescription(
@@ -220,6 +240,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
         icon = "mdi:battery-sync",
     ),
     SofarModbusNumberEntityDescription(
@@ -231,6 +252,7 @@ NUMBER_TYPES = [
         native_max_value = 10,
         native_step = 1,
         allowedtypes = HYBRID | PV | X3 | PM,
+        write_method = WRITE_MULTISINGLE_MODBUS,
         entity_category = EntityCategory.CONFIG,
     ),
     SofarModbusNumberEntityDescription(
@@ -242,6 +264,7 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
         entity_category = EntityCategory.CONFIG,
     ),
 ]
@@ -335,6 +358,7 @@ SELECT_TYPES = [
                 2: "Turn On, Enable Cold Start",
             },
         allowedtypes = HYBRID | X3 | EPS,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Battery Active Control", # Not confirmed option
@@ -345,6 +369,7 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Control",
@@ -355,6 +380,7 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID | PV | X3 | PM,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Parallel Master-Salve",
@@ -365,6 +391,7 @@ SELECT_TYPES = [
                 1: "Master",
             },
         allowedtypes = HYBRID | PV | X3 | PM,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Remote Control",
@@ -375,6 +402,7 @@ SELECT_TYPES = [
                 1: "On",
             },
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
         name = "Charger Use Mode",
@@ -399,6 +427,7 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     # Timing Charge Start
     # Timing Charge End
@@ -487,6 +516,18 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         allowedtypes = HYBRID | PV,
         entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RTC",
+        key = "rtc",
+        register = 0x42C,
+        unit = REGISTER_WORDS,
+        wordcount = 6,
+        scale = value_function_rtc_ymd,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | PV,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:clock",
     ),
     SofarModbusSensorEntityDescription(
         name = "Serial Number",
@@ -1541,7 +1582,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x607,
         unit = REGISTER_S16,
         #entity_registry_enabled_default =  False,
-        allowedtypes = HYBRID | GEN,
+        allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(

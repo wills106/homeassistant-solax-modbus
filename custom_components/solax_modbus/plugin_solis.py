@@ -100,9 +100,28 @@ def value_function_timingmode(initval, descr, datadict):
               ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
             ]
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+           ]
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
+    SolisModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 43000,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:home-clock",
+        value_function = value_function_sync_rtc,
+    ),
     SolisModbusButtonEntityDescription( 
         name = "Update Charge/Discharge Times",
         key = "update_charge_discharge_times",
@@ -121,7 +140,7 @@ MAX_CURRENTS = [
     ('160F',  62.5 ), # 3.6kW 48v
     ('1031',  100 ), # 5kW 48v
     ('6031',  100 ), # 6kW 48v
-    ('6031',  25 ), # 10kW HV
+    ('110C',  25 ), # 10kW HV
 ]
 
 NUMBER_TYPES = [
@@ -255,6 +274,20 @@ NUMBER_TYPES = [
     #
     ###
     SolisModbusNumberEntityDescription(
+        name = "Backflow Power",
+        key = "backflow_power",
+        register = 43074,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 9900,
+        native_step = 100,
+        scale = 0.01,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    SolisModbusNumberEntityDescription(
         name = "Battery ChargeDischarge Current",
         key = "battery_chargedischarge_current",
         register = 43116,
@@ -335,6 +368,17 @@ NUMBER_TYPES = [
 
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        option_dict =  {
+                0: "Off",
+                16: "On",
+            },
+        allowedtypes = HYBRID,
+        icon = "mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
         name = "Energy Storage Control Switch",
         key = "energy_storage_control_switch",
         register = 43110,
@@ -365,6 +409,19 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "RTC",
+        key = "rtc",
+        register = 33022,
+        register_type = REG_INPUT,
+        unit = REGISTER_WORDS,
+        wordcount = 6,
+        scale = value_function_rtc_ymd,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:clock",
     ),
     SolisModbusSensorEntityDescription(
         name = "Power Generation Total",
@@ -1384,12 +1441,33 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon = "mdi:home-export-outline",
     ),
     SolisModbusSensorEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        scale = {  
+                0: "Off", 
+                16: "On", },
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Backflow Power",
+        key = "backflow_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        register = 43074,
+        scale = 100,
+        rounding = 0,
+        allowedtypes = HYBRID,
+        #entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    SolisModbusSensorEntityDescription(
         name = "Battery ChargeDischarge Current",
         key = "battery_chargedischarge_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43116,
-        newblock = True,
         scale = 0.1,
         rounding = 0,
         allowedtypes = HYBRID,
@@ -1402,7 +1480,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43117,
-        #register_type = REG_INPUT,
         scale = 0.1,
         rounding = 0,
         allowedtypes = HYBRID,
@@ -1415,7 +1492,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43118,
-        #register_type = REG_INPUT,
         scale = 0.1,
         rounding = 0,
         entity_registry_enabled_default = False,
@@ -1428,7 +1504,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43141,
-        #register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
@@ -1441,7 +1516,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43142,
-        #register_type = REG_INPUT,
+
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
@@ -1452,7 +1527,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Charge Start Hours",
         key = "ro_timed_charge_start_h", 
         register = 43143,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
         allowedtypes =HYBRID,
@@ -1463,7 +1537,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Charge Start Minutes",
         key = "ro_timed_charge_start_m",
         register = 43144,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
@@ -1474,7 +1547,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Charge End Hours",
         key = "ro_timed_charge_end_h", 
         register = 43145,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
@@ -1485,7 +1557,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Charge End Minutes",
         key = "ro_timed_charge_end_m",
         register = 43146,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
@@ -1496,7 +1567,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Discharge Start Hours",
         key = "ro_timed_discharge_start_h", 
         register = 43147,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
         allowedtypes =HYBRID,
@@ -1518,7 +1588,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Discharge End Hours",
         key = "ro_timed_discharge_end_h", 
         register = 43149,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
@@ -1529,7 +1598,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         name = "RO Timed Discharge End Minutes",
         key = "ro_timed_discharge_end_m",
         register = 43150,
-        #register_type = REG_INPUT,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
