@@ -127,7 +127,8 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     if   power_control == "Enabled Power Control": 
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
-        ap_target = target - houseload_brut # subtract house load
+        if target <0 : ap_target = target - houseload_nett # subtract house load
+        else:          ap_target = target - houseload_brut 
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Self Use": # alternative computation for Power Control
         ap_target = 0 - houseload_nett # subtract house load
