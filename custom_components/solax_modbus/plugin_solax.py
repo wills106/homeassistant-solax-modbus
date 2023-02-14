@@ -4438,7 +4438,7 @@ class solax_plugin(plugin_base):
         seriesnumber                       = _read_serialnr(hub, 0x0)
         if not seriesnumber:  
             seriesnumber = _read_serialnr(hub, 0x300) # bug in endian.Little decoding?
-            if seriesnumber and not seriesnumber.startswith("M"):
+            if seriesnumber and not seriesnumber.startswith(("M", "X")):
                 ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii") # convert back to string
@@ -4459,8 +4459,6 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
         elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
         elif seriesnumber.startswith('XAC'):   invertertype = AC | GEN3 | X1 # X1AC
-        elif seriesnumber.startswith('XB3'):   invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
-        elif seriesnumber.startswith('XM3'):   invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
         elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3LE'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
@@ -4475,8 +4473,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-        elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
-        elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
+        elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
+        elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
+        elif seriesnumber.startswith('XMA'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
         elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
