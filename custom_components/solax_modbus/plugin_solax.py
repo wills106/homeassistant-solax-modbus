@@ -4009,6 +4009,18 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         icon = "mdi:current-dc",
     ),
     SolaXMicModbusSensorEntityDescription(
+        name = "Inverter Voltage",
+        key = "grid_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x404,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        sleepmode = SLEEPMODE_LASTAWAKE,
+        allowedtypes = MIC | X1,
+    ),
+    SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
         key = "grid_voltage_l1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -4018,7 +4030,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
@@ -4030,7 +4042,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
@@ -4042,7 +4054,20 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Inverter Frequency",
+        key = "grid_frequency",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x407,
+        newblock = True,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        sleepmode = SLEEPMODE_LASTAWAKE,
+        allowedtypes = MIC | X1,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
@@ -4055,7 +4080,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
@@ -4067,7 +4092,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
@@ -4079,7 +4104,18 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.01,
         rounding = 2,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Inverter Current",
+        key = "grid_current",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x40A,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MIC | X1,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L1",
@@ -4090,7 +4126,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L2",
@@ -4101,7 +4137,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Current L3",
@@ -4112,7 +4148,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Inverter Temperature",
@@ -4157,7 +4193,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x410,
         register_type = REG_INPUT,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L2",
@@ -4167,7 +4203,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
         register_type = REG_INPUT,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L3",
@@ -4177,7 +4213,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x412,
         register_type = REG_INPUT,
-        allowedtypes = MIC,
+        allowedtypes = MIC | X3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "PV Power 1",
@@ -4314,6 +4350,74 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN3,
         icon = "mdi:solar-power-variant",
     ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Inverter Power",
+        key = "inverter_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x435,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MIC | GEN,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Total Grid Export",
+        key = "total_grid_export",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default = False,
+        register = 0x437,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
+        icon = "mdi:home-export-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Total Grid Import",
+        key = "total_grid_import",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default = False,
+        register = 0x439,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
+        icon = "mdi:home-import-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Today's Grid Export",
+        key = "today_grid_export",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 0x43B,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
+        icon = "mdi:home-export-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Today's Grid Import",
+        key = "today_grid_import",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 0x43C,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MIC | GEN,
+        icon = "mdi:home-import-outline",
+    ),
 ]
 
 # ============================ plugin declaration =================================================
@@ -4335,7 +4439,7 @@ class solax_plugin(plugin_base):
         seriesnumber                       = _read_serialnr(hub, 0x0)
         if not seriesnumber:  
             seriesnumber = _read_serialnr(hub, 0x300) # bug in endian.Little decoding?
-            if seriesnumber and not seriesnumber.startswith("M"):
+            if seriesnumber and not seriesnumber.startswith(("M", "X")):
                 ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii") # convert back to string
@@ -4356,8 +4460,6 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
         elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
         elif seriesnumber.startswith('XAC'):   invertertype = AC | GEN3 | X1 # X1AC
-        elif seriesnumber.startswith('XB3'):   invertertype = PV | GEN3 | X1 # X1-Boost G3, should work with other kW raiting assuming they use Hybrid registers
-        elif seriesnumber.startswith('XM3'):   invertertype = PV | GEN3 | X1 # X1-Mini G3, should work with other kW raiting assuming they use Hybrid registers
         elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
         elif seriesnumber.startswith('H3LE'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
@@ -4372,6 +4474,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
+        elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
+        elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
+        elif seriesnumber.startswith('XMA'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
         elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
