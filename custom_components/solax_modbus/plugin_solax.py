@@ -127,7 +127,8 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     if   power_control == "Enabled Power Control": 
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
-        ap_target = target - houseload_brut # subtract house load
+        if target <0 : ap_target = target - houseload_nett # subtract house load
+        else:          ap_target = target - houseload_brut 
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Self Use": # alternative computation for Power Control
         ap_target = 0 - houseload_nett # subtract house load
@@ -136,7 +137,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         ap_target = target - pv # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Feedin Priority": # alternative computation for Power Control
-        if pv > houseload_nett:  ap_target = 0 - pv # 0 - houseload_nett - (pv - houseload_nett) 
+        if pv > houseload_nett:  ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
@@ -411,7 +412,7 @@ NUMBER_TYPES = [
         icon = "mdi:home-clock",
         initvalue = 0, # seconds - 
         native_min_value = 0,
-        native_max_value = 18000,
+        native_max_value = 28800,
         native_step = 600,
         fmt = "i",
         native_unit_of_measurement = UnitOfTime.SECONDS,
