@@ -4356,9 +4356,11 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
+        newblock = True,
         register = 0x435,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
+        entity_registry_enabled_default = False,
         allowedtypes = MIC | GEN,
         icon = "mdi:solar-power-variant",
     ),
@@ -4368,12 +4370,12 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
-        entity_registry_enabled_default = False,
         register = 0x437,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = MIC | GEN,
         icon = "mdi:home-export-outline",
     ),
@@ -4383,12 +4385,12 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
-        entity_registry_enabled_default = False,
         register = 0x439,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         scale = 0.01,
         rounding = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = MIC | GEN,
         icon = "mdi:home-import-outline",
     ),
@@ -4402,6 +4404,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = MIC | GEN,
         icon = "mdi:home-export-outline",
     ),
@@ -4415,6 +4418,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = MIC | GEN,
         icon = "mdi:home-import-outline",
     ),
@@ -4481,6 +4485,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC502T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MU502T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC702T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU702T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU802T'):  invertertype = MIC | GEN | X3 # MIC X3
