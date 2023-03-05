@@ -4480,6 +4480,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC502T'):  invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MU502T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MC702T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU702T'):  invertertype = MIC | GEN | X3 # MIC X3
         elif seriesnumber.startswith('MU802T'):  invertertype = MIC | GEN | X3 # MIC X3
