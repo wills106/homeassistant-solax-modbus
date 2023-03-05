@@ -2269,7 +2269,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "RO Passive Mode Upper",
         key = "ro_passive_mode_upper",
         unit = REGISTER_S32,
-        register = 0x1189,
+        register = 0x118B,
         #entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
@@ -2300,6 +2300,7 @@ class sofar_plugin(plugin_base):
         elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
         elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
         elif seriesnumber.startswith('SM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES, Not actually X3, needs changing
+        elif seriesnumber.startswith('SM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
         elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X3 | GEN # HYDxxxxES 2nd type, Not actually X3, needs changing
         elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
         elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
