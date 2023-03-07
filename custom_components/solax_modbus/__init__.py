@@ -449,35 +449,44 @@ class SolaXModbusHub:
 
 
     def read_modbus_block(self, block, typ):
+        errmsg = None
         if self.cyclecount <5: 
             _LOGGER.debug(f"{self.name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}")
         try:
             if typ == 'input': realtime_data = self.read_input_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
             else:              realtime_data = self.read_holding_registers(unit=self._modbus_addr, address=block.start, count=block.end - block.start)
-        except Exception as ex:
-            if self.slowdown == 1: _LOGGER.info(f"{str(ex)}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
-            return False
-        if realtime_data.isError():
-            if self.slowdown == 1: _LOGGER.info(f"{self.name} error reading {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
-            return False
-        #decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, block.order16, wordorder=block.order32)
-        decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, self.plugin.order16, wordorder=self.plugin.order32)
-        prevreg = block.start
-        for reg in block.regs:
-            if (reg - prevreg) > 0: 
-                decoder.skip_bytes((reg-prevreg) * 2)
-                if self.cyclecount < 5: _LOGGER.debug(f"skipping bytes {(reg-prevreg) * 2}")
-            descr = block.descriptions[reg] 
-            if type(descr) is dict: #  set of byte values
-                val = decoder.decode_16bit_uint()
-                for k in descr: self.treat_address(decoder, descr[k], val)
-                prevreg = reg + 1
-            else: # single value
-                self.treat_address(decoder, descr)
-                if descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,): prevreg = reg + 2
-                elif descr.unit in (REGISTER_STR, REGISTER_WORDS,): prevreg = reg + descr.wordcount
-                else: prevreg = reg+1
-        return True
+        except Exception as ex:  
+            errmsg = f"exception {str(ex)} "
+        else:
+            if realtime_data.isError(): errmsg = f"read_error "
+        if errmsg == None:
+            decoder = BinaryPayloadDecoder.fromRegisters(realtime_data.registers, self.plugin.order16, wordorder=self.plugin.order32)
+            prevreg = block.start
+            for reg in block.regs:
+                if (reg - prevreg) > 0: 
+                    decoder.skip_bytes((reg-prevreg) * 2)
+                    if self.cyclecount < 5: _LOGGER.debug(f"skipping bytes {(reg-prevreg) * 2}")
+                descr = block.descriptions[reg] 
+                if type(descr) is dict: #  set of byte values
+                    val = decoder.decode_16bit_uint()
+                    for k in descr: self.treat_address(decoder, descr[k], val)
+                    prevreg = reg + 1
+                else: # single value
+                    self.treat_address(decoder, descr)
+                    if descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,): prevreg = reg + 2
+                    elif descr.unit in (REGISTER_STR, REGISTER_WORDS,): prevreg = reg + descr.wordcount
+                    else: prevreg = reg+1
+            return True
+        else: #block read failure
+            firstdescr = block.descriptions[start] # check only first item in block
+            if firstdescr.ignore_readerror != False:  # ignore block read errors and return static data
+                for reg in block.regs: 
+                    descr = block.descriptions[reg]
+                    if ((descr.ignore_readerror != True) and (descr.ignore_readerror !=False)) : self.data[descr.key] = descr.ignore_readerror # return something static 
+                return True
+            else:
+                if self.slowdown == 1: _LOGGER.info(f"{errmsg}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)
+                return False
 
     def read_modbus_registers_all(self):
         res = True
