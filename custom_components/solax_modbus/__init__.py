@@ -482,7 +482,7 @@ class SolaXModbusHub:
             if firstdescr.ignore_readerror != False:  # ignore block read errors and return static data
                 for reg in block.regs: 
                     descr = block.descriptions[reg]
-                    self.data[descr.key] = descr.ignore_readerror # return something static 
+                    if ((descr.ignore_readerror != True) and (descr.ignore_readerror !=False)) : self.data[descr.key] = descr.ignore_readerror # return something static 
                 return True
             else:
                 if self.slowdown == 1: _LOGGER.info(f"{errmsg}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}", exc_info=True)

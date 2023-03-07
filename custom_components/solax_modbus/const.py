@@ -132,6 +132,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
                                    # The other entitties of the block can also have an ignore_readerror attribute that determines the value returned upon failure
                                    # so typically this attribute can be set to None or "Unknown" or any other value
                                    # This only works if the first entity of a block contains this attribute
+                                   # When simply set to True, no initial value will be returned, but the block will be considered valid
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
