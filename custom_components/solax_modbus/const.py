@@ -127,6 +127,11 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
     sleepmode: int = SLEEPMODE_LAST # or SLEEPMODE_ZERO or SLEEPMODE_NONE
+    ignore_readerror: bool = False # if not False, ignore read errors for this block and return this static value
+                                   # A failing block read will be accepted as valid block if the first entity of the block contains a non-False ignore_readerror attribute. 
+                                   # The other entitties of the block can also have an ignore_readerror attribute that determines the value returned upon failure
+                                   # so typically this attribute can be set to None or "Unknown" or any other value
+                                   # This only works if the first entity of a block contains this attribute
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
