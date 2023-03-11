@@ -403,6 +403,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 33004,
         register_type = REG_INPUT,
+        ignore_readerror = True,
         unit = REGISTER_STR,
         wordcount=8,
         entity_registry_enabled_default = False,
@@ -1667,7 +1668,7 @@ plugin_instance = solis_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
-    block_size = 48,
+    block_size = 40,
     order16 = Endian.Big,
     order32 = Endian.Big,
     )
