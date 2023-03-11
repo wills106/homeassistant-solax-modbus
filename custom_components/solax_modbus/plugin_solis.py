@@ -392,6 +392,17 @@ SELECT_TYPES = [
         allowedtypes = HYBRID,
         icon = "mdi:dip-switch",
     ),
+    SolisModbusSelectEntityDescription(
+        name = "Power Switch",
+        key = "power_switch",
+        register = 43007,
+        option_dict =  {
+                190: "On",
+                222: "Off",
+            },
+        allowedtypes = HYBRID,
+        icon = "mdi:dip-switch",
+    ),
 ]
 
 # ================================= Sennsor Declarations ============================================================
@@ -1444,6 +1455,17 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding = 2,
         allowedtypes = HYBRID,
         icon = "mdi:home-export-outline",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Power Switch",
+        key = "power_switch",
+        register = 43007,
+        ignore_readerror = True,
+        scale = {  
+                190: "On", 
+                222: "Off", },
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
         name = "Backflow Power Switch",
