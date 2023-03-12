@@ -99,16 +99,6 @@ class SolaXMicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
-def value_function_sync_rtc(initval, descr, datadict):
-    now = datetime.now()
-    return [ (REGISTER_U16, now.second, ),
-             (REGISTER_U16, now.minute, ),
-             (REGISTER_U16, now.hour, ),
-             (REGISTER_U16, now.day, ),
-             (REGISTER_U16, now.month, ),
-             (REGISTER_U16, now.year % 100, ),
-           ]
-
 def value_function_remotecontrol_recompute(initval, descr, datadict):
     power_control  = datadict.get('remotecontrol_power_control', "Disabled")
     set_type       = datadict.get('remotecontrol_set_type', "Set") # other options did not work

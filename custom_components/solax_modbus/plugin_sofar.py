@@ -114,16 +114,6 @@ def value_function_timingmode(initval, descr, datadict):
               ('timing_discharge_power', datadict.get('timing_discharge_power', datadict.get('ro_timing_discharge_power')), ),
             ]
 
-def value_function_sync_rtc(initval, descr, datadict):
-    now = datetime.now()
-    return [ (REGISTER_U16, now.year % 100, ),
-             (REGISTER_U16, now.month, ),
-             (REGISTER_U16, now.day, ),
-             (REGISTER_U16, now.hour, ),
-             (REGISTER_U16, now.minute, ),
-             (REGISTER_U16, now.second, ),
-           ]
-
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -142,7 +132,7 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID | PV,
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:home-clock",
-        value_function = value_function_sync_rtc,
+        value_function = value_function_sync_rtc_ymd,
     ),
     SofarModbusButtonEntityDescription(
         name = "Timing Control",

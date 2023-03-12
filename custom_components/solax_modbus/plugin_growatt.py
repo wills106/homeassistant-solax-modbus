@@ -103,16 +103,6 @@ def value_function_timingmode(initval, descr, datadict):
 def value_function_today_solar_energy(initval, descr, datadict):
     return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
 
-def value_function_sync_rtc(initval, descr, datadict):
-    now = datetime.now()
-    return [ (REGISTER_U16, now.year % 100, ),
-             (REGISTER_U16, now.month, ),
-             (REGISTER_U16, now.day, ),
-             (REGISTER_U16, now.hour, ),
-             (REGISTER_U16, now.minute, ),
-             (REGISTER_U16, now.second, ),
-           ]
-
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = []

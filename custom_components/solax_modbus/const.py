@@ -228,6 +228,26 @@ def value_function_house_load(initval, descr, datadict):
 def value_function_house_load_alt(initval, descr, datadict):
     return ( datadict['inverter_load'] - datadict['measured_power'] )
 
+def value_function_sync_rtc(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.second, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.year % 100, ),
+           ]
+
+def value_function_sync_rtc_ymd(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+           ]
+
 def value_function_rtc(initval, descr, datadict):
     try:
         (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
