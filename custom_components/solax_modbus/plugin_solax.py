@@ -4471,6 +4471,10 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
         elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
         elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
+        elif seriesnumber.startswith('F43'):   invertertype = AC | GEN4 | X1 # RetroFit X1 3kW / 3.7kW?
+        elif seriesnumber.startswith('F450'):   invertertype = AC | GEN4 | X1 # RetroFit 5kW
+        elif seriesnumber.startswith('F460'):  invertertype = AC | GEN4 | X1 # RetroFit X1 6kW?
+        elif seriesnumber.startswith('F475'):  invertertype = AC | GEN4 | X1 # RetroFit X1 7.5kW?
         elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
