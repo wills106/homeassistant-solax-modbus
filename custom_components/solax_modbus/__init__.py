@@ -478,7 +478,7 @@ class SolaXModbusHub:
                     else: prevreg = reg+1
             return True
         else: #block read failure
-            firstdescr = block.descriptions[start] # check only first item in block
+            firstdescr = block.descriptions[block.start] # check only first item in block
             if firstdescr.ignore_readerror != False:  # ignore block read errors and return static data
                 for reg in block.regs: 
                     descr = block.descriptions[reg]
