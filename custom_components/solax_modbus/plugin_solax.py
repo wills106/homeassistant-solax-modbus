@@ -130,6 +130,10 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         if pv > houseload_nett:  ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
+    elif power_control == "Enabled No Discharge": # alternative computation for Power Control
+        if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
+        else:                    ap_target = 0 - houseload_nett
+        power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
@@ -820,6 +824,7 @@ SELECT_TYPES = [
                 12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
                 110: "Enabled Self Use",  # variation of Grid Control with fixed target 0
                 120: "Enabled Feedin Priority", # variation of Battery Control with fixed target 0
+                130: "Enabled No Discharge", # missing HL from grid
                # 2: "Enabled Quantity Control",
                # 3: "Enabled SOC Target Control",
             },
