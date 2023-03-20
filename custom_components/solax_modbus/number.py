@@ -114,7 +114,7 @@ class SolaXModbusNumber(NumberEntity):
     @property
     def native_value(self) -> float:
         if self._key in self._hub.data: 
-            if self._read_scale: return self._hub.data[self._key]*self._read_scale
+            if (self._read_scale and self._hub.data[self._key]): return self._hub.data[self._key]*self._read_scale
             else: return self._hub.data[self._key]
         else: # first time initialize
             #return self.entity_description.initvalue
