@@ -100,7 +100,7 @@ def value_function_timingmode(initval, descr, datadict):
               ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
             ]
 def value_function_timingmode2(initval, descr, datadict):
-    return  [ 
+    return  [
               ('timed_charge_start_h_2', datadict.get('timed_charge_start_h_2', 0), ),
               ('timed_charge_start_m_2', datadict.get('timed_charge_start_m_2', 0), ),
               ('timed_charge_end_h_2', datadict.get('timed_charge_end_h_2', 0), ),
@@ -112,7 +112,7 @@ def value_function_timingmode2(initval, descr, datadict):
             ]
 
 def value_function_timingmode3(initval, descr, datadict):
-    return  [ 
+    return  [
               ('timed_charge_start_h_3', datadict.get('timed_charge_start_h_3', 0), ),
               ('timed_charge_start_m_3', datadict.get('timed_charge_start_m_3', 0), ),
               ('timed_charge_end_h_3', datadict.get('timed_charge_end_h_3', 0), ),
@@ -144,7 +144,7 @@ BUTTON_TYPES = [
         icon = "mdi:battery-clock",
         value_function = value_function_timingmode,
     ),
-    SolisModbusButtonEntityDescription( 
+    SolisModbusButtonEntityDescription(
         name = "Update Charge/Discharge Times 2",
         key = "update_charge_discharge_times_2",
         register = 43153,
@@ -153,7 +153,7 @@ BUTTON_TYPES = [
         icon = "mdi:battery-clock",
         value_function = value_function_timingmode2,
     ),
-    SolisModbusButtonEntityDescription( 
+    SolisModbusButtonEntityDescription(
         name = "Update Charge/Discharge Times 3",
         key = "update_charge_discharge_times_3",
         register = 43163,
@@ -303,7 +303,7 @@ NUMBER_TYPES = [
     ### TimeSlot2
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Hours 2",
-        key = "timed_charge_start_h_2", 
+        key = "timed_charge_start_h_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -333,7 +333,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 2",
-        key = "timed_charge_end_h_2", 
+        key = "timed_charge_end_h_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -363,7 +363,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 2",
-        key = "timed_discharge_start_h_2", 
+        key = "timed_discharge_start_h_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -393,7 +393,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 2",
-        key = "timed_discharge_end_h_2", 
+        key = "timed_discharge_end_h_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -424,7 +424,7 @@ NUMBER_TYPES = [
     ###TimeSlot3
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Hours 3",
-        key = "timed_charge_start_h_3", 
+        key = "timed_charge_start_h_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -454,7 +454,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 3",
-        key = "timed_charge_end_h_3", 
+        key = "timed_charge_end_h_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -484,7 +484,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 3",
-        key = "timed_discharge_start_h_3", 
+        key = "timed_discharge_start_h_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -514,7 +514,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 3",
-        key = "timed_discharge_end_h_3", 
+        key = "timed_discharge_end_h_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -1178,7 +1178,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 33142,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        scale = 0.01,
+        scale = 0.1,
         rounding = 2,
         allowedtypes = HYBRID,
     ),
@@ -1738,8 +1738,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "power_switch",
         register = 43007,
         ignore_readerror = True,
-        scale = {  
-                190: "On", 
+        scale = {
+                190: "On",
                 222: "Off", },
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
@@ -1749,7 +1749,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "backflow_power_switch",
         register = 43073,
         ignore_readerror = True,
-        scale = {  
+        scale = {
                 0: "Off", 
                 16: "On", },
         entity_registry_enabled_default = False,
@@ -1912,7 +1912,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     # ============================ TimeSlot2 ==============================
     SolisModbusSensorEntityDescription(
         name = "RO Timed Charge Start Hours 2",
-        key = "ro_timed_charge_start_h_2", 
+        key = "ro_timed_charge_start_h_2",
         register = 43153,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -1932,7 +1932,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Charge End Hours 2",
-        key = "ro_timed_charge_end_h_2", 
+        key = "ro_timed_charge_end_h_2",
         register = 43155,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -1952,7 +1952,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Discharge Start Hours 2",
-        key = "ro_timed_discharge_start_h_2", 
+        key = "ro_timed_discharge_start_h_2",
         register = 43157,
         ignore_readerror = True,
         native_unit_of_measurement = UnitOfTime.HOURS,
@@ -1973,7 +1973,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Discharge End Hours 2",
-        key = "ro_timed_discharge_end_h_2", 
+        key = "ro_timed_discharge_end_h_2",
         register = 43159,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -1994,7 +1994,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     # ============================ TimeSlot3 ==============================
     SolisModbusSensorEntityDescription(
         name = "RO Timed Charge Start Hours 3",
-        key = "ro_timed_charge_start_h_3", 
+        key = "ro_timed_charge_start_h_3",
         register = 43163,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2014,7 +2014,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Charge End Hours 3",
-        key = "ro_timed_charge_end_h_3", 
+        key = "ro_timed_charge_end_h_3",
         register = 43165,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2034,7 +2034,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Discharge Start Hours 3",
-        key = "ro_timed_discharge_start_h_3", 
+        key = "ro_timed_discharge_start_h_3",
         register = 43167,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2054,7 +2054,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "RO Timed Discharge End Hours 3",
-        key = "ro_timed_discharge_end_h_3", 
+        key = "ro_timed_discharge_end_h_3",
         register = 43169,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
