@@ -15,7 +15,11 @@
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
 ### Support Modbus over RS485 & TCP
-**(Pocket LAN / Pocket WiFi does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)** Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)
+**(Pocket LAN / Pocket WiFi v1 & v2 does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)**
+
+**Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported**
+
+**Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
