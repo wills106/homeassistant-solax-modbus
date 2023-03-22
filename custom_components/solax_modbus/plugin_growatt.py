@@ -50,18 +50,18 @@ ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 |
 def _read_serialnr(hub, address, swapbytes):
     res = None
     try:
-        inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=5)
+        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError(): 
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
-            res = decoder.decode_string(14).decode("ascii")
+            res = decoder.decode_string(12).decode("ascii")
             if swapbytes: 
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
-    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware version failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading firmware from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware version: {res}, swapped: {swapbytes}")
     return res
 
 # =================================================================================================
@@ -1842,18 +1842,18 @@ class growatt_plugin(plugin_base):
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 23)
+        seriesnumber                       = _read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
             seriesnumber                       = _read_serialnr(hub, 3001)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
         if seriesnumber.startswith('TLX'):  invertertype = PV | GEN2 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('TLXH'):  invertertype = HYBRID | GEN2 | X1 # Hybrid TL-XH 2.5kW - 6kW
-        elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
+        elif seriesnumber.startswith('RAAA'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
         elif seriesnumber.startswith('MID'):  invertertype = PV | GEN | X3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
