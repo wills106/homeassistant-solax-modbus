@@ -131,6 +131,28 @@ SELECT_TYPES = []
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
+        name = "Firmware Version",
+        key = "firmware_version",
+        register = 8,
+        unit = REGISTER_STR,
+        wordcount=3,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Firmware Control Version",
+        key = "firmware_control_version",
+        register = 12,
+        unit = REGISTER_STR,
+        wordcount=3,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "Language",
         key = "language",
         register = 15,
