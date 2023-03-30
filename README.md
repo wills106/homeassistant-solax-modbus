@@ -166,5 +166,13 @@ Please see [Discussion #26](https://github.com/wills106/homsassistant-solax-modb
 
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
+
+You can add the following lines to your configuration file:
+```
+logger:
+  default: warning
+  logs:
+    homeassistant.util.async_: error
+```
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
-4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error "Modbus Error: [Connection] Failed to connect[Modbus" You can't establish a connection if there is nothing to connect to.
+4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
