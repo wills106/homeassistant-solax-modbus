@@ -755,7 +755,7 @@ class solax_ev_charger_plugin(plugin_base):
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x600,  swapbytes = False)
+        seriesnumber                       = _read_serialnr(hub, 0x600)
         if not seriesnumber: 
             _LOGGER.error(f"{hub.name}: cannot find serial number for EV Charger")
             seriesnumber = "unknown"
