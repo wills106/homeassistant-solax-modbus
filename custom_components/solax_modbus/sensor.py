@@ -29,7 +29,7 @@ class block():
     regs: Any = None # sorted list of registers used in this block
 
 
-def splitInBlocks( descriptions, block_size ):
+def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
     start = INVALID_START
     end = 0
     blocks = []
@@ -39,6 +39,8 @@ def splitInBlocks( descriptions, block_size ):
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
             if ((end - start) > 0): 
                 _LOGGER.info(f"Starting new block at 0x{reg:x} ")
+                if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
+                    descr.ignore_readerror = auto_block_ignore_readerror
                 #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                 newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
                 blocks.append(newblock)
@@ -139,8 +141,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
     #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
     # split in blocks and store results
-    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size)
-    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size)
+    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
     hub.computedSensors = computedRegs
 
     for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")

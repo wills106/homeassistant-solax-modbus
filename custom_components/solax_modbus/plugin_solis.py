@@ -2259,4 +2259,5 @@ plugin_instance = solis_plugin(
     block_size = 40,
     order16 = Endian.Big,
     order32 = Endian.Big,
+    auto_block_ignore_readerror = True
     )
