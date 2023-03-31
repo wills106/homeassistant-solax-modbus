@@ -548,6 +548,30 @@ NUMBER_TYPES = [
     #
     ###
     SolisModbusNumberEntityDescription(
+        name = "Battery Minimum SOC",
+        key = "battery_minimum_soc",
+        register = 43011,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 99,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID,
+        icon = "mdi:battery-sync",
+    ),
+    SolisModbusNumberEntityDescription(
+        name = "Backup Mode SOC",
+        key = "backup_mode_soc",
+        register = 43024,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 99,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID,
+        icon = "mdi:battery-sync",
+    ),
+    SolisModbusNumberEntityDescription(
         name = "Backflow Power",
         key = "backflow_power",
         register = 43074,
@@ -1825,6 +1849,22 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name = "Battery Minimum SOC",
+        key = "battery_minimum_soc",
+        register = 43011,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
+        icon = "mdi:battery-sync",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Backup Mode SOC",
+        key = "backup_mode_soc",
+        register = 43024,
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID,
+        icon = "mdi:battery-sync",
+    ),
+    SolisModbusSensorEntityDescription(
         name = "Backflow Power Switch",
         key = "backflow_power_switch",
         register = 43073,
@@ -1902,7 +1942,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 43142,
-
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
