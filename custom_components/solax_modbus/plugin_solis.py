@@ -717,6 +717,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         unit = REGISTER_STR,
         wordcount=8,
         entity_registry_enabled_default = False,
+        sleepmode = SLEEPMODE_LASTAWAKE,
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
