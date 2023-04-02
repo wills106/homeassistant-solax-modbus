@@ -95,6 +95,7 @@ class plugin_base:
     NUMBER_TYPES: list[NumberEntityDescription]
     SELECT_TYPES: list[SelectEntityDescription]
     block_size: int = 100
+    auto_block_ignore_readerror: bool = None # if True or False, inserts a ignore_readerror statement for each block
     order16: int = None # Endian.Big or Endian.Little
     order32: int = None
 
