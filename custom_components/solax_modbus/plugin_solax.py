@@ -4363,7 +4363,8 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        #newblock = True,
+        ignore_readerror = True,
+        newblock = True,
         register = 0x435,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
@@ -4546,4 +4547,5 @@ plugin_instance = solax_plugin(
     block_size = 100,
     order16 = Endian.Big,
     order32 = Endian.Little,
+    auto_block_ignore_readerror = True
     )
