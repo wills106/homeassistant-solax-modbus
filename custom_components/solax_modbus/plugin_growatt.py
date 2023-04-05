@@ -5,6 +5,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from custom_components.solax_modbus.const import *
+from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,23 +46,21 @@ ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 |
 
 # ======================= end of bitmask handling code =============================================
 
+SENSOR_TYPES = []
+
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address, swapbytes):
+def _read_serialnr(hub, address):
     res = None
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError(): 
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
             res = decoder.decode_string(12).decode("ascii")
-            if swapbytes: 
-                ba = bytearray(res,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
-                res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware version failed at 0x{address:x}", exc_info=True)
-    if not res: _LOGGER.warning(f"{hub.name}: reading firmware from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware version: {res}, swapped: {swapbytes}")
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
 # =================================================================================================
