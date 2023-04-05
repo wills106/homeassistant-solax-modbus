@@ -1874,6 +1874,7 @@ class growatt_plugin(plugin_base):
         # derive invertertype from seriiesnumber
         if seriesnumber.startswith('TLX'):  invertertype = PV | GEN2 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('TLXH'):  invertertype = HYBRID | GEN2 | X1 # Hybrid TL-XH 2.5kW - 6kW
+        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid TL-XH 2.5kW - 6kW
         elif seriesnumber.startswith('RAAA'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
