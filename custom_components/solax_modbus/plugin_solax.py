@@ -272,6 +272,10 @@ MAX_EXPORT = [
     ('H1E37',   5000 ), # Gen3 X1
     ('H1E46',   6000 ), # Gen3 X1
     ('H1E5',    6000 ), # Gen3 X1
+    ('H1I30',   5000 ), # Gen3 X1
+    ('H1I37',   5000 ), # Gen3 X1
+    ('H1I46',   6000 ), # Gen3 X1
+    ('H1I5',    6000 ), # Gen3 X1
     ('HCC30',   5000 ), # Gen3 X1
     ('HCC37',   5000 ), # Gen3 X1
     ('HCC46',   6000 ), # Gen3 X1
@@ -4468,6 +4472,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('L50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 5kW
         elif seriesnumber.startswith('U50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
         elif seriesnumber.startswith('H1E'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
+        elif seriesnumber.startswith('H1I'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
         elif seriesnumber.startswith('HCC'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
         elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
         elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
