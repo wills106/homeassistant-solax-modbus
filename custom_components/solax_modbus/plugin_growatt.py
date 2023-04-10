@@ -58,9 +58,9 @@ def _read_serialnr(hub, address):
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
             res = decoder.decode_string(12).decode("ascii")
             hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
-    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware number before potential swap: {res}")
     return res
 
 # =================================================================================================
@@ -289,6 +289,20 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
     ),
     # Input registers
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power Total",
+        key = "pv_power_total",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 1,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | HYBRID | PV,
+        icon = "mdi:solar-power-variant",
+    ),
     GrowattModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
@@ -1611,6 +1625,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 3075,
         register_type = REG_INPUT,
+        unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN2,
@@ -1623,6 +1638,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 3077,
         register_type = REG_INPUT,
+        unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN2,
@@ -1875,7 +1891,8 @@ class growatt_plugin(plugin_base):
         if seriesnumber.startswith('TLX'):  invertertype = PV | GEN2 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('TLXH'):  invertertype = HYBRID | GEN2 | X1 # Hybrid TL-XH 2.5kW - 6kW
         elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid TL-XH 2.5kW - 6kW
-        elif seriesnumber.startswith('RAAA'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
+        elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
+        elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
         elif seriesnumber.startswith('MID'):  invertertype = PV | GEN | X3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
