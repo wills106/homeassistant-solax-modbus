@@ -288,7 +288,11 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN2 | HYBRID,
         entity_registry_enabled_default = False,
     ),
+    ###
+    #
     # Input registers
+    #
+    ###
     GrowattModbusSensorEntityDescription(
         name = "PV Power Total",
         key = "pv_power_total",
@@ -825,6 +829,28 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN | AC | HYBRID,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Priority",
+        key = "priority",
+        register = 118,
+        scale = { 0: "Load",
+                  1: "Battery",
+                  2: "Grid", },
+        register_type = REG_INPUT,
+        allowedtypes = GEN | AC | HYBRID,
+        icon = "mdi:run",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery Type",
+        key = "battery_type",
+        register = 119,
+        scale = { 0: "Lead-Acid",
+                  1: "Lithium", },
+        register_type = REG_INPUT,
+        allowedtypes = GEN | AC | HYBRID,
+        entity_registry_enabled_default = False,
+        icon = "mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Run Mode",
