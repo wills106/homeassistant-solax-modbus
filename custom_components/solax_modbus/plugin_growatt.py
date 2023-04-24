@@ -104,7 +104,18 @@ def value_function_today_solar_energy(initval, descr, datadict):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES = [
+    GrowattModbusButtonEntityDescription( 
+        name = "Sync RTC",
+        key = "sync_rtc",
+        register = 0x00,
+        #command = 0,
+        allowedtypes = AC | HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:home-clock",
+        value_function = value_function_sync_rtc_ymd,
+    ),
+]
 
 # ================================= Number Declarations ============================================================
 
@@ -120,6 +131,19 @@ NUMBER_TYPES = [
     #  Normal number types
     #
     ###
+    GrowattModbusNumberEntityDescription(
+        name = "Battery Minimum Capacity",
+        key = "battery_minimum_capacity",
+        register = 1071,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 100,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        state = "battery_minimum_capacity",
+        allowedtypes = GEN,
+        icon = "mdi:battery-sync",
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -221,6 +245,69 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = { 0: "50Hz",
                   1: "60Hz", },
         allowedtypes = GEN | EPS,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery Minimum Capacity",
+        key = "battery_minimum_capacity",
+        native_unit_of_measurement = PERCENTAGE,
+        register = 1071,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        icon = "mdi:battery-sync",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Start Time 1", 
+        key = "charger_start_time_1",
+        register = 1080,
+        scale = value_function_sofartime,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Stop Time 1", 
+        key = "charger_stop_time_1",
+        register = 1081,
+        scale = value_function_sofartime,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Time 1",
+        key = "charger_time_1",
+        register = 1082,
+        scale = { 0: "Disabled",
+                  1: "Enable", },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Start Time 2", 
+        key = "charger_start_time_2",
+        register = 1083,
+        scale = value_function_sofartime,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Stop Time 2", 
+        key = "charger_stop_time_2",
+        register = 1084,
+        scale = value_function_sofartime,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Charger Time 2",
+        key = "charger_time_2",
+        register = 1085,
+        scale = { 0: "Disabled",
+                  1: "Enable", },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Serial Number",
