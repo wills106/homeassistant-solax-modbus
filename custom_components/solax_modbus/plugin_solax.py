@@ -2666,7 +2666,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "OnGrid",
                   1: "OffGrid",   },
         register_type = REG_INPUT,
-        allowedtypes = GEN3 | GEN4,
+        allowedtypes = GEN4,
         icon = "mdi:transmission-tower",
     ),
     SolaXModbusSensorEntityDescription(
@@ -3590,6 +3590,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Grid Frequency",
+        key = "grid_frequency_meter",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0xC8,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Grid Voltage",
         key = "grid_voltage_meter",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -3611,7 +3623,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage L2",
@@ -3623,7 +3635,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage L3",
@@ -3635,7 +3647,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Modbus Power Control",
