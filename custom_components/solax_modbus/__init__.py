@@ -195,6 +195,7 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensors = []
         self.data = { "_repeatUntil": {}} # _repeatuntil contains button autorepeat expiry times
+        self.previousdata = {} # only if attribute prevent_update = True
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}

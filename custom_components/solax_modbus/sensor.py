@@ -187,7 +187,14 @@ class SolaXModbusSensor(SensorEntity):
     @callback
     def _update_state(self):
         if self.entity_description.key in self._hub.data:
-            self._state = self._hub.data[self.entity_description.key]
+            if self.entity_description.prevent_update:
+                old = self._hub.previousdata.get(self.entity_description.key, None)
+                new = self._hub.data[self.entity_description.key]
+                if new != old:
+                    self._hub.previousdata[self.entity_description.key] = new
+                    self._state = new
+            else: # normal case
+                self._state = self._hub.data[self.entity_description.key]
 
     @property
     def name(self):
