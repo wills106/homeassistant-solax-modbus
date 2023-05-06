@@ -856,6 +856,18 @@ SELECT_TYPES = [
 #
 ###
     SolaxModbusSelectEntityDescription(
+        name = "Lock State",
+        key = "lock_state",
+        register = 0x0,
+        option_dict =  {
+                0: "Locked",
+                2014: "Unlocked",
+                6868: "Unlocked - Advanced",
+            },
+        allowedtypes = HYBRID | AC,
+        icon = "mdi:lock-question",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "Allow Grid Charge",
         key = "allow_grid_charge",
         register = 0x40,
