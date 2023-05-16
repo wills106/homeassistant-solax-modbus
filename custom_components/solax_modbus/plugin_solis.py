@@ -1536,7 +1536,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 33177,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        scale = 0.1,
         rounding = 1,
         sleepmode = SLEEPMODE_NONE,
         allowedtypes = HYBRID,
