@@ -1909,8 +1909,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Set Frequency",
         key = "eps_set_frequency",
-        native_unit_of_measurement = UnitOfFrequency.HERTZ,
-        state_class = SensorStateClass.MEASUREMENT,
         register = 0xB8,
         scale = { 0: "50Hz",
                   1: "60Hz", },

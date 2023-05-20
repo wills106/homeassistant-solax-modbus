@@ -1590,6 +1590,18 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN | AC | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
+        name = "House Load",
+        key = "house_load",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 1031,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        allowedtypes = GEN | AC | HYBRID | X1,
+        icon = "mdi:home",
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "House Load L1",
         key = "house_load_l1",
         native_unit_of_measurement = UnitOfPower.WATT,
