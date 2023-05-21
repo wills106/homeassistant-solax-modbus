@@ -29,12 +29,14 @@ except: # pymodbus 2.5.3
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-
+from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
 
 from .const import (
     DEFAULT_NAME,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    DEFAULT_TCP_TYPE,
+    CONF_TCP_TYPE,
     CONF_MODBUS_ADDR,
     CONF_INTERFACE,
     CONF_SERIAL_PORT,
@@ -110,6 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     host = config.get(CONF_HOST, None)
     port = config.get(CONF_PORT, DEFAULT_PORT)
+    tcp_type = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
     modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     if modbus_addr == None: 
         modbus_addr = DEFAULT_MODBUS_ADDR
@@ -124,7 +127,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin, config)
+    hub = SolaXModbusHub(hass, name, host, port, tcp_type, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin, config)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
@@ -169,6 +172,7 @@ class SolaXModbusHub:
         name,
         host,
         port,
+        tcp_type,
         modbus_addr,
         interface,
         serial_port,
@@ -183,7 +187,12 @@ class SolaXModbusHub:
         if (interface == "serial"): 
             self._client = ModbusSerialClient(method="rtu", port=serial_port, baudrate=baudrate, parity='N', stopbits=1, bytesize=8, timeout=3)
         else:
-            self._client = ModbusTcpClient(host=host, port=port, timeout=5)
+            if tcp_type == "rtu":
+                self._client = ModbusTcpClient(host=host, port=port, timeout=5, framer=ModbusRtuFramer)
+            elif tcp_type == "ascii":
+                self._client = ModbusTcpClient(host=host, port=port, timeout=5, framer=ModbusAsciiFramer)
+            else:
+                self._client = ModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = threading.Lock()
         self._name = name
         self._modbus_addr = modbus_addr
