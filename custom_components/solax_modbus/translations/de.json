@@ -25,7 +25,8 @@
         "title": "TCP/IP Schnittstelle",
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
-          "port": "Der TCP Port über den die Verbindung zum Wechselrichter hergestellt wird"
+          "port": "Der TCP Port über den die Verbindung zum Wechselrichter hergestellt wird",
+          "tcp_type": "Die Modbus TCP Variante"
         }
       }
     },

@@ -29,6 +29,8 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DEFAULT_BAUDRATE,
 	DOMAIN,
+    DEFAULT_TCP_TYPE,
+    CONF_TCP_TYPE,
 	CONF_READ_EPS,
     CONF_READ_DCB,
     CONF_READ_PM,
@@ -75,6 +77,11 @@ BAUDRATES = [
     selector.SelectOptionDict(value="115200", label="115200"),
 ]
 
+TCP_TYPES = [
+    selector.SelectOptionDict(value="tcp", label="Modbus TCP"),
+    selector.SelectOptionDict(value="rtu", label="Modbus RTU over TCP"),
+    selector.SelectOptionDict(value="ascii", label="Modbus ASCII over TCP"),
+]
 
 PLUGINS = [ selector.SelectOptionDict(value=getPluginName(i), label=getPluginName(i)) for i in glob.glob(PLUGIN_PATH) ]
 
@@ -114,6 +121,7 @@ SERIAL_SCHEMA = vol.Schema( {
 TCP_SCHEMA = vol.Schema( {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
+        vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
     } )
 
 

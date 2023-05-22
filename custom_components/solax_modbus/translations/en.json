@@ -25,7 +25,8 @@
         "title": "TCP/IP Parameters",
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
-          "port": "The TCP port on which to connect to the inverter"
+          "port": "The TCP port on which to connect to the inverter",
+          "tcp_type": "The Modbus TCP variant"
         }
       }
     },

@@ -64,7 +64,8 @@
         "title": "TCP/IP Parameters",
         "data": {
           "host": "Ip-adressen för modbus-enheten på invertern",
-          "port": "TCP-port för anslutning till invertern"
+          "port": "TCP-port för anslutning till invertern",
+          "tcp_type": "Modbus TCP-varianten"
         }
       }
     },
