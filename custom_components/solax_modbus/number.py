@@ -1,10 +1,11 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
+from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, TMPDATA_EXPIRY
 #from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
+from time import time
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class SolaXModbusNumber(NumberEntity):
                 if hub.seriesnumber.startswith(prefix): self._attr_native_min_value = -native_value
         self._attr_native_step = number_info.native_step
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
-        self._state = number_info.state
+        self._state = number_info.state # not used AFAIK
         self.entity_description = number_info
         self._write_method = number_info.write_method
 
@@ -129,11 +130,11 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
+        payload = value
         if self._fmt == "i":
             payload = int(value/(self._attr_scale*self._read_scale))
         elif self._fmt == "f":
             payload = int(value/(self._attr_scale*self._read_scale))
-
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
@@ -141,7 +142,12 @@ class SolaXModbusNumber(NumberEntity):
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self._read_scale} scale {self._attr_scale}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
-            _LOGGER.info(f"*** local data written {self._key}: {value}")
+            _LOGGER.info(f"*** local data written {self._key}: {payload}")
+            corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
+            if corresponding_sensor: # only if corresponding sensor has prevent_update=True
+                self._hub.tmpdata[corresponding_sensor.entity_description.key] = payload
+                self._hub.tmpdata_expiry[corresponding_sensor.entity_description.key] = time() + TMPDATA_EXPIRY
+                # corresponding_sensor.async_write_ha_state()
             self._hub.localsUpdated = True # mark to save permanently
         self._hub.data[self._key] = value/self._read_scale
-        self.async_write_ha_state()
+        self.async_write_ha_state() # is this needed ?

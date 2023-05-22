@@ -38,6 +38,7 @@ DEFAULT_NAME = "SolaX"
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
+TMPDATA_EXPIRY   = 120 # seconds before temp entities return to modbus value
 CONF_READ_EPS    = "read_eps"
 CONF_READ_DCB    = "read_dcb"
 CONF_READ_PM    = "read_pm"

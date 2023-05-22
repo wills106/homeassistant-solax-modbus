@@ -360,6 +360,23 @@ NUMBER_TYPES = [
     # Data only number types
     #
     ###
+    
+    # For testing prevent_update mechanism - start of block
+    #SolaxModbusNumberEntityDescription(
+    #    name = "Dummy Timed Charge Start Hours",
+    #    key = "dummy_timed_charge_start_h", 
+    #    unit = REGISTER_U16,
+    #    fmt = "i",
+    #    initvalue = 0,
+    #    native_min_value = 0,
+    #    native_max_value = 23,
+    #    native_step = 1,
+    #    native_unit_of_measurement = UnitOfTime.HOURS,
+    #    allowedtypes = HYBRID,
+    #    write_method = WRITE_DATA_LOCAL,
+    #    entity_category = EntityCategory.CONFIG,
+    #    icon = "mdi:battery-clock",
+    #), end of block
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Active Power",
         key = "remotecontrol_active_power",
@@ -966,15 +983,17 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
-    SolaxModbusSelectEntityDescription(
-        name = "Charger Start Time 2",
-        key = "charger_start_time_2",
-        register = 0x6D,
-        option_dict = TIME_OPTIONS_GEN4,
-        allowedtypes = HYBRID | AC | GEN4,
-        entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+    # comment this  block to test prevent_update
+    SolaxModbusSelectEntityDescription(              # block
+        name = "Charger Start Time 2",               # block
+        key = "charger_start_time_2",                # block
+        register = 0x6D,                             # block
+        option_dict = TIME_OPTIONS_GEN4,             # block
+        allowedtypes = HYBRID | AC | GEN4,           # block
+        entity_category = EntityCategory.CONFIG,     # block
+        icon = "mdi:battery-clock",                  # block
     ),
+    # end of block
     SolaxModbusSelectEntityDescription(
         name = "Charger Use Mode",
         key = "charger_use_mode",
@@ -1353,6 +1372,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     # Holding
     #
     ###
+
+    # only for testing prevent_update mechanism - start of block
+    #SolaXModbusSensorEntityDescription(
+    #    name = "Dummy Timed Charge Start Hours", 
+    #    key = "dummy_timed_charge_start_h",
+    #    register = 0x9C,
+    #    #scale = value_function_gen4time,
+    #    #entity_registry_enabled_default = False,
+    #    allowedtypes = GEN4,
+    #    icon = "mdi:battery-clock",
+    #    prevent_update = True,
+    #), # end of block
+
     SolaXModbusSensorEntityDescription(
         name = "Series Number",
         key = "seriesnumber",
@@ -1718,15 +1750,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN2 | GEN3,
         icon = "mdi:battery-clock",
     ),
+    # comment this block to test prevent_update mechanism
     SolaXModbusSensorEntityDescription(
-        name = "Charger Start Time 2", 
-        key = "charger_start_time_2",
-        register = 0x9C,
-        scale = value_function_gen4time,
-        entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        name = "Charger Start Time 2",           # block
+        key = "charger_start_time_2",            # block
+        register = 0x9C,                         # block
+        scale = value_function_gen4time,         # block
+        entity_registry_enabled_default = False, # block
+        allowedtypes = GEN4,                     # block
+        icon = "mdi:battery-clock",              # block
     ),
+    # end of block
     SolaXModbusSensorEntityDescription(
         name = "Charger End Time 2",
         key = "charger_end_time_2",
