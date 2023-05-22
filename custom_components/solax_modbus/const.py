@@ -40,6 +40,7 @@ DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
 DEFAULT_TCP_TYPE = "tcp"
 CONF_TCP_TYPE = "tcp_type"
+TMPDATA_EXPIRY   = 120 # seconds before temp entities return to modbus value
 CONF_READ_EPS    = "read_eps"
 CONF_READ_DCB    = "read_dcb"
 CONF_READ_PM    = "read_pm"

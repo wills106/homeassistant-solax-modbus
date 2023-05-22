@@ -202,15 +202,17 @@ class SolaXModbusHub:
         self._baudrate = int(baudrate)
         self._scan_interval = timedelta(seconds=scan_interval)
         self._unsub_interval_method = None
-        self._sensors = []
+        self._sensor_callbacks = []
         self.data = { "_repeatUntil": {}} # _repeatuntil contains button autorepeat expiry times
-        self.previousdata = {} # only if attribute prevent_update = True
+        self.tmpdata = {} # for WRITE_DATA_LOCAL entities with corresponding prevent_update sensor
+        self.tmpdata_expiry = {} # expiry timestamps for tempdata
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.inputBlocks = {}
         self.holdingBlocks = {}
         self.computedSensors = {}
         self.computedButtons = {}
+        self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
@@ -252,20 +254,20 @@ class SolaXModbusHub:
     def async_add_solax_modbus_sensor(self, update_callback):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
-        if not self._sensors:
+        if not self._sensor_callbacks:
             self.connect()
             self._unsub_interval_method = async_track_time_interval(
                 self._hass, self.async_refresh_modbus_data, self._scan_interval
             )
+        self._sensor_callbacks.append(update_callback)
 
-        self._sensors.append(update_callback)
 
     @callback
     def async_remove_solax_modbus_sensor(self, update_callback):
         """Remove data update."""
-        self._sensors.remove(update_callback)
+        self._sensor_callbacks.remove(update_callback)
 
-        if not self._sensors:
+        if not self._sensor_callbacks:
             """stop the interval timer upon removal of last sensor"""
             self._unsub_interval_method()
             self._unsub_interval_method = None
@@ -274,13 +276,13 @@ class SolaXModbusHub:
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
         self.cyclecount = self.cyclecount+1
-        if not self._sensors:
+        if not self._sensor_callbacks:
             return
         if (self.cyclecount % self.slowdown) == 0: # only execute once every slowdown count
             update_result = self.read_modbus_data()
             if update_result:
                 self.slowdown = 1 # return to full polling after succesfull cycle
-                for update_callback in self._sensors:
+                for update_callback in self._sensor_callbacks:
                     update_callback()
             else: 
                 _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
@@ -447,6 +449,18 @@ class SolaXModbusHub:
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
             val = 0
+
+        if descr.prevent_update:
+            if  (self.tmpdata_expiry.get(descr.key, 0) > time()): 
+                val = self.tmpdata.get(descr.key, None)
+                if val == None: 
+                    LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
+                    val = 0
+            else: # expired
+                if self.tmpdata_expiry.get(descr.key, 0) > 0: self.localsUpdated = True 
+                self.tmpdata_expiry[descr.key] = 0 # update locals only once
+
+
         if type(descr.scale) is dict: # translate int to string 
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
