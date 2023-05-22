@@ -681,6 +681,8 @@ SELECT_TYPES = [
         key = "energy_storage_control_switch",
         register = 43110,
         option_dict =  {
+                1: "Auto Mode - No Grid Charge",
+                3: "Timed Charge/Discharge - No Grid Charge",
                 33: "Auto Mode",
                 35: "Timed Charge/Discharge",
                 37: "Off-Grid Mode",
@@ -1211,7 +1213,9 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 33132,
         register_type = REG_INPUT,
         scale = {  
-                33: "Auto Mode", 
+                1: "Auto Mode - No Grid Charge",
+                3: "Timed Charge/Discharge - No Grid Charge",
+                33: "Auto Mode",
                 35: "Timed Charge/Discharge", 
                 37: "Off-Grid Mode", 
                 41: "Battery Awaken", 
