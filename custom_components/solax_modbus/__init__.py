@@ -204,7 +204,7 @@ class SolaXModbusHub:
         self._unsub_interval_method = None
         self._sensor_callbacks = []
         self.data = { "_repeatUntil": {}} # _repeatuntil contains button autorepeat expiry times
-        self.tmpdata = {} # for WRITE_DATA_LOCAL entities with corresponding prevent_update sensor
+        self.tmpdata = {} # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
         self.tmpdata_expiry = {} # expiry timestamps for tempdata
         self.cyclecount = 0 # temporary - remove later
         self.slowdown = 1 # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
@@ -212,7 +212,7 @@ class SolaXModbusHub:
         self.holdingBlocks = {}
         self.computedSensors = {}
         self.computedButtons = {}
-        self.preventSensors = {} # sensors with prevent_update = True
+        #self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
         self.sleepnone = [] # sensors that will be cleared in sleepmode
@@ -449,7 +449,7 @@ class SolaXModbusHub:
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
             val = 0
-
+        """ TO BE REMOVED 
         if descr.prevent_update:
             if  (self.tmpdata_expiry.get(descr.key, 0) > time()): 
                 val = self.tmpdata.get(descr.key, None)
@@ -459,7 +459,7 @@ class SolaXModbusHub:
             else: # expired
                 if self.tmpdata_expiry.get(descr.key, 0) > 0: self.localsUpdated = True 
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
-
+        """
 
         if type(descr.scale) is dict: # translate int to string 
             return_value = descr.scale.get(val, "Unknown")
@@ -469,7 +469,8 @@ class SolaXModbusHub:
             try:    return_value = round(val*descr.scale, descr.rounding) 
             except: return_value = val # probably a REGISTER_WORDS instance
         #if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
-        if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data): self.data[descr.key] = return_value
+        if (self.tmpdata_expiry.get(descr.key,0) == 0) and ((descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)): 
+            self.data[descr.key] = return_value # case prevent_update number
 
 
     def read_modbus_block(self, block, typ):

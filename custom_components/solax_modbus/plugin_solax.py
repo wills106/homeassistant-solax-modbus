@@ -155,6 +155,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
 def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
     return autorepeat_remaining(datadict, 'remotecontrol_trigger', time())
 
+# for testing prevent_update only 
+#def value_function_test_prevent(initval, descr, datadict):
+#    _LOGGER.warning(f"succeeded test prevent_update - datadict: {datadict['dummy_timed_charge_start_h']}")
+#    return  None
+
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -230,6 +236,17 @@ BUTTON_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:lock-open",
     ),
+    # enable this block to test prevent_update
+    #SolaxModbusButtonEntityDescription(      # block
+    #    name = "Dummy test prevent update",  # block
+    #    key = "dummy_test_prevent_update",   # block
+    #    register = 0x9999,                   # block
+    #    allowedtypes = HYBRID,               # block
+    #    write_method = WRITE_MULTI_MODBUS,   # block
+    #    icon = "mdi:battery-clock",          # block
+    #    value_function = value_function_test_prevent, # block
+    #), # block
+    # end of block
 ]
 
 # ================================= Number Declarations ============================================================
@@ -376,7 +393,8 @@ NUMBER_TYPES = [
     #    write_method = WRITE_DATA_LOCAL,
     #    entity_category = EntityCategory.CONFIG,
     #    icon = "mdi:battery-clock",
-    #), end of block
+    #    prevent_update = True,
+    #),#ccf end of block
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Active Power",
         key = "remotecontrol_active_power",
@@ -1379,10 +1397,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     #    key = "dummy_timed_charge_start_h",
     #    register = 0x9C,
     #    #scale = value_function_gen4time,
-    #    #entity_registry_enabled_default = False,
+    #    entity_registry_enabled_default = False,
     #    allowedtypes = GEN4,
     #    icon = "mdi:battery-clock",
-    #    prevent_update = True,
+    #    #prevent_update = True,
     #), # end of block
 
     SolaXModbusSensorEntityDescription(
