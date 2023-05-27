@@ -128,7 +128,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
-    prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
+    #prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
     value_function: callable = None #  value = function(initval, descr, datadict)
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
     sleepmode: int = SLEEPMODE_LAST # or SLEEPMODE_ZERO or SLEEPMODE_NONE
@@ -174,6 +174,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
+    prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
 
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================

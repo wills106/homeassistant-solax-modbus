@@ -194,6 +194,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes",
@@ -209,6 +210,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours",
@@ -224,6 +226,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes",
@@ -239,6 +242,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours",
@@ -254,6 +258,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes",
@@ -269,6 +274,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours",
@@ -284,6 +290,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes",
@@ -299,6 +306,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     ### TimeSlot2
     SolisModbusNumberEntityDescription(
@@ -315,6 +323,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes 2",
@@ -330,6 +339,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 2",
@@ -345,6 +355,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes 2",
@@ -360,6 +371,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 2",
@@ -375,6 +387,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes 2",
@@ -390,6 +403,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 2",
@@ -405,6 +419,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes 2",
@@ -420,6 +435,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     ###TimeSlot3
     SolisModbusNumberEntityDescription(
@@ -436,6 +452,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes 3",
@@ -451,6 +468,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 3",
@@ -466,6 +484,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes 3",
@@ -481,6 +500,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 3",
@@ -496,6 +516,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes 3",
@@ -511,6 +532,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 3",
@@ -526,6 +548,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes 3",
@@ -541,6 +564,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
+        prevent_update = True,
     ),
     ###
     #
@@ -1980,7 +2004,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes",
@@ -1991,7 +2015,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours",
@@ -2002,7 +2026,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes",
@@ -2013,7 +2037,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours",
@@ -2024,7 +2048,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes",
@@ -2035,7 +2059,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours",
@@ -2046,7 +2070,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes",
@@ -2057,7 +2081,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),  
     # ============================ TimeSlot2 ==============================
     SolisModbusSensorEntityDescription(
@@ -2069,7 +2093,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes 2",
@@ -2080,7 +2104,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours 2",
@@ -2091,7 +2115,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes 2",
@@ -2102,7 +2126,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours 2",
@@ -2114,7 +2138,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes 2",
@@ -2125,7 +2149,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours 2",
@@ -2136,7 +2160,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes 2",
@@ -2147,7 +2171,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     # ============================ TimeSlot3 ==============================
     SolisModbusSensorEntityDescription(
@@ -2159,7 +2183,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes 3",
@@ -2170,7 +2194,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours 3",
@@ -2181,7 +2205,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes 3",
@@ -2192,7 +2216,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours 3",
@@ -2203,7 +2227,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes =HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes 3",
@@ -2214,7 +2238,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours 3",
@@ -2225,7 +2249,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+       #prevent_update = True,
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes 3",
@@ -2236,7 +2260,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
-        prevent_update = True,
+        #prevent_update = True,
     ),
 ]
 

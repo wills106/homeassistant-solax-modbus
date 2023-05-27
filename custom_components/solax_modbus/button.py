@@ -83,4 +83,4 @@ class SolaXModbusButton(ButtonEntity):
                 autorepeat_set(self._hub.data, self.button_info.key, time() + duration - 0.5 )
             if self.button_info.value_function:
                 res = self.button_info.value_function(0, self.button_info, self._hub.data )
-                self._hub.write_registers_multi(unit=self._modbus_addr, address=self._register, payload=res)
+                if res: self._hub.write_registers_multi(unit=self._modbus_addr, address=self._register, payload=res)

@@ -114,17 +114,32 @@ class SolaXModbusNumber(NumberEntity):
 
     @property
     def native_value(self) -> float:
+        descr = self.entity_description
+        if descr.prevent_update:
+            if  (self._hub.tmpdata_expiry.get(descr.key, 0) > time()): 
+                val = self._hub.tmpdata.get(descr.key, None)
+                if val == None: 
+                    _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
+                    val = 0
+                if (self._read_scale and self._hub.tmpdata[self._key]): res = val*self._read_scale
+                else: res = val 
+                #_LOGGER.debug(f"prevent_update returning native value {descr.key} : {res}")
+                return res
+            else: # expired
+                if self._hub.tmpdata_expiry.get(descr.key, 0) > 0: self._hub.localsUpdated = True 
+                self._hub.tmpdata_expiry[descr.key] = 0 # update locals only once
         if self._key in self._hub.data: 
             if (self._read_scale and self._hub.data[self._key]): return self._hub.data[self._key]*self._read_scale
             else: return self._hub.data[self._key]
         else: # first time initialize
             #return self.entity_description.initvalue
-            if self.entity_description.initvalue == None: return None
+            if descr.initvalue == None: return None
             else: 
-                res = self.entity_description.initvalue
+                res = descr.initvalue
                 if self._attr_native_max_value != None: res = min(res, self._attr_native_max_value)
                 if self._attr_native_min_value != None: res = max(res, self._attr_native_min_value)
                 self._hub.data[self._key] = res
+                #_LOGGER.warning(f"****** (debug) initializing {self._key}  = {res}")
                 return res
 
 
@@ -143,11 +158,12 @@ class SolaXModbusNumber(NumberEntity):
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
-            corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
-            if corresponding_sensor: # only if corresponding sensor has prevent_update=True
-                self._hub.tmpdata[corresponding_sensor.entity_description.key] = payload
-                self._hub.tmpdata_expiry[corresponding_sensor.entity_description.key] = time() + TMPDATA_EXPIRY
+            #corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
+            if self.entity_description.prevent_update: # if corresponding_sensor: # only if corresponding sensor has prevent_update=True
+                self._hub.tmpdata[self.entity_description.key] = payload
+                self._hub.tmpdata_expiry[self.entity_description.key] = time() + TMPDATA_EXPIRY
                 # corresponding_sensor.async_write_ha_state()
             self._hub.localsUpdated = True # mark to save permanently
         self._hub.data[self._key] = value/self._read_scale
+        #_LOGGER.info(f"*** data written part 2 {self._key}: {self._hub.data[self._key]}")
         self.async_write_ha_state() # is this needed ?
