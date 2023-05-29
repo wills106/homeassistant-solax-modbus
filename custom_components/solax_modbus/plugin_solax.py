@@ -3466,6 +3466,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "EPS Mode Runtime",
         key = "eps_mode_runtime",
+        native_unit_of_measurement = UnitOfTime.HOURS,
         register = 0x8A,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
