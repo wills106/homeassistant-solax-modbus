@@ -3,7 +3,7 @@ from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
 import logging
 from typing import Optional, Dict, Any, List
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
@@ -92,18 +92,19 @@ async def async_setup_entry(hass, entry, async_add_entities):
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early 
-            readscale = None
+            #readscale = None
             #normal_scale = not ((type(sensor_description.scale) is dict) or callable(sensor_description.scale))
             #if normal_scale and sensor_description.read_scale_exceptions:
+            newdescr = sensor_description
             if sensor_description.read_scale_exceptions:
                 for (prefix, value,) in sensor_description.read_scale_exceptions: 
-                    if hub.seriesnumber.startswith(prefix): readscale = value
+                    if hub.seriesnumber.startswith(prefix):  newdescr = replace (sensor_description, read_scale = value)
             sensor = SolaXModbusSensor(
                 hub_name,
                 hub,
                 device_info,
-                sensor_description,
-                read_scale = readscale,
+                newdescr,
+                #read_scale = readscale,
             )
             entities.append(sensor)
             if sensor_description.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(sensor_description.key)
@@ -163,7 +164,7 @@ class SolaXModbusSensor(SensorEntity):
         hub,
         device_info,
         description: BaseModbusSensorEntityDescription,
-        read_scale = 1
+        #read_scale = 1
     ):
         """Initialize the sensor."""
         self._platform_name = platform_name
@@ -171,7 +172,7 @@ class SolaXModbusSensor(SensorEntity):
         self._hub = hub
         self.entity_description: BaseModbusSensorEntityDescription = description
         #self._attr_scale = scale
-        self._read_scale = read_scale
+        #self._read_scale = read_scale
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -205,8 +206,9 @@ class SolaXModbusSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key in self._hub.data:
-            if self._read_scale: return self._hub.data[self.entity_description.key]*self._read_scale
-            else: return self._hub.data[self.entity_description.key]
+            #if self._read_scale: return self._hub.data[self.entity_description.key]*self._read_scale
+            #else: return self._hub.data[self.entity_description.key]
+            return self._hub.data[self.entity_description.key]*self.entity_description.read_scale
 
 
   

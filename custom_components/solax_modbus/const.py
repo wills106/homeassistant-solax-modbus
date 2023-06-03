@@ -122,6 +122,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     scale: float = 1 # can be float, dictionary or callable function(initval, descr, datadict)
     read_scale_exceptions: list = None # additional scaling when reading from modbus
+    read_scale: float = 1
     blacklist: list = None
     register: int = -1 # initialize with invalid register
     rounding: int = 1
@@ -165,6 +166,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
     read_scale_exceptions: list = None
+    read_scale: float = 1
     fmt: str = None
     scale: float = 1 
     state: str = None
