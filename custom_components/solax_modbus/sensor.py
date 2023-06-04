@@ -83,18 +83,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
     holdingRegs  = {}
     inputRegs    = {}
     computedRegs = {}
-    #holdingOrder16 = {} # all entities should have the same order
-    #inputOrder16   = {} # all entities should have the same order
-    #holdingOrder32 = {} # all entities should have the same order
-    #inputOrder32   = {} # all entities should have the same order
      
     plugin = hub.plugin #getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early 
-            #readscale = None
-            #normal_scale = not ((type(sensor_description.scale) is dict) or callable(sensor_description.scale))
-            #if normal_scale and sensor_description.read_scale_exceptions:
             newdescr = sensor_description
             if sensor_description.read_scale_exceptions:
                 for (prefix, value,) in sensor_description.read_scale_exceptions: 
@@ -104,36 +97,32 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 hub,
                 device_info,
                 newdescr,
-                #read_scale = readscale,
             )
+            hub.sensorEntities[newdescr.key] = sensor
             entities.append(sensor)
-            if sensor_description.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(sensor_description.key)
-            if sensor_description.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(sensor_description.key)
-            if (sensor_description.register < 0): # entity without modbus address
-                if sensor_description.value_function:
-                    computedRegs[sensor_description.key] = sensor_description
-                else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {sensor_description.key}")
+            if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
+            if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
+            if (newdescr.register < 0): # entity without modbus address
+                if newdescr.value_function:
+                    computedRegs[newdescr.key] = newdescr
+                else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
             else:
-                if sensor_description.register_type == REG_HOLDING:
-                    if sensor_description.register in holdingRegs: # duplicate or 2 bytes in one register ?
-                        if sensor_description.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[sensor_description.register].unit in (REGISTER_U8H, REGISTER_U8L,) : 
-                            first = holdingRegs[sensor_description.register]
-                            holdingRegs[sensor_description.register] = { first.unit: first, sensor_description.unit: sensor_description }
-                        else: _LOGGER.warning(f"holding register already used: 0x{sensor_description.register:x} {sensor_description.key}")
+                if newdescr.register_type == REG_HOLDING:
+                    if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
+                        if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) : 
+                            first = holdingRegs[newdescr.register]
+                            holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
+                        else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
                     else:
-                        holdingRegs[sensor_description.register] = sensor_description
-                        #holdingOrder16[sensor_description.order16] = True
-                        #holdingOrder32[sensor_description.order32] = True
-                elif sensor_description.register_type == REG_INPUT:
-                    if sensor_description.register in inputRegs: # duplicate or 2 bytes in one register ?
-                        first = inputRegs[sensor_description.register]
-                        inputRegs[sensor_description.register] = { first.unit: first, sensor_description.unit: sensor_description }
-                        _LOGGER.warning(f"input register already declared: 0x{sensor_description.register:x} {sensor_description.key}")
+                        holdingRegs[newdescr.register] = newdescr
+                elif newdescr.register_type == REG_INPUT:
+                    if newdescr.register in inputRegs: # duplicate or 2 bytes in one register ?
+                        first = inputRegs[newdescr.register]
+                        inputRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
+                        _LOGGER.warning(f"input register already declared: 0x{newdescr.register:x} {newdescr.key}")
                     else:
-                        inputRegs[sensor_description.register] = sensor_description
-                        #inputOrder16[sensor_description.order16] = True
-                        #inputOrder32[sensor_description.order32] = True
-                else: _LOGGER.warning(f"entity declaration without register_type found: {sensor_description.key}")
+                        inputRegs[newdescr.register] = newdescr
+                else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
     async_add_entities(entities)
     # sort the registers for this type of inverter
     holdingRegs = dict(sorted(holdingRegs.items()))
@@ -164,24 +153,19 @@ class SolaXModbusSensor(SensorEntity):
         hub,
         device_info,
         description: BaseModbusSensorEntityDescription,
-        #read_scale = 1
     ):
         """Initialize the sensor."""
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
         self.entity_description: BaseModbusSensorEntityDescription = description
-        #self._attr_scale = scale
-        #self._read_scale = read_scale
 
     async def async_added_to_hass(self):
         """Register callbacks."""
         self._hub.async_add_solax_modbus_sensor(self._modbus_data_updated)
-        #if self.entity_description.prevent_update: self._hub.preventSensors[self.entity_description.key] = self
 
     async def async_will_remove_from_hass(self) -> None:
         self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
-        #if self.entity_description.prevent_update: self._hub.preventSensors.pop(self.entity_description.key, None)
 
     @callback
     def _modbus_data_updated(self):
@@ -206,8 +190,6 @@ class SolaXModbusSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key in self._hub.data:
-            #if self._read_scale: return self._hub.data[self.entity_description.key]*self._read_scale
-            #else: return self._hub.data[self.entity_description.key]
             return self._hub.data[self.entity_description.key]*self.entity_description.read_scale
 
 

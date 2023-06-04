@@ -14,7 +14,7 @@ from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import pathlib
 
 from homeassistant.const import (
@@ -113,6 +113,9 @@ class plugin_base:
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
         return False
+
+    def localDataCallback(self, hub): # called when local data is updated or on startup
+        return True
 
 # =================================== base class for sensor entity descriptions =========================================
 

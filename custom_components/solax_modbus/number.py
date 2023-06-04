@@ -27,18 +27,15 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     plugin = hub.plugin #getPlugin(hub_name)
     entities = []
     for number_info in plugin.NUMBER_TYPES:
-        #readscale = 1
         newdescr = number_info
         if number_info.read_scale_exceptions:
             for (prefix, value,) in number_info.read_scale_exceptions: 
                 if hub.seriesnumber.startswith(prefix): newdescr = replace(number_info, read_scale = value)
-        if plugin.matchInverterWithMask(hub._invertertype,number_info.allowedtypes, hub.seriesnumber ,number_info.blacklist):
+        if plugin.matchInverterWithMask(hub._invertertype,newdescr.allowedtypes, hub.seriesnumber ,newdescr.blacklist):
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, newdescr) 
-            if number_info.write_method==WRITE_DATA_LOCAL: 
-                #if (number_info.initvalue) != None: hub.data[number_info.key] = number_info.initvalue
-                hub.writeLocals[number_info.key] = newdescr
+            if newdescr.write_method==WRITE_DATA_LOCAL:  hub.writeLocals[newdescr.key] = newdescr
+            hub.numberEntities[newdescr.key] = number
             entities.append(number)
-        
     async_add_entities(entities)
     return True
 
@@ -65,7 +62,6 @@ class SolaXModbusNumber(NumberEntity):
         self._attr_native_min_value = number_info.native_min_value
         self._attr_native_max_value = number_info.native_max_value
         self._attr_scale = number_info.scale
-        #self._read_scale = read_scale
         self.entity_description = number_info
         if number_info.max_exceptions:
             for (prefix, native_value,) in number_info.max_exceptions: 
@@ -100,15 +96,6 @@ class SolaXModbusNumber(NumberEntity):
         """Return the name."""
         return f"{self._platform_name} {self._name}"
 
-#    @property
-#    def state(self) -> str:
-#        """Return the state? """
-#        return f"{self._platform_name} {self._state}"
-
-#    @property
-#    def should_poll(self) -> bool:
-#        """Data is delivered by the hub"""
-#        return False
 
     @property
     def unique_id(self) -> Optional[str]:
@@ -131,11 +118,8 @@ class SolaXModbusNumber(NumberEntity):
                 if self._hub.tmpdata_expiry.get(descr.key, 0) > 0: self._hub.localsUpdated = True 
                 self._hub.tmpdata_expiry[descr.key] = 0 # update locals only once
         if self._key in self._hub.data: 
-            #if (descr.read_scale and self._hub.data[self._key]): return self._hub.data[self._key]*descr.read_scale
-            #else: return self._hub.data[self._key]
             return  self._hub.data[self._key]*descr.read_scale
         else: # first time initialize
-            #return self.entity_description.initvalue
             if descr.initvalue == None: return None
             else: 
                 res = descr.initvalue
