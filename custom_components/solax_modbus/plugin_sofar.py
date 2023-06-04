@@ -208,6 +208,19 @@ NUMBER_TYPES = [
     #
     ###
     SofarModbusNumberEntityDescription(
+        name = "Reflux Power",
+        key = "reflux_power",
+        register = 0x1024,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 20000,
+        native_step = 100,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
+        icon = "mdi:battery-sync",
+    ),
+    SofarModbusNumberEntityDescription(
         name = "Battery Minimum Capacity",
         key = "battery_minimum_capacity",
         register = 0x104D,
@@ -338,6 +351,18 @@ SELECT_TYPES = [
     #  Normal select types
     #
     ###
+    SofarModbusSelectEntityDescription(
+        name = "Reflux Control",
+        key = "reflux control",
+        register = 0x1023,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+                2: "Enabled - Set Value",
+            },
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS,
+    ),
     SofarModbusSelectEntityDescription(
         name = "EPS Control",
         key = "eps_control",
@@ -2016,6 +2041,23 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 # Basic Parameter Configuration (0x1000-0x10FF)
 #
 ###
+    SofarModbusSensorEntityDescription(
+        name = "Reflux Control",
+        key = "reflux_control",
+        register = 0x1023,
+        scale = { 0: "Disabled",
+                  1: "Enabled",
+                  2: "Enabled - Set Value" },
+        entity_registry_enabled_default =  False,
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Reflux Power",
+        key = "reflux_control",
+        register = 0x1024,
+        entity_registry_enabled_default =  False,
+        allowedtypes = HYBRID,
+    ),
     SofarModbusSensorEntityDescription(
         name = "EPS Control",
         key = "eps_control",
