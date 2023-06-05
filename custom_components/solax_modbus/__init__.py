@@ -212,6 +212,8 @@ class SolaXModbusHub:
         self.holdingBlocks = {}
         self.computedSensors = {}
         self.computedButtons = {}
+        self.sensorEntities = {} # all sensor entities, indexed by key
+        self.numberEntities = {} # all number entities, indexed by key
         #self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {} # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero = [] # sensors that will be set to zero in sleepmode
@@ -248,6 +250,8 @@ class SolaXModbusHub:
             else: _LOGGER.warning(f"local persistent data lost - please reinitialize {self.writeLocals.keys()}")
             fp.close()
             self.localsLoaded = True
+            self.plugin.localDataCallback(self)
+
     # end of save and load section
 
     @callback
@@ -519,11 +523,14 @@ class SolaXModbusHub:
             res = res and self.read_modbus_block(block, 'holding')
         for block in self.inputBlocks:
             res = res and self.read_modbus_block(block, 'input') 
+        if self.localsUpdated: 
+            self.saveLocalData() 
+            self.plugin.localDataCallback(self)
+        if not self.localsLoaded: self.loadLocalData()
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
             self.data[descr.key] = descr.value_function(0, descr, self.data )
-        if self.localsUpdated: self.saveLocalData() 
-        if not self.localsLoaded: self.loadLocalData()
+
         if res and self.writequeue and self.plugin.isAwake(self.data): #self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")

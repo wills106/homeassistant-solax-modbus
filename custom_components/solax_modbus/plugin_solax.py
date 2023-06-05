@@ -466,6 +466,18 @@ NUMBER_TYPES = [
         unit = REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
     ),
+    SolaxModbusNumberEntityDescription(
+        name = "Config Export Control Limit Readscale",
+        key = "config_export_control_limit_readscale",
+        allowedtypes = HYBRID | AC | GEN2 | GEN3 | GEN4,
+        native_min_value = 0.1,
+        native_max_value = 10.0, 
+        entity_category = EntityCategory.DIAGNOSTIC,
+        initvalue = 1, 
+        #unit = REGISTER_U16,
+        entity_registry_enabled_default = False,
+        write_method = WRITE_DATA_LOCAL,
+    ),
     ###
     #
     #  Normal number types
@@ -4770,6 +4782,20 @@ class solax_plugin(plugin_base):
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
+
+    def localDataCallback(self, hub):
+        # adapt the read scales for export_control_user_limit if exception is configured
+        _LOGGER.info(f"local data update callback")
+        config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
+        if config_scale_entity and config_scale_entity.enabled:
+            new_read_scale = hub.data.get("config_export_control_limit_readscale")
+            if new_read_scale != None: 
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
+                number_entity = hub.numberEntities.get("export_control_user_limit")
+                sensor_entity = hub.sensorEntities.get("export_control_user_limit")
+                if number_entity: number_entity.entity_description = replace(number_entity.entity_description, read_scale = new_read_scale, )
+                if sensor_entity: sensor_entity.entity_description = replace(sensor_entity.entity_description, read_scale = new_read_scale, )
+
 
 plugin_instance = solax_plugin(
     plugin_name = 'solax', 
