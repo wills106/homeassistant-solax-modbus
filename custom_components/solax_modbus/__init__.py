@@ -242,7 +242,9 @@ class SolaXModbusHub:
     def loadLocalData(self):
         try: fp = open(self._hass.config.path(f'{self.name}_data.json'))
         except:
-            if self.cyclecount > 5: self.localsLoaded=True  # retry a couple of polling cycles - then assume non-existent"
+            if self.cyclecount > 5: 
+                _LOGGER.warning(f"no local data file found after 5 tries - is this a first time run ?")
+                self.localsLoaded=True  # retry a couple of polling cycles - then assume non-existent"
         else: 
             loaded = json.load(fp)
             if loaded.get('_version') == self.DATAFORMAT_VERSION:
