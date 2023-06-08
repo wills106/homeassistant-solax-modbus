@@ -215,6 +215,7 @@ NUMBER_TYPES = [
         native_min_value = 0,
         native_max_value = 20000,
         native_step = 100,
+        scale = 100,
         native_unit_of_measurement = UnitOfPower.WATT,
         allowedtypes = HYBRID,
         write_method = WRITE_MULTISINGLE_MODBUS,
@@ -2053,7 +2054,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Reflux Power",
-        key = "reflux_control",
+        key = "reflux_power",
         register = 0x1024,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
