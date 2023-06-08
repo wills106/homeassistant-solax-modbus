@@ -354,7 +354,7 @@ SELECT_TYPES = [
     ###
     SofarModbusSelectEntityDescription(
         name = "Reflux Control",
-        key = "reflux control",
+        key = "reflux_control",
         register = 0x1023,
         option_dict =  {
                 0: "Disabled",
