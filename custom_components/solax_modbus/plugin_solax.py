@@ -479,6 +479,18 @@ NUMBER_TYPES = [
         entity_registry_enabled_default = False,
         write_method = WRITE_DATA_LOCAL,
     ),
+    SolaxModbusNumberEntityDescription(
+        name = "Config Max Export",
+        key = "config_max_export",
+        allowedtypes = HYBRID | AC | GEN2 | GEN3 | GEN4,
+        native_min_value = 500,
+        native_max_value = 50000, 
+        entity_category = EntityCategory.DIAGNOSTIC,
+        initvalue = 15000, 
+        #unit = REGISTER_U16,
+        entity_registry_enabled_default = False,
+        write_method = WRITE_DATA_LOCAL,
+    ),
     ###
     #
     #  Normal number types
@@ -5254,7 +5266,9 @@ class solax_plugin(plugin_base):
 
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured
+        # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info(f"local data update callback")
+ 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
@@ -5264,6 +5278,17 @@ class solax_plugin(plugin_base):
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity: number_entity.entity_description = replace(number_entity.entity_description, read_scale = new_read_scale, )
                 if sensor_entity: sensor_entity.entity_description = replace(sensor_entity.entity_description, read_scale = new_read_scale, )
+        config_maxexport_entity = hub.numberEntities.get("config_max_export")
+
+        if config_maxexport_entity and config_maxexport_entity.enabled:
+            new_max_export = hub.data.get("config_max_export")
+            if new_max_export != None: 
+                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:
+                    _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+                    number_entity = hub.numberEntities.get(key)
+                    number_entity._attr_native_max_value = new_max_export
+                    # update description also, not sure whether needed or not
+                    if number_entity: number_entity.entity_description = replace(number_entity.entity_description, native_max_value = new_max_export, )
 
 
 plugin_instance = solax_plugin(
