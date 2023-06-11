@@ -118,7 +118,9 @@ class SolaXModbusNumber(NumberEntity):
                 if self._hub.tmpdata_expiry.get(descr.key, 0) > 0: self._hub.localsUpdated = True 
                 self._hub.tmpdata_expiry[descr.key] = 0 # update locals only once
         if self._key in self._hub.data: 
-            return  self._hub.data[self._key]*descr.read_scale
+            try:    val = self._hub.data[self._key]*descr.read_scale
+            except: val = self._hub.data[self._key]
+            return val
         else: # first time initialize
             if descr.initvalue == None: return None
             else: 
