@@ -5278,17 +5278,19 @@ class solax_plugin(plugin_base):
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity: number_entity.entity_description = replace(number_entity.entity_description, read_scale = new_read_scale, )
                 if sensor_entity: sensor_entity.entity_description = replace(sensor_entity.entity_description, read_scale = new_read_scale, )
+ 
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
-
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
             if new_max_export != None: 
-                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:
-                    _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:    
                     number_entity = hub.numberEntities.get(key)
-                    number_entity._attr_native_max_value = new_max_export
-                    # update description also, not sure whether needed or not
-                    if number_entity: number_entity.entity_description = replace(number_entity.entity_description, native_max_value = new_max_export, )
+                    if number_entity:
+                        number_entity._attr_native_max_value = new_max_export
+                        # update description also, not sure whether needed or not
+                        number_entity.entity_description = replace(number_entity.entity_description, native_max_value = new_max_export, )
+                        _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+
 
 
 plugin_instance = solax_plugin(
