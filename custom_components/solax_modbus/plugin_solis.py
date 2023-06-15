@@ -2289,7 +2289,8 @@ class solis_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
+        if seriesnumber.startswith('1802'):  invertertype = HYBRID | X1 # PV Only S6-GR1P6K
+        elif seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
         elif seriesnumber.startswith('010F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
         elif seriesnumber.startswith('110F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
         elif seriesnumber.startswith('160F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
