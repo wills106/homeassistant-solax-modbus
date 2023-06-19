@@ -42,8 +42,8 @@ Untested Models:
    - SPA
   
  - Hybrid:
-   - SPH
-   - TL-XH
+   - SPH - WIP
+   - TL-XH - WIP
   
  - PV Only:
    - MAC
