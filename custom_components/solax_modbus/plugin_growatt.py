@@ -2745,7 +2745,7 @@ class growatt_plugin(plugin_base):
 
         else: 
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         if read_eps: invertertype = invertertype | EPS 
