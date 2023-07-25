@@ -104,8 +104,7 @@ def value_function_passivemode(initval, descr, datadict):
 
 def value_function_refluxcontrol(initval, descr, datadict):
     return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
-              ('reflux_power', datadict.get('reflux_power', datadict.get('ro_reflux_power')), ),
-              
+              ('reflux_power', datadict.get('reflux_power', datadict.get('ro_reflux_power')), ), 
             ]
 
 def value_function_timingmode(initval, descr, datadict):
@@ -202,6 +201,7 @@ NUMBER_TYPES = [
         scale = 100,
         native_unit_of_measurement = UnitOfPower.WATT,
         allowedtypes = HYBRID,
+        prevent_update = True,
         write_method = WRITE_DATA_LOCAL,
         icon = "mdi:battery-sync",
     ),
@@ -304,7 +304,6 @@ SELECT_TYPES = [
                 2: "Enabled - Set Value",
             },
         allowedtypes = HYBRID,
-        prevent_update = True,
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusSelectEntityDescription(
