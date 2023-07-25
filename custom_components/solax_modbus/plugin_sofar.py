@@ -102,6 +102,11 @@ def value_function_passivemode(initval, descr, datadict):
             (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
            ]
 
+def value_function_refluxcontrol(initval, descr, datadict):
+    return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
+              ('reflux_power', datadict.get('reflux_power', datadict.get('ro_reflux_power')), ),
+              
+            ]
 
 def value_function_timingmode(initval, descr, datadict):
     return  [ ('timing_id', datadict.get('timing_id', datadict.get('ro_timing_id')), ),
@@ -133,6 +138,14 @@ BUTTON_TYPES = [
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:home-clock",
         value_function = value_function_sync_rtc_ymd,
+    ),
+    SofarModbusButtonEntityDescription( 
+        name = "Reflux Control",
+        key = "reflux_control",
+        register = 0x1023,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        value_function = value_function_refluxcontrol,
     ),
     SofarModbusButtonEntityDescription(
         name = "Timing Control",
@@ -179,6 +192,20 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
+        name = "Reflux Power",
+        key = "reflux_power",
+        unit = REGISTER_U16,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 20000,
+        native_step = 100,
+        scale = 100,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        allowedtypes = HYBRID,
+        write_method = WRITE_DATA_LOCAL,
+        icon = "mdi:battery-sync",
+    ),
+    SofarModbusNumberEntityDescription(
         name = "Timing Charge Power",
         key = "timing_charge_power",
         allowedtypes = HYBRID,
@@ -207,20 +234,6 @@ NUMBER_TYPES = [
     #  Normal number types
     #
     ###
-    SofarModbusNumberEntityDescription(
-        name = "Reflux Power",
-        key = "reflux_power",
-        register = 0x1024,
-        fmt = "i",
-        native_min_value = 0,
-        native_max_value = 20000,
-        native_step = 100,
-        scale = 100,
-        native_unit_of_measurement = UnitOfPower.WATT,
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-        icon = "mdi:battery-sync",
-    ),
     SofarModbusNumberEntityDescription(
         name = "Battery Minimum Capacity",
         key = "battery_minimum_capacity",
@@ -281,6 +294,19 @@ SELECT_TYPES = [
     #  Data only select types
     #
     ###
+    SofarModbusSelectEntityDescription(
+        name = "Reflux Control",
+        key = "reflux_control",
+        unit = REGISTER_U16,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+                2: "Enabled - Set Value",
+            },
+        allowedtypes = HYBRID,
+        prevent_update = True,
+        write_method = WRITE_DATA_LOCAL,
+    ),
     SofarModbusSelectEntityDescription(
         name = "Timing ID",
         key = "timing_id",
@@ -352,18 +378,6 @@ SELECT_TYPES = [
     #  Normal select types
     #
     ###
-    SofarModbusSelectEntityDescription(
-        name = "Reflux Control",
-        key = "reflux_control",
-        register = 0x1023,
-        option_dict =  {
-                0: "Disabled",
-                1: "Enabled",
-                2: "Enabled - Set Value",
-            },
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-    ),
     SofarModbusSelectEntityDescription(
         name = "EPS Control",
         key = "eps_control",
@@ -2065,8 +2079,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "Reflux Control",
-        key = "reflux_control",
+        name = "RO Reflux Control",
+        key = "ro_reflux_control",
         register = 0x1023,
         scale = { 0: "Disabled",
                   1: "Enabled",
@@ -2075,8 +2089,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Reflux Power",
-        key = "reflux_power",
+        name = "RO Reflux Power",
+        key = "ro_reflux_power",
         register = 0x1024,
         scale = 100,
         entity_registry_enabled_default =  False,
