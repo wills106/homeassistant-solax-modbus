@@ -140,6 +140,7 @@ NUMBER_TYPES = [
         native_min_value = -100,
         native_max_value = 100,
         native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
         allowedtypes = ALL_GEN_GROUP,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
