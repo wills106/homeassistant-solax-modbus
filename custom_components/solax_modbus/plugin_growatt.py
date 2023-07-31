@@ -133,7 +133,6 @@ NUMBER_TYPES = [
     GrowattModbusNumberEntityDescription(
         name = "Grid Export Limit",
         key = "grid_export_limit",
-        native_unit_of_measurement = PERCENTAGE,
         register = 123,
         fmt = "i",
         scale = 0.1,
