@@ -966,7 +966,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "eps_switch",
         register = 3079,
         scale = { 0: "Disabled",
-                  1: "Enable", },allowedtypes = HYBRID | AC | GEN4 | EPS,
+                  1: "Enable", },
         allowedtypes = HYBRID | AC | GEN4 | EPS,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
