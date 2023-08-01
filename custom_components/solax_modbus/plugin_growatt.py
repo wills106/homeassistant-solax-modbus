@@ -2837,8 +2837,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Work Mode",
-        key = "work_mode",
+        name = "Work Mode - Priority",
+        key = "work_mode_priority",
         register = 3144,
         scale = { 0: "Load First",
                   1: "Battery First",
