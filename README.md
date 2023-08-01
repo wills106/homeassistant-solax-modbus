@@ -21,6 +21,8 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 (⚠I still don't recomend the PocketWiFi. If you loose all entites after normal operation, try power cycling your Inverter.
 
+Another approach to fixing previously working PocketWiFi installs is to restart your rooter and then reload the integration in Home Assistant. If that doesn't work you can unplug PocketWifi usb for 30 seconds and plug it in again, then reload the integration. 
+
 Updating / downgrading the Integration or Home Assitant wont help, you have lost the Internal Modbus connection between the Inverter and PocketWiFi and I am unable to assist with this issue.⚠)
 
 **Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
