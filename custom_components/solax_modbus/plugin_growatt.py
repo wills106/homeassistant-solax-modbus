@@ -2807,7 +2807,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN43,
+        allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
