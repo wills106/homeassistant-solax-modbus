@@ -522,7 +522,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Firmware Version",
         key = "firmware_version",
-        register = 8,
+        register = 9,
         unit = REGISTER_STR,
         wordcount=3,
         allowedtypes = GEN | GEN2 | GEN3,
