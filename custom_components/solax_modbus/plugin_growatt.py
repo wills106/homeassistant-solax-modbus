@@ -558,7 +558,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 15,
         scale = { 0: "Italiano",
                   1: "English",
-                  2: "Deutsche",
+                  2: "Deutsch",
                   3: "Espanol",
                   4: "Francais",
                   5: "Hanyu",
