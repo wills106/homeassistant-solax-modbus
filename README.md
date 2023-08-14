@@ -182,3 +182,17 @@ logger:
 ```
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
+
+# FAQ
+1. How do I enable a disabled entitie?
+
+Example given is for "Config Max Export"
+>Go to the SolaX Integration page.
+>
+>Find "+xy entities not shown"
+>
+>Click those till you find "Config Max Export"
+>
+>Then Cog/Gear icon.
+>
+>There is an option to enable it and press "UPDATE"
