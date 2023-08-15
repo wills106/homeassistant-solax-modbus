@@ -4924,7 +4924,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x410,
         register_type = REG_INPUT,
-        allowedtypes = MIC | X3,
+        allowedtypes = MIC | GEN,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L2",
@@ -4934,7 +4934,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
         register_type = REG_INPUT,
-        allowedtypes = MIC | X3,
+        allowedtypes = MIC | GEN,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Measured Power L3",
@@ -4944,7 +4944,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x412,
         register_type = REG_INPUT,
-        allowedtypes = MIC | X3,
+        allowedtypes = MIC | GEN,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "PV Power 1",
@@ -5032,7 +5032,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         sleepmode = SLEEPMODE_LASTAWAKE,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | GEN3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "Today's Yield",
@@ -5045,7 +5045,7 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | GEN3,
     ),
     SolaXMicModbusSensorEntityDescription(
         name = "PV Voltage 3",
@@ -5154,6 +5154,84 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN,
         icon = "mdi:home-import-outline",
     ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Inverter Power",
+        key = "inverter_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        ignore_readerror = True,
+        newblock = True, # Do not remove, required for FW <1.38
+        register = 0x43B,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        entity_registry_enabled_default = False,
+        allowedtypes = MIC | GEN2 | GEN3,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Total Grid Export",
+        key = "total_grid_export",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 0x43D,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        rounding = 2,
+        entity_registry_enabled_default = False,
+        allowedtypes = MIC | GEN2 | GEN3,
+        icon = "mdi:home-export-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Total Grid Import",
+        key = "total_grid_import",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 0x43F,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.01,
+        rounding = 2,
+        entity_registry_enabled_default = False,
+        allowedtypes = MIC | GEN2 | GEN3,
+        icon = "mdi:home-import-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Measured Power L1",
+        key = "measured_power_l1",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x704,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MIC | GEN2 | GEN3,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Measured Power L2",
+        key = "measured_power_l2",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x706,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MIC | GEN2 | GEN3,
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Measured Power L3",
+        key = "measured_power_l3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x708,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MIC | GEN2 | GEN3,
+    ),
 ]
 
 # ============================ plugin declaration =================================================
@@ -5231,9 +5309,12 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MC208T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC210T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MC212T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MC215T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
+        elif seriesnumber.startswith('MPT10T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
         else: 

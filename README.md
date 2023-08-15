@@ -21,6 +21,8 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 (⚠I still don't recomend the PocketWiFi. If you loose all entites after normal operation, try power cycling your Inverter.
 
+Another approach to fixing previously working PocketWiFi installs is to restart your rooter and then reload the integration in Home Assistant. If that doesn't work you can unplug PocketWifi usb for 30 seconds and plug it in again, then reload the integration. 
+
 Updating / downgrading the Integration or Home Assitant wont help, you have lost the Internal Modbus connection between the Inverter and PocketWiFi and I am unable to assist with this issue.⚠)
 
 **Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
@@ -180,3 +182,17 @@ logger:
 ```
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
+
+# FAQ
+1. How do I enable a disabled entitie?
+
+Example given is for "Config Max Export"
+>Go to the SolaX Integration page.
+>
+>Find "+xy entities not shown"
+>
+>Click those till you find "Config Max Export"
+>
+>Then Cog/Gear icon.
+>
+>There is an option to enable it and press "UPDATE"
