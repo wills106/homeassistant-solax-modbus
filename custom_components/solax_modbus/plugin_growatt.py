@@ -635,8 +635,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 1062,
-        scale = { 0: "50Hz",
-                  1: "60Hz", },
+        scale = { 0: "50",
+                  1: "60", },
         allowedtypes = GEN | GEN2 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
@@ -988,8 +988,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 3081,
-        scale = { 0: "50Hz",
-                  1: "60Hz", },
+        scale = { 0: "50",
+                  1: "60", },
         allowedtypes = HYBRID | AC | GEN4 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
