@@ -102,6 +102,9 @@ def value_function_timingmode(initval, descr, datadict):
 def value_function_today_solar_energy(initval, descr, datadict):
     return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
 
+def value_function_combined_battery_power(initval, descr, datadict):
+    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0) 
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -1528,7 +1531,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         allowedtypes = GEN2 | GEN3,
         icon = "mdi:solar-power",
-    ),
+    ), 
     GrowattModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "total_solar_energy",
@@ -1641,7 +1644,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         allowedtypes = GEN | GEN2,
-        icon = "mdi:home",
+        icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Charge Power",
@@ -1654,8 +1657,18 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         allowedtypes = GEN | GEN2,
-        icon = "mdi:home",
+        icon = "mdi:battery-arrow-up-outline",
     ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery Combined Power",
+        key = "bettery_combined_power",
+        value_function= value_function_combined_battery_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN2 | GEN3,
+        icon = "mdi:battery",
+    ),       
     # duplicate of register 97
     #GrowattModbusSensorEntityDescription(
     #    name = "Battery Voltage",
