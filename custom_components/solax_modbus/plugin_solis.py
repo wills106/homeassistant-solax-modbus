@@ -1838,12 +1838,14 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Power Factor",
         key = "meter_power_factor",
-        native_unit_of_measurement = PERCENTAGE,
+        native_unit_of_measurement = "None",
         device_class = SensorDeviceClass.POWER_FACTOR,
         register = 33281,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
         allowedtypes = HYBRID,
+        scale = 0.01,
+        rounding = 2,
     ),
     SolisModbusSensorEntityDescription(
         name = "Meter Grid Frequency",
