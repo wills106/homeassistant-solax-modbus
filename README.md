@@ -60,10 +60,12 @@ Sofar Solar
 - Unknown Models
 
 SolaX Power
+- A1 Hybrid - **WIP**
 - Gen2 Hybrid
 - Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
   - Qcells Q.VOLT HYB-G3-3P
+- J1 Hybrid - **WIP**
 - X3 MIC / MIC PRO (Limited set of entities available)
 
 Indepth Features

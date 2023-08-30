@@ -102,6 +102,9 @@ def value_function_timingmode(initval, descr, datadict):
 def value_function_today_solar_energy(initval, descr, datadict):
     return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
 
+def value_function_combined_battery_power(initval, descr, datadict):
+    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0) 
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -635,8 +638,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 1062,
-        scale = { 0: "50Hz",
-                  1: "60Hz", },
+        scale = { 0: "50",
+                  1: "60", },
         allowedtypes = GEN | GEN2 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
@@ -988,8 +991,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 3081,
-        scale = { 0: "50Hz",
-                  1: "60Hz", },
+        scale = { 0: "50",
+                  1: "60", },
         allowedtypes = HYBRID | AC | GEN4 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
@@ -1528,7 +1531,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         allowedtypes = GEN2 | GEN3,
         icon = "mdi:solar-power",
-    ),
+    ), 
     GrowattModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "total_solar_energy",
@@ -1641,7 +1644,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         allowedtypes = GEN | GEN2,
-        icon = "mdi:home",
+        icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Charge Power",
@@ -1654,8 +1657,18 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         allowedtypes = GEN | GEN2,
-        icon = "mdi:home",
+        icon = "mdi:battery-arrow-up-outline",
     ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery Combined Power",
+        key = "bettery_combined_power",
+        value_function= value_function_combined_battery_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN2 | GEN3,
+        icon = "mdi:battery",
+    ),       
     # duplicate of register 97
     #GrowattModbusSensorEntityDescription(
     #    name = "Battery Voltage",
@@ -3151,7 +3164,8 @@ class growatt_plugin(plugin_base):
 
         # derive invertertype from seriiesnumber
         #if seriesnumber.startswith('TLX'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
-        if seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW
+        if seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
+        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW
         elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV KTL3-X 15kW 3Phase (MOD)
         #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
         #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN3 | X3 # PV X3 3MPPT 50-70kW

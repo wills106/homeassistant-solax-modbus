@@ -5292,6 +5292,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('F475'):  invertertype = AC | GEN4 | X1 # RetroFit X1 7.5kW?
         elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
         elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
+        elif seriesnumber.startswith('H31'):   invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
         elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
         elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
