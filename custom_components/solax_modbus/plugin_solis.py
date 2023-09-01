@@ -1838,7 +1838,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Power Factor",
         key = "meter_power_factor",
-        native_unit_of_measurement = "None",
+        native_unit_of_measurement = None,
         device_class = SensorDeviceClass.POWER_FACTOR,
         register = 33281,
         register_type = REG_INPUT,
