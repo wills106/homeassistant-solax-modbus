@@ -144,7 +144,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}")
     res =  [ ('remotecontrol_power_control',  power_control, ),
              ('remotecontrol_set_type',       set_type, ),
-             ('remotecontrol_active_power',   max(min(ap_up, ap_target),   ap_lo), ),
+             ('remotecontrol_active_power',   ap_target, ), # correct issues #488 , #492  used to be : max(min(ap_up, ap_target),   ap_lo), ),
              ('remotecontrol_reactive_power', max(min(reap_up, reactive_power), reap_lo), ),
              ('remotecontrol_duration',       rc_duration, ),
            ]
