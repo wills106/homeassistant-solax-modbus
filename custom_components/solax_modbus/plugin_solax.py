@@ -271,6 +271,7 @@ MAX_CURRENTS = [
     ('H475',   30 ), # Gen4 X1 7.5kW
     ('PRE',   30 ), # Gen4 X1 RetroFit
     ('PRI',   30 ), # Gen4 X1 RetroFit
+    ('H31',    30 ), # Gen4 X3 TIGO
     ('H34A',    30 ), # Gen4 X3 A
     ('H34B',    30 ), # Gen4 X3 B
     ('H34C',    30 ), # Gen4 X3 C
@@ -333,6 +334,9 @@ MAX_EXPORT = [
     ('H3UE06', 12000 ), # Gen3 X3
     ('H3UE08', 14000 ), # Gen3 X3
     ('H3UE10', 15000 ), # Gen3 X3
+    ('H310', 15000 ), # Gen4 X3 TIGO
+    ('H312', 15000 ), # Gen4 X3 TIGO
+    ('H315', 16500 ), # Gen4 X3 TIGO
     ('H430',    6300 ), # Gen4 X1 3kW?
     ('H437',    7300 ), # Gen4 X1 3.7kW
     ('H450',    9200 ), # Gen4 X1 5kW
