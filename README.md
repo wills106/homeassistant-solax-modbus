@@ -42,8 +42,8 @@ Growatt:
    - SPA
   
  - Hybrid:
-   - SPH - WIP
-   - TL-XH - WIP
+   - SPH
+   - TL-XH
   
  - PV Only:
    - MAC
@@ -61,9 +61,10 @@ SolaX Power
 - Gen3 AC, Hybrid & Retrofit
 - Gen4 Hybrid
   - Qcells Q.VOLT HYB-G3-3P
+  - TIGO TSI
 - J1 Hybrid - **WIP**
 - X3 MIC / MIC PRO (Limited set of entities available)
-- X1 Air/Boost/Mini
+- X1 Air/Boost/Mini (Limited set of entities available)
 
 # Documentation
 
