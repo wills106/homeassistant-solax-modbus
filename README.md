@@ -79,8 +79,11 @@ You can add this custom_component directly through HACS, if you have HACS instal
 
 <B>Alternatively</B>
 
-Download the zip / tar.gz from the release page.
-- Extract the contents of solax_modbus into to your home-assistant config/custom_components folder.
+Download the zip / tar.gz source file from the release page.
+- Extract the contents of the zip / tar.gz
+- In the folder of the extracted content you will find a directory 'custom_components'.
+- Copy this directory into your Home-Assistant '<config>' directory so that you end up with this directory structure: '<config>/custom_components/solax_modbus
+- Restart Home-Assistant
 
 <B>Post Installation</B>
 
