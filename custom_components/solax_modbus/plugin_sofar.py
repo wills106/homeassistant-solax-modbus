@@ -59,7 +59,7 @@ def _read_serialnr(hub, address, swapbytes):
             res = decoder.decode_string(14).decode("ascii")
             if swapbytes: 
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
+                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)

@@ -84,7 +84,7 @@ class SolaxA1J1ModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SolaXA1J1ModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
     #order16: int = Endian.Big
-    #order32: int = Endian.Little
+    #order32: int = Endian.LITTLE
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
@@ -1022,10 +1022,10 @@ class solax_a1j1_plugin(plugin_base):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber                       = _read_serialnr(hub, 0x0)
         if not seriesnumber:  
-            seriesnumber = _read_serialnr(hub, 0x300) # bug in endian.Little decoding?
+            seriesnumber = _read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
             if seriesnumber and not seriesnumber.startswith(("M", "X")):
                 ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
+                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
                 seriesnumber = res
         if not seriesnumber: 
@@ -1099,6 +1099,6 @@ plugin_instance = solax_a1j1_plugin(
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
     order16 = Endian.Big,
-    order32 = Endian.Little,
+    order32 = Endian.LITTLE,
     auto_block_ignore_readerror = True
     )

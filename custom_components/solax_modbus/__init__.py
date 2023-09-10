@@ -344,7 +344,7 @@ class SolaXModbusHub:
     def _lowlevel_write_register(self, unit, address, payload):
         with self._lock:
             kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
-            #builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            #builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
