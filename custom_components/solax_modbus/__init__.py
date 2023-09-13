@@ -20,7 +20,7 @@ from homeassistant.components.button import ButtonEntity
 _LOGGER = logging.getLogger(__name__)
 try: # pymodbus 3.0.x
     from pymodbus.client import ModbusTcpClient, ModbusSerialClient
-    UNIT_OR_SLAVE = 'slave'
+    UNIT_OR_SLAVE = 'slave=slave'
     _LOGGER.debug("using pymodbus library 3.x")
 except: # pymodbus 2.5.3
     from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
