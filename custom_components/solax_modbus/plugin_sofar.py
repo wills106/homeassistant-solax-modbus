@@ -55,7 +55,7 @@ def _read_serialnr(hub, address, swapbytes):
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError(): 
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
             if swapbytes: 
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
@@ -89,8 +89,8 @@ class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #order16: int = Endian.Big
-    #order32: int = Endian.Big
+    #order16: int = Endian.BIG
+    #order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -2427,6 +2427,6 @@ plugin_instance = sofar_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
-    order16 = Endian.Big,
-    order32 = Endian.Big,
+    order16 = Endian.BIG,
+    order32 = Endian.BIG,
     )
