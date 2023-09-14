@@ -89,8 +89,8 @@ class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #order16: int = Endian.Big
-    #order32: int = Endian.Big
+    #order16: int = Endian.BIG
+    #order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
