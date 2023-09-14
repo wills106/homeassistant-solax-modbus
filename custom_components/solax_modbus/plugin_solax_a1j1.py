@@ -58,7 +58,7 @@ def _read_serialnr(hub, address):
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError(): 
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
             hub.seriesnumber = res    
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
@@ -83,7 +83,7 @@ class SolaxA1J1ModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass
 class SolaXA1J1ModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #order16: int = Endian.Big
+    #order16: int = Endian.BIG
     #order32: int = Endian.LITTLE
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
@@ -1098,7 +1098,7 @@ plugin_instance = solax_a1j1_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
-    order16 = Endian.Big,
+    order16 = Endian.BIG,
     order32 = Endian.LITTLE,
     auto_block_ignore_readerror = True
     )

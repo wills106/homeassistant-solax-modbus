@@ -57,11 +57,11 @@ def _read_serialnr(hub, address):
     res = None
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
-        if not inverter_data.isError(): 
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
             hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
