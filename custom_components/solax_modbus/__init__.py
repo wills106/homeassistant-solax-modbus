@@ -18,14 +18,22 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.components.button import ButtonEntity
 
 _LOGGER = logging.getLogger(__name__)
-try: # pymodbus 3.0.x
-    from pymodbus.client import ModbusTcpClient, ModbusSerialClient
-    UNIT_OR_SLAVE = 'slave=slave'
-    _LOGGER.debug("using pymodbus library 3.x")
-except: # pymodbus 2.5.3
-    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
-    UNIT_OR_SLAVE = 'unit'
-    _LOGGER.debug("using pymodbus library 2.x")
+#try: # pymodbus 3.0.x
+from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+#    UNIT_OR_SLAVE = 'slave'
+#    _LOGGER.warning("using pymodbus library 3.x")
+#except: # pymodbus 2.5.3
+#    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
+#    UNIT_OR_SLAVE = 'unit'
+#    _LOGGER.warning("using pymodbus library 2.x")
+#import pymodbus
+#_LOGGER.debug(f"pymodbus client version: { pymodbus.__version__ }")
+#if pymodbus.__version__.startswith('3.3') or pymodbus.__version.startswith('3.0'):
+#    Endian_BIG = Endian.big
+#    Endian_LITTLE = Endian.little
+#else:
+#    Endian_BIG = Endian.BIG
+#    Endian_LITTLE = Endian.LITTLE
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
@@ -332,18 +340,18 @@ class SolaXModbusHub:
     def read_holding_registers(self, unit, address, count):
         """Read holding registers."""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             return self._client.read_holding_registers(address, count, **kwargs)
     
     def read_input_registers(self, unit, address, count):
         """Read input registers."""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
     def _lowlevel_write_register(self, unit, address, payload):
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             #builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
@@ -371,7 +379,7 @@ class SolaXModbusHub:
     def write_registers_single(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
@@ -391,7 +399,7 @@ class SolaXModbusHub:
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             if isinstance(payload, list):
