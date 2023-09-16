@@ -55,6 +55,7 @@ SENSOR_TYPES = []
 
 def _read_serialnr(hub, address):
     res = None
+    inverter_data = None
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
