@@ -445,6 +445,7 @@ class SolaXModbusHub:
 
     def treat_address(self, decoder, descr, initval=0):
         return_value = None
+        val = None
         if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
@@ -462,7 +463,6 @@ class SolaXModbusHub:
         except Exception as ex: 
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
-            val = 0
         """ TO BE REMOVED 
         if descr.prevent_update:
             if  (self.tmpdata_expiry.get(descr.key, 0) > time()): 
@@ -475,7 +475,9 @@ class SolaXModbusHub:
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
         """
 
-        if type(descr.scale) is dict: # translate int to string 
+        if val == None:  # E.g. if errors have occurred during readout
+            return_value = None
+        elif type(descr.scale) is dict: # translate int to string 
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, self.data) 
