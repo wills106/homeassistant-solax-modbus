@@ -146,3 +146,23 @@ Please use one of the following discussions providing the details asked for:
 [Solis](https://github.com/wills106/homeassistant-solax-modbus/discussions/521)
 
 3. SolaX Only - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle
+
+4. Check a python module version eg pyModbus:
+
+Virtual Machine - Goto the console:
+```
+   ha > login
+   # docker exec -it homeassistant /bin/bash
+   pip show pymodbus
+```
+   Docker (Core) - Goto the console:
+```
+   pip show pymodbus
+```
+   To list all modules:
+```
+   Replace:
+   pip show pymodbus
+   With:
+   pip list
+```
