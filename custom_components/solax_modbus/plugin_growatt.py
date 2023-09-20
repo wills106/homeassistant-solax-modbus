@@ -2886,6 +2886,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         register = 1080,
         register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
         allowedtypes = GEN | GEN2 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
