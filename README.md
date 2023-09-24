@@ -36,11 +36,25 @@ You can have multiple instances of this Integration, just change the default Pre
 
 ### Supports:
 
-Ginlong Solis
+<details>
+<summary>
+
+#### Ginlong Solis
+
+</summary>
+
 - RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
 - RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 
-Growatt:
+</details>
+
+<details>
+<summary>
+
+#### Growatt:
+
+</summary>
+
  - AC Battery Storage:
    - SPA
   
@@ -54,11 +68,27 @@ Growatt:
    - MID
    - TL-X
 
-Sofar Solar
+</details>
+
+<details>
+<summary>
+
+#### Sofar Solar
+
+</summary>
+
 - HYDxxKTL-3P (plugin_sofar)
 - HYDxxxxES (plugin_sofar_old)
 
-SolaX Power
+</details>
+
+<details>
+<summary>
+
+#### SolaX Power
+
+</summary>
+
 - A1 Hybrid - **WIP**
 - Gen2 Hybrid
 - Gen3 AC, Hybrid & Retrofit
@@ -69,11 +99,18 @@ SolaX Power
 - X3 MIC / MIC PRO (Limited set of entities available)
 - X1 Air/Boost/Mini (Limited set of entities available)
 
+</details>
+
 # Documentation
 
 For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
 
+<details>
+<summary>
+
 # Installation
+
+</summary>
 
 <B>Preferred Option</B>
 
@@ -103,6 +140,8 @@ Serial
 
 Any manual updates / HACS updates require a restart of Home Assistant to take effect.
 - Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
+
+</details>
 
 # Known Issues
 
