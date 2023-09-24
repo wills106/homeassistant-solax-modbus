@@ -159,7 +159,13 @@ logger:
 4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
 
 # FAQ
-1. How do I enable a disabled entitie?
+
+<details>
+<summary>
+
+#### 1. How do I enable a disabled entitie?
+
+</summary>
 
 Example given is for "Config Max Export"
 >Go to the SolaX Integration page.
@@ -171,6 +177,8 @@ Example given is for "Config Max Export"
 >Then Cog/Gear icon.
 >
 >There is an option to enable it and press "UPDATE"
+
+</details>
 
 2. If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}" or "unrecognized inverter type - firmware version : {your_firmware_version_here}"
 
