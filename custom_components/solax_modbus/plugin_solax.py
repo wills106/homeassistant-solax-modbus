@@ -871,6 +871,18 @@ NUMBER_TYPES = [
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4 | DCB,
     ),
+    SolaxModbusNumberEntityDescription(
+        name = "Battery Charge Upper SOC",
+        key = "battery_charge_upper_soc", 
+        register = 0xE0,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 100,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | AC | GEN4,
+        icon = "mdi:battery-sync",
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -2301,6 +2313,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN3 | AC,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:meter-electric",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Battery Charge Upper SOC",
+        key = "battery_charge_upper_soc",
+        register = 0x10E,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-sync",
+        native_unit_of_measurement = PERCENTAGE,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Forcetime Period 1 Maximum Capacity",

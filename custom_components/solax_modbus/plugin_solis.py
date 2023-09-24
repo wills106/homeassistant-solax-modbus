@@ -168,6 +168,7 @@ BUTTON_TYPES = [
 
 MAX_CURRENTS = [
     ('0602',  62.5 ), # 3kW 48v
+    ('0102',  62.5 ), # 3kW 48v AC Only?
     ('110F',  62.5 ), # 3.6kW 48v
     ('160F',  62.5 ), # 3.6kW 48v
     ('1031',  100 ), # 5kW 48v
@@ -2296,6 +2297,7 @@ class solis_plugin(plugin_base):
         if seriesnumber.startswith('1801'):  invertertype = HYBRID | X1 # PV Only S6-GR1P 1-3K
         elif seriesnumber.startswith('1802'):  invertertype = HYBRID | X1 # PV Only S6-GR1P 2.5-6K
         elif seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
+        elif seriesnumber.startswith('0102'):  invertertype = HYBRID | X1 # AC? Gen5 3kW - 48v
         elif seriesnumber.startswith('010F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
         elif seriesnumber.startswith('110F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
         elif seriesnumber.startswith('114F'):  invertertype = HYBRID | X1 # Hybrid Gen5 6K - 48V
