@@ -186,7 +186,12 @@ Please use one of the following discussions providing the details asked for:
 
 3. SolaX Only - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle
 
-4. Check a python module version eg pyModbus:
+<details>
+<summary>
+
+#### 4. Check a python module version eg pyModbus:
+
+</summary>
 
 Virtual Machine - Goto the console:
 ```
@@ -205,3 +210,4 @@ Virtual Machine - Goto the console:
    With:
    pip list
 ```
+</details>
