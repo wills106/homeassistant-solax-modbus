@@ -1,21 +1,18 @@
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
-
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V51QQOL)
+# homeassistant-solax-modbus
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs) [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V51QQOL)
 
 [Octopus.Energy 🐙](https://share.octopus.energy/wise-boar-813) referral code. You get £50 credit for joining and I get £50 credit.
 
-# homeassistant-solax-modbus
-## Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
+## Summary
+
+Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
 **Integration 2023.09.4 and newer only supports HA 2023.9.2 and newer. Support for pyModbus below 3.5.2 has been dropped. For HA installations older than 2023.9.0 Integration 2023.09.3 is the last supported version**
 
-### Support Modbus over RS485 & TCP
-
+* Support Modbus over RS485 & TCP
 <details>
 <summary>
- 
-## SolaX - PocketWiFi Readme
-
+SolaX - PocketWiFi Readme
 </summary>
 
 **(Pocket LAN / Pocket WiFi v1 & v2 does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)**
@@ -34,13 +31,11 @@ Updating / downgrading the Integration or Home Assitant wont help, you have lost
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
 
-### Supports:
+### Support
 
 <details>
 <summary>
-
-#### Ginlong Solis
-
+Ginlong Solis
 </summary>
 
 - RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
@@ -50,9 +45,7 @@ You can have multiple instances of this Integration, just change the default Pre
 
 <details>
 <summary>
-
-#### Growatt:
-
+Growatt:
 </summary>
 
  - AC Battery Storage:
@@ -72,9 +65,7 @@ You can have multiple instances of this Integration, just change the default Pre
 
 <details>
 <summary>
-
-#### Sofar Solar
-
+Sofar Solar
 </summary>
 
 - HYDxxKTL-3P (plugin_sofar)
@@ -84,9 +75,7 @@ You can have multiple instances of this Integration, just change the default Pre
 
 <details>
 <summary>
-
-#### SolaX Power
-
+SolaX Power
 </summary>
 
 - A1 Hybrid - **WIP**
@@ -101,14 +90,14 @@ You can have multiple instances of this Integration, just change the default Pre
 
 </details>
 
-# Documentation
+## Documentation
 
 For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
 
 <details>
 <summary>
 
-# Installation
+## Installation
 
 </summary>
 
@@ -143,7 +132,7 @@ Any manual updates / HACS updates require a restart of Home Assistant to take ef
 
 </details>
 
-# Known Issues
+## Known Issues
 
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
 2. Possible Warnings about blocking call in the event loop (in systems with serial modbus connection).
@@ -158,13 +147,11 @@ logger:
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
 
-# FAQ
+## FAQ
 
 <details>
 <summary>
-
-#### 1. How do I enable a disabled entitie?
-
+1. How do I enable a disabled entitie?
 </summary>
 
 Example given is for "Config Max Export"
@@ -196,9 +183,7 @@ Please use one of the following discussions providing the details asked for:
 
 <details>
 <summary>
-
-#### 4. Check a python module version eg pyModbus:
-
+4. Check a python module version eg pyModbus:
 </summary>
 
 Virtual Machine - Goto the console:
