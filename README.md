@@ -9,31 +9,12 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 **Integration 2023.09.4 and newer only supports HA 2023.9.2 and newer. Support for pyModbus below 3.5.2 has been dropped. For HA installations older than 2023.9.0 Integration 2023.09.3 is the last supported version**
 
-* Support Modbus over RS485 & TCP
-<details>
-<summary>
-SolaX - PocketWiFi Readme
-</summary>
+* Supports Modbus over RS485 & TCP. **Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
 
-**(Pocket LAN / Pocket WiFi v1 & v2 does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)**
-
-#### Pocket WiFi 3.0 with Firmware V3.004.03 and above is only [officially supported](https://kb.solaxpower.com/data/detail/ff8080818407e2a701840a22dec20032.html). SolaX only mention Gen4 Hybrid, other Inverter may work?
-- **Contact SolaX for latest version.**
-
-(⚠I still don't recomend the PocketWiFi. If you loose all entites after normal operation, try power cycling your Inverter.
-
-Another approach to fixing previously working PocketWiFi installs is to restart your rooter and then reload the integration in Home Assistant. If that doesn't work you can unplug PocketWifi usb for 30 seconds and plug it in again, then reload the integration. 
-
-Updating / downgrading the Integration or Home Assitant wont help, you have lost the Internal Modbus connection between the Inverter and PocketWiFi and I am unable to assist with this issue.⚠)
-</details>
-
-**Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
-
-You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie SolaX Main or SolaX Southwest
-
-### Support
-
-<details>
+<ul>
+    <ul>
+      <li>
+       <details>
 <summary>
 Ginlong Solis
 </summary>
@@ -42,8 +23,9 @@ Ginlong Solis
 - RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
 
 </details>
-
-<details>
+      </li>
+      <li>
+       <details>
 <summary>
 Growatt:
 </summary>
@@ -62,8 +44,9 @@ Growatt:
    - TL-X
 
 </details>
-
-<details>
+      </li>
+      <li>
+       <details>
 <summary>
 Sofar Solar
 </summary>
@@ -72,8 +55,9 @@ Sofar Solar
 - HYDxxxxES (plugin_sofar_old)
 
 </details>
-
-<details>
+      </li>
+      <li>
+       <details>
 <summary>
 SolaX Power
 </summary>
@@ -89,10 +73,28 @@ SolaX Power
 - X1 Air/Boost/Mini (Limited set of entities available)
 
 </details>
+      </li>
+    </ul>
+</ul>
 
-## Documentation
+You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie. `SolaX Main` or `SolaX Southwest`.
 
-For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
+<details>
+<summary>
+SolaX - PocketWiFi Readme
+</summary>
+
+**(Pocket LAN / Pocket WiFi v1 & v2 does not provide a Modbus connection in most situations, trouble shooting for Pocket WiFi will not be provided)**
+
+#### Pocket WiFi 3.0 with Firmware V3.004.03 and above is only [officially supported](https://kb.solaxpower.com/data/detail/ff8080818407e2a701840a22dec20032.html). SolaX only mentions Gen4 Hybrid, other inverters may work?
+- **Contact SolaX for latest version.**
+
+(⚠I still don't recomend the PocketWiFi. If you loose all entites after normal operation, try power cycling your Inverter.
+
+Another approach to fixing previously working PocketWiFi installs is to restart your rooter and then reload the integration in Home Assistant. If that doesn't work you can unplug PocketWifi usb for 30 seconds and plug it in again, then reload the integration. 
+
+Updating / downgrading the integration or Home Assitant won't help, you have lost the internal Modbus connection between the Inverter and PocketWiFi and I am unable to assist with this issue.⚠)
+</details>
 
 <details>
 <summary>
@@ -147,14 +149,17 @@ logger:
 3. Please check the Todo List under discussions for other known issues and what's being worked on.
 4. If your Inverter is asleep do not start this integration / restart HA as you will get the following error **"Modbus Error: [Connection] Failed to connect[Modbus"** You can't establish a connection if there is nothing to connect to.
 
+## Documentation
+
+For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
+
 ## FAQ
 
 <details>
 <summary>
-1. How do I enable a disabled entitie?
+1. <em>Help, entity I need is not present!</em>
 </summary>
-
-Example given is for "Config Max Export"
+Your desired entity is most likely disabled. Example given is for "Config Max Export"
 >Go to the SolaX Integration page.
 >
 >Find "+xy entities not shown"
@@ -164,26 +169,34 @@ Example given is for "Config Max Export"
 >Then Cog/Gear icon.
 >
 >There is an option to enable it and press "UPDATE"
-
 </details>
-
-2. If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}" or "unrecognized inverter type - firmware version : {your_firmware_version_here}"
-
-Please use one of the following discussions providing the details asked for:
-
-[Growatt](https://github.com/wills106/homeassistant-solax-modbus/discussions/523)
-  
-[Sofar](https://github.com/wills106/homeassistant-solax-modbus/discussions/522)
-  
-[SolaX](https://github.com/wills106/homeassistant-solax-modbus/discussions/520)
-  
-[Solis](https://github.com/wills106/homeassistant-solax-modbus/discussions/521)
-
-3. SolaX Only - If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle
 
 <details>
 <summary>
-4. Check a python module version eg pyModbus:
+2. <em>If the Integration fails to load with the following error in your log "unrecognized inverter type - serial number : {your_serial_number_here}" or "unrecognized inverter type - firmware version : {your_firmware_version_here}"</em>
+</summary>
+Please use one of the following discussions providing the details asked for:
+
+<ul>
+    <ul>
+      <li><a href="https://github.com/wills106/homeassistant-solax-modbus/discussions/523">Growatt</a></li>
+      <li><a href="https://github.com/wills106/homeassistant-solax-modbus/discussions/522">Sofar</a></li>
+      <li><a href="https://github.com/wills106/homeassistant-solax-modbus/discussions/520">SolaX</a></li>
+      <li><a href="https://github.com/wills106/homeassistant-solax-modbus/discussions/521">Solis</a></li>
+    </ul>
+</ul>
+</details>
+
+<details>
+<summary>
+3. <em>SolaX Only - unable to change values (read only)</em>
+</summary>
+If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle*
+</details>
+
+<details>
+<summary>
+4. <em>Check a python module version eg pyModbus:</em>
 </summary>
 
 Virtual Machine - Goto the console:
