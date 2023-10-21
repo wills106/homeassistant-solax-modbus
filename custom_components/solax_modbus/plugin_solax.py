@@ -1353,6 +1353,19 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
+        name = "Shadow Fix Function Level",
+        key = "shadow_fix_enable",
+        register = 0x9C,
+        option_dict =  {
+                0: "Off",
+                1: "Low",
+                2: "Middle",
+                3: "High",
+            },
+        allowedtypes = HYBRID | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "Phase Power Balance X3",
         key = "phase_power_balance_x3",
         register = 0x9E,
