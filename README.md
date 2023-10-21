@@ -52,6 +52,7 @@ Sofar Solar
 </summary>
 
 - HYDxxKTL-3P (plugin_sofar)
+  - Azzurro 3.3k-12KTL-V3
 - HYDxxxxES (plugin_sofar_old)
 
 </details>
