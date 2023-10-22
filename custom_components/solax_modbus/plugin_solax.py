@@ -1367,7 +1367,7 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name = "Shadow Fix Function Level",
+        name = "Shadow Fix Function Level (GMPPT)",
         key = "shadow_fix_enable",
         register = 0x9C,
         option_dict =  {
@@ -2265,7 +2265,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:sun-compass",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Shadow Fix Function Level",
+        name = "Shadow Fix Function Level (GMPPT)",
         key = "shadow_fix_enable",
         register = 0x104,
         scale = { 0: "Off",
