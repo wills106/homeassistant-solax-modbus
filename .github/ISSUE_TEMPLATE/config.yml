@@ -2,4 +2,4 @@ blank_issues_enabled: true
 contact_links:
   - name: GitHub Community Support
     url: https://github.com/wills106/homeassistant-solax-modbus/discussions
-    about: Questions unrelated to this integration belong here.
+    about: Questions related to this integration belong here, general help, installation questions, supported Inverters.
