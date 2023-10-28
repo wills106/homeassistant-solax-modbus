@@ -104,6 +104,8 @@ Updating / downgrading the integration or Home Assitant won't help, you have los
 
 </summary>
 
+[Setup](https://github.com/wills106/homeassistant-solax-modbus/wiki/Installation-Notes) your modbus adapter first.
+
 <B>Preferred Option</B>
 
 You can add this custom_component directly through HACS, if you have HACS installed on your Home Assistant instance.
