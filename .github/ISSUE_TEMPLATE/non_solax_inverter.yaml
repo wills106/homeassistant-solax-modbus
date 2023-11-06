@@ -1,7 +1,7 @@
-name: Bug Report - Generic Inverter
-description: File a bug report about Gneric Inverter
+name: Bug Report - Non SolaX Inverter
+description: File a bug report about Non SolaX Inverter
 title: "[Bug]: "
-labels: ["bug", "triage", "Inverter"]
+labels: ["bug", "triage", "Non SolaX"]
 projects: []
 assignees: []
 body:
@@ -38,7 +38,7 @@ body:
     attributes:
       label: Inverter brand
       description: 
-      placeholder: e.g. Inverter
+      placeholder: e.g. Solis
     validations:
       required: true
   - type: input
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Plugin used
       description: 
-      placeholder: 
+      placeholder: e.g. solis_old
     validations:
       required: true
   - type: input
