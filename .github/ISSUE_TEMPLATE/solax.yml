@@ -3,7 +3,7 @@ description: File a bug report about Solax inverter
 title: "[Bug]: "
 labels: ["bug", "triage", "Solax"]
 projects: []
-assignees:
+assignees: []
 body:
   - type: markdown
     attributes:
@@ -73,7 +73,7 @@ body:
       placeholder: e.g. SolaX Pocket WiFi 3.0, Waveshare adapter 
     validations:
       required: true
-  - type: dongle-firmware
+  - type: textarea
     id: dongle-firmware
     attributes:
       label: Dongle firmware
