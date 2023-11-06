@@ -1,5 +1,5 @@
 name: Bug Report - Non SolaX Inverter
-description: File a bug report about Non SolaX Inverter
+description: File a bug report about Non SolaX Inverter (Growatt, Sofar (Azzurro), Solis etc)
 title: "[Bug]: "
 labels: ["bug", "triage", "Non SolaX"]
 projects: []

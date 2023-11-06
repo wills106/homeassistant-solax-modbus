@@ -2380,6 +2380,7 @@ class sofar_plugin(plugin_base):
         if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
         elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
         elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
+        elif seriesnumber.startswith('ZP1'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
         elif seriesnumber.startswith('SM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
         elif seriesnumber.startswith('ZM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxKTL ZCS HP, Single Phase
         elif seriesnumber.startswith('SH3E'):  invertertype = PV | X1 | GEN # 4.6 KTLM-G3

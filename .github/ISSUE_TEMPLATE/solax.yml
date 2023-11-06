@@ -1,7 +1,7 @@
-name: Bug Report - Solax inverter
-description: File a bug report about Solax inverter
+name: Bug Report - SolaX Inverter
+description: File a bug report about SolaX Inverter (QCells Gen3 & TIGO TSI)
 title: "[Bug]: "
-labels: ["bug", "triage", "Solax"]
+labels: ["bug", "triage", "SolaX"]
 projects: []
 assignees: []
 body:
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Plugin used
       description: 
-      placeholder: 
+      placeholder: e.g. plugin_solax, plugin_solax_a1j1
     validations:
       required: true
   - type: input
