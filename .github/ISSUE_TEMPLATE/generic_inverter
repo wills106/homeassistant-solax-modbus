@@ -58,7 +58,6 @@ body:
     validations:
       required: true
   - type: input
-  - type: input
     id: connection-method
     attributes:
       label: Connection Method
