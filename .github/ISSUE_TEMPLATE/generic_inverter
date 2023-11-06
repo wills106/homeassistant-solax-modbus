@@ -1,5 +1,5 @@
 name: Bug Report - Generic Inverter
-description: File a bug report about Generic Inverter
+description: File a bug report about Gneric Inverter
 title: "[Bug]: "
 labels: ["bug", "triage", "Inverter"]
 projects: []
@@ -38,7 +38,7 @@ body:
     attributes:
       label: Inverter brand
       description: 
-      placeholder: e.g. Sofar or Solis
+      placeholder: e.g. Inverter
     validations:
       required: true
   - type: input
@@ -52,9 +52,9 @@ body:
   - type: input
     id: serial-prefix
     attributes: 
-      label: First 6 digits of Serial (Firmware Version Growatt)
+      label: First 6 digits of Serial (Growatt FIrmware Version)
       description: 
-      placeholder: e.g. 0602
+      placeholder: e.g. 062000
     validations:
       required: true
   - type: input
