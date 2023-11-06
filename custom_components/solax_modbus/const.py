@@ -200,44 +200,44 @@ def value_function_pv_power_total(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0) + datadict.get('pv_power_3',0)
 
 def value_function_battery_output(initval, descr, datadict):
-    val = datadict["battery_power_charge"]
+    val = datadict.get('battery_power_charge', 0)
     if val<0: return abs(val)
     else: return 0
 
 def value_function_battery_input(initval, descr, datadict):
-    val = datadict["battery_power_charge"]
+    val = datadict.get('battery_power_charge', 0)
     if val>0: return val
     else: return 0
 
 def value_function_battery_output_solis(initval, descr, datadict):
-    inout = datadict["battery_charge_direction"]
-    val = datadict["battery_power"]
+    inout = datadict.get('battery_charge_direction', 0)
+    val = datadict.get('battery_power', 0)
     if inout == 1: return abs(val)
     else: return 0
 
 def value_function_battery_input_solis(initval, descr, datadict):
-    inout = datadict["battery_charge_direction"]
-    val = datadict["battery_power"]
+    inout = datadict.get('battery_charge_direction', 0)
+    val = datadict.get('battery_power', 0)
     if inout == 0: return val
     else: return 0
 
 def value_function_grid_import(initval, descr, datadict):
-    val = datadict["measured_power"]
+    val = datadict.get('measured_power', 0)
     if val<0: return abs(val)
     else: return 0
 
 def value_function_grid_export(initval, descr, datadict):
-    val = datadict["measured_power"]
+    val = datadict.get('measured_power', 0)
     if val>0: return val
     else: return 0
 
 def value_function_house_load(initval, descr, datadict):
-    return ( datadict['inverter_load'] - datadict['measured_power'] )
+    return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) )
 
 def value_function_house_load_alt(initval, descr, datadict):
     return (   datadict.get('pv_power_1', 0) +  datadict.get('pv_power_2', 0) + datadict.get('pv_power_3', 0)
-             - datadict['battery_power_charge'] 
-             - datadict['measured_power'] )
+             - datadict.get('battery_power_charge', 0)
+             - datadict.get('measured_power', 0) )
 
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
