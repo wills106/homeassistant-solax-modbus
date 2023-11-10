@@ -1,0 +1,31 @@
+site_name: Homeassistant SolaX modbus integration
+theme:
+  name: readthedocs
+  highlightjs: true
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        # See: https://mkdocstrings.github.io/python/usage/
+        python:
+          options:
+            docstring_style: sphinx
+markdown_extensions:
+  - markdown_include.include:
+      base_path: .
+  - admonition
+nav:
+- Modbus Adaptor Setup: modbus-adaptor-setup.md
+- Automation - Hints and Examples: automation-examples.md
+- Serial Baud Rates: baudrates.md
+- Compatible RS485 Adaptors: compatible-adaptors.md
+- Compatible inverters: compatible-inverters.md
+- Home Assistant "Energy Dashboard": energy-dashboard.md
+- SolaX:
+  - FAQ: solax-faq.md
+  - Firmware update: solax-firmware-update.md
+  - Modbus Power Control (remotecontrol power): modbus-power-control.md
+  - SolaX Gen4 Modes of Operation: solax-G4-operation-modes.md
+  - SolaX Gen2 & Gen3 Modes of Operation: solax-G23-operation-modes.md
+- Ginlong Solis:
+  - Ginlong Solis Modes of Operation - WIP: ginlong-solis-operation-modes.md

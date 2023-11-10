@@ -1,0 +1,78 @@
+# Compatible RS485 Adaptors
+
+This page does not use affiliate links, please only use these links as a guide. Shop around for the best prices!
+
+## RS485 - USB
+
+### Generic RS485 - USB
+
+![Image of Generic RS485 - USB](https://user-images.githubusercontent.com/18155231/161318880-9aade4a6-ab45-4be8-822d-404e831f42d8.png)
+
+[Amazon UK Link1](https://www.amazon.co.uk/dp/B07K3V381Z),
+[Berrybase Link1](https://www.berrybase.de/raspberry-pi/raspberry-pi-computer/usb-geraete/usb-rs485-konverter)
+
+## RS485 - Ethernet
+
+Whatever adapter you buy, make sure it supports Modbus transmission. Transparent adapters that do not look into the Modbus protocol cannot send the packages to the correct Modbus slave.
+
+### [USR-N510 RS232/RS485/RS422 to Ethernet](https://www.pusr.com/products/1-serial-port-etherne-device-servers-usr-n510.html)
+
+Older version of the USR-N510 with DB9 connector supporting RS232/RS485/RS422
+
+### [USR-W610 RS232/RS485 to Wifi & Ethernet](https://www.pusr.com/products/rs232/rs485-to-wifi-converters-usr-w610.html)
+
+Only Ethernet mode tested so far.
+
+[Amazon UK Link1](https://www.amazon.co.uk/dp/B07DNWM62H)
+
+### [Waveshare RS485 to RJ45 Ethernet DIN Rail Mount - RS485 TO ETH (B) / RS485 TO POE ETH (B)](https://www.waveshare.com/wiki/RS485_TO_ETH_(B))
+
+![Image of Waveshare RS485 to RJ45 Ethernet DIN Rail Mount](https://user-images.githubusercontent.com/18155231/161314257-2bb50255-f1f6-44c2-889f-aea5db528306.png)
+
+[Amazon UK Link1](https://www.amazon.co.uk/dp/B09MQTP16W) , [Amazon UK Link2](https://www.amazon.co.uk/dp/B09LQMH2S1) , [Amazon UK Link3](https://www.amazon.co.uk/dp/B09QMNWYLQ)
+
+### [ZLAN5843A 8-port RS232/485 serial port to Ethernet](http://www.zlmcu.com/en/products_ZLAN5843A.htm)
+
+![Image of ZLAN5843A](https://user-images.githubusercontent.com/18155231/161318289-7582aea1-2fc1-49f8-90a1-c2e7d34de50e.png)
+
+[AliExpress](https://www.aliexpress.com/item/32888961582.html)
+
+## Untested but should work according to the specs...
+
+### [USR-N510 RS485 to Ethernet](https://www.pusr.com/products/1-rs485-serial-port-etherne-device-servers-usr-n510.html)
+
+Newer version of the USR-N510 without DB9 connector supporting RS485 (Specs mention RS232/RS485/RS422 Optional)
+
+Should perform the same as the older version, although untested!
+
+### [USR-TCP232-410S RS232 / RS485 Serial to Ethernet Adapter](https://www.pusr.com/products/modbus-serial-to-ethernet-converters-usr-tcp232-410s.html)
+
+![Image of Usr-Tcp232-410S RS232 / RS485 Serial to Ethernet Adapter](https://user-images.githubusercontent.com/18155231/161313612-ebab3228-8bcd-4d41-9045-36c7bb258900.png)
+
+[Amazon UK Link 1](https://www.amazon.co.uk/dp/B07C1TC165)
+
+## Might work but potentially more hassle...
+
+### [USR-TCP232-304 only supports a Virtual Com Port?](https://www.pusr.com/products/1-port-rs485-to-ethernet-converters-usr-tcp232-304.html)
+
+![Image of USR-TCP232-304](https://user-images.githubusercontent.com/18155231/161317686-cc3d05d4-d5fa-441c-af42-ea3ad62f2026.png)
+
+As this Model appears to only gives you a Virtual Com Port it might prove difficult to pass into Home Assistant running in a VM or Home Assistant OS?
+
+[Amazon UK Link1](https://www.amazon.co.uk/dp/B07BC77L8K)
+
+## Non Working / Troublesome RS485 Adaptors
+
+### [Waveshare RS485 to WIFI/ETH](https://www.waveshare.com/wiki/RS485_TO_WIFI/ETH)
+
+This RS485 adaptor is very problematic:
+- There seems to be delayed communications,
+- Struggles to read more than 7 registers at a time,
+- Modbus Error: [Input/Output] Unable to decode request,
+- No ability to set "Auto query storage type" for Sofar Inverters.
+
+### [Waveshare RS485 to ETH](https://www.waveshare.com/wiki/RS485_TO_ETH)
+**Not to be confused with the DIN Rail mounted Waveshare RS485 TO ETH (B) mentioned above.**
+- This adaptor does not support "Modbus Transmission" it is a passive device.
+- You can't submit requests to the Inverter.
+- It does not work!
