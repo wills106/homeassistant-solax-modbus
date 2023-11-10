@@ -268,6 +268,7 @@ MAX_CURRENTS = [
     ('H3UE',    25 ), # Gen3 X3
     ('H43',   30 ), # Gen4 X1 3 / 3.7kW
     ('H450',   30 ), # Gen4 X1 5kW
+    ('H449',   30 ), # Gen4 X1 5kW
     ('H460',   30 ), # Gen4 X1 6kW
     ('H475',   30 ), # Gen4 X1 7.5kW
     ('PRE',   30 ), # Gen4 X1 RetroFit
@@ -340,6 +341,7 @@ MAX_EXPORT = [
     ('H315', 16500 ), # Gen4 X3 TIGO
     ('H430',    6300 ), # Gen4 X1 3kW?
     ('H437',    7300 ), # Gen4 X1 3.7kW
+    ('H449',    9200 ), # Gen4 X1 5kW
     ('H450',    9200 ), # Gen4 X1 5kW
     ('H460',    9200 ), # Gen4 X1 6kW
     ('H475',    9200 ), # Gen4 X1 7.5kW
@@ -5917,6 +5919,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
         elif seriesnumber.startswith('F3E'):   invertertype = AC | GEN3 | X3 # RetroFit
         elif seriesnumber.startswith('H43'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
+        elif seriesnumber.startswith('H44'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 alt 5kW
         elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
         elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
         elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW

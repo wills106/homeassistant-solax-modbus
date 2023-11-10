@@ -1,7 +1,7 @@
 name: Bug Report - SolaX Inverter
 description: File a bug report about SolaX Inverter (QCells Gen3 & TIGO TSI)
 title: "[Bug]: "
-labels: ["bug", "triage", "SolaX"]
+labels: ["bug", "triage", "solax"]
 projects: []
 assignees: []
 body:
@@ -41,12 +41,15 @@ body:
       placeholder: e.g. SolaX Power
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: plugin
     attributes:
       label: Plugin used
       description: 
-      placeholder: e.g. plugin_solax, plugin_solax_a1j1
+      options:
+        - plugin_solax.py
+        - plugin_solax_ev_charger.py
+        - plugin_solax_a1j1.py
     validations:
       required: true
   - type: input
@@ -103,11 +106,3 @@ body:
       placeholder: Add any other context about the problem here.
     validations:
       required: false
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: I have done my own research
-      description: I searched my problem in GitHub [Issues](https://github.com/wills106/homeassistant-solax-modbus/issues) and [Discussions](https://github.com/wills106/homeassistant-solax-modbus/discussions) and I have read [FAQ](https://github.com/wills106/homeassistant-solax-modbus#faq) and [Wiki](https://github.com/wills106/homeassistant-solax-modbus/wiki). 
-      options:
-        - label: Yes, I did
-          required: true
