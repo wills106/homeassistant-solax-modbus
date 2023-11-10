@@ -1,7 +1,7 @@
 name: Bug Report - Non SolaX Inverter
 description: File a bug report about Non SolaX Inverter (Growatt, Sofar (Azzurro), Solis etc)
 title: "[Bug]: "
-labels: ["bug", "triage", "Non SolaX"]
+labels: ["bug", "triage", "non solax"]
 projects: []
 assignees: []
 body:
@@ -41,18 +41,24 @@ body:
       placeholder: e.g. Solis
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: plugin
     attributes:
       label: Plugin used
       description: 
-      placeholder: e.g. solis_old
+      options:
+        - plugin_growatt.py
+        - plugin_sofar.py
+        - plugin_sofar_old.py
+        - plugin_solis.py
+        - plugin_solis_old.py
+        - plugin_srne.py
     validations:
       required: true
   - type: input
     id: serial-prefix
     attributes: 
-      label: First 6 digits of Serial (Growatt FIrmware Version)
+      label: First 6 digits of Serial (Growatt Firmware Version)
       description: 
       placeholder: e.g. 062000
     validations:
