@@ -93,11 +93,3 @@ body:
       placeholder: Add any other context about the problem here.
     validations:
       required: false
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: I have done my own research
-      description: I searched my problem in GitHub [Issues](https://github.com/wills106/homeassistant-solax-modbus/issues) and [Discussions](https://github.com/wills106/homeassistant-solax-modbus/discussions) and I have read [FAQ](https://github.com/wills106/homeassistant-solax-modbus#faq) and [Wiki](https://github.com/wills106/homeassistant-solax-modbus/wiki). 
-      options:
-        - label: Yes, I did
-          required: true
