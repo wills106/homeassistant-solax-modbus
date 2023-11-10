@@ -709,11 +709,13 @@ SELECT_TYPES = [
         option_dict =  {
                 1: "Selfuse - No Grid Charging",
                 3: "Timed Charge/Discharge - No Grid Charging",
+                17: "Backup/Reserve - No Grid Charging",
                 33: "Selfuse",
                 35: "Timed Charge/Discharge",
                 37: "Off-Grid Mode",
                 41: "Battery Awaken",
                 43: "Battery Awaken + Timed Charge/Discharge",
+                49: "Backup/Reserve - No Timed Charge/Discharge",
                 51: "Backup/Reserve",
             },
         allowedtypes = HYBRID,
