@@ -30,21 +30,21 @@ DO NOT CONNECT THIS COM PORT TO AN ETHERNET SWITCH - your Ethernet switch port w
 
 ## Waveshare RS485 to ETH (B)
 
-![Waveshare connection scheme](images/waveshareconnection-scheme.png)
+![Waveshare connection scheme](images/adaptor-rs485-eth-waveshare-b-scheme.png)
 
 - connects through Ethernet to your home network router/switch
 - use the "vircom" tool (Windows) to set the IP address matching your lan (or to let the device use DHCP, it does not use DHCP by default, however we recommend using a static IP)
 - configure it to use "Modbus TCP to RTU", make sure the work mode is "TCP Server" and the server listens to port 502. Make sure the baudrate matches the baudrate of your inverter (see:  settings > advanced settings > modbus > baud rate)
-![Waveshare Device Settings](images/waveshare-device-settings.png)
+![Waveshare Device Settings](images/adaptor-rs485-eth-waveshare-b-settings-device.png)
 
 - In "More Advanced Settings...",
     - **SolaX** set Modbus Gateway Type to "Simple Modbus to TCP/IP mode"
     - **Sofar Solar & possibly Growatt** set Modbus Gateway Type to "Auto query storage type"
     - all other parameters can be left default
-![Waveshare More Advanced Settings](images/waveshare-more-advanced-settings.png)
+![Waveshare More Advanced Settings](images/adaptor-rs485-eth-waveshare-b-settings-advanced.png)
 
 - you can verify the config by opening the webpage of your adapter: http://<waveshare_ip_addr>. It should show something like:
-![Waveshare device web page](images/waveshare-device-web-page.png)
+![Waveshare device web page](images/adaptor-rs485-eth-waveshare-b-web-page.png)
 - In the unlikely case you have multiple inverters connected to one RS485 adapter, you may need to modify the multi-host flag (untested). The system will increase the gap between messages, which will slow down the communication throughput. Make sure your polling interval is long enough (the act led should not light up all the time).
 - if all is well, the PWR LED should be red, the LINK LED should initially be green and become permanently blue as soon as HA has made the connection. The ACT LED should be off most of the time but should flash green (send) and blue (receive) briefly every 15 seconds (the default polling interval). From the Waveshare documentation:
     - If the Link light is not green, the network cable is not connected properly, please check the network cable. 
@@ -60,7 +60,7 @@ It should be possible to connect multiple inverters to the same Waveshare adapte
 
 ## USB to RS485 adaptor
 
-![USB to RS485 adaptor scheme](images/USB-to-RS485-adaptor-scheme.png)
+![USB to RS485 adaptor scheme](images/adaptor-rs485-usb-scheme.png)
 
 - Directly USB-connected to your HA system
 - This low cost model can be found in various e-shops, search for USB RS485
