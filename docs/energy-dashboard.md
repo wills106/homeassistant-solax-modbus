@@ -1,7 +1,7 @@
 # Home Assistant "Energy Dashboard"
 Energy Dashboard isn't actually live. It lags behind by an hour.
 
-![image](https://user-images.githubusercontent.com/18155231/200118632-2b07a0f5-83ee-49b6-8093-87966a71d11c.png)
+![Energy dashboard config](images/dashboard-energy-config.png)
 
 ## Entities
 
@@ -28,7 +28,7 @@ Energy Dashboard isn't actually live. It lags behind by an hour.
 ## [Power Distribution Card](https://github.com/JonahKr/power-distribution-card)
 Real Time Visualization of Energy flows
 
-![image](https://user-images.githubusercontent.com/18155231/200119158-e923f152-3236-4436-ac00-536d69a9952c.png)
+![Power Distribution Card](images/cards-power-distribution-card.png)
 
 ```
 type: custom:power-distribution-card
