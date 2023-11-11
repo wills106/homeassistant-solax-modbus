@@ -6,7 +6,7 @@ This page does not use affiliate links, please only use these links as a guide. 
 
 ### Generic RS485 - USB
 
-![Image of Generic RS485 - USB](https://user-images.githubusercontent.com/18155231/161318880-9aade4a6-ab45-4be8-822d-404e831f42d8.png)
+![Image of Generic RS485 - USB](images/adaptor-rs485-usb.png)
 
 [Amazon UK Link1](https://www.amazon.co.uk/dp/B07K3V381Z),
 [Berrybase Link1](https://www.berrybase.de/raspberry-pi/raspberry-pi-computer/usb-geraete/usb-rs485-konverter)
@@ -27,13 +27,13 @@ Only Ethernet mode tested so far.
 
 ### [Waveshare RS485 to RJ45 Ethernet DIN Rail Mount - RS485 TO ETH (B) / RS485 TO POE ETH (B)](https://www.waveshare.com/wiki/RS485_TO_ETH_(B))
 
-![Image of Waveshare RS485 to RJ45 Ethernet DIN Rail Mount](https://user-images.githubusercontent.com/18155231/161314257-2bb50255-f1f6-44c2-889f-aea5db528306.png)
+![Image of Waveshare RS485 to RJ45 Ethernet DIN Rail Mount](images/adaptor-rs485-eth-waveshare-b.png)
 
 [Amazon UK Link1](https://www.amazon.co.uk/dp/B09MQTP16W) , [Amazon UK Link2](https://www.amazon.co.uk/dp/B09LQMH2S1) , [Amazon UK Link3](https://www.amazon.co.uk/dp/B09QMNWYLQ)
 
 ### [ZLAN5843A 8-port RS232/485 serial port to Ethernet](http://www.zlmcu.com/en/products_ZLAN5843A.htm)
 
-![Image of ZLAN5843A](https://user-images.githubusercontent.com/18155231/161318289-7582aea1-2fc1-49f8-90a1-c2e7d34de50e.png)
+![Image of ZLAN5843A](images/adaptor-rs485-eth-zlan-5843a.png)
 
 [AliExpress](https://www.aliexpress.com/item/32888961582.html)
 
@@ -47,7 +47,7 @@ Should perform the same as the older version, although untested!
 
 ### [USR-TCP232-410S RS232 / RS485 Serial to Ethernet Adapter](https://www.pusr.com/products/modbus-serial-to-ethernet-converters-usr-tcp232-410s.html)
 
-![Image of Usr-Tcp232-410S RS232 / RS485 Serial to Ethernet Adapter](https://user-images.githubusercontent.com/18155231/161313612-ebab3228-8bcd-4d41-9045-36c7bb258900.png)
+![Image of Usr-Tcp232-410S RS232 / RS485 Serial to Ethernet Adapter](images/adaptor-rs485-eth-usr-410s.png)
 
 [Amazon UK Link 1](https://www.amazon.co.uk/dp/B07C1TC165)
 
@@ -55,7 +55,7 @@ Should perform the same as the older version, although untested!
 
 ### [USR-TCP232-304 only supports a Virtual Com Port?](https://www.pusr.com/products/1-port-rs485-to-ethernet-converters-usr-tcp232-304.html)
 
-![Image of USR-TCP232-304](https://user-images.githubusercontent.com/18155231/161317686-cc3d05d4-d5fa-441c-af42-ea3ad62f2026.png)
+![Image of USR-TCP232-304](images/adaptor-rs485-eth-usr-304.png)
 
 As this Model appears to only gives you a Virtual Com Port it might prove difficult to pass into Home Assistant running in a VM or Home Assistant OS?
 
