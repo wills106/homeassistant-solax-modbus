@@ -36,7 +36,7 @@ Known Serials
 
 #### Hybrid
 
-![Image of SP1ES](https://user-images.githubusercontent.com/18155231/197251406-e9ccb74c-3022-4331-8e23-6be2cbc9e7be.png)
+![Image of SP1ES](images/sofar-sp1s-photo.png)
 
 HYDxxKTL
 - Use plugin_sofar
@@ -59,11 +59,11 @@ Known Serials
 
 #### Single Phase
 
-#### AC / RetroFit
+##### AC / RetroFit
 
 X1-AC-n.n
 
-![image](https://user-images.githubusercontent.com/11804014/164073702-60db63d1-93a6-49f7-85cd-bb14f1d5a953.png)
+![image](images/solax-g2-hybrid-photo.png)
 
 > Must be connected by serial Modbus.
 
@@ -74,9 +74,9 @@ Known Serial Numbers G4
 - PRE
 - PRI
 
-### Three Phase
+#### Three Phase
 
-#### RetroFit G3
+##### RetroFit G3
 
 X3-Fit-nn.nx
 
@@ -90,7 +90,7 @@ Known Serial Numbers
 
 #### Single Phase
 
-![Image of SK-TL](https://user-images.githubusercontent.com/18155231/161395577-ebb13fd8-d6b5-4001-8048-cce119299a7b.png)
+![Image of SK-TL](images/solax-g2-hybrid-photo.png)
 
 > Features built in Ethernet
 
@@ -116,9 +116,7 @@ Known Serials
 
 #### Single Phase
 
-#### Hybrid
-
-![image](https://user-images.githubusercontent.com/18155231/160693214-5b61caa1-2ffc-4fd4-a9f3-9db1c45c29dc.png)
+![Photo of SolaX X3 Hybrid G3](images/solax-x1-hybrid-g3-photo.png)
 
 > Features built in Ethernet
 
@@ -131,8 +129,6 @@ Known Serial Numbers
 - XRE
 
 #### Three Phase
-
-#### Hybrid
 
 X3-Hybrid-nn-x-x
 
@@ -162,7 +158,7 @@ Known Serial Number
 - H475
 
 #### Three Phase
-![image](https://user-images.githubusercontent.com/11804014/160820148-64e35340-2122-4400-a76b-f14401f5cb93.png)
+![Photo of SolaX X3 Hybrid G4](images/solax-x3-hybrid-g4-photo.png)
 
 X3-Hybrid-n.n-x
 
