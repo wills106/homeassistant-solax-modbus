@@ -13,9 +13,6 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie. `SolaX Main` or `SolaX Southwest`.
 
-<details>
-<summary>
-
 ## Known Issues
 
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
