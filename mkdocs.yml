@@ -29,7 +29,8 @@ nav:
   - FAQ - WIP: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
 - Sofar:
-  - FAQ - WIP: sofar-faq.md
+  - Installation: sofar-installation.md
+  - FAQ: sofar-faq.md
   - Solis Modes of Operation - WIP: sofar-operation-modes.md
 - SolaX:
   - FAQ: solax-faq.md
