@@ -12,9 +12,9 @@ To allow maximum export you can override "Export Control User Limit" with "Confi
 ## Self Use
 For most people, this will be the most common mode of operation.
 In this mode, the home load will come from following sources in the given priority:
-* Solar, for the amount of solar energy available
-* Battery, as long as the battery State Of Charge (SOC) is above the "Battery Capacity" level (Default 10%)
-* Grid, for the remaining missing power
+- Solar, for the amount of solar energy available
+- Battery, as long as the battery State Of Charge (SOC) is above the "Battery Capacity" level (Default 10%)
+- Grid, for the remaining missing power
 
 Excess solar energy will go to Battery first, till the battery reaches the nearly full level.
 Once the battery is nearly full (95%), excess energy will go to the grid. Once the battery is completely full, all excess energy will go to the grid.
@@ -25,20 +25,20 @@ Battery charge and discharge currents can be limited with the "Battery Charge Ma
 ## Force Time
 Allows Battery Charging from the Grid:
 Allow Grid Charge has 4 sub-modes:
-* Both Forbidden: Does not charge from the grid. Inverter won't consume from batteries during time slots if set.
-* Period 1 Allowed: Charges from Grid during time set. Inverter won't consume from batteries during this time slot if set & Period 2 Allowed.
-* Period 2 Allowed: Charges from Grid during time set. Inverter won't consume from batteries during this time slot if set & Period 1 Allowed.
-* Both Allowed: Charges from Grid during both time slots. Handy if you have more dynamic Grid Pricing.
+- Both Forbidden: Does not charge from the grid. Inverter won't consume from batteries during time slots if set.
+- Period 1 Allowed: Charges from Grid during time set. Inverter won't consume from batteries during this time slot if set & Period 2 Allowed.
+- Period 2 Allowed: Charges from Grid during time set. Inverter won't consume from batteries during this time slot if set & Period 1 Allowed.
+- Both Allowed: Charges from Grid during both time slots. Handy if you have more dynamic Grid Pricing.
 
 ## Back Up Mode (Labelled Remote Mode on Gen2)
 Prevents battery discharging.
-* Designed for EPS use if you for example of unstable Grid connection during set periods of the day. 
-* Handy for saving battery capacity for expensive Grid Periods.
+- Designed for EPS use if you for example of unstable Grid connection during set periods of the day. 
+- Handy for saving battery capacity for expensive Grid Periods.
 
 ## Feedin Priority (Gen 3 Only)
 In Feedin Priority mode, the home load comes from following sources in the given priority:
-* Solar
-* Grid
+- Solar
+- Grid
 The battery will not discharge.
 
 Excess solar energy will go to the grid. If the grid power has been limited with the "Export Control User Limit" parameter, the remaining surplus power will go to the battery.
