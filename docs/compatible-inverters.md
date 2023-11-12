@@ -38,7 +38,10 @@ Known Serials
 
 ![Image of SP1ES](images/sofar-sp1s-photo.png)
 
-HYDxxKTL
+HYD xxKTL
+- Use plugin_sofar
+
+HYD xxKTL-3PH
 - Use plugin_sofar
 
 Known Serials
