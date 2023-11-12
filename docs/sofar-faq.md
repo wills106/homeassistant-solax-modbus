@@ -36,3 +36,5 @@ If that does still not help check the LAN Stick Loggers Firmware: Open the web i
 ### I have activated passive mode, but changing the 'Passive Mode Battery Power' has no impact
 
 After changing 'Passive Mode Battery Power' you have to press 'Passive Mode Battery Charge/Discharge' to commit the changes.
+
+See also this [example](https://github.com/wills106/homeassistant-solax-modbus/discussions/612).
