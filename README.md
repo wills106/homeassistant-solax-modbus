@@ -11,10 +11,6 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 * Supports Modbus over RS485 & TCP. **Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
 
-      </li>
-    </ul>
-</ul>
-
 You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie. `SolaX Main` or `SolaX Southwest`.
 
 <details>
