@@ -100,43 +100,6 @@ Updating / downgrading the integration or Home Assitant won't help, you have los
 <details>
 <summary>
 
-## Installation
-
-</summary>
-
-[Setup](https://github.com/wills106/homeassistant-solax-modbus/wiki/Installation-Notes) your modbus adapter first.
-
-<B>Preferred Option</B>
-
-You can add this custom_component directly through HACS, if you have HACS installed on your Home Assistant instance.
-
-<B>Alternatively</B>
-
-Download the zip / tar.gz source file from the release page.
-- Extract the contents of the zip / tar.gz
-- In the folder of the extracted content you will find a directory 'custom_components'.
-- Copy this directory into your Home-Assistant '<config>' directory so that you end up with this directory structure: '<config>/custom_components/solax_modbus
-- Restart Home-Assistant
-
-<B>Post Installation</B>
-
-After reboot of Home-Assistant, this integration can be configured through the integration setup UI
-
-<img src="https://user-images.githubusercontent.com/18155231/200254318-265189d5-34e2-459e-9933-cdb05c05977b.png" width=40% height=40%>
-
-TCP
-
-<img src="https://user-images.githubusercontent.com/18155231/182889165-2b304b6d-f548-4551-a34c-d190ff510992.png" width=40% height=40%>
-
-Serial
-
-<img src="https://user-images.githubusercontent.com/18155231/182894989-e9767f7b-6c5e-482d-bc6e-8c2c7b8f9445.png" width=40% height=40%>
-
-Any manual updates / HACS updates require a restart of Home Assistant to take effect.
-- Any major changes might require deleting the Integration from the Integration page and adding again. If you name the Integration exactly the same including the Area if set, you should retain the same entity naming bar any name changes in the release. (Refer to the release notes for any naming change)
-
-</details>
-
 ## Known Issues
 
 1. You can only have one connection to the inverter, so you can't use this and one of my yaml [packages](https://github.com/wills106/homeassistant-config/tree/master/packages) at the same time for writing to registers.
