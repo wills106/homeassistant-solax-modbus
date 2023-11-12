@@ -42,6 +42,13 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+MPPT3          = 0x40000
+MPPT4          = 0x80000
+MPPT6          = 0x100000
+MPPT8          = 0x200000
+MPPT10         = 0x400000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 # ======================= end of bitmask handling code =============================================
@@ -55,7 +62,7 @@ def _read_serialnr(hub, address):
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError(): 
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(12).decode("ascii")
             hub.seriesnumber = res    
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
@@ -81,8 +88,8 @@ class GrowattModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Growatt Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Big
+    order16: int = Endian.BIG
+    order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -1119,8 +1126,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
     ),
     GrowattModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -1131,8 +1137,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
         icon = "mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1146,8 +1151,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1159,8 +1163,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
     ),
     GrowattModbusSensorEntityDescription(
         name = "PV Current 4",
@@ -1171,8 +1174,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
         icon = "mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1186,8 +1188,155 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 5",
+        key = "pv_voltage_5",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 19,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 5",
+        key = "pv_current_5",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 20,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 5",
+        key = "pv_power_5",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 21,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 6",
+        key = "pv_voltage_6",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 23,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 6",
+        key = "pv_current_6",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 24,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 6",
+        key = "pv_power_6",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 25,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 7",
+        key = "pv_voltage_7",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 27,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 7",
+        key = "pv_current_7",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 28,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 7",
+        key = "pv_power_7",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 29,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 8",
+        key = "pv_voltage_8",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 31,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 8",
+        key = "pv_current_8",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 32,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 8",
+        key = "pv_power_8",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 33,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1473,7 +1622,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
+        allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -1488,7 +1637,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
+        allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -1503,7 +1652,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -1518,7 +1667,127 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3 | X3,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Today's PV5 Solar Energy",
+        key = "today_pv5_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 75,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Total PV5 Solar Energy",
+        key = "total_pv5_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 77,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Today's PV6 Solar Energy",
+        key = "today_pv6_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 79,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Total PV6 Solar Energy",
+        key = "total_pv6_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 81,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT6 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Today's PV7 Solar Energy",
+        key = "today_pv7_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 83,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Total PV7 Solar Energy",
+        key = "total_pv7_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 85,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Today's PV8 Solar Energy",
+        key = "today_pv8_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 87,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Total PV8 Solar Energy",
+        key = "total_pv8_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 89,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | X3 | MPPT8 | MPPT10,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -2311,8 +2580,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | ALL_MPPT_GROUP,
     ),
     GrowattModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -2323,8 +2591,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | ALL_MPPT_GROUP,
         icon = "mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2338,8 +2605,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | ALL_MPPT_GROUP,
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2351,8 +2617,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | MPPT4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "PV Current 4",
@@ -2363,8 +2628,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | MPPT4,
         icon = "mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2378,8 +2642,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | X3,
-        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | X3 | MPPT4,
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2707,7 +2970,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | X3 | ALL_MPPT_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -2722,7 +2985,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | X3 | ALL_MPPT_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
@@ -3167,7 +3430,8 @@ class growatt_plugin(plugin_base):
         if seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW
         elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV KTL3-X 15kW 3Phase (MOD)
-        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
+        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN3 | X3 | MPPT4 # PV KTL3-X 35kW 3Phase (MID)
+        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
         #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN3 | X3 # PV X3 3MPPT 50-70kW
         #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN3 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
         elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid KTL3-XH 2.5kW - 6kW
@@ -3175,6 +3439,7 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW
+        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN2 | X1 # Hybrid SPH 4kW - 10kW
         #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
 
         else: 
@@ -3193,11 +3458,12 @@ class growatt_plugin(plugin_base):
         hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
 plugin_instance = growatt_plugin(
@@ -3207,6 +3473,6 @@ plugin_instance = growatt_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 100,
-    order16 = Endian.Big,
-    order32 = Endian.Big,
+    order16 = Endian.BIG,
+    order32 = Endian.BIG,
     )

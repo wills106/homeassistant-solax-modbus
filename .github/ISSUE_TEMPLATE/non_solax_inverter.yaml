@@ -1,0 +1,95 @@
+name: Bug Report - Non SolaX Inverter
+description: File a bug report about Non SolaX Inverter (Growatt, Sofar (Azzurro), Solis etc)
+title: "[Bug]: "
+labels: ["bug", "triage", "non solax"]
+projects: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting the bug request, please try to provide as much information as possible.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: 
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration Version
+      description: 
+      placeholder: e.g. 2023.09.7
+    validations:
+      required: true
+  - type: input
+    id: ha-core-version
+    attributes:
+      label: Homeassistant core version 
+      description: 
+      placeholder: e.g. 2023.11.1
+    validations:
+      required: true
+  - type: input
+    id: inverter-brand
+    attributes:
+      label: Inverter brand
+      description: 
+      placeholder: e.g. Solis
+    validations:
+      required: true
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Plugin used
+      description: 
+      options:
+        - plugin_growatt.py
+        - plugin_sofar.py
+        - plugin_sofar_old.py
+        - plugin_solis.py
+        - plugin_solis_old.py
+        - plugin_srne.py
+    validations:
+      required: true
+  - type: input
+    id: serial-prefix
+    attributes: 
+      label: First 6 digits of Serial (Growatt Firmware Version)
+      description: 
+      placeholder: e.g. 062000
+    validations:
+      required: true
+  - type: input
+    id: connection-method
+    attributes:
+      label: Connection Method
+      description: Tell us which hardware (dongle) do you use to connect to the inverter
+      placeholder: e.g. RS485-USB, Waveshare adapter 
+    validations:
+      required: true
+  - type: textarea
+    id: log-output
+    attributes:
+      label: Detailed Error Log
+      description: Detailed Error Log, if you press on the individual error further information is displayed. This is the content we need, the description alone doesn't provide enough context.
+      placeholder: |
+        If there are no log's showing for SolaX try the following depending on your language settings, you can find the full logs under:
+        Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
+        Now the full logs are loaded. If you scroll down, you will see them. Once the full logs are shown, you can either use the search function in your browser to search for “solax” related entries or use the search entry field on top of the page.
+        Search for
+        solax
+        and report us the logs. Make sure to replace sensitive information by xxxx (if any)
+    validations:
+      required: false
+  - type: textarea
+    id: other-info
+    attributes:
+      label: Additional context
+      description: 
+      placeholder: Add any other context about the problem here.
+    validations:
+      required: false

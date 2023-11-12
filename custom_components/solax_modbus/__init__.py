@@ -18,14 +18,22 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.components.button import ButtonEntity
 
 _LOGGER = logging.getLogger(__name__)
-try: # pymodbus 3.0.x
-    from pymodbus.client import ModbusTcpClient, ModbusSerialClient
-    UNIT_OR_SLAVE = 'slave'
-    _LOGGER.debug("using pymodbus library 3.x")
-except: # pymodbus 2.5.3
-    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
-    UNIT_OR_SLAVE = 'unit'
-    _LOGGER.debug("using pymodbus library 2.x")
+#try: # pymodbus 3.0.x
+from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+#    UNIT_OR_SLAVE = 'slave'
+#    _LOGGER.warning("using pymodbus library 3.x")
+#except: # pymodbus 2.5.3
+#    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
+#    UNIT_OR_SLAVE = 'unit'
+#    _LOGGER.warning("using pymodbus library 2.x")
+#import pymodbus
+#_LOGGER.debug(f"pymodbus client version: { pymodbus.__version__ }")
+#if pymodbus.__version__.startswith('3.3') or pymodbus.__version.startswith('3.0'):
+#    Endian_BIG = Endian.big
+#    Endian_LITTLE = Endian.little
+#else:
+#    Endian_BIG = Endian.BIG
+#    Endian_LITTLE = Endian.LITTLE
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
@@ -332,19 +340,19 @@ class SolaXModbusHub:
     def read_holding_registers(self, unit, address, count):
         """Read holding registers."""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             return self._client.read_holding_registers(address, count, **kwargs)
     
     def read_input_registers(self, unit, address, count):
         """Read input registers."""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             return self._client.read_input_registers(address, count, **kwargs)
 
     def _lowlevel_write_register(self, unit, address, payload):
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
-            #builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
+            kwargs = {'slave': unit} if unit else {}
+            #builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
@@ -371,7 +379,7 @@ class SolaXModbusHub:
     def write_registers_single(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             builder.add_16bit_int(payload)
@@ -391,7 +399,7 @@ class SolaXModbusHub:
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         with self._lock:
-            kwargs = {UNIT_OR_SLAVE: unit} if unit else {}
+            kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
             builder.reset()
             if isinstance(payload, list):
@@ -437,6 +445,7 @@ class SolaXModbusHub:
 
     def treat_address(self, decoder, descr, initval=0):
         return_value = None
+        val = None
         if self.cyclecount <5: _LOGGER.debug(f"treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if   descr.unit == REGISTER_U16: val = decoder.decode_16bit_uint()
@@ -454,7 +463,6 @@ class SolaXModbusHub:
         except Exception as ex: 
             if self.cyclecount < 5: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key}", exc_info=True)
             else: _LOGGER.warning(f"{self.name}: read failed at 0x{descr.register:02x}: {descr.key} ")
-            val = 0
         """ TO BE REMOVED 
         if descr.prevent_update:
             if  (self.tmpdata_expiry.get(descr.key, 0) > time()): 
@@ -467,7 +475,9 @@ class SolaXModbusHub:
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
         """
 
-        if type(descr.scale) is dict: # translate int to string 
+        if val == None:  # E.g. if errors have occurred during readout
+            return_value = None
+        elif type(descr.scale) is dict: # translate int to string 
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, self.data) 

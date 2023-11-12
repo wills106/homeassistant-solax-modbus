@@ -5,24 +5,24 @@
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
-          "interface" : "Interface",
+          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
+          "interface": "Interface",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "plugin": "Select Inverter Type",
+          "read_pm": "Mode paralléle (Primaire-Secondaire)",
+          "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       },
       "serial": {
-        "title": "Serial Interface Parameters",
+        "title": "Paramètres de l'interface Série",
         "data": {
-          "read_serial_port": "Serial port name",
+          "read_serial_port": "Nom du port série",
           "baudrate": "Baudrate"
         }
       },
       "tcp": {
-        "title": "TCP/IP Parameters",
+        "title": "Paramètres TCP/IP",
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
@@ -31,39 +31,38 @@
       }
     },
     "error": {
-      "already_configured": "Device is already configured",
-      "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host IP address"
+      "already_configured": "Le périphérique est déjà configuré",
+      "name_already_used": "Le nom est déjà utilisé ou est invalide",
+      "invalid_host": "L'adresse IP de l'hôte est invalide"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Le périphérique est déjà configuré"
     }
   },
-
   "options": {
     "step": {
       "init": {
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
-          "interface" : "Interface",
+          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
+          "interface": "Interface",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "plugin": "Select Inverter Type",
+          "read_pm": "Mode paralléle (Primaire-Secondaire)",
+          "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       },
       "serial": {
-        "title": "Serial Interface Parameters",
+        "title": "Paramètres de l'interface Série",
         "data": {
-          "read_serial_port": "Serial port name",
+          "read_serial_port": "Nom du port série",
           "baudrate": "Baudrate"
         }
       },
       "tcp": {
-        "title": "TCP/IP Parameters",
+        "title": "Paramètres TCP/IP",
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter"
@@ -71,13 +70,12 @@
       }
     },
     "error": {
-      "already_configured": "Device is already configured",
-      "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host IP address"
+      "already_configured": "Le périphérique est déjà configuré",
+      "name_already_used": "Le nom est déjà utilisé ou est invalide",
+      "invalid_host": "L'adresse IP de l'hôte est invalide"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Le périphérique est déjà configuré"
     }
   }
 }
-

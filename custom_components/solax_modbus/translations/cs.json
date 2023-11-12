@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Určete vaše připojení přes modbus k měniči",
+        "data": {
+          "name": "Předpona pro použití senzory měniče",
+          "read_modbus_addr": "Adresa modbus měniče",
+          "interface" : "Rozhraní",
+          "read_eps": "Možnost záložního zdroje (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Paralelení režim (Master-Slave)",
+          "plugin": "Vyberte druh měniče",
+          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
+        }
+      },
+      "serial": {
+        "title": "Parametry sériového rozhraní",
+        "data": {
+          "read_serial_port": "Název sériového portu",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "Parametry TCP/IP",
+        "data": {
+          "host": "IP adresa měniče nebo modbus adaptéru",
+          "port": "TCP port připojení k měniči",
+          "tcp_type": "Varianta TCP protokolu modbus"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Zařízení je již nakonfigurováno",
+      "name_already_used": "Název byl již použit nebo je neplatný",
+      "invalid_host": "Neplatná IP adresa hostitele"
+    },
+    "abort": {
+      "already_configured": "Zařízení je již nakonfigurováno"
+    }
+  },
+
+  "options": {
+    "step": {
+      "init": {
+        "title": "Určete vaše připojení přes modbus k měniči",
+        "data": {
+          "name": "Předpona pro použití senzory měniče",
+          "read_modbus_addr": "Adresa modbus měniče",
+          "interface" : "Rozhraní",
+          "read_eps": "Možnost záložního zdroje (EPS)",
+          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_pm": "Paralelení režim (Master-Slave)",
+          "plugin": "Vyberte druh měniče",
+          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
+        }
+      },
+      "serial": {
+        "title": "Parametry sériového rozhraní",
+        "data": {
+          "read_serial_port": "Název sériového portu",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "Parametry TCP/IP",
+        "data": {
+          "host": "IP adresa měniče nebo modbus adaptéru",
+          "port": "TCP port připojení k měniči"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Zařízení je již nakonfigurováno",
+      "name_already_used": "Název byl již použit nebo je neplatný",
+      "invalid_host": "Neplatná IP adresa hostitele"
+    },
+    "abort": {
+      "already_configured": "Zařízení je již nakonfigurováno"
+    }
+  }
+}

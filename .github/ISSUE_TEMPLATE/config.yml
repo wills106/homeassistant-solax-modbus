@@ -1,0 +1,17 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Docs
+    url: https://homeassistant-solax-modbus.readthedocs.io
+    about: Documentation
+  - name: FAQ
+    url: https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq
+    about: For info on Frequently Asked Questions
+  - name: GitHub Community Support
+    url: https://github.com/wills106/homeassistant-solax-modbus/discussions
+    about: Questions related to this integration belong here, general help, installation questions, supported Inverters.
+  - name: Todo List
+    url: https://github.com/wills106/homeassistant-solax-modbus/discussions/200
+    about: List of open Improvements
+  - name: Unrecognized Inverter
+    url: https://github.com/wills106/homeassistant-solax-modbus/discussions?discussions_q=is%3Aopen+author%3Awills106+%22Unrecognized+Inverter%22
+    about: If you see "unrecognized inverter type" error

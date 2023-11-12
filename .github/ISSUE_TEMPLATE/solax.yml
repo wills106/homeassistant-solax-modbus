@@ -1,0 +1,108 @@
+name: Bug Report - SolaX Inverter
+description: File a bug report about SolaX Inverter (QCells Gen3 & TIGO TSI)
+title: "[Bug]: "
+labels: ["bug", "triage", "solax"]
+projects: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting the bug request, please try to provide as much information as possible.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: 
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration Version
+      description: 
+      placeholder: e.g. 2023.09.7
+    validations:
+      required: true
+  - type: input
+    id: ha-core-version
+    attributes:
+      label: Homeassistant core version 
+      description: 
+      placeholder: e.g. 2023.11.1
+    validations:
+      required: true
+  - type: input
+    id: inverter-brand
+    attributes:
+      label: Inverter brand
+      description: 
+      placeholder: e.g. SolaX Power
+    validations:
+      required: true
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Plugin used
+      description: 
+      options:
+        - plugin_solax.py
+        - plugin_solax_ev_charger.py
+        - plugin_solax_a1j1.py
+    validations:
+      required: true
+  - type: input
+    id: serial-prefix
+    attributes: 
+      label: First 6 digits of Serial
+      description: 
+      placeholder: e.g. F4502T
+    validations:
+      required: true
+  - type: input
+    id: inverter-firmwares
+    attributes: 
+      label: Inverter firmware versions
+      description: 
+      placeholder: e.g. ARM 1.31 and DSP 1.33
+    validations:
+      required: true
+  - type: input
+    id: connection-method
+    attributes:
+      label: Connection Method
+      description: Tell us which hardware (dongle) do you use to connect to the inverter
+      placeholder: e.g. SolaX Pocket WiFi 3.0, Waveshare adapter 
+    validations:
+      required: true
+  - type: textarea
+    id: dongle-firmware
+    attributes:
+      label: Dongle firmware
+      description: The firmware of the hardware you use for connection.
+      placeholder: For SolaX Pocket WiFi 3.0 look for "internal code", not for FW version
+    validations:
+      required: true
+  - type: textarea
+    id: log-output
+    attributes:
+      label: Detailed Error Log
+      description: Detailed Error Log, if you press on the individual error further information is displayed. This is the content we need, the description alone doesn't provide enough context.
+      placeholder: |
+        If there are no log's showing for SolaX try the following depending on your language settings, you can find the full logs under:
+        Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
+        Now the full logs are loaded. If you scroll down, you will see them. Once the full logs are shown, you can either use the search function in your browser to search for “solax” related entries or use the search entry field on top of the page.
+        Search for
+        solax
+        and report us the logs. Make sure to replace sensitive information by xxxx (if any)
+    validations:
+      required: false
+  - type: textarea
+    id: other-info
+    attributes:
+      label: Additional context
+      description: 
+      placeholder: Add any other context about the problem here.
+    validations:
+      required: false

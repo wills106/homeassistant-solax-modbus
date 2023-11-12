@@ -52,11 +52,11 @@ def _read_serialnr(hub, address, swapbytes):
     try:
         inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=8)
         if not inverter_data.isError(): 
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.Big)
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
             if swapbytes: 
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.Little ?
+                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
             hub.seriesnumber = res    
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
@@ -82,8 +82,8 @@ class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.Big
-    order32: int = Endian.Big
+    order16: int = Endian.BIG
+    order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -168,6 +168,7 @@ BUTTON_TYPES = [
 
 MAX_CURRENTS = [
     ('0602',  62.5 ), # 3kW 48v
+    ('0102',  62.5 ), # 3kW 48v AC Only?
     ('110F',  62.5 ), # 3.6kW 48v
     ('160F',  62.5 ), # 3.6kW 48v
     ('1031',  100 ), # 5kW 48v
@@ -708,11 +709,13 @@ SELECT_TYPES = [
         option_dict =  {
                 1: "Selfuse - No Grid Charging",
                 3: "Timed Charge/Discharge - No Grid Charging",
+                17: "Backup/Reserve - No Grid Charging",
                 33: "Selfuse",
                 35: "Timed Charge/Discharge",
                 37: "Off-Grid Mode",
                 41: "Battery Awaken",
                 43: "Battery Awaken + Timed Charge/Discharge",
+                49: "Backup/Reserve - No Timed Charge/Discharge",
                 51: "Backup/Reserve",
             },
         allowedtypes = HYBRID,
@@ -1240,11 +1243,13 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale = {  
                 1: "Selfuse - No Grid Charging",
                 3: "Timed Charge/Discharge - No Grid Charging",
+                17: "Backup/Reserve - No Grid Charging",                
                 33: "Selfuse",
                 35: "Timed Charge/Discharge", 
                 37: "Off-Grid Mode", 
                 41: "Battery Awaken", 
                 43: "Battery Awaken + Timed Charge/Discharge",
+                49: "Backup/Reserve - No Timed Charge/Discharge",                
                 51: "Backup/Reserve",
                 },
         allowedtypes = HYBRID,
@@ -1598,6 +1603,28 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
         icon = "mdi:home",
     ),
+     SolisModbusSensorEntityDescription(
+        name = "Battery Charge Current Limit",
+        key = "battery_charge_current_limit",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 33206,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X1,
+    ),   
+     SolisModbusSensorEntityDescription(
+        name = "Battery Discharge Current Limit",
+        key = "battery_discharge_current_limit",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 33207,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = HYBRID | X1,
+    ),          
     SolisModbusSensorEntityDescription(
         name = "Meter AC Voltage",
         key = "meter_ac_voltage",
@@ -2296,6 +2323,7 @@ class solis_plugin(plugin_base):
         if seriesnumber.startswith('1801'):  invertertype = HYBRID | X1 # PV Only S6-GR1P 1-3K
         elif seriesnumber.startswith('1802'):  invertertype = HYBRID | X1 # PV Only S6-GR1P 2.5-6K
         elif seriesnumber.startswith('0602'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
+        elif seriesnumber.startswith('0102'):  invertertype = HYBRID | X1 # AC? Gen5 3kW - 48v
         elif seriesnumber.startswith('010F'):  invertertype = HYBRID | X1 # Hybrid Gen5 3kW - 48v
         elif seriesnumber.startswith('110F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
         elif seriesnumber.startswith('114F'):  invertertype = HYBRID | X1 # Hybrid Gen5 6K - 48V
@@ -2337,7 +2365,7 @@ plugin_instance = solis_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES, 
     block_size = 40,
-    order16 = Endian.Big,
-    order32 = Endian.Big,
+    order16 = Endian.BIG,
+    order32 = Endian.BIG,
     auto_block_ignore_readerror = True
     )
