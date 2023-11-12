@@ -192,7 +192,7 @@ BUTTON_TYPES = [
         register = 0x1C,
         command = 1,
         allowedtypes = AC | HYBRID,
-        icon = "mdi:battery-clock",
+        icon = "mdi:power-on",
     ),
     SolaxModbusButtonEntityDescription(
         name = "System Off",
@@ -200,7 +200,7 @@ BUTTON_TYPES = [
         register = 0x1C,
         command = 0,
         allowedtypes = AC | HYBRID,
-        icon = "mdi:battery-clock",
+        icon = "mdi:power-off",
     ),
     SolaxModbusButtonEntityDescription(
         name = "Battery Awaken",
@@ -208,7 +208,7 @@ BUTTON_TYPES = [
         register = 0x56,
         command = 1,
         allowedtypes = ALLDEFAULT,
-        icon = "mdi:battery-clock",
+        icon = "mdi:battery-alert-variant",
     ),
     SolaxModbusButtonEntityDescription(
         name = "Grid Export",
@@ -565,7 +565,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Backup Nightcharge Upper SOC",
@@ -577,7 +577,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Battery Minimum Capacity",
@@ -718,6 +718,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
+        icon = "mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Feedin Nightcharge Upper SOC",
@@ -729,6 +730,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
+        icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Feedin On Power",
@@ -837,7 +839,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Selfuse Nightcharge Upper SOC",
@@ -849,7 +851,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Switch Off SOC",
@@ -883,7 +885,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
         name = "Generator Switch On SOC",
@@ -941,6 +943,7 @@ NUMBER_TYPES = [
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | GEN4 | DCB,
+        icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
         name = "PeakShaving Reserved SOC",
@@ -1069,7 +1072,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = GEN2 | GEN3, 
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
      SolaxModbusSelectEntityDescription(
         name = "Charger End Time 1",
@@ -1078,7 +1081,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4, 
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charger End Time 2",
@@ -1087,7 +1090,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | AC | GEN2 | GEN3, 
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charger End Time 2",
@@ -1096,7 +1099,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charger Start Time 1",
@@ -1105,7 +1108,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | AC | GEN2 | GEN3,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charger Start Time 1",
@@ -1114,7 +1117,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charger Start Time 2",
@@ -1123,7 +1126,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | AC | GEN2 | GEN3,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     # comment this  block to test prevent_update
     SolaxModbusSelectEntityDescription(              # block
@@ -1133,7 +1136,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,             # block
         allowedtypes = HYBRID | AC | GEN4,           # block
         entity_category = EntityCategory.CONFIG,     # block
-        icon = "mdi:battery-clock",                  # block
+        icon = "mdi:clock-start",                  # block
     ),
     # end of block
     SolaxModbusSelectEntityDescription(
@@ -1206,7 +1209,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | GEN2,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger End Time 1",
@@ -1215,7 +1218,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger End Time 2",
@@ -1224,7 +1227,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | GEN2,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger End Time 2",
@@ -1233,7 +1236,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4, 
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger Start Time 1",
@@ -1242,7 +1245,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | GEN2,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger Start Time 1",
@@ -1251,7 +1254,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger Start Time 2",
@@ -1260,7 +1263,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS,
         allowedtypes = HYBRID | GEN2,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Discharger Start Time 2",
@@ -1269,7 +1272,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "HotStandBy",
@@ -1339,7 +1342,7 @@ SELECT_TYPES = [
                 1: "Enabled",
             },
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:dip-switch",
+        icon = "mdi:heating-coil",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Battery Heating Start Time 1",
@@ -1348,7 +1351,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Battery Heating End Time 1",
@@ -1357,7 +1360,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Battery Heating Start Time 2",
@@ -1366,7 +1369,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Battery Heating End Time 2",
@@ -1375,7 +1378,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | AC | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Generator Start Method",
@@ -1413,7 +1416,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "PeakShaving Discharge Stop Time 1",
@@ -1422,7 +1425,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "PeakShaving Discharge Start Time 2",
@@ -1431,7 +1434,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaxModbusSelectEntityDescription(
         name = "PeakShaving Discharge Stop Time 2",
@@ -1440,7 +1443,7 @@ SELECT_TYPES = [
         option_dict = TIME_OPTIONS_GEN4,
         allowedtypes = HYBRID | GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
         name = "PeakShaving Charge from Grid",
@@ -2013,7 +2016,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Selfuse Discharge Min SOC",
@@ -2021,6 +2024,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x93,
         unit = REGISTER_U8H,
         allowedtypes = GEN4,
+        icon = "mdi:battery-charging-low",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Selfuse Night Charge Enable",
@@ -2039,7 +2043,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Selfuse Night Charge Upper SOC",
@@ -2047,6 +2051,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x94,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
+        icon = "mdi:battery-charging-high",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Feedin Night Charge Upper SOC",
@@ -2055,6 +2060,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_U8H,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
+        icon = "mdi:battery-charging-high",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Feedin Discharge Min SOC",
@@ -2063,6 +2069,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_U8L,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
+        icon = "mdi:battery-charging-low",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger Start Time 1", 
@@ -2073,7 +2080,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Backup Night Charge Upper SOC",
@@ -2082,7 +2089,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_U8H,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-high",
     ),
      SolaXModbusSensorEntityDescription(
         name = "Backup Discharge Min SOC",
@@ -2091,7 +2098,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_U8L,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = GEN4,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-low",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Charger Start Time 1", 
@@ -2100,7 +2107,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger End Time 1", 
@@ -2111,7 +2118,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Charger End Time 1", 
@@ -2120,7 +2127,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger Start Time 1",
@@ -2129,7 +2136,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Charger Start Time 2", 
@@ -2140,7 +2147,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger End Time 1",
@@ -2149,7 +2156,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Charge Period2 Enable",
@@ -2168,7 +2175,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     # comment this block to test prevent_update mechanism
     SolaXModbusSensorEntityDescription(
@@ -2178,7 +2185,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,         # block
         entity_registry_enabled_default = False, # block
         allowedtypes = GEN4,                     # block
-        icon = "mdi:battery-clock",              # block
+        icon = "mdi:clock-start",              # block
     ),
     # end of block
     SolaXModbusSensorEntityDescription(
@@ -2188,7 +2195,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger Start Time 2", 
@@ -2199,7 +2206,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger Start Time 2", 
@@ -2208,7 +2215,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger End Time 2",
@@ -2217,7 +2224,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Discharger End Time 2", 
@@ -2228,7 +2235,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN2,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "HotStandBy",
@@ -2258,7 +2265,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   1: "Enabled", },
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:dip-switch",
+        icon = "mdi:heating-coil",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Heating Start Time 1", 
@@ -2267,7 +2274,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Heating End Time 1", 
@@ -2276,7 +2283,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Modbus Power Control",
@@ -2296,7 +2303,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Heating End Time 2", 
@@ -2305,7 +2312,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         entity_registry_enabled_default = False,
         allowedtypes = HYBRID | AC | GEN4,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Registration Code Pocket",
@@ -2379,6 +2386,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Off",
                   1: "On", },
         allowedtypes = GEN2 | GEN3 | GEN4 | EPS,
+        icon = "mdi:volume-mute",
     ),
     SolaXModbusSensorEntityDescription(
         name = "EPS Set Frequency",
@@ -2465,7 +2473,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-start",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Backup Charge End",
@@ -2476,7 +2484,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen23time,
         entity_registry_enabled_default = False,
         allowedtypes = GEN3,
-        icon = "mdi:battery-clock",
+        icon = "mdi:clock-end",
     ),
     SolaXModbusSensorEntityDescription(
         name = "wAS4777 Power Manager",
@@ -2657,7 +2665,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x10E,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery-charging-high",
         native_unit_of_measurement = PERCENTAGE,
     ),
     SolaXModbusSensorEntityDescription(
@@ -3110,6 +3118,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x157,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
+        icon = "mdi:battery-charging-high",
     ),
     SolaXModbusSensorEntityDescription(
         name = "PeakShaving Reserved SOC",
@@ -3469,6 +3478,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_S16,
         allowedtypes = GEN2 | GEN3 | GEN4,
+        icon = "mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Temperature Board Charge",
@@ -4530,7 +4540,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = { 0: "Unfinished",
                   1: "Finished", },
-        icon = "mdi:dip-switch",
+        icon = "mdi:mdi:bullseye-arrow",
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4828,6 +4838,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_S32,
         allowedtypes = GEN3 | GEN4 | PM,
+        icon = "mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
         name = "PM Battery Current Charge",
@@ -5019,6 +5030,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x213,
         register_type = REG_INPUT,
         allowedtypes = GEN3 | GEN4 | PM,
+        icon = "mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
         name = "PM I2 Battery Voltage Charge",
@@ -5228,6 +5240,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x22D,
         register_type = REG_INPUT,
         allowedtypes = GEN3 | GEN4 | PM,
+        icon = "mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
         name = "PM I3 Battery Voltage Charge",
@@ -5292,7 +5305,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = GEN2 | GEN3 | GEN4,
-        icon = "mdi:home",
+        icon = "mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name = "House Load Alt",
@@ -5303,7 +5316,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        icon = "mdi:home",
+        icon = "mdi:home-lightning-bolt",
     ), 
     SolaXModbusSensorEntityDescription(
         name = "PV Power Total",
