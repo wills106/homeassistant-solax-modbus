@@ -26,10 +26,10 @@ nav:
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
 - Growatt:
-  - FAQ: growatt-faq.md
-  - Growatt Modes of Operation: growatt-operation-modes.md
+  - FAQ - WIP: growatt-faq.md
+  - Growatt Modes of Operation - WIP: growatt-operation-modes.md
 - Sofar:
-  - FAQ: sofar-faq.md
+  - FAQ - WIP: sofar-faq.md
   - Solis Modes of Operation - WIP: sofar-operation-modes.md
 - SolaX:
   - FAQ: solax-faq.md
@@ -38,7 +38,7 @@ nav:
   - SolaX Gen2 & Gen3 Modes of Operation: solax-G23-operation-modes.md
   - SolaX Gen4 Modes of Operation: solax-G4-operation-modes.md
 - Solis:
-  - FAQ: solis-faq.md
+  - FAQ - WIP: solis-faq.md
   - Solis Modes of Operation - WIP: solis-operation-modes.md
 not_in_nav: |
   /index.md
