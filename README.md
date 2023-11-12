@@ -11,69 +11,6 @@ Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assis
 
 * Supports Modbus over RS485 & TCP. **Please check the Wiki for [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors)**
 
-<ul>
-    <ul>
-      <li>
-       <details>
-<summary>
-Ginlong Solis
-</summary>
-
-- RHI-nK-48ES-5G Single Phase (lowercase n indicates Inverter size, ie 6kW)
-- RHI-3PnK-HVES-5G Three Phase (lowercase n indicates Inverter size, ie 10kW)
-
-</details>
-      </li>
-      <li>
-       <details>
-<summary>
-Growatt:
-</summary>
-
- - AC Battery Storage:
-   - SPA
-  
- - Hybrid:
-   - SPH
-   - TL-XH
-  
- - PV Only:
-   - MAC
-   - MAX
-   - MID
-   - TL-X
-
-</details>
-      </li>
-      <li>
-       <details>
-<summary>
-Sofar Solar
-</summary>
-
-- HYDxxKTL-3P (plugin_sofar)
-  - Azzurro 3.3k-12KTL-V3
-- HYDxxxxES (plugin_sofar_old)
-
-</details>
-      </li>
-      <li>
-       <details>
-<summary>
-SolaX Power
-</summary>
-
-- A1 Hybrid - **WIP**
-- Gen2 Hybrid
-- Gen3 AC, Hybrid & Retrofit
-- Gen4 Hybrid
-  - Qcells Q.VOLT HYB-G3-3P
-  - TIGO TSI
-- J1 Hybrid - **WIP**
-- X3 MIC / MIC PRO (Limited set of entities available)
-- X1 Air/Boost/Mini (Limited set of entities available)
-
-</details>
       </li>
     </ul>
 </ul>
