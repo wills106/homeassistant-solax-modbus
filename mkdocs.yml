@@ -1,4 +1,6 @@
 site_name: Homeassistant SolaX modbus integration
+site_description: The Description
+repo_url: https://github.com/wills106/homeassistant-solax-modbus
 theme:
   name: readthedocs
   highlightjs: true
@@ -15,6 +17,8 @@ markdown_extensions:
       base_path: .
   - admonition
 nav:
+- Installation: installation.md
+- FAQ: faq.md
 - Modbus Adaptor Setup: modbus-adaptor-setup.md
 - Automation - Hints and Examples: automation-examples.md
 - Serial Baud Rates: baudrates.md
@@ -29,3 +33,6 @@ nav:
   - SolaX Gen2 & Gen3 Modes of Operation: solax-G23-operation-modes.md
 - Ginlong Solis:
   - Ginlong Solis Modes of Operation - WIP: ginlong-solis-operation-modes.md
+not_in_nav: |
+  /index.md
+strict: true
