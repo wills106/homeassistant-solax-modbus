@@ -2051,6 +2051,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Stop Charge and Discharge",
                 1: "Force Charge",
                 2: "Force Discharge", },
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2707,6 +2708,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "phase_power_balance_x3",
         register = 0x106,
         scale = { 0: "Disabled", 1: "Enabled"},
+        entity_registry_enabled_default = False,
         allowedtypes = GEN3 | GEN4 | X3,
     ),
     SolaXModbusSensorEntityDescription(
