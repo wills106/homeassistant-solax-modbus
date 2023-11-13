@@ -5,6 +5,7 @@
 Always also check vendor specific FAQ pages:
 
 - [SolaX Power](solax-faq.md)
+- [Sofar Solar](sofar-faq.md)
 
 ## Entity I need is not present
 
