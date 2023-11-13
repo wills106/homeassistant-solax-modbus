@@ -3104,8 +3104,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Generator Max Charge",
-        key = "generator_max_charge",
+        name = "External Generation Max Charge",
+        key = "external_generation_max_charge",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x132,
