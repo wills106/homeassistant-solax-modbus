@@ -11,6 +11,16 @@ This page does not use affiliate links, please only use these links as a guide. 
 [Amazon UK Link1](https://www.amazon.co.uk/dp/B07K3V381Z),
 [Berrybase Link1](https://www.berrybase.de/raspberry-pi/raspberry-pi-computer/usb-geraete/usb-rs485-konverter)
 
+### Waveshare USB to RS485 FT232RL
+
+Especially with tricky inverters like Sofar Solar the Waveshare USB to RS485 with FT232RL chipset provided the most reliable connection among other tested USB adapters:
+
+![Image of Waveshare USB to RS485](images/adaptor-rs485-usb-waveshare-ft232rl.png)
+
+Note that there are two versions with two different chipsets available. Make sure that you get the one with the FT232 RL chipset.
+
+Also note that even this one does not work 100% reliably with the Sofar Solar HYD xxKTL. Recommended option for this inverter is to use the LSE-3 stick logger as described below.
+
 ## RS485 - Ethernet
 
 Whatever adapter you buy, make sure it supports Modbus transmission. Transparent adapters that do not look into the Modbus protocol cannot send the packages to the correct Modbus slave.
@@ -36,6 +46,20 @@ Only Ethernet mode tested so far.
 ![Image of ZLAN5843A](images/adaptor-rs485-eth-zlan-5843a.png)
 
 [AliExpress](https://www.aliexpress.com/item/32888961582.html)
+
+### For Sofar Solar: LAN Stick Logger LSE-3
+
+Sofar Solar inverters are a big tricky with standard RS485 adapters. You may need to try several variants until you find one that is working flawlessly with the Sofar Solar inverter.
+
+However there is one solution that works flawlessly and provides ModBus TCP out of the box: Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger.
+
+![Image of LSE-3 Logger](images/adaptor-rs485-sofar-lse3-logger.png)
+
+Configure the connection to its IP address on port 8899.
+
+Tested with LSE-3 firmware version ME_0D_270A_1.09.
+
+Note that port 8899 is also open on the LSW-3 logger, but any ModBus TCP connection attempts time out here.
 
 ## Untested but should work according to the specs...
 

@@ -2108,6 +2108,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Battery Charge Max Current",
         key = "battery_charge_max_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default = False,
         register = 0x90,
         scale = 0.01,
         allowedtypes = GEN2,
@@ -2117,6 +2118,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name = "Battery Charge Max Current",
         key = "battery_charge_max_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default = False,
         register = 0x90,
         scale = 0.1,
         allowedtypes = GEN3 | GEN4,
@@ -2158,6 +2160,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "selfuse_discharge_min_soc",
         register = 0x93,
         unit = REGISTER_U8H,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2166,6 +2169,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x93,
         unit = REGISTER_U8L,
         scale = { 0: "Disabled", 1: "Enabled", },
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2184,6 +2188,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "selfuse_nightcharge_upper_soc",
         register = 0x94,
         native_unit_of_measurement = PERCENTAGE,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2192,6 +2197,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x95,
         unit = REGISTER_U8H,
         native_unit_of_measurement = PERCENTAGE,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2200,6 +2206,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x95,
         unit = REGISTER_U8L,
         native_unit_of_measurement = PERCENTAGE,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -2219,6 +2226,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x96,
         unit = REGISTER_U8H,
         native_unit_of_measurement = PERCENTAGE,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         icon = "mdi:battery-sync",
     ),
@@ -2228,6 +2236,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x96,
         unit = REGISTER_U8L,
         native_unit_of_measurement = PERCENTAGE,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         icon = "mdi:battery-sync",
     ),
