@@ -21,9 +21,9 @@ You can use the SolaX cloud app or do it manually:
 ![SolaX PocketWiFi network settings](images/solax-pocketwifi-network-settings.png)
 - Your device will connect to your Wi-Fi network, the device will remain reachable over its Wi-Fi hotspot and you can also connect by the IP you have set in your network.
 
-## I have multiple inverters in master-slave mode and I can't connect to the via Modbus
+## I have multiple inverters in master-slave mode and I can't connect to them via Modbus
 
-There are no active developers with this setup, so we have limited ability to resolve this issue, there are common problems to check:
+There are no active developers with this setup, so we have limited ability to resolve this issue, but here are common problems to check:
 
 - Ensure all inverters have a different modbus address
 - Try setting longer polling frequency (double or more)
