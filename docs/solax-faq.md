@@ -20,3 +20,11 @@ You can use the SolaX cloud app or do it manually:
 - You can use static IP or DHCP, static IP is recommended, as the IP won't change after your router reboot. Common mistake is that static IP is set in DHCP address range, don't do that! Refer to your router which IPs you can use. Fill in the details and submit.
 ![SolaX PocketWiFi network settings](images/solax-pocketwifi-network-settings.png)
 - Your device will connect to your Wi-Fi network, the device will remain reachable over its Wi-Fi hotspot and you can also connect by the IP you have set in your network.
+
+## I have multiple inverters in master-slave mode and I can't connect to the via Modbus
+
+There are no active developers with this setup, so we have limited ability to resolve this issue, there are common problems to check:
+
+- Ensure all inverters have a different modbus address
+- Try setting longer polling frequency (double or more)
+- Check baudrate is the same on all inverters
