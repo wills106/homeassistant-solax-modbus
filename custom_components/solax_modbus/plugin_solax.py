@@ -235,7 +235,7 @@ BUTTON_TYPES = [
         command = 6868,
         allowedtypes = ALLDEFAULT,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:lock-open",
+        icon = "mdi:lock-open-plus",
     ),
     # enable this block to test prevent_update
     #SolaxModbusButtonEntityDescription(      # block
