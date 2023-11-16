@@ -992,7 +992,7 @@ NUMBER_TYPES = [
         native_max_value = 100,
         native_step = 1,
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = HYBRID | GEN4,
+        allowedtypes = HYBRID | GEN4 | DCB,
     ),
 ]
 
