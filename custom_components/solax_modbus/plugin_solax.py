@@ -700,8 +700,8 @@ NUMBER_TYPES = [
         icon = "mdi:home-export-outline",
     ),
     SolaxModbusNumberEntityDescription(
-        name = "External Generation Max Charge",
-        key = "external_generation_max_charge", 
+        name = "Generator Max Charge",
+        key = "generator_max_charge", 
         register = 0xC8,
         fmt = "i",
         native_min_value = 0,
@@ -1349,8 +1349,8 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name = "External Generation",
-        key = "external_generation",
+        name = "Generator Control",
+        key = "generator_control",
         register = 0xC7,
         option_dict =  {
                 0: "Disabled",
@@ -3094,8 +3094,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "External Generation",
-        key = "external_generation",
+        name = "Generator Control",
+        key = "generator_control",
         register = 0x131,
         scale = { 0: "Disabled",
                   1: "ATS Control",
@@ -3104,8 +3104,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "External Generation Max Charge",
-        key = "external_generation_max_charge",
+        name = "Generator Max Charge",
+        key = "generator_max_charge",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x132,
@@ -6152,7 +6152,7 @@ class solax_plugin(plugin_base):
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
             if new_max_export != None: 
-                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:    
+                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "generator_max_charge"]:    
                     number_entity = hub.numberEntities.get(key)
                     if number_entity:
                         number_entity._attr_native_max_value = new_max_export
