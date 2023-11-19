@@ -2,8 +2,6 @@ name: Bug Report - Non SolaX Inverter
 description: File a bug report about Non SolaX Inverter (Growatt, Sofar (Azzurro), Solis etc)
 title: "[Bug]: "
 labels: ["bug", "triage", "non solax"]
-projects: []
-assignees: []
 body:
   - type: markdown
     attributes:
@@ -14,22 +12,20 @@ body:
     attributes:
       label: Describe the bug
       description: A clear and concise description of what the bug is.
-      placeholder: 
     validations:
       required: true
   - type: input
     id: integration-version
     attributes:
       label: Integration Version
-      description: 
       placeholder: e.g. 2023.09.7
     validations:
       required: true
   - type: input
     id: ha-core-version
     attributes:
-      label: Homeassistant core version 
-      description: 
+      label: Homeassistant core version
+      description: You can find out [there](https://my.home-assistant.io/redirect/info/)
       placeholder: e.g. 2023.11.1
     validations:
       required: true
@@ -37,7 +33,6 @@ body:
     id: inverter-brand
     attributes:
       label: Inverter brand
-      description: 
       placeholder: e.g. Solis
     validations:
       required: true
@@ -45,7 +40,6 @@ body:
     id: plugin
     attributes:
       label: Plugin used
-      description: 
       options:
         - plugin_growatt.py
         - plugin_sofar.py
@@ -57,9 +51,9 @@ body:
       required: true
   - type: input
     id: serial-prefix
-    attributes: 
-      label: First 6 digits of Serial (Growatt Firmware Version)
-      description: 
+    attributes:
+      label: Serial prefix
+      description: First 6 digits of Serial (Growatt Firmware Version)
       placeholder: e.g. 062000
     validations:
       required: true
@@ -75,7 +69,7 @@ body:
     id: log-output
     attributes:
       label: Detailed Error Log
-      description: Detailed Error Log, if you press on the individual error further information is displayed. This is the content we need, the description alone doesn't provide enough context.
+      description: Detailed Error Log, if you press on the individual error further information is displayed. This is the content we need, the description alone doesn't provide enough context, [here are your logs](https://my.home-assistant.io/redirect/logs/).
       placeholder: |
         If there are no log's showing for SolaX try the following depending on your language settings, you can find the full logs under:
         Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
@@ -89,7 +83,6 @@ body:
     id: other-info
     attributes:
       label: Additional context
-      description: 
       placeholder: Add any other context about the problem here.
     validations:
       required: false
