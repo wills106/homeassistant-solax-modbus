@@ -155,7 +155,20 @@ NUMBER_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
-
+    # Not documented, source: https://www.photovoltaikforum.com/thread/192228-growatt-sph-modbus-rtu-rj45-pinout-und-register-beschreibung/?postID=3017838#post3017838
+    GrowattModbusNumberEntityDescription(
+        name = "Load First Battery Minimum SOC",
+        key = "load_first_battery_minimum_soc",
+        register = 608,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 100,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        state = "load_first_battery_minimum_soc",
+        allowedtypes = GEN | GEN2,
+        icon = "mdi:battery-sync",
+    ),
     GrowattModbusNumberEntityDescription(
         name = "Grid First Discharge Rate",
         key = "grid_first_discharge_rate",
@@ -845,6 +858,16 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
+    ),
+
+    # Not documented, source: https://www.photovoltaikforum.com/thread/192228-growatt-sph-modbus-rtu-rj45-pinout-und-register-beschreibung/?postID=3017838#post3017838
+    GrowattModbusSensorEntityDescription(
+        name = "Load First Battery Minimum SOC",
+        key = "load_first_battery_minimum_soc",
+        native_unit_of_measurement = PERCENTAGE,
+        register = 608,
+        allowedtypes = GEN | GEN2,
+        icon = "mdi:battery-sync",
     ),
 
     ###
