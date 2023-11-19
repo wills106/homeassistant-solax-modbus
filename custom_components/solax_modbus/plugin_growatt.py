@@ -15,7 +15,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -50,7 +50,7 @@ MPPT8          = 0x200000
 MPPT10         = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -62,10 +62,10 @@ def _read_serialnr(hub, address):
     res = None
     try:
         inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
-        if not inverter_data.isError(): 
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(12).decode("ascii")
-            hub.seriesnumber = res    
+            hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware number before potential swap: {res}")
@@ -116,7 +116,7 @@ def value_function_combined_battery_power(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
-    GrowattModbusButtonEntityDescription( 
+    GrowattModbusButtonEntityDescription(
         name = "Sync RTC",
         key = "sync_rtc",
         register = 45,
@@ -242,7 +242,7 @@ SELECT_TYPES = [
         name = "Grid Time 1",
         key = "grid_time_1",
         register = 1082,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled", },
         allowedtypes = GEN | GEN2,
@@ -271,7 +271,7 @@ SELECT_TYPES = [
         name = "Grid Time 2",
         key = "grid_time_2",
         register = 1085,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -301,7 +301,7 @@ SELECT_TYPES = [
         name = "Grid Time 3",
         key = "grid_time_3",
         register = 1088,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -313,7 +313,7 @@ SELECT_TYPES = [
         name = "Charger Switch",
         key = "charger_switch",
         register = 1092,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -343,7 +343,7 @@ SELECT_TYPES = [
         name = "Charger Time 1",
         key = "charger_time_1",
         register = 1102,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -373,7 +373,7 @@ SELECT_TYPES = [
         name = "Charger Time 2",
         key = "charger_time_2",
         register = 1105,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -403,7 +403,7 @@ SELECT_TYPES = [
         name = "Charger Time 3",
         key = "charger_time_3",
         register = 1108,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -433,7 +433,7 @@ SELECT_TYPES = [
         name = "Load Time 1",
         key = "load_time_1",
         register = 1112,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -463,7 +463,7 @@ SELECT_TYPES = [
         name = "Load Time 2",
         key = "load_time_2",
         register = 1115,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -493,7 +493,7 @@ SELECT_TYPES = [
         name = "Load Time 3",
         key = "load_time_3",
         register = 1118,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -505,7 +505,7 @@ SELECT_TYPES = [
         name = "Charger Switch",
         key = "charger_switch",
         register = 3049,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -517,7 +517,7 @@ SELECT_TYPES = [
         name = "EPS Switch",
         key = "eps_switch",
         register = 3079,
-        option_dict = {  
+        option_dict = {
                 0: "Disabled",
                 1: "Enabled",
             },
@@ -943,7 +943,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #),
     GrowattModbusSensorEntityDescription(
         name = "Charger Upper SOC",
-        key = "Charger_upper_soc", 
+        key = "Charger_upper_soc",
         register = 3048,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | AC | GEN4,
@@ -2320,7 +2320,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN | GEN2 | EPS | X3,
-    ),GrowattModbusSensorEntityDescription(
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "EPS Voltage L2",
         key = "eps_voltage_l2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -3505,7 +3506,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 
 @dataclass
 class growatt_plugin(plugin_base):
-    
+
     """
     def isAwake(self, datadict):
         return (datadict.get('run_mode', None) == 'Normal Mode')
@@ -3543,12 +3544,12 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 3kW - ?kW
         #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
 
-        else: 
+        else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS 
+        if read_eps: invertertype = invertertype | EPS
         if read_dcb: invertertype = invertertype | DCB
         return invertertype
 
@@ -3562,17 +3563,17 @@ class growatt_plugin(plugin_base):
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
 plugin_instance = growatt_plugin(
-    plugin_name = 'growatt', 
+    plugin_name = 'growatt',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
