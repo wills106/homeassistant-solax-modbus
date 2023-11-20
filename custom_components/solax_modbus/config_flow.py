@@ -39,6 +39,7 @@ from .const import (
     CONF_MODBUS_ADDR,
     CONF_BAUDRATE,
     CONF_PLUGIN,
+    CONF_SN,
 	DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_READ_PM,
@@ -81,6 +82,7 @@ TCP_TYPES = [
     selector.SelectOptionDict(value="tcp", label="Modbus TCP"),
     selector.SelectOptionDict(value="rtu", label="Modbus RTU over TCP"),
     selector.SelectOptionDict(value="ascii", label="Modbus ASCII over TCP"),
+    selector.SelectOptionDict(value="http", label="Http API"),
 ]
 
 PLUGINS = [ selector.SelectOptionDict(value=getPluginName(i), label=getPluginName(i)) for i in glob.glob(PLUGIN_PATH) ]
@@ -122,6 +124,7 @@ TCP_SCHEMA = vol.Schema( {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
+        vol.Optional(CONF_SN): str,
     } )
 
 

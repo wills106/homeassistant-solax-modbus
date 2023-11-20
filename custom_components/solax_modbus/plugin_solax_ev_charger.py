@@ -42,6 +42,9 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+PM  = 0x20000
+ALL_PM_GROUP = PM
+
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 # ======================= end of bitmask handling code =============================================
@@ -212,7 +215,6 @@ SELECT_TYPES = [
         option_dict =  {
             0: "Program New",
             1: "Program Off", },
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -312,7 +314,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             0: "Program New",
             1: "Program Off", },
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -427,7 +428,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     SolaXEVChargerModbusSensorEntityDescription(
         name = "Charge PE Voltage",
         key = "charge_pe_voltage",
-        register = 0x0,
+        register = 0x3,
         register_type = REG_INPUT,
         scale = 0.01,
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -719,6 +720,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     SolaXEVChargerModbusSensorEntityDescription(
         name = "Run Mode",
         key = "run_mode",
+        unit = REGISTER_U16,
         register = 0x1D,
         scale = { 0: "Available",
                   1: "Preparing",
