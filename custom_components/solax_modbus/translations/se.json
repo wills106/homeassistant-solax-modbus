@@ -65,7 +65,8 @@
         "data": {
           "host": "Ip-adressen för modbus-enheten på invertern",
           "port": "TCP-port för anslutning till invertern",
-          "tcp_type": "Modbus TCP-varianten"
+          "tcp_type": "Modbus TCP-varianten",
+          "serial_number": "HTTP API password (SN)"
         }
       }
     },

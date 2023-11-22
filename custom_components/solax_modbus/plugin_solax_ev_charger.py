@@ -79,6 +79,7 @@ class SolaXEVChargerModbusNumberEntityDescription(BaseModbusNumberEntityDescript
 @dataclass
 class SolaXEVChargerModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
+    write_method: int = WRITE_MULTISINGLE_MODBUS
 
 @dataclass
 class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescription):

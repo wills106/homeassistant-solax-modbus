@@ -101,7 +101,7 @@ class SolaXModbusSelect(SelectEntity):
         payload = get_payload(self._option_dict, option)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
-            self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
             self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)

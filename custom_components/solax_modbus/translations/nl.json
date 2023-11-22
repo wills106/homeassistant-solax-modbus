@@ -26,7 +26,8 @@
         "data": {
           "host": "Het IP-address van uw inverter of modbus-tcp adapter",
           "port": "De TCP port voor Inverter of Modbus adapter",
-          "tcp_type": "De Modbus TCP variant"
+          "tcp_type": "De Modbus TCP variant",
+          "serial_number": "HTTP API password (SN)"
         }
       }
     },

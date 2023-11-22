@@ -729,16 +729,50 @@ class SolaXHttpHub:
 
     def read_input_registers(self, unit, address, count):
         """Read input registers. In this case we fake it, only for reading serial."""
+        res= ModbusResponse()
         if address == 0x600:
-           return self._typeCode
+            coder=BinaryPayloadBuilder()
+            coder.add_string(self._typeCode)
+            res.registers=coder.to_registers()
+            return res
+        res.function_code=0xFF
+        return res
+
+    async def _http_post(self, url, payload):
+        try:
+            connector = aiohttp.TCPConnector(force_close=True,)
+            async with aiohttp.ClientSession(connector=connector) as session:
+                async with session.post(url,data=payload) as resp:
+                    if resp.status==200:
+                        return await resp.text()
+        except aiohttp.ServerDisconnectedError:
+            # Best is to just ignore it. Next refresh will suceed
+            pass
+        except Exception as ex:
+            _LOGGER.exception("Error reading ReadSetData", exc_info=ex)
         return None
 
     def write_register(self, unit, address, payload):
         """Write register."""
 
 
-    def write_registers_single(self, unit, address, payload):
+    async def write_registers_single(self, unit, address, payload):
         """Write registers multi, but write only one register of type 16bit"""
+        descr=self._map_register(address, payload)
+        if descr is None:
+            return False
+        try:
+            resp=None
+            resp=await self._http_post(f'http://{self._host}',f'optType=setReg&pwd={self._sn}&data={{"num":1,"Data":{json.dumps(descr)}}}')
+            if resp is not None:
+                _LOGGER.info(f'Received HTTP API response {resp}')
+                return True
+        # except aiohttp.ServerDisconnectedError:
+        #     # Best is to just ignore it. Next refresh will suceed
+        #     pass
+        except Exception as ex:
+            _LOGGER.exception("Error writing setReg", exc_info=ex)
+        return False
 
     def write_registers_multi(self, unit, address, payload):
         """Write registers multi.
@@ -761,6 +795,9 @@ class SolaXHttpHub:
                 async with session.post(f'http://{self._host}',data=f"optType=ReadRealTimeData&pwd={self._sn}") as resp:
                     if resp.status==200:
                         httpData=await resp.json(content_type='text/html')
+        except aiohttp.ServerDisconnectedError:
+            # Best is to just ignore it. Next refresh will suceed
+            pass
         except Exception as ex:
             _LOGGER.exception("Error reading ReadRealTimeData", exc_info=ex)
         return httpData
@@ -773,6 +810,9 @@ class SolaXHttpHub:
                 async with session.post(f'http://{self._host}',data=f"optType=ReadSetData&pwd={self._sn}") as resp:
                     if resp.status==200:
                         setData=await resp.json(content_type='text/html')
+        except aiohttp.ServerDisconnectedError:
+            # Best is to just ignore it. Next refresh will suceed
+            pass
         except Exception as ex:
             _LOGGER.exception("Error reading ReadSetData", exc_info=ex)
         return setData
@@ -789,6 +829,20 @@ class SolaXHttpHub:
             res = False
         return res
 
+    def _map_register(self, address, payload):
+        match address:
+            case 0x60D:
+                return [{"reg":2,"val":f"{payload}"}]
+            case 0x60C:
+                return [{"reg":1,"val":f"{payload}"}]
+            case 0x610:
+                return [{"reg":5,"val":f"{payload}"}]
+            case 0x613:
+                return [{"reg":11,"val":f"{payload}"}]
+            case 0x625:
+                return [{"reg":70,"val":f"{payload}"}]
+            case _:
+                return None
 
     def _map_address(self, Data, descr):
         return_value = None
@@ -798,50 +852,66 @@ class SolaXHttpHub:
         match descr.register:
             case 0x600:
                 return_value=Data[502]
+            case 0x60C:
+                return_value=Data[0]
             case 0x60D:
                 return_value=Data[1]
-            case 0x1D:
-                return_value=Data[0]
-            case 0x1C:
-                return_value=Data[23]
-            case 0x18:
-                return_value=Data[22]
-            case 0x15:
-                return_value=Data[19]
-            case 0x16:
-                return_value=Data[20]
-            case 0x17:
-                return_value=Data[21]
-            case 0x12:
-                return_value=Data[16]
-            case 0x13:
-                return_value=Data[17]
-            case 0x14:
-                return_value=Data[18]
-            case 0xF:
-                return_value=Data[12]
-            case 0x10:
-                return_value=Data[15]*65536+Data[14]
-            case 0xB:
+            case 0x610:
+                return_value=Data[29]
+            case 0x613:
                 return_value=Data[11]
-            case 0x8:
-                return_value=Data[8]
-            case 0x9:
-                return_value=Data[9]
-            case 0xA:
-                return_value=Data[10]
-            case 0x4:
-                return_value=Data[5]
-            case 0x5:
-                return_value=Data[6]
-            case 0x6:
-                return_value=Data[7]
+            # case 0x615:
+            #     return_value=Data[]
+            # case 0x616:
+            #     return_value=Data[]
+            # case 0x61E: # RTC: Y-M-D H:m:S
+            #     return_value=[Data[38]H, Data[38]L, Data[37]H, Data[37]L, Data[36]H, Data[36]L]
+            case 0x625:
+                return_value=Data[65]
+            # case 0x628:
+            #     return_value=Data[]
             case 0x0:
                 return_value=Data[2]
             case 0x1:
                 return_value=Data[3]
             case 0x2:
                 return_value=Data[4]
+            case 0x4:
+                return_value=Data[5]
+            case 0x5:
+                return_value=Data[6]
+            case 0x6:
+                return_value=Data[7]
+            case 0x8:
+                return_value=Data[8]
+            case 0x9:
+                return_value=Data[9]
+            case 0xA:
+                return_value=Data[10]
+            case 0xB:
+                return_value=Data[11]
+            case 0xF:
+                return_value=Data[12]
+            case 0x10:
+                return_value=Data[15]*65536+Data[14]
+            case 0x12:
+                return_value=Data[16]
+            case 0x13:
+                return_value=Data[17]
+            case 0x14:
+                return_value=Data[18]
+            case 0x15:
+                return_value=Data[19]
+            case 0x16:
+                return_value=Data[20]
+            case 0x17:
+                return_value=Data[21]
+            case 0x18:
+                return_value=Data[22]
+            case 0x1C:
+                return_value=Data[24]
+            case 0x1D:
+                return_value=Data[0]
             case _:
                 return_value=None
 

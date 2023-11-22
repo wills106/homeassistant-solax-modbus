@@ -26,7 +26,8 @@
         "data": {
           "host": "IP adresa měniče nebo modbus adaptéru",
           "port": "TCP port připojení k měniči",
-          "tcp_type": "Varianta TCP protokolu modbus"
+          "tcp_type": "Varianta TCP protokolu modbus",
+          "serial_number": "HTTP API heslo (SN)"
         }
       }
     },

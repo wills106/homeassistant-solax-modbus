@@ -26,7 +26,8 @@
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
-          "tcp_type": "Die Modbus TCP Variante"
+          "tcp_type": "Die Modbus TCP Variante",
+          "serial_number": "HTTP API Kennwoth (SN)"
         }
       }
     },
