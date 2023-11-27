@@ -711,7 +711,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN4 | DCB,
         max_exceptions = MAX_EXPORT,
     ),
     SolaxModbusNumberEntityDescription(
@@ -1357,7 +1357,7 @@ SELECT_TYPES = [
                 1: "ATS Control",
                 2: "Dry Contact",
             },
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN4 | DCB,
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3101,7 +3101,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   1: "ATS Control",
                   2: "Dry Contact", },
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Generator Max Charge",
@@ -3110,7 +3110,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         register = 0x132,
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
+        allowedtypes = GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Generator Start Method",
