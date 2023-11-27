@@ -6,7 +6,7 @@ It is recommended to have the latest firmware installed on your inverter, it may
 
 - Contact SolaX support - they are able to update your inverter remotely, you have to wait, but you are less likely to break anything.
 - Manual update from USB stick - you can update your inverter manually with firmware version of your choice.
-    - Latest SolaX firmwares can be found in [this repository](https://app.box.com/s/3nvo7ic523fhojf8uuto105q9a8dgk9n/folder/79352264617).
+    - Latest SolaX firmwares can be found in [this repository](https://app.box.com/s/3nvo7ic523fhojf8uuto105q9a8dgk9n/folder/79352264617) **This link isn't affiliated with homeassistant-solax-modbus nor has the authenticity of it been checked.**
 ## Inverter
 ### Prepare for update
   - Obtain the latest firmware for your inverter.

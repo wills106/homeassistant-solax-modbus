@@ -154,7 +154,7 @@ logger:
 
 ## Documentation
 
-For further Documentation please refer to the [Wiki](https://github.com/wills106/homsassistant-solax-modbus/wiki)
+For further Documentation please refer to the [Read the Docs](http://homeassistant-solax-modbus.readthedocs.io/)
 
 ## FAQ
 
