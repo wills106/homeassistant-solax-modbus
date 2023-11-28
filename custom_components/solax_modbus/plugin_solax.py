@@ -4645,8 +4645,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription( 
-        name = "Battery health percentage",
-        key = "bms_user_soh",
+        name = "Battery State of Health",
+        key = "battery_soh",
+        icon = "mdi:battery-heart",
         native_unit_of_measurement = PERCENTAGE,
         register = 0xBF,
         register_type = REG_INPUT,
