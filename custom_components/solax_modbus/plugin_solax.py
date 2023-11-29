@@ -1913,8 +1913,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN2 | GEN3,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
-    ),    
-
+    ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter DSP firmware minor version",
         key = "firmware_DSP_minor_version",
