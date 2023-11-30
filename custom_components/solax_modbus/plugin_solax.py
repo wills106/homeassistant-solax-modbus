@@ -4688,7 +4688,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = { 0: "Unfinished",
                   1: "Finished", },
-        icon = "mdi:mdi:bullseye-arrow",
+        icon = "mdi:bullseye-arrow",
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
