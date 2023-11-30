@@ -10,7 +10,7 @@
 ### "Reflux Control"
 
 - Set Select "Reflux Control"
-- Set Neumber "Reflux Power"
+- Set Number "Reflux Power"
 - Press Button "Reflux Control"
 
 ### "Update Charge/Discharge Times"
@@ -22,5 +22,5 @@
 - Set Select "Timing Discharge Start Time"
 - Set Select "Timing Discharge End Time"
 - Set Number "Timing Charge Power"
-- Set NUmber "Timing Discharge Power"
+- Set Number "Timing Discharge Power"
 - Press Button "Update Charge/Discharge Times"
