@@ -1,20 +1,26 @@
 # Sofar Modes of Operation - WIP
 
-## Example Formatting
+## Control Methods
 
-**Bold text, ideal for a warning statement**
+### "Passive Mode Battery Charge/Discharge"
 
-### Nested
+- Set Number "Passive Mode Battery Power"
+- Press Button "Passive Mode Battery Charge/Discharge"
 
-#### Further Nested
+### "Reflux Control"
 
-Allows the Index on the left to be broken down
+- Set Select "Reflux Control"
+- Set Neumber "Reflux Power"
+- Press Button "Reflux Control"
 
-### List options
+### "Update Charge/Discharge Times"
 
-List:
-
-- Item 1
-  - Item 1a
-- Item 2
-- Item 3
+- Set Select "Timing ID"
+- Set Select "Timing Charge"
+- Set Select "Timing Charge Start Time"
+- Set Select "Timing Charge End Time"
+- Set Select "Timing Discharge Start Time"
+- Set Select "Timing Discharge End Time"
+- Set Number "Timing Charge Power"
+- Set NUmber "Timing Discharge Power"
+- Press Button "Update Charge/Discharge Times"
