@@ -4608,7 +4608,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "battery temp high",
+        name = "Battery Temp High",
         key = "battery_temperature_high",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
@@ -4620,7 +4620,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "battery temp low",
+        name = "Battery Temp Low",
         key = "battery_temperature_low",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
@@ -4632,7 +4632,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Cell voltage high",
+        name = "Cell Voltage High",
         key = "cell_voltage_high",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
@@ -4644,7 +4644,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Cell voltage low",
+        name = "Cell Voltage Low",
         key = "cell_voltage_low",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
@@ -6151,6 +6151,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('H31'):   invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
         elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
+        elif seriesnumber.startswith('XB4'):   invertertype = MIC | GEN2 | X1 # X1-Boost G4
         elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
         elif seriesnumber.startswith('XM4'):   invertertype = MIC | GEN2 | X1 # X1-Mini G4
         elif seriesnumber.startswith('XMA'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
