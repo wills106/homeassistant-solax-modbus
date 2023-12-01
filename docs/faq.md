@@ -7,6 +7,12 @@ Always also check vendor specific FAQ pages:
 - [SolaX Power](solax-faq.md)
 - [Sofar Solar](sofar-faq.md)
 
+## Donations / Sponsor
+
+Please don't use / expect Donations as a form of paid technical support.
+
+I was asked to add the option to recieve donations as people wanted to buy me a Beer/Cola or multiples as a form of thanks.
+
 ## Entity I need is not present
 
 Your desired entity is most likely disabled. Example given is for "Config Max Export"
