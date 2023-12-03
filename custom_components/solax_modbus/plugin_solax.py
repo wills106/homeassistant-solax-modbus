@@ -2578,7 +2578,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   1: "60Hz", },
         allowedtypes = GEN2 | GEN3 | EPS,
     ),
-        SolaXModbusSensorEntityDescription(
+    SolaXModbusSensorEntityDescription(
         name = "EPS Min SOC",
         key = "eps_min_soc",
         native_unit_of_measurement = PERCENTAGE,
@@ -2586,7 +2586,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         allowedtypes = GEN4 | HYBRID,
     ),
-        SolaXModbusSensorEntityDescription(
+    SolaXModbusSensorEntityDescription(
         name = "EPS frequency",
         key = "eps_frequency_test",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
