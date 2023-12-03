@@ -7,6 +7,19 @@ Always also check vendor specific FAQ pages:
 - [SolaX Power](solax-faq.md)
 - [Sofar Solar](sofar-faq.md)
 
+## Detected blocking call
+If you use a UART-RS485 or USB-RS485 adaptor you will get the following errors in the log
+```
+Detected blocking call to sleep inside the event loop by custom integration 'solax_modbus' 
+```
+As a work around you can add the following lines to your configuration file:
+```
+logger:
+  default: warning
+  logs:
+    homeassistant.util.async_: error
+```
+
 ## Donations / Sponsor
 
 Please don't use / expect Donations as a form of paid technical support.
