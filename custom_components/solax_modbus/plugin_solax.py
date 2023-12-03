@@ -1432,6 +1432,17 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SolaxModbusSelectEntityDescription(
+        name = "MPPT",
+        key = "mppt_toggle",
+        register = 0x48,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = GEN4 | HYBRID,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "PeakShaving Discharge Stop Time 2",
         key = "peakshaving_discharge_stop_time_2",
         register = 0xED,
@@ -1627,6 +1638,19 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
+        name = "Shadow Fix Function Level 2 (GMPPT)",
+        key = "shadow_fix2_enable",
+        register = 0x98,
+        option_dict =  {
+                0: "Off",
+                1: "Low",
+                2: "Middle",
+                3: "High",
+            },
+        allowedtypes = HYBRID | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "Shadow Fix Function Level (GMPPT)",
         key = "shadow_fix_enable",
         register = 0x9C,
@@ -1767,6 +1791,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "MateBox enabled",
+        key = "matebox_enabled",
+        register = 0x1E,
+        scale = {
+            0: "disabled",
+            1: "enabled", },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | HYBRID,
+        icon = "mdi:dip-switch",
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Firmware Version Inverter Master",
         key = "firmwareversion_invertermaster",
         entity_registry_enabled_default = False,
@@ -1775,7 +1810,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),    
-
     SolaXModbusSensorEntityDescription(
         name = "Inverter DSP firmware minor version",
         key = "firmware_DSP_minor_version",
@@ -2386,6 +2420,23 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   1: "60Hz", },
         allowedtypes = GEN2 | GEN3 | EPS,
     ),
+        SolaXModbusSensorEntityDescription(
+        name = "EPS Min SOC",
+        key = "eps_min_soc",
+        native_unit_of_measurement = PERCENTAGE,
+        register = 0xB8,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | HYBRID,
+    ),
+        SolaXModbusSensorEntityDescription(
+        name = "EPS frequency",
+        key = "eps_frequency_test",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0xB9,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | HYBRID,
+    ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Rated Power",
         key = "inverter_rate_power",
@@ -2409,6 +2460,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         allowedtypes = GEN2 | GEN3 | GEN4,
         icon = "mdi:translate-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT",
+        key = "mppt_toggle",
+        register = 0xBC,
+        scale = { 0: "Disabled",
+                  1: "Enabled", },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4| HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Install Capacity",
@@ -2713,6 +2773,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Disabled",
                   1: "Enabled", },
         allowedtypes = X3 | GEN3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Shadow Fix Function Level 2 (GMPPT)",
+        key = "shadow_fix2_enable",
+        register = 0x114,
+        scale = { 0: "Off",
+                  1: "Low",
+                  2: "Middle",
+                  2: "High", },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name = "CT Meter Setting",
