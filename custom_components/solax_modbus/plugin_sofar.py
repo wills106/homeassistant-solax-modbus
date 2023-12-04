@@ -44,6 +44,13 @@ ALL_DCB_GROUP  = DCB
 PM  = 0x20000
 ALL_PM_GROUP = PM
 
+MPPT3          = 0x40000
+MPPT4          = 0x80000
+MPPT6          = 0x100000
+MPPT8          = 0x200000
+MPPT10         = 0x400000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 # ======================= end of bitmask handling code =============================================
@@ -2386,7 +2393,7 @@ class sofar_plugin(plugin_base):
         elif seriesnumber.startswith('SH3E'):  invertertype = PV | X1 | GEN # 4.6 KTLM-G3
         elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
         elif seriesnumber.startswith('ZS2E'):  invertertype = PV | X3 | GEN # 12 Azzurro KTL-V3
-        elif seriesnumber.startswith('SQ1ES1'):  invertertype = PV | X3 | GEN # 100kW KTLX-G4
+        elif seriesnumber.startswith('SQ1ES1'):  invertertype = PV | X3 | GEN | MPPT10 # 100kW KTLX-G4
         elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
@@ -2417,11 +2424,12 @@ class sofar_plugin(plugin_base):
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
         pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
+        mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
 plugin_instance = sofar_plugin(
     plugin_name = 'sofar',
