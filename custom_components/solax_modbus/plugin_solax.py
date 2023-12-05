@@ -214,6 +214,7 @@ BUTTON_TYPES = [
         register = 0x56,
         command = 1,
         allowedtypes = ALLDEFAULT,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-alert-variant",
     ),
     SolaxModbusButtonEntityDescription(
@@ -225,24 +226,24 @@ BUTTON_TYPES = [
         allowedtypes = GEN3 | HYBRID | AC,
         entity_category = EntityCategory.CONFIG,
     ),
-    SolaxModbusButtonEntityDescription(
-        name = "Unlock Inverter",
-        key = "unlock_inverter",
-        register = 0x00,
-        command = 2014,
-        allowedtypes = ALLDEFAULT,
-        entity_category = EntityCategory.CONFIG,
-        icon = "mdi:lock-open",
-    ),
-    SolaxModbusButtonEntityDescription(
-        name = "Unlock Inverter - Advanced",
-        key = "unlock_inverter_advanced",
-        register = 0x00,
-        command = 6868,
-        allowedtypes = ALLDEFAULT,
-        entity_category = EntityCategory.CONFIG,
-        icon = "mdi:lock-open-plus",
-    ),
+    #SolaxModbusButtonEntityDescription(
+    #    name = "Unlock Inverter",
+    #    key = "unlock_inverter",
+    #    register = 0x00,
+    #    command = 2014,
+    #    allowedtypes = ALLDEFAULT,
+    #    entity_category = EntityCategory.CONFIG,
+    #    icon = "mdi:lock-open",
+    #),
+    #SolaxModbusButtonEntityDescription(
+    #    name = "Unlock Inverter - Advanced",
+    #    key = "unlock_inverter_advanced",
+    #    register = 0x00,
+    #    command = 6868,
+    #    allowedtypes = ALLDEFAULT,
+    #    entity_category = EntityCategory.CONFIG,
+    #    icon = "mdi:lock-open-plus",
+    #),
     # enable this block to test prevent_update
     #SolaxModbusButtonEntityDescription(      # block
     #    name = "Dummy test prevent update",  # block
