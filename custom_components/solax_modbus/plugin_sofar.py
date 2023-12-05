@@ -305,7 +305,7 @@ SELECT_TYPES = [
     #
     ###
     SofarModbusSelectEntityDescription(
-        name = Reflux Control",
+        name = "Reflux Control",
         key = "reflux_control",
         unit = REGISTER_U16,
         option_dict =  {
