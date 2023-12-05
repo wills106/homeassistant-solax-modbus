@@ -35,6 +35,7 @@ nav:
 - SolaX:
   - FAQ: solax-faq.md
   - Firmware update: solax-firmware-update.md
+  - Entity description: solax-entity-description.md
   - Modbus Power Control (remotecontrol power): modbus-power-control.md
   - SolaX Gen2 & Gen3 Modes of Operation: solax-G23-operation-modes.md
   - SolaX Gen4 Modes of Operation: solax-G4-operation-modes.md
