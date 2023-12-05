@@ -128,7 +128,7 @@ def value_function_timingmode(initval, descr, datadict):
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
-    SofarModbusButtonEntityDescription( 
+    SofarModbusButtonEntityDescription(
         name = "Passive Mode Battery Charge/Discharge",
         key = "passive_mode_battery_charge_discharge",
         register = 0x1187,
@@ -136,7 +136,7 @@ BUTTON_TYPES = [
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
     ),
-    SofarModbusButtonEntityDescription( 
+    SofarModbusButtonEntityDescription(
         name = "Sync RTC",
         key = "sync_rtc",
         register = 0x1004,
@@ -145,7 +145,7 @@ BUTTON_TYPES = [
         icon = "mdi:home-clock",
         value_function = value_function_sync_rtc_ymd,
     ),
-    SofarModbusButtonEntityDescription( 
+    SofarModbusButtonEntityDescription(
         name = "Reflux Control",
         key = "reflux_control",
         register = 0x1023,
@@ -161,7 +161,7 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         icon = "mdi:battery-clock",
     ),
-    SofarModbusButtonEntityDescription( 
+    SofarModbusButtonEntityDescription(
         name = "Update Charge/Discharge Times",
         key = "update_charge_discharge_times",
         register = 0x1111,
@@ -305,7 +305,7 @@ SELECT_TYPES = [
     #
     ###
     SofarModbusSelectEntityDescription(
-        name = "Reflux Control",
+        name = Reflux Control",
         key = "reflux_control",
         unit = REGISTER_U16,
         option_dict =  {
@@ -597,6 +597,24 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit = REGISTER_STR,
         wordcount=7,
+        allowedtypes = HYBRID | PV,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        register = 0x44D,
+        newblock = True,
+        unit = REGISTER_STR,
+        wordcount=2,
+        allowedtypes = HYBRID | PV,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        register = 0x44F,
+        newblock = True,
+        unit = REGISTER_STR,
+        wordcount=12,
         allowedtypes = HYBRID | PV,
     ),
 ###
