@@ -115,6 +115,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     pv             = datadict.get('pv_power_total', 0)
     houseload_nett = datadict.get('inverter_load', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
+    parallel       = datadict.get('parallel_setting')
     if   power_control == "Enabled Power Control": 
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
@@ -133,13 +134,18 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         power_control = "Enabled Power Control"
     elif power_control == "Enabled No Discharge": # alternative computation for Power Control
         if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
-        else:                    ap_target = 0 - pv - houseload_nett # 2023/12/19 used to be 0 - houseload_nett
+        else:                    ap_target = 0 - pv - houseload_nett # 2023/12/19 discussion #672: used to be 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
-    ap_target = min(ap_target,  import_limit - houseload_brut)
+    if parallel == "Free":
+        ap_target = min(ap_target,  import_limit - houseload_brut)
+    else:# issue #618  multiple inverters in master/slave - suggestion @fxstein
+        active_power_real = datadict.get('active_power_real', 0)
+        houseload_real = (meas + active_power_real) * -1
+        ap_target = min(ap_target,  import_limit - houseload_real) 
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target: 
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}")
