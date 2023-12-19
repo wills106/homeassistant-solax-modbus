@@ -133,7 +133,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         power_control = "Enabled Power Control"
     elif power_control == "Enabled No Discharge": # alternative computation for Power Control
         if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
-        else:                    ap_target = 0 - houseload_nett
+        else:                    ap_target = 0 - pv - houseload_nett # 2023/12/19 used to be 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Disabled": 
         ap_target = target
