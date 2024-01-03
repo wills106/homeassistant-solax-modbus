@@ -24,7 +24,8 @@ GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
 GEN3           = 0x0004
 GEN4           = 0x0008
-ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN
+SPF            = 0x0016
+ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN | SPF
 
 X1             = 0x0100
 X3             = 0x0200
@@ -3399,6 +3400,105 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes = GEN4 | HYBRID,
     ),
+#####
+#
+# SPF
+# 
+#####
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 1",
+        key = "pv_voltage_1",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 1,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 2",
+        key = "pv_voltage_2",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 2,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 1",
+        key = "pv_power_1",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 2",
+        key = "pv_power_2",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 1",
+        key = "pv_current_1",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 7,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 2",
+        key = "pv_current_2",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 8,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = SPF,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery Voltage",
+        key = "battery_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 17,
+        register_type = REG_INPUT,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = SPF,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery SOC",
+        key = "battery_soc",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 18,
+        register_type = REG_INPUT,
+        allowedtypes = SPF,
+    ),
 ]
 
 # ============================ plugin declaration =================================================
@@ -3440,6 +3540,7 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN2 | X1 # Hybrid SPH 4kW - 10kW
+        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPH 3kW - 6kW
         #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
 
         else: 
