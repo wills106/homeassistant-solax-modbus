@@ -24,7 +24,7 @@ GEN            = 0x0001 # base generation for MIC, PV, AC
 GEN2           = 0x0002
 GEN3           = 0x0004
 GEN4           = 0x0008
-SPF            = 0x0016
+SPF            = 0x0010
 ALL_GEN_GROUP  = GEN2 | GEN3 | GEN4 | GEN | SPF
 
 X1             = 0x0100
@@ -3540,7 +3540,7 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN2 | X1 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPH 3kW - 6kW
+        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 3kW - ?kW
         #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
 
         else: 
