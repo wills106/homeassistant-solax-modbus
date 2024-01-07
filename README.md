@@ -87,7 +87,7 @@ SolaX - PocketLAN & PocketWiFi Readme
 
 **(Pocket LAN does not provide a Modbus connection at all and the Pocket WiFi v1 & v2 does not provide a reliable Modbus connection! Trouble shooting for Pocket WiFi v1 or v2 will not be provided)**
 
-#### Pocket WiFi 3.0 with Firmware V3.004.03 and above is only [officially supported](https://kb.solaxpower.com/data/detail/ff8080818407e2a701840a22dec20032.html). SolaX only mentions Gen4 Hybrid, other inverters may work?
+#### Pocket WiFi 3.0 with Firmware V3.004.03 and above is only [officially supported](https://kb.solaxpower.com/solution/detail/ff8080818407e2a701840a22dec20032). SolaX only mentions Gen4 Hybrid, other inverters may work?
 - **Contact SolaX for latest version.**
 
 (⚠I still don't recomend the PocketWiFi. If you loose all entites after normal operation, try power cycling your Inverter.
