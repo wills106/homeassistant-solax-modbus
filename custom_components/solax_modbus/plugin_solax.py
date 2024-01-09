@@ -1678,7 +1678,7 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name = "Shadow Fix Function Level 2 (GMPPT)",
+        name = "Shadow Fix Function Level PV2 (GMPPT)",
         key = "shadow_fix2_enable",
         register = 0x98,
         option_dict =  {
@@ -1691,7 +1691,7 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name = "Shadow Fix Function Level (GMPPT)",
+        name = "Shadow Fix Function Level PV1 (GMPPT)",
         key = "shadow_fix_enable",
         register = 0x9C,
         option_dict =  {
@@ -2748,13 +2748,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:sun-compass",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Shadow Fix Function Level (GMPPT)",
+        name = "Shadow Fix Function Level PV1 (GMPPT)",
         key = "shadow_fix_enable",
         register = 0x104,
         scale = { 0: "Off",
                   1: "Low",
                   2: "Middle",
-                  2: "High", },
+                  3: "High", },
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
@@ -2939,13 +2939,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = X3 | GEN3,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Shadow Fix Function Level 2 (GMPPT)",
+        name = "Shadow Fix Function Level PV2 (GMPPT)",
         key = "shadow_fix2_enable",
         register = 0x114,
         scale = { 0: "Off",
                   1: "Low",
                   2: "Middle",
-                  2: "High", },
+                  3: "High", },
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
     ),
