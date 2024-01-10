@@ -41,6 +41,13 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+MPPT3          = 0x40000
+MPPT4          = 0x80000
+MPPT6          = 0x100000
+MPPT8          = 0x200000
+MPPT10         = 0x400000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
 # ======================= end of bitmask handling code =============================================
@@ -122,6 +129,18 @@ def value_function_timingmode3(initval, descr, datadict):
               ('timed_discharge_end_h_3', datadict.get('timed_discharge_end_h_3', 0), ),
               ('timed_discharge_end_m_3', datadict.get('timed_discharge_end_m_3', 0), ),
             ]
+
+def value_function_pv1_power(initval, descr, datadict):
+    return  datadict.get('pv_voltage_1', 0) * datadict.get('pv_current_1',0)
+
+def value_function_pv2_power(initval, descr, datadict):
+    return  datadict.get('pv_voltage_2', 0) * datadict.get('pv_current_2',0)
+
+def value_function_pv3_power(initval, descr, datadict):
+    return  datadict.get('pv_voltage_3', 0) * datadict.get('pv_current_3',0)
+
+def value_function_pv4_power(initval, descr, datadict):
+    return  datadict.get('pv_voltage_4', 0) * datadict.get('pv_current_4',0)
 
 # ================================= Button Declarations ============================================================
 
@@ -865,6 +884,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "pv_voltage_1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33049,
         #ignore_readerror = True,
         register_type = REG_INPUT,
@@ -877,6 +897,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "pv_current_1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33050,
         register_type = REG_INPUT,
         scale = 0.1,
@@ -885,10 +906,21 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon = "mdi:current-dc",
     ),
     SolisModbusSensorEntityDescription(
+        name = "PV Power 1",
+        key = "pv_power_1",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_pv1_power,
+        allowedtypes = HYBRID,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolisModbusSensorEntityDescription(
         name = "PV Voltage 2",
         key = "pv_voltage_2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33051,
         register_type = REG_INPUT,
         scale = 0.1,
@@ -900,6 +932,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key = "pv_current_2",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33052,
         register_type = REG_INPUT,
         scale = 0.1,
@@ -908,54 +941,88 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon = "mdi:current-dc",
     ),
     SolisModbusSensorEntityDescription(
+        name = "PV Power 2",
+        key = "pv_power_2",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_pv2_power,
+        allowedtypes = HYBRID,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolisModbusSensorEntityDescription(
         name = "PV Voltage 3",
         key = "pv_voltage_3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33053,
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        #entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | ALL_MPPT_GROUP,
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Current 3",
         key = "pv_current_3",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33054,
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        #entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | ALL_MPPT_GROUP,
         icon = "mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "PV Power 3",
+        key = "pv_power_3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_pv3_power,
+        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        icon = "mdi:solar-power-variant",
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Voltage 4",
         key = "pv_voltage_4",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33055,
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        #entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | MPPT4,
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Current 4",
         key = "pv_current_4",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 33056,
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        #entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | MPPT4,
         icon = "mdi:current-dc",
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "PV Power 4",
+        key = "pv_power_4",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_pv4_power,
+        allowedtypes = HYBRID | MPPT4,
+        icon = "mdi:solar-power-variant",
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Total Power",
@@ -2372,11 +2439,12 @@ class solis_plugin(plugin_base):
         hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
 
 
