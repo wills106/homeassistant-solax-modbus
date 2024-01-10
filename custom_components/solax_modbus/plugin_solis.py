@@ -2444,7 +2444,7 @@ class solis_plugin(plugin_base):
         if blacklist:
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
 
