@@ -744,6 +744,19 @@ SELECT_TYPES = [
     ),
 
     GrowattModbusSelectEntityDescription(
+        name = "Priority",
+        key = "priority",
+        register = 1044,
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First", },
+        allowedtypes = GEN2 | GEN3,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:run",
+    ),
+
+    GrowattModbusSelectEntityDescription(
         name = "Charger Switch",
         key = "charger_switch",
         register = 3049,
