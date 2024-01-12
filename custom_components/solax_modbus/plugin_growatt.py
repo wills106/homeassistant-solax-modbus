@@ -780,6 +780,102 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
+    ###
+    #
+    # SPF Selects
+    #
+    ###
+    GrowattModbusSelectEntityDescription(
+        name = "PV Input Mode",
+        key = "pv_input_mode",
+        register = 7,
+        option_dict = {
+                0: "Independent",
+                1: "Parallel",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "AC Input Mode",
+        key = "ac_input_mode",
+        register = 8,
+        option_dict = {
+                0: "APL",
+                1: "UPS",
+                2: "Gen",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Output Voltage Type",
+        key = "output_voltage_type",
+        register = 18,
+        option_dict = {
+                0: "208",
+                1: "230",
+                2: "240",
+                3: "220",
+                4: "100",
+                5: "110",
+                6: "120",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Output Frequency Type",
+        key = "output_frequency_type",
+        register = 19,
+        option_dict = {
+                0: "50",
+                1: "60",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Overload Restart",
+        key = "overload_restart",
+        register = 20,
+        option_dict = {
+                0: "Yes",
+                1: "No",
+                2: "Switch to UTI",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Overtemperature Restart",
+        key = "overtemperature_restart",
+        register = 21,
+        option_dict = {
+                0: "Yes",
+                1: "No",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Buzzer",
+        key = "buzzer",
+        register = 22,
+        option_dict = {
+                0: "Enable",
+                1: "Disable",
+            },
+        allowedtypes = SPF,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
 ]
 
 # ================================= Sennsor Declarations ============================================================
@@ -1496,6 +1592,85 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         allowedtypes = HYBRID | AC | GEN4,
+        entity_registry_enabled_default = False,
+    ),
+    ###
+    #
+    # SPF Holding registers
+    #
+    ###
+    GrowattModbusSensorEntityDescription(
+        name = "PV Input Mode",
+        key = "pv_input_mode",
+        register = 7,
+        scale = { 0: "Independent",
+                  1: "Parallel", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "AC Input Mode",
+        key = "ac_input_mode",
+        register = 8,
+        scale = { 0: "APL",
+                  1: "UPS",
+                  2: "Gen", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Output Voltage Type",
+        key = "output_voltage_type",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 18,
+        scale = { 0: "208",
+                  1: "230",
+                  2: "240",
+                  3: "220",
+                  4: "100",
+                  5: "110",
+                  6: "120", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Output Frequency Type",
+        key = "output_frequency_type",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 19,
+        scale = { 0: "50",
+                  1: "60", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Overload Restart",
+        key = "overload_restart",
+        register = 20,
+        scale = { 0: "Yes",
+                  1: "No",
+                  2: "Switch to UTI", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Overtemperature Restart",
+        key = "overtemperature_restart",
+        register = 21,
+        scale = { 0: "Yes",
+                  1: "No", },
+        allowedtypes = SPF,
+        entity_registry_enabled_default = False,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Buzzer",
+        key = "buzzer",
+        register = 22,
+        scale = { 0: "Enable",
+                  1: "Disable", },
+        allowedtypes = SPF,
         entity_registry_enabled_default = False,
     ),
     ###
