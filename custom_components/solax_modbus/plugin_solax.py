@@ -6396,6 +6396,31 @@ SENSOR_TYPES_MIC: list[SolaXMicModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes = MIC | GEN4,
     ),
+    ###
+    #
+    # Computed
+    #
+    ###
+    SolaXMicModbusSensorEntityDescription(
+        name = "Grid Export",
+        key = "grid_export",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_grid_export,
+        allowedtypes = MIC,
+        icon = "mdi:home-export-outline",
+    ),
+    SolaXMicModbusSensorEntityDescription(
+        name = "Grid Import",
+        key = "grid_import",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_grid_import,
+        allowedtypes = MIC,
+        icon = "mdi:home-import-outline",
+    ),
 ]
 
 # ============================ plugin declaration =================================================
