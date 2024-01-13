@@ -443,7 +443,7 @@ class solis_old_plugin(plugin_base):
         elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
 
         else: 
-            invertertype = 0
+            invertertype = HYBRID
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
