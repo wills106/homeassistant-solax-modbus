@@ -87,7 +87,7 @@ The integration could rely on the Modbus TCP supported by some Solis dataloggers
 - `DLS-W` - **not compatible** - an obsolete datalogger - you should search for SolarMan-based integrations.
 - `S3-WIFI-ST` - **not compatible** - a newer model - works with the Solis Cloud only.
 - You could connect your inverter using any of the [Compatible RS485 Adaptors](https://github.com/wills106/homeassistant-solax-modbus/wiki/Compatible-RS485-Adaptors) when combined with the female plug `Exceedconn EC04681-2023-BF` - as there is no datalogger, there will be no Solis Cloud **(*)** reporting.
-- A combined method of Solis Cloud and Home Assistant using [any Datalogger](https://github.com/alienatedsec/solis-ha-modbus-cloud#supported-solis-dataloggers) as well as wiring, and how to connect and configure Waveshare devices to work with this integration are described in detail at https://github.com/alienatedsec/solis-ha-modbus-cloud
+- A combined method of Solis Cloud and Home Assistant using [any Datalogger](https://github.com/alienatedsec/solis-ha-modbus-cloud#supported-solis-dataloggers) as well as wiring, and how to connect and configure Waveshare devices to work with this integration are described in detail at [https://github.com/alienatedsec/solis-ha-modbus-cloud](https://github.com/alienatedsec/solis-ha-modbus-cloud)
 
 **(*) Disconnecting Solis Cloud is to prevent Solis engineers and your installer to support and monitor your PV installation.**
 
