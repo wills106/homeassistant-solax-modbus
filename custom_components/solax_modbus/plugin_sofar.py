@@ -553,7 +553,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x404,
         newblock = True,
         scale = { 0: "Waiting",
-                  1: "Chacking",
+                  1: "Checking",
                   2: "Grid-connected",
                   3: "Emergency Power Supply",
                   4: "Recoverable fault",
