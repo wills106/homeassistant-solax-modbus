@@ -15,9 +15,9 @@ Detected blocking call to sleep inside the event loop by custom integration 'sol
 As a work around you can add the following lines to your configuration file:
 ```
 logger:
-  default: warning
-  logs:
-    homeassistant.util.async_: error
+  filters:
+    custom_component.solax_modbus:
+      - "*blocking call*"
 ```
 
 ## Donations / Sponsor
