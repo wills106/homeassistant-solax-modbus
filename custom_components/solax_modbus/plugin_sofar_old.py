@@ -1,4 +1,5 @@
 import logging
+import re
 from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
@@ -50,6 +51,9 @@ ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 |
 
 # ====================== find inverter type and details ===========================================
 
+def remove_special_chars(input_str):
+    return re.sub(r'[^A-z0-9 -]', '', input_str)
+
 def _read_serialnr(hub, address, swapbytes):
     res = None
     try:
@@ -61,7 +65,8 @@ def _read_serialnr(hub, address, swapbytes):
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
-            hub.seriesnumber = res    
+            res = remove_special_chars(res)
+            hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}") 
@@ -140,7 +145,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "PV Power",
         key = "pv_power",
-        native_unit_of_measurement = UnitOfPower.WATT,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xA,
@@ -154,6 +159,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "activepower",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 0xC,
         scale = 0.01,
         rounding = 2,
@@ -205,6 +211,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "total_production",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x15,
         unit = REGISTER_U32,
         allowedtypes = PV | X1,
@@ -222,6 +229,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "today_production",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x19,
         scale = 0.01,
         rounding = 2,
@@ -344,8 +352,9 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ActivePower",
         key = "activepower",
-        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
-        device_class = SensorDeviceClass.ENERGY,
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
         register = 0xF,
         scale = 0.01,
         rounding = 2,
@@ -437,6 +446,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "total_production",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x18,
         unit = REGISTER_U32,
         allowedtypes = PV | X3,
@@ -454,6 +464,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key = "today_production",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x1C,
         scale = 0.01,
         rounding = 2,
@@ -1068,8 +1079,8 @@ class sofar_old_plugin(plugin_base):
 
         # derive invertertype from seriiesnumber
         if seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.count('SA3'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.count('SB1'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SA3'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
@@ -1078,7 +1089,7 @@ class sofar_old_plugin(plugin_base):
         elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SM1'):  invertertype = PV # Not sure if 1 or 3phase?
         elif seriesnumber.startswith('SE1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
-        elif seriesnumber.count('SM1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
+        elif seriesnumber.startswith('SM1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
         elif seriesnumber.startswith('ZE1E'):  invertertype = HYBRID | X1 # 3kW HYDxxxxES
         elif seriesnumber.startswith('ZM1E'):  invertertype = HYBRID | X1 # 3.6kW HYDxxxxES
         #elif seriesnumber.startswith('S??'):  invertertype = AC | HYBRID # Storage Inverter 1 or 3phase?
