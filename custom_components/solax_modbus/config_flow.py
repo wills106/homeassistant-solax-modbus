@@ -112,7 +112,6 @@ OPTION_SCHEMA = vol.Schema( {
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
     } )
 
-
 SERIAL_SCHEMA = vol.Schema( {
         vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): str,
         vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): selector.SelectSelector(selector.SelectSelectorConfig(options=BAUDRATES), ),
@@ -123,7 +122,6 @@ TCP_SCHEMA = vol.Schema( {
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
     } )
-
 
 async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any] :
     _LOGGER.info(f"validating base: {user_input}")
@@ -165,39 +163,6 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
 
 async def _next_step(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
-"""
-# remove soon please
-def _old_validate_base(data: Any) -> Any:
-    #Validate config.
-    interface   = data[CONF_INTERFACE]
-    modbus_addr = data[CONF_MODBUS_ADDR]
-    name        = data[CONF_NAME]
-    _LOGGER.info(f"validating base config for {name}: pre: {data}")
-    if getPlugin(name) or ((name == DEFAULT_NAME) and (data[CONF_PLUGIN] != DEFAULT_PLUGIN)): 
-        _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
-        data[CONF_NAME] = getPluginName(data[CONF_PLUGIN])
-        raise SchemaFlowError("name_already_used") 
-    return data
-
-# remove soon please
-def _old_validate_host(data: Any) -> Any:
-    port        = data[CONF_PORT]
-    host        = data[CONF_HOST]
-    try:
-        if ipaddress.ip_address(host).version == (4 or 6):  pass
-    except Exception as e:
-        _LOGGER.warning(e, exc_info = True)
-        _LOGGER.warning("valid IP address? Trying to validate it in another way")
-        disallowed = re.compile(r"[^a-zA-Z\d\-]")
-        res = all(x and not disallowed.search(x) for x in host.split("."))
-        if not res: raise SchemaFlowError("invalid_host") from e
-    _LOGGER.info(f"validating host: returning data: {data}")
-    return data
-
-# remove soon please
-def _old_next_step(data: Any) -> str:
-    return data[CONF_INTERFACE] # eitheer "tcp" or "serial"
-"""
 
 if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)): 
     _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
@@ -214,20 +179,6 @@ if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)):
 
 else: # for older versions - REMOVE SOON
     _LOGGER.error(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
-    """
-    CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_old_validate_base, next_step = _old_next_step),
-        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_old_validate_host),
-    }
-    OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "init":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_old_validate_base, next_step = _old_next_step),
-        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_old_validate_host),
-    }
-    """
-
-
 
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
@@ -237,10 +188,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     config_flow  = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
 
-
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         _LOGGER.info(f"title configflow {DOMAIN} {CONF_NAME}: {options}")
         # Return config entry title
         return cast(str, options[CONF_NAME]) if CONF_NAME in options else ""
-
-
