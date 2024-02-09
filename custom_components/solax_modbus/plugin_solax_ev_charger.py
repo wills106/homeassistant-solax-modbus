@@ -791,7 +791,8 @@ class solax_ev_charger_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
 plugin_instance = solax_ev_charger_plugin(
-    plugin_name = 'solax_ev_charger', 
+    plugin_name = 'SolaX EV Charger',
+    plugin_manufacturer = 'SolaX Power',
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

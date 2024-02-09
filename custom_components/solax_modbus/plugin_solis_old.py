@@ -466,7 +466,8 @@ class solis_old_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
 
 plugin_instance = solis_old_plugin(
-    plugin_name = 'solis_old', 
+    plugin_name = 'Solis Old',
+    plugin_manufacturer = 'Ginlog Solis',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

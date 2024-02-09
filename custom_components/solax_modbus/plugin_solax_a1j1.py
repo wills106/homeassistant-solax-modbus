@@ -1092,7 +1092,8 @@ class solax_a1j1_plugin(plugin_base):
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
 plugin_instance = solax_a1j1_plugin(
-    plugin_name = 'solax_a1j1', 
+    plugin_name = 'SolaX A1-J1',
+    plugin_manufacturer = 'SolaX Power',
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

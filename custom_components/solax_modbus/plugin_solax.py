@@ -6569,10 +6569,9 @@ class solax_plugin(plugin_base):
                         number_entity.entity_description = replace(number_entity.entity_description, native_max_value = new_max_export, )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
-
-
 plugin_instance = solax_plugin(
-    plugin_name = 'solax', 
+    plugin_name = 'SolaX',
+    plugin_manufacturer = 'SolaX Power',
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

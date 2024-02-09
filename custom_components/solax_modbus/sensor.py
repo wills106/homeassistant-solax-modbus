@@ -75,8 +75,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
-        "name": hub_name,
-        "manufacturer": ATTR_MANUFACTURER,
+        "name": hub.plugin.plugin_name,
+        "manufacturer": hub.plugin.plugin_manufacturer,
+        "serial_number": hub.seriesnumber,
     }
 
     entities = []

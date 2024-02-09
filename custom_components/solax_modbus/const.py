@@ -93,6 +93,7 @@ _LOGGER = logging.getLogger(__name__)
 @dataclass
 class plugin_base:
     plugin_name: str
+    plugin_manufacturer: str
     SENSOR_TYPES: list[SensorEntityDescription]
     BUTTON_TYPES: list[ButtonEntityDescription]
     NUMBER_TYPES: list[NumberEntityDescription]

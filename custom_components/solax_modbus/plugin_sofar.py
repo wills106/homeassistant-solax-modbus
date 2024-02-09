@@ -2961,7 +2961,8 @@ class sofar_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
 plugin_instance = sofar_plugin(
-    plugin_name = 'sofar',
+    plugin_name = 'Sofar',
+    plugin_manufacturer = 'Sofar Solar',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

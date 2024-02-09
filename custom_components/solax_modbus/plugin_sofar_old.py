@@ -1105,7 +1105,8 @@ class sofar_old_plugin(plugin_base):
 
 
 plugin_instance = sofar_old_plugin(
-    plugin_name = 'sofar_old', 
+    plugin_name = 'Sofar Old',
+    plugin_manufacturer = 'Sofar Solar',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

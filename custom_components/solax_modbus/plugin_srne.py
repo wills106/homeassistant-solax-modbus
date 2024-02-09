@@ -512,7 +512,8 @@ class srne_plugin(plugin_base):
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
 plugin_instance = srne_plugin(
-    plugin_name = 'srne', 
+    plugin_name = 'SRNE',
+    plugin_manufacturer = 'SRNE Solar',
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

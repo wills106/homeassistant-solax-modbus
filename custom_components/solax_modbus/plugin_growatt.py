@@ -4732,7 +4732,8 @@ class growatt_plugin(plugin_base):
 
 
 plugin_instance = growatt_plugin(
-    plugin_name = 'growatt',
+    plugin_name = 'Growatt',
+    plugin_manufacturer = 'Growatt New Energy',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,

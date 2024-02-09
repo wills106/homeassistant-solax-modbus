@@ -2472,7 +2472,8 @@ class solis_plugin(plugin_base):
 
 
 plugin_instance = solis_plugin(
-    plugin_name = 'solis', 
+    plugin_name = 'Solis',
+    plugin_manufacturer = 'Ginlog Solis',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
