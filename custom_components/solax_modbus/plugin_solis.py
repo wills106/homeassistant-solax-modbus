@@ -2404,21 +2404,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
 ]
 
-
-
 # ============================ plugin declaration =================================================
 
 @dataclass
 class solis_plugin(plugin_base):
-    
-    """
-    def isAwake(self, datadict):
-        return (datadict.get('run_mode', None) == 'Normal Mode')
-
-    def wakeupButton(self):
-        return 'battery_awaken'
-    """
-
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -2468,7 +2457,6 @@ class solis_plugin(plugin_base):
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
-
 
 
 plugin_instance = solis_plugin(

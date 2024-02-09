@@ -4,7 +4,6 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-#from .const import BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,30 +41,27 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+MPPT3          = 0x40000
+MPPT4          = 0x80000
+MPPT6          = 0x100000
+MPPT8          = 0x200000
+MPPT10         = 0x400000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 
-
-# ======================= end of bitmask handling code =============================================
-
-# ====================== find inverter type and details ===========================================
-
-def _read_serialnr(hub, address, swapbytes):
+def _read_serialnr(hub, address):
     res = None
+    inverter_data = None
     try:
         inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=4)
-        if not inverter_data.isError(): 
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(8).decode
-            if swapbytes: 
-                ba = bytearray(res) # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                res = str(ba) # convert back to string
+            res = decoder.decode_string(8).decode("ascii")
             hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
-    #return 'SP1ES2' 
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
 @dataclass
@@ -417,14 +413,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 
 @dataclass
 class solis_old_plugin(plugin_base):
-    
-    """
-    def isAwake(self, datadict):
-        return (datadict.get('run_mode', None) == 'Normal Mode')
-
-    def wakeupButton(self):
-        return 'battery_awaken'
-    """
 
     def determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -449,7 +437,6 @@ class solis_old_plugin(plugin_base):
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         if read_eps: invertertype = invertertype | EPS 
         if read_dcb: invertertype = invertertype | DCB
-        #hub.invertertype = invertertype
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -459,11 +446,12 @@ class solis_old_plugin(plugin_base):
         hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist: 
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 plugin_instance = solis_old_plugin(
     plugin_name = 'Solis Old',
