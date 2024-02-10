@@ -20,9 +20,11 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
     device_info = {
-        "identifiers": {(DOMAIN, hub_name)},
-        "name": hub_name,
-        "manufacturer": ATTR_MANUFACTURER,
+        "identifiers": {(DOMAIN, hub_name, hub.seriesnumber)},
+        "name": hub.plugin.plugin_name,
+        "manufacturer": hub.plugin.plugin_manufacturer,
+        #"model": hub.sensor_description.inverter_model,
+        "serial_number": hub.seriesnumber,
     }
     plugin = hub.plugin #getPlugin(hub_name)
     entities = []
