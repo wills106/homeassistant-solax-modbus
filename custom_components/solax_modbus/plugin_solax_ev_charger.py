@@ -181,6 +181,27 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
+        name = "ECO Gear",
+        key = "eco_gear",
+        register = 0x60E,
+        option_dict = {
+            1: "6A",
+            2: "10A",
+            3: "16A",
+            4: "20A",
+            5: "25A", },
+        icon = "mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name = "Green Gear",
+        key = "gree_gear",
+        register = 0x60F,
+        option_dict = {
+            1: "3A",
+            2: "6A", },
+        icon = "mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
         name = "Start Charge Mode",
         key = "start_charge_mode",
         register = 0x610,
@@ -273,6 +294,29 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             1: "Fast",
             2: "ECO",
             3: "Green", },
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name = "ECO Gear",
+        key = "eco_gear",
+        register = 0x60E,
+        scale = {
+            1: "6A",
+            2: "10A",
+            3: "16A",
+            4: "20A",
+            5: "25A", },
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name = "Green Gear",
+        key = "green_gear",
+        register = 0x60F,
+        scale = {
+            1: "3A",
+            2: "6A", },
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
