@@ -16,8 +16,8 @@ As a work around you can add the following lines to your configuration file:
 ```
 logger:
   filters:
-    custom_component.solax_modbus:
-      - "*blocking call*"
+    homeassistant.util.async_:
+      - ".*blocking call.*solax_modbus.*"
 ```
 
 ## Donations / Sponsor
