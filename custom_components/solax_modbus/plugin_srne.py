@@ -184,7 +184,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         register = 0x100,
-        allowedtypes = GEN, 
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Battery Voltage",
@@ -193,7 +193,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x101,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Battery Current",
@@ -203,7 +203,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         register = 0x102,
         scale = 0.1,
         unit = REGISTER_S16,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:current-dc",
     ),
     SRNEModbusSensorEntityDescription(
@@ -213,7 +213,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x107,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "PV Current 1",
@@ -222,7 +222,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 0x108,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:current-dc",
     ),
     SRNEModbusSensorEntityDescription(
@@ -232,7 +232,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x109,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:solar-power-variant",
     ),
     SRNEModbusSensorEntityDescription(
@@ -246,7 +246,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
             5: "Reserved 1",
             6: "Lithium Battery Active",
             7: "Reserved 2", },
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:dip-switch",
     ),
     SRNEModbusSensorEntityDescription(
@@ -257,7 +257,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10E,
         unit = REGISTER_S16,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "PV Voltage 2",
@@ -266,7 +266,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x10F,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "PV Current 2",
@@ -275,7 +275,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 0x110,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:current-dc",
     ),
     SRNEModbusSensorEntityDescription(
@@ -285,7 +285,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x111,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:solar-power-variant",
     ),
     SRNEModbusSensorEntityDescription(
@@ -303,7 +303,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
                   8: "Battery Active",
                   9: "Shutdown by User",
                  10: "Fault", },
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         icon = "mdi:run",
     ),
     SRNEModbusSensorEntityDescription(
@@ -313,7 +313,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x213,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Grid Current L1",
@@ -322,7 +322,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 0x214,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Grid Frequency L1",
@@ -331,7 +331,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x215,
         scale = 0.01,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
@@ -340,7 +340,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x216,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Inverter Current L1",
@@ -349,7 +349,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 0x217,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
@@ -358,7 +358,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x218,
         scale = 0.01,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Load Current L1",
@@ -367,7 +367,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 0x219,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "Battery Charge Mains",
@@ -377,7 +377,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x21E,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
         name = "DC-DC Temperature",
@@ -387,7 +387,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x220,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SRNEModbusSensorEntityDescription(
@@ -398,7 +398,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x221,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SRNEModbusSensorEntityDescription(
@@ -409,7 +409,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x222,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SRNEModbusSensorEntityDescription(
@@ -420,7 +420,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x224,
         scale = 0.1,
-        allowedtypes = GEN,
+        allowedtypes = ALLDEFAULT,
     ),
 ]
 
