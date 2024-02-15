@@ -104,7 +104,7 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_passivemode(initval, descr, datadict):
-    return [ (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
+    return [ (REGISTER_S32, datadict.get('passive_mode_grid_power', 0)),
             (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
             (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
            ]
@@ -200,8 +200,8 @@ NUMBER_TYPES = [
     #
     ###
     SofarModbusNumberEntityDescription(
-        name = "Passive Mode Battery Power",
-        key = "passive_mode_battery_power",
+        name = "Passive Mode Grid Power",
+        key = "passive_mode_grid_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
