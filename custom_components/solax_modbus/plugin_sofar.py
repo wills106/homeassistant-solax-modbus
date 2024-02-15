@@ -104,20 +104,8 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_passivemode(initval, descr, datadict):
-    return [ (REGISTER_S32, 0, ),
-            (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)), 
-            (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
-           ]
-
-def value_function_passivemode_min(initval, descr, datadict):
-    return [ (REGISTER_S32, 0, ),
+    return [ (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
             (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
-            (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)),
-           ]
-
-def value_function_passivemode_max(initval, descr, datadict):
-    return [ (REGISTER_S32, 0, ),
-            (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)), 
             (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
            ]
 
@@ -156,22 +144,6 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
-    ),
-    SofarModbusButtonEntityDescription(
-        name = "Passive Mode Min Battery",
-        key = "passive_mode_battery_set_min",
-        register = 0x1189,
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTI_MODBUS,
-        value_function = value_function_passivemode_min,
-    ),
-    SofarModbusButtonEntityDescription(
-        name = "Passive Mode Max Battery",
-        key = "passive_mode_battery_set_max",
-        register = 0x118B,
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTI_MODBUS,
-        value_function = value_function_passivemode_max,
     ),
     SofarModbusButtonEntityDescription(
         name = "Sync RTC",
