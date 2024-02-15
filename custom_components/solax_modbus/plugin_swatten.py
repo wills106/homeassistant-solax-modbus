@@ -182,8 +182,8 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
     #
     ###
     SwattenModbusSensorEntityDescription(
-        name = "Inverter Type",
-        key = "inverter_type",
+        name = "Phase",
+        key = "phase",
         register = 4052,
         register_type = REG_INPUT,
         allowedtypes = ALL_GEN_GROUP,
@@ -370,7 +370,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
     ),
     SwattenModbusSensorEntityDescription(
         name = "Model Type",
-        key = "firmware_version",
+        key = "model_type",
         register = 5809,
         unit = REGISTER_STR,
         wordcount=8,
@@ -400,7 +400,7 @@ class swatten_plugin(plugin_base):
 
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - equipment model : {seriesnumber}")
+            _LOGGER.error(f"unrecognized {hub.name} model type : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         if read_eps: invertertype = invertertype | EPS
