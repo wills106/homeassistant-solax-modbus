@@ -9,9 +9,9 @@ from custom_components.solax_modbus.const import *
 _LOGGER = logging.getLogger(__name__)
 
 """ ============================================================================================
-bitmasks  definitions to characterize inverters, ogranized by group
-these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
-within a group, the bits in an entitydeclaration will be interpreted as OR
+bitmasks  definitions to characterize inverters, organized by group
+these bitmasks are used in entity declarations to determine to which inverters the entity applies
+within a group, the bits in an entity declaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS 
@@ -109,6 +109,18 @@ def value_function_passivemode(initval, descr, datadict):
             (REGISTER_S32, datadict.get('passive_mode_battery_power', 0)),
            ]
 
+def value_function_passivemode_min(initval, descr, datadict):
+    return [ (REGISTER_S32, 0, ),
+            (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
+            (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)),
+           ]
+
+def value_function_passivemode_max(initval, descr, datadict):
+    return [ (REGISTER_S32, 0, ),
+            (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)), 
+            (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
+           ]
+
 def value_function_refluxcontrol(initval, descr, datadict):
     return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
               ('reflux_power', datadict.get('reflux_power', 0), ), 
@@ -144,6 +156,22 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
+    ),
+    SofarModbusButtonEntityDescription(
+        name = "Passive Mode Min Battery",
+        key = "passive_mode_battery_set_min",
+        register = 0x1189,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        value_function = value_function_passivemode_min,
+    ),
+    SofarModbusButtonEntityDescription(
+        name = "Passive Mode Max Battery",
+        key = "passive_mode_battery_set_max",
+        register = 0x118B,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        value_function = value_function_passivemode_max,
     ),
     SofarModbusButtonEntityDescription(
         name = "Sync RTC",
@@ -202,6 +230,36 @@ NUMBER_TYPES = [
     SofarModbusNumberEntityDescription(
         name = "Passive Mode Battery Power",
         key = "passive_mode_battery_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = NumberDeviceClass.POWER,
+        unit = REGISTER_S32,
+        fmt = "i",
+        native_max_value = 15000,
+        native_min_value = -15000,
+        native_step = 100,
+        initvalue = 0,
+        allowedtypes = HYBRID,
+        prevent_update = True,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SofarModbusNumberEntityDescription(
+        name = "Passive Mode Min Batter Power",
+        key = "passive_mode_battery_power_min",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = NumberDeviceClass.POWER,
+        unit = REGISTER_S32,
+        fmt = "i",
+        native_max_value = 15000,
+        native_min_value = -15000,
+        native_step = 100,
+        initvalue = 0,
+        allowedtypes = HYBRID,
+        prevent_update = True,
+        write_method = WRITE_DATA_LOCAL,
+    ),
+    SofarModbusNumberEntityDescription(
+        name = "Passive Mode Max Battery Power",
+        key = "passive_mode_battery_power_max",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
@@ -2875,11 +2933,11 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Passive Mode Battery Power",
-        key = "passive_mode_battery_power",
+        name = "RO Passive Mode Lower",
+        key = "ro_passive_mode_lower",
         unit = REGISTER_S32,
         register = 0x1189,
-        entity_registry_enabled_default =  False,
+        #entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
