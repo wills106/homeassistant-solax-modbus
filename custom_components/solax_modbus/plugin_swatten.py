@@ -96,22 +96,11 @@ class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
-def value_function_timingmode(initval, descr, datadict):
-    return  [ ('timed_charge_start_h', datadict.get('timed_charge_start_h', 0), ),
-              ('timed_charge_start_m', datadict.get('timed_charge_start_m', 0), ),
-              ('timed_charge_end_h', datadict.get('timed_charge_end_h', 0), ),
-              ('timed_charge_end_m', datadict.get('timed_charge_end_m', 0), ),
-              ('timed_discharge_start_h', datadict.get('timed_discharge_start_h', 0), ),
-              ('timed_discharge_start_m', datadict.get('timed_discharge_start_m', 0), ),
-              ('timed_discharge_end_h', datadict.get('timed_discharge_end_h', 0), ),
-              ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
-            ]
+def value_function_pv_power_1(initval, descr, datadict):
+    return  datadict.get('pv_voltage_1', 0) * datadict.get('pv_current_1',0)
 
-def value_function_today_solar_energy(initval, descr, datadict):
-    return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
-
-def value_function_combined_battery_power(initval, descr, datadict):
-    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0) 
+def value_function_pv_power_2(initval, descr, datadict):
+    return  datadict.get('pv_voltage_2', 0) * datadict.get('pv_current_2',0)
 
 # ================================= Button Declarations ============================================================
 
@@ -120,7 +109,7 @@ BUTTON_TYPES = [
         name = "Sync RTC",
         key = "sync_rtc",
         register = 4050,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:home-clock",
         value_function = value_function_sync_rtc_ymd,
@@ -171,7 +160,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         unit = REGISTER_WORDS,
         wordcount = 6,
         scale = value_function_rtc_ymd,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         #entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:clock",
@@ -186,7 +175,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         key = "phase",
         register = 4052,
         register_type = REG_INPUT,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         #entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:clock",
@@ -200,7 +189,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
     ),
     SwattenModbusSensorEntityDescription(
         name = "PV Current 1",
@@ -211,7 +200,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         #register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         icon = "mdi:current-dc",
     ),
     SwattenModbusSensorEntityDescription(
@@ -223,7 +212,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
     ),
     SwattenModbusSensorEntityDescription(
         name = "PV Current 2",
@@ -234,7 +223,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         icon = "mdi:current-dc",
     ),
     SwattenModbusSensorEntityDescription(
@@ -248,7 +237,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         #scale = 0.1,
         #rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         icon = "mdi:solar-power-variant",
     ),
     SwattenModbusSensorEntityDescription(
@@ -260,7 +249,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         scale = 0.1,
         register_type = REG_INPUT,
         rounding = 1,
-        allowedtypes = GEN | X1,
+        allowedtypes = HYBRID | GEN | X1,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Voltage L1",
@@ -271,7 +260,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Voltage L2",
@@ -282,7 +271,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Voltage L3",
@@ -293,7 +282,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Current",
@@ -305,7 +294,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         #unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | X1,
+        allowedtypes = HYBRID | GEN | X1,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Current L1",
@@ -317,7 +306,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         #unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Current L2",
@@ -329,7 +318,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         #unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Grid Current L3",
@@ -341,7 +330,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         #unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN | X3,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Total Output Power",
@@ -354,7 +343,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         #scale = 0.1,
         #rounding = 1,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         icon = "mdi:solar-power-variant",
     ),
     SwattenModbusSensorEntityDescription(
@@ -366,7 +355,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
     ),
     SwattenModbusSensorEntityDescription(
         name = "Model Type",
@@ -375,11 +364,36 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         unit = REGISTER_STR,
         wordcount=8,
         register_type = REG_INPUT,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = HYBRID | GEN,
         #entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
-    ),   
+    ),
+    #####
+    #
+    # Computed
+    #
+    #####
+    SwattenModbusSensorEntityDescription(
+        name = "PV Power 1",
+        key = "pv_power_1",
+        value_function= value_function_pv_power_1,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = HYBRID,
+        icon = "mdi:solar-power-variant",
+    ),
+    SwattenModbusSensorEntityDescription(
+        name = "PV Power 2",
+        key = "pv_power_2",
+        value_function= value_function_pv_power_2,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = HYBRID,
+        icon = "mdi:solar-power-variant",
+    ),
 ]
 
 # ============================ plugin declaration =================================================
@@ -395,8 +409,14 @@ class swatten_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('123'):  invertertype = PV | GEN | X1 # PV ?
-        elif seriesnumber.startswith('321'):  invertertype = HYBRID | GEN | X1 # Hybrid ?
+        if seriesnumber.startswith('SiH3KSH'):  invertertype = HYBRID | GEN | X1 # 1Phase 3kW HV ?
+        elif seriesnumber.startswith('SiH4KSH'):  invertertype = HYBRID | GEN | X1 # 1Phase 4kW HV?
+        elif seriesnumber.startswith('SiH5KSH'):  invertertype = HYBRID | GEN | X1 # 1Phase 45W HV?
+        elif seriesnumber.startswith('SiH6KSH'):  invertertype = HYBRID | GEN | X1 # 1Phase 4kW HV?
+        elif seriesnumber.startswith('SiH5KTH'):  invertertype = HYBRID | GEN | X3 # 3Phase 5kW HV?
+        elif seriesnumber.startswith('SiH6KTH'):  invertertype = HYBRID | GEN | X3 # 3Phase 6kW HV?
+        elif seriesnumber.startswith('SiH8KTH'):  invertertype = HYBRID | GEN | X3 # 3Phase 8kW HV
+        elif seriesnumber.startswith('SiH10KTH'):  invertertype = HYBRID | GEN | X3 # 3Phase 8kW HV?
 
         else:
             invertertype = 0
