@@ -157,6 +157,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         name = "RTC",
         key = "rtc",
         register = 4050,
+        register_type = REG_INPUT,
         unit = REGISTER_WORDS,
         wordcount = 6,
         scale = value_function_rtc_ymd,
@@ -170,16 +171,6 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
     # Input registers
     #
     ###
-    SwattenModbusSensorEntityDescription(
-        name = "Phase",
-        key = "phase",
-        register = 4052,
-        register_type = REG_INPUT,
-        allowedtypes = HYBRID | GEN,
-        #entity_registry_enabled_default = False,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:clock",
-    ),
     SwattenModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
