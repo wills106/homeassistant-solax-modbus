@@ -138,7 +138,7 @@ def value_function_toumode(initval, descr, datadict):
 
 BUTTON_TYPES = [
     SofarModbusButtonEntityDescription(
-        name = "Passive Mode Battery Charge/Discharge",
+        name = "Passive: Update Battery Charge/Discharge",
         key = "passive_mode_battery_charge_discharge",
         register = 0x1187,
         allowedtypes = HYBRID,
@@ -163,7 +163,7 @@ BUTTON_TYPES = [
         value_function = value_function_refluxcontrol,
     ),
     SofarModbusButtonEntityDescription(
-        name = "Timing Control",
+        name = "Timing: Control",
         key = "timing_control",
         register = 0x111F,
         command = 1,
@@ -171,7 +171,7 @@ BUTTON_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusButtonEntityDescription(
-        name = "Update Charge/Discharge Times",
+        name = "TOU: Update Charge/Discharge Times",
         key = "update_charge_discharge_times",
         register = 0x1111,
         allowedtypes = HYBRID,
@@ -180,7 +180,7 @@ BUTTON_TYPES = [
         value_function = value_function_timingmode,
     ),
     SofarModbusButtonEntityDescription(
-        name = "Update TOU Charge Times",
+        name = "TOU: Update Charge Times",
         key = "update_tou_charge_times",
         register = 0x1120,
         allowedtypes = HYBRID,
@@ -200,7 +200,7 @@ NUMBER_TYPES = [
     #
     ###
     SofarModbusNumberEntityDescription(
-        name = "Passive Mode Grid Power",
+        name = "Passive: Desired Grid Power",
         key = "passive_mode_grid_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
@@ -215,7 +215,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "Passive Mode Min Batter Power",
+        name = "Passive: Minimum Batter Power",
         key = "passive_mode_battery_power_min",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
@@ -230,7 +230,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "Passive Mode Max Battery Power",
+        name = "Passive: Maximum Battery Power",
         key = "passive_mode_battery_power_max",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
@@ -260,7 +260,7 @@ NUMBER_TYPES = [
         icon = "mdi:battery-sync",
     ),
     SofarModbusNumberEntityDescription(
-        name = "Timing Charge Power",
+        name = "Timing: Charge Power",
         key = "timing_charge_power",
         allowedtypes = HYBRID,
         native_min_value = 0,
@@ -273,7 +273,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "Timing Discharge Power",
+        name = "Timing: Discharge Power",
         key = "timing_discharge_power",
         allowedtypes = HYBRID,
         native_min_value = 0,
@@ -286,7 +286,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "Timing ID",
+        name = "Timing: ID",
         key = "timing_id",
         allowedtypes = HYBRID,
         native_min_value = 0,
@@ -297,7 +297,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "TOU ID",
+        name = "TOU: ID",
         key = "tou_id",
         allowedtypes = HYBRID,
         native_min_value = 0,
@@ -308,7 +308,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "TOU Target SOC",
+        name = "TOU: Target SOC",
         key = "tou_target_soc",
         allowedtypes = HYBRID,
         native_min_value = 30,
@@ -320,7 +320,7 @@ NUMBER_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusNumberEntityDescription(
-        name = "TOU Charge Power",
+        name = "TOU: Charge Power",
         key = "tou_charge_power",
         allowedtypes = HYBRID,
         native_min_value = 0,
@@ -398,7 +398,7 @@ SELECT_TYPES = [
         write_method = WRITE_DATA_LOCAL,
     ),
     SofarModbusSelectEntityDescription(
-        name = "Timing Charge",
+        name = "Timing: Charge",
         key = "timing_charge",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -411,7 +411,7 @@ SELECT_TYPES = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Charge Start Time",
+        name = "Timing: Charge Start Time",
         key = "timing_charge_start_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -421,7 +421,7 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Charge End Time",
+        name = "Timing: Charge End Time",
         key = "timing_charge_end_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -431,7 +431,7 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Discharge Start Time",
+        name = "Timing: Discharge Start Time",
         key = "timing_discharge_start_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -441,7 +441,7 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "Timing Discharge End Time",
+        name = "Timing: Discharge End Time",
         key = "timing_discharge_end_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -451,7 +451,7 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription(
-        name = "TOU Control",
+        name = "TOU: Control",
         key = "tou_control",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -464,7 +464,7 @@ SELECT_TYPES = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSelectEntityDescription( 
-        name = "TOU Charge Start Time",
+        name = "TOU: Charge Start Time",
         key = "tou_charge_start_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -474,7 +474,7 @@ SELECT_TYPES = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSelectEntityDescription( 
-        name = "TOU Charge End Time",
+        name = "TOU: Charge End Time",
         key = "tou_charge_end_time",
         unit = REGISTER_U16,
         write_method = WRITE_DATA_LOCAL,
@@ -2635,7 +2635,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "RO Reflux Control",
+        name = "Reflux Control",
         key = "ro_reflux_control",
         register = 0x1023,
         scale = { 0: "Disabled",
@@ -2739,7 +2739,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing ID",
+        name = "Timing: ID",
         key = "ro_timing_id",
         register = 0x1111,
         scale = { 0: "0",
@@ -2755,7 +2755,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing Charge",
+        name = "Timing: Charge",
         key = "ro_timing_charge",
         register = 0x1112,
         scale = { 0: "Enabled - Charging & Discharging",
@@ -2766,7 +2766,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing Charge Start Time", 
+        name = "Timing: Charge Start Time", 
         key = "ro_timing_charge_start_time",
         register = 0x1113,
         scale = value_function_sofartime,
@@ -2775,7 +2775,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing Charge End Time", 
+        name = "Timing: Charge End Time", 
         key = "ro_timing_charge_end_time",
         register = 0x1114,
         scale = value_function_sofartime,
@@ -2784,7 +2784,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing Discharge Start Time", 
+        name = "Timing: Discharge Start Time", 
         key = "ro_timing_discharge_start_time",
         register = 0x1115,
         scale = value_function_sofartime,
@@ -2793,7 +2793,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Timing Discharge End Time", 
+        name = "Timing: Discharge End Time", 
         key = "ro_timing_discharge_end_time",
         register = 0x1116,
         scale = value_function_sofartime,
@@ -2802,7 +2802,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing Charge Power", 
+        name = "Timing: Charge Power", 
         key = "timing_charge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2812,7 +2812,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing Discharge Power", 
+        name = "Timing: Discharge Power", 
         key = "timing_discharge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2822,7 +2822,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing Control",
+        name = "Timing: Control",
         key = "timeing_control", 
         register = 0x111F,
         scale = { 0: "0",
@@ -2838,14 +2838,14 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "TOU ID",
+        name = "TOU: ID",
         key = "tou_id",
         register = 0x1120,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO TOU Control",
+        name = "TOU: Control",
         key = "ro_tou_control",
         register = 0x1121,
         scale = { 0: "Disabled",
@@ -2854,7 +2854,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO TOU Charge Start Time", 
+        name = "TOU: Charge Start Time", 
         key = "ro_tou_charge_start_time",
         register = 0x1122,
         scale = value_function_sofartime,
@@ -2863,7 +2863,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO TOU Charge End Time", 
+        name = "TOU: Charge End Time", 
         key = "ro_tou_charge_end_time",
         register = 0x1123,
         scale = value_function_sofartime,
@@ -2872,7 +2872,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "TOU Target SOC",
+        name = "TOU: Target SOC",
         key = "tou_target_soc", 
         register = 0x1124,
         entity_registry_enabled_default =  False,
@@ -2897,7 +2897,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Passive Mode Gdes",
+        name = "Passive: Desired Grid Power",
         key = "ro_passive_mode_gdes",
         unit = REGISTER_S32,
         register = 0x1187,
@@ -2905,7 +2905,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Passive Mode Lower",
+        name = "Passive: Minimum Battery Power",
         key = "ro_passive_mode_lower",
         unit = REGISTER_S32,
         register = 0x1189,
@@ -2913,7 +2913,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RO Passive Mode Upper",
+        name = "Passive: Maximum Battery Power",
         key = "ro_passive_mode_upper",
         unit = REGISTER_S32,
         register = 0x118B,
