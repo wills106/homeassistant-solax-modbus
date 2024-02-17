@@ -2561,7 +2561,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1009,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3,
         icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2574,7 +2574,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1011,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3,
         icon = "mdi:battery-arrow-up-outline",
     ),
     GrowattModbusSensorEntityDescription(
