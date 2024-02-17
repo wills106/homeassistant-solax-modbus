@@ -1,6 +1,6 @@
 name: Bug Report - Non SolaX Inverter
 description: File a bug report about Non SolaX Inverter (Growatt, Sofar (Azzurro), Solis etc)
-title: "[Bug]: "
+title: "[Bug]: 'Inverter Brand' - 'Inverter Model' Description of Error"
 labels: ["bug", "triage", "non solax"]
 body:
   - type: markdown
