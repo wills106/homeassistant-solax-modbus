@@ -105,9 +105,14 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_passivemode(initval, descr, datadict):
     return [ (REGISTER_S32, datadict.get('passive_mode_grid_power', 0)),
-            (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
-            (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
+             (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
+             (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
            ]
+
+def value_function_passive_timeout(initval, descr, datadict):
+    return  [ ('passive_mode_timeout', datadict.get('passive_mode_timeout', 0), ),
+              ('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action', 0), ), 
+            ]
 
 def value_function_refluxcontrol(initval, descr, datadict):
     return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
@@ -144,6 +149,14 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passivemode,
+    ),
+    SofarModbusButtonEntityDescription(
+        name = "Passive: Update Timeout",
+        key = "passive_mode_update_timeout",
+        register = 0x1184,
+        allowedtypes = HYBRID,
+        write_method = WRITE_MULTI_MODBUS,
+        value_function = value_function_passive_timeout,
     ),
     SofarModbusButtonEntityDescription(
         name = "Sync RTC",
@@ -206,8 +219,8 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
         fmt = "i",
-        native_max_value = 15000,
-        native_min_value = -15000,
+        native_max_value = 20000,
+        native_min_value = -20000,
         native_step = 100,
         initvalue = 0,
         allowedtypes = HYBRID,
@@ -221,8 +234,8 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
         fmt = "i",
-        native_max_value = 15000,
-        native_min_value = -15000,
+        native_max_value = 10000,
+        native_min_value = -10000,
         native_step = 100,
         initvalue = 0,
         allowedtypes = HYBRID,
@@ -236,8 +249,8 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
         fmt = "i",
-        native_max_value = 15000,
-        native_min_value = -15000,
+        native_max_value = 10000,
+        native_min_value = -10000,
         native_step = 100,
         initvalue = 0,
         allowedtypes = HYBRID,
@@ -483,6 +496,34 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
+    SofarModbusSelectEntityDescription(
+        name = "Passive: Timeout",
+        key = "passive_mode_timeout",
+        unit = REGISTER_U16,
+        write_method = WRITE_DATA_LOCAL,
+        option_dict =  {
+                0: "Disabled",
+                300: "5 Minutes",
+                600: "10 Minutes",
+                900: "15 Minutes",
+                1800: "30 Minutes",
+                3600: "60 Minutes",
+                5400: "90 Minutes",
+                7200: "120 Minutes",
+            },
+        allowedtypes = HYBRID,
+    ),
+    SofarModbusSelectEntityDescription(
+        name = "Passive: Timeout Action",
+        key = "passive_mode_timeout_action",
+        unit = REGISTER_U16,
+        write_method = WRITE_DATA_LOCAL,
+        option_dict =  {
+                0: "Force Standby",
+                1: "Return to Previous Mode",
+            },
+        allowedtypes = HYBRID,
+    ),
     ###
     #
     #  Normal select types
@@ -569,7 +610,7 @@ SELECT_TYPES = [
 
 
 
-# ================================= Sennsor Declarations ============================================================
+# ================================= Sensor Declarations ============================================================
 
 SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [ 
 
@@ -2889,35 +2930,38 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Passive Mode Timeout",
-        key = "passive_mode_timeout",
+        name = "RO: Passive: Timeout",
+        key = "ro_passive_mode_timeout",
         register = 0x1184,
-        entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Passive: Desired Grid Power",
+        name = "RO: Passive: Timeout Action",
+        key = "ro_passive_mode_timeout_action",
+        register = 0x1185,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "RO: Passive: Desired Grid Power",
         key = "ro_passive_mode_gdes",
         unit = REGISTER_S32,
         register = 0x1187,
-        #entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Passive: Minimum Battery Power",
+        name = "RO: Passive: Minimum Battery Power",
         key = "ro_passive_mode_lower",
         unit = REGISTER_S32,
         register = 0x1189,
-        #entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Passive: Maximum Battery Power",
+        name = "RO: Passive: Maximum Battery Power",
         key = "ro_passive_mode_upper",
         unit = REGISTER_S32,
         register = 0x118B,
-        #entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
 ]

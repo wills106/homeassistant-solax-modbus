@@ -58,6 +58,7 @@ _TBD: Describe how to use Timing Mode with the Integration_
 The passive mode is designed for controlling the inverter with external energy management systems and allows fine control over its operations. So as you are using Home Assistant, this might be the most interesting mode for you besides the default "Self Use" mode.
 
 When the inverter is in "Passive Mode" it can be controlled through:
+
 - **Passive: Desired Grid Power**: _Number in Watt_. 
 
   Set the desired power that is taken from the Grid. The system will try to achieve this level within the boundaries of the current consumption, the current production, and the boundaries set by the battery parameters below. Positive values indicate power flow from grid to the system (grid consumption). Negative values indicate power flow from system to the grid (feed-in).
