@@ -5671,6 +5671,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # X3 Mic, Mic Pro
 #
 #####
+#
+# Holding Registers
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "Series Number",
         key = "seriesnumber",
@@ -5694,6 +5698,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:clock",
     ),
+    SolaXModbusSensorEntityDescription(
+        name = "Active Power Limit",
+        key = "active_power_limit",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        #state_class = SensorStateClass.MEASUREMENT,
+        register = 0x351,
+        allowedtypes = MIC | GEN2,
+    ),
+#####
+#
+# Input Registers
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
@@ -6234,13 +6252,31 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         allowedtypes = MIC | GEN2,
     ),
-###
+#####
 #
 # X1 Boost Gen4
 #
 # MIC Gen4?
 #
-###
+#####
+#
+# Holding Registers
+#
+#####
+    SolaXModbusSensorEntityDescription(
+        name = "Active Power Limit",
+        key = "active_power_limit",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        #state_class = SensorStateClass.MEASUREMENT,
+        register = 0x381,
+        allowedtypes = MIC | GEN4,
+    ),
+#####
+#
+# Input Registers
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage",
         key = "grid_voltage",
