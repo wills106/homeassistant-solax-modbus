@@ -2619,7 +2619,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | X3,
+        allowedtypes = GEN | GEN2 | GEN3 | X3,
         icon = "mdi:home",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2633,7 +2633,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | X3,
+        allowedtypes = GEN | GEN2 | GEN3 | X3,
         icon = "mdi:home",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2647,7 +2647,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | X3,
+        allowedtypes = GEN | GEN2 | GEN3 | X3,
         icon = "mdi:home",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2661,7 +2661,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | X3,
+        allowedtypes = GEN | GEN2 | GEN3 | X3,
         icon = "mdi:home",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2717,7 +2717,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3,
         icon = "mdi:home",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2944,7 +2944,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3,
         entity_registry_enabled_default = False,
         icon = "mdi:transmission-tower",
     ),
@@ -3535,7 +3535,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3041,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN4,
+        scale = 0.1,
+        allowedtypes = GEN3 | GEN4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Total Reverse Power",
@@ -3546,7 +3547,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3043,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN4,
+        scale = 0.1,
+        allowedtypes = GEN3 | GEN4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Total Load Power",
@@ -3557,7 +3559,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3045,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN4,
+        scale = 0.1,
+        allowedtypes = GEN3 | GEN4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Power Generation",
@@ -3713,7 +3716,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         icon = "mdi:home-import-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3742,7 +3745,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         icon = "mdi:home-export-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3756,7 +3759,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:home-export-outline",
     ),
