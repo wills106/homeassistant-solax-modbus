@@ -2561,7 +2561,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1009,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN | GEN2 | GEN3,
+        allowedtypes = GEN | GEN2,
         icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2574,7 +2574,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1011,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        allowedtypes = GEN | GEN2 | GEN3,
+        allowedtypes = GEN | GEN2,
         icon = "mdi:battery-arrow-up-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2584,7 +2584,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        allowedtypes = GEN2 | GEN3,
+        allowedtypes = GEN2 | GEN3 | GEN4,
         icon = "mdi:battery",
     ),       
     # duplicate of register 97
@@ -4144,7 +4144,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Charge Power",
@@ -4157,7 +4157,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
     #####
     #
