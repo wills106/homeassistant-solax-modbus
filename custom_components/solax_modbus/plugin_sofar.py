@@ -110,8 +110,8 @@ def value_function_passivemode(initval, descr, datadict):
            ]
 
 def value_function_passive_timeout(initval, descr, datadict):
-    return  [ ('passive_mode_timeout', datadict.get('passive_mode_timeout', 0), ),
-              ('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action', 0), ), 
+    return  [ ('passive_mode_timeout', datadict.get('passive_mode_timeout', datadict.get('passive_mode_timeout')), ),
+              ('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action')), ), 
             ]
 
 def value_function_refluxcontrol(initval, descr, datadict):
@@ -226,6 +226,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         prevent_update = True,
         write_method = WRITE_DATA_LOCAL,
+        icon = "mdi:transmission-tower",
     ),
     SofarModbusNumberEntityDescription(
         name = "Passive: Minimum Batter Power",
@@ -241,6 +242,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         prevent_update = True,
         write_method = WRITE_DATA_LOCAL,
+        icon = "mdi:battery-arrow-down",
     ),
     SofarModbusNumberEntityDescription(
         name = "Passive: Maximum Battery Power",
@@ -256,6 +258,7 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID,
         prevent_update = True,
         write_method = WRITE_DATA_LOCAL,
+        icon = "mdi:battery-arrow-up",
     ),
     SofarModbusNumberEntityDescription(
         name = "Reflux Power",
@@ -512,6 +515,7 @@ SELECT_TYPES = [
                 7200: "120 Minutes",
             },
         allowedtypes = HYBRID,
+        icon = "mdi:timer",
     ),
     SofarModbusSelectEntityDescription(
         name = "Passive: Timeout Action",
@@ -523,6 +527,7 @@ SELECT_TYPES = [
                 1: "Return to Previous Mode",
             },
         allowedtypes = HYBRID,
+        icon = "mdi:timer-cog",
     ),
     ###
     #
@@ -599,6 +604,7 @@ SELECT_TYPES = [
             },
         allowedtypes = HYBRID,
         write_method = WRITE_MULTISINGLE_MODBUS,
+        icon = "mdi:battery-charging-60",
     ),
     # Timing Charge Start
     # Timing Charge End
