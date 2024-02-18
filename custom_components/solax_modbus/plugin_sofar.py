@@ -234,8 +234,8 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
         fmt = "i",
-        native_max_value = 10000,
-        native_min_value = -10000,
+        native_max_value = 20000,
+        native_min_value = -20000,
         native_step = 100,
         initvalue = 0,
         allowedtypes = HYBRID,
@@ -249,8 +249,8 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         unit = REGISTER_S32,
         fmt = "i",
-        native_max_value = 10000,
-        native_min_value = -10000,
+        native_max_value = 20000,
+        native_min_value = -20000,
         native_step = 100,
         initvalue = 0,
         allowedtypes = HYBRID,
@@ -977,6 +977,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         newblock = True,
         unit = REGISTER_STR,
         wordcount=7,
+        entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
@@ -985,6 +986,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x44D,
         unit = REGISTER_STR,
         wordcount=2,
+        entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
@@ -993,6 +995,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x44F,
         unit = REGISTER_STR,
         wordcount=12,
+        entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = HYBRID | PV,
     ),
 ###
@@ -2940,6 +2943,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "RO: Passive: Timeout Action",
         key = "ro_passive_mode_timeout_action",
         register = 0x1185,
+        scale = { 0: "Force Standby",
+                  1: "Return to Previous Mode", },
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
@@ -2949,6 +2954,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         register = 0x1187,
         allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name = "RO: Passive: Minimum Battery Power",
@@ -2956,6 +2962,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         register = 0x1189,
         allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name = "RO: Passive: Maximum Battery Power",
@@ -2963,6 +2970,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_S32,
         register = 0x118B,
         allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
 ]
 
