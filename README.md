@@ -96,3 +96,5 @@ For further Documentation please refer to the [Read the Docs](http://homeassista
 ## FAQ
 
 [Read the Docs - General FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq/)
+ - [Read the Docs - Sofar FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/sofar-faq/)
+ - [Read the Docs - SolaX FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solax-faq/)
