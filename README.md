@@ -76,12 +76,14 @@ SolaX Power
 - X1 Air/Boost/Mini Gen3 & Gen4 (Limited set of entities available)
 
 </details>
+SRNE - WIP
+
+Swatten -WIP
       </li>
     </ul>
 </ul>
 
-SRNE - **WIP**
-Swatten - **WIP**
+
 
 ## Installation
 
