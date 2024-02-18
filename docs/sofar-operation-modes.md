@@ -1,7 +1,5 @@
 # Sofar Modes of Operation
 
-WARNING: Work in progress, some of this information may be inaccurate. Use at your own risk
-
 WARNING: most of the writeable parameters are written to EEPROM of the inverter after each modification. EEPROM has a limited (typically 100000) number of write cycles, so be careful that your automations do not modify these parameters too frequently.
 
 The modes are controlled through "Charger Use Mode", where you can choose one of the following modes by simply selecting one of these values:
@@ -59,11 +57,11 @@ The passive mode is designed for controlling the inverter with external energy m
 
 When the inverter is in "Passive Mode" it can be controlled through:
 
-- **Passive: Desired Grid Power**: _Number in Watt_. Set the desired power that is taken from the Grid. The system will try to achieve this level within the boundaries of the current consumption, the current production, and the boundaries set by the battery parameters below. Positive values indicate power flow from grid to the system (grid consumption). Negative values indicate power flow from system to the grid (feed-in). Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Desired Grid Power" for checking the current value.
+- **Passive: Desired Grid Power**: _Number in Watt_. Set the desired power that is taken from the Grid. The system will try to achieve this level within the boundaries of the current consumption, the current production, and the boundaries set by the battery parameters below. Positive values indicate power flow from grid to the system (grid consumption). Negative values indicate power flow from system to the grid (feed-in). Note that after changing the value in this field you have two minutes to commit the new value to the system using the button below. After two minutes the value will be restored to the value that's stored in the system.
 
-- **Passive: Maximum Battery Power**: _Number in Watt_. Limit the maximum battery power. Must be greater than or equal to "Passive Minimum Battery Power". Positive values indicate charging, negative values indicate discharging. Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Maximum Battery Power" for checking the current value.
+- **Passive: Maximum Battery Power**: _Number in Watt_. Limit the maximum battery power. Must be greater than or equal to "Passive Minimum Battery Power". Positive values indicate charging, negative values indicate discharging. Note that after changing the value in this field you have two minutes to commit the new value to the system using the button below. After two minutes the value will be restored to the value that's stored in the system.
 
-- **Passive: Minimum Battery Power**: _Number in Watt_. Limit the minimum battery power. Must be less than or equal to "Passive Maximum Battery Power". Positive values indicate charging, negative values indicate discharging. Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Minimum Battery Power" for checking the current value.
+- **Passive: Minimum Battery Power**: _Number in Watt_. Limit the minimum battery power. Must be less than or equal to "Passive Maximum Battery Power". Positive values indicate charging, negative values indicate discharging. Note that after changing the value in this field you have two minutes to commit the new value to the system using the button below. After two minutes the value will be restored to the value that's stored in the system.
 
 - **Passive: Update Battery Charge/Discharge**: _Button_. After changing "Desired Grid Power", "Maximum Battery Power", or "Minimum Battery Power" this button must be pressed to commit these values to the system. Without pressing this button after changing one or multiple of these values nothing will happen.
 
