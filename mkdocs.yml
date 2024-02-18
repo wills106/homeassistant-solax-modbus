@@ -29,9 +29,11 @@ nav:
   - FAQ - WIP: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
 - Sofar:
-  - Installation: sofar-installation.md
   - FAQ: sofar-faq.md
-  - Sofar Modes of Operation - WIP: sofar-operation-modes.md
+  - Installation: sofar-installation.md
+  - Entity description: sofar-entity-description.md
+  - Energy storage modes: sofar-energy-storage-modes.md
+  - Reflux control: sofar-reflux-control.md
 - SolaX:
   - FAQ: solax-faq.md
   - Firmware update: solax-firmware-update.md
