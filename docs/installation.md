@@ -38,5 +38,7 @@ Now it's only needed to add your inverter to Home Assistant.
 ![](images/integration-setup-tcpip.png)
 - If you use RS485 to USB adaptor:
     - Select the right port.
+      - If your installation has a tendancy to swap between ttyUSB0 and ttyUSB1 you can define it by the id
+      - /dev/serial/by-id/usb-xyz
     - Enter correct baud rate that does match setting on your inverter.
 ![](images/integration-setup-usb.png)
