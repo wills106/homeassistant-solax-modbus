@@ -3883,7 +3883,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3897,7 +3897,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-arrow-down",
     ),
@@ -3912,7 +3912,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         icon = "mdi:battery-arrow-up",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3926,7 +3926,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-arrow-up",
     ),
@@ -4111,7 +4111,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Current",
@@ -4122,7 +4122,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery SOC",
@@ -4131,7 +4131,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.BATTERY,
         register = 3171,
         register_type = REG_INPUT,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Discharge Power",
