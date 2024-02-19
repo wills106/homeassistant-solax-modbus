@@ -158,8 +158,9 @@ BUTTON_TYPES = [
         write_method = WRITE_MULTI_MODBUS,
         value_function = value_function_passive_timeout,
     ),
+    # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
     SofarModbusButtonEntityDescription(
-        name = "Sync RTC",
+        name = "Update System Time",
         key = "sync_rtc",
         register = 0x1004,
         allowedtypes = HYBRID | PV,
@@ -168,7 +169,7 @@ BUTTON_TYPES = [
         value_function = value_function_sync_rtc_ymd,
     ),
     SofarModbusButtonEntityDescription(
-        name = "Reflux Control",
+        name = "Reflux: Update",
         key = "reflux_control",
         register = 0x1023,
         allowedtypes = HYBRID,
@@ -183,6 +184,7 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID,
         icon = "mdi:battery-clock",
     ),
+    # Unlikely to work. Current value function writes just 8 registers, but according to doc 15 registers need to be written (0x1111 - 0x111F)
     SofarModbusButtonEntityDescription(
         name = "TOU: Update Charge/Discharge Times",
         key = "update_charge_discharge_times",
@@ -192,6 +194,7 @@ BUTTON_TYPES = [
         icon = "mdi:battery-clock",
         value_function = value_function_timingmode,
     ),
+    #Unlikely to work. According to doc starting at 0x1120 16 registers from 0x1120 to 0x112F must be written. But integration just writes 6 registers
     SofarModbusButtonEntityDescription(
         name = "TOU: Update Charge Times",
         key = "update_tou_charge_times",
@@ -261,7 +264,7 @@ NUMBER_TYPES = [
         icon = "mdi:battery-arrow-up",
     ),
     SofarModbusNumberEntityDescription(
-        name = "Reflux Power",
+        name = "Reflux: Maximum Power",
         key = "reflux_power",
         unit = REGISTER_U16,
         fmt = "i",
@@ -402,7 +405,7 @@ SELECT_TYPES = [
     #
     ###
     SofarModbusSelectEntityDescription(
-        name = "Reflux Control",
+        name = "Reflux: Control",
         key = "reflux_control",
         unit = REGISTER_U16,
         option_dict =  {
@@ -546,6 +549,7 @@ SELECT_TYPES = [
         allowedtypes = HYBRID | X3 | EPS,
         write_method = WRITE_MULTISINGLE_MODBUS,
     ),
+    # Does not work: Needs to be written with 0x102C
     SofarModbusSelectEntityDescription(
         name = "Battery Active Control", # Not confirmed option
         key = "battery_active_control",
@@ -591,7 +595,7 @@ SELECT_TYPES = [
         write_method = WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
-        name = "Charger Use Mode",
+        name = "Energy Storage Mode",
         key = "charger_use_mode",
         register = 0x1110,
         option_dict =  {
@@ -2685,7 +2689,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "Reflux Control",
+        name = "Reflux: Control",
         key = "ro_reflux_control",
         register = 0x1023,
         scale = { 0: "Disabled",
@@ -2695,7 +2699,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Reflux Power",
+        name = "Reflux: Power",
         key = "reflux_power",
         register = 0x1024,
         scale = 100,
@@ -2745,6 +2749,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | PV | X3 | PM,
     ),
+    # Does not work. needs to be written with many other registers
     SofarModbusSensorEntityDescription(
         name = "Battery Minimum Capacity",
         key = "battery_minimum_capacity",
@@ -2753,6 +2758,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
+    # Does not work. needs to be written with many other registers
     SofarModbusSensorEntityDescription(
         name = "Battery Minimum Capacity OffGrid",
         key = "battery_minimum_capacity_offgrid",

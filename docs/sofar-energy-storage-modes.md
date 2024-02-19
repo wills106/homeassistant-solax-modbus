@@ -1,8 +1,8 @@
-# Sofar Modes of Operation
+# Sofar Energy Storage Mode
 
 WARNING: most of the writeable parameters are written to EEPROM of the inverter after each modification. EEPROM has a limited (typically 100000) number of write cycles, so be careful that your automations do not modify these parameters too frequently.
 
-The modes are controlled through "Charger Use Mode", where you can choose one of the following modes by simply selecting one of these values:
+The modes are controlled through "Energy Storage Mode", where you can choose one of the following modes by simply selecting one of these values:
 
 - Self Use
 - Time of Use
@@ -152,9 +152,9 @@ When in passive mode the inverter can perform a configurable action after it did
 
 - **Passive: Timeout**: _Default: Disabled_. The timeout after which the configured timeout action will be executed. Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout" for checking the current value, which will be displayed in number of seconds, where 0 means 'Disabled'.
 
-- **Passive: Timeout Action**: _Default: Force Standby". The timeout action that will be executed after which the configured timeout has passed. By default "Force Standby" is selected. "Return to Previous Mode" will set the previously selected "Charger Use Mode", i.e. if the inverter was switched from "Self Use" into "Passive Mode" the inverter will switch back to "Self Use" after not receiving any communication for the configured "Passive: Timeout". Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout Action" for checking the current value.
+- **Passive: Timeout Action**: _Default: Force Standby". The timeout action that will be executed after which the configured timeout has passed. By default "Force Standby" is selected. "Return to Previous Mode" will set the previously selected "Energy Storage Mode", i.e. if the inverter was switched from "Self Use" into "Passive Mode" the inverter will switch back to "Self Use" after not receiving any communication for the configured "Passive: Timeout". Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout Action" for checking the current value.
 
-- **Passive: Update Timeout**: _Button_. After chaning "Passive: Timeout" or "Passive: Timeout Action" this button must be pressed to commit the values to the system. Please allow the system several minutes to reflect the changes in the corresponding read-only values.
+- **Passive: Update Timeout**: _Button_. After changing "Passive: Timeout" or "Passive: Timeout Action" this button must be pressed to commit the values to the system. Please allow the system several minutes to reflect the changes in the corresponding read-only values.
 
 
 ## Off-Grid (EPS)
@@ -164,16 +164,3 @@ With the EPS Mode the inverter can provide energy to the loads without public gr
 - If PV generation equals the load consumption (ΔP < 100 W), the inverter won't charge or discharge the battery.
 - If PV generation is larger than the load consumption, the surplus power is stored in the battery. If the battery is full or at maximum charging power, the PV power is reduced by adjusting the MPPT.
 - If the PV generation is less than the load consumption, it will discharge the battery to supply power to the load.
-
-
-
-## Reflux Control
-
-Controls how much power can be feed-in to the grid.
-
-- Set Select "Reflux Control"
-- Set Number "Reflux Power"
-- Press Button "Reflux Control"
-
-
-_TBD: More details_

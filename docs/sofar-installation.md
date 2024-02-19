@@ -1,4 +1,4 @@
-# Sofar Solar Installation
+# Sofar Installation
 
 How to install the RS485 connection to your Sofar Solar inverter hardware.
 
