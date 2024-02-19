@@ -980,7 +980,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RTC",
+        name = "System Time",
         key = "rtc",
         register = 0x42C,
         unit = REGISTER_WORDS,
