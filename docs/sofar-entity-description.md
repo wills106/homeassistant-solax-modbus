@@ -1,5 +1,7 @@
 # Description of Sofar Entities
 
+WARNING: most of the writeable parameters are written to EEPROM of the inverter after each modification. EEPROM has a limited (typically 100000) number of write cycles, so be careful that your automations do not modify these parameters too frequently.
+
 Very likely this document will always be work in progress ;-)
 
 ## Controls
