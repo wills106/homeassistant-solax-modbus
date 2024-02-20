@@ -15,7 +15,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -45,7 +45,7 @@ ALL_DCB_GROUP  = DCB
 PM  = 0x20000
 ALL_PM_GROUP = PM
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -53,14 +53,14 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
+async def async_read_serialnr(hub, address):
     res = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
-        if not inverter_data.isError(): 
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
-            hub.seriesnumber = res    
+            hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
@@ -93,7 +93,7 @@ class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescript
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
-    SolaXEVChargerModbusButtonEntityDescription( 
+    SolaXEVChargerModbusButtonEntityDescription(
         name = "Sync RTC",
         key = "sync_rtc",
         register = 0x61E,
@@ -267,7 +267,7 @@ SELECT_TYPES = [
 
 # ================================= Sennsor Declarations ============================================================
 
-SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [ 
+SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ###
     #
     # Holding
@@ -797,10 +797,10 @@ class solax_ev_charger_plugin(plugin_base):
         return 'battery_awaken'
     '''
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x600)
-        if not seriesnumber: 
+        seriesnumber                       = await async_read_serialnr(hub, 0x600)
+        if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number for EV Charger")
             seriesnumber = "unknown"
 
@@ -809,13 +809,13 @@ class solax_ev_charger_plugin(plugin_base):
         elif seriesnumber.startswith('C3110'):  invertertype = X3 # 11kW EV Three Phase
         elif seriesnumber.startswith('C3220'):  invertertype = X3 # 22kW EV Three Phase
         # add cases here
-        else: 
+        else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS 
+        if read_eps: invertertype = invertertype | EPS
         if read_dcb: invertertype = invertertype | DCB
         if read_pm: invertertype = invertertype | PM
         return invertertype
@@ -830,7 +830,7 @@ class solax_ev_charger_plugin(plugin_base):
         pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
@@ -840,7 +840,7 @@ plugin_instance = solax_ev_charger_plugin(
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.LITTLE,

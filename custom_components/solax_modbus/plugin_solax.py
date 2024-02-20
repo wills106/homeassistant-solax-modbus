@@ -60,11 +60,11 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
+async def async_read_serialnr(hub, address):
     res = None
     inverter_data = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
@@ -6514,12 +6514,12 @@ class solax_plugin(plugin_base):
         """ in order to wake up  the inverter , press this button """
         return 'battery_awaken'
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         #global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x0)
+        seriesnumber                       = await async_read_serialnr(hub, 0x0)
         if not seriesnumber:
-            seriesnumber = _read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
+            seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
             if seriesnumber and not seriesnumber.startswith(("M", "X")):
                 ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?

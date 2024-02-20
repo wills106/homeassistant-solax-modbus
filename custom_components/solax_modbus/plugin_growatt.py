@@ -58,10 +58,10 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
+async def async_read_serialnr(hub, address):
     res = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(12).decode("ascii")
@@ -4731,12 +4731,12 @@ class growatt_plugin(plugin_base):
     """
 
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 9)
+        seriesnumber                       = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber                       = _read_serialnr(hub, 3001)
+            seriesnumber                       = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
