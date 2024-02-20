@@ -412,7 +412,7 @@ class SolaXModbusHub:
             builder.reset()
             builder.add_16bit_int(payload)
             payload = builder.to_registers()
-            return await self._client.write_register(address, payload, **kwargs)
+            return await self._client.write_registers(address, payload, **kwargs)
 
     async def async_write_registers_multi(self, unit, address, payload): # Needs adapting for regiater que
         """Write registers multi.
@@ -587,7 +587,7 @@ class SolaXModbusHub:
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for addr in self.writequeue.keys():
                 val = self.writequeue.get(addr)
-                await self.write_register(self._modbus_addr, addr, val)
+                await self.async_write_register(self._modbus_addr, addr, val)
             self.writequeue = {} # make sure we do not write multiple times
         self.last_ts = time()
         for (k,v,) in self.data['_repeatUntil'].items():

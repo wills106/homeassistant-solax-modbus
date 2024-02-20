@@ -80,7 +80,7 @@ class SolaXModbusButton(ButtonEntity):
             )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
-            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
+            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
         elif self._write_method == WRITE_MULTI_MODBUS:
             if self.button_info.autorepeat:
                 duration = self._hub.data.get(self.button_info.autorepeat, 0)

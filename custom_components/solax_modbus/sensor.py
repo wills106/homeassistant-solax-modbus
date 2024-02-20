@@ -37,7 +37,7 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
     for reg in descriptions:
         descr = descriptions[reg]
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
-            if ((end - start) > 0): 
+            if ((end - start) > 0):
                 _LOGGER.info(f"Starting new block at 0x{reg:x} ")
                 if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
                     descr.ignore_readerror = auto_block_ignore_readerror
@@ -53,7 +53,7 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
         if type(descr) is dict: end = reg+1 # couple of byte values
         else:
             _LOGGER.info(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
-            if descr.unit in (REGISTER_STR, REGISTER_WORDS,): 
+            if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
                 if (descr.wordcount): end = reg+descr.wordcount
                 else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
             elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
@@ -85,14 +85,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
     holdingRegs  = {}
     inputRegs    = {}
     computedRegs = {}
-     
+
     plugin = hub.plugin #getPlugin(hub_name)
     for sensor_description in plugin.SENSOR_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
-            # apply scale exceptions early 
+            # apply scale exceptions early
             newdescr = sensor_description
             if sensor_description.read_scale_exceptions:
-                for (prefix, value,) in sensor_description.read_scale_exceptions: 
+                for (prefix, value,) in sensor_description.read_scale_exceptions:
                     if hub.seriesnumber.startswith(prefix):  newdescr = replace (sensor_description, read_scale = value)
             sensor = SolaXModbusSensor(
                 hub_name,
@@ -111,7 +111,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
             else:
                 if newdescr.register_type == REG_HOLDING:
                     if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
-                        if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) : 
+                        if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
                             first = holdingRegs[newdescr.register]
                             holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
                         else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
@@ -186,8 +186,8 @@ class SolaXModbusSensor(SensorEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return f"{self._platform_name}_{self.entity_description.key}"  
-    
+        return f"{self._platform_name}_{self.entity_description.key}"
+
     @property
     def native_value(self):
         """Return the state of the sensor."""
@@ -195,5 +195,5 @@ class SolaXModbusSensor(SensorEntity):
             try:    val = self._hub.data[self.entity_description.key]*self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
             except: val = self._hub.data[self.entity_description.key] # not a number
             return val
-  
+
 
