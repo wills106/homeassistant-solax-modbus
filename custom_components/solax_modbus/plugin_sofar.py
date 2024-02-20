@@ -14,7 +14,7 @@ these bitmasks are used in entity declarations to determine to which inverters t
 within a group, the bits in an entity declaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -51,28 +51,28 @@ MPPT8          = 0x200000
 MPPT10         = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub, address, swapbytes):
     res = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
-        if not inverter_data.isError(): 
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
-            if swapbytes: 
+            if swapbytes:
                 ba = bytearray(res,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
-            hub.seriesnumber = res    
+            hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
-    #return 'SP1ES2' 
+    #return 'SP1ES2'
     return res
 
 # =================================================================================================
@@ -80,17 +80,17 @@ def _read_serialnr(hub, address, swapbytes):
 @dataclass
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS
 
 @dataclass
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS
 
 @dataclass
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #write_method = WRITE_MULTISINGLE_MODBUS 
+    #write_method = WRITE_MULTISINGLE_MODBUS
 
 @dataclass
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
@@ -105,18 +105,18 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_passivemode(initval, descr, datadict):
     return [ (REGISTER_S32, datadict.get('passive_mode_grid_power', 0)),
-             (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)), 
+             (REGISTER_S32, datadict.get('passive_mode_battery_power_min', 0)),
              (REGISTER_S32, datadict.get('passive_mode_battery_power_max', 0)),
            ]
 
 def value_function_passive_timeout(initval, descr, datadict):
     return  [ ('passive_mode_timeout', datadict.get('passive_mode_timeout', datadict.get('passive_mode_timeout')), ),
-              ('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action')), ), 
+              ('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action', datadict.get('passive_mode_timeout_action')), ),
             ]
 
 def value_function_refluxcontrol(initval, descr, datadict):
     return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
-              ('reflux_power', datadict.get('reflux_power', 0), ), 
+              ('reflux_power', datadict.get('reflux_power', 0), ),
             ]
 
 def value_function_timingmode(initval, descr, datadict):
@@ -384,7 +384,7 @@ NUMBER_TYPES = [
     ),
     SofarModbusNumberEntityDescription(
         name = "Parallel Address",
-        key = "parallel_address", 
+        key = "parallel_address",
         register = 0x1037,
         fmt = "i",
         native_min_value = 0,
@@ -429,7 +429,7 @@ SELECT_TYPES = [
             },
         allowedtypes = HYBRID,
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "Timing: Charge Start Time",
         key = "timing_charge_start_time",
         unit = REGISTER_U16,
@@ -439,7 +439,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "Timing: Charge End Time",
         key = "timing_charge_end_time",
         unit = REGISTER_U16,
@@ -449,7 +449,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "Timing: Discharge Start Time",
         key = "timing_discharge_start_time",
         unit = REGISTER_U16,
@@ -459,7 +459,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "Timing: Discharge End Time",
         key = "timing_discharge_end_time",
         unit = REGISTER_U16,
@@ -482,7 +482,7 @@ SELECT_TYPES = [
             },
         allowedtypes = HYBRID,
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "TOU: Charge Start Time",
         key = "tou_charge_start_time",
         unit = REGISTER_U16,
@@ -492,7 +492,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:battery-clock",
     ),
-    SofarModbusSelectEntityDescription( 
+    SofarModbusSelectEntityDescription(
         name = "TOU: Charge End Time",
         key = "tou_charge_end_time",
         unit = REGISTER_U16,
@@ -622,7 +622,7 @@ SELECT_TYPES = [
 
 # ================================= Sensor Declarations ============================================================
 
-SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [ 
+SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 ###
 #
@@ -2800,7 +2800,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register = 0x1111,
         scale = { 0: "0",
                   1: "1",
-                  2: "2", 
+                  2: "2",
                   3: "3",
                   65531: "FFFB",
                   65532: "FFFC",
@@ -2822,7 +2822,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Charge Start Time", 
+        name = "Timing: Charge Start Time",
         key = "ro_timing_charge_start_time",
         register = 0x1113,
         scale = value_function_sofartime,
@@ -2831,7 +2831,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Charge End Time", 
+        name = "Timing: Charge End Time",
         key = "ro_timing_charge_end_time",
         register = 0x1114,
         scale = value_function_sofartime,
@@ -2840,7 +2840,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Discharge Start Time", 
+        name = "Timing: Discharge Start Time",
         key = "ro_timing_discharge_start_time",
         register = 0x1115,
         scale = value_function_sofartime,
@@ -2849,7 +2849,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Discharge End Time", 
+        name = "Timing: Discharge End Time",
         key = "ro_timing_discharge_end_time",
         register = 0x1116,
         scale = value_function_sofartime,
@@ -2858,7 +2858,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Charge Power", 
+        name = "Timing: Charge Power",
         key = "timing_charge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2868,7 +2868,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Timing: Discharge Power", 
+        name = "Timing: Discharge Power",
         key = "timing_discharge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2879,11 +2879,11 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Timing: Control",
-        key = "timeing_control", 
+        key = "timeing_control",
         register = 0x111F,
         scale = { 0: "0",
                   1: "1",
-                  2: "2", 
+                  2: "2",
                   3: "3",
                   65531: "FFFB",
                   65532: "FFFC",
@@ -2910,7 +2910,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "TOU: Charge Start Time", 
+        name = "TOU: Charge Start Time",
         key = "ro_tou_charge_start_time",
         register = 0x1122,
         scale = value_function_sofartime,
@@ -2919,7 +2919,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
-        name = "TOU: Charge End Time", 
+        name = "TOU: Charge End Time",
         key = "ro_tou_charge_end_time",
         register = 0x1123,
         scale = value_function_sofartime,
@@ -2929,13 +2929,13 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "TOU: Target SOC",
-        key = "tou_target_soc", 
+        key = "tou_target_soc",
         register = 0x1124,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "TOU Charge Power", 
+        name = "TOU Charge Power",
         key = "tou_charge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2993,7 +2993,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 @dataclass
 class sofar_plugin(plugin_base):
-    
+
     """
     def isAwake(self, datadict):
         return (datadict.get('run_mode', None) == 'Normal Mode')
@@ -3002,10 +3002,10 @@ class sofar_plugin(plugin_base):
         return 'battery_awaken'
     """
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x445,  swapbytes = False)
-        if not seriesnumber: 
+        seriesnumber = await async_read_serialnr(hub, 0x445, swapbytes=False)
+        if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
             seriesnumber = "unknown"
 
@@ -3032,13 +3032,13 @@ class sofar_plugin(plugin_base):
         #elif seriesnumber.startswith('SM1E'):  plugin_sofar_old
         #elif seriesnumber.startswith('ZM1E'):  plugin_sofar_old
 
-        else: 
+        else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS 
+        if read_eps: invertertype = invertertype | EPS
         if read_dcb: invertertype = invertertype | DCB
         if read_pm: invertertype = invertertype | PM
         return invertertype
@@ -3054,7 +3054,7 @@ class sofar_plugin(plugin_base):
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
@@ -3064,7 +3064,7 @@ plugin_instance = sofar_plugin(
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,

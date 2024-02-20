@@ -58,10 +58,10 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
+async def async_read_serialnr(hub, address):
     res = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(12).decode("ascii")
@@ -111,7 +111,7 @@ def value_function_today_solar_energy(initval, descr, datadict):
     return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
 
 def value_function_combined_battery_power(initval, descr, datadict):
-    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0) 
+    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
 # ================================= Button Declarations ============================================================
 
@@ -2449,7 +2449,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         allowedtypes = GEN2 | GEN3,
         icon = "mdi:solar-power",
-    ), 
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "total_solar_energy",
@@ -2586,7 +2586,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = GEN2 | GEN3 | GEN4,
         icon = "mdi:battery",
-    ),       
+    ),
     # duplicate of register 97
     #GrowattModbusSensorEntityDescription(
     #    name = "Battery Voltage",
@@ -4162,7 +4162,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #####
     #
     # SPF
-    # 
+    #
     #####
     GrowattModbusSensorEntityDescription(
         name = "Run Mode",
@@ -4206,7 +4206,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = SPF,
-    ),  
+    ),
     GrowattModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
@@ -4731,12 +4731,12 @@ class growatt_plugin(plugin_base):
     """
 
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 9)
+        seriesnumber                       = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber                       = _read_serialnr(hub, 3001)
+            seriesnumber                       = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
