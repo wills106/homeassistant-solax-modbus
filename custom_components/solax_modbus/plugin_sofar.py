@@ -139,6 +139,17 @@ def value_function_toumode(initval, descr, datadict):
               ('tou_charge_power', datadict.get('tou_charge_power', 0), ),
             ]
 
+def value_function_sync_rtc_ymd_sofar(initval, descr, datadict):
+    now = datetime.now()
+    return [ (REGISTER_U16, now.year % 100, ),
+             (REGISTER_U16, now.month, ),
+             (REGISTER_U16, now.day, ),
+             (REGISTER_U16, now.hour, ),
+             (REGISTER_U16, now.minute, ),
+             (REGISTER_U16, now.second, ),
+             (REGISTER_U16, 1, ),
+           ]
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -166,7 +177,7 @@ BUTTON_TYPES = [
         allowedtypes = HYBRID | PV,
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:home-clock",
-        value_function = value_function_sync_rtc_ymd,
+        value_function = value_function_sync_rtc_ymd_sofar,
     ),
     SofarModbusButtonEntityDescription(
         name = "Reflux: Update",
@@ -969,7 +980,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "RTC",
+        name = "System Time",
         key = "rtc",
         register = 0x42C,
         unit = REGISTER_WORDS,
@@ -2943,6 +2954,23 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
+    ),
+
+    SofarModbusSensorEntityDescription(
+        name = "Update System Time Operation Result",
+        key = "sync_rtc_result",
+        register = 0x100A,
+        scale = { 0: "Successful",
+                  1: "Operation in progress",
+                  2: "Enabled - Discharging",
+                  4: "Disabled",
+                  65531: "Operation failed, controller refused to respond",
+                  65532: "Operation failed, no response from the controller",
+                  65533: "Operation failed, current function disabled",
+                  65534: "Operation failed, parameter access failed",
+                  65535: "Operation failed, input parameters incorrect",  },
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name = "RO: Passive: Timeout",
