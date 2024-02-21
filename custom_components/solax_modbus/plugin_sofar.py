@@ -243,7 +243,7 @@ NUMBER_TYPES = [
         icon = "mdi:transmission-tower",
     ),
     SofarModbusNumberEntityDescription(
-        name = "Passive: Minimum Batter Power",
+        name = "Passive: Minimum Battery Power",
         key = "passive_mode_battery_power_min",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
