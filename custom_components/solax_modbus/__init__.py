@@ -299,7 +299,7 @@ class SolaXModbusHub:
 
 
     @callback
-    def async_remove_solax_modbus_sensor(self, update_callback):
+    async def async_remove_solax_modbus_sensor(self, update_callback):
         """Remove data update."""
         self._sensor_callbacks.remove(update_callback)
 
@@ -307,7 +307,7 @@ class SolaXModbusHub:
             """stop the interval timer upon removal of last sensor"""
             self._unsub_interval_method()
             self._unsub_interval_method = None
-            self.close()
+            await self.async_close()
 
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
@@ -349,16 +349,18 @@ class SolaXModbusHub:
         """Return the name of this hub."""
         return self._name
 
-    def close(self):
+    async def async_close(self):
         """Disconnect client."""
-        # with self._lock:
-        self._client.close()
+        if self._client.connected:
+            async with self._lock:
+                self._client.close()
 
     async def async_connect(self):
         """Connect client."""
         _LOGGER.debug("connect modbus")
-        async with self._lock:
-            await self._client.connect()
+        if not self._client.connected:
+            async with self._lock:
+                await self._client.connect()
 
 
     async def async_read_holding_registers(self, unit, address, count):
