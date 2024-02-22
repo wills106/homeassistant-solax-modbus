@@ -368,32 +368,6 @@ NUMBER_TYPES = [
     #
     ###
     SofarModbusNumberEntityDescription(
-        name = "Battery Minimum Capacity",
-        key = "battery_minimum_capacity",
-        register = 0x104D,
-        fmt = "i",
-        native_min_value = 1,
-        native_max_value = 90,
-        native_step = 1,
-        native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-        icon = "mdi:battery-sync",
-    ),
-    SofarModbusNumberEntityDescription(
-        name = "Battery Minimum Capacity OffGrid",
-        key = "battery_minimum_capacity_offgrid",
-        register = 0x104E,
-        fmt = "i",
-        native_min_value = 1,
-        native_max_value = 90,
-        native_step = 1,
-        native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-        icon = "mdi:battery-sync",
-    ),
-    SofarModbusNumberEntityDescription(
         name = "Parallel Address",
         key = "parallel_address",
         register = 0x1037,
@@ -560,40 +534,30 @@ SELECT_TYPES = [
         allowedtypes = HYBRID | X3 | EPS,
         write_method = WRITE_MULTISINGLE_MODBUS,
     ),
-    # Does not work: Needs to be written with 0x102C
-    SofarModbusSelectEntityDescription(
-        name = "Battery Active Control", # Not confirmed option
-        key = "battery_active_control",
-        register = 0x102B,
-        option_dict =  {
-                0: "Disabled",
-                1: "Enabled",
-            },
-        allowedtypes = HYBRID,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-    ),
-    SofarModbusSelectEntityDescription(
-        name = "Parallel Control",
-        key = "parallel_control",
-        register = 0x1035,
-        option_dict =  {
-                0: "Disabled",
-                1: "Enabled",
-            },
-        allowedtypes = HYBRID | PV | X3 | PM,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-    ),
-    SofarModbusSelectEntityDescription(
-        name = "Parallel Master-Salve",
-        key = "parallel_masterslave",
-        register = 0x1036,
-        option_dict =  {
-                0: "Slave",
-                1: "Master",
-            },
-        allowedtypes = HYBRID | PV | X3 | PM,
-        write_method = WRITE_MULTISINGLE_MODBUS,
-    ),
+
+    # Does not work. 0x1035, 0x1036, and 0x1037 have to be written in one single chunk
+    # SofarModbusSelectEntityDescription(
+    #     name = "Parallel Control",
+    #     key = "parallel_control",
+    #     register = 0x1035,
+    #     option_dict =  {
+    #             0: "Disabled",
+    #             1: "Enabled",
+    #         },
+    #     allowedtypes = HYBRID | PV | X3 | PM,
+    #     write_method = WRITE_MULTISINGLE_MODBUS,
+    # ),
+    # SofarModbusSelectEntityDescription(
+    #     name = "Parallel Master-Salve",
+    #     key = "parallel_masterslave",
+    #     register = 0x1036,
+    #     option_dict =  {
+    #             0: "Slave",
+    #             1: "Master",
+    #         },
+    #     allowedtypes = HYBRID | PV | X3 | PM,
+    #     write_method = WRITE_MULTISINGLE_MODBUS,
+    # ),
     SofarModbusSelectEntityDescription(
         name = "Remote Control",
         key = "remote_control",
