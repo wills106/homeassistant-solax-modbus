@@ -6491,7 +6491,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x437,
         register_type = REG_INPUT,
-        unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
         allowedtypes = MIC | GEN4,
