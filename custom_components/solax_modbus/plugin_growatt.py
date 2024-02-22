@@ -932,6 +932,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
+        name = "Inverter Module",
+        key = "inverter_module",
+        register = 28,
+        unit = REGISTER_STR,
+        wordcount=2,
+        allowedtypes = ALL_GEN_GROUP,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "RTC",
         key = "rtc",
         register = 45,
