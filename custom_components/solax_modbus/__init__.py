@@ -383,7 +383,7 @@ class SolaXModbusHub:
             builder.reset()
             builder.add_16bit_int(payload)
             payload = builder.to_registers()
-            return self._client.write_register(address, payload[0], **kwargs)
+            return await self._client.write_register(address, payload[0], **kwargs)
 
     async def async_write_register(self, unit, address, payload):
         """Write register."""
