@@ -28,12 +28,12 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     for select_info in plugin.SELECT_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
             select = SolaXModbusSelect(hub_name, hub, modbus_addr, device_info, select_info)
-            if select_info.write_method==WRITE_DATA_LOCAL: 
+            if select_info.write_method==WRITE_DATA_LOCAL:
                 if (select_info.initvalue != None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info
                 select_info.reverse_option_dict = {v: k for k, v in select_info.option_dict.items()}
             entities.append(select)
-        
+
     async_add_entities(entities)
     return True
 
@@ -71,7 +71,7 @@ class SolaXModbusSelect(SelectEntity):
         self._hub.async_add_solax_modbus_sensor(self._modbus_data_updated)
 
     async def async_will_remove_from_hass(self) -> None:
-        self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
+        await self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
 
     @callback
     def _modbus_data_updated(self):
@@ -103,10 +103,10 @@ class SolaXModbusSelect(SelectEntity):
         payload = get_payload(self._option_dict, option)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
-            self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
-            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             self._hub.localsUpdated = True # mark to save permanently
