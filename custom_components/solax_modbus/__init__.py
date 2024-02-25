@@ -138,16 +138,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"Setup {DOMAIN}.{name}")
     _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
-    hub = SolaXModbusHub(hass, name, host, port, tcp_type, modbus_addr, interface, serial_port, baudrate, scan_interval, plugin, config)
+    hub = SolaXModbusHub(hass, name, host, port, tcp_type, modbus_addr, interface, serial_port,
+                         baudrate, scan_interval, plugin, config, entry)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
-    await hub.async_get_inverter_type()
+    hass.async_create_task(hub.async_get_inverter_type())
 
-    for component in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component)
-        )
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
@@ -192,7 +189,8 @@ class SolaXModbusHub:
         baudrate,
         scan_interval,
         plugin,
-        config
+        config,
+        entry
     ):
         """Initialize the Modbus hub."""
         _LOGGER.debug(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
@@ -252,6 +250,7 @@ class SolaXModbusHub:
         self.localsUpdated = False
         self.localsLoaded = False
         self.config = config
+        self.entry = entry
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     async def async_get_inverter_type(self):
@@ -259,6 +258,11 @@ class SolaXModbusHub:
         self._invertertype = await self.plugin.async_determineInverterType(
             self, self.config
         )
+
+        for component in PLATFORMS:
+            self._hass.async_create_task(
+                self._hass.config_entries.async_forward_entry_setup(self.entry, component)
+            )
 
     # save and load local data entity values to make them persistent
     DATAFORMAT_VERSION = 1
@@ -288,10 +292,11 @@ class SolaXModbusHub:
     # end of save and load section
 
     @callback
-    def async_add_solax_modbus_sensor(self, update_callback):
+    async def async_add_solax_modbus_sensor(self, update_callback):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         if not self._sensor_callbacks:
+            await self.async_connect()
             self._unsub_interval_method = async_track_time_interval(
                 self._hass, self.async_refresh_modbus_data, self._scan_interval
             )
@@ -408,6 +413,7 @@ class SolaXModbusHub:
 
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
+        await self.async_connect()
         async with self._lock:
             kwargs = {"slave": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
@@ -428,6 +434,7 @@ class SolaXModbusHub:
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
+        await self.async_connect()
         async with self._lock:
             kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)

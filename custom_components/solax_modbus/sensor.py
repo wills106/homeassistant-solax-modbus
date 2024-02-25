@@ -164,7 +164,7 @@ class SolaXModbusSensor(SensorEntity):
 
     async def async_added_to_hass(self):
         """Register callbacks."""
-        self._hub.async_add_solax_modbus_sensor(self._modbus_data_updated)
+        await self._hub.async_add_solax_modbus_sensor(self._modbus_data_updated)
 
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
