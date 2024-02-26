@@ -30,20 +30,10 @@ X1             = 0x0100
 X3             = 0x0200
 ALL_X_GROUP    = X1 | X3
 
-PV             = 0x0400 # Needs further work on PV Only Inverters
-AC             = 0x0800
-HYBRID         = 0x1000
-MIC            = 0x2000
-ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
-
-EPS            = 0x8000
-ALL_EPS_GROUP  = EPS
-
-DCB            = 0x10000 # dry contact box - gen4
-ALL_DCB_GROUP  = DCB
-
-PM  = 0x20000
-ALL_PM_GROUP = PM
+POW7           = 0x0001
+POW11          = 0x0002
+POW22          = 0x0004
+ALL_POW_GROUP  = POW7 | POW11 | POW22
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -194,7 +184,7 @@ SELECT_TYPES = [
     ),
     SolaXEVChargerModbusSelectEntityDescription(
         name = "Green Gear",
-        key = "gree_gear",
+        key = "green_gear",
         register = 0x60F,
         option_dict = {
             1: "3A",
@@ -234,9 +224,8 @@ SELECT_TYPES = [
         key = "rfid_program",
         register = 0x616,
         option_dict =  {
-            0: "Program New",
-            1: "Program Off", },
-        entity_category = EntityCategory.CONFIG,
+            1: "Program New",
+            0: "Program Off", },
         icon = "mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -250,19 +239,19 @@ SELECT_TYPES = [
             3: "L3 Phase", },
         icon = "mdi:dip-switch",
     ),
-    SolaXEVChargerModbusSelectEntityDescription(
-        name = "Control Command",
-        key = "control_command",
-        register = 0x628,
-        option_dict =  {
-            1: "Available",
-            2: "Unavailable",
-            3: "Stop charging",
-            4: "Start Charging",
-            5: "Reserve",
-            6: "Cancel the Reservation", },
-        icon = "mdi:dip-switch",
-    ),
+    # SolaXEVChargerModbusSelectEntityDescription(
+    #     name = "Control Command",
+    #     key = "control_command",
+    #     register = 0x627,
+    #     option_dict =  {
+    #         1: "Available",
+    #         2: "Unavailable",
+    #         3: "Stop charging",
+    #         4: "Start Charging",
+    #         5: "Reserve",
+    #         6: "Cancel the Reservation", },
+    #     icon = "mdi:dip-switch",
+    # ),
 ]
 
 # ================================= Sennsor Declarations ============================================================
@@ -274,8 +263,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     #
     ###
     SolaXEVChargerModbusSensorEntityDescription(
-        name = "CT Meter Setting",
-        key = "ct_meter_setting",
+        name = "Meter Setting",
+        key = "meter_setting",
         register = 0x60C,
         scale = {
             0: "External CT",
@@ -356,10 +345,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key = "rfid_program",
         register = 0x616,
         scale = {
-            0: "Program New",
-            1: "Program Off", },
+            1: "Program New",
+            0: "Program Off", },
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -381,7 +369,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         rounding = 1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
-        allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -405,23 +392,22 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         rounding = 1,
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
-        allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
     ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name = "Control Command",
-        key = "control_command",
-        register = 0x628,
-        scale = {
-            1: "Available",
-            2: "Unavailable",
-            3: "Stop charging",
-            4: "Start Charging",
-            5: "Reserve",
-            6: "Cancel the Reservation", },
-        entity_registry_enabled_default = False,
-        icon = "mdi:dip-switch",
-    ),
+    # SolaXEVChargerModbusSensorEntityDescription(
+    #     name = "Control Command",
+    #     key = "control_command",
+    #     register = 0x627,
+    #     scale = {
+    #         1: "Available",
+    #         2: "Unavailable",
+    #         3: "Stop charging",
+    #         4: "Start Charging",
+    #         5: "Reserve",
+    #         6: "Cancel the Reservation", },
+    #     entity_registry_enabled_default = False,
+    #     icon = "mdi:dip-switch",
+    # ),
     ###
     #
     # Input
@@ -474,7 +460,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     SolaXEVChargerModbusSensorEntityDescription(
         name = "Charge PE Voltage",
         key = "charge_pe_voltage",
-        register = 0x0,
+        register = 0x3,
         register_type = REG_INPUT,
         scale = 0.01,
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -805,34 +791,24 @@ class solax_ev_charger_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
-        if   seriesnumber.startswith('C1070'):  invertertype = X1 # 7kW EV Single Phase?
-        elif seriesnumber.startswith('C3110'):  invertertype = X3 # 11kW EV Three Phase
-        elif seriesnumber.startswith('C3220'):  invertertype = X3 # 22kW EV Three Phase
+        if   seriesnumber.startswith('C1070'):  invertertype = X1 | POW7 # 7kW EV Single Phase
+        elif seriesnumber.startswith('C3110'):  invertertype = X3 | POW11 # 11kW EV Three Phase
+        elif seriesnumber.startswith('C3220'):  invertertype = X3 | POW22 # 22kW EV Three Phase
         # add cases here
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
-        if read_pm: invertertype = invertertype | PM
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
         # returns true if the entity needs to be created for an inverter
-        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP)  != 0) or (entitymask & ALL_GEN_GROUP  == 0)
+        powmatch = ((inverterspec & entitymask & ALL_POW_GROUP)  != 0) or (entitymask & ALL_POW_GROUP  == 0)
         xmatch   = ((inverterspec & entitymask & ALL_X_GROUP)    != 0) or (entitymask & ALL_X_GROUP    == 0)
-        hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
-        epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
-        dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
-        pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
+        return (xmatch and powmatch) and not blacklisted
 
 plugin_instance = solax_ev_charger_plugin(
     plugin_name = 'SolaX EV Charger',
