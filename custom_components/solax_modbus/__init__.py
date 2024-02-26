@@ -101,6 +101,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
+    await asyncio.sleep(5)
     _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
     config = entry.options
     name = config[CONF_NAME]
