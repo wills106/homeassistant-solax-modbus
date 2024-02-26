@@ -14,10 +14,10 @@ import json
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTERVAL, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.components.button import ButtonEntity
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 
 _LOGGER = logging.getLogger(__name__)
 #try: # pymodbus 3.0.x
@@ -69,7 +69,7 @@ from .const import (
 from .const import REGISTER_S32, REGISTER_U32, REGISTER_U16, REGISTER_S16, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 
 
-PLATFORMS = ["button", "number", "select", "sensor"]
+PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
 
 #seriesnumber = 'unknown'
 
@@ -143,7 +143,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
-    hass.async_create_task(hub.async_get_inverter_type())
+    #hass.async_create_task(hub.async_init())
+    #hass.async_create_background_task(hub.async_init(), "async_init")
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
+    #entry.async_create_task(hass, hub.async_init(), "async_init")
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
@@ -253,7 +256,7 @@ class SolaXModbusHub:
         self.entry = entry
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
-    async def async_get_inverter_type(self):
+    async def async_init(self):
         await self.async_connect()
         self._invertertype = await self.plugin.async_determineInverterType(
             self, self.config
