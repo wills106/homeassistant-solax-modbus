@@ -3186,7 +3186,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Load Management",
                   1: "Generator Control", },
         entity_registry_enabled_default = False,
-        allowedtypes = AC | HYBRID | GEN4,
+        allowedtypes = AC | HYBRID | GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Parallel Setting",
