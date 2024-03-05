@@ -143,9 +143,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
-    # Tests on some systems have shown that establishing the Modbus connection 
+    # Tests on some systems have shown that establishing the Modbus connection
     # can occasionally lead to errors if Home Assistant is not fully loaded.
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
+    if hass.is_running:
+        await hub.async_init()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
