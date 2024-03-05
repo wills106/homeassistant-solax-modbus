@@ -3628,16 +3628,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Today's Solar Energy",
-        key = "today_solar_energy",
-        value_function= value_function_today_solar_energy,
-        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
-        device_class = SensorDeviceClass.ENERGY,
-        state_class = SensorStateClass.TOTAL_INCREASING,
-        allowedtypes = GEN4,
-        icon = "mdi:solar-power",
-    ),
-    GrowattModbusSensorEntityDescription(
         name = "Total Solar Energy",
         key = "total_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
