@@ -139,14 +139,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
     hub = SolaXModbusHub(hass, name, host, port, tcp_type, modbus_addr, interface, serial_port,
-                         baudrate, scan_interval, plugin, config, entry)
+                        baudrate, scan_interval, plugin, config, entry)
     """Register the hub."""
     hass.data[DOMAIN][name] = { "hub": hub,  }
 
-    #hass.async_create_task(hub.async_init())
-    #hass.async_create_background_task(hub.async_init(), "async_init")
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
-    #entry.async_create_task(hass, hub.async_init(), "async_init")
+    # Tests on some systems have shown that establishing the Modbus connection
+    # can occasionally lead to errors if Home Assistant is not fully loaded.
+    if hass.is_running:
+        await hub.async_init()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
@@ -430,8 +432,8 @@ class SolaXModbusHub:
         unit is the modbus address of the device that will be writen to
         address us the start register address
         payload is a list of tuples containing
-          - a select or number entity keys names or alternatively REGISTER_xx type declarations
-          - the values are the values that will be encoded according to the spec of that entity
+            - a select or number entity keys names or alternatively REGISTER_xx type declarations
+            - the values are the values that will be encoded according to the spec of that entity
         The list of tuples will be converted to a modbus payload with the proper encoding and written
         to modbus device with address=unit
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
@@ -613,6 +615,5 @@ class SolaXModbusHub:
                     payload=payload,
                 )
         return res
-
 
 

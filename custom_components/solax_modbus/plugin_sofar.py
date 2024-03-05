@@ -51,6 +51,8 @@ MPPT8          = 0x200000
 MPPT10         = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
+BAT_BTS        = 0x1000000
+
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
@@ -2981,10 +2983,45 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
 ]
 
+BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
+    # SofarModbusSensorEntityDescription(
+    #     name = "Battery total voltage",
+    #     key = "battery_total_voltage",
+    #     native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+    #     device_class = SensorDeviceClass.VOLTAGE,
+    #     register = 0x900F,
+    #     scale = 0.1,
+    #     rounding = 1,
+    #     allowedtypes = BAT_BTS,
+    # ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "Battery total current",
+    #     key = "battery_total_current",
+    #     native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+    #     device_class = SensorDeviceClass.CURRENT,
+    #     register = 0x9010,
+    #     unit = REGISTER_S16,
+    #     scale = 0.1,
+    #     rounding = 1,
+    #     allowedtypes = BAT_BTS,
+    # ),
+    SofarModbusSensorEntityDescription(
+        name = "Battery cell voltage",
+        key = "battery_cell_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x9051,
+        scale = 0.001,
+        rounding = 1,
+        allowedtypes = BAT_BTS,
+    ),
+]
+
 # ============================ plugin declaration =================================================
 
 @dataclass
 class sofar_plugin(plugin_base):
+    BATTERY_SENSOR_TYPES: list[SensorEntityDescription] = None
 
     """
     def isAwake(self, datadict):
@@ -3003,8 +3040,8 @@ class sofar_plugin(plugin_base):
 
         # derive invertertype from seriiesnumber
         if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
-        elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
-        elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
+        elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P
+        elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P 2nd type
         elif seriesnumber.startswith('ZP1'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
         elif seriesnumber.startswith('ZP2'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
         elif seriesnumber.startswith('SM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
@@ -3057,6 +3094,7 @@ plugin_instance = sofar_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
+    BATTERY_SENSOR_TYPES = BATTERY_SENSOR_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,

@@ -38,7 +38,7 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
         descr = descriptions[reg]
         if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
             if ((end - start) > 0):
-                _LOGGER.info(f"Starting new block at 0x{reg:x} ")
+                _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
                 if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
                     descr.ignore_readerror = auto_block_ignore_readerror
                 #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
@@ -52,7 +52,7 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
         if start == INVALID_START: start = reg
         if type(descr) is dict: end = reg+1 # couple of byte values
         else:
-            _LOGGER.info(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
+            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
             if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
                 if (descr.wordcount): end = reg+descr.wordcount
                 else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
@@ -87,8 +87,41 @@ async def async_setup_entry(hass, entry, async_add_entities):
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
-    for sensor_description in plugin.SENSOR_TYPES:
-        if plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
+    registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, plugin.SENSOR_TYPES)
+
+    if plugin.BATTERY_SENSOR_TYPES is not None:
+        device_info_battery = {
+            "identifiers": {(DOMAIN, hub_name + "_battery")},
+            "name": hub.plugin.plugin_name + " Battery",
+            "manufacturer": hub.plugin.plugin_manufacturer,
+            #"model": hub.sensor_description.inverter_model,
+            "serial_number": hub.seriesnumber,
+        }
+
+        registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
+
+    async_add_entities(entities)
+    # sort the registers for this type of inverter
+    holdingRegs = dict(sorted(holdingRegs.items()))
+    inputRegs   = dict(sorted(inputRegs.items()))
+    # check for consistency
+    #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
+    #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
+    # split in blocks and store results
+    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+    hub.computedSensors = computedRegs
+
+    for i in hub.holdingBlocks: _LOGGER.debug(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+    for i in hub.inputBlocks: _LOGGER.debug(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+    _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
+    _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
+    _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
+    return True
+
+def registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_types):  # noqa: D103
+    for sensor_description in sensor_types:
+        if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
             newdescr = sensor_description
             if sensor_description.read_scale_exceptions:
@@ -125,26 +158,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     else:
                         inputRegs[newdescr.register] = newdescr
                 else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
-    async_add_entities(entities)
-    # sort the registers for this type of inverter
-    holdingRegs = dict(sorted(holdingRegs.items()))
-    inputRegs   = dict(sorted(inputRegs.items()))
-    # check for consistency
-    #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-    #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-    # split in blocks and store results
-    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-    hub.computedSensors = computedRegs
-
-    for i in hub.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-    for i in hub.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-    _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
-    _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
-    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
-    return True
-
-
 
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""
