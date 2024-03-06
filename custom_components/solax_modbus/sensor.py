@@ -4,6 +4,7 @@ from homeassistant.components.sensor import SensorEntity
 import logging
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, replace
+from copy import copy
 import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
@@ -87,7 +88,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
-    registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, plugin.SENSOR_TYPES)
+    entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, plugin.SENSOR_TYPES)
 
     if plugin.BATTERY_SENSOR_TYPES is not None:
         device_info_battery = {
@@ -98,7 +99,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "serial_number": hub.seriesnumber,
         }
 
-        registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
+        entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
 
     async_add_entities(entities)
     # sort the registers for this type of inverter
@@ -119,45 +120,55 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
     return True
 
-def registerToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_types):  # noqa: D103
+def entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_types):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
-            newdescr = sensor_description
-            if sensor_description.read_scale_exceptions:
-                for (prefix, value,) in sensor_description.read_scale_exceptions:
-                    if hub.seriesnumber.startswith(prefix):  newdescr = replace (sensor_description, read_scale = value)
-            sensor = SolaXModbusSensor(
-                hub_name,
-                hub,
-                device_info,
-                newdescr,
-            )
-            hub.sensorEntities[newdescr.key] = sensor
-            entities.append(sensor)
-            if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
-            if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
-            if (newdescr.register < 0): # entity without modbus address
-                if newdescr.value_function:
-                    computedRegs[newdescr.key] = newdescr
-                else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
+            if sensor_description.value_series is not None:
+                for serie_value in range(sensor_description.value_series):
+                    newdescr = copy(sensor_description)
+                    newdescr.name = newdescr.name.replace("{}", str(serie_value+1))
+                    newdescr.key = newdescr.key.replace("{}", str(serie_value+1))
+                    newdescr.register = sensor_description.register + serie_value
+                    entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, newdescr)
             else:
-                if newdescr.register_type == REG_HOLDING:
-                    if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
-                        if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
-                            first = holdingRegs[newdescr.register]
-                            holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                        else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
-                    else:
-                        holdingRegs[newdescr.register] = newdescr
-                elif newdescr.register_type == REG_INPUT:
-                    if newdescr.register in inputRegs: # duplicate or 2 bytes in one register ?
-                        first = inputRegs[newdescr.register]
-                        inputRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                        _LOGGER.warning(f"input register already declared: 0x{newdescr.register:x} {newdescr.key}")
-                    else:
-                        inputRegs[newdescr.register] = newdescr
-                else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
+                entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_description)
+
+def entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, newdescr):  # noqa: D103
+    if newdescr.read_scale_exceptions:
+        for (prefix, value,) in newdescr.read_scale_exceptions:
+            if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
+    sensor = SolaXModbusSensor(
+        hub_name,
+        hub,
+        device_info,
+        newdescr,
+    )
+    hub.sensorEntities[newdescr.key] = sensor
+    entities.append(sensor)
+    if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
+    if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
+    if (newdescr.register < 0): # entity without modbus address
+        if newdescr.value_function:
+            computedRegs[newdescr.key] = newdescr
+        else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
+    else:
+        if newdescr.register_type == REG_HOLDING:
+            if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
+                if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
+                    first = holdingRegs[newdescr.register]
+                    holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
+                else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
+            else:
+                holdingRegs[newdescr.register] = newdescr
+        elif newdescr.register_type == REG_INPUT:
+            if newdescr.register in inputRegs: # duplicate or 2 bytes in one register ?
+                first = inputRegs[newdescr.register]
+                inputRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
+                _LOGGER.warning(f"input register already declared: 0x{newdescr.register:x} {newdescr.key}")
+            else:
+                inputRegs[newdescr.register] = newdescr
+        else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
 
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""

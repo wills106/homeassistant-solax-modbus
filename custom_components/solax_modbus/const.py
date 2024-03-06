@@ -103,13 +103,13 @@ class plugin_base:
     order16: int = None # Endian.BIG or Endian.LITTLE
     order32: int = None
 
-    def isAwake(self, datadict): 
+    def isAwake(self, datadict):
         return True # always awake by default
 
     def wakeupButton(self):
         return None # no wakeup button
 
-    def determineInverterType(self, hub, configdict): 
+    def determineInverterType(self, hub, configdict):
         return 0
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -138,15 +138,17 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     wordcount: int = None # only for unit = REGISTER_STR and REGISTER_WORDS
     sleepmode: int = SLEEPMODE_LAST # or SLEEPMODE_ZERO or SLEEPMODE_NONE
     ignore_readerror: bool = False # if not False, ignore read errors for this block and return this static value
-                                   # A failing block read will be accepted as valid block if the first entity of the block contains a non-False ignore_readerror attribute. 
+                                   # A failing block read will be accepted as valid block if the first entity of the block contains a non-False ignore_readerror attribute.
                                    # The other entitties of the block can also have an ignore_readerror attribute that determines the value returned upon failure
                                    # so typically this attribute can be set to None or "Unknown" or any other value
                                    # This only works if the first entity of a block contains this attribute
                                    # When simply set to True, no initial value will be returned, but the block will be considered valid
+    value_series: int = None # if not None, the value is part of a series of values with similar properties
+                             # The name and key must contain a placeholder {} that is replaced by the preceding number
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
-    allowedtypes: int = 0 # overload with ALLDEFAULT from plugin  
+    allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
     command: int = None
     blacklist: list = None # none or list of serial number prefixes
@@ -172,7 +174,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     read_scale_exceptions: list = None
     read_scale: float = 1
     fmt: str = None
-    scale: float = 1 
+    scale: float = 1
     state: str = None
     max_exceptions: list = None   #  None or list with structue [ ('U50EC' , 40,) ]
     min_exceptions_minus: list = None # same structure as max_exceptions, values are applied with a minus
@@ -299,11 +301,11 @@ TIME_OPTIONS = { }
 TIME_OPTIONS_GEN4 = { }
 for h in range(0,24):
     for m in range(0, 60, 15):
-        TIME_OPTIONS[m*256+h] = f"{h:02}:{m:02}" 
-        TIME_OPTIONS_GEN4[h*256+m] = f"{h:02}:{m:02}" 
+        TIME_OPTIONS[m*256+h] = f"{h:02}:{m:02}"
+        TIME_OPTIONS_GEN4[h*256+m] = f"{h:02}:{m:02}"
         if (h, m,) == (0,  0,): # add extra entry 00:01
-            TIME_OPTIONS[1*256+h] = f"{h:02}:{m+1:02}"  
-            TIME_OPTIONS_GEN4[h*256+1] = f"{h:02}:{m+1:02}" 
+            TIME_OPTIONS[1*256+h] = f"{h:02}:{m+1:02}"
+            TIME_OPTIONS_GEN4[h*256+1] = f"{h:02}:{m+1:02}"
         if (h, m,) == (23, 45,): # add extra entry 23:59
             TIME_OPTIONS[(m+14)*256+h] = f"{h:02}:{m+14:02}"
-            TIME_OPTIONS_GEN4[h*256+m+14] = f"{h:02}:{m+14:02}" 
+            TIME_OPTIONS_GEN4[h*256+m+14] = f"{h:02}:{m+14:02}"
