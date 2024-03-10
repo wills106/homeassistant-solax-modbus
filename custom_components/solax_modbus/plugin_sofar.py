@@ -2747,8 +2747,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "Remote Control",
-        key = "remote_control",
+        name = "Remote Switch On Off",
+        key = "remote_on_off",
         register = 0x1104,
         newblock = True,
         scale = { 0: "Off",
