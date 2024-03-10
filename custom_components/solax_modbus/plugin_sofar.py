@@ -559,8 +559,8 @@ SELECT_TYPES = [
     #     write_method = WRITE_MULTISINGLE_MODBUS,
     # ),
     SofarModbusSelectEntityDescription(
-        name = "Remote Control",
-        key = "remote_control",
+        name = "Remote Switch On Off",
+        key = "remote_switch_on_off",
         register = 0x1104,
         option_dict =  {
                 0: "Off",
