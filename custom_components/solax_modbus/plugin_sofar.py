@@ -2768,7 +2768,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power Total",
-        key = "Battery_power_total",
+        key = "battery_power_total",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x667,
