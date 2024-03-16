@@ -13,7 +13,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
 
@@ -251,7 +251,7 @@ def value_function_sync_rtc(initval, descr, datadict):
            ]
 
 def value_function_sync_rtc_ymd(initval, descr, datadict):
-    now = datetime.now()
+    now = datetime.now() + timedelta(seconds=datadict.get('sync_rtc_offset', 0))
     return [ (REGISTER_U16, now.year % 100, ),
              (REGISTER_U16, now.month, ),
              (REGISTER_U16, now.day, ),
