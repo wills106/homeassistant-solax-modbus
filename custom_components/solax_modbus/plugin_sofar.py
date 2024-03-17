@@ -3018,23 +3018,6 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | PV | X3 | PM,
     ),
-    # Does not work. needs to be written with many other registers
-    SofarModbusSensorEntityDescription(
-        name = "Battery Minimum Capacity",
-        key = "battery_minimum_capacity",
-        register = 0x104D,
-        newblock = True,
-        entity_registry_enabled_default =  False,
-        allowedtypes = HYBRID,
-    ),
-    # Does not work. needs to be written with many other registers
-    SofarModbusSensorEntityDescription(
-        name = "Battery Minimum Capacity OffGrid",
-        key = "battery_minimum_capacity_offgrid",
-        register = 0x104E,
-        entity_registry_enabled_default =  False,
-        allowedtypes = HYBRID,
-    ),
 
 ###
 #
@@ -3244,7 +3227,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "BatConfig: Address 4",
         key = "bat_config_address_4",
-        register = 0x1055,
+        register = 0x1056,
         entity_category = EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
