@@ -321,7 +321,7 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
-        await self.async_connect()
+        #await self.async_connect()
         self.cyclecount = self.cyclecount + 1
         if not self._sensor_callbacks:
             return
@@ -398,6 +398,7 @@ class SolaXModbusHub:
     async def async_write_register(self, unit, address, payload):
         """Write register."""
         #awake = self.awakeplugin(self.data)
+        await self.async_connect()
         awake = self.plugin.isAwake(self.data)
         if awake: return await self.async_lowlevel_write_register(unit, address, payload)
         else:
