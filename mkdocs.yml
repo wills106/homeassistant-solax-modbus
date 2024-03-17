@@ -33,7 +33,7 @@ nav:
   - Installation: sofar-installation.md
   - Entity description: sofar-entity-description.md
   - Energy storage modes: sofar-energy-storage-modes.md
-  - Reflux control: sofar-reflux-control.md
+  - Feed-In limitation: sofar-feedin-limitation.md
 - SolaX:
   - FAQ: solax-faq.md
   - Firmware update: solax-firmware-update.md

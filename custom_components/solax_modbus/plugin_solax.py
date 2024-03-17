@@ -2852,7 +2852,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 4: "Default",
                   900: "15 Minutes",
                   1800: "30 Minutes",
-                  3600: "60 Minutes", },
+                  3600: "60 Minutes",
+                  5400: "90 Minutes",
+                  7200: "120 Minutes", },
         entity_registry_enabled_default = False,
         allowedtypes = AC | HYBRID | GEN3,
         icon = "mdi:home-export-outline",
@@ -3186,7 +3188,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Load Management",
                   1: "Generator Control", },
         entity_registry_enabled_default = False,
-        allowedtypes = AC | HYBRID | GEN4,
+        allowedtypes = AC | HYBRID | GEN4 | DCB,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Parallel Setting",
@@ -6654,6 +6656,11 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('H31'):   invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
         elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
         elif seriesnumber.startswith('F34'):   invertertype = AC | GEN4 | X3 # Gen4 X3 FIT
+        elif seriesnumber.startswith('H3BC15'):   invertertype = HYBRID | GEN4 | X3 # X3 Ultra ?
+        elif seriesnumber.startswith('H3BC19'):   invertertype = HYBRID | GEN4 | X3 # X3 Ultra ?
+        elif seriesnumber.startswith('H3BC20'):   invertertype = HYBRID | GEN4 | X3 # X3 Ultra ?
+        elif seriesnumber.startswith('H3BC25'):   invertertype = HYBRID | GEN4 | MPPT3 | X3 # X3 Ultra 25kW
+        elif seriesnumber.startswith('H3BC30'):   invertertype = HYBRID | GEN4 | MPPT3 | X3 # X3 Ultra ?
         elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
         elif seriesnumber.startswith('XB4'):   invertertype = MIC | GEN4 | X1 # X1-Boost G4
         elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
