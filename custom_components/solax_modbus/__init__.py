@@ -374,7 +374,7 @@ class SolaXModbusHub:
     
     async def _check_connection(self):
         if not self._client.connected:
-            _LOGGER.info("Invertyer is not connected, trying to reconnect")
+            _LOGGER.info("Inverter is not connected, trying to connect")
             return await self.async_connect()
 
         return self._client.connected
@@ -382,15 +382,15 @@ class SolaXModbusHub:
     async def async_connect(self):
         result = False
 
-        _LOGGER.debug("Trying to connect to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+        _LOGGER.debug("Trying to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
 
         async with self._lock:
             result = await self._client.connect()
 
         if result:
-            _LOGGER.info("Successfull connection to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+            _LOGGER.info("Inverter connected at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
         else:
-            _LOGGER.warning("Unsuccessfull connection to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+            _LOGGER.warning("Unable to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
         return result
 
 
