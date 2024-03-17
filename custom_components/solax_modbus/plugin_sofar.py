@@ -115,8 +115,8 @@ def value_function_passive_timeout(initval, descr, datadict):
             ]
 
 def value_function_refluxcontrol(initval, descr, datadict):
-    return  [ ('reflux_control', datadict.get('reflux_control', datadict.get('ro_reflux_control')), ),
-              ('reflux_power', datadict.get('reflux_power', 0), ),
+    return  [ ('feedin_limitation_mode', datadict.get('feedin_limitation_mode', datadict.get('feedin_limitation_mode')), ),
+              ('feedin_max_power', int(datadict.get('feedin_max_power', 0)) / 100, ),
             ]
 
 def value_function_timingmode(initval, descr, datadict):
@@ -180,8 +180,8 @@ BUTTON_TYPES = [
         value_function = value_function_sync_rtc_ymd_sofar,
     ),
     SofarModbusButtonEntityDescription(
-        name = "Reflux: Update",
-        key = "reflux_control",
+        name = "FeedIn: Update",
+        key = "feedin_limitation_mode",
         register = 0x1023,
         allowedtypes = HYBRID,
         write_method = WRITE_MULTI_MODBUS,
@@ -275,14 +275,13 @@ NUMBER_TYPES = [
         icon = "mdi:battery-arrow-up",
     ),
     SofarModbusNumberEntityDescription(
-        name = "Reflux: Maximum Power",
-        key = "reflux_power",
+        name = "FeedIn: Maximum Power",
+        key = "feedin_max_power",
         unit = REGISTER_U16,
         fmt = "i",
         native_min_value = 0,
         native_max_value = 20000,
         native_step = 100,
-        scale = 100,
         native_unit_of_measurement = UnitOfPower.WATT,
         allowedtypes = HYBRID,
         prevent_update = True,
@@ -390,13 +389,13 @@ SELECT_TYPES = [
     #
     ###
     SofarModbusSelectEntityDescription(
-        name = "Reflux: Control",
-        key = "reflux_control",
+        name = "FeedIn: Limitation Mode",
+        key = "feedin_limitation_mode",
         unit = REGISTER_U16,
         option_dict =  {
                 0: "Disabled",
-                1: "Enabled",
-                2: "Enabled - Set Value",
+                1: "Enabled - Feed-in limitation",
+                2: "Enabled - 3-phase limit",
             },
         allowedtypes = HYBRID,
         write_method = WRITE_DATA_LOCAL,
@@ -2959,18 +2958,18 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "Reflux: Control",
-        key = "ro_reflux_control",
+        name = "FeedIn: Limitation Mode",
+        key = "feedin_limitation_mode",
         register = 0x1023,
         scale = { 0: "Disabled",
-                  1: "Enabled",
-                  2: "Enabled - Set Value" },
+                  1: "Enabled - Feed-in limitation",
+                  2: "Enabled - 3-phase limit" },
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Reflux: Power",
-        key = "reflux_power",
+        name = "FeedIn: Maximum Power",
+        key = "feedin_max_power",
         register = 0x1024,
         scale = 100,
         entity_registry_enabled_default =  False,
