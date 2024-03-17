@@ -259,7 +259,7 @@ class SolaXModbusHub:
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     async def async_init(self):
-        await self.async_connect()
+        await self._check_connection()
         self._invertertype = await self.plugin.async_determineInverterType(
             self, self.config
         )
@@ -301,7 +301,7 @@ class SolaXModbusHub:
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         if not self._sensor_callbacks:
-            await self.async_connect()
+            await self._check_connection()
             self._unsub_interval_method = async_track_time_interval(
                 self._hass, self.async_refresh_modbus_data, self._scan_interval
             )
@@ -321,7 +321,7 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
-        await self.async_connect()
+        await self._check_connection()
         self.cyclecount = self.cyclecount + 1
         if not self._sensor_callbacks:
             return
@@ -365,12 +365,33 @@ class SolaXModbusHub:
             async with self._lock:
                 self._client.close()
 
-    async def async_connect(self):
-        """Connect client."""
-        _LOGGER.debug("connect modbus")
+    #async def async_connect(self):
+    #    """Connect client."""
+    #    _LOGGER.debug("connect modbus")
+    #    if not self._client.connected:
+    #        async with self._lock:
+    #            await self._client.connect()
+    
+    async def _check_connection(self):
         if not self._client.connected:
-            async with self._lock:
-                await self._client.connect()
+            _LOGGER.info("Invertyer is not connected, trying to reconnect")
+            return await self.async_connect()
+
+        return self._client.connected
+
+    async def async_connect(self):
+        result = False
+
+        _LOGGER.debug("Trying to connect to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+
+        async with self._lock:
+            result = await self._client.connect()
+
+        if result:
+            _LOGGER.info("Successfull connection to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+        else:
+            _LOGGER.warning("Unsuccessfull connection to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+        return result
 
 
     async def async_read_holding_registers(self, unit, address, count):
@@ -386,6 +407,7 @@ class SolaXModbusHub:
             return await self._client.read_input_registers(address, count, **kwargs)
 
     async def async_lowlevel_write_register(self, unit, address, payload):
+        await self._check_connection()
         async with self._lock:
             kwargs = {'slave': unit} if unit else {}
             #builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
@@ -418,7 +440,7 @@ class SolaXModbusHub:
 
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for regiater que
         """Write registers multi, but write only one register of type 16bit"""
-        await self.async_connect()
+        await self._check_connection()
         async with self._lock:
             kwargs = {"slave": unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
@@ -439,7 +461,7 @@ class SolaXModbusHub:
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
-        await self.async_connect()
+        await self._check_connection()
         async with self._lock:
             kwargs = {'slave': unit} if unit else {}
             builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
