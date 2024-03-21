@@ -6177,6 +6177,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+        blacklist=('MU802T',)
     ),
     SolaXModbusSensorEntityDescription(
         name = "Firmware Version ARM",
@@ -6187,6 +6188,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+        blacklist=('MU802T',)
     ),
     SolaXModbusSensorEntityDescription(
         name = "Firmware Version DSP",
