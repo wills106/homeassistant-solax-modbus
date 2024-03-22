@@ -69,6 +69,11 @@ async def async_read_serialnr(hub, address):
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
+            if res and not res.startswith(("M", "X")):
+                ba = bytearray(res,"ascii") # convert to bytearray for swapping
+                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
+                res = str(ba, "ascii") # convert back to string
+                hub.seriesnumber = res
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
@@ -162,11 +167,13 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     return res
 
 def value_function_byteswapserial(initval, descr, datadict):
-    if seriesnumber and not seriesnumber.startswith(("M", "X")):
-        ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
-        ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-        res = str(ba, "ascii") # convert back to string
-        seriesnumber = res
+    if initval and not initval.startswith(("M", "X")):
+        preswap = initval
+        swapped = ""
+        for pos in range(0, len(preswap), 2):
+            swapped += preswap[pos+1] + preswap[pos]
+        return swapped
+    return initval
 
 def valuefunction_firmware_g3(initval, descr, datadict):
     return f"3.{initval}"
@@ -6149,7 +6156,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x300,
         unit = REGISTER_STR,
         wordcount=7,
-        scale = value_function_byeswapserial,
+        scale = value_function_byteswapserial,
         entity_registry_enabled_default = False,
         allowedtypes = MIC,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -7082,11 +7089,6 @@ class solax_plugin(plugin_base):
         seriesnumber                       = await async_read_serialnr(hub, 0x0)
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
-            if seriesnumber and not seriesnumber.startswith(("M", "X")):
-                ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                res = str(ba, "ascii") # convert back to string
-                seriesnumber = res
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
             seriesnumber = "unknown"
