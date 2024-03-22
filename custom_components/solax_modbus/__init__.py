@@ -321,22 +321,23 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
         """Time to update."""
-        await self._check_connection()
-        self.cyclecount = self.cyclecount + 1
-        if not self._sensor_callbacks:
-            return
-        if (self.cyclecount % self.slowdown) == 0: # only execute once every slowdown count
-            update_result = await self.async_read_modbus_data()
-            if update_result:
-                self.slowdown = 1 # return to full polling after succesfull cycle
-                for update_callback in self._sensor_callbacks:
-                    update_callback()
-            else:
-                _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
-                self.slowdown = 10
-                for i in self.sleepnone: self.data.pop(i, None)
-                for i in self.sleepzero: self.data[i] = 0
-                # self.data = {} # invalidate data - do we want this ??
+        async with self._lock:
+          await self._check_connection()
+          self.cyclecount = self.cyclecount + 1
+          if not self._sensor_callbacks:
+              return
+          if (self.cyclecount % self.slowdown) == 0: # only execute once every slowdown count
+              update_result = await self.async_read_modbus_data()
+              if update_result:
+                  self.slowdown = 1 # return to full polling after succesfull cycle
+                  for update_callback in self._sensor_callbacks:
+                      update_callback()
+              else:
+                  _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
+                  self.slowdown = 10
+                  for i in self.sleepnone: self.data.pop(i, None)
+                  for i in self.sleepzero: self.data[i] = 0
+                  # self.data = {} # invalidate data - do we want this ??
 
     @property
     def invertertype(self):
@@ -384,8 +385,7 @@ class SolaXModbusHub:
 
         _LOGGER.debug("Trying to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
 
-        async with self._lock:
-            result = await self._client.connect()
+        result = await self._client.connect()
 
         if result:
             _LOGGER.info("Inverter connected at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
@@ -396,15 +396,13 @@ class SolaXModbusHub:
 
     async def async_read_holding_registers(self, unit, address, count):
         """Read holding registers."""
-        async with self._lock:
-            kwargs = {'slave': unit} if unit else {}
-            return await self._client.read_holding_registers(address, count, **kwargs)
+        kwargs = {'slave': unit} if unit else {}
+        return await self._client.read_holding_registers(address, count, **kwargs)
 
     async def async_read_input_registers(self, unit, address, count):
         """Read input registers."""
-        async with self._lock:
-            kwargs = {'slave': unit} if unit else {}
-            return await self._client.read_input_registers(address, count, **kwargs)
+        kwargs = {'slave': unit} if unit else {}
+        return await self._client.read_input_registers(address, count, **kwargs)
 
     async def async_lowlevel_write_register(self, unit, address, payload):
         await self._check_connection()
