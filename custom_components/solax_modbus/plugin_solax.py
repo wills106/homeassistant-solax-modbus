@@ -161,6 +161,13 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
 
+def value_function_byteswapserial(initval, descr, datadict):
+    if seriesnumber and not seriesnumber.startswith(("M", "X")):
+        ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
+        ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
+        res = str(ba, "ascii") # convert back to string
+        seriesnumber = res
+
 def valuefunction_firmware_g3(initval, descr, datadict):
     return f"3.{initval}"
 
@@ -6142,6 +6149,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x300,
         unit = REGISTER_STR,
         wordcount=7,
+        scale = value_function_byeswapserial,
         entity_registry_enabled_default = False,
         allowedtypes = MIC,
         entity_category = EntityCategory.DIAGNOSTIC,
