@@ -69,11 +69,12 @@ async def async_read_serialnr(hub, address):
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
-            if res and not res.startswith(("M", "X")):
-                ba = bytearray(res,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                res = str(ba, "ascii") # convert back to string
-                hub.seriesnumber = res
+            if address == 0x300:
+              if res and not res.startswith(("M", "X")):
+                  ba = bytearray(res,"ascii") # convert to bytearray for swapping
+                  ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
+                  res = str(ba, "ascii") # convert back to string
+                  hub.seriesnumber = res
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
