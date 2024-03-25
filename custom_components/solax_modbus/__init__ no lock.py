@@ -362,8 +362,7 @@ class SolaXModbusHub:
     async def async_close(self):
         """Disconnect client."""
         if self._client.connected:
-            async with self._lock:
-                self._client.close()
+            self._client.close()
 
     async def _check_connection(self):
         if not self._client.connected:
@@ -376,13 +375,14 @@ class SolaXModbusHub:
         result = False
 
         _LOGGER.debug("Trying to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
-        async with self._lock:
-            result = await self._client.connect()
-            if result:
-                _LOGGER.info("Inverter connected at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
-            else:
-                _LOGGER.warning("Unable to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
-            return result
+
+        result = await self._client.connect()
+
+        if result:
+            _LOGGER.info("Inverter connected at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+        else:
+            _LOGGER.warning("Unable to connect to Inverter at %s:%s", self._client.comm_params.host, self._client.comm_params.port)
+        return result
 
 
     async def async_read_holding_registers(self, unit, address, count):
