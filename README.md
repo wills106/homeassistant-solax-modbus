@@ -7,7 +7,7 @@
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
-**Integration 2023.09.4 and newer only supports HA 2024.3.2 and newer. Support for pyModbus below 3.6.6 has been dropped. For HA installations older than 2024.3.2 Integration 2024.03.1 is the last supported version**
+**Integration 2024.03.2 and newer only supports HA 2024.3.2 and newer. Support for pyModbus below 3.6.6 has been dropped. For HA installations older than 2024.3.2 Integration 2024.03.1 is the last supported version**
 
 * Supports Modbus over RS485 & TCP. **Please check the Docs for [Compatible RS485 Adaptors](https://homeassistant-solax-modbus.readthedocs.io/en/latest/compatible-adaptors/)**
 
