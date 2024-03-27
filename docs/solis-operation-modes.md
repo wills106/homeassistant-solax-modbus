@@ -2,6 +2,34 @@
 
 ## Energy Storage Control Switch
 
+| Value | Inverter mode                                |  | Bit | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|-------|----------------------------------------------|--|-----|---|---|---|---|---|---|---|---|
+| 1     | Self-Use - No Grid Charging                  |  |     | x |   |   |   |   |   |   |   |
+| 3     | Timed Charge/Discharge - No Grid Charging    |  |     | x | x |   |   |   |   |   |   |
+| 17    | Backup/Reserve - No Grid Charging            |  |     | x |   |   |   | x |   |   |   |
+| 33    | Self-Use - No Timed Charge/Discharge         |  |     | x |   |   |   |   | x |   |   |
+| 35    | Self-Use                                     |  |     | x | x |   |   |   | x |   |   |
+| 37    | Off-Grid Mode                                |  |     | x |   | x |   |   | x |   |   |
+| 41    | Battery Awaken                               |  |     | x |   |   | x |   | x |   |   |
+| 43    | Battery Awaken + Timed Charge/Discharge      |  |     | x | x |   | x |   | x |   |   |
+| 49    | Backup/Reserve - No Timed Charge/Discharge   |  |     | x |   |   |   | x | x |   |   |
+| 51    | Backup/Reserve                               |  |     | x | x |   |   | x | x |   |   |
+| 64    | Feed-in priority - No Grid Charging          |  |     |   |   |   |   |   |   | x |   |
+| 96    | Feed-in priority - No Timed Charge/Discharge |  |     |   |   |   |   |   | x | x |   |
+| 98    | Feed-in priority                             |  |     |   | x |   |   |   | x | x |   |
+|       |                                              |  |     |   |   |   |   |   |   |   |   |
+|       |                                              |  |     |   |   |   |   |   |   |   |   |
+|       | **Bit description**                          |  |     |   |   |   |   |   |   |   |   |
+|       | 0 = Self-Use                                 |  |     |   |   |   |   |   |   |   |   |
+|       | 1= Time Of Use                               |  |     |   |   |   |   |   |   |   |   |
+|       | 2 = OFF-Grid Mode                            |  |     |   |   |   |   |   |   |   |   |
+|       | 3 = Battery Wakeup                           |  |     |   |   |   |   |   |   |   |   |
+|       | 4 = Reserve Battery                          |  |     |   |   |   |   |   |   |   |   |
+|       | 5 = Allow Grid To Charge                     |  |     |   |   |   |   |   |   |   |   |
+|       | 6 = Feed In Priority                         |  |     |   |   |   |   |   |   |   |   |
+
+
+
 ## Auto Mode - No Grid Charge
 
 Description
