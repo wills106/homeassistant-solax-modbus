@@ -13,7 +13,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from pymodbus.payload import Endian
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
 
@@ -93,6 +93,7 @@ _LOGGER = logging.getLogger(__name__)
 @dataclass
 class plugin_base:
     plugin_name: str
+    plugin_manufacturer: str
     SENSOR_TYPES: list[SensorEntityDescription]
     BUTTON_TYPES: list[ButtonEntityDescription]
     NUMBER_TYPES: list[NumberEntityDescription]
@@ -250,7 +251,12 @@ def value_function_sync_rtc(initval, descr, datadict):
            ]
 
 def value_function_sync_rtc_ymd(initval, descr, datadict):
-    now = datetime.now()
+    offset = datadict.get('sync_rtc_offset', 0)
+    if isinstance(offset, float) or isinstance(offset, int):
+        now = datetime.now() + timedelta(seconds=offset)
+    else:
+        now = datetime.now()
+
     return [ (REGISTER_U16, now.year % 100, ),
              (REGISTER_U16, now.month, ),
              (REGISTER_U16, now.day, ),

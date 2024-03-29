@@ -31,6 +31,7 @@ Now it's only needed to add your inverter to Home Assistant.
     - Navigate to your `Devices & services`.
     - Click `ADD INTEGRATION`
     - Search and select `SolaX Inverter Modbus`
+- You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie. `SolaX Main` or `SolaX Southwest`.
 - Select correct Modbus address, look at your inverter if the default one does not work.
 ![](images/integration-setup.png)
 - If you use RS485 to Ethernet adaptor:
@@ -38,5 +39,7 @@ Now it's only needed to add your inverter to Home Assistant.
 ![](images/integration-setup-tcpip.png)
 - If you use RS485 to USB adaptor:
     - Select the right port.
+      - If your installation has a tendancy to swap between ttyUSB0 and ttyUSB1 you can define it by the id
+      - /dev/serial/by-id/usb-xyz
     - Enter correct baud rate that does match setting on your inverter.
 ![](images/integration-setup-usb.png)

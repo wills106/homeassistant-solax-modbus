@@ -1,0 +1,47 @@
+---
+name: 🛠️ Feature Request
+description: Suggest an idea to help us improve homeassistant-solax-modbus
+title: "[FR]: 'Overview of request'"
+labels:
+  - "enhancement"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for submitting the feature request, please try to provide as much information as possible.
+        Please check the [Todo List](https://github.com/wills106/homeassistant-solax-modbus/discussions/200) for the list of open Improvements
+
+  - type: textarea
+    attributes:
+      label: Description
+      description: |
+        A clear and concise description of the feature you're interested in.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Suggested Solution
+      description: |
+        Describe the solution you'd like. A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternatives
+      description: |
+        Describe alternatives you've considered.
+        A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: |
+        Add any other context about the problem here.
+        Identified Registers or links to documentation.
+    validations:
+      required: false

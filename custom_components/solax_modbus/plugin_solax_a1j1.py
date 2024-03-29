@@ -15,7 +15,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -45,7 +45,7 @@ ALL_DCB_GROUP  = DCB
 PM  = 0x20000
 ALL_PM_GROUP = PM
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -53,14 +53,14 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-def _read_serialnr(hub, address):
+async def async_read_serialnr(hub, address):
     res = None
     try:
-        inverter_data = hub.read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
-        if not inverter_data.isError(): 
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
-            hub.seriesnumber = res    
+            hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
@@ -105,11 +105,11 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     pv             = datadict.get('pv_power_total', 0)
     houseload_nett = datadict.get('inverter_load', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
-    if   power_control == "Enabled Power Control": 
+    if   power_control == "Enabled Power Control":
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
         if target <0 : ap_target = target - houseload_nett # subtract house load
-        else:          ap_target = target - houseload_brut 
+        else:          ap_target = target - houseload_brut
         power_control = "Enabled Power Control"
     elif power_control == "Enabled Self Use": # alternative computation for Power Control
         ap_target = 0 - houseload_nett # subtract house load
@@ -125,13 +125,13 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
-    elif power_control == "Disabled": 
+    elif power_control == "Disabled":
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
     ap_target = min(ap_target,  import_limit - houseload_brut)
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
-    if  old_ap_target != ap_target: 
+    if  old_ap_target != ap_target:
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}")
     res =  [ ('remotecontrol_power_control',  power_control, ),
              ('remotecontrol_set_type',       set_type, ),
@@ -146,7 +146,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
 def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
     return autorepeat_remaining(datadict, 'remotecontrol_trigger', time())
 
-# for testing prevent_update only 
+# for testing prevent_update only
 #def value_function_test_prevent(initval, descr, datadict):
 #    _LOGGER.warning(f"succeeded test prevent_update - datadict: {datadict['dummy_timed_charge_start_h']}")
 #    return  None
@@ -172,7 +172,7 @@ SELECT_TYPES = [
 
 # ================================= Sennsor Declarations ============================================================
 
-SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [ 
+SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
     ###
     #
     # Holding
@@ -250,7 +250,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         icon = "mdi:dip-switch",
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name = "Charger Start Time 1", 
+        name = "Charger Start Time 1",
         key = "charger_start_time_1",
         register = 0x2E,
         allowedtypes = J1,
@@ -259,7 +259,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name = "Charger Stop Time 1", 
+        name = "Charger Stop Time 1",
         key = "charger_stop_time_1",
         register = 0x2F,
         allowedtypes = J1,
@@ -268,7 +268,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name = "Charger Start Time 2", 
+        name = "Charger Start Time 2",
         key = "charger_start_time_2",
         register = 0x30,
         allowedtypes = J1,
@@ -277,7 +277,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name = "Charger Stop Time 2", 
+        name = "Charger Stop Time 2",
         key = "charger_stop_time_2",
         register = 0x31,
         allowedtypes = J1,
@@ -645,7 +645,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.BATTERY,
         register = 0x17,
         register_type = REG_INPUT,
-        allowedtypes = J1, 
+        allowedtypes = J1,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
         name = "Inverter Temperature",
@@ -1008,7 +1008,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
 
 @dataclass
 class solax_a1j1_plugin(plugin_base):
-    
+
     def isAwake(self, datadict):
         """ determine if inverter is awake based on polled datadict"""
         return (datadict.get('run_mode', None) == 'Normal Mode')
@@ -1017,18 +1017,18 @@ class solax_a1j1_plugin(plugin_base):
         """ in order to wake up  the inverter , press this button """
         return 'battery_awaken'
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         #global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 0x0)
-        if not seriesnumber:  
-            seriesnumber = _read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
+        seriesnumber                       = await async_read_serialnr(hub, 0x0)
+        if not seriesnumber:
+            seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
             if seriesnumber and not seriesnumber.startswith(("M", "X")):
                 ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii") # convert back to string
                 seriesnumber = res
-        if not seriesnumber: 
+        if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
             seriesnumber = "unknown"
 
@@ -1036,13 +1036,13 @@ class solax_a1j1_plugin(plugin_base):
         if   seriesnumber.startswith('J1'):  invertertype = HYBRID | J1 # J1 Hybrid - Unknown Serial
         elif seriesnumber.startswith('A1'):  invertertype = HYBRID | A1 # A1 Hybrid - Unknown Serial
         # add cases here
-        else: 
+        else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
         read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS 
+        if read_eps: invertertype = invertertype | EPS
         if read_dcb: invertertype = invertertype | DCB
         if read_pm: invertertype = invertertype | PM
 
@@ -1060,7 +1060,7 @@ class solax_a1j1_plugin(plugin_base):
         pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP)  != 0) or (entitymask & ALL_PM_GROUP  == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
@@ -1068,22 +1068,22 @@ class solax_a1j1_plugin(plugin_base):
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info(f"local data update callback")
- 
+
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
-            if new_read_scale != None: 
+            if new_read_scale != None:
                 _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity: number_entity.entity_description = replace(number_entity.entity_description, read_scale = new_read_scale, )
                 if sensor_entity: sensor_entity.entity_description = replace(sensor_entity.entity_description, read_scale = new_read_scale, )
- 
+
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
-            if new_max_export != None: 
-                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:    
+            if new_max_export != None:
+                for key in ["remotecontrol_active_power", "remotecontrol_import_limit", "export_control_user_limit", "external_generation_max_charge"]:
                     number_entity = hub.numberEntities.get(key)
                     if number_entity:
                         number_entity._attr_native_max_value = new_max_export
@@ -1092,11 +1092,12 @@ class solax_a1j1_plugin(plugin_base):
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
 plugin_instance = solax_a1j1_plugin(
-    plugin_name = 'solax_a1j1', 
+    plugin_name = 'SolaX A1-J1',
+    plugin_manufacturer = 'SolaX Power',
     SENSOR_TYPES = SENSOR_TYPES_MAIN,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.LITTLE,

@@ -4,7 +4,6 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-#from .const import BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -42,30 +41,27 @@ ALL_EPS_GROUP  = EPS
 DCB            = 0x10000 # dry contact box - gen4
 ALL_DCB_GROUP  = DCB
 
+MPPT3          = 0x40000
+MPPT4          = 0x80000
+MPPT6          = 0x100000
+MPPT8          = 0x200000
+MPPT10         = 0x400000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
-
-# ======================= end of bitmask handling code =============================================
-
-# ====================== find inverter type and details ===========================================
-
-def _read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub, address):
     res = None
+    inverter_data = None
     try:
-        inverter_data = hub.read_input_registers(unit=hub._modbus_addr, address=address, count=4)
-        if not inverter_data.isError(): 
+        inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=4)
+        if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(8).decode
-            if swapbytes: 
-                ba = bytearray(res) # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                res = str(ba) # convert back to string
-            hub.seriesnumber = res    
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+            res = decoder.decode_string(8).decode("ascii")
+            hub.seriesnumber = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
-    #return 'SP1ES2' 
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
 @dataclass
@@ -417,19 +413,11 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 
 @dataclass
 class solis_old_plugin(plugin_base):
-    
-    """
-    def isAwake(self, datadict):
-        return (datadict.get('run_mode', None) == 'Normal Mode')
 
-    def wakeupButton(self):
-        return 'battery_awaken'
-    """
-
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = _read_serialnr(hub, 3061,  swapbytes = False)
-        if not seriesnumber: 
+        seriesnumber                       = await async_read_serialnr(hub, 3061,  swapbytes = False)
+        if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
             seriesnumber = "unknown"
 
@@ -440,16 +428,15 @@ class solis_old_plugin(plugin_base):
         elif seriesnumber.startswith('503105'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW
         elif seriesnumber.startswith('603105'):  invertertype = HYBRID | X1 # Hybrid Gen5 6kW
         elif seriesnumber.startswith('603122'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW
-        elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase 
+        elif seriesnumber.startswith('110CA22'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW 3Phase
 
-        else: 
+        else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS 
+        if read_eps: invertertype = invertertype | EPS
         if read_dcb: invertertype = invertertype | DCB
-        #hub.invertertype = invertertype
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -459,18 +446,20 @@ class solis_old_plugin(plugin_base):
         hybmatch = ((inverterspec & entitymask & ALL_TYPE_GROUP) != 0) or (entitymask & ALL_TYPE_GROUP == 0)
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP)  != 0) or (entitymask & ALL_EPS_GROUP  == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP)  != 0) or (entitymask & ALL_DCB_GROUP  == 0)
+        mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP)  != 0) or (entitymask & ALL_MPPT_GROUP  == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 plugin_instance = solis_old_plugin(
-    plugin_name = 'solis_old', 
+    plugin_name = 'Solis Old',
+    plugin_manufacturer = 'Ginlog Solis',
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 48,
     order16 = Endian.BIG,
     order32 = Endian.BIG,

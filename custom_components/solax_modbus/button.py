@@ -21,8 +21,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
-        "name": hub_name,
-        "manufacturer": ATTR_MANUFACTURER,
+        "name": hub.plugin.plugin_name,
+        "manufacturer": hub.plugin.plugin_manufacturer,
+        #"model": hub.sensor_description.inverter_model,
+        "serial_number": hub.seriesnumber,
     }
     plugin = hub.plugin
     entities = []
@@ -72,15 +74,20 @@ class SolaXModbusButton(ButtonEntity):
     async def async_press(self) -> None:
         """Write the button value."""
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
-            LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
-            self._hub.write_registers_single(unit=self._modbus_addr, address=self._register, payload=self._command)
+            _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
+            await self._hub.async_write_registers_single(
+                unit=self._modbus_addr, address=self._register, payload=self._command
+            )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
-            self._hub.write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
+            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=self._command)
         elif self._write_method == WRITE_MULTI_MODBUS:
             if self.button_info.autorepeat:
                 duration = self._hub.data.get(self.button_info.autorepeat, 0)
                 autorepeat_set(self._hub.data, self.button_info.key, time() + duration - 0.5 )
             if self.button_info.value_function:
                 res = self.button_info.value_function(0, self.button_info, self._hub.data )
-                if res: self._hub.write_registers_multi(unit=self._modbus_addr, address=self._register, payload=res)
+                if res:
+                    await self._hub.async_write_registers_multi(
+                        unit=self._modbus_addr, address=self._register, payload=res
+                    )

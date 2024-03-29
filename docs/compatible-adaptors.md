@@ -61,6 +61,11 @@ Tested with LSE-3 firmware version ME_0D_270A_1.09.
 
 Note that port 8899 is also open on the LSW-3 logger, but any ModBus TCP connection attempts time out here.
 
+### [SolaX PocketWiFi 3.0](https://www.solaxpower.com/monitoring-dongles/)
+
+- Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
+- SolaX only mentions Gen4 Hybrid, other inverters may work?
+
 ## Untested but should work according to the specs...
 
 ### [USR-N510 RS485 to Ethernet](https://www.pusr.com/products/1-rs485-serial-port-etherne-device-servers-usr-n510.html)
@@ -83,9 +88,20 @@ Should perform the same as the older version, although untested!
 
 As this Model appears to only gives you a Virtual Com Port it might prove difficult to pass into Home Assistant running in a VM or Home Assistant OS?
 
+- You can use Modbus RTU over TCP
+
 [Amazon UK Link1](https://www.amazon.co.uk/dp/B07BC77L8K)
 
 ## Non Working / Troublesome RS485 Adaptors
+
+### [SolaX PocketLAN](https://www.solaxpower.com/monitoring-dongles/)
+
+This adaptor does not provide a Modbus connection
+
+### [SolaX PocketWiFI 2](https://www.solaxpower.com/monitoring-dongles/)
+
+- This adaptor provides a very unreliable Modbus connection, if any connectivity at all.
+- No support for this adaptor will be provided.
 
 ### [Waveshare RS485 to WIFI/ETH](https://www.waveshare.com/wiki/RS485_TO_WIFI/ETH)
 
