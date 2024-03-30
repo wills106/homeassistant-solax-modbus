@@ -623,8 +623,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     SolaXEVChargerModbusSensorEntityDescription(
         name = "Charge Added Total",
         key = "charge_added_total",
-        register = 0x10,
-        register_type = REG_INPUT,
+        register=0x619,
+        register_type=REG_HOLDING,
         unit = REGISTER_U32,
         scale = 0.1,
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
