@@ -64,7 +64,7 @@ Do not tick the Serial RS485 flag; the serial port is ignored in this setup.
 
 When configuring the SolaX Modbus Integration, tick the 'RS485 serial port' flag, and specify the actual serial port name  (as seen in the output of 'ls /dev/ttyUSB*'). In case you have more than one usb device, it makes sense to use the name seen in the output of 'ls /dev/serial/by-id'. In this setup, the IP address and TCP port do not matter, use 'localhost' as IP address and leave the TCP port default 502.
 
-### Multiple inverters connected to one RS485 adaptor & Terminating resistors
+## Multiple inverters connected to one RS485 adaptor & Terminating resistors
 
 It should be possible to connect multiple inverters to the same RS485 adapter (eg Waveshare). The inverters must have different Modbus addresses, so you need to change the Modbus addresses of the inverters first. Then configure one instance for each inverter. The configuration dialogue allows you to set the Modbus address.
 
