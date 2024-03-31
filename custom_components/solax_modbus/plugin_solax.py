@@ -1492,6 +1492,19 @@ SELECT_TYPES = [
         icon = "mdi:clock-end",
     ),
     SolaxModbusSelectEntityDescription(
+        name = "Battery to EV Charger",
+        key = "battery_to_ev_charger",
+        register = 0xE1,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "Generator Start Method",
         key = "generator_start_method",
         register = 0xE3,
@@ -3077,6 +3090,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-charging-high",
         native_unit_of_measurement = PERCENTAGE,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Battery to EV Charger",
+        key = "battery_to_ev_charger",
+        register = 0x111,
+        scale = { 0: "Enabled",
+                  1: "Disabled", },
+        entity_registry_enabled_default = False,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+        icon = "mdi:dip-switch",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Forcetime Period 1 Maximum Capacity",
