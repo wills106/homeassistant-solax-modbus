@@ -3,7 +3,7 @@ import asyncio
 import logging
 import threading
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any,  Optional
 from contextlib import contextmanager
 
 # import importlib.util, sys
@@ -194,7 +194,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if hass.is_running:
         await hub.async_init()
     else:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init())
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, hub.async_init)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
@@ -314,7 +314,7 @@ class SolaXModbusHub:
         self.entry = entry
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
-    async def async_init(self):
+    async def async_init(self, *args: Any) -> None:
         await self._check_connection()
         self._invertertype = await self.plugin.async_determineInverterType(
             self, self.config
