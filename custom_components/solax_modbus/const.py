@@ -251,7 +251,12 @@ def value_function_sync_rtc(initval, descr, datadict):
            ]
 
 def value_function_sync_rtc_ymd(initval, descr, datadict):
-    now = datetime.now() + timedelta(seconds=datadict.get('sync_rtc_offset', 0))
+    offset = datadict.get('sync_rtc_offset', 0)
+    if isinstance(offset, float) or isinstance(offset, int):
+        now = datetime.now() + timedelta(seconds=offset)
+    else:
+        now = datetime.now()
+
     return [ (REGISTER_U16, now.year % 100, ),
              (REGISTER_U16, now.month, ),
              (REGISTER_U16, now.day, ),

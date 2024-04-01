@@ -69,10 +69,16 @@ async def async_read_serialnr(hub, address):
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(14).decode("ascii")
+            if address == 0x300:
+              if res and not res.startswith(("M", "X")):
+                  ba = bytearray(res,"ascii") # convert to bytearray for swapping
+                  ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
+                  res = str(ba, "ascii") # convert back to string
+                  hub.seriesnumber = res
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
     return res
 
 # =================================================================================================
@@ -160,6 +166,15 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     if (power_control == "Disabled"): autorepeat_stop(datadict, descr.key)
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
+
+def value_function_byteswapserial(initval, descr, datadict):
+    if initval and not initval.startswith(("M", "X")):
+        preswap = initval
+        swapped = ""
+        for pos in range(0, len(preswap), 2):
+            swapped += preswap[pos+1] + preswap[pos]
+        return swapped
+    return initval
 
 def valuefunction_firmware_g3(initval, descr, datadict):
     return f"3.{initval}"
@@ -1475,6 +1490,19 @@ SELECT_TYPES = [
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:clock-end",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "Battery to EV Charger",
+        key = "battery_to_ev_charger",
+        register = 0xE1,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Generator Start Method",
@@ -3062,6 +3090,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-charging-high",
         native_unit_of_measurement = PERCENTAGE,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Battery to EV Charger",
+        key = "battery_to_ev_charger",
+        register = 0x111,
+        scale = { 0: "Enabled",
+                  1: "Disabled", },
+        entity_registry_enabled_default = False,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+        icon = "mdi:dip-switch",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Forcetime Period 1 Maximum Capacity",
@@ -6142,6 +6180,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x300,
         unit = REGISTER_STR,
         wordcount=7,
+        scale = value_function_byteswapserial,
         entity_registry_enabled_default = False,
         allowedtypes = MIC,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6177,6 +6216,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+        blacklist=('MU802T',)
     ),
     SolaXModbusSensorEntityDescription(
         name = "Firmware Version ARM",
@@ -6187,6 +6227,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+        blacklist=('MU802T',)
     ),
     SolaXModbusSensorEntityDescription(
         name = "Firmware Version DSP",
@@ -6438,6 +6479,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:run",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Measured Power",
+        key = "measured_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x410,
+        register_type = REG_INPUT,
+        allowedtypes = MIC | GEN | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Measured Power L1",
         key = "measured_power_l1",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6445,7 +6496,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x410,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC | GEN | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L2",
@@ -6455,7 +6506,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC | GEN | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L3",
@@ -6465,7 +6516,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x412,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN,
+        allowedtypes = MIC | GEN | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Power 1",
@@ -6721,6 +6772,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Measured Power",
+        key = "measured_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x704,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MIC | GEN2 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Measured Power L1",
         key = "measured_power_l1",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6729,7 +6791,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x704,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L2",
@@ -6740,7 +6802,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x706,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L3",
@@ -6751,7 +6813,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x708,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | X3,
     ),
 #####
 #
@@ -7072,11 +7134,6 @@ class solax_plugin(plugin_base):
         seriesnumber                       = await async_read_serialnr(hub, 0x0)
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
-            if seriesnumber and not seriesnumber.startswith(("M", "X")):
-                ba = bytearray(seriesnumber,"ascii") # convert to bytearray for swapping
-                ba[0::2], ba[1::2] = ba[1::2], ba[0::2] # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                res = str(ba, "ascii") # convert back to string
-                seriesnumber = res
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
             seriesnumber = "unknown"
