@@ -748,7 +748,20 @@ SELECT_TYPES = [
                 0: "Off",
                 16: "On",
             },
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+        icon = "mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        option_dict =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        allowedtypes = HYBRID | X3,
         icon = "mdi:dip-switch",
     ),
     SolisModbusSelectEntityDescription(
@@ -2067,9 +2080,23 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 43073,
         scale = {
                 0: "Off",
-                16: "On", },
+                16: "On",
+            },
         entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        scale =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
         name = "Backflow Power",
