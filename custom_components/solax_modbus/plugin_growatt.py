@@ -902,6 +902,23 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
+    ###
+    #
+    # SPF Selects
+    #
+    ###
+    GrowattModbusSelectEntityDescription(
+        name = "Select baud rate",
+        key = "Select_baud_rate",
+        register = 22,
+        option_dict = {
+                0: "9600bps",
+                1: "38400bps",
+            },
+        allowedtypes = GEN2 | GEN3 | GEN4 | GEN | X3,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:dip-switch",
+    ),
 ]
 
 # ================================= Sennsor Declarations ============================================================
