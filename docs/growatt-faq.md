@@ -1,20 +1,7 @@
-# Growatt FAQ - WIP
+# Growatt FAQ
 
-## Example Formatting
+## Baud Rate
 
-**Bold text, ideal for a warning statement**
+Default Baud rate is 9600, optionally you can set 38400
 
-### Nested
-
-#### Further Nested
-
-Allows the Index on the left to be broken down
-
-### List options
-
-List:
-
-- Item 1
-  - Item 1a
-- Item 2
-- Item 3
+**Remember to reconfigure the Integration following a change!**

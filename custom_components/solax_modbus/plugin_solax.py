@@ -3094,7 +3094,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Battery to EV Charger",
         key = "battery_to_ev_charger",
-        register = 0x111,
+        register = 0x10F,
         scale = { 0: "Enabled",
                   1: "Disabled", },
         entity_registry_enabled_default = False,

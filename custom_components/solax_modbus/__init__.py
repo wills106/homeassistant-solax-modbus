@@ -44,7 +44,7 @@ from pymodbus.client import AsyncModbusTcpClient, AsyncModbusSerialClient
 #    Endian_BIG = Endian.BIG
 #    Endian_LITTLE = Endian.LITTLE
 from pymodbus.constants import Endian
-from pymodbus.exceptions import ConnectionException
+from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
 
@@ -614,6 +614,9 @@ class SolaXModbusHub:
             res = await self.async_read_modbus_registers_all()
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")
+            res = False
+        except ModbusIOException as ex:
+            _LOGGER.error(f"ModbusIOError: {ex}")
             res = False
         except Exception as ex:
             _LOGGER.exception("Something went wrong reading from modbus")

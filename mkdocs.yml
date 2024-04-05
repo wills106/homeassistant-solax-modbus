@@ -26,7 +26,7 @@ nav:
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
 - Growatt:
-  - FAQ - WIP: growatt-faq.md
+  - FAQ: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
 - Sofar:
   - FAQ: sofar-faq.md
