@@ -4,6 +4,7 @@ import logging
 import threading
 from datetime import datetime, timedelta
 from typing import Any,  Optional
+from types  import SimpleNamespace
 from contextlib import contextmanager
 
 # import importlib.util, sys
@@ -283,8 +284,14 @@ class SolaXModbusHub:
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
         self._scan_interval = timedelta(seconds=scan_interval)
-        self._unsub_interval_method = None
-        self._sensor_callbacks = []
+        self.groups = {} #group info, below
+        self._empty_group = lambda: SimpleNamespace(
+            interval = 0,
+            _unsub_interval_method = None,
+            _sensors = [],
+            inputBlocks = {},
+            holdingBlocks = {}
+        )
         self.data = {
             "_repeatUntil": {}
         }  # _repeatuntil contains button autorepeat expiry times
@@ -292,8 +299,6 @@ class SolaXModbusHub:
         self.tmpdata_expiry = {}  # expiry timestamps for tempdata
         self.cyclecount = 0  # temporary - remove later
         self.slowdown = 1  # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
-        self.inputBlocks = {}
-        self.holdingBlocks = {}
         self.computedSensors = {}
         self.computedButtons = {}
         self.sensorEntities = {}  # all sensor entities, indexed by key
@@ -365,41 +370,54 @@ class SolaXModbusHub:
 
     # end of save and load section
 
+    def entity_group(self, sensor):
+        g = getattr(sensor.entity_description, "scan_interval", 0)
+        if g <= 0:
+            g = self._scan_interval
+        else:
+            g = timedelta(seconds=g)
+        return g
+
     @callback
-    async def async_add_solax_modbus_sensor(self, update_callback):
+    async def async_add_solax_modbus_sensor(self, sensor):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
-        if not self._sensor_callbacks:
+        interval = self.entity_group(sensor)
+        grp = self.groups.setdefault(interval, self._empty_group())
+        if not grp._sensors:
+            grp.interval = interval
             await self._check_connection()
-            self._unsub_interval_method = async_track_time_interval(
-                self._hass, self.async_refresh_modbus_data, self._scan_interval
-            )
-        self._sensor_callbacks.append(update_callback)
+            async def _refresh(_now: Optional[int] = None) -> None:
+                await self.async_refresh_modbus_data(grp, _now)
+            grp._unsub_interval_method = async_track_time_interval(self._hass, _refresh, interval)
+        grp._sensors.append(sensor)
 
     @callback
-    async def async_remove_solax_modbus_sensor(self, update_callback):
+    async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
-        self._sensor_callbacks.remove(update_callback)
+        interval = self.entity_group(sensor)
+        grp = self.groups.get(interval, self._empty_group())
+        grp._sensors.remove(sensor)
 
-        if not self._sensor_callbacks:
+        if not grp._sensors:
             """stop the interval timer upon removal of last sensor"""
-            self._unsub_interval_method()
-            self._unsub_interval_method = None
+            grp._unsub_interval_method()
+            grp._unsub_interval_method = None
             await self.async_close()
 
-    async def async_refresh_modbus_data(self, _now: Optional[int] = None) -> None:
+    async def async_refresh_modbus_data(self, group, _now: Optional[int] = None) -> None:
         """Time to update."""
         self.cyclecount = self.cyclecount + 1
-        if not self._sensor_callbacks:
+        if not group._sensors:
             return
         if (
             self.cyclecount % self.slowdown
         ) == 0:  # only execute once every slowdown count
-            update_result = await self.async_read_modbus_data()
+            update_result = await self.async_read_modbus_data(group)
             if update_result:
                 self.slowdown = 1  # return to full polling after succesfull cycle
-                for update_callback in self._sensor_callbacks:
-                    update_callback()
+                for sensor in group._sensors:
+                    sensor.modbus_data_updated()
             else:
                 _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
                 self.slowdown = 10
@@ -608,10 +626,10 @@ class SolaXModbusHub:
             )
             return None
 
-    async def async_read_modbus_data(self):
+    async def async_read_modbus_data(self, group):
         res = True
         try:
-            res = await self.async_read_modbus_registers_all()
+            res = await self.async_read_modbus_registers_all(group)
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline.")
             res = False
@@ -777,11 +795,11 @@ class SolaXModbusHub:
                     )
                 return False
 
-    async def async_read_modbus_registers_all(self):
+    async def async_read_modbus_registers_all(self, group):
         res = True
-        for block in self.holdingBlocks:
+        for block in group.holdingBlocks:
             res = res and await self.async_read_modbus_block(block, "holding")
-        for block in self.inputBlocks:
+        for block in group.inputBlocks:
             res = res and await self.async_read_modbus_block(block, "input")
         if self.localsUpdated:
             self.saveLocalData()
