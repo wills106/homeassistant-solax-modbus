@@ -78,7 +78,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         "identifiers": {(DOMAIN, hub_name)},
         "name": hub.plugin.plugin_name,
         "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
+        "model": getattr(hub.plugin,"inverter_model",None),
         "serial_number": hub.seriesnumber,
     }
 
@@ -105,7 +105,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 newdescr,
             )
             hub.sensorEntities[newdescr.key] = sensor
-            entities.append(sensor)
+            #internal sensors are only used for polling values for selects, etc
+            if not getattr(newdescr,"internal",None):
+                entities.append(sensor)
             if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
             if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
             if (newdescr.register < 0): # entity without modbus address
