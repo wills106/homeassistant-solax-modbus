@@ -394,6 +394,7 @@ MAX_EXPORT = [
     ('PRI5',    9200 ), # Gen4 X1 RetroFit 5kW
     ('F34',    10000 ), # Gen4 X3 RetroFit
     ('H34A05',  7500 ), # Gen4 X3 A
+    ('H34A06',  6000 ), # Gen4 X3 A
     ('H34A08', 12000 ), # Gen4 X3 A
     ('H34A10', 15000 ), # Gen4 X3 A
     ('H34A12', 15000 ), # Gen4 X3 A
