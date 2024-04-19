@@ -132,6 +132,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
+    scan_interval: int = 0 # <=0 -> hub interval
+    internal: bool = False # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     #prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
     value_function: callable = None #  value = function(initval, descr, datadict)
