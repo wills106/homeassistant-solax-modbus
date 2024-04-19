@@ -56,7 +56,7 @@ ALLDEFAULT = 0 #HYBRID | AC | ALL_X_GROUP
 
 INTERVAL_FAST = 15
 INTERVAL_VERY_FAST = 5
-INTERVAL_MPPT = 0 #not special
+INTERVAL_MPPT = INTERVAL_FAST
 
 _simple_switch = {0: "off", 1: "on"}
 #_simple_switch = {0: False, 1: True}
