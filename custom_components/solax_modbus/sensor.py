@@ -148,7 +148,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
         #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
         # split in blocks and store results
-        hub_group = hub.groups[k];
+        hub_group = hub.groups[k]
         hub_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
         hub_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
         hub.computedSensors = computedRegs
