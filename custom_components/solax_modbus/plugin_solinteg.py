@@ -54,9 +54,7 @@ ALL_MPPT = MPPT2 | MPPT4
 #ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
 ALLDEFAULT = 0 #HYBRID | AC | ALL_X_GROUP
 
-INTERVAL_FAST = 15
-INTERVAL_VERY_FAST = 5
-INTERVAL_MPPT = INTERVAL_FAST
+SCAN_GROUP_MPPT = SCAN_GROUP_MEDIUM
 
 _simple_switch = {0: "off", 1: "on"}
 #_simple_switch = {0: False, 1: True}
@@ -453,7 +451,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         key = "inverter_status",
         entity_category = EntityCategory.DIAGNOSTIC,
         register = 10105,
-        scan_interval = INTERVAL_FAST,
+        scan_group = SCAN_GROUP_MEDIUM,
         scale = {  
             0: "Waiting",
             1: "Self checking",
@@ -516,7 +514,15 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
     ),
-    
+    SolintegModbusSensorEntityDescription(
+        name = "Inverter Temperature",
+        key = "inverter_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        register = 11032,
+        scale = 0.1,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
     SolintegModbusSensorEntityDescription(
         name = "PV Voltage 1",
         key = "pv_voltage_1",
@@ -525,7 +531,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register = 11038,
         #ignore_readerror = True,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
     ),
     SolintegModbusSensorEntityDescription(
         name = "PV Current 1",
@@ -534,7 +540,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 11039,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:current-dc",
     ),
     SolintegModbusSensorEntityDescription(
@@ -545,7 +551,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register = 11062,
         #scale = 0.001,
         unit = REGISTER_U32,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:solar-power-variant",
     ),
     SolintegModbusSensorEntityDescription(
@@ -556,7 +562,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT_MIN2,
         register = 11040,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
     ),
     SolintegModbusSensorEntityDescription(
         name = "PV Current 2",
@@ -566,7 +572,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT_MIN2,
         register = 11041,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:current-dc",
     ),
     SolintegModbusSensorEntityDescription(
@@ -577,7 +583,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT_MIN2,
         register = 11064,
         unit = REGISTER_U32,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:solar-power-variant",
     ),
 
@@ -589,7 +595,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11042,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
     ),
     SolintegModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -599,7 +605,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11043,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:current-dc",
     ),
     SolintegModbusSensorEntityDescription(
@@ -610,7 +616,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11066,
         unit = REGISTER_U32,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:solar-power-variant",
     ),
     SolintegModbusSensorEntityDescription(
@@ -621,7 +627,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11044,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
     ),
     SolintegModbusSensorEntityDescription(
         name = "PV Current 4",
@@ -631,7 +637,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11045,
         scale = 0.1,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:current-dc",
     ),
     SolintegModbusSensorEntityDescription(
@@ -642,7 +648,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes = MPPT4,
         register = 11068,
         unit = REGISTER_U32,
-        scan_interval = INTERVAL_MPPT,
+        scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:solar-power-variant",
     ),
 
@@ -654,7 +660,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 11028,
         unit = REGISTER_U32,
-        scan_interval = INTERVAL_VERY_FAST,
+        scan_group = SCAN_GROUP_FAST,
         icon = "mdi:solar-power-variant",
     ),
     SolintegModbusSensorEntityDescription(
@@ -691,7 +697,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         register = 11016,
         unit = REGISTER_S32,
-        scan_interval = INTERVAL_VERY_FAST,
+        scan_group = SCAN_GROUP_FAST,
     ),
     SolintegModbusSensorEntityDescription(
         name = "Inverter Frequency",
@@ -750,7 +756,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register = 33000,
         scale = 0.01,
         allowedtypes = HYBRID,
-        scan_interval = INTERVAL_FAST,
+        scan_group = SCAN_GROUP_MEDIUM,
     ),
     SolintegModbusSensorEntityDescription(
         name = "Battery SOH",
@@ -762,6 +768,17 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon = "mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
+    SolintegModbusSensorEntityDescription(
+        name = "Battery Temperature",
+        key = "battery_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        register = 33003,
+        scale = 0.1,
+        allowedtypes = HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+
     SolintegModbusSensorEntityDescription(
         name = "Battery Firmware",
         key = "battery_firmware",
@@ -846,7 +863,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 30258,
         unit = REGISTER_S32,
-        scan_interval = INTERVAL_FAST,
+        scan_group = SCAN_GROUP_MEDIUM,
         #entity_registry_enabled_default = False,
         allowedtypes = HYBRID,
         icon = "mdi:home",
@@ -903,7 +920,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 30230,
         unit = REGISTER_S32,
-        scan_interval = INTERVAL_FAST,
+        scan_group = SCAN_GROUP_MEDIUM,
         allowedtypes = HYBRID | ALL_EPS_GROUP,
         icon = "mdi:home",
     ),
@@ -1008,7 +1025,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         register = 11000,
         unit = REGISTER_S32,
-        scan_interval = INTERVAL_VERY_FAST,
+        scan_group = SCAN_GROUP_FAST,
     ),
     SolintegModbusSensorEntityDescription(
         name = "Meter Grid Import Total",
@@ -1038,7 +1055,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name = "House Load",
         key = "house_load",
         value_function = value_function_house_load,
-        scan_interval = INTERVAL_VERY_FAST,
+        scan_group = SCAN_GROUP_FAST,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,

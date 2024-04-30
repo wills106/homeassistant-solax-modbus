@@ -72,6 +72,7 @@ from .const import (
     DEFAULT_PLUGIN,
     # PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
+    SCAN_GROUP_DEFAULT,
 )
 from .const import (
     REGISTER_S32,
@@ -120,7 +121,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
     _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
     config = entry.options
-    name = config[CONF_NAME]
     plugin_name = config[CONF_PLUGIN]
 
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
@@ -147,46 +147,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.error(f"could not import plugin with name: {plugin_name}")
     # ====================== end of dynamic load ==============================================================
 
-    host = config.get(CONF_HOST, None)
-    port = config.get(CONF_PORT, DEFAULT_PORT)
-    tcp_type = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
-    modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
-    if modbus_addr == None:
-        modbus_addr = DEFAULT_MODBUS_ADDR
-        _LOGGER.warning(
-            f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}"
-        )
-    interface = config.get(CONF_INTERFACE, None)
-    if (
-        not interface
-    ):  # legacy parameter name was read_serial, this block can be removed later
-        if config.get("read_serial", False):
-            interface = "serial"
-        else:
-            interface = "tcp"
-    serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
-    baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
-    scan_interval = config[CONF_SCAN_INTERVAL]
-    _LOGGER.debug(f"Setup {DOMAIN}.{name}")
-    _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
-
     hub = SolaXModbusHub(
         hass,
-        name,
-        host,
-        port,
-        tcp_type,
-        modbus_addr,
-        interface,
-        serial_port,
-        baudrate,
-        scan_interval,
         plugin,
-        config,
         entry,
     )
     """Register the hub."""
-    hass.data[DOMAIN][name] = {
+    hass.data[DOMAIN][hub._name] = {
         "hub": hub,
     }
 
@@ -237,19 +204,33 @@ class SolaXModbusHub:
     def __init__(
         self,
         hass,
-        name,
-        host,
-        port,
-        tcp_type,
-        modbus_addr,
-        interface,
-        serial_port,
-        baudrate,
-        scan_interval,
         plugin,
-        config,
         entry,
     ):
+        config = entry.options
+        name = config[CONF_NAME]
+        host = config.get(CONF_HOST, None)
+        port = config.get(CONF_PORT, DEFAULT_PORT)
+        tcp_type = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
+        modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
+        if modbus_addr == None:
+            modbus_addr = DEFAULT_MODBUS_ADDR
+            _LOGGER.warning(
+                f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}"
+            )
+        interface = config.get(CONF_INTERFACE, None)
+        if (
+            not interface
+        ):  # legacy parameter name was read_serial, this block can be removed later
+            if config.get("read_serial", False):
+                interface = "serial"
+            else:
+                interface = "tcp"
+        serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
+        baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
+        _LOGGER.debug(f"Setup {DOMAIN}.{name}")
+        _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
+
         """Initialize the Modbus hub."""
         _LOGGER.debug(
             f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}"
@@ -283,7 +264,6 @@ class SolaXModbusHub:
         self.interface = interface
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
-        self._scan_interval = timedelta(seconds=scan_interval)
         self.groups = {} #group info, below
         self._empty_group = lambda: SimpleNamespace(
             interval = 0,
@@ -312,7 +292,6 @@ class SolaXModbusHub:
         self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
         self.wakeupButton = None
         self._invertertype = None
-        self._lastts = 0  # timestamp of last polling cycle
         self.localsUpdated = False
         self.localsLoaded = False
         self.config = config
@@ -371,11 +350,14 @@ class SolaXModbusHub:
     # end of save and load section
 
     def entity_group(self, sensor):
-        g = getattr(sensor.entity_description, "scan_interval", 0)
-        if g <= 0:
-            g = self._scan_interval
-        else:
-            g = timedelta(seconds=g)
+        #scan group
+        g = getattr(sensor.entity_description, "scan_group", None)
+        if not g: g = SCAN_GROUP_DEFAULT
+        #scan interval
+        g = self.config.get(g, None)
+        #when declared but not present in config, use default; this MUST exist
+        if not g: g = self.config[SCAN_GROUP_DEFAULT]
+
         return g
 
     @callback
@@ -389,7 +371,8 @@ class SolaXModbusHub:
             await self._check_connection()
             async def _refresh(_now: Optional[int] = None) -> None:
                 await self.async_refresh_modbus_data(grp, _now)
-            grp._unsub_interval_method = async_track_time_interval(self._hass, _refresh, interval)
+            grp._unsub_interval_method = async_track_time_interval(
+                self._hass, _refresh, timedelta(seconds=interval))
         grp._sensors.append(sensor)
 
     @callback

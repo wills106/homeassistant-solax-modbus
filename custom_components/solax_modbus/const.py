@@ -28,6 +28,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
+    CONF_SCAN_INTERVAL,
 )
 
 
@@ -63,7 +64,13 @@ SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
 SLEEPMODE_LAST   = 1 # when no communication at all
 SLEEPMODE_LASTAWAKE = 2 # when still responding but register must be ignored when not awake
-
+#keys for config
+CONF_SCAN_INTERVAL_MEDIUM = "scan_interval_medium"
+CONF_SCAN_INTERVAL_FAST   = "scan_interval_fast"
+#values for scan_group attribute
+SCAN_GROUP_DEFAULT = CONF_SCAN_INTERVAL             # default scan group, slow; should always work
+SCAN_GROUP_MEDIUM  = CONF_SCAN_INTERVAL_MEDIUM      # medium speed scanning (energy, temp, soc...)
+SCAN_GROUP_FAST    = CONF_SCAN_INTERVAL_FAST        # fast scanning (power,...)
 
 # ================================= Definitions for Sensor Declarations =================================================
 
@@ -132,7 +139,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int = None # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
     unit: int = None # e.g. REGISTER_U16
-    scan_interval: int = 0 # <=0 -> hub interval
+    scan_group: int = None # <=0 -> default group
     internal: bool = False # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False # set to True to start a new modbus read block operation - do not use frequently
     #prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
