@@ -2256,7 +2256,6 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         state_class = SensorStateClass.MEASUREMENT,
         # device_class = SensorDeviceClass.BATTERY,
-        state_class = SensorStateClass.MEASUREMENT,
         register = 0x608,
         allowedtypes = HYBRID,
     ),
