@@ -76,6 +76,8 @@ SolaX Power
 - X1 Air/Boost/Mini Gen3 & Gen4 (Limited set of entities available)
 
 </details>
+Solinteg - WIP
+
 SRNE - WIP
 
 Swatten -WIP
