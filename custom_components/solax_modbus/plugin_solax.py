@@ -185,6 +185,9 @@ def valuefunction_firmware_g4(initval, descr, datadict):
 def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
     return autorepeat_remaining(datadict, 'remotecontrol_trigger', time())
 
+def value_function_battery_power_charge(initval, descr, datadict):
+    return  datadict.get('battery_1_power_charge', 0) + datadict.get('battery_2_power_charge',0)
+
 # for testing prevent_update only
 #def value_function_test_prevent(initval, descr, datadict):
 #    _LOGGER.warning(f"succeeded test prevent_update - datadict: {datadict['dummy_timed_charge_start_h']}")
@@ -6088,6 +6091,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         value_function = value_function_remotecontrol_autorepeat_remaining,
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
         icon = "mdi:home-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Total Battery Power Charge",
+        key = "battery_power_charge",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_battery_power_charge,
+        allowedtypes = AC | HYBRID | GEN5,
+        icon = "mdi:battery-charging",
     ),
 #####
 #
