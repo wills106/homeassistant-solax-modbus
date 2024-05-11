@@ -423,9 +423,12 @@ MAX_EXPORT = [
 EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4', 10 ),     # assuming all Gen4s
     ('H34', 10),     # assuming all Gen4s
-    ('H4502T', 1),   # more specific entry comes last and wins
-    ('H3UE10', 10),  # bug report #339
-#    ('H1E', 10 ), # assuming all Gen4s
+    ('H3UE10', 10),  # Issue #339
+    ('H4372A', 1),   # Issue #857
+    ('H4502A', 1),   # Issue #857
+    ('H4502T', 1),   # Issue #418
+    ('H4602A', 1),   # Issue #882 
+#    ('H1E', 10 ), # more specific entry comes last and wins
 ]
 
 

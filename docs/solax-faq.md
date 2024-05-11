@@ -10,7 +10,9 @@ SolaX products (TODO - find out which, maybe only gen4?) provide a "firmware ver
 
 ## Unable to change values (read only)
 
-If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle.
+If you can read values, but unable to adjust select / number you need to change the select "Lock State" from "Locked" to "Unlocked". Might need performing again following a full Power Cycle.
+
+![Image of SolaX Lock State](images/solax-lock-state.png)
 
 ## How to connect PocketWiFi 3.0 to my Wi-Fi network?
 
