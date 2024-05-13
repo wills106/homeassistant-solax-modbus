@@ -81,6 +81,78 @@ async def async_read_serialnr(hub, address):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
     return res
 
+async def _read_firmware_arm(hub, address=0x83):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM: {res}")
+    return res
+
+async def _read_firmware_dsp(hub, address=0x7D):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware DSP failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware DSP: {res}")
+    return res
+
+async def _read_model_gen3(hub, address=0xE9):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=10)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_string(20).decode("ascii")
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} model: {res}")
+    return res
+
+async def _read_model_type_gen4(hub, address=0x105):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Type failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Type: {res}")
+    return res
+
+async def _read_model_style_gen4(hub, address=0x107):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Type failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Type: {res}")
+    return res
+
+async def _read_model_power(hub, address=0xBA):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Power failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Power: {res}")
+    return res
+
 # =================================================================================================
 
 @dataclass
@@ -7162,8 +7234,40 @@ class solax_plugin(plugin_base):
         if read_dcb: invertertype = invertertype | DCB
         if read_pm: invertertype = invertertype | PM
 
-        #if invertertype & MIC: self.SENSOR_TYPES = SENSOR_TYPES_MIC
-        #else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
+        if not seriesnumber.startswith('XRE'):
+            if invertertype & GEN2:
+                firmware_arm = await _read_firmware_arm(hub)
+                firmware_dsp = await _read_firmware_dsp(hub)
+                model_power = await _read_model_power(hub) /1000
+                self.inverter_hw_version = f"Gen2"
+                self.inverter_model = f"SKSU / SKTL {model_power}w"
+                self.inverter_sw_version = f"DSP v2.{firmware_dsp} ARM v2.{firmware_arm}"
+            elif invertertype & GEN3:
+                firmware_arm = await _read_firmware_arm(hub)
+                firmware_dsp = await _read_firmware_dsp(hub)
+                model = await _read_model_gen3(hub)
+                self.inverter_hw_version = f"Gen3"
+                self.inverter_model = model
+                self.inverter_sw_version = f"DSP v3.{firmware_dsp} ARM v3.{firmware_arm}"
+            elif invertertype & GEN4:
+                firmware_arm = await _read_firmware_arm(hub)
+                firmware_dsp = await _read_firmware_dsp(hub)
+                model_type = 0
+                model_style = 0
+                model_typ = await _read_model_type_gen4(hub)
+                if model_typ == 1:
+                    model_type = 'X1'
+                elif model_typ == 3:
+                    model_type = 'X3'
+                model_sty = await _read_model_style_gen4(hub)
+                if model_sty == 0:
+                    model_style = '-Hybrid-'
+                elif model_sty == 1:
+                    model_style = '-FIT-'
+                model_power = await _read_model_power(hub) /1000
+                self.inverter_hw_version = f"Gen4"
+                self.inverter_model = f"{model_type}{model_style}{model_power}"
+                self.inverter_sw_version = f"DSP v1.{firmware_dsp} ARM v1.{firmware_arm}"
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):

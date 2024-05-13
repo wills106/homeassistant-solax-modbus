@@ -75,10 +75,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
     device_info = {
+        "hw_version": getattr(hub.plugin,"inverter_hw_version",None),
         "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
         "manufacturer": hub.plugin.plugin_manufacturer,
         "model": getattr(hub.plugin,"inverter_model",None),
+        "name": hub.plugin.plugin_name,
+        "sw_version": getattr(hub.plugin,"inverter_sw_version",None),
         "serial_number": hub.seriesnumber,
     }
 
