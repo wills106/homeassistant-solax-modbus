@@ -1,34 +1,31 @@
 """The SolaX Modbus Integration."""
 import asyncio
-import logging
-import threading
-from datetime import datetime, timedelta
-from typing import Any,  Optional
-from types  import SimpleNamespace
-from contextlib import contextmanager
+from datetime import timedelta
 
 # import importlib.util, sys
 import importlib
-from time import time
 import json
+import logging
+from time import time
+from types import ModuleType, SimpleNamespace
+from typing import Any, Optional
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
-    CONF_SCAN_INTERVAL,
+    EVENT_HOMEASSISTANT_STARTED,
     Platform,
 )
 from homeassistant.core import HomeAssistant, callback
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
-from pymodbus.client import AsyncModbusTcpClient, AsyncModbusSerialClient
 
 #    UNIT_OR_SLAVE = 'slave'
 #    _LOGGER.warning("using pymodbus library 3.x")
@@ -47,45 +44,42 @@ from pymodbus.client import AsyncModbusTcpClient, AsyncModbusSerialClient
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
+from pymodbus.transaction import ModbusAsciiFramer, ModbusRtuFramer
 
 from .const import (
-    DEFAULT_NAME,
-    DEFAULT_SCAN_INTERVAL,
-    DOMAIN,
-    DEFAULT_TCP_TYPE,
-    CONF_TCP_TYPE,
-    CONF_MODBUS_ADDR,
-    CONF_INTERFACE,
-    CONF_SERIAL_PORT,
-    CONF_READ_EPS,
-    CONF_READ_DCB,
     CONF_BAUDRATE,
+    CONF_INTERFACE,
+    CONF_MODBUS_ADDR,
     CONF_PLUGIN,
-    DEFAULT_READ_EPS,
-    DEFAULT_READ_DCB,
-    DEFAULT_INTERFACE,
-    DEFAULT_SERIAL_PORT,
-    DEFAULT_MODBUS_ADDR,
-    DEFAULT_PORT,
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_SERIAL_PORT,
+    CONF_TCP_TYPE,
     DEFAULT_BAUDRATE,
+    DEFAULT_INTERFACE,
+    DEFAULT_MODBUS_ADDR,
+    DEFAULT_NAME,
     DEFAULT_PLUGIN,
-    # PLUGIN_PATH,
-    SLEEPMODE_LASTAWAKE,
-    SCAN_GROUP_DEFAULT,
-)
-from .const import (
-    REGISTER_S32,
-    REGISTER_U32,
-    REGISTER_U16,
+    DEFAULT_PORT,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SERIAL_PORT,
+    DEFAULT_TCP_TYPE,
+    DOMAIN,
     REGISTER_S16,
-    REGISTER_ULSB16MSB16,
+    REGISTER_S32,
     REGISTER_STR,
-    REGISTER_WORDS,
     REGISTER_U8H,
     REGISTER_U8L,
+    REGISTER_U16,
+    REGISTER_U32,
+    REGISTER_ULSB16MSB16,
+    REGISTER_WORDS,
+    SCAN_GROUP_DEFAULT,
+    # PLUGIN_PATH,
+    SLEEPMODE_LASTAWAKE,
 )
-
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
 
@@ -116,6 +110,14 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     return True
 
+def _load_plugin(plugin_name:str) -> ModuleType:
+    _LOGGER.info("trying to load plugin - plugin_name: %s",plugin_name)
+    plugin = importlib.import_module(
+        f".plugin_{plugin_name}", "custom_components.solax_modbus"
+    )
+    if not plugin:
+        _LOGGER.error("Could not import plugin with name: %s",plugin_name)
+    return plugin
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX mobus."""
@@ -139,12 +141,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # end of conversion
 
     # ================== dynamically load desired plugin =======================================================
-    _LOGGER.info(f"trying to load plugin - plugin_name: {plugin_name}")
-    plugin = importlib.import_module(
-        f".plugin_{plugin_name}", "custom_components.solax_modbus"
-    )
-    if not plugin:
-        _LOGGER.error(f"could not import plugin with name: {plugin_name}")
+
+    plugin = await hass.async_add_executor_job(_load_plugin, plugin_name)
+
     # ====================== end of dynamic load ==============================================================
 
     hub = SolaXModbusHub(
