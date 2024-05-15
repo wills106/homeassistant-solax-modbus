@@ -81,6 +81,18 @@ async def async_read_serialnr(hub, address):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
     return res
 
+async def _read_firmware_arm_major(hub, address=0x80):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM major failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM major: {res}")
+    return res
+
 async def _read_firmware_arm(hub, address=0x83):
     res = None
     try:
@@ -3925,7 +3937,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x8,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = AC | HYBRID,
+        allowedtypes = AC | HYBRID | GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Temperature",
+        key = "inverter_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x8,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        unit = REGISTER_S16,
+        allowedtypes = AC | HYBRID | GEN5,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7248,6 +7273,26 @@ class solax_plugin(plugin_base):
                 self.inverter_hw_version = f"Gen4"
                 self.inverter_model = f"{model_type}{model_style}{model_power}"
                 self.inverter_sw_version = f"DSP v1.{firmware_dsp} ARM v1.{firmware_arm}"
+            elif invertertype & GEN5:
+                firmware_arm_major = await _read_firmware_arm_major(hub)
+                firmware_arm = await _read_firmware_arm(hub)
+                firmware_dsp = await _read_firmware_dsp(hub)
+                model_type = 0
+                model_style = 0
+                model_typ = await _read_model_type_gen4(hub)
+                if model_typ == 1:
+                    model_type = 'X1'
+                elif model_typ == 3:
+                    model_type = 'X3'
+                model_sty = await _read_model_style_gen4(hub)
+                if model_sty == 0:
+                    model_style = '-Hybrid-'
+                elif model_sty == 1:
+                    model_style = '-FIT-'
+                model_power = await _read_model_power(hub) /1000
+                self.inverter_hw_version = f"Gen5"
+                self.inverter_model = f"{model_type}{model_style}{model_power}"
+                self.inverter_sw_version = f"DSP {firmware_dsp} ARM v{firmware_arm_major}.{firmware_arm}"
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
