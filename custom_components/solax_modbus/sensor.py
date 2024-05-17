@@ -171,7 +171,7 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         g = groups.setdefault(hub.entity_group(sensor), newgrp())
         holdingRegs  = g.holdingRegs
         inputRegs    = g.inputRegs
-        
+
         if newdescr.register_type == REG_HOLDING:
             if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
                 if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
