@@ -3,6 +3,7 @@ from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
 import logging
 from typing import Optional, Dict, Any, List
+from types  import SimpleNamespace
 from dataclasses import dataclass, replace
 from copy import copy
 import homeassistant.util.dt as dt_util
@@ -75,20 +76,25 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
     device_info = {
+        "hw_version": getattr(hub.plugin,"inverter_hw_version",None),
         "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
         "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
+        "model": getattr(hub.plugin,"inverter_model",None),
+        "name": hub.plugin.plugin_name,
+        "sw_version": getattr(hub.plugin,"inverter_sw_version",None),
         "serial_number": hub.seriesnumber,
     }
 
     entities = []
-    holdingRegs  = {}
-    inputRegs    = {}
+    groups = {}
+    newgrp = lambda: SimpleNamespace(
+        holdingRegs  = {},
+        inputRegs    = {}
+        )
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
-    entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, plugin.SENSOR_TYPES)
+    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, plugin.SENSOR_TYPES)
 
     if plugin.BATTERY_SENSOR_TYPES is not None:
         device_info_battery = {
@@ -99,28 +105,34 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "serial_number": hub.seriesnumber,
         }
 
-        entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
+        entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
 
     async_add_entities(entities)
-    # sort the registers for this type of inverter
-    holdingRegs = dict(sorted(holdingRegs.items()))
-    inputRegs   = dict(sorted(inputRegs.items()))
-    # check for consistency
-    #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-    #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-    # split in blocks and store results
-    hub.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-    hub.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-    hub.computedSensors = computedRegs
+    _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
+    #now the groups are available
+    for k, v in groups.items():
+        _LOGGER.info(f"{hub_name} group: {k}")
+        # sort the registers for this type of inverter
+        holdingRegs = dict(sorted(v.holdingRegs.items()))
+        inputRegs   = dict(sorted(v.inputRegs.items()))
+        # check for consistency
+        #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
+        #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
+        # split in blocks and store results
+        hub_group = hub.groups[k]
+        hub_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+        hub_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+        hub.computedSensors = computedRegs
 
-    for i in hub.holdingBlocks: _LOGGER.debug(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-    for i in hub.inputBlocks: _LOGGER.debug(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-    _LOGGER.debug(f"holdingBlocks: {hub.holdingBlocks}")
-    _LOGGER.debug(f"inputBlocks: {hub.inputBlocks}")
-    _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
+        for i in hub_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+        for i in hub_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+        _LOGGER.debug(f"holdingBlocks: {hub_group.holdingBlocks}")
+        _LOGGER.debug(f"inputBlocks: {hub_group.inputBlocks}")
+
+    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
     return True
 
-def entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_types):  # noqa: D103
+def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, sensor_types):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
@@ -130,11 +142,11 @@ def entityToList(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, 
                     newdescr.name = newdescr.name.replace("{}", str(serie_value+1))
                     newdescr.key = newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
-                    entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, newdescr)
+                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr)
             else:
-                entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, sensor_description)
+                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, sensor_description)
 
-def entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computedRegs, device_info, newdescr):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -145,7 +157,9 @@ def entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computed
         newdescr,
     )
     hub.sensorEntities[newdescr.key] = sensor
-    entities.append(sensor)
+    #internal sensors are only used for polling values for selects, etc
+    if not getattr(newdescr,"internal",None):
+        entities.append(sensor)
     if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
@@ -153,6 +167,11 @@ def entityToListSingle(hub, hub_name, entities, holdingRegs, inputRegs, computed
             computedRegs[newdescr.key] = newdescr
         else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
     else:
+        #target group
+        g = groups.setdefault(hub.entity_group(sensor), newgrp())
+        holdingRegs  = g.holdingRegs
+        inputRegs    = g.inputRegs
+        
         if newdescr.register_type == REG_HOLDING:
             if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
                 if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
@@ -188,13 +207,13 @@ class SolaXModbusSensor(SensorEntity):
 
     async def async_added_to_hass(self):
         """Register callbacks."""
-        await self._hub.async_add_solax_modbus_sensor(self._modbus_data_updated)
+        await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
-        await self._hub.async_remove_solax_modbus_sensor(self._modbus_data_updated)
+        await self._hub.async_remove_solax_modbus_sensor(self)
 
     @callback
-    def _modbus_data_updated(self):
+    def modbus_data_updated(self):
         self.async_write_ha_state()
 
     @callback
@@ -219,5 +238,3 @@ class SolaXModbusSensor(SensorEntity):
             try:    val = self._hub.data[self.entity_description.key]*self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
             except: val = self._hub.data[self.entity_description.key] # not a number
             return val
-
-

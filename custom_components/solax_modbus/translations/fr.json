@@ -11,7 +11,9 @@
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {
@@ -51,7 +53,9 @@
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {

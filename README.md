@@ -76,6 +76,8 @@ SolaX Power
 - X1 Air/Boost/Mini Gen3 & Gen4 (Limited set of entities available)
 
 </details>
+Solinteg - WIP
+
 SRNE - WIP
 
 Swatten -WIP
@@ -91,7 +93,7 @@ Swatten -WIP
 
 ## Documentation
 
-For further Documentation please refer to the [Read the Docs](http://homeassistant-solax-modbus.readthedocs.io/)
+For further Documentation please refer to the [Read the Docs](https://homeassistant-solax-modbus.readthedocs.io/)
 
 ## FAQ
 

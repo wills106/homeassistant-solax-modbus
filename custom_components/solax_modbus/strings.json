@@ -11,7 +11,9 @@
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {
@@ -52,7 +54,9 @@
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {

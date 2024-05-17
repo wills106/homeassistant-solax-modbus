@@ -248,6 +248,18 @@ SELECT_TYPES = [
     #
     ###
     GrowattModbusSelectEntityDescription(
+        name = "Select baud rate",
+        key = "select_baud_rate",
+        register = 22,
+        option_dict = {
+                0: "9600bps",
+                1: "38400bps", },
+        allowedtypes = GEN | GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
         name = "Limit Grid Export",
         key = "limit_grid_export",
         register = 122,
@@ -260,7 +272,6 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
-
     ###
     #  Battery First (4-6)
     ###
@@ -764,7 +775,7 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
@@ -945,6 +956,16 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:translate-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Select baud rate",
+        key = "select_baud_rate",
+        register = 22,
+        scale = { 0: "9600bps",
+                  1: "38400bps", },
+        allowedtypes = GEN | GEN2 | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Serial Number",
@@ -1562,7 +1583,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3049,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
@@ -2635,7 +2656,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   4: "Update Mode",
                   5: "PV Bat Online",
                   6: "Bat Online",
-                  8: "Normal Mode", },
+                  8: "Normal Mode",
+                  9: "Bypass" },
         register_type = REG_INPUT,
         allowedtypes = GEN | GEN2,
         icon = "mdi:run",
@@ -4866,15 +4888,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 @dataclass
 class growatt_plugin(plugin_base):
 
-    """
-    def isAwake(self, datadict):
-        return (datadict.get('run_mode', None) == 'Normal Mode')
-
-    def wakeupButton(self):
-        return 'battery_awaken'
-    """
-
-
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber                       = await async_read_serialnr(hub, 9)
@@ -4926,7 +4939,6 @@ class growatt_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
-
 
 plugin_instance = growatt_plugin(
     plugin_name = 'Growatt',

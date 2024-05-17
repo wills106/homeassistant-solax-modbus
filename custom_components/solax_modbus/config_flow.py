@@ -44,6 +44,8 @@ from .const import (
     DEFAULT_READ_PM,
     DEFAULT_PLUGIN,
     PLUGIN_PATH,
+    CONF_SCAN_INTERVAL_MEDIUM,
+    CONF_SCAN_INTERVAL_FAST
     # PLUGIN_PATH_OLDSTYLE,
 )
 
@@ -96,7 +98,9 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(selector.SelectSelectorConfig(options=INTERFACES), ),
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(selector.SelectSelectorConfig(options=PLUGINS), ),
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
@@ -106,7 +110,9 @@ OPTION_SCHEMA = vol.Schema( {
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(selector.SelectSelectorConfig(options=INTERFACES), ),
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(selector.SelectSelectorConfig(options=PLUGINS), ),
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,

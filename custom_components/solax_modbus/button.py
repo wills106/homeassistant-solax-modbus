@@ -88,6 +88,7 @@ class SolaXModbusButton(ButtonEntity):
             if self.button_info.value_function:
                 res = self.button_info.value_function(0, self.button_info, self._hub.data )
                 if res:
+                    _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
                     await self._hub.async_write_registers_multi(
                         unit=self._modbus_addr, address=self._register, payload=res
                     )
