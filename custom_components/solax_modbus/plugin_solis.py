@@ -748,7 +748,20 @@ SELECT_TYPES = [
                 0: "Off",
                 16: "On",
             },
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+        icon = "mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        option_dict =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        allowedtypes = HYBRID | X3,
         icon = "mdi:dip-switch",
     ),
     SolisModbusSelectEntityDescription(
@@ -2067,9 +2080,23 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 43073,
         scale = {
                 0: "Off",
-                16: "On", },
+                16: "On",
+            },
         entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        scale =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
         name = "Backflow Power",
@@ -2414,6 +2441,7 @@ class solis_plugin(plugin_base):
         elif seriesnumber.startswith('114F'):  invertertype = HYBRID | X1 # Hybrid Gen5 6K - 48V
         elif seriesnumber.startswith('134F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
         elif seriesnumber.startswith('140C'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - HV
+        elif seriesnumber.startswith('143'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
         elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith('160F3'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
         elif seriesnumber.startswith('1033'):  invertertype = HYBRID | X3 # Hybrid Gen6  10kW - HV

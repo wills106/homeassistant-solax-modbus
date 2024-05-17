@@ -6,6 +6,10 @@ Have you double checked that the termination resistor is installed on both ends?
 
 The by-far best and easiest ModBus connection is provided by the replacing the LSW-3 WiFi Stick Logger with the LSE-3 Ethernet Stick Logger. The later provides Modbus TCP out of the box via the port 8899.
 
+## RS485 communication stops after a few hours
+
+There was an issue in recent firmware versions (introduced at around V110000) that cause the firmware communication to fail after a few hours. Install a newer firmware of at least version V110051.
+
 ## I am using the LSW-3 Wifi Stick Logger, but ModBus TCP does not work
 
 Even though also on the LSW-3 Wifi Stick Logger shows that port 8899 is open, Modbus TCP connection attempts time out. Replace our stick logger with the LSE-3 LAN Stick Logger.
