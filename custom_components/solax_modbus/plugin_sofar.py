@@ -3566,6 +3566,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
 ]
 
+
 BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     # SofarModbusSensorEntityDescription(
     #     name = "Battery total voltage",
@@ -3593,6 +3594,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key = "battery_bms_version",
         native_unit_of_measurement = None,
         state_class = SensorStateClass.MEASUREMENT,
+        entity_category = EntityCategory.DIAGNOSTIC,
         register = 0x900B,
         allowedtypes = BAT_BTS,
     ),
