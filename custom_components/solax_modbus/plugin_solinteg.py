@@ -20,7 +20,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -51,7 +51,7 @@ MPPT4          = 0x40000
 MPPT_MIN2      = MPPT2 | MPPT4
 ALL_MPPT = MPPT2 | MPPT4
 
-#ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3 
+#ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 ALLDEFAULT = 0 #HYBRID | AC | ALL_X_GROUP
 
 SCAN_GROUP_MPPT = SCAN_GROUP_MEDIUM
@@ -112,7 +112,7 @@ def _model_str(val):
             "MHT-15K-40",
             "MHT-20K-40",
             ],
-            
+
         31: [
             "MHS-3K-30D",
             "MHS-3.6K-30D",
@@ -227,28 +227,28 @@ class SolintegModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 BUTTON_TYPES = [
     #on off commands, reg 25008
-    SolintegModbusButtonEntityDescription( 
+    SolintegModbusButtonEntityDescription(
         name = "Stop Soft(Backup on)",
         key = "control_cmd_stop",
         register = 25008,
         icon = "mdi:stop",
         command = 0x100,
     ),
-    SolintegModbusButtonEntityDescription( 
+    SolintegModbusButtonEntityDescription(
         name = "Stop Full",
         key = "control_cmd_stop_full",
         register = 25008,
         icon = "mdi:alert-box",
         command = 0x404,
     ),
-    SolintegModbusButtonEntityDescription( 
+    SolintegModbusButtonEntityDescription(
         name = "Start",
         key = "control_cmd_start",
         register = 25008,
         icon = "mdi:play",
         command = 0x101,
     ),
-    SolintegModbusButtonEntityDescription( 
+    SolintegModbusButtonEntityDescription(
         name = "Restart",
         key = "control_cmd_restart",
         register = 25009,
@@ -354,7 +354,7 @@ NUMBER_TYPES = [
 ]
 
 # ================================= Select Declarations ============================================================
-          
+
 SELECT_TYPES = [
     SolintegModbusSelectEntityDescription(
         name = "Working Mode",
@@ -433,7 +433,7 @@ SELECT_TYPES = [
 
 # ================================= Sensor Declarations ============================================================
 
-SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [ 
+SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Firmware",
         key = "firmware",
@@ -453,7 +453,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         register = 10105,
         scan_group = SCAN_GROUP_MEDIUM,
-        scale = {  
+        scale = {
             0: "Waiting",
             1: "Self checking",
             2: "On Grid generating",
@@ -804,7 +804,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Battery Firmware",
         key = "battery_firmware",
-        register = 32003, 
+        register = 32003,
         #unit = REGISTER_U16,
         scale = lambda v, *a: _bytes_str(v.to_bytes(2)),
         allowedtypes = HYBRID,
@@ -935,7 +935,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale = 0.1,
         allowedtypes = HYBRID,
     ),
-    
+
     SolintegModbusSensorEntityDescription(
         name = "Backup Power",
         key = "backup_power",
@@ -1221,28 +1221,31 @@ class solinteg_plugin(plugin_base):
         else : #bh == 31, other 30...
             mppt = 2
             invertertype = invertertype | MPPT2
-        #prepare mppt list
-        mppt_mask = 2**mppt - 1 #mask
-        hub.data["mppt_count"] = mppt
-        hub.data["mppt_mask"] = mppt_mask
-        hub.data["mppt_list"] = []
-        sel_dd = {0: "off", mppt_mask: "on"}
-        for i in range(mppt):
-            mx = f"mppt{i+1}"
-            hub.data["mppt_list"].append(mx)
-            sel_dd[2**i] = mx
-        #set the options
-        for sel in self.SELECT_TYPES:
-            if sel.key == "shadow_scan":
-                sel.option_dict = sel_dd
-                break
 
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS 
-        if read_dcb: invertertype = invertertype | DCB
+        if invertertype > 0:
+            #prepare mppt list
+            mppt_mask = 2**mppt - 1 #mask
+            hub.data["mppt_count"] = mppt
+            hub.data["mppt_mask"] = mppt_mask
+            hub.data["mppt_list"] = []
+            sel_dd = {0: "off", mppt_mask: "on"}
+            for i in range(mppt):
+                mx = f"mppt{i+1}"
+                hub.data["mppt_list"].append(mx)
+                sel_dd[2**i] = mx
+            #set the options
+            for sel in self.SELECT_TYPES:
+                if sel.key == "shadow_scan":
+                    sel.option_dict = sel_dd
+                    break
 
-        _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+
+            _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -1255,7 +1258,7 @@ class solinteg_plugin(plugin_base):
         mpptmatch= ((inverterspec & entitymask & ALL_MPPT)       != 0) or (entitymask & ALL_MPPT == 0)
         blacklisted = False
         if blacklist:
-            for start in blacklist: 
+            for start in blacklist:
                 if serialnumber.startswith(start) : return False
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch)
 
@@ -1266,7 +1269,7 @@ plugin_instance = solinteg_plugin(
     SENSOR_TYPES = SENSOR_TYPES,
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
-    SELECT_TYPES = SELECT_TYPES, 
+    SELECT_TYPES = SELECT_TYPES,
     block_size = 120,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
