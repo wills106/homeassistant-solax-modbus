@@ -480,7 +480,7 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4372A', 1),   # Issue #857
     ('H4502A', 1),   # Issue #857
     ('H4502T', 1),   # Issue #418
-    ('H4602A', 1),   # Issue #882
+    ('H4602A', 1),   # Issue #882 
 #    ('H1E', 10 ), # more specific entry comes last and wins
 ]
 
@@ -7000,7 +7000,7 @@ class solax_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
-
+        
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
             read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
@@ -7063,7 +7063,7 @@ class solax_plugin(plugin_base):
                     self.inverter_hw_version = f"Gen5"
                     self.inverter_model = f"{model_type}{model_style}{model_power}"
                     self.inverter_sw_version = f"DSP {firmware_dsp} ARM v{firmware_arm_major}.{firmware_arm}"
-
+        
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
