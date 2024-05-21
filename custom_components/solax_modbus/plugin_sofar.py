@@ -3665,6 +3665,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x9051,
         scale = 0.001,
+        rounding = 3,
         allowedtypes = BAT_BTS,
         value_series = 16
     ),
@@ -3675,6 +3676,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x9069,
         scale = 0.001,
+        rounding = 3,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
@@ -3684,6 +3686,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x906A,
         scale = 0.001,
+        rounding = 3,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
@@ -3765,11 +3768,41 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
 ]
 
+@dataclass
+class battery_config():
+    battery_sensor_type = BATTERY_SENSOR_TYPES
+    bapack_number_address = 0x900d
+
+    number_cels_in_parallel: int = None # number of battery pack cells in parallel
+    number_strings: int = None # number of strings of all battery packs
+
+    async def get_number_cels_in_parallel(self, hub):
+        if self.number_cels_in_parallel == None:
+            await self.get_batpack_number(hub)
+        return self.number_cels_in_parallel
+
+    async def get_number_strings(self, hub):
+        if self.number_strings == None:
+            await self.get_batpack_number(hub)
+        return self.number_strings
+
+    async def get_batpack_number(self, hub):
+        res = None
+        try:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                self.number_cels_in_parallel = decoder.decode_8bit_int()
+                self.number_strings = decoder.decode_8bit_int()
+        except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
+
+
+
 # ============================ plugin declaration =================================================
 
 @dataclass
 class sofar_plugin(plugin_base):
-    BATTERY_SENSOR_TYPES: list[SensorEntityDescription] = None
+    BATTERY_CONFIG: battery_config = None
 
     """
     def isAwake(self, datadict):
@@ -3845,7 +3878,7 @@ plugin_instance = sofar_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
-    BATTERY_SENSOR_TYPES = BATTERY_SENSOR_TYPES,
+    BATTERY_CONFIG = battery_config(),
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,

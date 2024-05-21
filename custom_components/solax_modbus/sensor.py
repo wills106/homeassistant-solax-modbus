@@ -12,6 +12,7 @@ from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
 from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.helpers.device_registry import DeviceInfo
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -96,16 +97,22 @@ async def async_setup_entry(hass, entry, async_add_entities):
     plugin = hub.plugin #getPlugin(hub_name)
     entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, plugin.SENSOR_TYPES)
 
-    if plugin.BATTERY_SENSOR_TYPES is not None:
-        device_info_battery = {
-            "identifiers": {(DOMAIN, hub_name + "_battery")},
-            "name": hub.plugin.plugin_name + " Battery",
-            "manufacturer": hub.plugin.plugin_manufacturer,
-            #"model": hub.sensor_description.inverter_model,
-            "serial_number": hub.seriesnumber,
-        }
+    if plugin.BATTERY_CONFIG is not None:
+        battery_config = plugin.BATTERY_CONFIG
+        number_cels_in_parallel = await battery_config.get_number_cels_in_parallel(hub)
+        number_strings = await battery_config.get_number_strings(hub)
+        _LOGGER.info(f"number_cels_in_parallel: {number_cels_in_parallel}, number_strings: {number_strings}")
 
-        entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, plugin.BATTERY_SENSOR_TYPES)
+        device_info_battery = DeviceInfo(
+            identifiers = {(DOMAIN, hub_name + "_battery")},
+            name = hub.plugin.plugin_name + " Battery",
+            manufacturer = hub.plugin.plugin_manufacturer,
+            #"model": hub.sensor_description.inverter_model,
+            serial_number = hub.seriesnumber,
+            via_device = (DOMAIN, hub_name),
+        )
+
+        entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, battery_config.battery_sensor_type)
 
     async_add_entities(entities)
     _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
