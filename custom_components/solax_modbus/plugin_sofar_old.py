@@ -251,7 +251,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x1B,
         unit = REGISTER_S16,
         entity_registry_enabled_default = False,
-        allowedtypes = PV | X3,
+        allowedtypes = PV | X1,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -263,7 +263,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register = 0x1C,
         unit = REGISTER_S16,
         entity_registry_enabled_default = False,
-        allowedtypes = PV | X3,
+        allowedtypes = PV | X1,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     # End of Single Phase
