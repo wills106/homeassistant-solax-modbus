@@ -297,11 +297,16 @@ class SolaXModbusHub:
         self.entry = entry
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
-    async def async_init(self, *args: Any) -> None:
-        await self._check_connection()
-        self._invertertype = await self.plugin.async_determineInverterType(
-            self, self.config
-        )
+    async def async_init(self, *args: Any) -> None:  # noqa: D102
+        while self._invertertype in (None, 0):
+            await self._check_connection()
+            self._invertertype = await self.plugin.async_determineInverterType(
+                self, self.config
+            )
+
+            if self._invertertype == 0:
+                _LOGGER.info("next inverter check in 10sec")
+                await asyncio.sleep(10)
 
         for component in PLATFORMS:
             self._hass.async_create_task(
