@@ -1094,12 +1094,15 @@ class sofar_old_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
-        if read_pm: invertertype = invertertype | PM
+
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+            if read_pm: invertertype = invertertype | PM
+
         return invertertype
 
 
