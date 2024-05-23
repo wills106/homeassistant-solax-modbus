@@ -2208,8 +2208,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 #
 ###
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 1",
-        key = "battery_voltage_1",
+        name = "Voltage 1",
+        key = "voltage_1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x604,
@@ -2219,8 +2219,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 1",
-        key = "battery_current_1",
+        name = "Current 1",
+        key = "current_1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x605,
@@ -2230,8 +2230,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 1",
-        key = "Battery_power_1",
+        name = "Power 1",
+        key = "power_1",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2242,8 +2242,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 1",
-        key = "battery_temperature_1",
+        name = "Temperature 1",
+        key = "temperature_1",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2253,8 +2253,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 1",
-        key = "battery_capacity_charge_1",
+        name = "Capacity 1",
+        key = "capacity_charge_1",
         native_unit_of_measurement = PERCENTAGE,
         state_class = SensorStateClass.MEASUREMENT,
         # device_class = SensorDeviceClass.BATTERY,
@@ -2262,8 +2262,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 1",
-        key = "battery_state_of_health_1",
+        name = "State of Health 1",
+        key = "state_of_health_1",
         register = 0x609,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
@@ -2271,15 +2271,15 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 1",
-        key = "battery_charge_cycle_1",
+        name = "Charge Cycle 1",
+        key = "charge_cycle_1",
         register = 0x60A,
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 2",
-        key = "battery_voltage_2",
+        name = "Voltage 2",
+        key = "voltage_2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x60B,
@@ -2290,8 +2290,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 2",
-        key = "battery_current_2",
+        name = "Current 2",
+        key = "current_2",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x60C,
@@ -2302,8 +2302,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 2",
-        key = "Battery_power_2",
+        name = "Power 2",
+        key = "power_2",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2315,8 +2315,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 2",
-        key = "battery_temperature_2",
+        name = "Temperature 2",
+        key = "temperature_2",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2327,8 +2327,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 2",
-        key = "battery_capacity_charge_2",
+        name = "Capacity 2",
+        key = "capacity_charge_2",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2337,8 +2337,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 2",
-        key = "battery_state_of_health_2",
+        name = "State of Health 2",
+        key = "state_of_health_2",
         register = 0x610,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2347,16 +2347,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 2",
-        key = "battery_charge_cycle_2",
+        name = "Charge Cycle 2",
+        key = "charge_cycle_2",
         register = 0x611,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 3",
-        key = "battery_voltage_3",
+        name = "Voltage 3",
+        key = "voltage_3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x612,
@@ -2367,8 +2367,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 3",
-        key = "battery_current_3",
+        name = "Current 3",
+        key = "current_3",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x613,
@@ -2379,8 +2379,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 3",
-        key = "Battery_power_3",
+        name = "Power 3",
+        key = "power_3",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2392,8 +2392,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 3",
-        key = "battery_temperature_3",
+        name = "Temperature 3",
+        key = "temperature_3",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2404,8 +2404,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 3",
-        key = "battery_capacity_charge_3",
+        name = "Capacity 3",
+        key = "capacity_charge_3",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2414,8 +2414,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 3",
-        key = "battery_state_of_health_3",
+        name = "State of Health 3",
+        key = "state_of_health_3",
         register = 0x617,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2424,16 +2424,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 3",
-        key = "battery_charge_cycle_3",
+        name = "Charge Cycle 3",
+        key = "charge_cycle_3",
         register = 0x618,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 4",
-        key = "battery_voltage_4",
+        name = "Voltage 4",
+        key = "voltage_4",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x619,
@@ -2444,8 +2444,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 4",
-        key = "battery_current_4",
+        name = "Current 4",
+        key = "current_4",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x61A,
@@ -2456,8 +2456,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 4",
-        key = "Battery_power_4",
+        name = "Power 4",
+        key = "power_4",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2469,8 +2469,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 4",
-        key = "battery_temperature_4",
+        name = "Temperature 4",
+        key = "temperature_4",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2481,8 +2481,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 4",
-        key = "battery_capacity_charge_4",
+        name = "Capacity 4",
+        key = "capacity_charge_4",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2491,8 +2491,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 4",
-        key = "battery_state_of_health_4",
+        name = "State of Health 4",
+        key = "state_of_health_4",
         register = 0x61E,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2501,16 +2501,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 4",
-        key = "battery_charge_cycle_4",
+        name = "Charge Cycle 4",
+        key = "charge_cycle_4",
         register = 0x61F,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 5",
-        key = "battery_voltage_5",
+        name = "Voltage 5",
+        key = "voltage_5",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x620,
@@ -2521,8 +2521,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 5",
-        key = "battery_current_5",
+        name = "Current 5",
+        key = "current_5",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x621,
@@ -2533,8 +2533,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 5",
-        key = "Battery_power_5",
+        name = "Power 5",
+        key = "power_5",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2546,8 +2546,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 5",
-        key = "battery_temperature_5",
+        name = "Temperature 5",
+        key = "temperature_5",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2558,8 +2558,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 5",
-        key = "battery_capacity_charge_5",
+        name = "Capacity 5",
+        key = "capacity_charge_5",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2568,8 +2568,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 5",
-        key = "battery_state_of_health_5",
+        name = "State of Health 5",
+        key = "state_of_health_5",
         register = 0x625,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2578,16 +2578,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 5",
-        key = "battery_charge_cycle_5",
+        name = "Charge Cycle 5",
+        key = "charge_cycle_5",
         register = 0x626,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 6",
-        key = "battery_voltage_6",
+        name = "Voltage 6",
+        key = "voltage_6",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x627,
@@ -2598,8 +2598,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 6",
-        key = "battery_current_6",
+        name = "Current 6",
+        key = "current_6",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x628,
@@ -2610,8 +2610,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 6",
-        key = "Battery_power_6",
+        name = "Power 6",
+        key = "power_6",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2623,8 +2623,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 6",
-        key = "battery_temperature_6",
+        name = "Temperature 6",
+        key = "temperature_6",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2635,8 +2635,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 6",
-        key = "battery_capacity_charge_6",
+        name = "Capacity 6",
+        key = "capacity_charge_6",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2645,8 +2645,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 6",
-        key = "battery_state_of_health_6",
+        name = "State of Health 6",
+        key = "state_of_health_6",
         register = 0x62C,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2655,16 +2655,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 6",
-        key = "battery_charge_cycle_6",
+        name = "Charge Cycle 6",
+        key = "charge_cycle_6",
         register = 0x62D,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 7",
-        key = "battery_voltage_7",
+        name = "Voltage 7",
+        key = "voltage_7",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x62E,
@@ -2675,8 +2675,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 7",
-        key = "battery_current_7",
+        name = "Current 7",
+        key = "current_7",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x62F,
@@ -2687,8 +2687,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 7",
-        key = "Battery_power_7",
+        name = "Power 7",
+        key = "power_7",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2700,8 +2700,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 7",
-        key = "battery_temperature_7",
+        name = "Temperature 7",
+        key = "temperature_7",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2712,8 +2712,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 7",
-        key = "battery_capacity_charge_7",
+        name = "Capacity 7",
+        key = "capacity_charge_7",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2722,8 +2722,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 7",
-        key = "battery_state_of_health_7",
+        name = "State of Health 7",
+        key = "state_of_health_7",
         register = 0x633,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2732,16 +2732,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 7",
-        key = "battery_charge_cycle_7",
+        name = "Charge Cycle 7",
+        key = "charge_cycle_7",
         register = 0x634,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Voltage 8",
-        key = "battery_voltage_8",
+        name = "Voltage 8",
+        key = "voltage_8",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x635,
@@ -2752,8 +2752,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Current 8",
-        key = "battery_current_8",
+        name = "Current 8",
+        key = "current_8",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x636,
@@ -2764,8 +2764,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power 8",
-        key = "Battery_power_8",
+        name = "Power 8",
+        key = "power_8",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2777,8 +2777,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Temperature 8",
-        key = "battery_temperature_8",
+        name = "Temperature 8",
+        key = "temperature_8",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2789,8 +2789,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity 8",
-        key = "battery_capacity_charge_8",
+        name = "Capacity 8",
+        key = "capacity_charge_8",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2799,8 +2799,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | GEN,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health 8",
-        key = "battery_state_of_health_8",
+        name = "State of Health 8",
+        key = "state_of_health_8",
         register = 0x63A,
         native_unit_of_measurement = PERCENTAGE,
         entity_registry_enabled_default =  False,
@@ -2809,16 +2809,16 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Charge Cycle 8",
-        key = "battery_charge_cycle_8",
+        name = "Charge Cycle 8",
+        key = "charge_cycle_8",
         register = 0x63B,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Power Total",
-        key = "battery_power_total",
+        name = "Power Total",
+        key = "power_total",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2830,8 +2830,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Capacity Total",
-        key = "battery_capacity_charge_total",
+        name = "Capacity Total",
+        key = "capacity_charge_total",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2839,8 +2839,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery State of Health Total",
-        key = "battery_state_of_health_total",
+        name = "State of Health Total",
+        key = "state_of_health_total",
         register = 0x669,
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID,
@@ -2954,8 +2954,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:home-export-outline",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Input Energy Today",
-        key = "battery_input_energy_today",
+        name = "Input Energy Today",
+        key = "input_energy_today",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2967,8 +2967,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-arrow-up",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Input Energy Total",
-        key = "battery_input_energy_total",
+        name = "Input Energy Total",
+        key = "input_energy_total",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2980,8 +2980,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-arrow-up",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Output Energy Today",
-        key = "battery_output_energy_today",
+        name = "Output Energy Today",
+        key = "output_energy_today",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2993,8 +2993,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         icon = "mdi:battery-arrow-down",
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Output Energy Total",
-        key = "battery_Output_energy_total",
+        name = "Output Energy Total",
+        key = "Output_energy_total",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3040,8 +3040,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | X3 | EPS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Active Control",
-        key = "battery_active_control",
+        name = "Active Control",
+        key = "active_control",
         register = 0x102B,
         scale = { 0: "Disabled",
                   1: "Enabled", },
@@ -3569,8 +3569,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     # SofarModbusSensorEntityDescription(
-    #     name = "Battery total voltage",
-    #     key = "battery_total_voltage",
+    #     name = "total voltage",
+    #     key = "total_voltage",
     #     native_unit_of_measurement = UnitOfElectricPotential.VOLT,
     #     device_class = SensorDeviceClass.VOLTAGE,
     #     register = 0x900F,
@@ -3579,8 +3579,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     #     allowedtypes = BAT_BTS,
     # ),
     # SofarModbusSensorEntityDescription(
-    #     name = "Battery total current",
-    #     key = "battery_total_current",
+    #     name = "total current",
+    #     key = "total_current",
     #     native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
     #     device_class = SensorDeviceClass.CURRENT,
     #     register = 0x9010,
@@ -3590,8 +3590,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     #     allowedtypes = BAT_BTS,
     # ),
     SofarModbusSensorEntityDescription(
-        name = "Battery BMS Version",
-        key = "battery_bms_version",
+        name = "BMS Version",
+        key = "bms_version",
         native_unit_of_measurement = None,
         state_class = SensorStateClass.MEASUREMENT,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -3599,16 +3599,16 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Nr",
-        key = "battery_pack_nr",
+        name = "Pack Nr",
+        key = "pack_nr",
         native_unit_of_measurement = None,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x900D,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Total Voltage",
-        key = "battery_total_voltage",
+        name = "Total Voltage",
+        key = "total_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x900F,
@@ -3616,8 +3616,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Total Current",
-        key = "battery_total_current",
+        name = "Total Current",
+        key = "total_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x9010,
@@ -3626,31 +3626,31 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery SOC",
-        key = "battery_soc",
+        name = "SOC",
+        key = "soc",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         register = 0x9012,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery SOH",
-        key = "battery_soh",
+        name = "SOH",
+        key = "soh",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         register = 0x9013,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack ID",
-        key = "battery_pack_id",
+        name = "Pack ID",
+        key = "pack_id",
         newblock = True,
         register = 0x9044,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Serial Number",
-        key = "battery_pack_serial_number",
+        name = "Pack Serial Number",
+        key = "pack_serial_number",
         register = 0x9048,
         newblock = True,
         unit = REGISTER_STR,
@@ -3659,8 +3659,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery cell {} voltage",
-        key = "battery_cell_{}_voltage",
+        name = "cell {} voltage",
+        key = "cell_{}_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x9051,
@@ -3670,8 +3670,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         value_series = 16
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery cell min voltage",
-        key = "battery_cell_min_voltage",
+        name = "cell min voltage",
+        key = "cell_min_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x9069,
@@ -3680,8 +3680,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery cell max voltage",
-        key = "battery_cell_max_voltage",
+        name = "cell max voltage",
+        key = "cell_max_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x906A,
@@ -3690,8 +3690,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Temperature {}",
-        key = "battery_pack_temperature_{}",
+        name = "Pack Temperature {}",
+        key = "pack_temperature_{}",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -3702,8 +3702,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         value_series = 4
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Temperature MOS",
-        key = "battery_pack_temperature_mos",
+        name = "Pack Temperature MOS",
+        key = "pack_temperature_mos",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -3713,8 +3713,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Temperature Env",
-        key = "battery_pack_temperature_env",
+        name = "Pack Temperature Env",
+        key = "pack_temperature_env",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
@@ -3724,8 +3724,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Current",
-        key = "battery_pack_current",
+        name = "Pack Current",
+        key = "pack_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x9071,
@@ -3734,8 +3734,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack remaining capacity",
-        key = "battery_pack_remaining_capacity",
+        name = "Pack remaining capacity",
+        key = "pack_remaining_capacity",
         native_unit_of_measurement = "Ah",
         device_class = SensorDeviceClass.ENERGY_STORAGE,
         register = 0x9072,
@@ -3743,8 +3743,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Full charge capacity",
-        key = "battery_pack_full_charge_capacity",
+        name = "Pack Full charge capacity",
+        key = "pack_full_charge_capacity",
         native_unit_of_measurement = "Ah",
         device_class = SensorDeviceClass.ENERGY_STORAGE,
         register = 0x9073,
@@ -3752,15 +3752,15 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack Cycles",
-        key = "battery_pack_cycles",
+        name = "Pack Cycles",
+        key = "pack_cycles",
         register = 0x9074,
         entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Battery Pack SOC",
-        key = "battery_pack_soc",
+        name = "Pack SOC",
+        key = "pack_soc",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         register = 0x907A,
@@ -3771,22 +3771,24 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 @dataclass
 class battery_config():
     battery_sensor_type = BATTERY_SENSOR_TYPES
+    battery_sensor_name_prefix = "Battery "
+    battery_sensor_key_prefix = "battery_{bat-nr}_{pack-nr}_"
     bapack_number_address = 0x900d
 
     number_cels_in_parallel: int = None # number of battery pack cells in parallel
     number_strings: int = None # number of strings of all battery packs
 
-    async def get_number_cels_in_parallel(self, hub):
+    async def get_batpack_quantity(self, hub):
         if self.number_cels_in_parallel == None:
-            await self.get_batpack_number(hub)
+            await self.get_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
-    async def get_number_strings(self, hub):
+    async def get_bat_quantity(self, hub):
         if self.number_strings == None:
-            await self.get_batpack_number(hub)
+            await self.get_bat_quantitys(hub)
         return self.number_strings
 
-    async def get_batpack_number(self, hub):
+    async def get_bat_quantitys(self, hub):
         res = None
         try:
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)

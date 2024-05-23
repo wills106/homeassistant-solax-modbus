@@ -16,19 +16,13 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         hub_name = entry.options[CONF_NAME] # new style
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR) # new style
     hub = hass.data[DOMAIN][hub_name]["hub"]
-    device_info = {
-        "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
-        "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
-        "serial_number": hub.seriesnumber,
-    }
+
     plugin = hub.plugin #getPlugin(hub_name)
     entities = []
     for select_info in plugin.SELECT_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber , select_info.blacklist):
             select_info.reverse_option_dict = {v: k for k, v in select_info.option_dict.items()}
-            select = SolaXModbusSelect(hub_name, hub, modbus_addr, device_info, select_info)
+            select = SolaXModbusSelect(hub_name, hub, modbus_addr, hub.device_info, select_info)
             if select_info.write_method==WRITE_DATA_LOCAL:
                 if (select_info.initvalue != None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info

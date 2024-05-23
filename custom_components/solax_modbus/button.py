@@ -19,18 +19,11 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
-    device_info = {
-        "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
-        "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
-        "serial_number": hub.seriesnumber,
-    }
     plugin = hub.plugin
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
-            button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
+            button = SolaXModbusButton( hub_name, hub, modbus_addr, hub.device_info, button_info )
             entities.append(button)
             if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
             if button_info.value_function: hub.computedButtons[button_info.key] = button_info

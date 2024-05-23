@@ -19,13 +19,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         hub_name = entry.options[CONF_NAME]
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
-    device_info = {
-        "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
-        "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
-        "serial_number": hub.seriesnumber,
-    }
+
     plugin = hub.plugin #getPlugin(hub_name)
     entities = []
     for number_info in plugin.NUMBER_TYPES:
@@ -34,7 +28,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             for (prefix, value,) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix): newdescr = replace(number_info, read_scale = value)
         if plugin.matchInverterWithMask(hub._invertertype,newdescr.allowedtypes, hub.seriesnumber ,newdescr.blacklist):
-            number = SolaXModbusNumber( hub_name, hub, modbus_addr, device_info, newdescr)
+            number = SolaXModbusNumber( hub_name, hub, modbus_addr, hub.device_info, newdescr)
             if newdescr.write_method==WRITE_DATA_LOCAL:  hub.writeLocals[newdescr.key] = newdescr
             hub.numberEntities[newdescr.key] = number
             entities.append(number)

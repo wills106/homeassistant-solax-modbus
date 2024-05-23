@@ -75,17 +75,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
     else: hub_name = entry.options[CONF_NAME] # new format
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
-
-    device_info = {
-        "hw_version": getattr(hub.plugin,"inverter_hw_version",None),
-        "identifiers": {(DOMAIN, hub_name)},
-        "manufacturer": hub.plugin.plugin_manufacturer,
-        "model": getattr(hub.plugin,"inverter_model",None),
-        "name": hub.plugin.plugin_name,
-        "sw_version": getattr(hub.plugin,"inverter_sw_version",None),
-        "serial_number": hub.seriesnumber,
-    }
-
     entities = []
     groups = {}
     newgrp = lambda: SimpleNamespace(
@@ -95,65 +84,74 @@ async def async_setup_entry(hass, entry, async_add_entities):
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
-    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, plugin.SENSOR_TYPES)
+    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info, plugin.SENSOR_TYPES, "", "")
 
     if plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
-        number_cels_in_parallel = await battery_config.get_number_cels_in_parallel(hub)
-        number_strings = await battery_config.get_number_strings(hub)
-        _LOGGER.info(f"number_cels_in_parallel: {number_cels_in_parallel}, number_strings: {number_strings}")
+        batpack_quantity = await battery_config.get_batpack_quantity(hub)
+        bat_quantity = await battery_config.get_bat_quantity(hub)
+        _LOGGER.info(f"batpack_quantity: {batpack_quantity}, bat_quantity: {bat_quantity}")
 
-        device_info_battery = DeviceInfo(
-            identifiers = {(DOMAIN, hub_name + "_battery")},
-            name = hub.plugin.plugin_name + " Battery",
-            manufacturer = hub.plugin.plugin_manufacturer,
-            #"model": hub.sensor_description.inverter_model,
-            serial_number = hub.seriesnumber,
-            via_device = (DOMAIN, hub_name),
-        )
+        for batpack_nr in range(0, batpack_quantity, 1):
+            device_info_battery = DeviceInfo(
+                identifiers = {(DOMAIN, hub_name, f"battery_1_{batpack_nr+1}")},
+                name = hub.plugin.plugin_name + f" Battery 1/{batpack_nr+1}",
+                manufacturer = hub.plugin.plugin_manufacturer,
+                #"model": hub.sensor_description.inverter_model,
+                serial_number = hub.seriesnumber,
+                via_device = (DOMAIN, hub_name, "Inverter"),
+            )
 
-        entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, battery_config.battery_sensor_type)
+            name_prefix = battery_config.battery_sensor_name_prefix
+            key_prefix = battery_config.battery_sensor_key_prefix.replace("{bat-nr}", str(1)).replace("{pack-nr}", str(batpack_nr+1))
+
+            entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, battery_config.battery_sensor_type, name_prefix, key_prefix)
 
     async_add_entities(entities)
     _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
-    for k, v in groups.items():
-        _LOGGER.info(f"{hub_name} group: {k}")
-        # sort the registers for this type of inverter
-        holdingRegs = dict(sorted(v.holdingRegs.items()))
-        inputRegs   = dict(sorted(v.inputRegs.items()))
-        # check for consistency
-        #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-        #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-        # split in blocks and store results
-        hub_group = hub.groups[k]
-        hub_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-        hub_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-        hub.computedSensors = computedRegs
+    for interval, interval_group in groups.items():
+        _LOGGER.info(f"{hub_name} group: {interval}")
+        for device_name, device_group in interval_group.items():
+            # sort the registers for this type of inverter
+            holdingRegs = dict(sorted(device_group.holdingRegs.items()))
+            inputRegs   = dict(sorted(device_group.inputRegs.items()))
+            # check for consistency
+            #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
+            #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
+            # split in blocks and store results
+            hub_interval_group = hub.groups.setdefault(interval, {})
+            hub_device_group = hub_interval_group.setdefault(device_name, hub.empty_group())
+            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+            hub.computedSensors = computedRegs
 
-        for i in hub_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-        for i in hub_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-        _LOGGER.debug(f"holdingBlocks: {hub_group.holdingBlocks}")
-        _LOGGER.debug(f"inputBlocks: {hub_group.inputBlocks}")
+            for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+            for i in hub_device_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+            _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
+            _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
 
     _LOGGER.info(f"computedRegs: {hub.computedSensors}")
     return True
 
-def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, sensor_types):  # noqa: D103
+def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, sensor_types, name_prefix, key_prefix):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):
                     newdescr = copy(sensor_description)
-                    newdescr.name = newdescr.name.replace("{}", str(serie_value+1))
-                    newdescr.key = newdescr.key.replace("{}", str(serie_value+1))
+                    newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
+                    newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
                     entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr)
             else:
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, sensor_description)
+                newdescr = copy(sensor_description)
+                newdescr.name = name_prefix + newdescr.name
+                newdescr.key = key_prefix + newdescr.key
+                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr)
 
-def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -163,6 +161,7 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         device_info,
         newdescr,
     )
+
     hub.sensorEntities[newdescr.key] = sensor
     #internal sensors are only used for polling values for selects, etc
     if not getattr(newdescr,"internal",None):
@@ -175,9 +174,12 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
-        g = groups.setdefault(hub.entity_group(sensor), newgrp())
-        holdingRegs  = g.holdingRegs
-        inputRegs    = g.inputRegs
+        interval_group = groups.setdefault(hub.entity_group(sensor), {})
+        device_group_key = hub.device_group_key(device_info)
+        _LOGGER.info(f"batpack_nr: {device_group_key}")
+        device_group = interval_group.setdefault(device_group_key, newgrp())
+        holdingRegs  = device_group.holdingRegs
+        inputRegs    = device_group.inputRegs
 
         if newdescr.register_type == REG_HOLDING:
             if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?
@@ -210,6 +212,7 @@ class SolaXModbusSensor(SensorEntity):
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
+        self.entity_id = "sensor." + platform_name + "_" + description.key
         self.entity_description: BaseModbusSensorEntityDescription = description
 
     async def async_added_to_hass(self):

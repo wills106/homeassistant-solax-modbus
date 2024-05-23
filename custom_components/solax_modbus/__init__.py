@@ -23,6 +23,9 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.device_registry import DeviceInfo
+
+from .sensor import SolaXModbusSensor
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -264,7 +267,7 @@ class SolaXModbusHub:
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
         self.groups = {} #group info, below
-        self._empty_group = lambda: SimpleNamespace(
+        self.empty_group = lambda: SimpleNamespace(
             interval = 0,
             _unsub_interval_method = None,
             _sensors = [],
@@ -295,6 +298,8 @@ class SolaXModbusHub:
         self.localsLoaded = False
         self.config = config
         self.entry = entry
+        self.device_info = None
+
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
@@ -307,6 +312,16 @@ class SolaXModbusHub:
             if self._invertertype == 0:
                 _LOGGER.info("next inverter check in 10sec")
                 await asyncio.sleep(10)
+
+        self.device_info = DeviceInfo(
+            hw_version = getattr(self.plugin,"inverter_hw_version",None),
+            identifiers = {(DOMAIN, self._name, "Inverter")},
+            manufacturer = self.plugin.plugin_manufacturer,
+            model = getattr(self.plugin,"inverter_model",None),
+            name = self.plugin.plugin_name + " Inverter",
+            sw_version = getattr(self.plugin,"inverter_sw_version",None),
+            serial_number = self.seriesnumber,
+        )
 
         for component in PLATFORMS:
             self._hass.async_create_task(
@@ -364,12 +379,24 @@ class SolaXModbusHub:
 
         return g
 
+    def device_group_key(self, device_info: DeviceInfo):
+        key = ""
+        for identifier in device_info["identifiers"]:
+            if identifier[0] != DOMAIN:
+                continue
+            key = identifier[1] + "_" + identifier[2]
+
+        return key
+
+
     @callback
-    async def async_add_solax_modbus_sensor(self, sensor):
+    async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         interval = self.entity_group(sensor)
-        grp = self.groups.setdefault(interval, self._empty_group())
+        interval_group = self.groups.setdefault(interval, {})
+        device_key = self.device_group_key(sensor.device_info)
+        grp = interval_group.setdefault(device_key, self.empty_group())
         if not grp._sensors:
             grp.interval = interval
             await self._check_connection()
@@ -383,7 +410,7 @@ class SolaXModbusHub:
     async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
         interval = self.entity_group(sensor)
-        grp = self.groups.get(interval, self._empty_group())
+        grp = self.groups.get(interval, self.empty_group())
         grp._sensors.remove(sensor)
 
         if not grp._sensors:
