@@ -79,12 +79,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
     groups = {}
     newgrp = lambda: SimpleNamespace(
         holdingRegs  = {},
-        inputRegs    = {}
+        inputRegs    = {},
+        readPreparation = None,
         )
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
-    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info, plugin.SENSOR_TYPES, "", "")
+    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
+                 plugin.SENSOR_TYPES, "", "", None)
 
     if plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
@@ -105,7 +107,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
             name_prefix = battery_config.battery_sensor_name_prefix
             key_prefix = battery_config.battery_sensor_key_prefix.replace("{bat-nr}", str(1)).replace("{pack-nr}", str(batpack_nr+1))
 
-            entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery, battery_config.battery_sensor_type, name_prefix, key_prefix)
+            async def readPreparation(bat_nr=0, batpack_nr=batpack_nr):
+                return await battery_config.select_battery(hub, bat_nr, batpack_nr)
+
+            entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery,
+                         battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation)
 
     async_add_entities(entities)
     _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
@@ -120,8 +126,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
             #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
             #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
             # split in blocks and store results
-            hub_interval_group = hub.groups.setdefault(interval, {})
-            hub_device_group = hub_interval_group.setdefault(device_name, hub.empty_group())
+            hub_interval_group = hub.groups.setdefault(interval, hub.empty_interval_group())
+            hub_device_group = hub_interval_group.device_groups.setdefault(device_name, hub.empty_device_group())
+            hub_device_group.readPreparation = device_group.readPreparation
             hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
             hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
             hub.computedSensors = computedRegs
@@ -134,7 +141,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.info(f"computedRegs: {hub.computedSensors}")
     return True
 
-def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, sensor_types, name_prefix, key_prefix):  # noqa: D103
+def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo,
+                 sensor_types, name_prefix, key_prefix, readPreparation):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
@@ -144,14 +152,14 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
                     newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
-                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr)
+                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation)
             else:
                 newdescr = copy(sensor_description)
                 newdescr.name = name_prefix + newdescr.name
                 newdescr.key = key_prefix + newdescr.key
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr)
+                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation)
 
-def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -176,10 +184,10 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         #target group
         interval_group = groups.setdefault(hub.entity_group(sensor), {})
         device_group_key = hub.device_group_key(device_info)
-        _LOGGER.info(f"batpack_nr: {device_group_key}")
         device_group = interval_group.setdefault(device_group_key, newgrp())
         holdingRegs  = device_group.holdingRegs
         inputRegs    = device_group.inputRegs
+        device_group.readPreparation = readPreparation
 
         if newdescr.register_type == REG_HOLDING:
             if newdescr.register in holdingRegs: # duplicate or 2 bytes in one register ?

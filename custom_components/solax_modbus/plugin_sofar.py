@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
@@ -3774,21 +3775,22 @@ class battery_config():
     battery_sensor_name_prefix = "Battery "
     battery_sensor_key_prefix = "battery_{bat-nr}_{pack-nr}_"
     bapack_number_address = 0x900d
+    bms_Inquire_address = 0x9020
 
     number_cels_in_parallel: int = None # number of battery pack cells in parallel
     number_strings: int = None # number of strings of all battery packs
 
     async def get_batpack_quantity(self, hub):
         if self.number_cels_in_parallel == None:
-            await self.get_bat_quantitys(hub)
+            await self._determine_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
     async def get_bat_quantity(self, hub):
         if self.number_strings == None:
-            await self.get_bat_quantitys(hub)
+            await self._determine_bat_quantitys(hub)
         return self.number_strings
 
-    async def get_bat_quantitys(self, hub):
+    async def _determine_bat_quantitys(self, hub):
         res = None
         try:
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
@@ -3798,7 +3800,22 @@ class battery_config():
                 self.number_strings = decoder.decode_8bit_int()
         except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
 
-
+    async def select_battery(self, hub, bat_nr: int, bat_back_nr: int):
+        faulty_nr = 0
+        payload = faulty_nr << 12 | bat_back_nr << 8 | bat_nr
+        _LOGGER.info(f"select_battery: {hex(payload)}")
+        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_Inquire_address, payload=payload)
+        for retry in range(0,3):
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_Inquire_address, count=1)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                ok = decoder.decode_16bit_uint() == payload
+                if ok:
+                    return True
+                await asyncio.sleep(1)
+            else:
+                return False
+        return False
 
 # ============================ plugin declaration =================================================
 

@@ -267,12 +267,16 @@ class SolaXModbusHub:
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
         self.groups = {} #group info, below
-        self.empty_group = lambda: SimpleNamespace(
+        self.empty_interval_group = lambda: SimpleNamespace(
             interval = 0,
-            _unsub_interval_method = None,
-            _sensors = [],
+            unsub_interval_method = None,
+            device_groups = {}
+        )
+        self.empty_device_group = lambda: SimpleNamespace(
+            sensors = [],
             inputBlocks = {},
-            holdingBlocks = {}
+            holdingBlocks = {},
+            readPreparation = None, # function to call before read group
         )
         self.data = {
             "_repeatUntil": {}
@@ -394,52 +398,70 @@ class SolaXModbusHub:
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         interval = self.entity_group(sensor)
-        interval_group = self.groups.setdefault(interval, {})
-        device_key = self.device_group_key(sensor.device_info)
-        grp = interval_group.setdefault(device_key, self.empty_group())
-        if not grp._sensors:
-            grp.interval = interval
-            await self._check_connection()
+        interval_group = self.groups.setdefault(interval, self.empty_interval_group())
+        if not interval_group.device_groups:
+            interval_group.interval = interval
             async def _refresh(_now: Optional[int] = None) -> None:
-                await self.async_refresh_modbus_data(grp, _now)
-            grp._unsub_interval_method = async_track_time_interval(
+                await self._check_connection()
+                await self.async_refresh_modbus_data(interval_group, _now)
+            interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval))
-        grp._sensors.append(sensor)
+
+        device_key = self.device_group_key(sensor.device_info)
+        grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
+        grp.sensors.append(sensor)
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
         interval = self.entity_group(sensor)
-        grp = self.groups.get(interval, self.empty_group())
-        grp._sensors.remove(sensor)
+        interval_group = self.groups.get(interval, self.empty_interval_group())
+        device_key = self.device_group_key(sensor.device_info)
+        grp = interval_group.device_groups.get(device_key, self.empty_device_group())
+        grp.sensors.remove(sensor)
 
-        if not grp._sensors:
-            """stop the interval timer upon removal of last sensor"""
-            grp._unsub_interval_method()
-            grp._unsub_interval_method = None
-            await self.async_close()
+        if not grp.sensors:
+            interval_group.device_groups.pop(device_key)
 
-    async def async_refresh_modbus_data(self, group, _now: Optional[int] = None) -> None:
+            if not interval_group.device_groups:
+                # stop the interval timer upon removal of last device group from interval group
+                grp.unsub_interval_method()
+                grp.unsub_interval_method = None
+                self.groups.pop(interval)
+
+                if not self.groups:
+                    await self.async_close()
+
+    async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
         self.cyclecount = self.cyclecount + 1
-        if not group._sensors:
+        if not interval_group.device_groups:
             return
+
         if (
             self.cyclecount % self.slowdown
         ) == 0:  # only execute once every slowdown count
-            update_result = await self.async_read_modbus_data(group)
-            if update_result:
-                self.slowdown = 1  # return to full polling after succesfull cycle
-                for sensor in group._sensors:
-                    sensor.modbus_data_updated()
-            else:
-                _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
-                self.slowdown = 10
-                for i in self.sleepnone:
-                    self.data.pop(i, None)
-                for i in self.sleepzero:
-                    self.data[i] = 0
-                # self.data = {} # invalidate data - do we want this ??
+            for group in interval_group.device_groups.values():
+
+                if group.readPreparation is not None:
+                    if not await group.readPreparation():
+                        continue
+
+                update_result = await self.async_read_modbus_data(group)
+                if update_result:
+                    self.slowdown = 1  # return to full polling after succesfull cycle
+                    for sensor in group.sensors:
+                        sensor.modbus_data_updated()
+                else:
+                    _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
+                    self.slowdown = 10
+                    for i in self.sleepnone:
+                        self.data.pop(i, None)
+                    for i in self.sleepzero:
+                        self.data[i] = 0
+                    # self.data = {} # invalidate data - do we want this ??
+
+                _LOGGER.info(f"device group read done")
 
     @property
     def invertertype(self):
