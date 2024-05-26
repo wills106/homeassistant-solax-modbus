@@ -242,12 +242,13 @@ def value_function_grid_export(initval, descr, datadict):
     else: return 0
 
 def value_function_house_load(initval, descr, datadict):
-    return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) )
+    return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) + datadict.get('meter_2_measured_power', 0) )
 
 def value_function_house_load_alt(initval, descr, datadict):
     return (   datadict.get('pv_power_1', 0) +  datadict.get('pv_power_2', 0) + datadict.get('pv_power_3', 0)
              - datadict.get('battery_power_charge', 0)
-             - datadict.get('measured_power', 0) )
+             - datadict.get('measured_power', 0)
+             + datadict.get('meter_2_measured_power', 0) )
 
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
