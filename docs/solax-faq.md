@@ -27,7 +27,7 @@ You can use the SolaX cloud app or do it manually:
 ## I have lost my entities on restart / update using PocketWiFi 3.0
 
 Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
-- Ensure Firmware is uptodate
+- **Ensure Firmware is uptodate (Contact SolaX)**
 - Restart your rooter and then reload the integration in Home Assistant.
 - If that doesn't work you can unplug PocketWifi 3.0 for 30 seconds and plug it in again, then reload the integration.
 

@@ -2085,17 +2085,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     #), # end of block
 
     SolaXModbusSensorEntityDescription(
-        name = "Series Number",
-        key = "seriesnumber",
-        register = 0x00,
-        unit = REGISTER_STR,
-        wordcount=7,
-        entity_registry_enabled_default = False,
-        allowedtypes = AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
         name = "MateBox enabled",
         key = "matebox_enabled",
         register = 0x1E,
@@ -2633,14 +2622,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_gen4time,
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
         internal = True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        key = "modbus_power_control",
-        register = 0xA6,
-        scale = { 0: "Disabled",
-                  1: "Total",
-                  2: "Split Phase", },
-        allowedtypes = AC | HYBRID | GEN3,
     ),
     SolaXModbusSensorEntityDescription(
         key = "battery_heating_start_time_2",
