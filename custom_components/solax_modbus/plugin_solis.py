@@ -190,6 +190,7 @@ MAX_CURRENTS = [
     ('0102',  62.5 ), # 3kW 48v AC Only?
     ('110F',  62.5 ), # 3.6kW 48v
     ('160F5',  62.5 ), # 3.6kW 48v
+    ('160F4',  62.5 ), # 3.6kW 48v
     ('160F3',  100 ), # 5kW 48v
     ('1031',  100 ), # 5kW 48v
     ('134F',  100 ), # 5kW 48v
@@ -2443,6 +2444,7 @@ class solis_plugin(plugin_base):
         elif seriesnumber.startswith('140C'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - HV
         elif seriesnumber.startswith('143'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
         elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('160F4'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith('160F3'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
         elif seriesnumber.startswith('1033'):  invertertype = HYBRID | X3 # Hybrid Gen6  10kW - HV
         elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92 10kW - HV
