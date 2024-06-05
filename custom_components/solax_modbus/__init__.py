@@ -277,6 +277,7 @@ class SolaXModbusHub:
             inputBlocks = {},
             holdingBlocks = {},
             readPreparation = None, # function to call before read group
+            readFollowUp = None, # function to call after read group
         )
         self.data = {
             "_repeatUntil": {}
@@ -442,11 +443,6 @@ class SolaXModbusHub:
             self.cyclecount % self.slowdown
         ) == 0:  # only execute once every slowdown count
             for group in interval_group.device_groups.values():
-
-                if group.readPreparation is not None:
-                    if not await group.readPreparation():
-                        continue
-
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
                     self.slowdown = 1  # return to full polling after succesfull cycle
@@ -512,7 +508,14 @@ class SolaXModbusHub:
             self._client.comm_params.port,
         )
 
-        result = await self._client.connect()
+        result: bool
+        for retry in range(2):
+            result = await self._client.connect()
+            if not result:
+                _LOGGER.info("Connect to Inverter attempt %d of 3 is not successful", retry+1)
+                await asyncio.sleep(1)
+            else:
+                break
 
         if result:
             _LOGGER.info(
@@ -677,7 +680,7 @@ class SolaXModbusHub:
             res = False
         return res
 
-    def treat_address(self, decoder, descr, initval=0):
+    def treat_address(self, data, decoder, descr, initval=0):
         return_value = None
         val = None
         if self.cyclecount < 5:
@@ -731,12 +734,18 @@ class SolaXModbusHub:
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
         """
 
+        if (descr.key == "battery_1_1_pack_rt_id" or descr.key == "battery_1_1_pack_serial_number" or
+            descr.key == "battery_1_2_pack_rt_id" or descr.key == "battery_1_2_pack_serial_number" or
+            descr.key == "battery_1_3_pack_rt_id" or descr.key == "battery_1_3_pack_serial_number" or
+            descr.key == "battery_1_4_pack_rt_id" or descr.key == "battery_1_4_pack_serial_number"):
+            _LOGGER.info(f"descr {descr.key} val {val}")
+
         if val == None:  # E.g. if errors have occurred during readout
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
-            return_value = descr.scale(val, descr, self.data)
+            return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
             try:
                 return_value = round(val * descr.scale, descr.rounding)
@@ -744,11 +753,11 @@ class SolaXModbusHub:
                 return_value = val  # probably a REGISTER_WORDS instance
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (self.tmpdata_expiry.get(descr.key, 0) == 0) and (
-            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)
+            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(data)
         ):
-            self.data[descr.key] = return_value  # case prevent_update number
+            data[descr.key] = return_value  # case prevent_update number
 
-    async def async_read_modbus_block(self, block, typ):
+    async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
         if self.cyclecount < 5:
             _LOGGER.debug(
@@ -788,10 +797,10 @@ class SolaXModbusHub:
                 if type(descr) is dict:  #  set of byte values
                     val = decoder.decode_16bit_uint()
                     for k in descr:
-                        self.treat_address(decoder, descr[k], val)
+                        self.treat_address(data, decoder, descr[k], val)
                     prevreg = reg + 1
                 else:  # single value
-                    self.treat_address(decoder, descr)
+                    self.treat_address(data, decoder, descr)
                     if descr.unit in (
                         REGISTER_S32,
                         REGISTER_U32,
@@ -819,7 +828,7 @@ class SolaXModbusHub:
                         if (descr.ignore_readerror != True) and (
                             descr.ignore_readerror != False
                         ):
-                            self.data[
+                            data[
                                 descr.key
                             ] = descr.ignore_readerror  # return something static
                 return True
@@ -832,11 +841,27 @@ class SolaXModbusHub:
                 return False
 
     async def async_read_modbus_registers_all(self, group):
+        if group.readPreparation is not None:
+            if not await group.readPreparation():
+                _LOGGER.info(f"device group read cancel")
+                return False
+        else:
+            _LOGGER.info(f"device group inverter")
+
+        data = {}
         res = True
         for block in group.holdingBlocks:
-            res = res and await self.async_read_modbus_block(block, "holding")
+            res = res and await self.async_read_modbus_block(data, block, "holding")
         for block in group.inputBlocks:
-            res = res and await self.async_read_modbus_block(block, "input")
+            res = res and await self.async_read_modbus_block(data, block, "input")
+
+        if group.readFollowUp is not None:
+            if not await group.readFollowUp():
+                _LOGGER.info(f"device group check not success")
+
+        for key, value in data.items():
+            self.data[key] = value
+
         if self.localsUpdated:
             self.saveLocalData()
             self.plugin.localDataCallback(self)

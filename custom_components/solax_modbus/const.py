@@ -309,6 +309,28 @@ def value_function_firmware(initval, descr, datadict):
     h = initval >> 8
     return f"{h}.{m:02d}"
 
+def value_function_2byte_timestamp(initval, descr, datadict):
+    # Real-time data timestamp
+    # Bit0-5: second, range 0-59
+    # Bit6-11: minute, range 0-59
+    # Bit12-16: hour, range 0-23
+    # Bit17-21: day, range 1-31
+    # Bit22-25: month, range 1-12
+    # Bit26-31: year, range 0-63 (from the year 2000)"
+    second = initval & 0b111111
+    initval = initval >> 6
+    minute = initval & 0b111111
+    initval = initval >> 6
+    hour = initval & 0b11111
+    initval = initval >> 5
+    day = initval & 0b11111
+    initval = initval >> 5
+    month = initval & 0b1111
+    initval = initval >> 4
+    year = initval & 0b111111
+    return f"{day}/{month}/{year} {hour}:{minute}:{second}"
+
+
 # ================================= Computed Time Values =================================================
 
 TIME_OPTIONS = { }

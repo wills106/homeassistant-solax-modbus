@@ -3600,14 +3600,6 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name = "Pack Nr",
-        key = "pack_nr",
-        native_unit_of_measurement = None,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x900D,
-        allowedtypes = BAT_BTS,
-    ),
-    SofarModbusSensorEntityDescription(
         name = "Total Voltage",
         key = "total_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
@@ -3738,7 +3730,6 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Pack remaining capacity",
         key = "pack_remaining_capacity",
         native_unit_of_measurement = "Ah",
-        device_class = SensorDeviceClass.ENERGY_STORAGE,
         register = 0x9072,
         scale = 0.1,
         allowedtypes = BAT_BTS,
@@ -3747,7 +3738,6 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name = "Pack Full charge capacity",
         key = "pack_full_charge_capacity",
         native_unit_of_measurement = "Ah",
-        device_class = SensorDeviceClass.ENERGY_STORAGE,
         register = 0x9073,
         scale = 0.1,
         allowedtypes = BAT_BTS,
@@ -3775,7 +3765,8 @@ class battery_config():
     battery_sensor_name_prefix = "Battery "
     battery_sensor_key_prefix = "battery_{bat-nr}_{pack-nr}_"
     bapack_number_address = 0x900d
-    bms_Inquire_address = 0x9020
+    bms_inquire_address = 0x9020
+    bms_check_address = 0x9044
 
     number_cels_in_parallel: int = None # number of battery pack cells in parallel
     number_strings: int = None # number of strings of all battery packs
@@ -3804,17 +3795,37 @@ class battery_config():
         faulty_nr = 0
         payload = faulty_nr << 12 | bat_back_nr << 8 | bat_nr
         _LOGGER.info(f"select_battery: {hex(payload)}")
-        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_Inquire_address, payload=payload)
-        for retry in range(0,3):
-            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_Inquire_address, count=1)
+        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+        for retry in range(0,10):
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if not inverter_data.isError():
                 decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
                 ok = decoder.decode_16bit_uint() == payload
                 if ok:
                     return True
-                await asyncio.sleep(1)
+                else:
+                    await asyncio.sleep(1)
+
             else:
                 return False
+        return False
+
+    async def check_battery_on_end(self, hub, bat_nr: int, bat_back_nr: int):
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            batt_time = value_function_2byte_timestamp(decoder.decode_32bit_uint(), None, None)
+            _LOGGER.info(f"batt time: {batt_time}")
+
+        faulty_nr = 0
+        compare_value = faulty_nr << 12 | bat_back_nr << 8 | bat_nr
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            new_value = decoder.decode_16bit_uint()
+            _LOGGER.info(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
+            return new_value == compare_value
+
         return False
 
 # ============================ plugin declaration =================================================
