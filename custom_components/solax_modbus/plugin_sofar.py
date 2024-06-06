@@ -3767,9 +3767,12 @@ class battery_config():
     bapack_number_address = 0x900d
     bms_inquire_address = 0x9020
     bms_check_address = 0x9044
+    batt_pack_serial_address = 0x9048
+    batt_pack_serial_len = 9
 
     number_cels_in_parallel: int = None # number of battery pack cells in parallel
     number_strings: int = None # number of strings of all battery packs
+    batt_pack_serials = {}
 
     async def get_batpack_quantity(self, hub):
         if self.number_cels_in_parallel == None:
@@ -3791,24 +3794,59 @@ class battery_config():
                 self.number_strings = decoder.decode_8bit_int()
         except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
 
-    async def select_battery(self, hub, bat_nr: int, bat_back_nr: int):
+        await self._init_batt_pack_serials(hub)
+
+    async def _init_batt_pack_serials(self, hub):
+        retry = 0
+        while retry < 5:
+            retry = retry + 1
+            for batt_nr in range(self.number_strings):
+                if not self.batt_pack_serials.__contains__(batt_nr):
+                    self.batt_pack_serials[batt_nr] = {}
+
+                for batt_pack_nr in range(self.number_cels_in_parallel):
+                    await self.select_battery(hub, batt_nr, batt_pack_nr)
+                    await asyncio.sleep(1)
+                    serial = await self._determinate_batt_pack_serial(hub)
+                    if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+                        if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
+                            retry = retry - 1
+                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
+
+        _LOGGER.info(f"serials {self.batt_pack_serials}")
+
+    async def _determinate_batt_pack_serial(self, hub):
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            serial = str(decoder.decode_string(self.batt_pack_serial_len * 2).decode("ascii"))
+            return serial
+
+    async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
         faulty_nr = 0
-        payload = faulty_nr << 12 | bat_back_nr << 8 | bat_nr
-        _LOGGER.info(f"select_battery: {hex(payload)}")
+        payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
+        _LOGGER.info(f"select bat-nr: {batt_nr} bat-pack: {batt_pack_nr} {hex(payload)}")
         await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+
+    async def check_battery_on_start(self, hub, old_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+        faulty_nr = 0
+        payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         for retry in range(0,10):
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if not inverter_data.isError():
                 decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-                ok = decoder.decode_16bit_uint() == payload
-                if ok:
-                    return True
-                else:
+                readed = decoder.decode_16bit_uint()
+                ok = readed == payload
+                if not ok:
                     await asyncio.sleep(1)
+                else:
+                    serial = await self._determinate_batt_pack_serial(hub)
+                    _LOGGER.info(f"batt pack serial: {serial}")
+                    return serial == self.batt_pack_serials[batt_nr][batt_pack_nr]
 
             else:
+                _LOGGER.error(f"can't read batt check register")
                 return False
-        return False
 
     async def check_battery_on_end(self, hub, bat_nr: int, bat_back_nr: int):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)

@@ -108,8 +108,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
             name_prefix = battery_config.battery_sensor_name_prefix
             key_prefix = battery_config.battery_sensor_key_prefix.replace("{bat-nr}", str(1)).replace("{pack-nr}", str(batpack_nr+1))
 
-            async def readPreparation(bat_nr=0, batpack_nr=batpack_nr):
-                return await battery_config.select_battery(hub, bat_nr, batpack_nr)
+            async def readPreparation(old_data, key_prefix=key_prefix, bat_nr=0, batpack_nr=batpack_nr):
+                await battery_config.select_battery(hub, bat_nr, batpack_nr)
+                return await battery_config.check_battery_on_start(hub, old_data, key_prefix, bat_nr, batpack_nr)
 
             async def readFollowUp(bat_nr=0, batpack_nr=batpack_nr):
                 return await battery_config.check_battery_on_end(hub, bat_nr, batpack_nr)

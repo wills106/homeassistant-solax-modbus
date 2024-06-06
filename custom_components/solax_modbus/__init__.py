@@ -734,12 +734,6 @@ class SolaXModbusHub:
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
         """
 
-        if (descr.key == "battery_1_1_pack_rt_id" or descr.key == "battery_1_1_pack_serial_number" or
-            descr.key == "battery_1_2_pack_rt_id" or descr.key == "battery_1_2_pack_serial_number" or
-            descr.key == "battery_1_3_pack_rt_id" or descr.key == "battery_1_3_pack_serial_number" or
-            descr.key == "battery_1_4_pack_rt_id" or descr.key == "battery_1_4_pack_serial_number"):
-            _LOGGER.info(f"descr {descr.key} val {val}")
-
         if val == None:  # E.g. if errors have occurred during readout
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
@@ -842,9 +836,9 @@ class SolaXModbusHub:
 
     async def async_read_modbus_registers_all(self, group):
         if group.readPreparation is not None:
-            if not await group.readPreparation():
+            if not await group.readPreparation(self.data):
                 _LOGGER.info(f"device group read cancel")
-                return False
+                return True
         else:
             _LOGGER.info(f"device group inverter")
 
@@ -858,6 +852,7 @@ class SolaXModbusHub:
         if group.readFollowUp is not None:
             if not await group.readFollowUp():
                 _LOGGER.info(f"device group check not success")
+                return False
 
         for key, value in data.items():
             self.data[key] = value
