@@ -850,9 +850,9 @@ class SolaXModbusHub:
             res = res and await self.async_read_modbus_block(data, block, "input")
 
         if group.readFollowUp is not None:
-            if not await group.readFollowUp():
+            if not await group.readFollowUp(self.data, data):
                 _LOGGER.info(f"device group check not success")
-                return False
+                return True
 
         for key, value in data.items():
             self.data[key] = value

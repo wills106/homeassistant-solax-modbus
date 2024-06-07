@@ -112,8 +112,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 await battery_config.select_battery(hub, bat_nr, batpack_nr)
                 return await battery_config.check_battery_on_start(hub, old_data, key_prefix, bat_nr, batpack_nr)
 
-            async def readFollowUp(bat_nr=0, batpack_nr=batpack_nr):
-                return await battery_config.check_battery_on_end(hub, bat_nr, batpack_nr)
+            async def readFollowUp(old_data, new_data, key_prefix=key_prefix, bat_nr=0, batpack_nr=batpack_nr):
+                return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, bat_nr, batpack_nr)
 
             entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)
