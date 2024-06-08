@@ -100,3 +100,27 @@ For further Documentation please refer to the [Read the Docs](https://homeassist
 [Read the Docs - General FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq/)
  - [Read the Docs - Sofar FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/sofar-faq/)
  - [Read the Docs - SolaX FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solax-faq/)
+
+## Multiple Connections
+
+Modbus is designed to mostly have a single Master.
+If you try to connect multiple instances to the Inverter ie this Integration and Node-RED the Inverter will either block the second connection or likely to result in data collisions.
+
+If this happens it's recomended to use a multiplexer such as https://github.com/IngmarStein/tcp-multiplexer this has been tested by reading and writing from two instances of HA at once.
+
+This can be started with Docker or Docker Compose.
+Example Compose:
+
+```
+services:
+  modbus-proxy:
+    image: ghcr.io/ingmarstein/tcp-multiplexer
+    container_name: modbus_proxy
+    ports:
+      - "5020:5020"
+    command: [ "server", "-t", "192.168.123.123:502", "-l", "5020", "-p", "modbus", "-v" ]
+    restart: unless-stopped
+```
+
+Server address is the Inverter / data logger.
+You then direct this integration to the machine running the proxy and port 5020 in this example.
