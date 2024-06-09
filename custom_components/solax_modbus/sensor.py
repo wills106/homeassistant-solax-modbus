@@ -1,6 +1,7 @@
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers import device_registry as dr
 import logging
 from typing import Optional, Dict, Any, List
 from types  import SimpleNamespace
@@ -86,34 +87,75 @@ async def async_setup_entry(hass, entry, async_add_entities):
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
+
+    # async def readFollowUp(old_data, new_data, key_prefix=key_prefix, hub_name=hub_name):
+    #     dev_registry = dr.async_get(hass)
+    #     device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
+    #     if device is not None:
+    #         batt_pack_model = await battery_config.get_batt_pack_model(hub)
+    #         batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
+    #         dev_registry.async_update_device(
+    #             device.id,
+    #             sw_version=batt_pack_sw_version,
+    #             model=batt_pack_model)
+    #     return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
+
     entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
-                 plugin.SENSOR_TYPES, "", "", None, None)
+                 plugin.SENSOR_TYPES, "Inverter ", "", None, None)
 
     if plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
-        batpack_quantity = await battery_config.get_batpack_quantity(hub)
-        bat_quantity = await battery_config.get_bat_quantity(hub)
-        _LOGGER.info(f"batpack_quantity: {batpack_quantity}, bat_quantity: {bat_quantity}")
+        batt_pack_quantity = await battery_config.get_batt_pack_quantity(hub)
+        batt_quantity = await battery_config.get_batt_quantity(hub)
+        _LOGGER.info(f"batt_pack_quantity: {batt_pack_quantity}, batt_quantity: {batt_quantity}")
 
-        for batpack_nr in range(0, batpack_quantity, 1):
+        batt_nr = 0
+        for batt_pack_nr in range(0, batt_pack_quantity, 1):
+            if not await battery_config.select_battery(hub, batt_nr, batt_pack_nr):
+                _LOGGER.warning(f"cannot select batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
+                continue
+
+            batt_pack_id = f"battery_1_{batt_pack_nr+1}"
+            dev_registry = dr.async_get(hass)
+            device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
+            if device is not None:
+                _LOGGER.debug(f"batt pack serial: {device.serial_number}")
+                await battery_config.init_batt_pack(hub, device.serial_number)
+
+            batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
+            if batt_pack_serial is None:
+                _LOGGER.warning(f"cannot get serial for batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
+                await battery_config.init_batt_pack_serials(hub)
+                batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
+                if batt_pack_serial is None:
+                    continue
+
             device_info_battery = DeviceInfo(
-                identifiers = {(DOMAIN, hub_name, f"battery_1_{batpack_nr+1}")},
-                name = hub.plugin.plugin_name + f" Battery 1/{batpack_nr+1}",
+                identifiers = {(DOMAIN, hub_name, batt_pack_id)},
+                name = hub.plugin.plugin_name + f" Battery {batt_nr + 1}/{batt_pack_nr + 1}",
                 manufacturer = hub.plugin.plugin_manufacturer,
-                #"model": hub.sensor_description.inverter_model,
-                serial_number = hub.seriesnumber,
+                serial_number = batt_pack_serial,
                 via_device = (DOMAIN, hub_name, "Inverter"),
             )
 
-            name_prefix = battery_config.battery_sensor_name_prefix
-            key_prefix = battery_config.battery_sensor_key_prefix.replace("{bat-nr}", str(1)).replace("{pack-nr}", str(batpack_nr+1))
+            name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr+1)).replace("{pack-nr}", str(batt_pack_nr+1))
+            key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr+1)).replace("{pack-nr}", str(batt_pack_nr+1))
 
-            async def readPreparation(old_data, key_prefix=key_prefix, bat_nr=0, batpack_nr=batpack_nr):
-                await battery_config.select_battery(hub, bat_nr, batpack_nr)
-                return await battery_config.check_battery_on_start(hub, old_data, key_prefix, bat_nr, batpack_nr)
+            async def readPreparation(old_data, key_prefix=key_prefix, batt_nr=0, batt_pack_nr=batt_pack_nr):
+                await battery_config.select_battery(hub, batt_nr, batt_pack_nr)
+                return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
 
-            async def readFollowUp(old_data, new_data, key_prefix=key_prefix, bat_nr=0, batpack_nr=batpack_nr):
-                return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, bat_nr, batpack_nr)
+            async def readFollowUp(old_data, new_data, key_prefix=key_prefix, hub_name=hub_name, batt_pack_id=batt_pack_id, batt_nr=batt_nr, batt_pack_nr=batt_pack_nr):
+                dev_registry = dr.async_get(hass)
+                device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
+                if device is not None:
+                    batt_pack_model = await battery_config.get_batt_pack_model(hub)
+                    batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
+                    dev_registry.async_update_device(
+                        device.id,
+                        sw_version=batt_pack_sw_version,
+                        model=batt_pack_model)
+                return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
 
             entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)

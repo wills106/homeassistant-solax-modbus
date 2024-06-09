@@ -3590,6 +3590,16 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     #     rounding = 1,
     #     allowedtypes = BAT_BTS,
     # ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "BMS Manufacture Name",
+    #     key = "bms_manufacture_name",
+    #     register = 0x9007,
+    #     newblock = True,
+    #     unit = REGISTER_STR,
+    #     wordcount=4,
+    #     entity_category = EntityCategory.DIAGNOSTIC,
+    #     allowedtypes = BAT_BTS,
+    # ),
     SofarModbusSensorEntityDescription(
         name = "BMS Version",
         key = "bms_version",
@@ -3597,6 +3607,15 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         entity_category = EntityCategory.DIAGNOSTIC,
         register = 0x900B,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Realtime Capacity",
+        key = "realtime_capacity",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 0x900E,
+        scale = 0.1,
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
@@ -3749,86 +3768,88 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = BAT_BTS,
     ),
-    SofarModbusSensorEntityDescription(
-        name = "Pack SOC",
-        key = "pack_soc",
-        native_unit_of_measurement = PERCENTAGE,
-        device_class = SensorDeviceClass.BATTERY,
-        register = 0x907A,
-        allowedtypes = BAT_BTS,
-    ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "Pack SOC",
+    #     key = "pack_soc",
+    #     native_unit_of_measurement = PERCENTAGE,
+    #     device_class = SensorDeviceClass.BATTERY,
+    #     register = 0x907A,
+    #     allowedtypes = BAT_BTS,
+    # ),
 ]
 
 @dataclass
 class battery_config():
     battery_sensor_type = BATTERY_SENSOR_TYPES
-    battery_sensor_name_prefix = "Battery "
-    battery_sensor_key_prefix = "battery_{bat-nr}_{pack-nr}_"
+    battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
+    battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
     bapack_number_address = 0x900d
     bms_inquire_address = 0x9020
     bms_check_address = 0x9044
     batt_pack_serial_address = 0x9048
     batt_pack_serial_len = 9
+    batt_pack_model_address = 0x9007
+    batt_pack_model_len = 4
 
     number_cels_in_parallel: int = None # number of battery pack cells in parallel
     number_strings: int = None # number of strings of all battery packs
     batt_pack_serials = {}
+    selected_batt_nr: int = None
+    selected_batt_pack_nr: int = None
 
-    async def get_batpack_quantity(self, hub):
+    async def init_batt_pack(self, hub, serial_number):
+        if not self.batt_pack_serials.__contains__(self.selected_batt_nr):
+            self.batt_pack_serials[self.selected_batt_nr] = {}
+        self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
+
+    async def get_batt_pack_quantity(self, hub):
         if self.number_cels_in_parallel == None:
             await self._determine_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
-    async def get_bat_quantity(self, hub):
+    async def get_batt_quantity(self, hub):
         if self.number_strings == None:
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
-    async def _determine_bat_quantitys(self, hub):
-        res = None
-        try:
-            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
-            if not inverter_data.isError():
-                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-                self.number_cels_in_parallel = decoder.decode_8bit_int()
-                self.number_strings = decoder.decode_8bit_int()
-        except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
-
-        await self._init_batt_pack_serials(hub)
-
-    async def _init_batt_pack_serials(self, hub):
-        retry = 0
-        while retry < 5:
-            retry = retry + 1
-            for batt_nr in range(self.number_strings):
-                if not self.batt_pack_serials.__contains__(batt_nr):
-                    self.batt_pack_serials[batt_nr] = {}
-
-                for batt_pack_nr in range(self.number_cels_in_parallel):
-                    await self.select_battery(hub, batt_nr, batt_pack_nr)
-                    await asyncio.sleep(0.3)
-                    serial = await self._determinate_batt_pack_serial(hub)
-                    if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
-                        if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
-                            retry = retry - 1
-                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
-
-        _LOGGER.info(f"serials {self.batt_pack_serials}")
-
-    async def _determinate_batt_pack_serial(self, hub):
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len)
-        if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            serial = str(decoder.decode_string(self.batt_pack_serial_len * 2).decode("ascii"))
-            return serial
-
     async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        _LOGGER.info(f"select bat-nr: {batt_nr} bat-pack: {batt_pack_nr} {hex(payload)}")
+        _LOGGER.info(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
         await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+        await asyncio.sleep(0.3)
+        self.selected_batt_nr = batt_nr
+        self.selected_batt_pack_nr = batt_pack_nr
+        return True
+
+    async def get_batt_pack_serial(self, hub, batt_nr: int, batt_pack_nr: int):
+        if not self.batt_pack_serials.__contains__(batt_nr):
+            return None
+        if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+            return None
+        return self.batt_pack_serials[batt_nr][batt_pack_nr]
+
+    async def get_batt_pack_model(self, hub):
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            serial = str(decoder.decode_string(self.batt_pack_model_len * 2).decode("ascii"))
+            return serial
+
+    async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
+        sw_version_key = key_prefix + "bms_version"
+        if not new_data.__contains__(sw_version_key):
+            _LOGGER.info(f"batt pack software version not received {sw_version_key}")
+            return None
+        return f"BMS: V{new_data[sw_version_key]}"
+
 
     async def check_battery_on_start(self, hub, old_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+        if not self.batt_pack_serials.__contains__(batt_nr):
+            return False
+        if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+            return False
+
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         for retry in range(0,10):
@@ -3872,6 +3893,41 @@ class battery_config():
                 return False
 
         return False
+
+    async def _determine_bat_quantitys(self, hub):
+        res = None
+        try:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                self.number_cels_in_parallel = decoder.decode_8bit_int()
+                self.number_strings = decoder.decode_8bit_int()
+        except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
+
+    async def init_batt_pack_serials(self, hub):
+        retry = 0
+        while retry < 5:
+            retry = retry + 1
+            for batt_nr in range(self.number_strings):
+                if not self.batt_pack_serials.__contains__(batt_nr):
+                    self.batt_pack_serials[batt_nr] = {}
+
+                for batt_pack_nr in range(self.number_cels_in_parallel):
+                    await self.select_battery(hub, batt_nr, batt_pack_nr)
+                    serial = await self._determinate_batt_pack_serial(hub)
+                    if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+                        if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
+                            retry = retry - 1
+                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
+
+        _LOGGER.info(f"serials {self.batt_pack_serials}")
+
+    async def _determinate_batt_pack_serial(self, hub):
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            serial = str(decoder.decode_string(self.batt_pack_serial_len * 2).decode("ascii"))
+            return serial
 
 # ============================ plugin declaration =================================================
 
@@ -3957,4 +4013,5 @@ plugin_instance = sofar_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    inverter_sw_version = "123"
     )

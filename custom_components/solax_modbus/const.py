@@ -109,6 +109,7 @@ class plugin_base:
     auto_block_ignore_readerror: bool = None # if True or False, inserts a ignore_readerror statement for each block
     order16: int = None # Endian.BIG or Endian.LITTLE
     order32: int = None
+    inverter_sw_version: str = None
 
     def isAwake(self, datadict):
         return True # always awake by default
@@ -116,8 +117,11 @@ class plugin_base:
     def wakeupButton(self):
         return None # no wakeup button
 
-    def determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub, configdict):
         return 0
+
+    async def async_determineInverterData(self, hub, configdict):
+        return False
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
         return False
