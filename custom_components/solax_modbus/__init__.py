@@ -58,6 +58,8 @@ from .const import (
     CONF_READ_EPS,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
+    CONF_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_BAUDRATE,
     DEFAULT_INTERFACE,
     DEFAULT_MODBUS_ADDR,
@@ -261,6 +263,7 @@ class SolaXModbusHub:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = asyncio.Lock()
         self._name = name
+        self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX, DEFAULT_INVERTER_NAME_SUFFIX)
         self._modbus_addr = modbus_addr
         self._seriesnumber = "still unknown"
         self.interface = interface
@@ -318,12 +321,16 @@ class SolaXModbusHub:
                 _LOGGER.info("next inverter check in 10sec")
                 await asyncio.sleep(10)
 
+        plugin_name = self.plugin.plugin_name
+        if self.inverterNameSuffix is not None and self.inverterNameSuffix != "":
+            plugin_name = plugin_name + " " + self.inverterNameSuffix
+
         self.device_info = DeviceInfo(
             hw_version = getattr(self.plugin,"inverter_hw_version",None),
             identifiers = {(DOMAIN, self._name, "Inverter")},
             manufacturer = self.plugin.plugin_manufacturer,
             model = getattr(self.plugin,"inverter_model",None),
-            name = self.plugin.plugin_name + " Inverter",
+            name = plugin_name,
             sw_version = getattr(self.plugin,"inverter_sw_version",None),
             serial_number = self.seriesnumber,
         )

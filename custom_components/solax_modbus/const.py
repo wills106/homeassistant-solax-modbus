@@ -36,12 +36,14 @@ from homeassistant.const import (
 
 DOMAIN = "solax_modbus"
 DEFAULT_NAME = "SolaX"
+DEFAULT_INVERTER_NAME_SUFFIX = "Inverter"
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_PORT = 502
 DEFAULT_MODBUS_ADDR = 1
 DEFAULT_TCP_TYPE = "tcp"
 CONF_TCP_TYPE = "tcp_type"
 TMPDATA_EXPIRY   = 120 # seconds before temp entities return to modbus value
+CONF_INVERTER_NAME_SUFFIX = "inverter_name_suffix"
 CONF_READ_EPS    = "read_eps"
 CONF_READ_DCB    = "read_dcb"
 CONF_READ_PM    = "read_pm"
@@ -51,6 +53,7 @@ CONF_SERIAL_PORT = "read_serial_port"
 CONF_SolaX_HUB   = "solax_hub"
 CONF_BAUDRATE    = "baudrate"
 CONF_PLUGIN      = "plugin"
+CONF_READ_BATTERY = "read_battery"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
@@ -59,6 +62,7 @@ DEFAULT_READ_DCB = False
 DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
 DEFAULT_PLUGIN        = "solax"
+DEFAULT_READ_BATTERY = False
 PLUGIN_PATH = f"{pathlib.Path(__file__).parent.absolute()}/plugin_*.py"
 SLEEPMODE_NONE   = None
 SLEEPMODE_ZERO   = 0 # when no communication at all
@@ -98,6 +102,15 @@ _LOGGER = logging.getLogger(__name__)
 # ==================================== plugin base class ====================================================================
 
 @dataclass
+class base_battery_config:
+    def __init__(
+        self
+    ):
+        self.battery_sensor_type: list[SelectEntityDescription] | None = None
+        self.battery_sensor_name_prefix: str | None = None
+        self.battery_sensor_key_prefix: str | None = None
+
+@dataclass
 class plugin_base:
     plugin_name: str
     plugin_manufacturer: str
@@ -105,11 +118,12 @@ class plugin_base:
     BUTTON_TYPES: list[ButtonEntityDescription]
     NUMBER_TYPES: list[NumberEntityDescription]
     SELECT_TYPES: list[SelectEntityDescription]
+    BATTERY_CONFIG: base_battery_config | None = None
     block_size: int = 100
-    auto_block_ignore_readerror: bool = None # if True or False, inserts a ignore_readerror statement for each block
-    order16: int = None # Endian.BIG or Endian.LITTLE
-    order32: int = None
-    inverter_sw_version: str = None
+    auto_block_ignore_readerror: bool | None = None # if True or False, inserts a ignore_readerror statement for each block
+    order16: int | None = None # Endian.BIG or Endian.LITTLE
+    order32: int | None = None
+    inverter_sw_version: str | None = None
 
     def isAwake(self, datadict):
         return True # always awake by default

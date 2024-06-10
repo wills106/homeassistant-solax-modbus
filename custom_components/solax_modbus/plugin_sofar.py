@@ -3779,10 +3779,14 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 ]
 
 @dataclass
-class battery_config():
-    battery_sensor_type = BATTERY_SENSOR_TYPES
-    battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
-    battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
+class battery_config(base_battery_config):
+    def __init__(
+        self
+    ):
+        self.battery_sensor_type = BATTERY_SENSOR_TYPES
+        self.battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
+        self.battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
+
     bapack_number_address = 0x900d
     bms_inquire_address = 0x9020
     bms_check_address = 0x9044
@@ -3933,7 +3937,6 @@ class battery_config():
 
 @dataclass
 class sofar_plugin(plugin_base):
-    BATTERY_CONFIG: battery_config = None
 
     """
     def isAwake(self, datadict):

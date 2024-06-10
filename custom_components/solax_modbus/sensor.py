@@ -10,11 +10,10 @@ from copy import copy
 import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
-from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L
+from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L, CONF_READ_BATTERY
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.device_registry import DeviceInfo
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,7 +102,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, "Inverter ", "", None, None)
 
-    if plugin.BATTERY_CONFIG is not None:
+    readBattery = entry.options.get(CONF_READ_BATTERY, False)
+    if readBattery and plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
         batt_pack_quantity = await battery_config.get_batt_pack_quantity(hub)
         batt_quantity = await battery_config.get_batt_quantity(hub)

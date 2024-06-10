@@ -7,6 +7,7 @@
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
+          "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
@@ -28,6 +29,12 @@
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
           "tcp_type": "Die Modbus TCP Variante"
         }
+      },
+      "battery": {
+        "title": "Batteriemodule auslesen",
+        "data": {
+          "read_battery": "Auslesen aktivieren"
+        }
       }
     },
     "error": {
@@ -47,6 +54,7 @@
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
+          "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
@@ -66,6 +74,12 @@
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter"
+        }
+      },
+      "battery": {
+        "title": "Batteriemodule auslesen",
+        "data": {
+          "read_battery": "Auslesen aktivieren"
         }
       }
     },
