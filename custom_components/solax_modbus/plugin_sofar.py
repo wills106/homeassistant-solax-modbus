@@ -3954,25 +3954,55 @@ class sofar_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
-        elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P
-        elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P 2nd type
-        elif seriesnumber.startswith('ZP1'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
-        elif seriesnumber.startswith('ZP2'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
-        elif seriesnumber.startswith('SM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
-        elif seriesnumber.startswith('ZM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxKTL ZCS HP, Single Phase
-        elif seriesnumber.startswith('SH3E'):  invertertype = PV | X1 | GEN # 4.6 KTLM-G3
-        elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
-        elif seriesnumber.startswith('ZS2E'):  invertertype = PV | X3 | GEN # 12 Azzurro KTL-V3
-        elif seriesnumber.startswith('SQ1ES1'):  invertertype = PV | X3 | GEN | MPPT10 # 100kW KTLX-G4
-        elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SH1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
+        if   seriesnumber.startswith('SP1ES120N6'):
+            invertertype = HYBRID | X3 # HYD20KTL-3P no PV
+            self.inverter_model = "HYD20KTL-3P"
+        elif seriesnumber.startswith('SP1'):
+            invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P
+            self.inverter_model = "HYDxxKTL-3P"
+        elif seriesnumber.startswith('SP2'):
+            invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P 2nd type
+            self.inverter_model = f"HYD{seriesnumber[6:8]}KTL-3P 2nd"
+        elif seriesnumber.startswith('ZP1'):
+            invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
+            self.inverter_model = "HYDxx ZSS"
+        elif seriesnumber.startswith('ZP2'):
+            invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
+            self.inverter_model = "HYDxx ZSS"
+        elif seriesnumber.startswith('SM2E'):
+            invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
+            self.inverter_model = "HYDxxxxES"
+        elif seriesnumber.startswith('ZM2E'):
+            invertertype = HYBRID | X1 | GEN # HYDxxxxKTL ZCS HP, Single Phase
+            self.inverter_model = "HYDxxxxKTL ZCS HP"
+        elif seriesnumber.startswith('SH3E'):
+            invertertype = PV | X1 | GEN # 4.6 KTLM-G3
+            self.inverter_model = "4.6 KTLM-G3"
+        elif seriesnumber.startswith('SS2E'):
+            invertertype = PV | X3 | GEN # 4.4 KTLX-G3
+            self.inverter_model = "4.4 KTLX-G3"
+        elif seriesnumber.startswith('ZS2E'):
+            invertertype = PV | X3 | GEN # 12 Azzurro KTL-V3
+            self.inverter_model = "12 Azzurro KTL-V3"
+        elif seriesnumber.startswith('SQ1ES1'):
+            invertertype = PV | X3 | GEN | MPPT10 # 100kW KTLX-G4
+            self.inverter_model = "100kW KTLX-G4"
+        elif seriesnumber.startswith('SA1'):
+            invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SB1'):
+            invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SC1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SD1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SF4'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SH1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SL1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SJ2'):
+            invertertype = PV | X3 # Older Probably 3phase
         #elif seriesnumber.startswith('SM1E'):  plugin_sofar_old
         #elif seriesnumber.startswith('ZM1E'):  plugin_sofar_old
 
@@ -4005,6 +4035,12 @@ class sofar_plugin(plugin_base):
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
+    def getSoftwareVersion(self, new_data):
+        return new_data.get("software_version", None)
+
+    def getHardwareVersion(self, new_data):
+        return new_data.get("hardware_version", None)
+
 plugin_instance = sofar_plugin(
     plugin_name = 'Sofar',
     plugin_manufacturer = 'Sofar Solar',
@@ -4015,6 +4051,5 @@ plugin_instance = sofar_plugin(
     BATTERY_CONFIG = battery_config(),
     block_size = 100,
     order16 = Endian.BIG,
-    order32 = Endian.BIG,
-    inverter_sw_version = "123"
+    order32 = Endian.BIG
     )

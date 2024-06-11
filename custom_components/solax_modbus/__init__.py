@@ -50,6 +50,7 @@ from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.transaction import ModbusAsciiFramer, ModbusRtuFramer
 
 from .const import (
+    INVERTER_IDENT,
     CONF_BAUDRATE,
     CONF_INTERFACE,
     CONF_MODBUS_ADDR,
@@ -326,12 +327,10 @@ class SolaXModbusHub:
             plugin_name = plugin_name + " " + self.inverterNameSuffix
 
         self.device_info = DeviceInfo(
-            hw_version = getattr(self.plugin,"inverter_hw_version",None),
-            identifiers = {(DOMAIN, self._name, "Inverter")},
+            identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
             manufacturer = self.plugin.plugin_manufacturer,
             model = getattr(self.plugin,"inverter_model",None),
             name = plugin_name,
-            sw_version = getattr(self.plugin,"inverter_sw_version",None),
             serial_number = self.seriesnumber,
         )
 
@@ -423,9 +422,16 @@ class SolaXModbusHub:
     async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
         interval = self.entity_group(sensor)
-        interval_group = self.groups.get(interval, self.empty_interval_group())
+        interval_group = self.groups.get(interval, None)
+        if interval_group is None:
+            return
+
         device_key = self.device_group_key(sensor.device_info)
-        grp = interval_group.device_groups.get(device_key, self.empty_device_group())
+        grp = interval_group.device_groups.get(device_key, None)
+        if grp is None:
+            return
+
+        _LOGGER.debug(f"remove sensor {sensor.entity_description.key}")
         grp.sensors.remove(sensor)
 
         if not grp.sensors:
@@ -433,8 +439,8 @@ class SolaXModbusHub:
 
             if not interval_group.device_groups:
                 # stop the interval timer upon removal of last device group from interval group
-                grp.unsub_interval_method()
-                grp.unsub_interval_method = None
+                interval_group.unsub_interval_method()
+                interval_group.unsub_interval_method = None
                 self.groups.pop(interval)
 
                 if not self.groups:

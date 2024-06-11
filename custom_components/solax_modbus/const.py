@@ -35,6 +35,7 @@ from homeassistant.const import (
 # ================================= Definitions for config_flow ==========================================================
 
 DOMAIN = "solax_modbus"
+INVERTER_IDENT = "inverter"
 DEFAULT_NAME = "SolaX"
 DEFAULT_INVERTER_NAME_SUFFIX = "Inverter"
 DEFAULT_SCAN_INTERVAL = 15
@@ -123,7 +124,7 @@ class plugin_base:
     auto_block_ignore_readerror: bool | None = None # if True or False, inserts a ignore_readerror statement for each block
     order16: int | None = None # Endian.BIG or Endian.LITTLE
     order32: int | None = None
-    inverter_sw_version: str | None = None
+    inverter_model: str = None
 
     def isAwake(self, datadict):
         return True # always awake by default
@@ -142,6 +143,15 @@ class plugin_base:
 
     def localDataCallback(self, hub): # called when local data is updated or on startup
         return True
+
+    def getModel(self, new_data):
+        return None
+
+    def getSoftwareVersion(self, new_data):
+        return None
+
+    def getHardwareVersion(self, new_data):
+        return None
 
 # =================================== base class for sensor entity descriptions =========================================
 

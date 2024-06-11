@@ -10,7 +10,7 @@ from copy import copy
 import homeassistant.util.dt as dt_util
 
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
-from .const import REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L, CONF_READ_BATTERY
+from .const import INVERTER_IDENT, REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L, CONF_READ_BATTERY
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -87,20 +87,26 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     plugin = hub.plugin #getPlugin(hub_name)
 
-    # async def readFollowUp(old_data, new_data, key_prefix=key_prefix, hub_name=hub_name):
-    #     dev_registry = dr.async_get(hass)
-    #     device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
-    #     if device is not None:
-    #         batt_pack_model = await battery_config.get_batt_pack_model(hub)
-    #         batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
-    #         dev_registry.async_update_device(
-    #             device.id,
-    #             sw_version=batt_pack_sw_version,
-    #             model=batt_pack_model)
-    #     return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
+    async def readFollowUp(old_data, new_data):
+        dev_registry = dr.async_get(hass)
+        device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, INVERTER_IDENT)})
+        if device is not None:
+            sw_version = plugin.getSoftwareVersion(new_data)
+            hw_version = plugin.getHardwareVersion(new_data)
+
+            if sw_version is not None or hw_version is not None:
+                dev_registry.async_update_device(
+                    device.id,
+                    sw_version=sw_version,
+                    hw_version=hw_version)
+        return True
+
+    inverter_name_suffix = ""
+    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
+        inverter_name_suffix = hub.inverterNameSuffix + " "
 
     entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
-                 plugin.SENSOR_TYPES, "Inverter ", "", None, None)
+                 plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
     if readBattery and plugin.BATTERY_CONFIG is not None:
@@ -135,7 +141,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 name = hub.plugin.plugin_name + f" Battery {batt_nr + 1}/{batt_pack_nr + 1}",
                 manufacturer = hub.plugin.plugin_manufacturer,
                 serial_number = batt_pack_serial,
-                via_device = (DOMAIN, hub_name, "Inverter"),
+                via_device = (DOMAIN, hub_name, INVERTER_IDENT),
             )
 
             name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr+1)).replace("{pack-nr}", str(batt_pack_nr+1))
