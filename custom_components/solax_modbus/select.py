@@ -52,6 +52,7 @@ class SolaXModbusSelect(SelectEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
+        self.entity_id = "select." + platform_name + "_" + select_info.key
         self._name = select_info.name
         self._key = select_info.key
         self._register = select_info.register
