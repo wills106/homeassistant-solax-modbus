@@ -1375,6 +1375,14 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes = HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name = "Energy Storage Control",
+        key = "energy_storage_control",
+        register = 33132,
+        unit = REGISTER_U16,
+        register_type = REG_INPUT,
+        allowedtypes = HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
         name = "Battery Voltage",
         key = "battery_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
