@@ -3661,6 +3661,17 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes = BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
+        name = "Pack Time",
+        key = "pack_time",
+        register = 0x9045,
+        unit = REGISTER_S32,
+        wordcount = 1,
+        scale = value_function_2byte_timestamp,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        allowedtypes = BAT_BTS,
+        icon = "mdi:clock",
+    ),
+    SofarModbusSensorEntityDescription(
         name = "Pack Serial Number",
         key = "pack_serial_number",
         register = 0x9048,
@@ -3819,7 +3830,7 @@ class battery_config(base_battery_config):
     async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        _LOGGER.info(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
+        _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
         await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
         await asyncio.sleep(0.3)
         self.selected_batt_nr = batt_nr
@@ -3872,11 +3883,11 @@ class battery_config(base_battery_config):
                 return False
 
     async def check_battery_on_end(self, hub, old_data, new_data, key_prefix, batt_nr: int, batt_pack_nr: int):
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
-        if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            batt_time = value_function_2byte_timestamp(decoder.decode_32bit_uint(), None, None)
-            _LOGGER.info(f"batt time: {batt_time}")
+        # inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
+        # if not inverter_data.isError():
+        #     decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+        #     batt_time = value_function_2byte_timestamp(decoder.decode_32bit_uint(), None, None)
+        #     _LOGGER.info(f"batt time: {batt_time}")
 
         faulty_nr = 0
         compare_value = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
@@ -3884,14 +3895,14 @@ class battery_config(base_battery_config):
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             new_value = decoder.decode_16bit_uint()
-            _LOGGER.info(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
+            _LOGGER.debug(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
             if new_value == compare_value:
                 serial_key = key_prefix + "pack_serial_number"
                 if not new_data.__contains__(serial_key):
                     _LOGGER.info(f"batt pack serial not received {serial_key}")
                     return False
                 serial = new_data[serial_key]
-                _LOGGER.info(f"batt pack serial: {serial}")
+                _LOGGER.debug(f"batt pack serial: {serial}")
                 return serial == self.batt_pack_serials[batt_nr][batt_pack_nr]
             else:
                 return False

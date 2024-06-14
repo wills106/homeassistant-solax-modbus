@@ -346,19 +346,22 @@ def value_function_2byte_timestamp(initval, descr, datadict):
     # Bit17-21: day, range 1-31
     # Bit22-25: month, range 1-12
     # Bit26-31: year, range 0-63 (from the year 2000)"
-    second = initval & 0b111111
-    initval = initval >> 6
-    minute = initval & 0b111111
-    initval = initval >> 6
-    hour = initval & 0b11111
-    initval = initval >> 5
-    day = initval & 0b11111
-    initval = initval >> 5
-    month = initval & 0b1111
-    initval = initval >> 4
-    year = initval & 0b111111
-    return f"{day}/{month}/{year} {hour}:{minute}:{second}"
-
+    try:
+        second = initval & 0b111111
+        initval = initval >> 6
+        minute = initval & 0b111111
+        initval = initval >> 6
+        hour = initval & 0b11111
+        initval = initval >> 5
+        day = initval & 0b11111
+        initval = initval >> 5
+        month = initval & 0b1111
+        initval = initval >> 4
+        year = initval & 0b111111
+        val = f"{day:02}/{month:02}/{year:02} {hour:02}:{minute:02}:{second:02}"
+        return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
+    except:   # noqa: E722
+        pass
 
 # ================================= Computed Time Values =================================================
 
