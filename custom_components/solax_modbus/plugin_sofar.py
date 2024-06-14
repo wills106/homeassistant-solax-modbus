@@ -3845,11 +3845,15 @@ class battery_config(base_battery_config):
         return self.batt_pack_serials[batt_nr][batt_pack_nr]
 
     async def get_batt_pack_model(self, hub):
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len)
-        if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            serial = str(decoder.decode_string(self.batt_pack_model_len * 2).decode("ascii"))
-            return serial
+        try:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                serial = str(decoder.decode_string(self.batt_pack_model_len * 2).decode("ascii"))
+                return serial
+        except:
+            _LOGGER.warn(f"Cannot read batt pack serial")
+            return None
 
     async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
         sw_version_key = key_prefix + "bms_version"
