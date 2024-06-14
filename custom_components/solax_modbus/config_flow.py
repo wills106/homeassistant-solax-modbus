@@ -189,7 +189,7 @@ async def _next_step_modbus(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
 
 async def _next_step_battery(user_input: Any) -> str:
-    _LOGGER.info(f"_next_step_battery: returning data: {user_input}")
+    _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
     if user_input["support-battery"]:
         return "battery"
     return None

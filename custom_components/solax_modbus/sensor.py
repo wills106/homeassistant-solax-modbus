@@ -170,7 +170,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
     for interval, interval_group in groups.items():
-        _LOGGER.info(f"{hub_name} group: {interval}")
+        _LOGGER.debug(f"{hub_name} group: {interval}")
         for device_name, device_group in interval_group.items():
             # sort the registers for this type of inverter
             holdingRegs = dict(sorted(device_group.holdingRegs.items()))

@@ -470,7 +470,7 @@ class SolaXModbusHub:
                         self.data[i] = 0
                     # self.data = {} # invalidate data - do we want this ??
 
-                _LOGGER.info(f"device group read done")
+                _LOGGER.debug(f"device group read done")
 
     @property
     def invertertype(self):
@@ -853,7 +853,7 @@ class SolaXModbusHub:
                 _LOGGER.info(f"device group read cancel")
                 return True
         else:
-            _LOGGER.info(f"device group inverter")
+            _LOGGER.debug(f"device group inverter")
 
         data = {}
         res = True
@@ -864,7 +864,7 @@ class SolaXModbusHub:
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
-                _LOGGER.info(f"device group check not success")
+                _LOGGER.warning(f"device group check not success")
                 return True
 
         for key, value in data.items():
