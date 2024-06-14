@@ -264,7 +264,7 @@ class SolaXModbusHub:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = asyncio.Lock()
         self._name = name
-        self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX, DEFAULT_INVERTER_NAME_SUFFIX)
+        self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self._modbus_addr = modbus_addr
         self._seriesnumber = "still unknown"
         self.interface = interface

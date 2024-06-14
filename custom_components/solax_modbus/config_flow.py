@@ -120,7 +120,7 @@ OPTION_SCHEMA = vol.Schema( {
         vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
-        vol.Optional(CONF_INVERTER_NAME_SUFFIX, default=DEFAULT_INVERTER_NAME_SUFFIX): str,
+        vol.Optional(CONF_INVERTER_NAME_SUFFIX): str,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
