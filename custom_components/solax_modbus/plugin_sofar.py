@@ -2255,7 +2255,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 1",
-        key = "battery_capacity_charge_1",
+        key = "battery_capacity_1",
         native_unit_of_measurement = PERCENTAGE,
         state_class = SensorStateClass.MEASUREMENT,
         # device_class = SensorDeviceClass.BATTERY,
@@ -2329,7 +2329,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 2",
-        key = "battery_capacity_charge_2",
+        key = "battery_capacity_2",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2406,7 +2406,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 3",
-        key = "battery_capacity_charge_3",
+        key = "battery_capacity_3",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2483,7 +2483,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 4",
-        key = "battery_capacity_charge_4",
+        key = "battery_capacity_4",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2560,7 +2560,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 5",
-        key = "battery_capacity_charge_5",
+        key = "battery_capacity_5",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2637,7 +2637,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 6",
-        key = "battery_capacity_charge_6",
+        key = "battery_capacity_6",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2714,7 +2714,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 7",
-        key = "battery_capacity_charge_7",
+        key = "battery_capacity_7",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2791,7 +2791,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 8",
-        key = "battery_capacity_charge_8",
+        key = "battery_capacity_8",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2832,7 +2832,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity Total",
-        key = "battery_capacity_charge_total",
+        key = "battery_capacity_total",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
