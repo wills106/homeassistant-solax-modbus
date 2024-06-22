@@ -7,6 +7,7 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
+          "inverter_name_suffix": "Name suffix for the inverter",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
@@ -30,6 +31,12 @@
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
         }
+      },
+      "battery": {
+        "title": "Read out battery modules",
+        "data": {
+          "read_battery": "Enable readout"
+        }
       }
     },
     "error": {
@@ -50,6 +57,7 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
+          "inverter_name_suffix": "Name suffix for the inverter",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
@@ -71,6 +79,12 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter"
+        }
+      },
+      "battery": {
+        "title": "Read out battery modules",
+        "data": {
+          "read_battery": "Enable readout"
         }
       }
     },

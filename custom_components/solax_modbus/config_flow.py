@@ -2,11 +2,13 @@ import ipaddress
 import re
 import logging
 import glob
+import importlib
 from collections.abc import Mapping
 from typing import Any, cast
 
 import voluptuous as vol
-from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult
+from types import ModuleType
 from homeassistant.const import (CONF_HOST, CONF_NAME, CONF_PORT,
                                  CONF_SCAN_INTERVAL,)
 from homeassistant.const import (MAJOR_VERSION, MINOR_VERSION, )
@@ -22,7 +24,8 @@ from homeassistant.helpers.schema_config_entry_flow import (
 
 from .const import (
 	DEFAULT_NAME,
-	DEFAULT_PORT,
+    DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_PORT,
 	DEFAULT_SCAN_INTERVAL,
     DEFAULT_INTERFACE,
     DEFAULT_SERIAL_PORT,
@@ -31,6 +34,7 @@ from .const import (
 	DOMAIN,
     DEFAULT_TCP_TYPE,
     CONF_TCP_TYPE,
+	CONF_INVERTER_NAME_SUFFIX,
 	CONF_READ_EPS,
     CONF_READ_DCB,
     CONF_READ_PM,
@@ -39,10 +43,12 @@ from .const import (
     CONF_MODBUS_ADDR,
     CONF_BAUDRATE,
     CONF_PLUGIN,
+    CONF_READ_BATTERY,
 	DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_READ_PM,
     DEFAULT_PLUGIN,
+    DEFAULT_READ_BATTERY,
     PLUGIN_PATH,
     CONF_SCAN_INTERVAL_MEDIUM,
     CONF_SCAN_INTERVAL_FAST
@@ -58,7 +64,7 @@ glob_plugin = {}
 
 def setPlugin(instancename, plugin):
     global glob_plugin
-    glob_plugin[instancename] = plugin 
+    glob_plugin[instancename] = plugin
 
 def getPlugin(instancename):
     return glob_plugin.get(instancename) """
@@ -71,7 +77,7 @@ def getPluginName(plugin_path):
 
 BAUDRATES = [
     selector.SelectOptionDict(value="9600",   label="9600"),
-    selector.SelectOptionDict(value="14400",  label="14400"),    
+    selector.SelectOptionDict(value="14400",  label="14400"),
     selector.SelectOptionDict(value="19200",  label="19200"),
     selector.SelectOptionDict(value="38400",  label="38400"),
     selector.SelectOptionDict(value="56000",  label="56000"),
@@ -90,7 +96,7 @@ PLUGINS = [ selector.SelectOptionDict(value=getPluginName(i), label=getPluginNam
 
 INTERFACES = [
     selector.SelectOptionDict(value="tcp",    label="TCP / Ethernet"),
-    selector.SelectOptionDict(value="serial", label="Serial"),    
+    selector.SelectOptionDict(value="serial", label="Serial"),
 ]
 
 CONFIG_SCHEMA = vol.Schema( {
@@ -101,6 +107,7 @@ CONFIG_SCHEMA = vol.Schema( {
         vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_INVERTER_NAME_SUFFIX, default=DEFAULT_INVERTER_NAME_SUFFIX): str,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
@@ -113,6 +120,7 @@ OPTION_SCHEMA = vol.Schema( {
         vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
+        vol.Optional(CONF_INVERTER_NAME_SUFFIX): str,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
@@ -127,6 +135,10 @@ TCP_SCHEMA = vol.Schema( {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
+    } )
+
+BATTERY_SCHEMA = vol.Schema( {
+        vol.Optional(CONF_READ_BATTERY, default=DEFAULT_READ_BATTERY): bool,
     } )
 
 async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any] :
@@ -146,11 +158,12 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
     # end of conversion
 
     _LOGGER.info(f"validating base config for {name}: pre: {user_input}")
-    #if getPlugin(name) or ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)): 
-    if ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)): 
+    #if getPlugin(name) or ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)):
+    if ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)):
         _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
         user_input[CONF_NAME] = user_input[CONF_PLUGIN] # getPluginName(user_input[CONF_PLUGIN])
-        raise SchemaFlowError("name_already_used") 
+        raise SchemaFlowError("name_already_used")
+
     return user_input
 
 async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> Any:
@@ -165,22 +178,45 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
         res = all(x and not disallowed.search(x) for x in host.split("."))
         if not res: raise SchemaFlowError("invalid_host") from e
     _LOGGER.info(f"validating host: returning data: {user_input}")
+
+    pluginconf_name = handler.options[CONF_PLUGIN]
+    plugin = await handler.parent_handler.hass.async_add_executor_job(_load_plugin, pluginconf_name)
+    user_input["support-battery"] = plugin.plugin_instance.BATTERY_CONFIG is not None
+
     return user_input
 
-async def _next_step(user_input: Any) -> str:
+async def _next_step_modbus(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
 
-if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)): 
+async def _next_step_battery(user_input: Any) -> str:
+    _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
+    if user_input["support-battery"]:
+        return "battery"
+    return None
+
+def _load_plugin(plugin_name:str) -> ModuleType:
+    _LOGGER.info("trying to load plugin - plugin_name: %s",plugin_name)
+    plugin = importlib.import_module(
+        f".plugin_{plugin_name}", "custom_components.solax_modbus"
+    )
+    if not plugin:
+        _LOGGER.error("Could not import plugin with name: %s",plugin_name)
+    return plugin
+
+
+if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)):
     _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
     CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "user":   SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step),
-        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
+        "user":    SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step_modbus),
+        "serial":  SchemaFlowFormStep(SERIAL_SCHEMA, next_step = _next_step_battery),
+        "tcp":     SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step = _next_step_battery),
+        "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "init":   SchemaFlowFormStep(OPTION_SCHEMA, next_step = _next_step),
-        "serial": SchemaFlowFormStep(SERIAL_SCHEMA),
-        "tcp":    SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host),
+        "init":    SchemaFlowFormStep(OPTION_SCHEMA, next_step = _next_step_modbus),
+        "serial":  SchemaFlowFormStep(SERIAL_SCHEMA, next_step = _next_step_battery),
+        "tcp":     SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step = _next_step_battery),
+        "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
 
 else: # for older versions - REMOVE SOON
@@ -189,6 +225,12 @@ else: # for older versions - REMOVE SOON
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     #Handle a config or options flow for Utility Meter.
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle a flow initialized by the user."""
+        errors = {}
 
     _LOGGER.info(f"starting configflow - domain = {DOMAIN}")
     config_flow  = CONFIG_FLOW

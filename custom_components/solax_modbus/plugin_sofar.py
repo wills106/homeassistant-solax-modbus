@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
@@ -50,6 +51,8 @@ MPPT6          = 0x100000
 MPPT8          = 0x200000
 MPPT10         = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+
+BAT_BTS        = 0x1000000
 
 ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -2238,7 +2241,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 1",
-        key = "Battery_power_1",
+        key = "battery_power_1",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2262,7 +2265,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 1",
-        key = "battery_capacity_charge_1",
+        key = "battery_capacity_1",
         native_unit_of_measurement = PERCENTAGE,
         state_class = SensorStateClass.MEASUREMENT,
         # device_class = SensorDeviceClass.BATTERY,
@@ -2311,7 +2314,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 2",
-        key = "Battery_power_2",
+        key = "battery_power_2",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2337,7 +2340,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 2",
-        key = "battery_capacity_charge_2",
+        key = "battery_capacity_2",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2389,7 +2392,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 3",
-        key = "Battery_power_3",
+        key = "battery_power_3",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2414,7 +2417,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 3",
-        key = "battery_capacity_charge_3",
+        key = "battery_capacity_3",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2466,7 +2469,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 4",
-        key = "Battery_power_4",
+        key = "battery_power_4",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2491,7 +2494,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 4",
-        key = "battery_capacity_charge_4",
+        key = "battery_capacity_4",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2543,7 +2546,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 5",
-        key = "Battery_power_5",
+        key = "battery_power_5",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2568,7 +2571,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 5",
-        key = "battery_capacity_charge_5",
+        key = "battery_capacity_5",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2620,7 +2623,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 6",
-        key = "Battery_power_6",
+        key = "battery_power_6",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2645,7 +2648,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 6",
-        key = "battery_capacity_charge_6",
+        key = "battery_capacity_6",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2697,7 +2700,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 7",
-        key = "Battery_power_7",
+        key = "battery_power_7",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2722,7 +2725,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 7",
-        key = "battery_capacity_charge_7",
+        key = "battery_capacity_7",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2774,7 +2777,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Power 8",
-        key = "Battery_power_8",
+        key = "battery_power_8",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2799,7 +2802,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity 8",
-        key = "battery_capacity_charge_8",
+        key = "battery_capacity_8",
         native_unit_of_measurement = PERCENTAGE,
         # device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -2840,7 +2843,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Capacity Total",
-        key = "battery_capacity_charge_total",
+        key = "battery_capacity_total",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -3003,7 +3006,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
     SofarModbusSensorEntityDescription(
         name = "Battery Output Energy Total",
-        key = "battery_Output_energy_total",
+        key = "battery_output_energy_total",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3575,6 +3578,387 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     ),
 ]
 
+
+BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
+    # SofarModbusSensorEntityDescription(
+    #     name = "total voltage",
+    #     key = "total_voltage",
+    #     native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+    #     device_class = SensorDeviceClass.VOLTAGE,
+    #     register = 0x900F,
+    #     scale = 0.1,
+    #     rounding = 1,
+    #     allowedtypes = BAT_BTS,
+    # ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "total current",
+    #     key = "total_current",
+    #     native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+    #     device_class = SensorDeviceClass.CURRENT,
+    #     register = 0x9010,
+    #     unit = REGISTER_S16,
+    #     scale = 0.1,
+    #     rounding = 1,
+    #     allowedtypes = BAT_BTS,
+    # ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "BMS Manufacture Name",
+    #     key = "bms_manufacture_name",
+    #     register = 0x9007,
+    #     newblock = True,
+    #     unit = REGISTER_STR,
+    #     wordcount=4,
+    #     entity_category = EntityCategory.DIAGNOSTIC,
+    #     allowedtypes = BAT_BTS,
+    # ),
+    SofarModbusSensorEntityDescription(
+        name = "BMS Version",
+        key = "bms_version",
+        native_unit_of_measurement = None,
+        state_class = SensorStateClass.MEASUREMENT,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        register = 0x900B,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Realtime Capacity",
+        key = "realtime_capacity",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 0x900E,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Total Voltage",
+        key = "total_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x900F,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Total Current",
+        key = "total_current",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x9010,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "SOC",
+        key = "soc",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 0x9012,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "SOH",
+        key = "soh",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 0x9013,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack ID",
+        key = "pack_id",
+        newblock = True,
+        register = 0x9044,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Time",
+        key = "pack_time",
+        register = 0x9045,
+        unit = REGISTER_S32,
+        wordcount = 1,
+        scale = value_function_2byte_timestamp,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        allowedtypes = BAT_BTS,
+        icon = "mdi:clock",
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Serial Number",
+        key = "pack_serial_number",
+        register = 0x9048,
+        newblock = True,
+        unit = REGISTER_STR,
+        wordcount=9,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "cell {} voltage",
+        key = "cell_{}_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x9051,
+        scale = 0.001,
+        rounding = 3,
+        allowedtypes = BAT_BTS,
+        value_series = 16
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "cell min voltage",
+        key = "cell_min_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x9069,
+        scale = 0.001,
+        rounding = 3,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "cell max voltage",
+        key = "cell_max_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x906A,
+        scale = 0.001,
+        rounding = 3,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Temperature {}",
+        key = "pack_temperature_{}",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x906B,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+        value_series = 4
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Temperature MOS",
+        key = "pack_temperature_mos",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x906F,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Temperature Env",
+        key = "pack_temperature_env",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x9070,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Current",
+        key = "pack_current",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x9071,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack remaining capacity",
+        key = "pack_remaining_capacity",
+        native_unit_of_measurement = "Ah",
+        register = 0x9072,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Full charge capacity",
+        key = "pack_full_charge_capacity",
+        native_unit_of_measurement = "Ah",
+        register = 0x9073,
+        scale = 0.1,
+        allowedtypes = BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name = "Pack Cycles",
+        key = "pack_cycles",
+        register = 0x9074,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        allowedtypes = BAT_BTS,
+    ),
+    # SofarModbusSensorEntityDescription(
+    #     name = "Pack SOC",
+    #     key = "pack_soc",
+    #     native_unit_of_measurement = PERCENTAGE,
+    #     device_class = SensorDeviceClass.BATTERY,
+    #     register = 0x907A,
+    #     allowedtypes = BAT_BTS,
+    # ),
+]
+
+@dataclass
+class battery_config(base_battery_config):
+    def __init__(
+        self
+    ):
+        self.battery_sensor_type = BATTERY_SENSOR_TYPES
+        self.battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
+        self.battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
+
+    bapack_number_address = 0x900d
+    bms_inquire_address = 0x9020
+    bms_check_address = 0x9044
+    batt_pack_serial_address = 0x9048
+    batt_pack_serial_len = 9
+    batt_pack_model_address = 0x9007
+    batt_pack_model_len = 4
+
+    number_cels_in_parallel: int = None # number of battery pack cells in parallel
+    number_strings: int = None # number of strings of all battery packs
+    batt_pack_serials = {}
+    selected_batt_nr: int = None
+    selected_batt_pack_nr: int = None
+
+    async def init_batt_pack(self, hub, serial_number):
+        if not self.batt_pack_serials.__contains__(self.selected_batt_nr):
+            self.batt_pack_serials[self.selected_batt_nr] = {}
+        self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
+
+    async def get_batt_pack_quantity(self, hub):
+        if self.number_cels_in_parallel == None:
+            await self._determine_bat_quantitys(hub)
+        return self.number_cels_in_parallel
+
+    async def get_batt_quantity(self, hub):
+        if self.number_strings == None:
+            await self._determine_bat_quantitys(hub)
+        return self.number_strings
+
+    async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
+        faulty_nr = 0
+        payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
+        _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
+        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+        await asyncio.sleep(0.3)
+        self.selected_batt_nr = batt_nr
+        self.selected_batt_pack_nr = batt_pack_nr
+        return True
+
+    async def get_batt_pack_serial(self, hub, batt_nr: int, batt_pack_nr: int):
+        if not self.batt_pack_serials.__contains__(batt_nr):
+            return None
+        if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+            return None
+        return self.batt_pack_serials[batt_nr][batt_pack_nr]
+
+    async def get_batt_pack_model(self, hub):
+        try:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                serial = str(decoder.decode_string(self.batt_pack_model_len * 2).decode("ascii"))
+                return serial
+        except:
+            _LOGGER.warn(f"Cannot read batt pack serial")
+            return None
+
+    async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
+        sw_version_key = key_prefix + "bms_version"
+        if not new_data.__contains__(sw_version_key):
+            _LOGGER.info(f"batt pack software version not received {sw_version_key}")
+            return None
+        return f"BMS: V{new_data[sw_version_key]}"
+
+
+    async def check_battery_on_start(self, hub, old_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+        if not self.batt_pack_serials.__contains__(batt_nr):
+            return False
+        if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+            return False
+
+        faulty_nr = 0
+        payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
+        for retry in range(0,10):
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                readed = decoder.decode_16bit_uint()
+                ok = readed == payload
+                if not ok:
+                    await asyncio.sleep(0.3)
+                else:
+                    return True
+
+            else:
+                _LOGGER.error(f"can't read batt check register")
+                return False
+
+    async def check_battery_on_end(self, hub, old_data, new_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+        # inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
+        # if not inverter_data.isError():
+        #     decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+        #     batt_time = value_function_2byte_timestamp(decoder.decode_32bit_uint(), None, None)
+        #     _LOGGER.info(f"batt time: {batt_time}")
+
+        faulty_nr = 0
+        compare_value = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            new_value = decoder.decode_16bit_uint()
+            _LOGGER.debug(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
+            if new_value == compare_value:
+                serial_key = key_prefix + "pack_serial_number"
+                if not new_data.__contains__(serial_key):
+                    _LOGGER.info(f"batt pack serial not received {serial_key}")
+                    return False
+                serial = new_data[serial_key]
+                _LOGGER.debug(f"batt pack serial: {serial}")
+                return serial == self.batt_pack_serials[batt_nr][batt_pack_nr]
+            else:
+                return False
+
+        return False
+
+    async def _determine_bat_quantitys(self, hub):
+        res = None
+        try:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
+            if not inverter_data.isError():
+                decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+                self.number_cels_in_parallel = decoder.decode_8bit_int()
+                self.number_strings = decoder.decode_8bit_int()
+        except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
+
+    async def init_batt_pack_serials(self, hub):
+        retry = 0
+        while retry < 5:
+            retry = retry + 1
+            for batt_nr in range(self.number_strings):
+                if not self.batt_pack_serials.__contains__(batt_nr):
+                    self.batt_pack_serials[batt_nr] = {}
+
+                for batt_pack_nr in range(self.number_cels_in_parallel):
+                    await self.select_battery(hub, batt_nr, batt_pack_nr)
+                    serial = await self._determinate_batt_pack_serial(hub)
+                    if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
+                        if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
+                            retry = retry - 1
+                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
+
+        _LOGGER.info(f"serials {self.batt_pack_serials}")
+
+    async def _determinate_batt_pack_serial(self, hub):
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            serial = str(decoder.decode_string(self.batt_pack_serial_len * 2).decode("ascii"))
+            return serial
+
 # ============================ plugin declaration =================================================
 
 @dataclass
@@ -3596,25 +3980,55 @@ class sofar_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
-        if   seriesnumber.startswith('SP1ES120N6'):  invertertype = HYBRID | X3 # HYD20KTL-3P no PV
-        elif seriesnumber.startswith('SP1'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P
-        elif seriesnumber.startswith('SP2'):  invertertype = HYBRID | X3 | GEN # HYDxxKTL-3P 2nd type
-        elif seriesnumber.startswith('ZP1'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
-        elif seriesnumber.startswith('ZP2'):  invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
-        elif seriesnumber.startswith('SM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
-        elif seriesnumber.startswith('ZM2E'):  invertertype = HYBRID | X1 | GEN # HYDxxxxKTL ZCS HP, Single Phase
-        elif seriesnumber.startswith('SH3E'):  invertertype = PV | X1 | GEN # 4.6 KTLM-G3
-        elif seriesnumber.startswith('SS2E'):  invertertype = PV | X3 | GEN # 4.4 KTLX-G3
-        elif seriesnumber.startswith('ZS2E'):  invertertype = PV | X3 | GEN # 12 Azzurro KTL-V3
-        elif seriesnumber.startswith('SQ1ES1'):  invertertype = PV | X3 | GEN | MPPT10 # 100kW KTLX-G4
-        elif seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
-        elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SH1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SL1'):  invertertype = PV | X3 # Older Probably 3phase
-        elif seriesnumber.startswith('SJ2'):  invertertype = PV | X3 # Older Probably 3phase
+        if   seriesnumber.startswith('SP1ES120N6'):
+            invertertype = HYBRID | X3 # HYD20KTL-3P no PV
+            self.inverter_model = "HYD20KTL-3P"
+        elif seriesnumber.startswith('SP1'):
+            invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P
+            self.inverter_model = "HYDxxKTL-3P"
+        elif seriesnumber.startswith('SP2'):
+            invertertype = HYBRID | X3 | GEN | BAT_BTS # HYDxxKTL-3P 2nd type
+            self.inverter_model = f"HYD{seriesnumber[6:8]}KTL-3P 2nd"
+        elif seriesnumber.startswith('ZP1'):
+            invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
+            self.inverter_model = "HYDxx ZSS"
+        elif seriesnumber.startswith('ZP2'):
+            invertertype = HYBRID | X3 | GEN # Azzurro HYDxx ZSS
+            self.inverter_model = "HYDxx ZSS"
+        elif seriesnumber.startswith('SM2E'):
+            invertertype = HYBRID | X1 | GEN # HYDxxxxES, Not actually X3, needs changing
+            self.inverter_model = "HYDxxxxES"
+        elif seriesnumber.startswith('ZM2E'):
+            invertertype = HYBRID | X1 | GEN # HYDxxxxKTL ZCS HP, Single Phase
+            self.inverter_model = "HYDxxxxKTL ZCS HP"
+        elif seriesnumber.startswith('SH3E'):
+            invertertype = PV | X1 | GEN # 4.6 KTLM-G3
+            self.inverter_model = "4.6 KTLM-G3"
+        elif seriesnumber.startswith('SS2E'):
+            invertertype = PV | X3 | GEN # 4.4 KTLX-G3
+            self.inverter_model = "4.4 KTLX-G3"
+        elif seriesnumber.startswith('ZS2E'):
+            invertertype = PV | X3 | GEN # 12 Azzurro KTL-V3
+            self.inverter_model = "12 Azzurro KTL-V3"
+        elif seriesnumber.startswith('SQ1ES1'):
+            invertertype = PV | X3 | GEN | MPPT10 # 100kW KTLX-G4
+            self.inverter_model = "100kW KTLX-G4"
+        elif seriesnumber.startswith('SA1'):
+            invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SB1'):
+            invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('SC1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SD1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SF4'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SH1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SL1'):
+            invertertype = PV | X3 # Older Probably 3phase
+        elif seriesnumber.startswith('SJ2'):
+            invertertype = PV | X3 # Older Probably 3phase
         #elif seriesnumber.startswith('SM1E'):  plugin_sofar_old
         #elif seriesnumber.startswith('ZM1E'):  plugin_sofar_old
 
@@ -3647,6 +4061,12 @@ class sofar_plugin(plugin_base):
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
+    def getSoftwareVersion(self, new_data):
+        return new_data.get("software_version", None)
+
+    def getHardwareVersion(self, new_data):
+        return new_data.get("hardware_version", None)
+
 plugin_instance = sofar_plugin(
     plugin_name = 'Sofar',
     plugin_manufacturer = 'Sofar Solar',
@@ -3654,7 +4074,8 @@ plugin_instance = sofar_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
+    BATTERY_CONFIG = battery_config(),
     block_size = 100,
     order16 = Endian.BIG,
-    order32 = Endian.BIG,
+    order32 = Endian.BIG
     )
