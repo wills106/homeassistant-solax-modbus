@@ -209,8 +209,8 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
             else:
                 newdescr = copy(sensor_description)
-                newdescr.name = name_prefix + newdescr.name
-                newdescr.key = key_prefix + newdescr.key
+                newdescr.name = newdescr.name
+                newdescr.key = newdescr.key
                 entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103

@@ -165,6 +165,54 @@ async def _read_model_power(hub, address=0xBA):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Power: {res}")
     return res
 
+async def _read_firmware_arm_mic(hub, address=0x353):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM: {res}")
+    return res
+
+async def _read_firmware_dsp_mic(hub, address=0x352):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware DSP failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware DSP: {res}")
+    return res
+
+async def _read_firmware_arm_mic_g4(hub, address=0x390):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM: {res}")
+    return res
+
+async def _read_firmware_dsp_mic_g4(hub, address=0x394):
+    res = None
+    try:
+        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_16bit_uint()
+            hub._invertertype = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware DSP failed at 0x{address:x}", exc_info=True)
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware DSP: {res}")
+    return res
+
 # =================================================================================================
 
 @dataclass
@@ -6976,6 +7024,12 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
         elif seriesnumber.startswith('MPT10T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT12T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT15T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT17T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT20T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT25T'):  invertertype = MIC | GEN2 | MPPT3 | X3 # MIC PRO X3
+        elif seriesnumber.startswith('MPT30T'):  invertertype = MIC | GEN2 | MPPT3 | X3 # MIC PRO X3
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN2 | MPPT3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
         else:
@@ -7045,6 +7099,43 @@ class solax_plugin(plugin_base):
                         self.inverter_hw_version = f"Gen5"
                         self.inverter_model = f"{model_type}{model_style}{model_power}"
                         self.inverter_sw_version = f"DSP {firmware_dsp} ARM v{firmware_arm_major}.{firmware_arm}"
+                elif invertertype & GEN:
+                    if not seriesnumber.startswith('MU802T'):
+                        firmware_arm = await _read_firmware_arm_mic(hub)
+                        firmware_dsp = await _read_firmware_dsp_mic(hub)
+                        self.inverter_hw_version = f"Gen1"
+                        self.inverter_model = f"X3 MIC/MIC PRO"
+                        self.inverter_sw_version = f"DSP v1.{firmware_dsp} ARM v1.{firmware_arm}"
+                    else:
+                        self.inverter_hw_version = f"Gen1"
+                        self.inverter_model = f"X3 MIC/MIC PRO"
+                        self.inverter_sw_version = f"DSP Unknown ARM Unknown"
+                elif invertertype & GEN2:
+                    if invertertype & X1:
+                        firmware_arm = await _read_firmware_arm_mic(hub)
+                        firmware_dsp = await _read_firmware_dsp_mic(hub)
+                        self.inverter_hw_version = f"Gen3"
+                        self.inverter_model = f"X1 Air/Boost/Mini"
+                        self.inverter_sw_version = f"DSP v2.{firmware_dsp} ARM v1.{firmware_arm}"
+                    elif invertertype & X3:
+                        firmware_arm = await _read_firmware_arm_mic(hub)
+                        firmware_dsp = await _read_firmware_dsp_mic(hub)
+                        self.inverter_hw_version = f"Gen2"
+                        self.inverter_model = f"X3 MIC/MIC PRO"
+                        self.inverter_sw_version = f"DSP v1.{firmware_dsp} ARM v1.{firmware_arm}"
+                elif invertertype & GEN4:
+                    if invertertype & X1:
+                        firmware_arm = await _read_firmware_arm_mic_g4(hub)
+                        firmware_dsp = await _read_firmware_dsp_mic_g4(hub)
+                        self.inverter_hw_version = f"Gen4"
+                        self.inverter_model = f"X1 Air/Boost/Mini"
+                        self.inverter_sw_version = f"DSP v{firmware_dsp} ARM v{firmware_arm}"
+            else:
+                firmware_arm = await _read_firmware_arm(hub)
+                firmware_dsp = await _read_firmware_dsp(hub)
+                self.inverter_hw_version = f"Gen3"
+                self.inverter_model = f"X1-Hybrid"
+                self.inverter_sw_version = f"DSP v3.{firmware_dsp} ARM v3.{firmware_arm}"
         
         return invertertype
 
@@ -7062,6 +7153,12 @@ class solax_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
+
+#    def getSoftwareVersion(self, new_data):
+#        return self.inverter_sw_version
+
+#    def getHardwareVersion(self, new_data):
+#        return self.inverter_hw_version
 
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured
