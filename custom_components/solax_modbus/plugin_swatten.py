@@ -600,10 +600,13 @@ class swatten_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} model type : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
+
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):

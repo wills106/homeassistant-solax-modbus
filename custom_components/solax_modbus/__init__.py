@@ -24,6 +24,9 @@ from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceInfo
+
+from .sensor import SolaXModbusSensor
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -48,6 +51,7 @@ from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.transaction import ModbusAsciiFramer, ModbusRtuFramer
 
 from .const import (
+    INVERTER_IDENT,
     CONF_BAUDRATE,
     CONF_INTERFACE,
     CONF_MODBUS_ADDR,
@@ -56,6 +60,8 @@ from .const import (
     CONF_READ_EPS,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
+    CONF_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_BAUDRATE,
     DEFAULT_INTERFACE,
     DEFAULT_MODBUS_ADDR,
@@ -259,18 +265,24 @@ class SolaXModbusHub:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5)
         self._lock = asyncio.Lock()
         self._name = name
+        self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self._modbus_addr = modbus_addr
         self._seriesnumber = "still unknown"
         self.interface = interface
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
         self.groups = {} #group info, below
-        self._empty_group = lambda: SimpleNamespace(
+        self.empty_interval_group = lambda: SimpleNamespace(
             interval = 0,
-            _unsub_interval_method = None,
-            _sensors = [],
+            unsub_interval_method = None,
+            device_groups = {}
+        )
+        self.empty_device_group = lambda: SimpleNamespace(
+            sensors = [],
             inputBlocks = {},
-            holdingBlocks = {}
+            holdingBlocks = {},
+            readPreparation = None, # function to call before read group
+            readFollowUp = None, # function to call after read group
         )
         self.data = {
             "_repeatUntil": {}
@@ -296,13 +308,43 @@ class SolaXModbusHub:
         self.localsLoaded = False
         self.config = config
         self.entry = entry
+        self.device_info = None
+
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
-    async def async_init(self, *args: Any) -> None:
-        await self._check_connection()
-        self._invertertype = await self.plugin.async_determineInverterType(
-            self, self.config
-        )
+    async def async_init(self, *args: Any) -> None:  # noqa: D102
+        while self._invertertype in (None, 0):
+            await self._check_connection()
+            self._invertertype = await self.plugin.async_determineInverterType(
+                self, self.config
+            )
+
+            if self._invertertype == 0:
+                _LOGGER.info("next inverter check in 10sec")
+                await asyncio.sleep(10)
+
+        plugin_name = self.plugin.plugin_name
+        if self.inverterNameSuffix is not None and self.inverterNameSuffix != "":
+            plugin_name = plugin_name + " " + self.inverterNameSuffix
+        
+        if plugin_name != 'Sofar':
+            self.device_info = DeviceInfo(
+                identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
+                manufacturer = self.plugin.plugin_manufacturer,
+                model = getattr(self.plugin,"inverter_model",None),
+                name = plugin_name,
+                serial_number = self.seriesnumber,
+                hw_version = getattr(self.plugin,"inverter_hw_version",None),
+                sw_version = getattr(self.plugin,"inverter_sw_version",None),
+            )
+        else:
+            self.device_info = DeviceInfo(
+                identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
+                manufacturer = self.plugin.plugin_manufacturer,
+                model = getattr(self.plugin,"inverter_model",None),
+                name = plugin_name,
+                serial_number = self.seriesnumber,
+            )
 
         for component in PLATFORMS:
             self._hass.async_create_task(
@@ -360,55 +402,87 @@ class SolaXModbusHub:
 
         return g
 
+    def device_group_key(self, device_info: DeviceInfo):
+        key = ""
+        for identifier in device_info["identifiers"]:
+            if identifier[0] != DOMAIN:
+                continue
+            key = identifier[1] + "_" + identifier[2]
+
+        return key
+
+
     @callback
-    async def async_add_solax_modbus_sensor(self, sensor):
+    async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         interval = self.entity_group(sensor)
-        grp = self.groups.setdefault(interval, self._empty_group())
-        if not grp._sensors:
-            grp.interval = interval
-            await self._check_connection()
+        interval_group = self.groups.setdefault(interval, self.empty_interval_group())
+        if not interval_group.device_groups:
+            interval_group.interval = interval
             async def _refresh(_now: Optional[int] = None) -> None:
-                await self.async_refresh_modbus_data(grp, _now)
-            grp._unsub_interval_method = async_track_time_interval(
+                await self._check_connection()
+                await self.async_refresh_modbus_data(interval_group, _now)
+            interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval))
-        grp._sensors.append(sensor)
+
+        device_key = self.device_group_key(sensor.device_info)
+        grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
+        grp.sensors.append(sensor)
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
         interval = self.entity_group(sensor)
-        grp = self.groups.get(interval, self._empty_group())
-        grp._sensors.remove(sensor)
+        interval_group = self.groups.get(interval, None)
+        if interval_group is None:
+            return
 
-        if not grp._sensors:
-            """stop the interval timer upon removal of last sensor"""
-            grp._unsub_interval_method()
-            grp._unsub_interval_method = None
-            await self.async_close()
+        device_key = self.device_group_key(sensor.device_info)
+        grp = interval_group.device_groups.get(device_key, None)
+        if grp is None:
+            return
 
-    async def async_refresh_modbus_data(self, group, _now: Optional[int] = None) -> None:
+        _LOGGER.debug(f"remove sensor {sensor.entity_description.key}")
+        grp.sensors.remove(sensor)
+
+        if not grp.sensors:
+            interval_group.device_groups.pop(device_key)
+
+            if not interval_group.device_groups:
+                # stop the interval timer upon removal of last device group from interval group
+                interval_group.unsub_interval_method()
+                interval_group.unsub_interval_method = None
+                self.groups.pop(interval)
+
+                if not self.groups:
+                    await self.async_close()
+
+    async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
         self.cyclecount = self.cyclecount + 1
-        if not group._sensors:
+        if not interval_group.device_groups:
             return
+
         if (
             self.cyclecount % self.slowdown
         ) == 0:  # only execute once every slowdown count
-            update_result = await self.async_read_modbus_data(group)
-            if update_result:
-                self.slowdown = 1  # return to full polling after succesfull cycle
-                for sensor in group._sensors:
-                    sensor.modbus_data_updated()
-            else:
-                _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
-                self.slowdown = 10
-                for i in self.sleepnone:
-                    self.data.pop(i, None)
-                for i in self.sleepzero:
-                    self.data[i] = 0
-                # self.data = {} # invalidate data - do we want this ??
+            for group in interval_group.device_groups.values():
+                update_result = await self.async_read_modbus_data(group)
+                if update_result:
+                    self.slowdown = 1  # return to full polling after succesfull cycle
+                    for sensor in group.sensors:
+                        sensor.modbus_data_updated()
+                else:
+                    _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
+                    self.slowdown = 10
+                    for i in self.sleepnone:
+                        self.data.pop(i, None)
+                    for i in self.sleepzero:
+                        self.data[i] = 0
+                    # self.data = {} # invalidate data - do we want this ??
+
+                _LOGGER.debug(f"device group read done")
 
     @property
     def invertertype(self):
@@ -459,7 +533,14 @@ class SolaXModbusHub:
             self._client.comm_params.port,
         )
 
-        result = await self._client.connect()
+        result: bool
+        for retry in range(2):
+            result = await self._client.connect()
+            if not result:
+                _LOGGER.info("Connect to Inverter attempt %d of 3 is not successful", retry+1)
+                await asyncio.sleep(1)
+            else:
+                break
 
         if result:
             _LOGGER.info(
@@ -507,7 +588,7 @@ class SolaXModbusHub:
 
     async def async_write_register(self, unit, address, payload):
         """Write register."""
-        # awake = self.awakeplugin(self.data)
+        await self.async_connect()
         awake = self.plugin.isAwake(self.data)
         if awake:
             return await self.async_lowlevel_write_register(unit, address, payload)
@@ -632,7 +713,7 @@ class SolaXModbusHub:
             res = False
         return res
 
-    def treat_address(self, decoder, descr, initval=0):
+    def treat_address(self, data, decoder, descr, initval=0):
         return_value = None
         val = None
         if self.cyclecount < 5:
@@ -691,7 +772,7 @@ class SolaXModbusHub:
         elif type(descr.scale) is dict:  # translate int to string
             return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
-            return_value = descr.scale(val, descr, self.data)
+            return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
             try:
                 return_value = round(val * descr.scale, descr.rounding)
@@ -699,11 +780,11 @@ class SolaXModbusHub:
                 return_value = val  # probably a REGISTER_WORDS instance
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (self.tmpdata_expiry.get(descr.key, 0) == 0) and (
-            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)
+            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(data)
         ):
-            self.data[descr.key] = return_value  # case prevent_update number
+            data[descr.key] = return_value  # case prevent_update number
 
-    async def async_read_modbus_block(self, block, typ):
+    async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
         if self.cyclecount < 5:
             _LOGGER.debug(
@@ -743,10 +824,10 @@ class SolaXModbusHub:
                 if type(descr) is dict:  #  set of byte values
                     val = decoder.decode_16bit_uint()
                     for k in descr:
-                        self.treat_address(decoder, descr[k], val)
+                        self.treat_address(data, decoder, descr[k], val)
                     prevreg = reg + 1
                 else:  # single value
-                    self.treat_address(decoder, descr)
+                    self.treat_address(data, decoder, descr)
                     if descr.unit in (
                         REGISTER_S32,
                         REGISTER_U32,
@@ -774,7 +855,7 @@ class SolaXModbusHub:
                         if (descr.ignore_readerror != True) and (
                             descr.ignore_readerror != False
                         ):
-                            self.data[
+                            data[
                                 descr.key
                             ] = descr.ignore_readerror  # return something static
                 return True
@@ -787,11 +868,28 @@ class SolaXModbusHub:
                 return False
 
     async def async_read_modbus_registers_all(self, group):
+        if group.readPreparation is not None:
+            if not await group.readPreparation(self.data):
+                _LOGGER.info(f"device group read cancel")
+                return True
+        else:
+            _LOGGER.debug(f"device group inverter")
+
+        data = {}
         res = True
         for block in group.holdingBlocks:
-            res = res and await self.async_read_modbus_block(block, "holding")
+            res = res and await self.async_read_modbus_block(data, block, "holding")
         for block in group.inputBlocks:
-            res = res and await self.async_read_modbus_block(block, "input")
+            res = res and await self.async_read_modbus_block(data, block, "input")
+
+        if group.readFollowUp is not None:
+            if not await group.readFollowUp(self.data, data):
+                _LOGGER.warning(f"device group check not success")
+                return True
+
+        for key, value in data.items():
+            self.data[key] = value
+
         if self.localsUpdated:
             self.saveLocalData()
             self.plugin.localDataCallback(self)

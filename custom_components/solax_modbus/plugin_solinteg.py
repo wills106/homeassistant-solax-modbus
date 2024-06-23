@@ -1221,28 +1221,31 @@ class solinteg_plugin(plugin_base):
         else : #bh == 31, other 30...
             mppt = 2
             invertertype = invertertype | MPPT2
-        #prepare mppt list
-        mppt_mask = 2**mppt - 1 #mask
-        hub.data["mppt_count"] = mppt
-        hub.data["mppt_mask"] = mppt_mask
-        hub.data["mppt_list"] = []
-        sel_dd = {0: "off", mppt_mask: "on"}
-        for i in range(mppt):
-            mx = f"mppt{i+1}"
-            hub.data["mppt_list"].append(mx)
-            sel_dd[2**i] = mx
-        #set the options
-        for sel in self.SELECT_TYPES:
-            if sel.key == "shadow_scan":
-                sel.option_dict = sel_dd
-                break
+        
+        if invertertype > 0:
+            #prepare mppt list
+            mppt_mask = 2**mppt - 1 #mask
+            hub.data["mppt_count"] = mppt
+            hub.data["mppt_mask"] = mppt_mask
+            hub.data["mppt_list"] = []
+            sel_dd = {0: "off", mppt_mask: "on"}
+            for i in range(mppt):
+                mx = f"mppt{i+1}"
+                hub.data["mppt_list"].append(mx)
+                sel_dd[2**i] = mx
+            #set the options
+            for sel in self.SELECT_TYPES:
+                if sel.key == "shadow_scan":
+                    sel.option_dict = sel_dd
+                    break
 
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS 
-        if read_dcb: invertertype = invertertype | DCB
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            if read_eps: invertertype = invertertype | EPS 
+            if read_dcb: invertertype = invertertype | DCB
 
-        _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+            _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+        
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
