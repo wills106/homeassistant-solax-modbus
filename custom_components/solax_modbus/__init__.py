@@ -23,6 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.exceptions import HomeAssistantError
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -540,7 +541,11 @@ class SolaXModbusHub:
         payload = builder.to_registers()
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.write_registers(address, payload, **kwargs)
+            try:
+                resp = await self._client.write_registers(address, payload, **kwargs)
+            except (ConnectionException, ModbusIOException) as e:
+                original_message = str(e)
+                raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
         return resp
 
     async def async_write_registers_multi(
@@ -600,7 +605,11 @@ class SolaXModbusHub:
             )
             async with self._lock:
                 await self._check_connection()
-                resp = await self._client.write_registers(address, payload, **kwargs)
+                try:
+                    resp = await self._client.write_registers(address, payload, **kwargs)
+                except (ConnectionException, ModbusIOException) as e:
+                    original_message = str(e)
+                    raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
             return resp
         else:
             _LOGGER.error(
