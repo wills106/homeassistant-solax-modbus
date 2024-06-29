@@ -200,24 +200,22 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
             # apply scale exceptions early
-            if hub.plugin.plugin_name != 'Sofar':
-                newdescr = copy(sensor_description)
-                newdescr.name = newdescr.name
-                newdescr.key = newdescr.key
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
-            else:
-                if sensor_description.value_series is not None:
-                    for serie_value in range(sensor_description.value_series):
-                        newdescr = copy(sensor_description)
-                        newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
-                        newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
-                        newdescr.register = sensor_description.register + serie_value
-                        entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
-                else:
+            if sensor_description.value_series is not None:
+                for serie_value in range(sensor_description.value_series):
                     newdescr = copy(sensor_description)
-                    newdescr.name = name_prefix + newdescr.name
-                    newdescr.key = key_prefix + newdescr.key
+                    newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
+                    newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
+                    newdescr.register = sensor_description.register + serie_value
                     entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+            else:
+                newdescr = copy(sensor_description)
+                try:
+                   newdescr.name = name_prefix + newdescr.name
+                except:
+                   newdescr.name = newdescr.name
+                   
+                newdescr.key = key_prefix + newdescr.key
+                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
     if newdescr.read_scale_exceptions:
