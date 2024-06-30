@@ -872,10 +872,10 @@ class SolaXModbusHub:
             res = res and await self.async_read_modbus_block(data, block, "input")
 
         if self.localsUpdated:
-            self.saveLocalData()
+            await self._hass.async_add_executor_job(self.saveLocalData)
             self.plugin.localDataCallback(self)
         if not self.localsLoaded:
-            self.loadLocalData()
+            await self._hass.async_add_executor_job(self.loadLocalData)
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
             data[descr.key] = descr.value_function(0, descr, data)
