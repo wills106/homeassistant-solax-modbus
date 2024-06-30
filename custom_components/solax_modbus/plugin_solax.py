@@ -524,7 +524,7 @@ MAX_EXPORT = [
 EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4', 10 ),     # assuming all Gen4s
     ('H34', 10),     # assuming all Gen4s
-    ('H3UE', 10),  # Issue #339, 922
+    ('H3UE10', 10),  # Issue #339
     ('H4372A', 1),   # Issue #857
     ('H4502A', 1),   # Issue #857
     ('H4502T', 1),   # Issue #418
@@ -6295,6 +6295,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:run",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Measured Power",
+        key = "measured_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x410,
+        register_type = REG_INPUT,
+        allowedtypes = MIC | GEN | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Measured Power L1",
         key = "measured_power_l1",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6578,8 +6588,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power 2",
-        key = "measured_power_2",
+        name = "Measured Power",
+        key = "measured_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
