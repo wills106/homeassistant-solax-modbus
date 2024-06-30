@@ -272,6 +272,39 @@ def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
 def value_function_battery_power_charge(initval, descr, datadict):
     return  datadict.get('battery_1_power_charge', 0) + datadict.get('battery_2_power_charge',0)
 
+def value_function_hardware_version_g1(initval, descr, datadict):
+    return  f"Gen1"
+
+def value_function_hardware_version_g2(initval, descr, datadict):
+    return  f"Gen2"
+
+def value_function_hardware_version_g3(initval, descr, datadict):
+    return  f"Gen3"
+
+def value_function_hardware_version_g4(initval, descr, datadict):
+    return  f"Gen4"
+
+def value_function_hardware_version_g5(initval, descr, datadict):
+    return  f"Gen5"
+
+def value_function_software_version_g2(initval, descr, datadict):
+    return  f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
+
+def value_function_software_version_g3(initval, descr, datadict):
+    return  f"DSP v3.{datadict.get('firmware_dsp')} ARM v3.{datadict.get('firmware_arm')}"
+
+def value_function_software_version_g4(initval, descr, datadict):
+    return  f"DSP v1.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
+
+def value_function_software_version_g5(initval, descr, datadict):
+    return  f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
+
+def value_function_software_version_air_g3(initval, descr, datadict):
+    return  f"DSP v2.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
+
+def value_function_software_version_air_g4(initval, descr, datadict):
+    return  f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
+
 # for testing prevent_update only
 #def value_function_test_prevent(initval, descr, datadict):
 #    _LOGGER.warning(f"succeeded test prevent_update - datadict: {datadict['dummy_timed_charge_start_h']}")
@@ -476,7 +509,7 @@ MAX_EXPORT = [
 EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4', 10 ),     # assuming all Gen4s
     ('H34', 10),     # assuming all Gen4s
-    ('H3UE10', 10),  # Issue #339
+    ('H3UE', 10),  # Issue #339, 922
     ('H4372A', 1),   # Issue #857
     ('H4502A', 1),   # Issue #857
     ('H4502T', 1),   # Issue #418
@@ -2202,13 +2235,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:dip-switch",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Inverter DSP firmware minor version",
-        key = "firmware_DSP_minor_version",
-        entity_registry_enabled_default = False,
+        key = "firmware_dsp",
         register = 0x7D,
-        allowedtypes = AC | HYBRID | GEN5,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        allowedtypes = AC | HYBRID,
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter DSP hardware version",
@@ -2229,13 +2259,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Inverter ARM firmware major version",
-        key = "firmware_ARM_major_version",
-        entity_registry_enabled_default = False,
+        key = "firmware_arm_major",
         register = 0x80,
         allowedtypes = AC | HYBRID | GEN5,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Firmware Version Modbus TCP Major",
@@ -2256,13 +2283,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Inverter ARM firmware minor version",
-        key = "firmware_ARM_minor_version",
-        entity_registry_enabled_default = False,
-        allowedtypes = AC | HYBRID | GEN5,
+        key = "firmware_arm",
         register = 0x83,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        allowedtypes = AC | HYBRID,
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Bootloader Version",
@@ -5882,6 +5906,30 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g2,
+        allowedtypes = AC | HYBRID | GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g3,
+        allowedtypes = AC | HYBRID | GEN3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g4,
+        allowedtypes = AC | HYBRID | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g5,
+        allowedtypes = AC | HYBRID | GEN5,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "House Load",
         key = "house_load",
         value_function = value_function_house_load,
@@ -5922,6 +5970,30 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-clock",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_g2,
+        allowedtypes = AC | HYBRID | GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_g3,
+        allowedtypes = AC | HYBRID | GEN3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_g4,
+        allowedtypes = AC | HYBRID | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_g5,
+        allowedtypes = AC | HYBRID | GEN5,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Total Battery Power Charge",
         key = "battery_power_charge",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -5942,18 +6014,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # Holding Registers
 #
 #####
-    SolaXModbusSensorEntityDescription(
-        name = "Series Number",
-        key = "seriesnumber",
-        register = 0x300,
-        unit = REGISTER_STR,
-        wordcount=7,
-        scale = value_function_byteswapserial,
-        entity_registry_enabled_default = False,
-        allowedtypes = MIC,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
     SolaXModbusSensorEntityDescription(
         name = "RTC",
         key = "rtc",
@@ -5976,46 +6036,30 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version DSP",
-        key = "firmwareversion_dsp",
-        entity_registry_enabled_default = False,
+        key = "firmware_dsp",
         register = 0x33D,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-        blacklist=('MU802T',)
+        blacklist=('MU802T',),
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version ARM",
-        key = "firmwareversion_arm",
-        entity_registry_enabled_default = False,
+        key = "firmware_arm",
         register = 0x33E,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-        blacklist=('MU802T',)
+        blacklist=('MU802T',),
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version DSP",
-        key = "firmwareversion_dsp",
-        entity_registry_enabled_default = False,
+        key = "firmware_dsp",
         register = 0x352,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version ARM",
-        key = "firmwareversion_arm",
-        entity_registry_enabled_default = False,
+        key = "firmware_arm",
         register = 0x353,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        internal = True,
     ),
 #####
 #
@@ -6245,16 +6289,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes = MIC | GEN | GEN2,
         icon = "mdi:run",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Measured Power",
-        key = "measured_power",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x410,
-        register_type = REG_INPUT,
-        allowedtypes = MIC | GEN | X1,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Measured Power L1",
@@ -6540,8 +6574,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power",
-        key = "measured_power",
+        name = "Measured Power 2",
+        key = "measured_power_2",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -6604,24 +6638,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version ARM",
-        key = "firmwareversion_arm",
-        entity_registry_enabled_default = False,
+        key = "firmware_arm",
         register = 0x390,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Firmware Version DSP",
-        key = "firmwareversion_dsp",
-        entity_registry_enabled_default = False,
+        key = "firmware_dsp",
         register = 0x394,
-        #scale = valuefunction_firmware_g3,
         allowedtypes = MIC | GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
+        internal = True,
     ),
 #####
 #
@@ -6872,6 +6898,30 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g3,
+        allowedtypes = MIC | GEN2 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g4,
+        allowedtypes = MIC | GEN4 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g1,
+        allowedtypes = MIC | GEN | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Hardware Version",
+        key = "hardware_version",
+        value_function = value_function_hardware_version_g2,
+        allowedtypes = MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "PV Power Total",
         key = "pv_power_total",
         value_function= value_function_pv_power_total,
@@ -6880,6 +6930,25 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = MIC | GEN4,
         icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_air_g3,
+        allowedtypes = MIC | GEN2 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_air_g4,
+        allowedtypes = MIC | GEN4 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        value_function = value_function_software_version_g4,
+        allowedtypes = MIC | GEN | GEN2 | X3,
+        blacklist=('MU802T',)
     ),
 ]
 
@@ -6907,75 +6976,234 @@ class solax_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
-        if   seriesnumber.startswith('L30'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
-        elif seriesnumber.startswith('U30'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
-        elif seriesnumber.startswith('L37'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3.7kW Untested
-        elif seriesnumber.startswith('U37'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
-        elif seriesnumber.startswith('L50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 5kW
-        elif seriesnumber.startswith('U50'):  invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
-        elif seriesnumber.startswith('H1E'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
-        elif seriesnumber.startswith('H1I'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-        elif seriesnumber.startswith('HCC'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-        elif seriesnumber.startswith('HUE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
-        elif seriesnumber.startswith('XRE'):   invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
-        elif seriesnumber.startswith('XAC'):   invertertype = AC | GEN3 | X1 # X1AC
-        elif seriesnumber.startswith('H3DE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-        elif seriesnumber.startswith('H3E'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-        elif seriesnumber.startswith('H3LE'):   invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-        elif seriesnumber.startswith('H3PE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-        elif seriesnumber.startswith('H3UE'):  invertertype = HYBRID | GEN3 | X3 # Gen3 X3
-        elif seriesnumber.startswith('F3D'):   invertertype = AC | GEN3 | X3 # RetroFit
-        elif seriesnumber.startswith('F3E'):   invertertype = AC | GEN3 | X3 # RetroFit
-        elif seriesnumber.startswith('H43'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
-        elif seriesnumber.startswith('H44'):   invertertype = HYBRID | GEN4 | X1 # Gen4 X1 alt 5kW
-        elif seriesnumber.startswith('H450'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
-        elif seriesnumber.startswith('H460'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
-        elif seriesnumber.startswith('H475'):  invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
-        elif seriesnumber.startswith('F43'):   invertertype = AC | GEN4 | X1 # RetroFit X1 3kW / 3.7kW?
-        elif seriesnumber.startswith('F450'):   invertertype = AC | GEN4 | X1 # RetroFit 5kW
-        elif seriesnumber.startswith('F460'):  invertertype = AC | GEN4 | X1 # RetroFit X1 6kW?
-        elif seriesnumber.startswith('F475'):  invertertype = AC | GEN4 | X1 # RetroFit X1 7.5kW?
-        elif seriesnumber.startswith('PRE'):   invertertype = AC | GEN4 | X1 # RetroFit
-        elif seriesnumber.startswith('PRI'):   invertertype = AC | GEN4 | X1 # RetroFit
-        elif seriesnumber.startswith('H31'):   invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
-        elif seriesnumber.startswith('H34'):   invertertype = HYBRID | GEN4 | X3 # Gen4 X3
-        elif seriesnumber.startswith('F34'):   invertertype = AC | GEN4 | X3 # Gen4 X3 FIT
-        elif seriesnumber.startswith('H3BC15'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BC19'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BC20'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BC25'):   invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
-        elif seriesnumber.startswith('H3BC30'):   invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BD15'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BD19'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BD20'):   invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('H3BD25'):   invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
-        elif seriesnumber.startswith('H3BD30'):   invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
-        elif seriesnumber.startswith('XB3'):   invertertype = MIC | GEN2 | X1 # X1-Boost
-        elif seriesnumber.startswith('XB4'):   invertertype = MIC | GEN4 | X1 # X1-Boost G4
-        elif seriesnumber.startswith('XM3'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
-        elif seriesnumber.startswith('XM4'):   invertertype = MIC | GEN4 | X1 # X1-Mini G4
-        elif seriesnumber.startswith('XMA'):   invertertype = MIC | GEN2 | X1 # X1-Mini G3
-        elif seriesnumber.startswith('MC103T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MP153T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MC203T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MC502T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MU502T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MC702T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MU702T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MU802T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MU803T'):  invertertype = MIC | GEN | X3 # MIC X3
-        elif seriesnumber.startswith('MC106T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC204T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC205T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC206T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC208T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC210T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC212T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MC215T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MU602T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MU806T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MP156T'):  invertertype = MIC | GEN2 | X3 # MIC X3
-        elif seriesnumber.startswith('MPT10T'):  invertertype = MIC | GEN2 | X3 # MIC PRO X3
+        if   seriesnumber.startswith('L30'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3kW
+            self.inverter_model = "X1-Hybrid SK-TL"
+        elif seriesnumber.startswith('U30'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3kW
+            self.inverter_model = "X1-Hybrid SK-SU"
+        elif seriesnumber.startswith('L37'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 3.7kW Untested
+            self.inverter_model = "X1-Hybrid SK-TL"
+        elif seriesnumber.startswith('U37'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 3.7kW Untested
+            self.inverter_model = "X1-Hybrid SK-SU"
+        elif seriesnumber.startswith('L50'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-TL 5kW
+            self.inverter_model = "X1-Hybrid SK-TL"
+        elif seriesnumber.startswith('U50'):
+            invertertype = HYBRID | GEN2 | X1 # Gen2 X1 SK-SU 5kW
+            self.inverter_model = "X1-Hybrid SK-SU"
+        elif seriesnumber.startswith('H1E'):
+            invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Early
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('H1I'):
+            invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('HCC'):
+            invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('HUE'):
+            invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Late
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('XRE'):
+            invertertype = HYBRID | GEN3 | X1 # Gen3 X1 Alternative
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('XAC'):
+            invertertype = AC | GEN3 | X1 # X1AC
+            self.inverter_model = "X1-AC"
+        elif seriesnumber.startswith('H3DE'):
+            invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('H3E'):
+            invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('H3LE'):
+            invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('H3PE'):
+            invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('H3UE'):
+            invertertype = HYBRID | GEN3 | X3 # Gen3 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('F3D'):
+            invertertype = AC | GEN3 | X3 # RetroFit
+            self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith('F3E'):
+            invertertype = AC | GEN3 | X3 # RetroFit
+            self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith('H43'):
+            invertertype = HYBRID | GEN4 | X1 # Gen4 X1 3kW / 3.7kW
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('H44'):
+            invertertype = HYBRID | GEN4 | X1 # Gen4 X1 alt 5kW
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('H450'):
+            invertertype = HYBRID | GEN4 | X1 # Gen4 X1 5.0kW
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('H460'):
+            invertertype = HYBRID | GEN4 | X1 # Gen4 X1 6kW?
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('H475'):
+            invertertype = HYBRID | GEN4 | X1 # Gen4 X1 7.5kW
+            self.inverter_model = "X1-Hybrid"
+        elif seriesnumber.startswith('F43'):
+            invertertype = AC | GEN4 | X1 # RetroFit X1 3kW / 3.7kW?
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('F450'):
+            invertertype = AC | GEN4 | X1 # RetroFit 5kW
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('F460'):
+            invertertype = AC | GEN4 | X1 # RetroFit X1 6kW?
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('F475'):
+            invertertype = AC | GEN4 | X1 # RetroFit X1 7.5kW?
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('PRE'):
+            invertertype = AC | GEN4 | X1 # RetroFit
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('PRI'):
+            invertertype = AC | GEN4 | X1 # RetroFit
+            self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('H31'):
+            invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
+            self.inverter_model = "X3-TIGO TSI"
+        elif seriesnumber.startswith('H34'):
+            invertertype = HYBRID | GEN4 | X3 # Gen4 X3
+            self.inverter_model = "X3-Hybrid"
+        elif seriesnumber.startswith('F34'):
+            invertertype = AC | GEN4 | X3 # Gen4 X3 FIT
+            self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith('H3BC15'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BC19'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BC20'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BC25'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BC30'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BD15'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BD19'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BD20'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BD25'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('H3BD30'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
+            self.inverter_model = "X3-Ultra"
+        elif seriesnumber.startswith('XB3'):
+            invertertype = MIC | GEN2 | X1 # X1-Boost
+            self.inverter_model = "X1-Boost"
+        elif seriesnumber.startswith('XB4'):
+            invertertype = MIC | GEN4 | X1 # X1-Boost G4
+            self.inverter_model = "X1-Boost"
+        elif seriesnumber.startswith('XM3'):
+            invertertype = MIC | GEN2 | X1 # X1-Mini G3
+            self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('XM4'):
+            invertertype = MIC | GEN4 | X1 # X1-Mini G4
+            self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('XMA'):
+            invertertype = MIC | GEN2 | X1 # X1-Mini G3
+            self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('MC103T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MP153T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC203T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC502T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU502T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC702T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU702T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU802T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MU803T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC106T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC204T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC205T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC206T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC208T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+            self.software_version = "Unknown"
+        elif seriesnumber.startswith('MC210T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC212T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC215T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU602T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU806T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MP156T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MPT08T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT10T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT12T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT15T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT17T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT20T'):
+            invertertype = MIC | GEN2 | X3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT25T'):
+            invertertype = MIC | GEN2 | X3 | MPPT3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MPT30T'):
+            invertertype = MIC | GEN2 | X3 | MPPT3 # MIC PRO X3
+            self.inverter_model = "X3-MIC PRO"
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN2 | MPPT3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
         else:
@@ -6990,62 +7218,6 @@ class solax_plugin(plugin_base):
             if read_dcb: invertertype = invertertype | DCB
             if read_pm: invertertype = invertertype | PM
 
-            if not seriesnumber.startswith('XRE'):
-                if not invertertype & MIC:
-                    if invertertype & GEN2:
-                        firmware_arm = await _read_firmware_arm(hub)
-                        firmware_dsp = await _read_firmware_dsp(hub)
-                        model_power = await _read_model_power(hub) /1000
-                        self.inverter_hw_version = f"Gen2"
-                        self.inverter_model = f"SKSU / SKTL {model_power}w"
-                        self.inverter_sw_version = f"DSP v2.{firmware_dsp} ARM v2.{firmware_arm}"
-                    elif invertertype & GEN3:
-                        firmware_arm = await _read_firmware_arm(hub)
-                        firmware_dsp = await _read_firmware_dsp(hub)
-                        model = await _read_model_gen3(hub)
-                        self.inverter_hw_version = f"Gen3"
-                        self.inverter_model = model
-                        self.inverter_sw_version = f"DSP v3.{firmware_dsp} ARM v3.{firmware_arm}"
-                    elif invertertype & GEN4:
-                        firmware_arm = await _read_firmware_arm(hub)
-                        firmware_dsp = await _read_firmware_dsp(hub)
-                        model_type = 0
-                        model_style = 0
-                        model_typ = await _read_model_type_gen4(hub)
-                        if model_typ == 1:
-                            model_type = 'X1'
-                        elif model_typ == 3:
-                            model_type = 'X3'
-                        model_sty = await _read_model_style_gen4(hub)
-                        if model_sty == 0:
-                            model_style = '-Hybrid-'
-                        elif model_sty == 1:
-                            model_style = '-FIT-'
-                        model_power = await _read_model_power(hub) /1000
-                        self.inverter_hw_version = f"Gen4"
-                        self.inverter_model = f"{model_type}{model_style}{model_power}"
-                        self.inverter_sw_version = f"DSP v1.{firmware_dsp} ARM v1.{firmware_arm}"
-                    elif invertertype & GEN5:
-                        firmware_arm_major = await _read_firmware_arm_major(hub)
-                        firmware_arm = await _read_firmware_arm(hub)
-                        firmware_dsp = await _read_firmware_dsp(hub)
-                        model_type = 0
-                        model_style = 0
-                        model_typ = await _read_model_type_gen4(hub)
-                        if model_typ == 1:
-                            model_type = 'X1'
-                        elif model_typ == 3:
-                            model_type = 'X3'
-                        model_sty = await _read_model_style_gen4(hub)
-                        if model_sty == 0:
-                            model_style = '-Hybrid-'
-                        elif model_sty == 1:
-                            model_style = '-FIT-'
-                        model_power = await _read_model_power(hub) /1000
-                        self.inverter_hw_version = f"Gen5"
-                        self.inverter_model = f"{model_type}{model_style}{model_power}"
-                        self.inverter_sw_version = f"DSP {firmware_dsp} ARM v{firmware_arm_major}.{firmware_arm}"
-        
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -7062,6 +7234,12 @@ class solax_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
+
+    def getSoftwareVersion(self, new_data):
+        return new_data.get("software_version", None)
+
+    def getHardwareVersion(self, new_data):
+        return new_data.get("hardware_version", None)
 
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured

@@ -209,7 +209,11 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
             else:
                 newdescr = copy(sensor_description)
-                newdescr.name = name_prefix + newdescr.name
+                try:
+                   newdescr.name = name_prefix + newdescr.name
+                except:
+                   newdescr.name = newdescr.name
+                   
                 newdescr.key = key_prefix + newdescr.key
                 entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
