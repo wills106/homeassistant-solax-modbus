@@ -871,14 +871,6 @@ class SolaXModbusHub:
         for block in group.inputBlocks:
             res = res and await self.async_read_modbus_block(data, block, "input")
 
-        if group.readFollowUp is not None:
-            if not await group.readFollowUp(self.data, data):
-                _LOGGER.warning(f"device group check not success")
-                return True
-
-        for key, value in data.items():
-            self.data[key] = value
-
         if self.localsUpdated:
             self.saveLocalData()
             self.plugin.localDataCallback(self)
@@ -886,7 +878,15 @@ class SolaXModbusHub:
             self.loadLocalData()
         for reg in self.computedSensors:
             descr = self.computedSensors[reg]
-            self.data[descr.key] = descr.value_function(0, descr, self.data)
+            data[descr.key] = descr.value_function(0, descr, data)
+
+        if group.readFollowUp is not None:
+            if not await group.readFollowUp(self.data, data):
+                _LOGGER.warning(f"device group check not success")
+                return True
+
+        for key, value in data.items():
+            self.data[key] = value
 
         if (
             res and self.writequeue and self.plugin.isAwake(self.data)
