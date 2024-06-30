@@ -326,25 +326,14 @@ class SolaXModbusHub:
         plugin_name = self.plugin.plugin_name
         if self.inverterNameSuffix is not None and self.inverterNameSuffix != "":
             plugin_name = plugin_name + " " + self.inverterNameSuffix
-        
-        if plugin_name != 'Sofar':
-            self.device_info = DeviceInfo(
-                identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
-                manufacturer = self.plugin.plugin_manufacturer,
-                model = getattr(self.plugin,"inverter_model",None),
-                name = plugin_name,
-                serial_number = self.seriesnumber,
-                hw_version = getattr(self.plugin,"inverter_hw_version",None),
-                sw_version = getattr(self.plugin,"inverter_sw_version",None),
-            )
-        else:
-            self.device_info = DeviceInfo(
-                identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
-                manufacturer = self.plugin.plugin_manufacturer,
-                model = getattr(self.plugin,"inverter_model",None),
-                name = plugin_name,
-                serial_number = self.seriesnumber,
-            )
+
+        self.device_info = DeviceInfo(
+            identifiers = {(DOMAIN, self._name, INVERTER_IDENT)},
+            manufacturer = self.plugin.plugin_manufacturer,
+            model = getattr(self.plugin,"inverter_model",None),
+            name = plugin_name,
+            serial_number = self.seriesnumber,
+        )
 
         for component in PLATFORMS:
             self._hass.async_create_task(
