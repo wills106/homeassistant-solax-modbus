@@ -36,7 +36,7 @@ AC             = 0x0800
 HYBRID         = 0x1000
 MIC            = 0x2000
 MAX            = 0x4000
-ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
+ALL_TYPE_GROUP = PV | AC | HYBRID | MIC | MAX
 
 EPS            = 0x8000
 ALL_EPS_GROUP  = EPS
