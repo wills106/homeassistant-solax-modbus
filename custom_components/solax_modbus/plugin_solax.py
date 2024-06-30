@@ -35,6 +35,7 @@ PV             = 0x0400 # Needs further work on PV Only Inverters
 AC             = 0x0800
 HYBRID         = 0x1000
 MIC            = 0x2000
+MAX            = 0x4000
 ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
 
 EPS            = 0x8000
@@ -6872,11 +6873,333 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes = MIC | GEN4,
     ),
-    ###
-    #
-    # Computed
-    #
-    ###
+#####
+#
+# X3 MAX MEGA
+#
+#
+#####
+#
+# Holding Registers
+#
+#####
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Voltage L1",
+        key = "grid_voltage_l1",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x1001,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Current L1",
+        key = "grid_current_l1",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x1002,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Measured Power L1",
+        key = "measured_power_l1",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1003,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ), 
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Frequency L1",
+        key = "grid_frequency_l1",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1005,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Voltage L2",
+        key = "grid_voltage_l2",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x1006,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Current L2",
+        key = "grid_current_l2",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x1007,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Measured Power L2",
+        key = "measured_power_l2",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1008,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Frequency L2",
+        key = "grid_frequency_l2",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x100A,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Voltage L3",
+        key = "grid_voltage_l3",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x100B,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Current L3",
+        key = "grid_current_l3",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x100C,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Measured Power L3",
+        key = "measured_power_l3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x100D,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ), 
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Frequency L3",
+        key = "grid_frequency_l3",
+        native_unit_of_measurement = UnitOfFrequency.HERTZ,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x100F,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 1",
+        key = "pv_voltage_1",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x1010,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 1",
+        key = "pv_current_1",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x1011,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 1",
+        key = "pv_power_1",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1012,
+        allowedtypes = MAX,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 2",
+        key = "pv_voltage_2",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x1014,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 2",
+        key = "pv_current_2",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x1015,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 2",
+        key = "pv_power_2",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1016,
+        allowedtypes = MAX,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 3",
+        key = "pv_voltage_3",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x1018,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 3",
+        key = "pv_current_3",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x1019,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 3",
+        key = "pv_power_3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x101A,
+        allowedtypes = MAX,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Inverter Temperature",
+        key = "inverter_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x101C,
+        allowedtypes = MAX,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Run Mode",
+        key = "run_mode",
+        register = 0x101D,
+        scale = { 0: "Initial Mode",
+                  1: "Standby Mode",
+                  3: "Normal Mode",
+                  5: "Fault Mode",
+                  9: "Shutdown mode", },
+        allowedtypes = MAX,
+        icon = "mdi:run",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 4",
+        key = "pv_voltage_4",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x103E,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 4",
+        key = "pv_current_4",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x103F,
+        scale = 0.01,
+        rounding = 2,
+        allowedtypes = MAX,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 4",
+        key = "pv_power_4",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x1040,
+        allowedtypes = MAX,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Model Number",
+        key = "model_number",
+        register = 0x1A00,
+        unit = REGISTER_STR,
+        wordcount=8,
+        #scale = value_function_byteswapserial,
+        #entity_registry_enabled_default = False,
+        allowedtypes = MAX,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Serial Number",
+        key = "seriesnumber",
+        register = 0x1A10,
+        unit = REGISTER_STR,
+        wordcount=8,
+        #scale = value_function_byteswapserial,
+        #entity_registry_enabled_default = False,
+        allowedtypes = MAX,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Software Version",
+        key = "software_version",
+        register = 0x1A1C,
+        unit = REGISTER_STR,
+        wordcount=3,
+        allowedtypes = MAX,
+        icon = "mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT Qty",
+        key = "mppt_qty",
+        register = 0x1A3B,
+        allowedtypes = MAX,
+        icon = "mdi:information",
+    ),
+###
+#
+# Computed
+#
+###
     SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
@@ -6972,7 +7295,9 @@ class solax_plugin(plugin_base):
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
+            seriesnumber = await async_read_serialnr(hub, 0x1A10)
+        if not seriesnumber:
+            _LOGGER.error(f"{hub.name}: cannot find any serial number(s)")
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
@@ -7204,6 +7529,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MPT30T'):
             invertertype = MIC | GEN2 | X3 | MPPT3 # MIC PRO X3
             self.inverter_model = "X3-MIC PRO"
+        elif seriesnumber.startswith('MAXMEG'):
+            invertertype = MAX # MIC PRO X3
+            self.inverter_model = "X3-MAX MEGA"
         #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN2 | MPPT3 | X3 # Unknown MIC Pro with PV3 X3
         # add cases here
         else:
