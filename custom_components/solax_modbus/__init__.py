@@ -864,7 +864,7 @@ class SolaXModbusHub:
         else:
             _LOGGER.debug(f"device group inverter")
 
-        data = {}
+        data = {"_repeatUntil": self.data["_repeatUntil"]}
         res = True
         for block in group.holdingBlocks:
             res = res and await self.async_read_modbus_block(data, block, "holding")
