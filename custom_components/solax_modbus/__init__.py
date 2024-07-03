@@ -336,7 +336,7 @@ class SolaXModbusHub:
         )
 
         for component in PLATFORMS:
-            self._hass.async_create_task(
+            await self._hass.async_create_task(
                 self._hass.config_entries.async_forward_entry_setup(
                     self.entry, component
                 )
