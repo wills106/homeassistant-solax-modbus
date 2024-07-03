@@ -368,7 +368,7 @@ def value_function_2byte_timestamp(initval, descr, datadict):
 TIME_OPTIONS = { }
 TIME_OPTIONS_GEN4 = { }
 for h in range(0,24):
-    for m in range(0, 60, 15):
+    for m in range(0, 60, 5):
         TIME_OPTIONS[m*256+h] = f"{h:02}:{m:02}"
         TIME_OPTIONS_GEN4[h*256+m] = f"{h:02}:{m:02}"
         if (h, m,) == (0,  0,): # add extra entry 00:01
