@@ -178,6 +178,9 @@ def _fn_mppt_mask(v, descr, dd):
     mask = dd["mppt_mask"]
     return "off" if v == 0 else "on" if v & mask == mask else _flag_list(v, dd["mppt_list"], "unknown")
 
+def value_function_house_load(initval, descr, datadict):
+    return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) + datadict.get('meter_2_measured_power', 0) )
+
 # =================================================================================================
 
 #gc: set defaults; not all classes have all fields...
