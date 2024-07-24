@@ -1238,7 +1238,7 @@ SELECT_TYPES = [
     ),
     SolaxModbusSelectEntityDescription(
         name = "Charge and Discharge Period2 Enable",
-        key = "charge_period2_enable",
+        key = "charge_and_discharge_period2_enable",
         register = 0x6C,
         option_dict = {
                 0: "Disabled",
@@ -1987,7 +1987,7 @@ SELECT_TYPES = [
     ),
     SolaxModbusSelectEntityDescription(
         name = "Shadow Fix Function Level PV2 (GMPPT)",
-        key = "shadow_fix2_enable",
+        key = "shadow_fix_function_level_pv2_gmppt",
         register = 0x98,
         option_dict =  {
                 0: "Off",
@@ -2000,7 +2000,7 @@ SELECT_TYPES = [
     ),
     SolaxModbusSelectEntityDescription(
         name = "Shadow Fix Function Level PV1 (GMPPT)",
-        key = "shadow_fix_enable",
+        key = "shadow_fix_function_level_pv1_gmppt",
         register = 0x9C,
         option_dict =  {
                 0: "Off",
@@ -2047,7 +2047,7 @@ SELECT_TYPES = [
     ),
     SolaxModbusSelectEntityDescription(
         name = "Selfuse Night Charge Enable",
-        key = "selfuse_nightcharge_enable",
+        key = "selfuse_night_charge_enable",
         register = 0x62,
         option_dict =  {
                 0: "Disabled",
@@ -2452,7 +2452,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "selfuse_nightcharge_enable",
+        key = "selfuse_night_charge_enable",
         register = 0x93,
         unit = REGISTER_U8L,
         scale = { 0: "Disabled", 1: "Enabled", },
@@ -2558,7 +2558,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "charge_period2_enable",
+        key = "charge_and_discharge_period2_enable",
         register = 0x9B,
         scale = { 0: "Disabled", 1: "Enabled", },
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
@@ -2898,7 +2898,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:sun-compass",
     ),
     SolaXModbusSensorEntityDescription(
-        key = "shadow_fix_enable",
+        key = "shadow_fix_function_level_pv1_gmppt",
         register = 0x104,
         scale = { 0: "Off",
                   1: "Low",
@@ -3056,7 +3056,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN3 | X3,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "shadow_fix2_enable",
+        key = "shadow_fix_function_level_pv2_gmppt",
         register = 0x114,
         scale = { 0: "Off",
                   1: "Low",
@@ -3708,7 +3708,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency",
-        key = "grid_frequency",
+        key = "inverter_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x7,
@@ -4344,7 +4344,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
-        key = "grid_frequency_l1",
+        key = "inverter_frequency_l1",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x6D,
@@ -4404,7 +4404,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
-        key = "grid_frequency_l2",
+        key = "inverter_frequency_l2",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x71,
@@ -4449,7 +4449,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
-        key = "grid_frequency_l3",
+        key = "inverter_frequency_l3",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x75,
@@ -4739,7 +4739,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Today's Export Energy",
-        key = "todays_s_export_energy",
+        key = "today_s_export_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4905,7 +4905,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Temp High",
-        key = "battery_temperature_high",
+        key = "battery_temp_high",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         register = 0xBA,
@@ -4917,7 +4917,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Battery Temp Low",
-        key = "battery_temperature_low",
+        key = "battery_temp_low",
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         register = 0xBB,
@@ -4963,7 +4963,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Frequency",
-        key = "grid_frequency_meter",
+        key = "inverter_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xC8,
@@ -4975,7 +4975,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage",
-        key = "grid_voltage_meter",
+        key = "grid_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xC9,
@@ -4987,7 +4987,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage L1",
-        key = "grid_voltage_meter_l1",
+        key = "grid_voltage_l1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xCA,
@@ -4999,7 +4999,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage L2",
-        key = "grid_voltage_meter_l2",
+        key = "grid_voltage_l2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xCB,
@@ -5011,7 +5011,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Voltage L3",
-        key = "grid_voltage_meter_l3",
+        key = "grid_voltage_l3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0xCC,
@@ -6173,7 +6173,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency",
-        key = "grid_frequency",
+        key = "inverter_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x407,
@@ -6186,7 +6186,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
-        key = "grid_frequency_l1",
+        key = "inverter_frequency_l1",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x407,
@@ -6199,7 +6199,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
-        key = "grid_frequency_l2",
+        key = "inverter_frequency_l2",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x408,
@@ -6211,7 +6211,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
-        key = "grid_frequency_l3",
+        key = "inverter_frequency_l3",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x409,
@@ -6689,7 +6689,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency",
-        key = "grid_frequency",
+        key = "inverter_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x406,
@@ -6926,7 +6926,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ), 
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L1",
-        key = "grid_frequency_l1",
+        key = "inverter_frequency_l1",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1005,
@@ -6968,7 +6968,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L2",
-        key = "grid_frequency_l2",
+        key = "inverter_frequency_l2",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x100A,
@@ -7010,7 +7010,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ), 
     SolaXModbusSensorEntityDescription(
         name = "Inverter Frequency L3",
-        key = "grid_frequency_l3",
+        key = "inverter_frequency_l3",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x100F,
