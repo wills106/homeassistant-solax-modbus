@@ -4310,7 +4310,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
-        key = "grid_voltage_l1",
+        key = "inverter_voltage_l1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x6A,
@@ -4321,7 +4321,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L1",
-        key = "grid_current_l1",
+        key = "inverter_current_l1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x6B,
@@ -4333,7 +4333,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L1",
-        key = "grid_power_l1",
+        key = "inverter_power_l1",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4355,7 +4355,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
-        key = "grid_voltage_l2",
+        key = "inverter_voltage_l2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x6E,
@@ -4366,7 +4366,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L2",
-        key = "grid_current_l2",
+        key = "inverter_current_l2",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x6F,
@@ -4393,7 +4393,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L2",
-        key = "grid_power_l2",
+        key = "inverter_power_l2",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4415,7 +4415,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
-        key = "grid_voltage_l3",
+        key = "inverter_voltage_l3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x72,
@@ -4426,7 +4426,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L3",
-        key = "grid_current_l3",
+        key = "inverter_current_l3",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x73,
@@ -4438,7 +4438,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L3",
-        key = "grid_power_l3",
+        key = "inverter_power_l3",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -6125,7 +6125,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage",
-        key = "grid_voltage",
+        key = "inverter_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x404,
@@ -6137,7 +6137,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
-        key = "grid_voltage_l1",
+        key = "inverter_voltage_l1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x404,
@@ -6149,7 +6149,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
-        key = "grid_voltage_l2",
+        key = "inverter_voltage_l2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x405,
@@ -6161,7 +6161,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
-        key = "grid_voltage_l3",
+        key = "inverter_voltage_l3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x406,
@@ -6177,7 +6177,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x407,
-        #newblock = True,
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
@@ -6190,7 +6189,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x407,
-        #newblock = True,
         register_type = REG_INPUT,
         scale = 0.01,
         rounding = 2,
@@ -6223,7 +6221,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current",
-        key = "grid_current",
+        key = "inverter_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40A,
@@ -6234,7 +6232,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L1",
-        key = "grid_current_l1",
+        key = "inverter_current_l1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40A,
@@ -6245,7 +6243,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L2",
-        key = "grid_current_l2",
+        key = "inverter_current_l2",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40B,
@@ -6256,7 +6254,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L3",
-        key = "grid_current_l3",
+        key = "inverter_current_l3",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x40C,
@@ -6381,7 +6379,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x423,
-        #newblock = True,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         scale = 0.001,
@@ -6410,7 +6407,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 0x423,
-        #newblock = True,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
         scale = 0.1,
@@ -6512,7 +6508,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Today's Grid Export",
-        key = "today_grid_export",
+        key = "today_s_grid_export",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6526,7 +6522,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Today's Grid Import",
-        key = "today_grid_import",
+        key = "today_s_grid_import",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6643,7 +6639,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "active_power_limit",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
-        #state_class = SensorStateClass.MEASUREMENT,
         register = 0x381,
         allowedtypes = MIC | GEN4,
     ),
@@ -6666,7 +6661,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #####
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage",
-        key = "grid_voltage",
+        key = "inverter_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x400,
@@ -6678,7 +6673,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current",
-        key = "grid_current",
+        key = "inverter_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x403,
@@ -6726,7 +6721,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x40A,
         register_type = REG_INPUT,
-        #ignore_readerror = True,
         scale = 0.1,
         rounding = 1,
         allowedtypes = MIC | GEN4,
@@ -6894,7 +6888,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #####
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L1",
-        key = "grid_voltage_l1",
+        key = "inverter_voltage_l1",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x1001,
@@ -6904,7 +6898,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L1",
-        key = "grid_current_l1",
+        key = "inverter_current_l1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1002,
@@ -6936,7 +6930,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L2",
-        key = "grid_voltage_l2",
+        key = "inverter_voltage_l2",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x1006,
@@ -6946,7 +6940,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L2",
-        key = "grid_current_l2",
+        key = "inverter_current_l2",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x1007,
@@ -6978,7 +6972,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Voltage L3",
-        key = "grid_voltage_l3",
+        key = "inverter_voltage_l3",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
         register = 0x100B,
@@ -6988,7 +6982,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Current L3",
-        key = "grid_current_l3",
+        key = "inverter_current_l3",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         register = 0x100C,
@@ -7170,20 +7164,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x1A00,
         unit = REGISTER_STR,
         wordcount=8,
-        #scale = value_function_byteswapserial,
-        #entity_registry_enabled_default = False,
         allowedtypes = MAX,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
         name = "Serial Number",
-        key = "seriesnumber",
+        key = "serial_number",
         register = 0x1A10,
         unit = REGISTER_STR,
         wordcount=8,
-        #scale = value_function_byteswapserial,
-        #entity_registry_enabled_default = False,
         allowedtypes = MAX,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
