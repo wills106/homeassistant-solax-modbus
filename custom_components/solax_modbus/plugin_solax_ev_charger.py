@@ -239,19 +239,19 @@ SELECT_TYPES = [
             3: "L3 Phase", },
         icon = "mdi:dip-switch",
     ),
-    # SolaXEVChargerModbusSelectEntityDescription(
-    #     name = "Control Command",
-    #     key = "control_command",
-    #     register = 0x627,
-    #     option_dict =  {
-    #         1: "Available",
-    #         2: "Unavailable",
-    #         3: "Stop charging",
-    #         4: "Start Charging",
-    #         5: "Reserve",
-    #         6: "Cancel the Reservation", },
-    #     icon = "mdi:dip-switch",
-    # ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name = "Control Command",
+        key = "control_command",
+        register = 0x627,
+        option_dict =  {
+            1: "Available",
+            2: "Unavailable",
+            3: "Stop charging",
+            4: "Start Charging",
+            5: "Reserve",
+            6: "Cancel the Reservation", },
+        icon = "mdi:dip-switch",
+    ),
 ]
 
 # ================================= Sennsor Declarations ============================================================
@@ -394,20 +394,20 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         entity_registry_enabled_default = False,
     ),
-    # SolaXEVChargerModbusSensorEntityDescription(
-    #     name = "Control Command",
-    #     key = "control_command",
-    #     register = 0x627,
-    #     scale = {
-    #         1: "Available",
-    #         2: "Unavailable",
-    #         3: "Stop charging",
-    #         4: "Start Charging",
-    #         5: "Reserve",
-    #         6: "Cancel the Reservation", },
-    #     entity_registry_enabled_default = False,
-    #     icon = "mdi:dip-switch",
-    # ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name = "Control Command",
+        key = "control_command",
+        register = 0x627,
+        scale = {
+            1: "Available",
+            2: "Unavailable",
+            3: "Stop charging",
+            4: "Start Charging",
+            5: "Reserve",
+            6: "Cancel the Reservation", },
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
     ###
     #
     # Input
