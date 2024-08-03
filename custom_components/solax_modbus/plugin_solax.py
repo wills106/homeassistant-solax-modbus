@@ -82,104 +82,6 @@ async def async_read_serialnr(hub, address):
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
     return res
 
-async def async_read_serialnr_alt(hub, address):
-    res = None
-    inverter_data = None
-    try:
-        inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=8)
-        if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(16).decode("ascii")
-            hub.seriesnumber = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
-    if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
-    return res
-
-async def _read_firmware_arm_major(hub, address=0x80):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM major failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM major: {res}")
-    return res
-
-async def _read_firmware_arm(hub, address=0x83):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware ARM failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware ARM: {res}")
-    return res
-
-async def _read_firmware_dsp(hub, address=0x7D):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Firmware DSP failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Firmware DSP: {res}")
-    return res
-
-async def _read_model_gen3(hub, address=0xE9):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=10)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(20).decode("ascii")
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} model: {res}")
-    return res
-
-async def _read_model_type_gen4(hub, address=0x105):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Type failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Type: {res}")
-    return res
-
-async def _read_model_style_gen4(hub, address=0x107):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Type failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Type: {res}")
-    return res
-
-async def _read_model_power(hub, address=0xBA):
-    res = None
-    try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
-            hub._invertertype = res
-    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read Model Power failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} Model Power: {res}")
-    return res
-
 # =================================================================================================
 
 @dataclass
@@ -197,19 +99,8 @@ class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #order16: int = Endian.BIG
-    #order32: int = Endian.LITTLE
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
-
-#@dataclass
-#class SolaX#MicModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
-    # A class that describes SolaX Power MIC Modbus sensor entities.
-#    allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    #order16: int = Endian.BIG
-    #order32: int = Endian.LITTLE
-#    unit: int = REGISTER_U16
-#    register_type: int = REG_HOLDING
 
 # ====================================== Computed value functions  =================================================
 
@@ -328,12 +219,6 @@ def value_function_software_version_air_g3(initval, descr, datadict):
 
 def value_function_software_version_air_g4(initval, descr, datadict):
     return  f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
-
-# for testing prevent_update only
-#def value_function_test_prevent(initval, descr, datadict):
-#    _LOGGER.warning(f"succeeded test prevent_update - datadict: {datadict['dummy_timed_charge_start_h']}")
-#    return  None
-
 
 # ================================= Button Declarations ============================================================
 
@@ -541,7 +426,6 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
 #    ('H1E', 10 ), # more specific entry comes last and wins
 ]
 
-
 NUMBER_TYPES = [
 
     ###
@@ -549,24 +433,6 @@ NUMBER_TYPES = [
     # Data only number types
     #
     ###
-
-    # For testing prevent_update mechanism - start of block
-    #SolaxModbusNumberEntityDescription(
-    #    name = "Dummy Timed Charge Start Hours",
-    #    key = "dummy_timed_charge_start_h",
-    #    unit = REGISTER_U16,
-    #    fmt = "i",
-    #    initvalue = 0,
-    #    native_min_value = 0,
-    #    native_max_value = 23,
-    #    native_step = 1,
-    #    native_unit_of_measurement = UnitOfTime.HOURS,
-    #    allowedtypes = HYBRID,
-    #    write_method = WRITE_DATA_LOCAL,
-    #    entity_category = EntityCategory.CONFIG,
-    #    icon = "mdi:battery-clock",
-    #    prevent_update = True,
-    #),#ccf end of block
     SolaxModbusNumberEntityDescription(
         name = "Remotecontrol Active Power",
         key = "remotecontrol_active_power",
@@ -577,7 +443,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
         initvalue = 0,
-        #max_exceptions = MAX_EXPORT,
         min_exceptions_minus = MAX_EXPORT, # negative
         unit = REGISTER_S32,
         write_method = WRITE_DATA_LOCAL,
@@ -629,7 +494,6 @@ NUMBER_TYPES = [
         allowedtypes = HYBRID | GEN4 | GEN5,
         native_min_value = 0,
         native_max_value = 30000, # overwritten by MAX_EXPORT
-        #max_exceptions = MAX_EXPORT,
         native_step = 100,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = NumberDeviceClass.POWER,
@@ -1169,7 +1033,6 @@ NUMBER_TYPES = [
 # ================================= Select Declarations ============================================================
 
 SELECT_TYPES = [
-
 ###
 #
 #  Data only select types
@@ -1208,7 +1071,6 @@ SELECT_TYPES = [
         initvalue = "Set",
         icon = "mdi:transmission-tower",
     ),
-
 ###
 #
 #  Normal select types
@@ -1325,17 +1187,15 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:clock-start",
     ),
-    # comment this  block to test prevent_update
-    SolaxModbusSelectEntityDescription(              # block
-        name = "Charger Start Time 2",               # block
-        key = "charger_start_time_2",                # block
-        register = 0x6D,                             # block
-        option_dict = TIME_OPTIONS_GEN4,             # block
-        allowedtypes = AC | HYBRID | GEN4 | GEN5,           # block
-        entity_category = EntityCategory.CONFIG,     # block
-        icon = "mdi:clock-start",                  # block
+    SolaxModbusSelectEntityDescription(
+        name = "Charger Start Time 2",
+        key = "charger_start_time_2",
+        register = 0x6D,
+        option_dict = TIME_OPTIONS_GEN4,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+        entity_category = EntityCategory.CONFIG,
+        icon = "mdi:clock-start",
     ),
-    # end of block
     SolaxModbusSelectEntityDescription(
         name = "Charger Use Mode",
         key = "charger_use_mode",
@@ -2123,24 +1983,11 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
-    ###
-    #
-    # Holding
-    #
-    ###
-
-    # only for testing prevent_update mechanism - start of block
-    #SolaXModbusSensorEntityDescription(
-    #    name = "Dummy Timed Charge Start Hours",
-    #    key = "dummy_timed_charge_start_h",
-    #    register = 0x9C,
-    #    #scale = value_function_gen4time,
-    #    entity_registry_enabled_default = False,
-    #    allowedtypes = AC | HYBRID | GEN4 | GEN5,
-    #    icon = "mdi:battery-clock",
-    #    #prevent_update = True,
-    #), # end of block
-
+#####
+#
+# Holding
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "MateBox enabled",
         key = "matebox_enabled",
@@ -3293,11 +3140,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN4 | DCB,
         internal = True,
     ),
-    ####
-    #
-    # End of block where Values need finding on Gen 5
-    #
-    ###
+#####
+#
+# End of block where Values need finding on Gen 5
+#
+#####
     SolaXModbusSensorEntityDescription(
         key = "parallel_setting",
         register = 0x130,
@@ -3551,13 +3398,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN4 | DCB,
         internal = True,
     ),
-    #####
-    #
-    # Gen5 Block
-    #
-    # Differs from Gen4 at 0x121 to 0x12F
-    #
-    #####
+#####
+#
+# Gen5 Block
+#
+# Differs from Gen4 at 0x121 to 0x12F
+#
+#####
     SolaXModbusSensorEntityDescription(
         key = "generator_charge_start_time_1",
         register = 0x124,
@@ -5299,11 +5146,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
         internal = True,
     ),
-    ###
-    #
-    # Input - Parallel Mode
-    #
-    ###
+#####
+#
+# Input - Parallel Mode
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "PM Inverter Count",
         key = "pm_inverter_count",
@@ -5904,11 +5751,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         allowedtypes = AC | HYBRID | GEN3 | GEN4 | GEN5 | PM,
     ),
-    ###
-    #
-    # Computed
-    #
-    ###
+#####
+#
+# Computed
+#
+#####
     SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
@@ -6055,7 +5902,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "active_power_limit",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
-        #state_class = SensorStateClass.MEASUREMENT,
         register = 0x351,
         allowedtypes = MIC | GEN2,
     ),
@@ -7210,340 +7056,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
 #####
 #
-# X3 MAX MEGA G2
-#
-#
-#####
-#
-# Input Registers
-#
-#####
-    SolaXModbusSensorEntityDescription(
-        name = "Grid Voltage L1",
-        key = "grid_voltage_l1",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x100,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Grid Voltage L2",
-        key = "grid_voltage_l2",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x101,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Grid Voltage L3",
-        key = "grid_voltage_l3",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x102,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Inverter Voltage L1",
-        key = "inverter_voltage_l1",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x103,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Inverter Voltage L2",
-        key = "inverter_voltage_l2",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x104,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Inverter Voltage L3",
-        key = "inverter_voltage_l3",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x105,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Grid Frequency",
-        key = "grid_frequency",
-        native_unit_of_measurement = UnitOfFrequency.HERTZ,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x106,
-        register_type = REG_INPUT,
-        scale = 0.01,
-        rounding = 2,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Inverter Current L1",
-        key = "inverter_current_l1",
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        register = 0x180,
-        register_type = REG_INPUT,
-        scale = 0.01,
-        rounding = 2,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Measured Power L1",
-        key = "measured_power_l1",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x1003,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ), 
-    SolaXModbusSensorEntityDescription(
-        name = "Active Power",
-        key = "active_power",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x183,
-        register_type = REG_INPUT,
-        unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Reactive Power",
-        key = "reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
-        device_class = SensorDeviceClass.REACTIVE_POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x185,
-        register_type = REG_INPUT,
-        unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Apparent Power",
-        key = "apparent_power",
-        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
-        device_class = SensorDeviceClass.APPARENT_POWER,
-        register = 0x223,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Voltage 1",
-        key = "pv_voltage_1",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x28B,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Current 1",
-        key = "pv_current_1",
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        register = 0x28C,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Power 1",
-        key = "pv_power_1",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x28D,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "MPPT 1 Temperature",
-        key = "mppt_1_temperature",
-        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
-        device_class = SensorDeviceClass.TEMPERATURE,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x28F,
-        register_type = REG_INPUT,
-        unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Voltage 2",
-        key = "pv_voltage_2",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x292,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Current 2",
-        key = "pv_current_2",
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        register = 0x293,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Power 2",
-        key = "pv_power_2",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x294,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "MPPT 2 Temperature",
-        key = "mppt_2_temperature",
-        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
-        device_class = SensorDeviceClass.TEMPERATURE,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x296,
-        register_type = REG_INPUT,
-        unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Voltage 3",
-        key = "pv_voltage_3",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x299,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Current 3",
-        key = "pv_current_3",
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        register = 0x29A,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Power 3",
-        key = "pv_power_3",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x29B,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "MPPT 3 Temperature",
-        key = "mppt_3_temperature",
-        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
-        device_class = SensorDeviceClass.TEMPERATURE,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x29D,
-        register_type = REG_INPUT,
-        unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Voltage 4",
-        key = "pv_voltage_4",
-        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-        device_class = SensorDeviceClass.VOLTAGE,
-        register = 0x2A0,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Current 4",
-        key = "pv_current_4",
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        register = 0x2A1,
-        register_type = REG_INPUT,
-        scale = 0.1,
-        rounding = 1,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "PV Power 4",
-        key = "pv_power_4",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x2A2,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        allowedtypes = MAX | GEN2,
-        icon = "mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "MPPT 4 Temperature",
-        key = "mppt_4_temperature",
-        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
-        device_class = SensorDeviceClass.TEMPERATURE,
-        state_class = SensorStateClass.MEASUREMENT,
-        register = 0x2A4,
-        register_type = REG_INPUT,
-        unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2,
-        entity_category = EntityCategory.DIAGNOSTIC,
-    ),
-###
-#
 # Computed
 #
-###
+#####
     SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
@@ -7640,8 +7155,6 @@ class solax_plugin(plugin_base):
             seriesnumber = await async_read_serialnr(hub, 0x300) # bug in Endian.LITTLE decoding?
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x1A10)
-        if not seriesnumber:
-            seriesnumber = await async_read_serialnr_alt(hub, 0x32)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find any serial number(s)")
             seriesnumber = "unknown"
@@ -7878,14 +7391,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MPT30'):
             invertertype = MIC | GEN2 | X3 | MPPT3 # MIC PRO X3
             self.inverter_model = "X3-MIC PRO"
-        elif seriesnumber.startswith('MAXMEG'):
-            invertertype = MAX # MAX MEGA G1
-            self.inverter_model = "X3-MAX MEGA"
-        elif seriesnumber.startswith('MAXMEG_G2'):
-            invertertype = MAX | GEN2 # MAX MEGA G2
-            self.inverter_model = "X3-MAX MEGA - G2"
-        #elif seriesnumber.startswith('MCPRO'):  invertertype = MIC | GEN2 | MPPT3 | X3 # Unknown MIC Pro with PV3 X3
-        # add cases here
+        elif seriesnumber.startswith('MAX'):
+            invertertype = MAX # MAX G1
+            self.inverter_model = "X3-MAX"
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
