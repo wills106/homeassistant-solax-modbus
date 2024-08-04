@@ -574,7 +574,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT5,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Current 5",
@@ -586,7 +586,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT5,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -598,7 +598,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2A9,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2 | MPPT5,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
         icon = "mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -610,7 +610,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2AB,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2 | MPPT5,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -623,7 +623,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT6,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Current 6",
@@ -635,7 +635,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT6,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -647,7 +647,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2B0,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2 | MPPT6,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
         icon = "mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -659,7 +659,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2B2,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2 | MPPT6,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -672,7 +672,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Current 7",
@@ -684,7 +684,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -696,7 +696,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2B7,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -708,7 +708,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2B9,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -721,7 +721,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Current 8",
@@ -733,7 +733,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -745,7 +745,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2BE,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -757,7 +757,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2C0,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -770,7 +770,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Current 9",
@@ -782,7 +782,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -794,7 +794,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2C5,
         register_type = REG_INPUT,
         unit = REGISTER_S32,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         icon = "mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -806,7 +806,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x2C7,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
-        allowedtypes = MAX | GEN2 | MPPT9,
+        allowedtypes = MAX | GEN2 | MPPT12 | MPPT9,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
