@@ -71,9 +71,11 @@ SolaX Power
 - Gen4 Hybrid & RetroFit
   - Qcells Q.VOLT HYB-G3-3P
   - TIGO TSI
+- Gen5 Hybrid
 - J1 Hybrid - **WIP**
-- X3 MIC / MIC PRO Gen1 & Gen2 (Limited set of entities available)
 - X1 Air/Boost/Mini Gen3 & Gen4 (Limited set of entities available)
+- X3 MEGA / FORTH Gen2 (Limited set of entities available)
+- X3 MIC / MIC PRO Gen1 & Gen2 (Limited set of entities available)
 
 </details>
 Solinteg - WIP
