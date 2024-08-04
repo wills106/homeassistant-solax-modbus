@@ -47,12 +47,12 @@ ALL_DCB_GROUP  = DCB
 PM  = 0x20000
 ALL_PM_GROUP = PM
 
-MPPT3          = 0x40000
-MPPT4          = 0x80000
-MPPT6          = 0x100000
-MPPT8          = 0x200000
-MPPT10         = 0x400000
-ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+MPPT5          = 0x40000
+MPPT6          = 0x80000
+MPPT9          = 0x100000
+MPPT12         = 0x200000
+MPPT14         = 0x400000
+ALL_MPPT_GROUP = MPPT5 | MPPT6 | MPPT9 | MPPT12 | MPPT14
 
 ALLDEFAULT = 0 # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | X1 | X3
 
@@ -565,6 +565,398 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 5",
+        key = "pv_voltage_5",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2A7,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT5,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 5",
+        key = "pv_current_5",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2A8,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT5,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 5",
+        key = "pv_power_5",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2A9,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT5,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 5 Temperature",
+        key = "mppt_5_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2AB,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT5,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 6",
+        key = "pv_voltage_6",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2AE,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT6,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 6",
+        key = "pv_current_6",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2AF,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT6,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 6",
+        key = "pv_power_6",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2B0,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT6,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 6 Temperature",
+        key = "mppt_6_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2B2,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT6,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 7",
+        key = "pv_voltage_7",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2B5,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 7",
+        key = "pv_current_7",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2B6,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 7",
+        key = "pv_power_7",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2B7,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 7 Temperature",
+        key = "mppt_7_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2B9,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 8",
+        key = "pv_voltage_8",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2BC,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 8",
+        key = "pv_current_8",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2BD,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 8",
+        key = "pv_power_8",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2BE,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 8 Temperature",
+        key = "mppt_8_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2C0,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 9",
+        key = "pv_voltage_9",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2C3,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 9",
+        key = "pv_current_9",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2C4,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 9",
+        key = "pv_power_9",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2C5,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 9 Temperature",
+        key = "mppt_9_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2C7,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT9,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 10",
+        key = "pv_voltage_10",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2CA,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 10",
+        key = "pv_current_10",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2CB,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 10",
+        key = "pv_power_10",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2CC,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 10 Temperature",
+        key = "mppt_10_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2CE,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 11",
+        key = "pv_voltage_11",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2D1,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 11",
+        key = "pv_current_11",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2D2,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 11",
+        key = "pv_power_11",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2D3,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 11 Temperature",
+        key = "mppt_11_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2D5,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 12",
+        key = "pv_voltage_12",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x2D8,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Current 12",
+        key = "pv_current_12",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x2D9,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 12",
+        key = "pv_power_12",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2DA,
+        register_type = REG_INPUT,
+        unit = REGISTER_S32,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "MPPT 12 Temperature",
+        key = "mppt_12_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x2DC,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        allowedtypes = MAX | GEN2 | MPPT12,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
         key = "active_power_control",
         register = 0x2304,
         scale = 0.1,
@@ -596,7 +988,37 @@ class solax_mega_forth_plugin(plugin_base):
         # derive invertertupe from seriiesnumber
         if   seriesnumber.startswith('X3G04'):
             invertertype = MAX | GEN2 # MAX G2
-            self.inverter_model = "X3 - MEGA - G2"
+            self.inverter_model = "X3 - MEGA 40kW - G2"
+        elif seriesnumber.startswith('X3G05'):
+            invertertype = MAX | GEN2 | MPPT5 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 50kW - G2"
+        elif seriesnumber.startswith('X3G06'):
+            invertertype = MAX | GEN2 | MPPT6 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 60kW - G2"
+        elif seriesnumber.startswith('X3G075'):
+            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 75kW - G2"
+        elif seriesnumber.startswith('X3G08'):
+            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 80kW - G2"
+        elif seriesnumber.startswith('X3G01'):
+            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 100kW - G2"
+        elif seriesnumber.startswith('X3G011'):
+            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 110kW - G2"
+        elif seriesnumber.startswith('X3G012'):
+            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 120kW - G2"
+        elif seriesnumber.startswith('X3G0125'):
+            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 125kW - G2"
+        elif seriesnumber.startswith('X3G013'):
+            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 136kW - G2"
+        elif seriesnumber.startswith('X3G015'):
+            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
+            self.inverter_model = "X3- MEGA 150kW - G2"
         elif seriesnumber.startswith('MAXMEG_G2'):
             invertertype = MAX | GEN2 # MAX MEGA G2
             self.inverter_model = "X3-MAX MEGA - G2"
@@ -671,6 +1093,6 @@ plugin_instance = solax_mega_forth_plugin(
     SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
     order16 = Endian.BIG,
-    order32 = Endian.LITTLE,
+    order32 = Endian.BIG,
     auto_block_ignore_readerror = True
     )
