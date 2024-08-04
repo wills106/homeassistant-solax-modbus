@@ -4824,7 +4824,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Frequency",
-        key = "inverter_frequency",
+        key = "grid_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0xC8,
