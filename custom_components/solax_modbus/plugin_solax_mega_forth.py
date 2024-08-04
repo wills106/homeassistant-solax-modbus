@@ -114,7 +114,7 @@ NUMBER_TYPES = [
 
     SolaxModbusNumberEntityDescription(
         name = "Active Power",
-        key = "active_power",
+        key = "active_power_control",
         register = 0x2304,
         fmt = "i",
         native_min_value = 1,
@@ -126,7 +126,7 @@ NUMBER_TYPES = [
     ),
     SolaxModbusNumberEntityDescription(
         name = "Reactive Power",
-        key = "reactive_power",
+        key = "reactive_power_control",
         register = 0x2305,
         fmt = "i",
         native_min_value = 1,
@@ -358,7 +358,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfTemperature.CELSIUS,
         device_class = SensorDeviceClass.TEMPERATURE,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 0x28F,
+        register = 0x202,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
         scale = 0.1,
@@ -562,14 +562,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "active_power",
+        key = "active_power_control",
         register = 0x2304,
         scale = 0.1,
         allowedtypes = MAX | GEN2,
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "reactive_power",
+        key = "reactive_power_control",
         register = 0x2305,
         scale = 0.1,
         allowedtypes = MAX | GEN2,
