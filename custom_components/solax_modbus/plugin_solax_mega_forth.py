@@ -996,29 +996,29 @@ class solax_mega_forth_plugin(plugin_base):
             invertertype = MAX | GEN2 | MPPT6 # MAX MEGA G2
             self.inverter_model = "X3- MEGA 60kW - G2"
         elif seriesnumber.startswith('X3G075'):
-            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 75kW - G2"
+            invertertype = MAX | GEN2 | MPPT9 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 75kW - G2"
         elif seriesnumber.startswith('X3G08'):
-            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 80kW - G2"
+            invertertype = MAX | GEN2 | MPPT9 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 80kW - G2"
         elif seriesnumber.startswith('X3G01'):
-            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 100kW - G2"
+            invertertype = MAX | GEN2 | MPPT9 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 100kW - G2"
         elif seriesnumber.startswith('X3G011'):
-            invertertype = MAX | GEN2 | MPPT9 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 110kW - G2"
+            invertertype = MAX | GEN2 | MPPT9 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 110kW - G2"
         elif seriesnumber.startswith('X3G012'):
-            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 120kW - G2"
+            invertertype = MAX | GEN2 | MPPT12 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 120kW - G2"
         elif seriesnumber.startswith('X3G0125'):
-            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 125kW - G2"
+            invertertype = MAX | GEN2 | MPPT12 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 125kW - G2"
         elif seriesnumber.startswith('X3G013'):
-            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 136kW - G2"
+            invertertype = MAX | GEN2 | MPPT12 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 136kW - G2"
         elif seriesnumber.startswith('X3G015'):
-            invertertype = MAX | GEN2 | MPPT12 # MAX MEGA G2
-            self.inverter_model = "X3- MEGA 150kW - G2"
+            invertertype = MAX | GEN2 | MPPT12 # MAX FORTH G2
+            self.inverter_model = "X3- FORTH 150kW - G2"
         elif seriesnumber.startswith('MAXMEG_G2'):
             invertertype = MAX | GEN2 # MAX MEGA G2
             self.inverter_model = "X3-MAX MEGA - G2"
