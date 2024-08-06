@@ -1028,6 +1028,23 @@ NUMBER_TYPES = [
         native_unit_of_measurement = PERCENTAGE,
         allowedtypes = HYBRID | GEN5 | DCB,
     ),
+#####
+#
+# MIC
+#
+#####
+    SolaxModbusNumberEntityDescription(
+        name = "Active Power Limit",
+        key = "active_power_limit",
+        register = 0x638,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 30000,
+        native_step = 100,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = NumberDeviceClass.POWER,
+        allowedtypes = MIC | GEN2 | X3,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -1977,6 +1994,26 @@ SELECT_TYPES = [
         allowedtypes = AC | HYBRID | GEN4 | DCB,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:home-clock",
+    ),
+#####
+#
+# MIC
+#
+#####
+    SolaxModbusSelectEntityDescription(
+        name = "Q Curve",
+        key = "q-curve",
+        register = 0x640,
+        option_dict = {
+                0: "Off",
+                1: "Over Excited",
+                2: "Under Excited",
+                3: "PF(p)",
+                4: "Q(u)",
+                5: "FixQPower",
+            },
+        allowedtypes = MIC | GEN2,
+        icon = "mdi:dip-switch",
     ),
 ]
 
@@ -5898,12 +5935,24 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:clock",
     ),
     SolaXModbusSensorEntityDescription(
+        key = "q-curve",
+        register = 0x347,
+        scale = { 0: "Off",
+                  1: "Over Excited",
+                  2: "Under Excited",
+                  3: "PF(p)",
+                  4: "Q(u)",
+                  5: "FixQPower", },
+        allowedtypes = MIC | GEN2,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Active Power Limit",
         key = "active_power_limit",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         register = 0x351,
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_dsp",
