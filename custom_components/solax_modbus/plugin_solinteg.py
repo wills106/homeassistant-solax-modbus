@@ -175,8 +175,8 @@ def _fw_str(wa, *a):
     return f"V{_bytes_str(ba[0:4])}-{_bytes_str(ba[4:8])}"
 
 def _fn_mppt_mask(v, descr, dd):
-    mask = dd["mppt_mask"]
-    return "off" if v == 0 else "on" if v & mask == mask else _flag_list(v, dd["mppt_list"], "unknown")
+    mask = dd.get("mppt_mask", 0)
+    return "off" if v == 0 or mask == 0 else "on" if v & mask == mask else _flag_list(v, dd["mppt_list"], "unknown")
 
 def value_function_house_load(initval, descr, datadict):
     return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) + datadict.get('meter_2_measured_power', 0) )
@@ -421,14 +421,7 @@ SELECT_TYPES = [
         name = "Shadow Scan",
         key = "shadow_scan",
         register = 25020,
-        option_dict = {
-            0: "off",
-            0xff: "on",
-            1: "mppt1",
-            2: "mppt2",
-            4: "mppt3",
-            8: "mppt4",
-        },
+        option_dict = {0: "off", 0x7fff: "on"},
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:box-shadow",
     ),
@@ -818,8 +811,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name = "Battery Rated Capacity",
         key = "battery_rated_capacity",
         native_unit_of_measurement = UnitOfEnergy.WATT_HOUR,
-        #register = 32007, #not working??
-        entity_registry_enabled_default = False,
+        register = 32007, #working, from fw V27.52.3.0
         unit = REGISTER_U32,
         allowedtypes = HYBRID,
         icon = "mdi:battery",
@@ -1227,11 +1219,10 @@ class solinteg_plugin(plugin_base):
         
         if invertertype > 0:
             #prepare mppt list
-            mppt_mask = 2**mppt - 1 #mask
-            hub.data["mppt_count"] = mppt
-            hub.data["mppt_mask"] = mppt_mask
+            #hub.data["mppt_count"] = mppt
+            hub.data["mppt_mask"] = 2**mppt - 1 #mask
             hub.data["mppt_list"] = []
-            sel_dd = {0: "off", mppt_mask: "on"}
+            sel_dd = {0: "off", 0x7fff: "on"} #dict uses 16 bit signed!?, 0xffff not possible
             for i in range(mppt):
                 mx = f"mppt{i+1}"
                 hub.data["mppt_list"].append(mx)
@@ -1239,7 +1230,8 @@ class solinteg_plugin(plugin_base):
             #set the options
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
-                    sel.option_dict = sel_dd
+                    sel.option_dict.clear()
+                    sel.option_dict.update(sel_dd)
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
