@@ -1078,6 +1078,7 @@ class sofar_old_plugin(plugin_base):
         if seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SA3'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('ZA3'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
