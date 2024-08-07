@@ -2003,6 +2003,21 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription(
         name = "Q Curve",
         key = "q-curve",
+        register = 0x62F,
+        option_dict = {
+                0: "Off",
+                1: "Over Excited",
+                2: "Under Excited",
+                3: "PF(p)",
+                4: "Q(u)",
+                5: "FixQPower",
+            },
+        allowedtypes = MIC | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "Q Curve",
+        key = "q-curve",
         register = 0x640,
         option_dict = {
                 0: "Off",
@@ -2014,6 +2029,18 @@ SELECT_TYPES = [
             },
         allowedtypes = MIC | GEN2,
         icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "Lock State",
+        key = "lock_state",
+        register = 0x600,
+        option_dict =  {
+                0: "Locked",
+                2014: "Unlocked",
+                6868: "Unlocked - Advanced",
+            },
+        allowedtypes = MIC,
+        icon = "mdi:lock-question",
     ),
 ]
 
@@ -5980,6 +6007,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN2,
         internal = True,
     ),
+    SolaXModbusSensorEntityDescription(
+        key = "lock_state",
+        register = 0x39A,
+        scale = { 0: "Locked",
+                  1: "Unlocked",
+                  2: "Unlocked - Advanced", },
+        allowedtypes = MIC,
+        internal = True,
+    ),
 #####
 #
 # Input Registers
@@ -6544,6 +6580,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #
 #####
     SolaXModbusSensorEntityDescription(
+        key = "q-curve",
+        register = 0x35C,
+        scale = { 0: "Off",
+                  1: "Over Excited",
+                  2: "Under Excited",
+                  3: "PF(p)",
+                  4: "Q(u)",
+                  5: "FixQPower", },
+        allowedtypes = MIC | GEN4,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Active Power Limit",
         key = "active_power_limit",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6646,6 +6694,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
+        name = "PV Voltage 3",
+        key = "pv_voltage_3",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 0x40C,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MIC | GEN4 | MPPT3,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "PV Current 1",
         key = "pv_current_1",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
@@ -6670,6 +6729,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
+        name = "PV Current 3",
+        key = "pv_current_3",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 0x40F,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = MIC | GEN4 | MPPT3,
+        icon = "mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "PV Power 1",
         key = "pv_power_1",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6687,6 +6758,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
+        register_type = REG_INPUT,
+        allowedtypes = MIC | GEN4,
+        icon = "mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "PV Power 3",
+        key = "pv_power_3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 0x412,
         register_type = REG_INPUT,
         allowedtypes = MIC | GEN4,
         icon = "mdi:solar-power-variant",
@@ -7299,6 +7381,15 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('PRI'):
             invertertype = AC | GEN4 | X1 # RetroFit
             self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith('H55'):
+            invertertype = HYBRID | GEN5 | X1 # X1-IES 5kW?
+            self.inverter_model = "X1-IES"
+        elif seriesnumber.startswith('H56'):
+            invertertype = HYBRID | GEN5 | X1 # X1-IES 6kW?
+            self.inverter_model = "X1-IES"
+        elif seriesnumber.startswith('H58'):
+            invertertype = HYBRID | GEN5 | X1 # X1-IES 8kW
+            self.inverter_model = "X1-IES"
         elif seriesnumber.startswith('H31'):
             invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
             self.inverter_model = "X3-TIGO TSI"
@@ -7344,18 +7435,21 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('XB3'):
             invertertype = MIC | GEN2 | X1 # X1-Boost
             self.inverter_model = "X1-Boost"
-        elif seriesnumber.startswith('XB4'):
-            invertertype = MIC | GEN4 | X1 # X1-Boost G4
-            self.inverter_model = "X1-Boost"
         elif seriesnumber.startswith('XM3'):
             invertertype = MIC | GEN2 | X1 # X1-Mini G3
             self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('XB4'):
+            invertertype = MIC | GEN4 | X1 # X1-Boost G4
+            self.inverter_model = "X1-Boost"
         elif seriesnumber.startswith('XM4'):
             invertertype = MIC | GEN4 | X1 # X1-Mini G4
             self.inverter_model = "X1-Mini"
         elif seriesnumber.startswith('XMA'):
             invertertype = MIC | GEN2 | X1 # X1-Mini G3
             self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('XST'):
+            invertertype = MIC | GEN4 | X1 | MPPT3 # X1-SMART-G2
+            self.inverter_model = "X1-SMART-G2"
         elif seriesnumber.startswith('MC103T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
