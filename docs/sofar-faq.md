@@ -22,6 +22,19 @@ I have seen that it might take a while until the port 8899 gets opened by the LA
 
 If that does still not help check the LAN Stick Loggers Firmware: Open the web interface at `http://\<LSE-3 IP Address\>` and on the 'Status' page expand the 'Device Information'. Check that the Firmware version is 'ME_0D_270A_1.09' or newer.
 
+## Using the LSE-3 logger stick, write requests fail with errors.
+
+You are using the LSE-3 logger stick to connect home assistant to your Sofar Solar inverter. When setting values you get error messages like the following:
+
+`Modbus Error: [Input/Output] ERROR: No response received after 3 retries`
+
+There is an issue with the LSE-3 logger stick that does not return response codes for write requests in the standard format. Thus the write attempt is considered as failed, even though it was successful.
+
+When using the UI you can ignore these errors.
+
+In automations and scripts these errors will cause your automation to stop. Workaround: Add `continue_on_error: true` to the YAML of your service calls that set values to the inverter. More details on `continue_on_error` can be found in the [Home Assistant documentation](https://www.home-assistant.io/docs/scripts/#continuing-on-error).
+
+
 ## I have changed some values, but they seem to have no impact on the inverter's operation.
 
 The Sofar Hybrid inverters have several registers that cannot be written on their own. These need to be written in batch of several registers. The integration for Sofar therefore provides several buttons that trigger the write actions to the inverter. For example after changing "Passive: Desired Grid Power", "Passive: Maximum Battery Power", or "Passive: Minimum Battery Power" you have to press "Passive: Update Battery Charge/Discharge" to commit the changed values to the inverter.
