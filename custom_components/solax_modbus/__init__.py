@@ -508,7 +508,7 @@ class SolaXModbusHub:
 
         return self._client.connected
 
-    async def async_connect(self, retries=6):
+    async def async_connect(self):
         result = False
 
         _LOGGER.debug(
