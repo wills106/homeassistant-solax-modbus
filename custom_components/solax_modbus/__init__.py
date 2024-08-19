@@ -515,18 +515,8 @@ class SolaXModbusHub:
             self._client.comm_params.host,
             self._client.comm_params.port,
         )
-
-        result: bool
-        for retry in range(2):
-            result = await self._client.connect()
-            if not result:
-                _LOGGER.info(
-                    "Connect to Inverter attempt %d of 3 is not successful", retry + 1
-                )
-                await asyncio.sleep(1)
-            else:
-                break
-
+        
+        result = await self._client.connect()
         if result:
             _LOGGER.info(
                 "Inverter connected at %s:%s",
