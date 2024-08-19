@@ -242,18 +242,19 @@ class SolaXModbusHub:
                 stopbits=1,
                 bytesize=8,
                 timeout=3,
+                retries=6,
             )
         else:
             if tcp_type == "rtu":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=ModbusRtuFramer
+                    host=host, port=port, timeout=5, framer=ModbusRtuFramer, retries=6
                 )
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=ModbusAsciiFramer
+                    host=host, port=port, timeout=5, framer=ModbusAsciiFramer, retries=6
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, retries=6)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
