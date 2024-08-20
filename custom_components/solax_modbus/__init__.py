@@ -564,7 +564,6 @@ class SolaXModbusHub:
 
     async def async_write_register(self, unit, address, payload):
         """Write register."""
-        await self.async_connect()
         awake = self.plugin.isAwake(self.data)
         if awake:
             return await self.async_lowlevel_write_register(unit, address, payload)
