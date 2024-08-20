@@ -242,18 +242,19 @@ class SolaXModbusHub:
                 stopbits=1,
                 bytesize=8,
                 timeout=3,
+                retries=6,
             )
         else:
             if tcp_type == "rtu":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=ModbusRtuFramer
+                    host=host, port=port, timeout=5, framer=ModbusRtuFramer, retries=6
                 )
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=ModbusAsciiFramer
+                    host=host, port=port, timeout=5, framer=ModbusAsciiFramer, retries=6
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, retries=6)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
@@ -507,7 +508,7 @@ class SolaXModbusHub:
 
         return self._client.connected
 
-    async def async_connect(self, retries=6):
+    async def async_connect(self):
         result = False
 
         _LOGGER.debug(
@@ -515,18 +516,8 @@ class SolaXModbusHub:
             self._client.comm_params.host,
             self._client.comm_params.port,
         )
-
-        result: bool
-        for retry in range(2):
-            result = await self._client.connect()
-            if not result:
-                _LOGGER.info(
-                    "Connect to Inverter attempt %d of 3 is not successful", retry + 1
-                )
-                await asyncio.sleep(1)
-            else:
-                break
-
+        
+        result = await self._client.connect()
         if result:
             _LOGGER.info(
                 "Inverter connected at %s:%s",
