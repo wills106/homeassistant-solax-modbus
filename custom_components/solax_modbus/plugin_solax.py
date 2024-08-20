@@ -303,24 +303,30 @@ MAX_CURRENTS = [
     ('U50',    50 ), # Gen2 X1 SK-SU
     ('F3D',    35 ), # RetroFit X3
     ('F3E',    25 ), # RetroFit X3
-    ('H3DE',    25 ), # Gen3 X3 might need changing?
+    ('H3DE',   25 ), # Gen3 X3 might need changing?
     ('H3E',    25 ), # Gen3 X3
-    ('H3LE',    25 ), # Gen3 X3
-    ('H3PE',    25 ), # Gen3 X3 might need changing?
-    ('H3UE',    25 ), # Gen3 X3
-    ('H43',   30 ), # Gen4 X1 3 / 3.7kW
+    ('H3LE',   25 ), # Gen3 X3
+    ('H3PE',   25 ), # Gen3 X3 might need changing?
+    ('H3UE',   25 ), # Gen3 X3
+    ('H43',    30 ), # Gen4 X1 3 / 3.7kW
     ('H450',   30 ), # Gen4 X1 5kW
     ('H449',   30 ), # Gen4 X1 5kW
     ('H460',   30 ), # Gen4 X1 6kW
     ('H475',   30 ), # Gen4 X1 7.5kW
-    ('PRE',   30 ), # Gen4 X1 RetroFit
-    ('PRI',   30 ), # Gen4 X1 RetroFit
-    ('F34',   30 ), # Gen4 X3 RetroFit
+    ('PRE',    30 ), # Gen4 X1 RetroFit
+    ('PRI',    30 ), # Gen4 X1 RetroFit
+    ('H55',    50 ), # Gen5 X1-IES
+    ('H56',    50 ), # Gen5 X1-IES
+    ('H58',    50 ), # Gen5 X1-IES
+    ('F34',    30 ), # Gen4 X3 RetroFit
     ('H31',    30 ), # Gen4 X3 TIGO
-    ('H34A',    30 ), # Gen4 X3 A
-    ('H34B',    30 ), # Gen4 X3 B
-    ('H34C',    30 ), # Gen4 X3 C
-    ('H34T',    25 ), # Gen4 X3 T
+    ('H34A',   30 ), # Gen4 X3 A
+    ('H34B',   30 ), # Gen4 X3 B
+    ('H34C',   30 ), # Gen4 X3 C
+    ('H34T',   25 ), # Gen4 X3 T
+    ('H35A',   50 ), # Gen5 X3-IES A
+    ('H3BC',   30 ), # Gen5 X3 Ultra C
+    ('H3BD',   30 ), # Gen5 X3 Ultra D
     ### All known Inverters added
 ]
 
@@ -412,6 +418,23 @@ MAX_EXPORT = [
     ('H34T10', 15000 ), # Gen4 X3 T
     ('H34T12', 15000 ), # Gen4 X3 T
     ('H34T15', 16500 ), # Gen4 X3 T
+    ('H35A04',  4000 ), # Gen5 X3-IES A
+    ('H35A05',  5000 ), # Gen5 X3-IES A
+    ('H35A06',  6000 ), # Gen5 X3-IES A
+    ('H35A08',  8000 ), # Gen5 X3-IES A
+    ('H35A10', 10000 ), # Gen5 X3-IES A
+    ('H35A12', 12000 ), # Gen5 X3-IES A
+    ('H35A15', 15000 ), # Gen5 X3-IES A
+    ('H3BC15', 15000 ), # Gen5 X3 Ultra C
+    ('H3BC19', 19999 ), # Gen5 X3 Ultra C
+    ('H3BC20', 20000 ), # Gen5 X3 Ultra C
+    ('H3BC25', 25000 ), # Gen5 X3 Ultra C
+    ('H3BC30', 30000 ), # Gen5 X3 Ultra C
+    ('H3BD15', 15000 ), # Gen5 X3 Ultra D
+    ('H3BD19', 19999 ), # Gen5 X3 Ultra D
+    ('H3BD20', 20000 ), # Gen5 X3 Ultra D
+    ('H3BD25', 25000 ), # Gen5 X3 Ultra D
+    ('H3BD30', 30000 ), # Gen5 X3 Ultra D
     ### All known Inverters added
 ]
 
@@ -517,7 +540,7 @@ NUMBER_TYPES = [
         key = "config_max_export",
         allowedtypes = AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
         native_min_value = 600,
-        native_max_value = 50000,
+        native_max_value = 60000,
         entity_category = EntityCategory.DIAGNOSTIC,
         initvalue = 15000,
         native_step = 200,
@@ -7382,13 +7405,13 @@ class solax_plugin(plugin_base):
             invertertype = AC | GEN4 | X1 # RetroFit
             self.inverter_model = "X1-RetroFit"
         elif seriesnumber.startswith('H55'):
-            invertertype = HYBRID | GEN5 | X1 # X1-IES 5kW?
+            invertertype = HYBRID | GEN5 | X1 | MPPT3 # X1-IES 5kW?
             self.inverter_model = "X1-IES"
         elif seriesnumber.startswith('H56'):
-            invertertype = HYBRID | GEN5 | X1 # X1-IES 6kW?
+            invertertype = HYBRID | GEN5 | X1 | MPPT3 # X1-IES 6kW?
             self.inverter_model = "X1-IES"
         elif seriesnumber.startswith('H58'):
-            invertertype = HYBRID | GEN5 | X1 # X1-IES 8kW
+            invertertype = HYBRID | GEN5 | X1 | MPPT3 # X1-IES 8kW
             self.inverter_model = "X1-IES"
         elif seriesnumber.startswith('H31'):
             invertertype = HYBRID | GEN4 | X3 # TIGO TSI X3
@@ -7399,6 +7422,24 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('F34'):
             invertertype = AC | GEN4 | X3 # Gen4 X3 FIT
             self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith('H35A04'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 4kW ?
+            self.inverter_model = "X3-IES"
+        elif seriesnumber.startswith('H35A06'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 6kW ?
+            self.inverter_model = "X3-IES"
+        elif seriesnumber.startswith('H35A08'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 8kW ?
+            self.inverter_model = "X3-IES"
+        elif seriesnumber.startswith('H35A10'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 10kW
+            self.inverter_model = "X3-IES"
+        elif seriesnumber.startswith('H35A12'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 12kW ?
+            self.inverter_model = "X3-IES"
+        elif seriesnumber.startswith('H35A15'):
+            invertertype = HYBRID | GEN5 | X3 # X3-IES 15kW ?
+            self.inverter_model = "X3-IES"
         elif seriesnumber.startswith('H3BC15'):
             invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
             self.inverter_model = "X3-Ultra"
