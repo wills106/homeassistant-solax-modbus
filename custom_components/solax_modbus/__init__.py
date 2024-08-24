@@ -235,7 +235,6 @@ class SolaXModbusHub:
         self._hass = hass
         if interface == "serial":
             self._client = AsyncModbusSerialClient(
-                method="rtu",
                 port=serial_port,
                 baudrate=baudrate,
                 parity="N",
