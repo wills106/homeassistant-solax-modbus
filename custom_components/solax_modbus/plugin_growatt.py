@@ -3326,25 +3326,29 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN | GEN2,
         icon = "mdi:home",
     ),
-
+#####
+#
+# TL-X TL-XH
+#
+#####
     GrowattModbusSensorEntityDescription(
         name = "Inverter State",
         key = "inverter_state",
         register = 3000,
+        register_type = REG_INPUT,
         unit = REGISTER_U8H,
         scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Run Mode",
         key = "run_mode",
         register = 3000,
+        register_type = REG_INPUT,
         unit = REGISTER_U8L,
         scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
     ),
-
-    # TL-X TL-XH
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
         key = "total_pv_power",
