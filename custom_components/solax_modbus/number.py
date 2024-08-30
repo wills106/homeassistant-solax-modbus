@@ -32,7 +32,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             for (prefix, value,) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix): newdescr = replace(number_info, read_scale = value)
         if plugin.matchInverterWithMask(hub._invertertype,newdescr.allowedtypes, hub.seriesnumber ,newdescr.blacklist):
-            newdescr.name = inverter_name_suffix + newdescr.name
+            if not (newdescr.name.startswith(inverter_name_suffix)): newdescr.name = inverter_name_suffix + newdescr.name
             number = SolaXModbusNumber( hub_name, hub, modbus_addr, hub.device_info, newdescr)
             if newdescr.write_method==WRITE_DATA_LOCAL:  hub.writeLocals[newdescr.key] = newdescr
             hub.numberEntities[newdescr.key] = number
