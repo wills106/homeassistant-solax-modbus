@@ -321,7 +321,7 @@ SELECT_TYPES = [
                 1: "Meter 1",
                 2: "Meter 2",
                 3: "CT Clamp", },
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3 | GEN4,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
