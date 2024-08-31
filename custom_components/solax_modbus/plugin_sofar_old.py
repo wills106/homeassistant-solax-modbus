@@ -1118,4 +1118,5 @@ plugin_instance = sofar_old_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )

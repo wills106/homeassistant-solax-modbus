@@ -4077,5 +4077,6 @@ plugin_instance = sofar_plugin(
     BATTERY_CONFIG = battery_config(),
     block_size = 100,
     order16 = Endian.BIG,
-    order32 = Endian.BIG
+    order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )

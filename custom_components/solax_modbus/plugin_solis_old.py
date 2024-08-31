@@ -466,4 +466,5 @@ plugin_instance = solis_old_plugin(
     block_size = 48,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )

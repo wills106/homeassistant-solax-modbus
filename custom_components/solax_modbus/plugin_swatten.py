@@ -633,4 +633,5 @@ plugin_instance = swatten_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.LITTLE,
+    auto_block_ignore_readerror = True
     )
