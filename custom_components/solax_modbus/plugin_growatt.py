@@ -815,7 +815,7 @@ SELECT_TYPES = [
                 0: "Load First",
                 1: "Battery First",
                 2: "Grid First", },
-        allowedtypes = GEN2 | GEN3,
+        allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:run",
     ),
