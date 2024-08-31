@@ -3133,7 +3133,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | GEN3,
+        allowedtypes = GEN | GEN2,
         entity_registry_enabled_default = False,
         icon = "mdi:transmission-tower",
     ),
