@@ -27,7 +27,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
-            button_info.name = inverter_name_suffix + button_info.name
+            if not (button_info.name.startswith(inverter_name_suffix)): button_info.name = inverter_name_suffix + button_info.name
             button = SolaXModbusButton( hub_name, hub, modbus_addr, hub.device_info, button_info )
             entities.append(button)
             if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
