@@ -2768,7 +2768,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
-        key = "bettery_combined_power",
+        key = "battery_combined_power",
         value_function= value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
