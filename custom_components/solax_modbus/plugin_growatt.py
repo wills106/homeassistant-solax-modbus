@@ -221,15 +221,68 @@ NUMBER_TYPES = [
         icon = "mdi:battery-sync",
     ),
     GrowattModbusNumberEntityDescription(
-        name = "Battery First Maximum SOC",
-        key = "battery_first_maximum_soc",
-        register = 3048,
+        name = "EMS Discharging Rate",
+        key = "ems_discharging_rate",
+        register = 3036,
+        unit = REGISTER_U16,
         native_min_value = 0,
         native_max_value = 100,
         native_step = 1,
+        fmt = "i",
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = GEN4,
-        icon = "mdi:battery-sync",
+        allowedtypes = GEN3 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-arrow-down",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Discharging Stop SOC",
+        key = "ems_discharging_stop_soc",
+        register = 3037,
+        unit = REGISTER_U16,
+        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-10",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Charging Rate",
+        key = "ems_charging_rate",
+        register = 3047,
+        unit = REGISTER_U16,
+        native_min_value = 0,
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-arrow-up",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Charging Stop SOC",
+        key = "ems_charging_stop_soc",
+        register = 3048,
+        unit = REGISTER_U16,
+        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
     ),
 ]
 
@@ -762,7 +815,7 @@ SELECT_TYPES = [
                 0: "Load First",
                 1: "Battery First",
                 2: "Grid First", },
-        allowedtypes = GEN2 | GEN3,
+        allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:run",
     ),
@@ -777,7 +830,7 @@ SELECT_TYPES = [
             },
         allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:dip-switch",
+        icon = "battery-charging",
     ),
     GrowattModbusSelectEntityDescription(
         name = "EPS Switch",
@@ -787,9 +840,9 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | AC | GEN4 | EPS,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4 | EPS,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:dip-switch",
+        icon = "mdi:power-plug-battery",
     ),
     ###
     #
@@ -1011,7 +1064,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   3: "CT Clamp", },
         allowedtypes = GEN | GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1023,7 +1075,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         allowedtypes = GEN | GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
 
@@ -1568,14 +1619,41 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #    entity_category = EntityCategory.DIAGNOSTIC,
     #    icon = "mdi:information",
     #),
-    GrowattModbusSensorEntityDescription(
-        name = "Charger Upper SOC",
-        key = "Charger_upper_soc",
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Discharging Rate",
+        key = "ems_discharging_rate",
+        register = 3036,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-arrow-down",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Discharging Stop SOC",
+        key = "ems_discharging_stop_soc",
+        register = 3037,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-10",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Charging Rate",
+        key = "ems_charging_rate",
+        register = 3047,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-arrow-up",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Charging Stop SOC",
+        key = "ems_charging_stop_soc",
         register = 3048,
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Charger Switch",
@@ -1605,7 +1683,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3079,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        allowedtypes = HYBRID | AC | GEN4 | EPS,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4 | EPS,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
@@ -2690,7 +2768,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
-        key = "bettery_combined_power",
+        key = "battery_combined_power",
         value_function= value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -3055,7 +3133,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | GEN3,
+        allowedtypes = GEN | GEN2,
         entity_registry_enabled_default = False,
         icon = "mdi:transmission-tower",
     ),
@@ -3331,24 +3409,24 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # TL-X TL-XH
 #
 #####
-    GrowattModbusSensorEntityDescription(
-        name = "Inverter State",
-        key = "inverter_state",
-        register = 3000,
-        register_type = REG_INPUT,
-        unit = REGISTER_U8H,
-        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
-        allowedtypes = GEN3 | GEN4,
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "Run Mode",
-        key = "run_mode",
-        register = 3000,
-        register_type = REG_INPUT,
-        unit = REGISTER_U8L,
-        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
-        allowedtypes = GEN3 | GEN4,
-    ),
+#    GrowattModbusSensorEntityDescription(
+#        name = "Inverter State",
+#        key = "inverter_state",
+#        register = 3000,
+#        register_type = REG_INPUT,
+#        unit = REGISTER_U8H,
+#        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
+#        allowedtypes = GEN3 | GEN4,
+#    ),
+#    GrowattModbusSensorEntityDescription(
+#        name = "Run Mode",
+#        key = "run_mode",
+#        register = 3000,
+#        register_type = REG_INPUT,
+#        unit = REGISTER_U8L,
+#        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
+#        allowedtypes = GEN3 | GEN4,
+#    ),
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
         key = "total_pv_power",
@@ -3878,7 +3956,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:home-import-outline",
     ),
@@ -4257,7 +4335,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 3169,
         register_type = REG_INPUT,
-        scale = 0.01,
+        scale = 0.1, #doc says 0.01, but datasheet of APX HV system module for MOD / MID TL-XH (BP) inverters have operating voltage range 600-980V.
         rounding = 2,
         allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
@@ -4268,6 +4346,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 3170,
         register_type = REG_INPUT,
+        unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN3 | GEN4 | HYBRID,
@@ -4923,12 +5002,12 @@ class growatt_plugin(plugin_base):
         #if seriesnumber.startswith('TLX'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         if seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW
-        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV KTL3-X 15kW 3Phase (MOD)
-        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN3 | X3 | MPPT4 # PV KTL3-X 35kW 3Phase (MID)
+        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV TL3-X 15kW 3Phase (MOD)
+        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN3 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
         #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
         #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN3 | X3 # PV X3 3MPPT 50-70kW
         #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN3 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid KTL3-XH 2.5kW - 6kW
+        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid TL3-XH (BP) 2.5kW - 10kW (MOD)
         elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
@@ -4974,4 +5053,5 @@ plugin_instance = growatt_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )
