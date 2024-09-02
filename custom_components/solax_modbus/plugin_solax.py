@@ -2952,8 +2952,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key = "battery_to_ev_charger",
         register = 0x10F,
-        scale = { 0: "Enabled",
-                  1: "Disabled", },
+        scale = { 1: "Enabled",
+                  0: "Disabled", },
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
         internal = True,
     ),
