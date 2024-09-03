@@ -351,8 +351,15 @@ class SolaXModbusHub:
                 self.localsLoaded = (
                     True  # retry a couple of polling cycles - then assume non-existent"
                 )
-        else:
+            return
+        try:
             loaded = json.load(fp)
+        except:
+            _LOGGER.info("Local data file not readable. Reseting to empty")
+            fp.close()
+            self.saveLocalData()
+            return
+        else:
             if loaded.get("_version") == self.DATAFORMAT_VERSION:
                 for desc in self.writeLocals:
                     self.data[desc] = loaded.get(desc)
@@ -515,7 +522,7 @@ class SolaXModbusHub:
             self._client.comm_params.host,
             self._client.comm_params.port,
         )
-        
+
         result = await self._client.connect()
         if result:
             _LOGGER.info(
