@@ -760,7 +760,7 @@ class SolaXModbusHub:
                 return_value = val  # probably a REGISTER_WORDS instance
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (self.tmpdata_expiry.get(descr.key, 0) == 0) and (
-            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(data)
+            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)
         ):
             data[descr.key] = return_value  # case prevent_update number
 
