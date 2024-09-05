@@ -220,6 +220,9 @@ def value_function_software_version_air_g3(initval, descr, datadict):
 def value_function_software_version_air_g4(initval, descr, datadict):
     return  f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
 
+def value_function_battery_voltage_cell_difference(initval, descr, datadict):
+    return  datadict.get('cell_voltage_high', 0) - datadict.get('cell_voltage_low',0)
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -479,7 +482,7 @@ NUMBER_TYPES = [
         native_min_value = -4000,
         native_max_value = 4000,
         native_step = 100,
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = NumberDeviceClass.REACTIVE_POWER,
         initvalue = 0,
         write_method = WRITE_DATA_LOCAL,
@@ -4901,6 +4904,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
+        name = "Battery Voltage Cell Difference",
+        key = "battery_voltage_cell_difference",
+        value_function= value_function_battery_voltage_cell_difference,
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        state_class = SensorStateClass.MEASUREMENT,
+        rounding = 3,
+        entity_registry_enabled_default = False,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Battery State of Health",
         key = "battery_soh",
         icon = "mdi:battery-heart",
@@ -5008,7 +5022,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Target",
         key = "reactive_power_target",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x104,
@@ -5030,7 +5044,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Real",
         key = "reactive_power_real",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x108,
@@ -5077,7 +5091,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Upper",
         key = "reactive_power_upper",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x10E,
@@ -5088,7 +5102,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name = "Reactive Power Lower",
         key = "reactive_power_lower",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x110,

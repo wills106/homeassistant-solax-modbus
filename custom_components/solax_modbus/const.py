@@ -19,7 +19,7 @@ import pathlib
 
 from homeassistant.const import (
     PERCENTAGE,
-    POWER_VOLT_AMPERE_REACTIVE,
+    UnitOfReactivePower,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,

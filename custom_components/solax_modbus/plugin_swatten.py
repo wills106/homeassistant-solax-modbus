@@ -347,7 +347,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
     SwattenModbusSensorEntityDescription(
         name = "Reactive Power",
         key = "reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 4083,

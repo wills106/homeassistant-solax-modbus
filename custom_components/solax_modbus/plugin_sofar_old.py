@@ -168,7 +168,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ReactivePower",
         key = "reactivepower",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 0xD,
         unit = REGISTER_S16,
@@ -362,7 +362,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ReactivePower",
         key = "reactivepower",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 0x10,
         unit = REGISTER_S16,

@@ -189,8 +189,9 @@ MAX_CURRENTS = [
     ('0602',  62.5 ), # 3kW 48v
     ('0102',  62.5 ), # 3kW 48v AC Only?
     ('110F',  62.5 ), # 3.6kW 48v
-    ('160F5',  62.5 ), # 3.6kW 48v
     ('160F3',  100 ), # 5kW 48v
+    ('160F4',  60 ), # 3.6kW 48v
+    ('160F5',  62.5 ), # 3.6kW 48v
     ('1031',  100 ), # 5kW 48v
     ('134F',  100 ), # 5kW 48v
     ('6031',  100 ), # 6kW 48v
@@ -1004,8 +1005,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -1017,8 +1017,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
         icon = "mdi:current-dc",
     ),
     SolisModbusSensorEntityDescription(
@@ -1028,7 +1027,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_pv3_power,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
         icon = "mdi:solar-power-variant",
     ),
     SolisModbusSensorEntityDescription(
@@ -1041,7 +1040,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
         allowedtypes = HYBRID | MPPT4,
     ),
     SolisModbusSensorEntityDescription(
@@ -1054,7 +1052,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
         allowedtypes = HYBRID | MPPT4,
         icon = "mdi:current-dc",
     ),
@@ -1182,7 +1179,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Reactive Power",
         key = "reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33081,
         register_type = REG_INPUT,
@@ -1889,7 +1886,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power",
         key = "meter_reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33265,
         register_type = REG_INPUT,
@@ -1899,7 +1896,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L1",
         key = "meter_reactive_power_l1",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33265,
         register_type = REG_INPUT,
@@ -1909,7 +1906,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L2",
         key = "meter_reactive_power_l2",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33267,
         register_type = REG_INPUT,
@@ -1919,7 +1916,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L3",
         key = "meter_reactive_power_l3",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33269,
         register_type = REG_INPUT,
@@ -1929,7 +1926,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power Total",
         key = "meter_reactive_power_total",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33271,
         register_type = REG_INPUT,
@@ -2442,9 +2439,11 @@ class solis_plugin(plugin_base):
         elif seriesnumber.startswith('134F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
         elif seriesnumber.startswith('140C'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - HV
         elif seriesnumber.startswith('143'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
-        elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith('160F3'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
-        elif seriesnumber.startswith('1033'):  invertertype = HYBRID | X3 # Hybrid Gen6  10kW - HV
+        elif seriesnumber.startswith('160F4'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('103305'):  invertertype = HYBRID | X3 | MPPT4 # Hybrid Gen6  8kW - HV
+        elif seriesnumber.startswith('103306'):  invertertype = HYBRID | X3 | MPPT4 # Hybrid Gen6  10kW - HV
         elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92 10kW - HV
         elif seriesnumber.startswith('114C'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW - HV
         elif seriesnumber.startswith('1805'):  invertertype = HYBRID | X3 # PV Only Gen5 5-20kW
