@@ -97,37 +97,37 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_timingmode(initval, descr, datadict):
-    return  [ ('timed_charge_start_h', datadict.get('timed_charge_start_h', 0), ),
-              ('timed_charge_start_m', datadict.get('timed_charge_start_m', 0), ),
-              ('timed_charge_end_h', datadict.get('timed_charge_end_h', 0), ),
-              ('timed_charge_end_m', datadict.get('timed_charge_end_m', 0), ),
-              ('timed_discharge_start_h', datadict.get('timed_discharge_start_h', 0), ),
-              ('timed_discharge_start_m', datadict.get('timed_discharge_start_m', 0), ),
-              ('timed_discharge_end_h', datadict.get('timed_discharge_end_h', 0), ),
-              ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
+    return  [ ('timed_charge_start_hours', datadict.get('timed_charge_start_hours', 0), ),
+              ('timed_charge_start_minutes', datadict.get('timed_charge_start_minutes', 0), ),
+              ('timed_charge_end_hours', datadict.get('timed_charge_end_hours', 0), ),
+              ('timed_charge_end_minutes', datadict.get('timed_charge_end_minutes', 0), ),
+              ('timed_discharge_start_hours', datadict.get('timed_discharge_start_hours', 0), ),
+              ('timed_discharge_start_minutes', datadict.get('timed_discharge_start_minutes', 0), ),
+              ('timed_discharge_end_hours', datadict.get('timed_discharge_end_hours', 0), ),
+              ('timed_discharge_end_minutes', datadict.get('timed_discharge_end_minutes', 0), ),
             ]
 def value_function_timingmode2(initval, descr, datadict):
     return  [
-              ('timed_charge_start_h_2', datadict.get('timed_charge_start_h_2', 0), ),
-              ('timed_charge_start_m_2', datadict.get('timed_charge_start_m_2', 0), ),
-              ('timed_charge_end_h_2', datadict.get('timed_charge_end_h_2', 0), ),
-              ('timed_charge_end_m_2', datadict.get('timed_charge_end_m_2', 0), ),
-              ('timed_discharge_start_h_2', datadict.get('timed_discharge_start_h_2', 0), ),
-              ('timed_discharge_start_m_2', datadict.get('timed_discharge_start_m_2', 0), ),
-              ('timed_discharge_end_h_2', datadict.get('timed_discharge_end_h_2', 0), ),
-              ('timed_discharge_end_m_2', datadict.get('timed_discharge_end_m_2', 0), ),
+              ('timed_charge_start_hours_2', datadict.get('timed_charge_start_hours_2', 0), ),
+              ('timed_charge_start_minutes_2', datadict.get('timed_charge_start_minutes_2', 0), ),
+              ('timed_charge_end_hours_2', datadict.get('timed_charge_end_hours_2', 0), ),
+              ('timed_charge_end_minutes_2', datadict.get('timed_charge_end_minutes_2', 0), ),
+              ('timed_discharge_start_hours_2', datadict.get('timed_discharge_start_hours_2', 0), ),
+              ('timed_discharge_start_minutes_2', datadict.get('timed_discharge_start_minutes_2', 0), ),
+              ('timed_discharge_end_hours_2', datadict.get('timed_discharge_end_hours_2', 0), ),
+              ('timed_discharge_end_minutes_2', datadict.get('timed_discharge_end_minutes_2', 0), ),
             ]
 
 def value_function_timingmode3(initval, descr, datadict):
     return  [
-              ('timed_charge_start_h_3', datadict.get('timed_charge_start_h_3', 0), ),
-              ('timed_charge_start_m_3', datadict.get('timed_charge_start_m_3', 0), ),
-              ('timed_charge_end_h_3', datadict.get('timed_charge_end_h_3', 0), ),
-              ('timed_charge_end_m_3', datadict.get('timed_charge_end_m_3', 0), ),
-              ('timed_discharge_start_h_3', datadict.get('timed_discharge_start_h_3', 0), ),
-              ('timed_discharge_start_m_3', datadict.get('timed_discharge_start_m_3', 0), ),
-              ('timed_discharge_end_h_3', datadict.get('timed_discharge_end_h_3', 0), ),
-              ('timed_discharge_end_m_3', datadict.get('timed_discharge_end_m_3', 0), ),
+              ('timed_charge_start_hours_3', datadict.get('timed_charge_start_hours_3', 0), ),
+              ('timed_charge_start_minutes_3', datadict.get('timed_charge_start_minutes_3', 0), ),
+              ('timed_charge_end_hours_3', datadict.get('timed_charge_end_hours_3', 0), ),
+              ('timed_charge_end_minutes_3', datadict.get('timed_charge_end_minutes_3', 0), ),
+              ('timed_discharge_start_hours_3', datadict.get('timed_discharge_start_hours_3', 0), ),
+              ('timed_discharge_start_minutes_3', datadict.get('timed_discharge_start_minutes_3', 0), ),
+              ('timed_discharge_end_hours_3', datadict.get('timed_discharge_end_hours_3', 0), ),
+              ('timed_discharge_end_minutes_3', datadict.get('timed_discharge_end_minutes_3', 0), ),
             ]
 
 def value_function_pv1_power(initval, descr, datadict):
