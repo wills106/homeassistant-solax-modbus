@@ -628,6 +628,29 @@ class SolaXModbusHub:
                 ) from e
         return resp
 
+    #same as above "async_write_registers_single" but for uint16
+    async def async_write_registers_single_unsigned(
+        self, unit, address, payload
+    ):  # Needs adapting for regiater que
+        """Write registers multi, but write only one register of type 16bit"""
+        kwargs = {"slave": unit} if unit else {}
+        builder = BinaryPayloadBuilder(
+            byteorder=self.plugin.order16, wordorder=self.plugin.order32
+        )
+        builder.reset()
+        builder.add_16bit_uint(payload)
+        payload = builder.to_registers()
+        async with self._lock:
+            await self._check_connection()
+            try:
+                resp = await self._client.write_registers(address, payload, **kwargs)
+            except (ConnectionException, ModbusIOException) as e:
+                original_message = str(e)
+                raise HomeAssistantError(
+                    f"Error writing single Modbus registers: {original_message}"
+                ) from e
+        return resp   
+        
     async def async_write_registers_multi(
         self, unit, address, payload
     ):  # Needs adapting for regiater que
