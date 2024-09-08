@@ -328,8 +328,8 @@ MAX_CURRENTS = [
     ('H34C',   30 ), # Gen4 X3 C
     ('H34T',   25 ), # Gen4 X3 T
     ('H35A',   50 ), # Gen5 X3-IES A
-    ('H3BC',   30 ), # Gen5 X3 Ultra C
-    ('H3BD',   30 ), # Gen5 X3 Ultra D
+    ('H3BC',   60 ), # Gen5 X3 Ultra C
+    ('H3BD',   60 ), # Gen5 X3 Ultra D
     ### All known Inverters added
 ]
 
