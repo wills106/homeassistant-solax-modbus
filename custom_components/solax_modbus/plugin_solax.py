@@ -330,6 +330,7 @@ MAX_CURRENTS = [
     ('H35A',   50 ), # Gen5 X3-IES A
     ('H3BC',   60 ), # Gen5 X3 Ultra C
     ('H3BD',   60 ), # Gen5 X3 Ultra D
+    ('H3BF',   60 ), # Gen5 X3 Ultra F
     ### All known Inverters added
 ]
 
@@ -438,6 +439,11 @@ MAX_EXPORT = [
     ('H3BD20', 20000 ), # Gen5 X3 Ultra D
     ('H3BD25', 25000 ), # Gen5 X3 Ultra D
     ('H3BD30', 30000 ), # Gen5 X3 Ultra D
+    ('H3BF15', 15000 ), # Gen5 X3 Ultra F
+    ('H3BF19', 19999 ), # Gen5 X3 Ultra F
+    ('H3BF20', 20000 ), # Gen5 X3 Ultra F
+    ('H3BF25', 25000 ), # Gen5 X3 Ultra F
+    ('H3BF30', 30000 ), # Gen5 X3 Ultra F
     ### All known Inverters added
 ]
 
@@ -7444,34 +7450,49 @@ class solax_plugin(plugin_base):
             invertertype = HYBRID | GEN5 | X3 # X3-IES 10-15kW
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith('H3BC15'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra C
             self.inverter_model = "X3-Ultra-15kW"
         elif seriesnumber.startswith('H3BC19'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra C
             self.inverter_model = "X3-Ultra-19.9kW"
         elif seriesnumber.startswith('H3BC20'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra C
             self.inverter_model = "X3-Ultra-20kW"
         elif seriesnumber.startswith('H3BC25'):
-            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra C
             self.inverter_model = "X3-Ultra-25kW"
         elif seriesnumber.startswith('H3BC30'):
-            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra C
             self.inverter_model = "X3-Ultra-30kW"
         elif seriesnumber.startswith('H3BD15'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra D
             self.inverter_model = "X3-Ultra-15kW"
         elif seriesnumber.startswith('H3BD19'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra D
             self.inverter_model = "X3-Ultra-19.9kW"
         elif seriesnumber.startswith('H3BD20'):
-            invertertype = HYBRID | GEN5 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra D
             self.inverter_model = "X3-Ultra-20kW"
         elif seriesnumber.startswith('H3BD25'):
-            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra 25kW
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra D
             self.inverter_model = "X3-Ultra-20kW"
         elif seriesnumber.startswith('H3BD30'):
-            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra ?
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra D
+            self.inverter_model = "X3-Ultra-30kW"
+        elif seriesnumber.startswith('H3BF15'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra F
+            self.inverter_model = "X3-Ultra-15kW"
+        elif seriesnumber.startswith('H3BF19'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra F
+            self.inverter_model = "X3-Ultra-19.9kW"
+        elif seriesnumber.startswith('H3BF20'):
+            invertertype = HYBRID | GEN5 | X3 # X3 Ultra F
+            self.inverter_model = "X3-Ultra-20kW"
+        elif seriesnumber.startswith('H3BF25'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra F
+            self.inverter_model = "X3-Ultra-20kW"
+        elif seriesnumber.startswith('H3BF30'):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3 # X3 Ultra F
             self.inverter_model = "X3-Ultra-30kW"
         elif seriesnumber.startswith('XAU'):
             invertertype = MIC | GEN2 | X1 # X1-Boost
