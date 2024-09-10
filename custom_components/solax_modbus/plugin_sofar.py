@@ -4024,7 +4024,8 @@ class sofar_plugin(plugin_base):
         elif seriesnumber.startswith('SF4'):
             invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SH1'):
-            invertertype = PV | X3 # Older Probably 3phase
+            invertertype = HYBRID | X3 | GEN | BAT_BTS # HYD5...8KTL-3P
+            self.inverter_model = "HYD5...8KTL-3P"
         elif seriesnumber.startswith('SL1'):
             invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SJ2'):
