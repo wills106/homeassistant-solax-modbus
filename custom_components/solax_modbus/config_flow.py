@@ -190,7 +190,7 @@ async def _next_step_modbus(user_input: Any) -> str:
 
 async def _next_step_battery(user_input: Any) -> str:
     _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
-    if user_input["support-battery"]:
+    if user_input.get("support-battery", False):
         return "battery"
     return None
 
