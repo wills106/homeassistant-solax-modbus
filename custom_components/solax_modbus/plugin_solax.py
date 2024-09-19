@@ -540,6 +540,7 @@ NUMBER_TYPES = [
         allowedtypes = AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
         native_min_value = 0.1,
         native_max_value = 10.0,
+        native_step = 0.1,
         entity_category = EntityCategory.DIAGNOSTIC,
         initvalue = 1,
         entity_registry_enabled_default = False,
