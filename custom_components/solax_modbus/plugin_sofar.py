@@ -2284,6 +2284,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 1",
         key = "battery_charge_cycle_1",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x60A,
         allowedtypes = HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2361,6 +2362,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 2",
         key = "battery_charge_cycle_2",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x611,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID,
@@ -2438,6 +2440,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 3",
         key = "battery_charge_cycle_3",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x618,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
@@ -2515,6 +2518,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 4",
         key = "battery_charge_cycle_4",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x61F,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
@@ -2592,6 +2596,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 5",
         key = "battery_charge_cycle_5",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x626,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
@@ -2669,6 +2674,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 6",
         key = "battery_charge_cycle_6",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x62D,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
@@ -2746,6 +2752,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 7",
         key = "battery_charge_cycle_7",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x634,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
@@ -2823,6 +2830,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name = "Battery Charge Cycle 8",
         key = "battery_charge_cycle_8",
+	state_class = SensorStateClass.MEASUREMENT,
         register = 0x63B,
         entity_registry_enabled_default =  False,
         allowedtypes = HYBRID | GEN,
