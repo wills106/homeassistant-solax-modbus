@@ -7,11 +7,14 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
+          "inverter_name_suffix": "Name suffix for the inverter",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The default polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {
@@ -27,6 +30,12 @@
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
+        }
+      },
+      "battery": {
+        "title": "Read out battery modules",
+        "data": {
+          "read_battery": "Enable readout"
         }
       }
     },
@@ -48,11 +57,14 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
+          "inverter_name_suffix": "Name suffix for the inverter",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The polling frequency of the modbus registers in seconds"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval"
         }
       },
       "serial": {
@@ -67,6 +79,12 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter"
+        }
+      },
+      "battery": {
+        "title": "Read out battery modules",
+        "data": {
+          "read_battery": "Enable readout"
         }
       }
     },

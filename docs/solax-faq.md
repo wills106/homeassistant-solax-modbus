@@ -10,7 +10,9 @@ SolaX products (TODO - find out which, maybe only gen4?) provide a "firmware ver
 
 ## Unable to change values (read only)
 
-If you can read values, but unable to adjust select / number you need to press the "Unlock Inverter" button. Might need performing again following a full Power Cycle.
+If you can read values, but unable to adjust select / number you need to change the select "Lock State" from "Locked" to "Unlocked". Might need performing again following a full Power Cycle.
+
+![Image of SolaX Lock State](images/solax-lock-state.png)
 
 ## How to connect PocketWiFi 3.0 to my Wi-Fi network?
 
@@ -25,7 +27,7 @@ You can use the SolaX cloud app or do it manually:
 ## I have lost my entities on restart / update using PocketWiFi 3.0
 
 Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
-- Ensure Firmware is uptodate
+- **Ensure Firmware is uptodate (Contact SolaX)**
 - Restart your rooter and then reload the integration in Home Assistant.
 - If that doesn't work you can unplug PocketWifi 3.0 for 30 seconds and plug it in again, then reload the integration.
 

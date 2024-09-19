@@ -103,7 +103,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit   = datadict.get('remotecontrol_import_limit', 20000)
     meas           = datadict.get('measured_power', 0)
     pv             = datadict.get('pv_power_total', 0)
-    houseload_nett = datadict.get('inverter_load', 0) - meas
+    houseload_nett = datadict.get('inverter_power', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
     if   power_control == "Enabled Power Control":
         ap_target = target
@@ -1039,15 +1039,18 @@ class solax_a1j1_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
-        if read_pm: invertertype = invertertype | PM
 
-        if invertertype & MIC: self.SENSOR_TYPES = SENSOR_TYPES_MIC
-        #else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+            if read_pm: invertertype = invertertype | PM
+
+            if invertertype & MIC: self.SENSOR_TYPES = SENSOR_TYPES_MIC
+            #else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
+
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):

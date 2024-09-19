@@ -19,18 +19,16 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
-    device_info = {
-        "identifiers": {(DOMAIN, hub_name)},
-        "name": hub.plugin.plugin_name,
-        "manufacturer": hub.plugin.plugin_manufacturer,
-        #"model": hub.sensor_description.inverter_model,
-        "serial_number": hub.seriesnumber,
-    }
     plugin = hub.plugin
+    inverter_name_suffix = ""
+    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
+        inverter_name_suffix = hub.inverterNameSuffix + " "
+
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist):
-            button = SolaXModbusButton( hub_name, hub, modbus_addr, device_info, button_info )
+            if not (button_info.name.startswith(inverter_name_suffix)): button_info.name = inverter_name_suffix + button_info.name
+            button = SolaXModbusButton( hub_name, hub, modbus_addr, hub.device_info, button_info )
             entities.append(button)
             if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
             if button_info.value_function: hub.computedButtons[button_info.key] = button_info
@@ -54,6 +52,7 @@ class SolaXModbusButton(ButtonEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
+        self.entity_id = "button." + platform_name + "_" + button_info.key
         self._name = button_info.name
         self._key = button_info.key
         self.button_info = button_info
@@ -88,6 +87,7 @@ class SolaXModbusButton(ButtonEntity):
             if self.button_info.value_function:
                 res = self.button_info.value_function(0, self.button_info, self._hub.data )
                 if res:
+                    _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
                     await self._hub.async_write_registers_multi(
                         unit=self._modbus_addr, address=self._register, payload=res
                     )

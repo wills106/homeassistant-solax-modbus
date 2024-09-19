@@ -107,8 +107,8 @@ def value_function_timingmode(initval, descr, datadict):
               ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
             ]
 
-def value_function_today_solar_energy(initval, descr, datadict):
-    return  datadict.get('today_pv1_solar_energy', 0) + datadict.get('today_pv2_solar_energy',0) + datadict.get('today_pv3_solar_energy',0) + datadict.get('today_pv4_solar_energy',0)
+def value_function_today_s_solar_energy(initval, descr, datadict):
+    return  datadict.get('today_s_pv1_solar_energy', 0) + datadict.get('today_s_pv2_solar_energy',0) + datadict.get('today_s_pv3_solar_energy',0) + datadict.get('today_s_pv4_solar_energy',0)
 
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
@@ -221,15 +221,68 @@ NUMBER_TYPES = [
         icon = "mdi:battery-sync",
     ),
     GrowattModbusNumberEntityDescription(
-        name = "Battery First Maximum SOC",
-        key = "battery_first_maximum_soc",
-        register = 3048,
+        name = "EMS Discharging Rate",
+        key = "ems_discharging_rate",
+        register = 3036,
+        unit = REGISTER_U16,
         native_min_value = 0,
         native_max_value = 100,
         native_step = 1,
+        fmt = "i",
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = GEN4,
-        icon = "mdi:battery-sync",
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-arrow-down",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Discharging Stop SOC",
+        key = "ems_discharging_stop_soc",
+        register = 3037,
+        unit = REGISTER_U16,
+        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-10",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Charging Rate",
+        key = "ems_charging_rate",
+        register = 3047,
+        unit = REGISTER_U16,
+        native_min_value = 0,
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-arrow-up",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Charging Stop SOC",
+        key = "ems_charging_stop_soc",
+        register = 3048,
+        unit = REGISTER_U16,
+        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
     ),
 ]
 
@@ -248,6 +301,18 @@ SELECT_TYPES = [
     #
     ###
     GrowattModbusSelectEntityDescription(
+        name = "Select baud rate",
+        key = "select_baud_rate",
+        register = 22,
+        option_dict = {
+                0: "9600bps",
+                1: "38400bps", },
+        allowedtypes = GEN | GEN2 | GEN3 | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
         name = "Limit Grid Export",
         key = "limit_grid_export",
         register = 122,
@@ -260,7 +325,6 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
-
     ###
     #  Battery First (4-6)
     ###
@@ -751,7 +815,7 @@ SELECT_TYPES = [
                 0: "Load First",
                 1: "Battery First",
                 2: "Grid First", },
-        allowedtypes = GEN2 | GEN3,
+        allowedtypes = GEN2,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:run",
     ),
@@ -764,9 +828,9 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:dip-switch",
+        icon = "battery-charging",
     ),
     GrowattModbusSelectEntityDescription(
         name = "EPS Switch",
@@ -776,9 +840,9 @@ SELECT_TYPES = [
                 0: "Disabled",
                 1: "Enabled",
             },
-        allowedtypes = HYBRID | AC | GEN4 | EPS,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4 | EPS,
         entity_category = EntityCategory.CONFIG,
-        icon = "mdi:dip-switch",
+        icon = "mdi:power-plug-battery",
     ),
     ###
     #
@@ -947,6 +1011,16 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:translate-variant",
     ),
     GrowattModbusSensorEntityDescription(
+        name = "Select baud rate",
+        key = "select_baud_rate",
+        register = 22,
+        scale = { 0: "9600bps",
+                  1: "38400bps", },
+        allowedtypes = GEN | GEN2 | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "Serial Number",
         key = "serialnumber",
         register = 23,
@@ -957,17 +1031,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
-    GrowattModbusSensorEntityDescription(
-        name = "Inverter Module",
-        key = "inverter_module",
-        register = 28,
-        unit = REGISTER_STR,
-        wordcount=2,
-        allowedtypes = ALL_GEN_GROUP,
-        entity_registry_enabled_default = False,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
+    #GrowattModbusSensorEntityDescription(
+    #    name = "Inverter Module",
+    #    key = "inverter_module",
+    #    register = 28,
+    #    unit = REGISTER_STR,
+    #    wordcount=2,
+    #    allowedtypes = GEN | GEN4,
+    #    entity_registry_enabled_default = False,
+    #    entity_category = EntityCategory.DIAGNOSTIC,
+    #    icon = "mdi:information",
+    #),
     GrowattModbusSensorEntityDescription(
         name = "RTC",
         key = "rtc",
@@ -990,7 +1064,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   3: "CT Clamp", },
         allowedtypes = GEN | GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
     GrowattModbusSensorEntityDescription(
@@ -1002,7 +1075,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         allowedtypes = GEN | GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        entity_category = EntityCategory.CONFIG,
         icon = "mdi:transmission-tower-export",
     ),
 
@@ -1547,14 +1619,41 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #    entity_category = EntityCategory.DIAGNOSTIC,
     #    icon = "mdi:information",
     #),
-    GrowattModbusSensorEntityDescription(
-        name = "Charger Upper SOC",
-        key = "Charger_upper_soc",
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Discharging Rate",
+        key = "ems_discharging_rate",
+        register = 3036,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-arrow-down",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Discharging Stop SOC",
+        key = "ems_discharging_stop_soc",
+        register = 3037,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-10",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Charging Rate",
+        key = "ems_charging_rate",
+        register = 3047,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-arrow-up",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Charging Stop SOC",
+        key = "ems_charging_stop_soc",
         register = 3048,
         native_unit_of_measurement = PERCENTAGE,
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | GEN3 | GEN4,
         entity_registry_enabled_default = False,
-        icon = "mdi:battery-sync",
+        icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Charger Switch",
@@ -1562,7 +1661,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3049,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        allowedtypes = HYBRID | AC | GEN4,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
@@ -1584,7 +1683,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3079,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        allowedtypes = HYBRID | AC | GEN4 | EPS,
+        allowedtypes = HYBRID | AC | GEN3 | GEN4 | EPS,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
@@ -2248,7 +2347,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Power Generation",
-        key = "today_power_generation",
+        key = "today_s_power_generation",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
@@ -2291,7 +2390,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV1 Solar Energy",
-        key = "today_pv1_solar_energy",
+        key = "today_s_pv1_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2321,7 +2420,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV2 Solar Energy",
-        key = "today_pv2_solar_energy",
+        key = "today_s_pv2_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2351,7 +2450,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV3 Solar Energy",
-        key = "today_pv3_solar_energy",
+        key = "today_s_pv3_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2381,7 +2480,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV4 Solar Energy",
-        key = "today_pv4_solar_energy",
+        key = "today_s_pv4_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2411,7 +2510,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV5 Solar Energy",
-        key = "today_pv5_solar_energy",
+        key = "today_s_pv5_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2441,7 +2540,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV6 Solar Energy",
-        key = "today_pv6_solar_energy",
+        key = "today_s_pv6_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2471,7 +2570,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV7 Solar Energy",
-        key = "today_pv7_solar_energy",
+        key = "today_s_pv7_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2501,7 +2600,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV8 Solar Energy",
-        key = "today_pv8_solar_energy",
+        key = "today_s_pv8_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2531,8 +2630,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy",
-        key = "today_solar_energy",
-        value_function= value_function_today_solar_energy,
+        key = "today_s_solar_energy",
+        value_function= value_function_today_s_solar_energy,
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2601,7 +2700,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN2 | GEN3,
+        allowedtypes = GEN2,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Priority",
@@ -2635,7 +2734,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   4: "Update Mode",
                   5: "PV Bat Online",
                   6: "Bat Online",
-                  8: "Normal Mode", },
+                  8: "Normal Mode",
+                  9: "Bypass" },
         register_type = REG_INPUT,
         allowedtypes = GEN | GEN2,
         icon = "mdi:run",
@@ -2668,7 +2768,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
-        key = "bettery_combined_power",
+        key = "battery_combined_power",
         value_function= value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -2894,7 +2994,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Grid Import",
-        key = "today_grid_import",
+        key = "today_s_grid_import",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2923,7 +3023,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Grid Export",
-        key = "today_grid_export",
+        key = "today_s_grid_export",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2952,7 +3052,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
-        key = "today_battery_output_energy",
+        key = "today_s_battery_output_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -2981,7 +3081,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Input Energy",
-        key = "today_battery_input_energy",
+        key = "today_s_battery_input_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3010,7 +3110,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Load",
-        key = "today_load",
+        key = "today_s_load",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3033,7 +3133,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2 | GEN3,
+        allowedtypes = GEN | GEN2,
         entity_registry_enabled_default = False,
         icon = "mdi:transmission-tower",
     ),
@@ -3218,7 +3318,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "System Electric Energy Today",
-        key = "today_system_electric_energy",
+        key = "system_electric_energy_today",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3233,7 +3333,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "System Electric Energy Total",
-        key = "total_system_electric_energy",
+        key = "system_electric_energy_total",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3248,7 +3348,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Self Electric Energy Today",
-        key = "today_self_electric_energy",
+        key = "self_electric_energy_today",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3263,7 +3363,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Self Electric Energy Total",
-        key = "total_self_electric_energy",
+        key = "self_electric_energy_total",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3304,8 +3404,29 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN | GEN2,
         icon = "mdi:home",
     ),
-
-    # TL-X TL-XH
+#####
+#
+# TL-X TL-XH
+#
+#####
+#    GrowattModbusSensorEntityDescription(
+#        name = "Inverter State",
+#        key = "inverter_state",
+#        register = 3000,
+#        register_type = REG_INPUT,
+#        unit = REGISTER_U8H,
+#        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
+#        allowedtypes = GEN3 | GEN4,
+#    ),
+#    GrowattModbusSensorEntityDescription(
+#        name = "Run Mode",
+#        key = "run_mode",
+#        register = 3000,
+#        register_type = REG_INPUT,
+#        unit = REGISTER_U8L,
+#        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
+#        allowedtypes = GEN3 | GEN4,
+#    ),
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
         key = "total_pv_power",
@@ -3679,7 +3800,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Power Generation",
-        key = "today_power_generation",
+        key = "today_s_power_generation",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
@@ -3722,7 +3843,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV1 Solar Energy",
-        key = "today_pv1_solar_energy",
+        key = "today_s_pv1_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3752,7 +3873,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV2 Solar Energy",
-        key = "today_pv2_solar_energy",
+        key = "today_s_pv2_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3782,7 +3903,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV3 Solar Energy",
-        key = "today_pv3_solar_energy",
+        key = "today_s_pv3_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3812,7 +3933,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Grid Import",
-        key = "today_grid_import",
+        key = "today_s_grid_import",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3835,13 +3956,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN4,
+        allowedtypes = GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:home-import-outline",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Grid Export",
-        key = "today_grid_export",
+        key = "today_s_grid_export",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3870,7 +3991,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Yield",
-        key = "today_yield",
+        key = "today_s_yield",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3896,7 +4017,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's PV4 Solar Energy",
-        key = "today_pv4_solar_energy",
+        key = "today_s_pv4_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3926,7 +4047,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy",
-        key = "today_solar_energy",
+        key = "today_s_solar_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3979,7 +4100,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
-        key = "today_battery_output_energy",
+        key = "today_s_battery_output_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4008,7 +4129,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Input Energy",
-        key = "today_battery_input_energy",
+        key = "today_s_battery_input_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4214,7 +4335,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 3169,
         register_type = REG_INPUT,
-        scale = 0.01,
+        scale = 0.1, #doc says 0.01, but datasheet of APX HV system module for MOD / MID TL-XH (BP) inverters have operating voltage range 600-980V.
         rounding = 2,
         allowedtypes = GEN3 | GEN4 | HYBRID,
     ),
@@ -4225,6 +4346,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.CURRENT,
         register = 3170,
         register_type = REG_INPUT,
+        unit = REGISTER_S16,
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN3 | GEN4 | HYBRID,
@@ -4619,7 +4741,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy PV1",
-        key = "today_solar_energy_pv1",
+        key = "today_s_solar_energy_pv1",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
@@ -4647,7 +4769,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy PV2",
-        key = "today_solar_energy_pv2",
+        key = "today_s_solar_energy_pv2",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         icon = "mdi:solar-power",
         device_class = SensorDeviceClass.ENERGY,
@@ -4675,7 +4797,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's AC Charge",
-        key = "today_ac_charge",
+        key = "today_s_ac_charge",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4701,7 +4823,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Discharge",
-        key = "today_battery_discharge",
+        key = "today_s_battery_discharge",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4727,7 +4849,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Today's AC Discharge",
-        key = "today_ac_discharge",
+        key = "today_s_ac_discharge",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -4866,15 +4988,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 @dataclass
 class growatt_plugin(plugin_base):
 
-    """
-    def isAwake(self, datadict):
-        return (datadict.get('run_mode', None) == 'Normal Mode')
-
-    def wakeupButton(self):
-        return 'battery_awaken'
-    """
-
-
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber                       = await async_read_serialnr(hub, 9)
@@ -4889,12 +5002,12 @@ class growatt_plugin(plugin_base):
         #if seriesnumber.startswith('TLX'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         if seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW
-        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV KTL3-X 15kW 3Phase (MOD)
-        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN3 | X3 | MPPT4 # PV KTL3-X 35kW 3Phase (MID)
+        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN3 | X3 # PV TL3-X 15kW 3Phase (MOD)
+        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN3 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
         #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
         #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN3 | X3 # PV X3 3MPPT 50-70kW
         #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN3 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid KTL3-XH 2.5kW - 6kW
+        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid TL3-XH (BP) 2.5kW - 10kW (MOD)
         elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN2 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
@@ -4907,10 +5020,13 @@ class growatt_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
+
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
@@ -4927,7 +5043,6 @@ class growatt_plugin(plugin_base):
                 if serialnumber.startswith(start) : blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
-
 plugin_instance = growatt_plugin(
     plugin_name = 'Growatt',
     plugin_manufacturer = 'Growatt New Energy',
@@ -4938,4 +5053,5 @@ plugin_instance = growatt_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )

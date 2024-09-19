@@ -97,37 +97,37 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 def value_function_timingmode(initval, descr, datadict):
-    return  [ ('timed_charge_start_h', datadict.get('timed_charge_start_h', 0), ),
-              ('timed_charge_start_m', datadict.get('timed_charge_start_m', 0), ),
-              ('timed_charge_end_h', datadict.get('timed_charge_end_h', 0), ),
-              ('timed_charge_end_m', datadict.get('timed_charge_end_m', 0), ),
-              ('timed_discharge_start_h', datadict.get('timed_discharge_start_h', 0), ),
-              ('timed_discharge_start_m', datadict.get('timed_discharge_start_m', 0), ),
-              ('timed_discharge_end_h', datadict.get('timed_discharge_end_h', 0), ),
-              ('timed_discharge_end_m', datadict.get('timed_discharge_end_m', 0), ),
+    return  [ ('timed_charge_start_hours', datadict.get('timed_charge_start_hours', 0), ),
+              ('timed_charge_start_minutes', datadict.get('timed_charge_start_minutes', 0), ),
+              ('timed_charge_end_hours', datadict.get('timed_charge_end_hours', 0), ),
+              ('timed_charge_end_minutes', datadict.get('timed_charge_end_minutes', 0), ),
+              ('timed_discharge_start_hours', datadict.get('timed_discharge_start_hours', 0), ),
+              ('timed_discharge_start_minutes', datadict.get('timed_discharge_start_minutes', 0), ),
+              ('timed_discharge_end_hours', datadict.get('timed_discharge_end_hours', 0), ),
+              ('timed_discharge_end_minutes', datadict.get('timed_discharge_end_minutes', 0), ),
             ]
 def value_function_timingmode2(initval, descr, datadict):
     return  [
-              ('timed_charge_start_h_2', datadict.get('timed_charge_start_h_2', 0), ),
-              ('timed_charge_start_m_2', datadict.get('timed_charge_start_m_2', 0), ),
-              ('timed_charge_end_h_2', datadict.get('timed_charge_end_h_2', 0), ),
-              ('timed_charge_end_m_2', datadict.get('timed_charge_end_m_2', 0), ),
-              ('timed_discharge_start_h_2', datadict.get('timed_discharge_start_h_2', 0), ),
-              ('timed_discharge_start_m_2', datadict.get('timed_discharge_start_m_2', 0), ),
-              ('timed_discharge_end_h_2', datadict.get('timed_discharge_end_h_2', 0), ),
-              ('timed_discharge_end_m_2', datadict.get('timed_discharge_end_m_2', 0), ),
+              ('timed_charge_start_hours_2', datadict.get('timed_charge_start_hours_2', 0), ),
+              ('timed_charge_start_minutes_2', datadict.get('timed_charge_start_minutes_2', 0), ),
+              ('timed_charge_end_hours_2', datadict.get('timed_charge_end_hours_2', 0), ),
+              ('timed_charge_end_minutes_2', datadict.get('timed_charge_end_minutes_2', 0), ),
+              ('timed_discharge_start_hours_2', datadict.get('timed_discharge_start_hours_2', 0), ),
+              ('timed_discharge_start_minutes_2', datadict.get('timed_discharge_start_minutes_2', 0), ),
+              ('timed_discharge_end_hours_2', datadict.get('timed_discharge_end_hours_2', 0), ),
+              ('timed_discharge_end_minutes_2', datadict.get('timed_discharge_end_minutes_2', 0), ),
             ]
 
 def value_function_timingmode3(initval, descr, datadict):
     return  [
-              ('timed_charge_start_h_3', datadict.get('timed_charge_start_h_3', 0), ),
-              ('timed_charge_start_m_3', datadict.get('timed_charge_start_m_3', 0), ),
-              ('timed_charge_end_h_3', datadict.get('timed_charge_end_h_3', 0), ),
-              ('timed_charge_end_m_3', datadict.get('timed_charge_end_m_3', 0), ),
-              ('timed_discharge_start_h_3', datadict.get('timed_discharge_start_h_3', 0), ),
-              ('timed_discharge_start_m_3', datadict.get('timed_discharge_start_m_3', 0), ),
-              ('timed_discharge_end_h_3', datadict.get('timed_discharge_end_h_3', 0), ),
-              ('timed_discharge_end_m_3', datadict.get('timed_discharge_end_m_3', 0), ),
+              ('timed_charge_start_hours_3', datadict.get('timed_charge_start_hours_3', 0), ),
+              ('timed_charge_start_minutes_3', datadict.get('timed_charge_start_minutes_3', 0), ),
+              ('timed_charge_end_hours_3', datadict.get('timed_charge_end_hours_3', 0), ),
+              ('timed_charge_end_minutes_3', datadict.get('timed_charge_end_minutes_3', 0), ),
+              ('timed_discharge_start_hours_3', datadict.get('timed_discharge_start_hours_3', 0), ),
+              ('timed_discharge_start_minutes_3', datadict.get('timed_discharge_start_minutes_3', 0), ),
+              ('timed_discharge_end_hours_3', datadict.get('timed_discharge_end_hours_3', 0), ),
+              ('timed_discharge_end_minutes_3', datadict.get('timed_discharge_end_minutes_3', 0), ),
             ]
 
 def value_function_pv1_power(initval, descr, datadict):
@@ -189,8 +189,9 @@ MAX_CURRENTS = [
     ('0602',  62.5 ), # 3kW 48v
     ('0102',  62.5 ), # 3kW 48v AC Only?
     ('110F',  62.5 ), # 3.6kW 48v
-    ('160F5',  62.5 ), # 3.6kW 48v
     ('160F3',  100 ), # 5kW 48v
+    ('160F4',  60 ), # 3.6kW 48v
+    ('160F5',  62.5 ), # 3.6kW 48v
     ('1031',  100 ), # 5kW 48v
     ('134F',  100 ), # 5kW 48v
     ('6031',  100 ), # 6kW 48v
@@ -221,7 +222,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Hours",
-        key = "timed_charge_start_h",
+        key = "timed_charge_start_hours",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -237,7 +238,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes",
-        key = "timed_charge_start_m",
+        key = "timed_charge_start_minutes",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -253,7 +254,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours",
-        key = "timed_charge_end_h",
+        key = "timed_charge_end_hours",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -269,7 +270,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes",
-        key = "timed_charge_end_m",
+        key = "timed_charge_end_minutes",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -285,7 +286,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours",
-        key = "timed_discharge_start_h",
+        key = "timed_discharge_start_hours",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -301,7 +302,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes",
-        key = "timed_discharge_start_m",
+        key = "timed_discharge_start_minutes",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -317,7 +318,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours",
-        key = "timed_discharge_end_h",
+        key = "timed_discharge_end_hours",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -333,7 +334,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes",
-        key = "timed_discharge_end_m",
+        key = "timed_discharge_end_minutes",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -350,7 +351,7 @@ NUMBER_TYPES = [
     ### TimeSlot2
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Hours 2",
-        key = "timed_charge_start_h_2",
+        key = "timed_charge_start_hours_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -366,7 +367,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes 2",
-        key = "timed_charge_start_m_2",
+        key = "timed_charge_start_minutes_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -382,7 +383,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 2",
-        key = "timed_charge_end_h_2",
+        key = "timed_charge_end_hours_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -398,7 +399,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes 2",
-        key = "timed_charge_end_m_2",
+        key = "timed_charge_end_minutes_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -414,7 +415,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 2",
-        key = "timed_discharge_start_h_2",
+        key = "timed_discharge_start_hours_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -430,7 +431,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes 2",
-        key = "timed_discharge_start_m_2",
+        key = "timed_discharge_start_minutes_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -446,7 +447,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 2",
-        key = "timed_discharge_end_h_2",
+        key = "timed_discharge_end_hours_2",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -462,7 +463,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes 2",
-        key = "timed_discharge_end_m_2",
+        key = "timed_discharge_end_minutes_2",
         fmt = "i",
         unit = REGISTER_U16,
         initvalue = 0,
@@ -479,7 +480,7 @@ NUMBER_TYPES = [
     ###TimeSlot3
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Hours 3",
-        key = "timed_charge_start_h_3",
+        key = "timed_charge_start_hours_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -495,7 +496,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge Start Minutes 3",
-        key = "timed_charge_start_m_3",
+        key = "timed_charge_start_minutes_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -511,7 +512,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Hours 3",
-        key = "timed_charge_end_h_3",
+        key = "timed_charge_end_hours_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -527,7 +528,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Charge End Minutes 3",
-        key = "timed_charge_end_m_3",
+        key = "timed_charge_end_minutes_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -543,7 +544,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Hours 3",
-        key = "timed_discharge_start_h_3",
+        key = "timed_discharge_start_hours_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -559,7 +560,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge Start Minutes 3",
-        key = "timed_discharge_start_m_3",
+        key = "timed_discharge_start_minutes_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -575,7 +576,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Hours 3",
-        key = "timed_discharge_end_h_3",
+        key = "timed_discharge_end_hours_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -591,7 +592,7 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name = "Timed Discharge End Minutes 3",
-        key = "timed_discharge_end_m_3",
+        key = "timed_discharge_end_minutes_3",
         unit = REGISTER_U16,
         fmt = "i",
         initvalue = 0,
@@ -748,7 +749,20 @@ SELECT_TYPES = [
                 0: "Off",
                 16: "On",
             },
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+        icon = "mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        option_dict =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        allowedtypes = HYBRID | X3,
         icon = "mdi:dip-switch",
     ),
     SolisModbusSelectEntityDescription(
@@ -991,8 +1005,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
     ),
     SolisModbusSensorEntityDescription(
         name = "PV Current 3",
@@ -1004,8 +1017,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
         icon = "mdi:current-dc",
     ),
     SolisModbusSensorEntityDescription(
@@ -1015,7 +1027,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         value_function = value_function_pv3_power,
-        allowedtypes = HYBRID | ALL_MPPT_GROUP,
+        allowedtypes = HYBRID | MPPT4 | MPPT3,
         icon = "mdi:solar-power-variant",
     ),
     SolisModbusSensorEntityDescription(
@@ -1028,7 +1040,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
         allowedtypes = HYBRID | MPPT4,
     ),
     SolisModbusSensorEntityDescription(
@@ -1041,7 +1052,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         scale = 0.1,
         rounding = 1,
-        #entity_registry_enabled_default = False,
         allowedtypes = HYBRID | MPPT4,
         icon = "mdi:current-dc",
     ),
@@ -1169,7 +1179,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Reactive Power",
         key = "reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33081,
         register_type = REG_INPUT,
@@ -1201,7 +1211,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Inverter Frequency",
-        key = "grid_frequency",
+        key = "inverter_frequency",
         native_unit_of_measurement = UnitOfFrequency.HERTZ,
         device_class = SensorDeviceClass.FREQUENCY,
         state_class = SensorStateClass.MEASUREMENT,
@@ -1863,7 +1873,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Meter Active Power Total",
-        key = "meter_activepower_total",
+        key = "meter_active_power_total",
         native_unit_of_measurement = UnitOfPower.KILO_WATT,
         device_class = SensorDeviceClass.POWER,
         register = 33263,
@@ -1876,7 +1886,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power",
         key = "meter_reactive_power",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33265,
         register_type = REG_INPUT,
@@ -1886,7 +1896,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L1",
         key = "meter_reactive_power_l1",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33265,
         register_type = REG_INPUT,
@@ -1896,7 +1906,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L2",
         key = "meter_reactive_power_l2",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33267,
         register_type = REG_INPUT,
@@ -1906,7 +1916,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power L3",
         key = "meter_reactive_power_l3",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33269,
         register_type = REG_INPUT,
@@ -1916,7 +1926,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     SolisModbusSensorEntityDescription(
         name = "Meter Reactive Power Total",
         key = "meter_reactive_power_total",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 33271,
         register_type = REG_INPUT,
@@ -2067,9 +2077,23 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register = 43073,
         scale = {
                 0: "Off",
-                16: "On", },
+                16: "On",
+            },
         entity_registry_enabled_default = False,
-        allowedtypes = HYBRID,
+        allowedtypes = HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name = "Backflow Power Switch",
+        key = "backflow_power_switch",
+        register = 43073,
+        scale =  {
+                0: "Off & Balanced output",
+                16: "On & Balanced output",
+                64: "Off & Unbalanced output",
+                80: "On & Unbalanced output"
+            },
+        entity_registry_enabled_default = False,
+        allowedtypes = HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
         name = "Backflow Power",
@@ -2150,7 +2174,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Hours",
-        key = "timed_charge_start_h",
+        key = "timed_charge_start_hours",
         register = 43143,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2160,7 +2184,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes",
-        key = "timed_charge_start_m",
+        key = "timed_charge_start_minutes",
         register = 43144,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2170,7 +2194,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours",
-        key = "timed_charge_end_h",
+        key = "timed_charge_end_hours",
         register = 43145,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2180,7 +2204,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes",
-        key = "timed_charge_end_m",
+        key = "timed_charge_end_minutes",
         register = 43146,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2190,7 +2214,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours",
-        key = "timed_discharge_start_h",
+        key = "timed_discharge_start_hours",
         register = 43147,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2200,7 +2224,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes",
-        key = "timed_discharge_start_m",
+        key = "timed_discharge_start_minutes",
         register = 43148,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2210,7 +2234,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours",
-        key = "timed_discharge_end_h",
+        key = "timed_discharge_end_hours",
         register = 43149,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2220,7 +2244,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes",
-        key = "timed_discharge_end_m",
+        key = "timed_discharge_end_minutes",
         register = 43150,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2231,7 +2255,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     # ============================ TimeSlot2 ==============================
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Hours 2",
-        key = "timed_charge_start_h_2",
+        key = "timed_charge_start_hours_2",
         register = 43153,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2241,7 +2265,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes 2",
-        key = "timed_charge_start_m_2",
+        key = "timed_charge_start_minutes_2",
         register = 43154,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2251,7 +2275,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours 2",
-        key = "timed_charge_end_h_2",
+        key = "timed_charge_end_hours_2",
         register = 43155,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2261,7 +2285,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes 2",
-        key = "timed_charge_end_m_2",
+        key = "timed_charge_end_minutes_2",
         register = 43156,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2271,7 +2295,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours 2",
-        key = "timed_discharge_start_h_2",
+        key = "timed_discharge_start_hours_2",
         register = 43157,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2281,7 +2305,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes 2",
-        key = "timed_discharge_start_m_2",
+        key = "timed_discharge_start_minutes_2",
         register = 43158,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2291,7 +2315,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours 2",
-        key = "timed_discharge_end_h_2",
+        key = "timed_discharge_end_hours_2",
         register = 43159,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2301,7 +2325,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes 2",
-        key = "timed_discharge_end_m_2",
+        key = "timed_discharge_end_minutes_2",
         register = 43160,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2312,7 +2336,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     # ============================ TimeSlot3 ==============================
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Hours 3",
-        key = "timed_charge_start_h_3",
+        key = "timed_charge_start_hours_3",
         register = 43163,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2322,7 +2346,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge Start Minutes 3",
-        key = "timed_charge_start_m_3",
+        key = "timed_charge_start_minutes_3",
         register = 43164,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2332,7 +2356,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Hours 3",
-        key = "timed_charge_end_h_3",
+        key = "timed_charge_end_hours_3",
         register = 43165,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2342,7 +2366,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Charge End Minutes 3",
-        key = "timed_charge_end_m_3",
+        key = "timed_charge_end_minutes_3",
         register = 43166,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2352,7 +2376,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Hours 3",
-        key = "timed_discharge_start_h_3",
+        key = "timed_discharge_start_hours_3",
         register = 43167,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2362,7 +2386,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge Start Minutes 3",
-        key = "timed_discharge_start_m_3",
+        key = "timed_discharge_start_minutes_3",
         register = 43168,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2372,7 +2396,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Hours 3",
-        key = "timed_discharge_end_h_3",
+        key = "timed_discharge_end_hours_3",
         register = 43169,
         native_unit_of_measurement = UnitOfTime.HOURS,
         entity_registry_enabled_default = False,
@@ -2382,7 +2406,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name = "Timed Discharge End Minutes 3",
-        key = "timed_discharge_end_m_3",
+        key = "timed_discharge_end_minutes_3",
         register = 43170,
         native_unit_of_measurement = UnitOfTime.MINUTES,
         entity_registry_enabled_default = False,
@@ -2415,9 +2439,11 @@ class solis_plugin(plugin_base):
         elif seriesnumber.startswith('134F'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
         elif seriesnumber.startswith('140C'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - HV
         elif seriesnumber.startswith('143'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48V
-        elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith('160F3'):  invertertype = HYBRID | X1 # Hybrid Gen5 5kW - 48v
-        elif seriesnumber.startswith('1033'):  invertertype = HYBRID | X3 # Hybrid Gen6  10kW - HV
+        elif seriesnumber.startswith('160F4'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('160F5'):  invertertype = HYBRID | X1 # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith('103305'):  invertertype = HYBRID | X3 | MPPT4 # Hybrid Gen6  8kW - HV
+        elif seriesnumber.startswith('103306'):  invertertype = HYBRID | X3 | MPPT4 # Hybrid Gen6  10kW - HV
         elif seriesnumber.startswith('110C'):  invertertype = HYBRID | X3 # Hybrid Gen5 0CA2 / 0C92 10kW - HV
         elif seriesnumber.startswith('114C'):  invertertype = HYBRID | X3 # Hybrid Gen5 10kW - HV
         elif seriesnumber.startswith('1805'):  invertertype = HYBRID | X3 # PV Only Gen5 5-20kW
@@ -2428,10 +2454,13 @@ class solis_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
+
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+
         return invertertype
 
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):

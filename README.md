@@ -7,7 +7,7 @@
 
 Universal Solar Inverter over Modbus RS485 / TCP custom_component for Home Assistant
 
-**Integration 2023.09.4 and newer only supports HA 2023.9.2 and newer. Support for pyModbus below 3.5.2 has been dropped. For HA installations older than 2023.9.0 Integration 2023.09.3 is the last supported version**
+**Integration 2024.09.1 and newer only supports HA 2024.9.0 and newer**
 
 * Supports Modbus over RS485 & TCP. **Please check the Docs for [Compatible RS485 Adaptors](https://homeassistant-solax-modbus.readthedocs.io/en/latest/compatible-adaptors/)**
 
@@ -71,11 +71,15 @@ SolaX Power
 - Gen4 Hybrid & RetroFit
   - Qcells Q.VOLT HYB-G3-3P
   - TIGO TSI
+- Gen5 Hybrid
 - J1 Hybrid - **WIP**
-- X3 MIC / MIC PRO Gen1 & Gen2 (Limited set of entities available)
 - X1 Air/Boost/Mini Gen3 & Gen4 (Limited set of entities available)
+- X3 MEGA / FORTH Gen2 (Limited set of entities available)
+- X3 MIC / MIC PRO Gen1 & Gen2 (Limited set of entities available)
 
 </details>
+Solinteg - WIP
+
 SRNE - WIP
 
 Swatten -WIP
@@ -91,10 +95,34 @@ Swatten -WIP
 
 ## Documentation
 
-For further Documentation please refer to the [Read the Docs](http://homeassistant-solax-modbus.readthedocs.io/)
+For further Documentation please refer to the [Read the Docs](https://homeassistant-solax-modbus.readthedocs.io/)
 
 ## FAQ
 
 [Read the Docs - General FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq/)
  - [Read the Docs - Sofar FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/sofar-faq/)
  - [Read the Docs - SolaX FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solax-faq/)
+
+## Multiple Connections
+
+Modbus is designed to mostly have a single Master.
+If you try to connect multiple instances to the Inverter ie this Integration and Node-RED the Inverter will either block the second connection or likely to result in data collisions.
+
+If this happens it's recomended to use a multiplexer such as https://github.com/IngmarStein/tcp-multiplexer this has been tested by reading and writing from two instances of HA at once.
+
+This can be started with Docker or Docker Compose.
+Example Compose:
+
+```
+services:
+  modbus-proxy:
+    image: ghcr.io/ingmarstein/tcp-multiplexer
+    container_name: modbus_proxy
+    ports:
+      - "5020:5020"
+    command: [ "server", "-t", "192.168.123.123:502", "-l", "5020", "-p", "modbus", "-v" ]
+    restart: unless-stopped
+```
+
+Server address is the Inverter / data logger.
+You then direct this integration to the machine running the proxy and port 5020 in this example.

@@ -168,7 +168,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ReactivePower",
         key = "reactivepower",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 0xD,
         unit = REGISTER_S16,
@@ -250,8 +250,8 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1B,
         unit = REGISTER_S16,
-        entity_registry_enabled_default = False,
-        allowedtypes = PV | X3,
+        #entity_registry_enabled_default = False,
+        allowedtypes = PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -262,8 +262,8 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x1C,
         unit = REGISTER_S16,
-        entity_registry_enabled_default = False,
-        allowedtypes = PV | X3,
+        #entity_registry_enabled_default = False,
+        allowedtypes = PV,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     # End of Single Phase
@@ -362,7 +362,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     SofarOldModbusSensorEntityDescription(
         name = "ReactivePower",
         key = "reactivepower",
-        native_unit_of_measurement = POWER_VOLT_AMPERE_REACTIVE,
+        native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class = SensorDeviceClass.REACTIVE_POWER,
         register = 0x10,
         unit = REGISTER_S16,
@@ -1078,6 +1078,7 @@ class sofar_old_plugin(plugin_base):
         if seriesnumber.startswith('SA1'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SA3'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SB1'):  invertertype = PV | X1 # Older Might be single
+        elif seriesnumber.startswith('ZA3'):  invertertype = PV | X1 # Older Might be single
         elif seriesnumber.startswith('SC1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SD1'):  invertertype = PV | X3 # Older Probably 3phase
         elif seriesnumber.startswith('SF4'):  invertertype = PV | X3 # Older Probably 3phase
@@ -1094,12 +1095,15 @@ class sofar_old_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
-        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
-        if read_eps: invertertype = invertertype | EPS
-        if read_dcb: invertertype = invertertype | DCB
-        if read_pm: invertertype = invertertype | PM
+
+        if invertertype > 0:
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+            if read_eps: invertertype = invertertype | EPS
+            if read_dcb: invertertype = invertertype | DCB
+            if read_pm: invertertype = invertertype | PM
+
         return invertertype
 
 
@@ -1114,4 +1118,5 @@ plugin_instance = sofar_old_plugin(
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
+    auto_block_ignore_readerror = True
     )
