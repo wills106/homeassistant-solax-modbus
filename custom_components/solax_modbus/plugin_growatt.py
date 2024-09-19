@@ -237,7 +237,7 @@ NUMBER_TYPES = [
         entity_category = EntityCategory.CONFIG,
     ),
     GrowattModbusNumberEntityDescription(
-        name = "EMS Discharging Stop SOC",
+        name = "EMS Discharging Stop SOC (off grid)",
         key = "ems_discharging_stop_soc",
         register = 3037,
         unit = REGISTER_U16,
@@ -273,7 +273,7 @@ NUMBER_TYPES = [
         key = "ems_charging_stop_soc",
         register = 3048,
         unit = REGISTER_U16,
-        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_min_value = 11, #according to shine app.
         native_max_value = 100,
         native_step = 1,
         fmt = "i",
@@ -281,6 +281,22 @@ NUMBER_TYPES = [
         allowedtypes = GEN3 | GEN4 | HYBRID,
         write_method = WRITE_SINGLE_MODBUS,
         icon = "mdi:battery",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "EMS Discharging Stop SOC (on grid)",
+        key = "ems_discharging_stop_soc_on_grid",
+        register = 3067, #requires newer firmware
+        unit = REGISTER_U16,
+        native_min_value = 10, #default to avoid complete discharge, documentation says 0.
+        native_max_value = 100,
+        native_step = 1,
+        fmt = "i",
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3 | GEN4 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:battery-10",
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.CONFIG,
     ),
@@ -1629,7 +1645,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery-arrow-down",
     ),
     GrowattModbusSensorEntityDescription( # to refresh number entity
-        name = "EMS Discharging Stop SOC",
+        name = "EMS Discharging Stop SOC (off grid)",
         key = "ems_discharging_stop_soc",
         register = 3037,
         native_unit_of_measurement = PERCENTAGE,
@@ -1664,6 +1680,15 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = HYBRID | AC | GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSensorEntityDescription( # to refresh number entity
+        name = "EMS Discharging Stop SOC (on grid)",
+        key = "ems_discharging_stop_soc_on_grid",
+        register = 3067, #requires newer firmware
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = HYBRID | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-10",
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Type",
