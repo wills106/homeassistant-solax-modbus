@@ -5005,10 +5005,14 @@ class growatt_plugin(plugin_base):
         # TL3-XH (MOD) = GEN3
         
         # derive invertertype from seriiesnumber
+        #if seriesnumber.startswith('TLX'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
         if seriesnumber.startswith('GH1'):  invertertype = PV | GEN3 | X1 # PV TL-X 2.5kW - 6kW (MIN)
         elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
         elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN | X3 # PV TL3-X 15kW 3Phase (MOD)
         elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
+        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN3 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
+        #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN3 | X3 # PV X3 3MPPT 50-70kW
+        #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN3 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
         elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid TL3-XH (BP) 2.5kW - 10kW (MOD)
         elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN2 | X1 # Hybrid SPH 3kW - 6kW
@@ -5017,6 +5021,7 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN2 | X1 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 3kW - ?kW
         elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN | X3 # AC SPA 4kW - 10kW
         
         else:
             invertertype = 0
