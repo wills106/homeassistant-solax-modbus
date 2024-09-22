@@ -3431,6 +3431,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN3,
+        entity_registry_enabled_default = False,
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
