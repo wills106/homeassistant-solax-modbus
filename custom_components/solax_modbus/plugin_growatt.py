@@ -32,7 +32,7 @@ X3             = 0x0200
 ALL_X_GROUP    = X1 | X3
 
 PV             = 0x0400 # Needs further work on PV Only Inverters
-AC             = 0x0800 # not used?
+AC             = 0x0800
 HYBRID         = 0x1000
 MIC            = 0x2000
 ALL_TYPE_GROUP = PV | AC | HYBRID | MIC
@@ -50,7 +50,7 @@ MPPT8          = 0x200000
 MPPT10         = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-ALLDEFAULT = 0 # should be equivalent to HYBRID | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
+ALLDEFAULT = 0 # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -4997,7 +4997,7 @@ class growatt_plugin(plugin_base):
             seriesnumber = "unknown"
 
         ### Current mapping assumptions for Growatt
-        # SPF = SPF # not listed in MODBUS documentation under storage types, can maybe be combined?
+        # SPF = SPF 
         # Storage (MIX, SPA, SPH) = GEN2
         # TL3-X (MAX, MID, MAC & MOD) = GEN
         # TL-X, TL-XH, TL-XHUS (MIN) = GEN3
