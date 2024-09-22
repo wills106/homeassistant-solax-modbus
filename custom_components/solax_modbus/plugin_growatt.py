@@ -1881,7 +1881,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32,
         scale = 0.1,
         rounding = 1,
-        allowedtypes = GEN | GEN2,
+        allowedtypes = GEN | GEN2 | GEN3, #GEN3 is to avoid name breaking, has same under "Total PV Power"
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3420,8 +3420,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 #        allowedtypes = GEN3,
 #    ),
     GrowattModbusSensorEntityDescription(
-        name = "PV Power Total",
-        key = "pv_power_total",
+        name = "Total PV Power",
+        key = "total_pv_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
