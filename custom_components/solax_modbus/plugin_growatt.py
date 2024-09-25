@@ -252,6 +252,52 @@ NUMBER_TYPES = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.CONFIG,
     ),
+    # TL-XH GEN3 load/battery/grid first priority 
+    # Set decimal value in register - not pretty currently
+    # Note register 3038 must be set first and followed by 3039 within few seconds. 
+    #   Register 3038 values:
+    #       Minutes bit 0-7
+    #       Hours bit 8-12
+    #       Priority bit 13-14: 0 load first, 1 battery first, 2 grid first
+    #       Enable bit 15: 0 disabled, 1 enabled
+    #   Register 3039 values:
+    #       Minutes bit 0-7
+    #       Hours bit 8-12
+    #       Reserved bits 13-15: 000 
+    GrowattModbusNumberEntityDescription(
+        name = "Time 1 Start",
+        key = "time_1_start",
+        register = 3038, # TL-XH GEN3 load/battery/grid first priority 
+        unit = REGISTER_U16,
+        native_min_value = 0,
+        native_max_value = 55099,
+        native_step = 1,
+        scale = 1,
+        fmt="H",  # 'H' for unsigned 16-bit integer range 
+        native_unit_of_measurement = None,
+        allowedtypes = GEN3 | HYBRID,
+        write_method = WRITE_MULTISINGLE_MODBUS_UNSIGNED, #Added _UNSIGNED copy function to support unsigned int 16-bit
+        icon = "mdi:clock-start",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "Time 1 End",
+        key = "time_1_end",
+        register = 3039, # TL-XH GEN3 load/battery/grid first priority 
+        unit = REGISTER_U16,
+        native_min_value = 0,
+        native_max_value = 5947,
+        native_step = 1,
+        scale = 1,
+        fmt="i",  # 'i' for integer
+        native_unit_of_measurement = None,
+        allowedtypes = GEN3 | HYBRID,
+        write_method = WRITE_SINGLE_MODBUS,
+        icon = "mdi:clock-end",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.CONFIG,
+    ),
     GrowattModbusNumberEntityDescription(
         name = "EMS Charging Rate",
         key = "ems_charging_rate",
@@ -4385,6 +4431,24 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         rounding = 1,
         allowedtypes = GEN3 | HYBRID,
     ),
+    # TL-XH GEN3 load/battery/grid first priority 
+    # Read out set value in register. Return in decimal - not pretty currently
+    GrowattModbusSensorEntityDescription(
+        name = "Time 1 Start",
+        key = "time_1_start_read",
+        register = 3038, # TL-XH GEN3 load/battery/grid first priority
+        allowedtypes = GEN3 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 1 End",
+        key = "time_1_end_read",
+        register = 3039, #TL-XH GEN3 load/battery/grid first priority
+        allowedtypes = GEN3 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
     #####
     #
     # SPF
