@@ -599,7 +599,11 @@ class SolaXModbusHub:
             byteorder=self.plugin.order16, wordorder=self.plugin.order32
         )
         builder.reset()
-        builder.add_16bit_int(payload)
+        if payload <=  32767:
+            builder.add_16bit_int(payload)
+        else:
+            builder.add_16bit_uint(payload)  # Use unsigned 16-bit integer method for larger values
+        
         payload = builder.to_registers()
         async with self._lock:
             await self._check_connection()
