@@ -141,6 +141,10 @@ class SolaXModbusNumber(NumberEntity):
             payload = int(value/(self._attr_scale*self.entity_description.read_scale))
         elif self._fmt == "f":
             payload = int(value/(self._attr_scale*self.entity_description.read_scale))
+        elif self._fmt == "H": # Handling for unsigned integer
+            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
+            if payload < 0:
+                _LOGGER.info(f"Integer for register {self._register} value {payload} cannot be negative. Unsigned 16-bit integer.")
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale}")
             await self._hub.async_write_registers_single(
