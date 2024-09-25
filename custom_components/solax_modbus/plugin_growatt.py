@@ -256,13 +256,13 @@ NUMBER_TYPES = [
     # Set decimal value in register - not pretty currently
     # Note register 3038 must be set first and followed by 3039 within few seconds. 
     #   Register 3038 values:
-    #       Minutes bit 0-7
-    #       Hours bit 8-12
-    #       Priority bit 13-14: 0 load first, 1 battery first, 2 grid first
-    #       Enable bit 15: 0 disabled, 1 enabled
+    #       Minutes bit 0-7 (+mins)
+    #       Hours bit 8-12 (+hours*256)
+    #       Priority bit 13-14: load first = +0, battery first = +8192, grid first = +16384
+    #       Enable bit 15: disabled = +0, enabled = +32768
     #   Register 3039 values:
-    #       Minutes bit 0-7
-    #       Hours bit 8-12
+    #       Minutes bit 0-7 (+mins)
+    #       Hours bit 8-12 (+hours*256)
     #       Reserved bits 13-15: 000 
     GrowattModbusNumberEntityDescription(
         name = "Time 1 Start",
@@ -4435,7 +4435,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     # Read out set value in register. Return in decimal - not pretty currently
     GrowattModbusSensorEntityDescription(
         name = "Time 1 Start",
-        key = "time_1_start_read",
+        key = "time_1_start",
         register = 3038, # TL-XH GEN3 load/battery/grid first priority
         allowedtypes = GEN3 | HYBRID,
         entity_registry_enabled_default = False,
@@ -4443,7 +4443,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name = "Time 1 End",
-        key = "time_1_end_read",
+        key = "time_1_end",
         register = 3039, #TL-XH GEN3 load/battery/grid first priority
         allowedtypes = GEN3 | HYBRID,
         entity_registry_enabled_default = False,
