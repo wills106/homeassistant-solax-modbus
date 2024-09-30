@@ -57,7 +57,6 @@ ALLDEFAULT = 0 #HYBRID | AC | ALL_X_GROUP
 SCAN_GROUP_MPPT = SCAN_GROUP_MEDIUM
 
 _simple_switch = {0: "off", 1: "on"}
-#_simple_switch = {0: False, 1: True}
 
 # ======================= end of bitmask handling code =============================================
 
@@ -174,9 +173,12 @@ def _fw_str(wa, *a):
     ba = [b for w in wa for b in w.to_bytes(2)]
     return f"V{_bytes_str(ba[0:4])}-{_bytes_str(ba[4:8])}"
 
+_mppt_dd = {0: "off", 0x7fff: "on"} #dict uses 16 bit signed!?, 0xffff not possible
+_mppt_mask = 0xff   #max 8 mppts
+_mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
+
 def _fn_mppt_mask(v, descr, dd):
-    mask = dd.get("mppt_mask", 0)
-    return "off" if v == 0 or mask == 0 else "on" if v & mask == mask else _flag_list(v, dd["mppt_list"], "unknown")
+    return "off" if v == 0 else "on" if v & _mppt_mask == _mppt_mask else _flag_list(v, _mppt_list, "unknown")
 
 def value_function_house_load(initval, descr, datadict):
     return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) )
@@ -421,7 +423,7 @@ SELECT_TYPES = [
         name = "Shadow Scan",
         key = "shadow_scan",
         register = 25020,
-        option_dict = {0: "off", 0x7fff: "on"},
+        option_dict = _mppt_dd,
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:box-shadow",
     ),
@@ -1218,20 +1220,17 @@ class solinteg_plugin(plugin_base):
             invertertype = invertertype | MPPT2
         
         if invertertype > 0:
+            data = hub.data
             #prepare mppt list
-            #hub.data["mppt_count"] = mppt
-            hub.data["mppt_mask"] = 2**mppt - 1 #mask
-            hub.data["mppt_list"] = []
-            sel_dd = {0: "off", 0x7fff: "on"} #dict uses 16 bit signed!?, 0xffff not possible
+            data["mppt_count"] = mppt
+            data["mppt_mask"] = 2**mppt - 1 #mask
+            sel_dd = _mppt_dd.copy() #copy
             for i in range(mppt):
-                mx = f"mppt{i+1}"
-                hub.data["mppt_list"].append(mx)
-                sel_dd[2**i] = mx
+                sel_dd[2**i] = f"mppt{i+1}"
             #set the options
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
-                    sel.option_dict.clear()
-                    sel.option_dict.update(sel_dd)
+                    sel.option_dict = sel_dd
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
