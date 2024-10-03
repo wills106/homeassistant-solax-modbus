@@ -119,6 +119,28 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     pv             = datadict.get('pv_power_total', 0)
     houseload_nett = datadict.get('inverter_power', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
+
+    #
+    # fxstein - Parallel Mode 
+    #
+    inverter_count = datadict.get('pm_inverter_count', 1)
+    pm_mode        = True if inverter_count > 1 else False
+
+    # Sum up all the possible PV power in case we are in PM mode
+    if pm_mode:
+        pv2            = datadict.get('pm_i2_pv_power_1', 0) + datadict.get('pm_i2_pv_power_2', 0)
+        pv3            = datadict.get('pm_i3_pv_power_1', 0) + datadict.get('pm_i3_pv_power_2', 0)
+        pv             = pv + pv2 + pv3
+
+        # TODO: Needs further refinements of calculations in pm mode - existing calculation are partially wrong
+        houseload_nett = datadict.get('inverter_power', 0) - meas
+        houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
+        ap_real        = datadict.get('active_power_real', 0)
+        houseload_real = -(meas + ap_real)
+    #
+    # /fxstein - Parallel Mode 
+    #
+    
     if   power_control == "Enabled Power Control":
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
@@ -136,6 +158,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Enabled No Discharge": # alternative computation for Power Control
+
+        # fxstein - To avoid shutting down PV on a sunny day when batteries are full - need to stay slightly below target
+        # TODO modify calculations with offset * number of inverters when in parallel mode
+        # if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) - 600 # 0 - pv + (houseload_brut - houseload_nett)
+        # else:                    ap_target = 0 - houseload_nett - 600
+
         if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
@@ -143,7 +171,20 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
-    ap_target = min(ap_target,  import_limit - houseload_brut)
+
+    #
+    # fxstein - Parallel Mode 
+    #
+    # Alternative target modification when in parallel mode
+    # TODO: Needs further modification once various underlying calculations have been fixed
+
+    if pm_mode: ap_target = min(ap_target,  import_limit - houseload_real)
+    else:       ap_target = min(ap_target,  import_limit - houseload_brut)
+    
+    #
+    # /fxstein - Parallel Mode 
+    #
+    
     #_LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if  old_ap_target != ap_target:
         _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}")
@@ -194,6 +235,9 @@ def value_function_hardware_version_g5(initval, descr, datadict):
     return  f"Gen5"
 
 def value_function_house_load(initval, descr, datadict):
+    # fxstein - incorrect for PM mode. Inverter power is this inverter, 
+    # but measured power if for all Inverters on the Master and 0 on all Slaves
+    # TODO: fix calculation in PM mode
     return ( datadict.get('inverter_power', 0) - datadict.get('measured_power', 0) + datadict.get('meter_2_measured_power', 0) )
 
 def value_function_house_load_alt(initval, descr, datadict):
