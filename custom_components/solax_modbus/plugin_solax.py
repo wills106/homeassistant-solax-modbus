@@ -5922,6 +5922,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #
 #####
     SolaXModbusSensorEntityDescription(
+        name = "Measured Power",
+        key = "measured_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_measured_power,
+        allowedtypes = MIC | GEN2 | GEN3 | GEN4 | GEN5,
+    ),
+    SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
         native_unit_of_measurement = UnitOfPower.WATT,
