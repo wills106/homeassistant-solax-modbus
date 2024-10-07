@@ -119,6 +119,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     pv             = datadict.get('pv_power_total', 0)
     houseload_nett = datadict.get('inverter_power', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
+    # Current SoC for capacity related calculations like Battery Hold/No Discharge
+    battery_capacity = datadict.get('battery_capacity', 0)
+
     if   power_control == "Enabled Power Control":
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
@@ -136,9 +139,14 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Enabled No Discharge": # alternative computation for Power Control
-        if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
-        else:                    ap_target = 0 - houseload_nett
-        power_control = "Enabled Power Control"
+        # Only hold battery level at below 98% SoC to avoid PV from shutting down when full
+        if battery_capacity < 98:
+            if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
+            else:                    ap_target = 0 - houseload_nett
+            power_control = "Enabled Power Control"
+        else:
+            ap_target = 0
+            power_control == "Disabled"
     elif power_control == "Disabled":
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
