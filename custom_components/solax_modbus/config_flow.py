@@ -44,6 +44,7 @@ from .const import (
     CONF_BAUDRATE,
     CONF_PLUGIN,
     CONF_READ_BATTERY,
+    CONF_CORE_HUB,
 	DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_READ_PM,
@@ -97,6 +98,7 @@ PLUGINS = [ selector.SelectOptionDict(value=getPluginName(i), label=getPluginNam
 INTERFACES = [
     selector.SelectOptionDict(value="tcp",    label="TCP / Ethernet"),
     selector.SelectOptionDict(value="serial", label="Serial"),
+    selector.SelectOptionDict(value="core", label="Hass core Hub"),
 ]
 
 CONFIG_SCHEMA = vol.Schema( {
@@ -135,6 +137,12 @@ TCP_SCHEMA = vol.Schema( {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
+    } )
+
+CORE_SCHEMA = vol.Schema( {
+        vol.Required(CONF_CORE_HUB): str,
+        #vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
+        #vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
     } )
 
 BATTERY_SCHEMA = vol.Schema( {
@@ -185,6 +193,20 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
 
     return user_input
 
+async def _validate_core_modbus_hub(handler: SchemaCommonFlowHandler, user_input: Any) -> Any:
+    hub_name = user_input[CONF_CORE_HUB]
+    non_empty = re.compile(r"\w")
+    try:
+        res = non_empty.search(hub_name)
+    except Exception as e:
+        raise SchemaFlowError(f"invalid core modbus hub name: '{hub_name}'") from e
+    if not res:
+        raise SchemaFlowError(f"core modbus hub name empty")
+    return user_input
+
+        
+    
+
 async def _next_step_modbus(user_input: Any) -> str:
     return user_input[CONF_INTERFACE] # eitheer "tcp" or "serial"
 
@@ -210,12 +232,14 @@ if (MAJOR_VERSION >=2023) or ((MAJOR_VERSION==2022) and (MINOR_VERSION==12)):
         "user":    SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step = _next_step_modbus),
         "serial":  SchemaFlowFormStep(SERIAL_SCHEMA, next_step = _next_step_battery),
         "tcp":     SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step = _next_step_battery),
+        "core":  SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step = _next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "init":    SchemaFlowFormStep(OPTION_SCHEMA, next_step = _next_step_modbus),
         "serial":  SchemaFlowFormStep(SERIAL_SCHEMA, next_step = _next_step_battery),
         "tcp":     SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step = _next_step_battery),
+        "core":  SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step = _next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
 

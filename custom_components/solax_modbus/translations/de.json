@@ -30,6 +30,12 @@
           "tcp_type": "Die Modbus TCP Variante"
         }
       },
+      "core": {
+        "title": "Core Modbus Hub Auswahl",
+        "data": {
+            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
+        }
+      },
       "battery": {
         "title": "Batteriemodule auslesen",
         "data": {
@@ -74,6 +80,12 @@
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter"
+        }
+      },
+      "Core": {
+        "title": "Core Modbus Hub Auswahl",
+        "data": {
+            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
         }
       },
       "battery": {
