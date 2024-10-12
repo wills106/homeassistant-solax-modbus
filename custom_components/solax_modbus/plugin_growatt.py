@@ -3050,6 +3050,73 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
+        name = "PV Voltage 3",
+        key = "pv_voltage_3",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 120,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | MPPT3,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Current 3",
+        key = "pv_current_3",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 121,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | MPPT3,
+        icon = "mdi:current-dc",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "PV Power 3",
+        key = "pv_power_3",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 122,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | MPPT3,
+        icon = "mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Today's PV3 Solar Energy",
+        key = "today_s_pv3_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 124,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | MPPT3,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Total PV3 Solar Energy",
+        key = "total_pv3_solar_energy",
+        native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
+        device_class = SensorDeviceClass.ENERGY,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 126,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.1,
+        rounding = 1,
+        allowedtypes = GEN | MPPT3,
+        entity_registry_enabled_default = False,
+        icon = "mdi:solar-power",
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "Run Mode",
         key = "run_mode",
         register = 1000,
@@ -5328,6 +5395,8 @@ class growatt_plugin(plugin_base):
         
         # derive invertertype from seriiesnumber
         if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
+        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
+        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
         elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
         elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
         elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
