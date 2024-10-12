@@ -1309,6 +1309,17 @@ SELECT_TYPES = [
         icon = "mdi:cloud",
     ),
     SolaxModbusSelectEntityDescription(
+        name = "Discharge Cut Off Point Different",
+        key = "discharge_cut_off_point_different",
+        register = 0xA6,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = AC | HYBRID | GEN3 | GEN4 | GEN5,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
         name = "Meter 1 Direction",
         key = "meter_1_direction",
         register = 0xAB,
@@ -2081,7 +2092,7 @@ SELECT_TYPES = [
                 2014: "Unlocked",
                 6868: "Unlocked - Advanced",
             },
-        allowedtypes = MIC,
+        allowedtypes = MIC | GEN2,
         icon = "mdi:lock-question",
     ),
 ]
@@ -2988,14 +2999,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Discharge Cut Off Point Different",
         key = "discharge_cut_off_point_different",
         register = 0x111,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        entity_registry_enabled_default = False,
         allowedtypes = AC | HYBRID | GEN3 | GEN4 | GEN5,
-        icon = "mdi:dip-switch",
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "battery_minimum_capacity_gridtied",
@@ -6062,11 +6071,28 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key = "lock_state",
+        register = 0x367,
+        scale = { 0: "Locked",
+                  1: "Unlocked",
+                  2: "Unlocked - Advanced", },
+        allowedtypes = MIC | GEN2 | X3,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Export Power Limit",
+        key = "export_power_limit",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        register = 0x371,
+        allowedtypes = MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "lock_state",
         register = 0x39A,
         scale = { 0: "Locked",
                   1: "Unlocked",
                   2: "Unlocked - Advanced", },
-        allowedtypes = MIC,
+        allowedtypes = MIC | GEN2 | X1,
         internal = True,
     ),
 #####
@@ -7521,6 +7547,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('XMA'):
             invertertype = MIC | GEN2 | X1 # X1-Mini G3
             self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('ZA4'):
+            invertertype = MIC | GEN4 | X1 # X1-Boost G4
+            self.inverter_model = "X1-Boost"
         elif seriesnumber.startswith('XST'):
             invertertype = MIC | GEN4 | X1 | MPPT3 # X1-SMART-G2
             self.inverter_model = "X1-SMART-G2"
@@ -7539,16 +7568,33 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MU502T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC602T'):
+            invertertype = MIC | GEN | X3 # MIC X3 6kW
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU602T'):
+            invertertype = MIC | GEN | X3 # MIC X3 6kW
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC702T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MU702T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC802T'):
+            invertertype = MIC | GEN | X3 # MIC X3 8kW
         elif seriesnumber.startswith('MU802T'):
             invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC803T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MU803T'):
             invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC806T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU806T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC106T'):
             invertertype = MIC | GEN2 | X3 # MIC X3
@@ -7573,12 +7619,6 @@ class solax_plugin(plugin_base):
             invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC215T'):
-            invertertype = MIC | GEN2 | X3 # MIC X3
-            self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith('MU602T'):
-            invertertype = MIC | GEN2 | X3 # MIC X3
-            self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith('MU806T'):
             invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MP156T'):
