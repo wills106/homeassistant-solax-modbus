@@ -5319,31 +5319,31 @@ class growatt_plugin(plugin_base):
             seriesnumber = "unknown"
 
         ### Current mapping assumptions for Growatt
-        # SPF = SPF 
+        # TL3-SL = GEN
+        # TL3-X (MAX, MID, MAC & MOD) = GEN2
         # Storage (MIX, SPA, SPH) = GEN3
-        # TL3-X (MAX, MID, MAC & MOD) = GEN
         # TL-X, TL-XH, TL-XHUS (MIN) = GEN4
         # TL3-XH (MOD) = GEN4
+        # SPF = SPF 
         
         # derive invertertype from seriiesnumber
-        #if seriesnumber.startswith('TLX'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW
-        if seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
+        if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
         elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
         elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
+        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
+        elif seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
         #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
         #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
         #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 2.5kW - 10kW (MOD)
         elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
         elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 3kW - ?kW
+        elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
+        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
+        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 2.5kW - 10kW (MOD)
+        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
         elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be SPF?
+        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
         
         else:
             invertertype = 0
