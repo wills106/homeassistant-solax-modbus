@@ -6753,12 +6753,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Active Power Limit",
         key = "active_power_limit",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
         register = 0x381,
         allowedtypes = MIC | GEN4,
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_arm",
