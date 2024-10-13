@@ -117,6 +117,22 @@ def value_function_combined_battery_power(initval, descr, datadict):
 
 BUTTON_TYPES = [
     GrowattModbusButtonEntityDescription(
+        name = "Active Power Not Limited",
+        key = "active_power_not_limited",
+        register = 3,
+        command = 255,
+        allowedtypes = ALL_GEN_GROUP,
+        icon = "mdi:gauge-full",
+    ),
+    GrowattModbusButtonEntityDescription(
+        name = "Reactive Power Not Limited",
+        key = "reactive_power_not_limited",
+        register = 4,
+        command = 255,
+        allowedtypes = ALL_GEN_GROUP,
+        icon = "mdi:gauge-full",
+    ),
+    GrowattModbusButtonEntityDescription(
         name = "Sync RTC",
         key = "sync_rtc",
         register = 45,
@@ -141,6 +157,28 @@ NUMBER_TYPES = [
     #  Normal number types
     #
     ###
+    GrowattModbusNumberEntityDescription(
+        name = "Active Power Limit",
+        key = "active_power_limit",
+        register = 3,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 100,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = ALL_GEN_GROUP,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "Reactive Power Limit",
+        key = "reactive_power_limit",
+        register = 4,
+        fmt = "i",
+        native_min_value = -100,
+        native_max_value = 100,
+        native_step = 1,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = ALL_GEN_GROUP,
+    ),
     GrowattModbusNumberEntityDescription(
         name = "Grid Export Limit",
         key = "grid_export_limit",
@@ -987,6 +1025,19 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
+    GrowattModbusSensorEntityDescription(
+        key = "active_power_limit",
+        register = 3,
+        allowedtypes = ALL_GEN_GROUP,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "reactive_power_limit",
+        register = 4,
+        unit = REGISTER_S16,
+        allowedtypes = ALL_GEN_GROUP,
+        internal = True,
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Firmware Version",
         key = "firmware_version",
