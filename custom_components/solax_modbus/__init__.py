@@ -10,6 +10,7 @@ import logging
 from time import time
 from types import ModuleType, SimpleNamespace
 from typing import Any, Optional
+from weakref import ref as WeakRef
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 
@@ -26,6 +27,13 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
+try:
+    from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
+except ImportError:
+    def get_hub(name): None
+    class CoreModbusHub: 
+        """ place holder dummy """
+
 
 from .sensor import SolaXModbusSensor
 
@@ -62,6 +70,7 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_INVERTER_NAME_SUFFIX,
+    CONF_CORE_HUB,
     DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_BAUDRATE,
     DEFAULT_INTERFACE,
@@ -156,11 +165,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # ====================== end of dynamic load ==============================================================
 
-    hub = SolaXModbusHub(
-        hass,
-        plugin,
-        entry,
-    )
+    if config.get(CONF_INTERFACE,None) == 'core':
+        hub = SolaXCoreModbusHub(
+            hass,
+            plugin,
+            entry,
+        )
+    else:
+        hub = SolaXModbusHub(
+            hass,
+            plugin,
+            entry,
+        )
     """Register the hub."""
     hass.data[DOMAIN][hub._name] = {
         "hub": hub,
@@ -218,7 +234,7 @@ class SolaXModbusHub:
         interface = config.get(CONF_INTERFACE, None)
         if (
             not interface
-        ):  # legacy parameter name was read_serial, this block can be removed later
+        ):  # core modbus parameter name was read_serial, this block can be removed later
             if config.get("read_serial", False):
                 interface = "serial"
             else:
@@ -243,7 +259,7 @@ class SolaXModbusHub:
                 timeout=3,
                 retries=6,
             )
-        else:
+        elif interface == "tcp":
             if tcp_type == "rtu":
                 self._client = AsyncModbusTcpClient(
                     host=host, port=port, timeout=5, framer=ModbusRtuFramer, retries=6
@@ -912,3 +928,299 @@ class SolaXModbusHub:
                     payload=payload,
                 )
         return res
+
+class SolaXCoreModbusHub(SolaXModbusHub,CoreModbusHub):
+    """Thread safe wrapper class for pymodbus."""
+
+    def __init__(
+        self,
+        hass,
+        plugin,
+        entry,
+    ):
+        SolaXModbusHub.__init__(self,hass,plugin,entry)
+        config = entry.options
+        core_hub_name = config.get(CONF_CORE_HUB,"")
+        self._core_hub = core_hub_name
+        self._hub = None
+        _LOGGER.debug(f"solax via core modbus hub '{core_hub_name}")
+
+        _LOGGER.debug("setup solax core modbus hub done %s", self.__dict__)
+
+
+
+    async def async_close(self):
+        """Disconnect client."""
+        with self._lock:
+            if self._hub:
+                self._hub = None
+
+    # async def async_connect(self):
+    #    """Connect client."""
+    #    _LOGGER.debug("connect modbus")
+    #    if not self._client.connected:
+    #        async with self._lock:
+    #            await self._client.connect()
+
+    async def _check_connection(self):
+        # get hold of temporary strong reference to CoreModbusHub object
+        # and pass it on success to caller if available
+        if ( self._hub is None or ( hub := self._hub() ) is None ):
+            return await self.async_connect()
+        async with hub._lock:
+            try:
+                if hub._client.connected:
+                    return hub
+            except (TypeError,AttributeError):
+                pass
+        _LOGGER.info("Inverter is not connected, trying to connect")
+        return await self.async_connect(hub)
+            
+    def _hub_closed_now(self,ref_obj):
+        with self._lock:
+            if ref_obj is self._hub:
+                self._hub = None
+
+    async def async_connect(self,hub = None):
+        delay = True
+        while True:
+            # check if strong reference to 
+            # get one.
+            if hub is not None or ( self._hub is not None and ( hub := self._hub() ) is not None ):
+                port = hub._pb_params.get('port',0)
+                host = hub._pb_params.get('host',port)
+                # TODO just wait some time and recheck again if client connected before 
+                # giving up
+                await hub._lock.acquire()
+                try:
+                    if hub._client and hub._client.connected:
+                        hub._lock.release()
+                        _LOGGER.info(
+                            "Inverter connected at %s:%s",
+                            host,port,
+                        )
+                        return hub
+                except (TypeError,AttributeError):
+                    pass
+                hub._lock.release()
+                if not delay:
+                    reason = " core modbus hub '{self._core_hub}' not ready" if hub._config_delay else ""
+                    _LOGGER.warning(
+                        f"Unable to connect to Inverter at {host}:{port}.{reason}"
+                    )
+                    return None
+            else:
+                # get hold of current CoreModbusHub object with
+                # provided entity name
+                try:
+                    hub = get_core_hub(self._hass,self._core_hub)
+                except KeyError:
+                    _LOGGER.warning(
+                        f"CoreModbusHub '{self._core_hub}' not available",
+                    )
+                    return None
+                else:
+                    if hub:
+                        # upbdate weak reference handle to refere to
+                        # the actual CoreModbusHub object
+                        self._hub = WeakRef(hub,self._hub_closed_now)
+                        continue
+                if not delay:
+                    _LOGGER.warning(
+                        "Unable to join core modbus %s",
+                        self._core_hub,
+                    )
+                    return None
+            # wait some time (TODO make configurable) before
+            # rechecking if CoreModbusHub object has been created and
+            # connected
+            delay = False
+            await asyncio.sleep(10)
+
+    async def async_read_holding_registers(self, unit, address, count):
+        """Read holding registers."""
+        kwargs = {"slave": unit} if unit else {}
+        async with self._lock:
+            hub = await self._check_connection()
+        try:
+            if hub._config_delay:
+                return None
+            async with hub._lock:
+                try:
+                    resp = await hub._client.read_holding_registers(address, count, **kwargs)
+                except (ConnectionException, ModbusIOException) as e:
+                    original_message = str(e)
+                    raise HomeAssistantError(
+                        f"Error reading Modbus holding registers: {original_message}"
+                    ) from e
+            return resp
+        except (TypeError, AttributeError) as e:
+            raise HomeAssistantError(
+                f"Error reading Modbus holding registers: core modbus access failed"
+            ) from e
+        
+
+    async def async_read_input_registers(self, unit, address, count):
+        """Read input registers."""
+        kwargs = {"slave": unit} if unit else {}
+        async with self._lock:
+            hub = await self._check_connection()
+        try:
+            if hub._config_delay:
+                return None
+            async with hub._lock:
+                try:
+                    resp = await hub._client.read_input_registers(address, count, **kwargs)
+                except (ConnectionException, ModbusIOException) as e:
+                    original_message = str(e)
+                    raise HomeAssistantError(
+                        f"Error reading Modbus input registers: {original_message}"
+                    ) from e
+        except (TypeError, AttributeError) as e:
+            raise HomeAssistantError(
+                f"Error reading Modbus input registers: core modbus access failed"
+            ) from e
+        return resp
+
+    async def async_lowlevel_write_register(self, unit, address, payload):
+        # builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(
+            byteorder=self.plugin.order16, wordorder=self.plugin.order32
+        )
+        builder.reset()
+        builder.add_16bit_int(payload)
+        payload = builder.to_registers()
+        kwargs = {"slave": unit} if unit else {}
+        async with self._lock:
+            hub = await self._check_connection()
+        try:
+            if hub._config_delay:
+                return None
+            async with hub._lock:
+                try:
+                    resp = await self._client.write_register(address, payload[0], **kwargs)
+                except (ConnectionException, ModbusIOException) as e:
+                    original_message = str(e)
+                    raise HomeAssistantError(
+                        f"Error writing single Modbus register: {original_message}"
+                    ) from e
+            return resp
+        except (TypeError, AttributeError) as e:
+            raise HomeAssistantError(
+                f"Error writing single Modbus input register: core modbus access failed"
+            ) from e
+
+
+    async def async_write_registers_single(
+        self, unit, address, payload
+    ):  # Needs adapting for regiater que
+        """Write registers multi, but write only one register of type 16bit"""
+        builder = BinaryPayloadBuilder(
+            byteorder=self.plugin.order16, wordorder=self.plugin.order32
+        )
+        builder.reset()
+        builder.add_16bit_int(payload)
+        payload = builder.to_registers()
+        kwargs = {"slave": unit} if unit else {}
+        async with self._lock:
+            hub = await self._check_connection()
+        try:
+            if hub._config_delay:
+                return None
+            async with hub._lock:
+                try:
+                    resp = await self._client.write_registers(address, payload, **kwargs)
+                except (ConnectionException, ModbusIOException) as e:
+                    original_message = str(e)
+                    raise HomeAssistantError(
+                        f"Error writing single Modbus registers: {original_message}"
+                    ) from e
+                
+            return resp
+        except (TypeError, AttributeError) as e:
+            raise HomeAssistantError(
+                f"Error writing single Modbus Modbus registers: core modbus access failed"
+            ) from e
+
+    async def async_write_registers_multi(
+        self, unit, address, payload
+    ):  # Needs adapting for regiater que
+        """Write registers multi.
+        unit is the modbus address of the device that will be writen to
+        address us the start register address
+        payload is a list of tuples containing
+            - a select or number entity keys names or alternatively REGISTER_xx type declarations
+            - the values are the values that will be encoded according to the spec of that entity
+        The list of tuples will be converted to a modbus payload with the proper encoding and written
+        to modbus device with address=unit
+        All register descriptions referenced in the payload must be consecutive (without leaving holes)
+        32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
+        """
+        kwargs = {"slave": unit} if unit else {}
+        builder = BinaryPayloadBuilder(
+            byteorder=self.plugin.order16, wordorder=self.plugin.order32
+        )
+        builder.reset()
+        if isinstance(payload, list):
+            for (
+                key,
+                value,
+            ) in payload:
+                if key.startswith("_"):
+                    typ = key
+                    value = int(value)
+                else:
+                    descr = self.writeLocals[key]
+                    if hasattr(descr, "reverse_option_dict"):
+                        value = descr.reverse_option_dict[value]  # string to int
+                    elif callable(descr.scale):  # function to call ?
+                        value = descr.scale(value, descr, self.data)
+                    else:  # apply simple numeric scaling and rounding if not a list of words
+                        try:
+                            value = value * descr.scale
+                        except:
+                            _LOGGER.error(f"cannot treat payload scale {value} {descr}")
+                    value = int(value)
+                    typ = descr.unit
+                if typ == REGISTER_U16:
+                    builder.add_16bit_uint(value)
+                elif typ == REGISTER_S16:
+                    builder.add_16bit_int(value)
+                elif typ == REGISTER_U32:
+                    builder.add_32bit_uint(value)
+                elif typ == REGISTER_S32:
+                    builder.add_32bit_int(value)
+                else:
+                    _LOGGER.error(f"unsupported unit type: {typ} for {key}")
+            payload = builder.to_registers()
+            # for easier debugging, make next line a _LOGGER.info line
+            _LOGGER.debug(
+                f"Ready to write multiple registers at 0x{address:02x}: {payload}"
+            )
+            async with self._lock:
+                hub = await self._check_connection()
+            try:
+                if hub._config_delay:
+                    return None
+                async with hub._lock:
+                    try:
+                        resp = await self._client.write_registers(
+                            address, payload, **kwargs
+                        )
+                    except (ConnectionException, ModbusIOException) as e:
+                        original_message = str(e)
+                        raise HomeAssistantError(
+                            f"Error writing multiple Modbus registers: {original_message}"
+                        ) from e
+                return resp
+            except (TypeError, AttributeError) as e:
+                raise HomeAssistantError(
+                    f"Error writing single Modbus Modbus registers: core modbus access failed"
+                ) from e
+        else:
+            _LOGGER.error(
+                f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}"
+            )
+        return None
+
+
