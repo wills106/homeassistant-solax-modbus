@@ -1,6 +1,7 @@
 {
   "domain": "solax_modbus",
   "name": "SolaX Inverter Modbus",
+  "afterdependencies": ["modbus"],
   "codeowners": ["@wills106"],
   "config_flow": true,
   "dependencies": [],
