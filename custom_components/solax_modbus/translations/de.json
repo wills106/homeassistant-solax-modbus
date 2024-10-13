@@ -9,7 +9,7 @@
           "interface" : "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "read_eps": "Notstromschalter (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
@@ -62,7 +62,7 @@
           "interface" : "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "read_eps": "Notstromschalter (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
           "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"

@@ -8,7 +8,7 @@
           "read_modbus_addr": "Adresa modbus měniče",
           "interface" : "Rozhraní",
           "read_eps": "Možnost záložního zdroje (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelení režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
           "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
@@ -49,7 +49,7 @@
           "read_modbus_addr": "Adresa modbus měniče",
           "interface" : "Rozhraní",
           "read_eps": "Možnost záložního zdroje (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelení režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
           "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
