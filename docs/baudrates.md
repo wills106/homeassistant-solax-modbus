@@ -2,11 +2,15 @@
 
 **Do not set polling below 5s, on inverters running at 9600**
 
-### Growatt
+### AlphaESS:
+
+9600 for Inverters without built in Ethernet
+
+### Growatt:
 
 Default is 9600. Can be 38400
 
-### Sofar Solar
+### Sofar Solar:
 
 Default is meant to be 9600. Some support up to 57600 or 115200
 Check the LCD to ensure the Inverter is matched to the RS485 device.
@@ -19,7 +23,7 @@ Check the LCD to ensure the Inverter is matched to the RS485 device.
 
 115200
 
-### SolaX Gen4:
+### SolaX Gen4 & Gen5:
 
 19200
 
@@ -30,6 +34,10 @@ Check the LCD to ensure the Inverter is matched to the RS485 device.
 ### Solis:
 
 9600
+
+### Solinteg:
+
+???
 
 ### SRNE:
 
