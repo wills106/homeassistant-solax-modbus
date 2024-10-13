@@ -201,19 +201,6 @@ def value_function_hardware_version_g4(initval, descr, datadict):
 def value_function_hardware_version_g5(initval, descr, datadict):
     return  f"Gen5"
 
-# Function to apply meter direction to raw power measurements
-def value_function_measured_power(initval, descr, datadict):
-    meter_1_direction = datadict.get('meter_1_direction', 'Negativ')
-    _LOGGER.debug(f"meter_1_direction: {meter_1_direction}")
-    
-    # If meter is set to Positiv direction it reports imported energy as negative values
-    # If meter is set to Negative direction it reports imported energy as positive values
-    measured_power = datadict.get('measured_power_raw', 0)
-    measured_power = measured_power if meter_1_direction == 'Negativ' else -(measured_power)
-    _LOGGER.debug(f"measured_power: {measured_power}")
-
-    return measured_power 
-
 def value_function_house_load(initval, descr, datadict):
     return ( datadict.get('inverter_power', 0) - datadict.get('measured_power', 0) + datadict.get('meter_2_measured_power', 0) )
 
@@ -1378,32 +1365,6 @@ SELECT_TYPES = [
                 1: "Negative",
             },
         allowedtypes = AC | HYBRID | GEN3,
-        entity_category = EntityCategory.CONFIG,
-        entity_registry_enabled_default = False,
-        icon = "mdi:meter-electric",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name = "Meter 1 Direction",
-        key = "meter_1_direction",
-        register = 0x010B,
-        option_dict =  {
-                0: "Positive",
-                1: "Negative",
-            },
-        allowedtypes = AC | HYBRID | GEN4,
-        entity_category = EntityCategory.CONFIG,
-        entity_registry_enabled_default = False,
-        icon = "mdi:meter-electric",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name = "Meter 2 Direction",
-        key = "meter_2_direction",
-        register = 0x010C,
-        option_dict =  {
-                0: "Positive",
-                1: "Negative",
-            },
-        allowedtypes = AC | HYBRID | GEN4,
         entity_category = EntityCategory.CONFIG,
         entity_registry_enabled_default = False,
         icon = "mdi:meter-electric",
@@ -3182,22 +3143,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        key = "meter_1_direction",
-        register = 0x010B ,
-        scale = { 0: "Positive",
-                  1: "Negative", },
-        allowedtypes = AC | HYBRID | GEN4,
-        internal = True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        key = "meter_2_direction",
-        register = 0x010C,
-        scale = { 0: "Positive",
-                  1: "Negative", },
-        allowedtypes = AC | HYBRID | GEN4,
-        internal = True,
-    ),
-    SolaXModbusSensorEntityDescription(
         name = "FVRT Function",
         key = "fvrt_function",
         register = 0x116,
@@ -4222,8 +4167,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power Raw",
-        key = "measured_power_raw",
+        name = "Measured Power",
+        key = "measured_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4231,7 +4176,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_S32,
         allowedtypes =  AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
-        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Grid Export Total",
@@ -6013,15 +5957,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #
 #####
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power",
-        key = "measured_power",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        state_class = SensorStateClass.MEASUREMENT,
-        value_function = value_function_measured_power,
-        allowedtypes = MIC | GEN2 | GEN3 | GEN4 | GEN5,
-    ),
-    SolaXModbusSensorEntityDescription(
         name = "Grid Export",
         key = "grid_export",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -6436,8 +6371,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power Raw",
-        key = "measured_power_raw",
+        name = "Measured Power",
+        key = "measured_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -6445,7 +6380,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         #newblock = True,
         register_type = REG_INPUT,
         allowedtypes = MIC | GEN | GEN2,
-        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Run Mode",
@@ -6907,15 +6841,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Measured Power Raw",
-        key = "measured_power_raw",
+        name = "Measured Power",
+        key = "measured_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x409,
         register_type = REG_INPUT,
         allowedtypes = MIC | GEN4 | GEN5,
-        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Voltage 1",
