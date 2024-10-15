@@ -4039,7 +4039,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4 | X1,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Grid Power",
+        name = "Grid Power Total",
         key = "total_grid_power_va",
         native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
         device_class = SensorDeviceClass.APPARENT_POWER,
