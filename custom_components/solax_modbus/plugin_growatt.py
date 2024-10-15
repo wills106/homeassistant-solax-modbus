@@ -253,6 +253,20 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_battery_voltage(initval, descr, datadict):
+		bms = datadict.get('bms_monitoring_version', 0)
+		if bms = 'ZECA' then #Battery system APX HV (ZECA) uses 0.1 scaling factor for battery voltage 
+			initval = initval / 10
+		else 
+			initval = initval / 100
+		return initval	
+
+def value_function_firmware_control_version(initval, descr, datadict):
+		fw_ascii = datadict.get('firmware_control_version_ascii', 0)
+		fw_ver = datadict.get('firmware_control_version_number', 0)
+		fw_ver = f'{fw_ver:04}' # Convert to a 4-digit decimal number
+		return f'{fw_ascii}-{fw_ver}'
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -280,15 +294,6 @@ BUTTON_TYPES = [
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:home-clock",
         value_function = value_function_sync_rtc_ymd,
-    ),
-    GrowattModbusButtonEntityDescription(
-        name = "Update Time Slot 1",
-        key = "time_slot_1",
-        register = 3038,
-        allowedtypes = HYBRID | GEN3,
-        write_method = WRITE_MULTI_MODBUS,
-        icon = "mdi:battery-clock",
-        value_function = value_function_time_slot_1,
     ),
     GrowattModbusButtonEntityDescription(
         name = "Update Time Slots",
@@ -1360,11 +1365,23 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Control Version",
-        key = "firmware_control_version",
+        key = "firmware_control_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount=2,
+        allowedtypes = ALL_GEN_GROUP,
+		internal = true,
+    ),
+	GrowattModbusSensorEntityDescription(
+        key = "firmware_control_version_number",
+        register = 14,
+        allowedtypes = ALL_GEN_GROUP,
+        internal = true,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Firmware Control Version",
+        key = "firmware_control_version",
+        value_function = value_function_firmware_control_version,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -4150,24 +4167,25 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # TL-X TL-XH
 #
 #####
-#    GrowattModbusSensorEntityDescription(
-#        name = "Inverter State",
-#        key = "inverter_state",
-#        register = 3000,
-#        register_type = REG_INPUT,
-#        unit = REGISTER_U8H, #currently not working in the integration
-#        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
-#        allowedtypes = GEN4,
-#    ),
-#    GrowattModbusSensorEntityDescription(
-#        name = "Run Mode",
-#        key = "run_mode",
-#        register = 3000,
-#        register_type = REG_INPUT,
-#        unit = REGISTER_U8L, #currently not working in the integration
-#        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
-#        allowedtypes = GEN4,
-#    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter State",
+        key = "inverter_state",
+        newblock = true,
+        register = 3000,
+        register_type = REG_INPUT,
+        unit = REGISTER_U8H, #currently not working in the integration
+        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
+        allowedtypes = GEN4,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Run Mode",
+        key = "run_mode",
+        register = 3000,
+        register_type = REG_INPUT,
+        unit = REGISTER_U8L, #currently not working in the integration
+        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
+        allowedtypes = GEN4,
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
         key = "total_pv_power",
@@ -4339,7 +4357,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 3023,
         register_type = REG_INPUT,
-        unit = REGISTER_U32,
+        unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN4 | X1,
@@ -4849,6 +4867,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
+        key = "bms_monitoring_version",
+        register = 3096, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount=2,
+        allowedtypes = GEN4 | HYBRID,
+        internal = true,
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
         key = "today_s_battery_output_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
@@ -5085,7 +5111,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 3169,
         register_type = REG_INPUT,
-        scale = 0.1, #doc says 0.01, but datasheet of APX HV system module for MOD / MID TL-XH (BP) inverters have operating voltage range 600-980V.
+        scale = value_function_battery_voltage, #due to different scaling factor depending on battery system, default scale 0.01
         rounding = 2,
         allowedtypes = GEN4 | HYBRID,
     ),
@@ -5250,7 +5276,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
-    
+  
     #####
     #
     # SPF
