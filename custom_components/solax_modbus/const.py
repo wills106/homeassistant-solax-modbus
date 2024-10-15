@@ -19,7 +19,6 @@ import pathlib
 
 from homeassistant.const import (
     PERCENTAGE,
-    UnitOfReactivePower,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -30,6 +29,21 @@ from homeassistant.const import (
     UnitOfTime,
     CONF_SCAN_INTERVAL,
 )
+
+try:
+    from homeassistant.const import (
+        UnitOfReactivePower,
+    ) ## some changes maybe revert on update of hass
+except ImportError:
+    # NOTE:fallback for older homeassistant installation
+    #      likely to be removed in future version
+
+    from enum import StrEnum
+    from homeassistant.const import (
+        POWER_VOLT_AMPERE_REACTIVE
+    )
+    class UnitOfReactivePower(StrEnum):
+        VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
 
 
 # ================================= Definitions for config_flow ==========================================================
@@ -55,6 +69,7 @@ CONF_SolaX_HUB   = "solax_hub"
 CONF_BAUDRATE    = "baudrate"
 CONF_PLUGIN      = "plugin"
 CONF_READ_BATTERY = "read_battery"
+CONF_CORE_HUB = "read_core_hub"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
@@ -203,7 +218,6 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
-    prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -366,6 +380,6 @@ for h in range(0,24):
         if (h, m,) == (0,  0,): # add extra entry 00:01
             TIME_OPTIONS[1*256+h] = f"{h:02}:{m+1:02}"
             TIME_OPTIONS_GEN4[h*256+1] = f"{h:02}:{m+1:02}"
-        if (h, m,) == (23, 55,): # add extra entry 23:59
-            TIME_OPTIONS[(m+4)*256+h] = f"{h:02}:{m+4:02}"
-            TIME_OPTIONS_GEN4[h*256+m+4] = f"{h:02}:{m+4:02}"
+        if (h, m,) == (23, 45,): # add extra entry 23:59
+            TIME_OPTIONS[(m+14)*256+h] = f"{h:02}:{m+14:02}"
+            TIME_OPTIONS_GEN4[h*256+m+14] = f"{h:02}:{m+14:02}"
