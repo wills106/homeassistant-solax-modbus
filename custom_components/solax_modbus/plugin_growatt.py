@@ -3875,12 +3875,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "inverter_state",
         value_function = value_function_inverter_state,
         allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Run Mode",
         key = "run_mode",
         value_function = value_function_run_mode,
         allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
