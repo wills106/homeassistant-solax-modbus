@@ -109,7 +109,6 @@ WRITE_SINGLE_MODBUS       = 1 # use write_single_modbus command
 WRITE_MULTISINGLE_MODBUS  = 2 # use write_mutiple modbus command for single register
 WRITE_DATA_LOCAL          = 3 # write only to local data storage (not persistent)
 WRITE_MULTI_MODBUS        = 4 # use write_multiple modbus command
-WRITE_MULTISINGLE_MODBUS_UNSIGNED  = 5 # use write_mutiple modbus command for single register (UNSIGNED 16-bit INT)  
 
 
 _LOGGER = logging.getLogger(__name__)
