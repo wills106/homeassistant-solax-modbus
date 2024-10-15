@@ -30,6 +30,12 @@
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
         }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+            "read_core_hub": "The core modbus hub used to connect to the inverter"
+        }
       }
     },
     "error": {
@@ -71,6 +77,12 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter"
+        }
+      },
+      "core": {
+        "title": "Core modbus hub selection",
+        "data": {
+            "read_core_hub": "The core modbus hub used to connect to the inverter"
         }
       }
     },

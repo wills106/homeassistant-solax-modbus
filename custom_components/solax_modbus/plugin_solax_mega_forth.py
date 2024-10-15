@@ -956,6 +956,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes = MAX | GEN2 | MPPT12,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
+#####
+#
+# Holding Registers
+#
+#####
     SolaXModbusSensorEntityDescription(
         key = "active_power_control",
         register = 0x2304,

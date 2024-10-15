@@ -119,6 +119,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     pv             = datadict.get('pv_power_total', 0)
     houseload_nett = datadict.get('inverter_power', 0) - meas
     houseload_brut = pv - datadict.get('battery_power_charge', 0) - meas
+    # Current SoC for capacity related calculations like Battery Hold/No Discharge
+    battery_capacity = datadict.get('battery_capacity', 0)
+
     if   power_control == "Enabled Power Control":
         ap_target = target
     elif power_control == "Enabled Grid Control": # alternative computation for Power Control
@@ -136,9 +139,14 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         else:                    ap_target = 0 - houseload_nett
         power_control = "Enabled Power Control"
     elif power_control == "Enabled No Discharge": # alternative computation for Power Control
-        if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
-        else:                    ap_target = 0 - houseload_nett
-        power_control = "Enabled Power Control"
+        # Only hold battery level at below 98% SoC to avoid PV from shutting down when full
+        if battery_capacity < 98:
+            if pv <= houseload_nett: ap_target = 0 - pv + (houseload_brut - houseload_nett) # 0 - pv + (houseload_brut - houseload_nett)
+            else:                    ap_target = 0 - houseload_nett
+            power_control = "Enabled Power Control"
+        else:
+            ap_target = 0
+            power_control == "Disabled"
     elif power_control == "Disabled":
         ap_target = target
         autorepeat_duration = 10 # or zero - stop autorepeat since it makes no sense when disabled
@@ -1079,6 +1087,30 @@ NUMBER_TYPES = [
         device_class = NumberDeviceClass.POWER,
         allowedtypes = MIC | GEN2 | X3,
     ),
+    SolaxModbusNumberEntityDescription(
+        name = "Export Power Limit",
+        key = "export_power_limit",
+        register = 0x65C,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 30000,
+        native_step = 100,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = NumberDeviceClass.POWER,
+        allowedtypes = MIC | GEN2 | X3,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name = "Active Power Limit",
+        key = "active_power_limit",
+        register = 0x669,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 30000,
+        native_step = 100,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = NumberDeviceClass.POWER,
+        allowedtypes = MIC | GEN4,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -1299,6 +1331,17 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         entity_registry_enabled_default = False,
         icon = "mdi:cloud",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "Discharge Cut Off Point Different",
+        key = "discharge_cut_off_point_different",
+        register = 0xA6,
+        option_dict =  {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = AC | HYBRID | GEN3 | GEN4 | GEN5,
+        icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
         name = "Meter 1 Direction",
@@ -2035,6 +2078,42 @@ SELECT_TYPES = [
 #
 #####
     SolaxModbusSelectEntityDescription(
+        name = "Lock State",
+        key = "lock_state",
+        register = 0x600,
+        option_dict =  {
+                0: "Locked",
+                2014: "Unlocked",
+                6868: "Unlocked - Advanced",
+            },
+        allowedtypes = MIC | GEN2 | GEN4,
+        icon = "mdi:lock-question",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "MPPT Scan Mode PV1",
+        key = "mppt_scan_mode_pv1",
+        register = 0x601,
+        option_dict =  {
+                0: "Off",
+                1: "Low",
+                2: "Middle",
+                3: "High",
+            },
+        allowedtypes = MIC | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    #SolaxModbusSelectEntityDescription(
+    #    name = "MPPT",
+    #    key = "mppt",
+    #    register = 0x602,
+    #    option_dict =  {
+    #            0: "Enabled",
+    #            1: "Disabled",
+    #        },
+    #    allowedtypes = HYBRID | GEN4,
+    #    icon = "mdi:dip-switch",
+    #),
+    SolaxModbusSelectEntityDescription(
         name = "Q Curve",
         key = "q-curve",
         register = 0x62F,
@@ -2061,20 +2140,34 @@ SELECT_TYPES = [
                 4: "Q(u)",
                 5: "FixQPower",
             },
-        allowedtypes = MIC | GEN2,
+        allowedtypes = MIC | GEN2 | X3,
         icon = "mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name = "Lock State",
-        key = "lock_state",
-        register = 0x600,
+        name = "MPPT Scan Mode PV2",
+        key = "mppt_scan_mode_pv2",
+        register = 0x6A6,
         option_dict =  {
-                0: "Locked",
-                2014: "Unlocked",
-                6868: "Unlocked - Advanced",
+                0: "Off",
+                1: "Low",
+                2: "Middle",
+                3: "High",
             },
-        allowedtypes = MIC,
-        icon = "mdi:lock-question",
+        allowedtypes = MIC | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name = "MPPT Scan Mode PV3",
+        key = "mppt_scan_mode_pv3",
+        register = 0x6A7,
+        option_dict =  {
+                0: "Off",
+                1: "Low",
+                2: "Middle",
+                3: "High",
+            },
+        allowedtypes = MIC | GEN4 |MPPT3,
+        icon = "mdi:dip-switch",
     ),
 ]
 
@@ -2980,14 +3073,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Discharge Cut Off Point Different",
         key = "discharge_cut_off_point_different",
         register = 0x111,
         scale = { 0: "Disabled",
                   1: "Enabled", },
-        entity_registry_enabled_default = False,
         allowedtypes = AC | HYBRID | GEN3 | GEN4 | GEN5,
-        icon = "mdi:dip-switch",
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "battery_minimum_capacity_gridtied",
@@ -6007,26 +6098,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon = "mdi:clock",
     ),
     SolaXModbusSensorEntityDescription(
-        key = "q-curve",
-        register = 0x347,
-        scale = { 0: "Off",
-                  1: "Over Excited",
-                  2: "Under Excited",
-                  3: "PF(p)",
-                  4: "Q(u)",
-                  5: "FixQPower", },
-        allowedtypes = MIC | GEN2,
-        internal = True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name = "Active Power Limit",
-        key = "active_power_limit",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
-        register = 0x351,
-        allowedtypes = MIC | GEN2 | X3,
-    ),
-    SolaXModbusSensorEntityDescription(
         key = "firmware_dsp",
         register = 0x33D,
         allowedtypes = MIC | GEN,
@@ -6038,6 +6109,24 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register = 0x33E,
         allowedtypes = MIC | GEN,
         blacklist=('MU802T',),
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "q-curve",
+        register = 0x347,
+        scale = { 0: "Off",
+                  1: "Over Excited",
+                  2: "Under Excited",
+                  3: "PF(p)",
+                  4: "Q(u)",
+                  5: "FixQPower", },
+        allowedtypes = MIC | GEN2 | X3,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "active_power_limit",
+        register = 0x351,
+        allowedtypes = MIC | GEN2 | X3,
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6054,11 +6143,28 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key = "lock_state",
+        register = 0x367,
+        scale = { 0: "Locked",
+                  1: "Unlocked",
+                  2: "Unlocked - Advanced", },
+        allowedtypes = MIC | GEN2 | X3,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Export Power Limit",
+        key = "export_power_limit",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        register = 0x371,
+        allowedtypes = MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "lock_state",
         register = 0x39A,
         scale = { 0: "Locked",
                   1: "Unlocked",
                   2: "Unlocked - Advanced", },
-        allowedtypes = MIC,
+        allowedtypes = MIC | GEN2 | GEN4 | X1,
         internal = True,
     ),
 #####
@@ -6625,6 +6731,16 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 #
 #####
     SolaXModbusSensorEntityDescription(
+        key = "mppt_scan_mode_pv1",
+        register = 0x320,
+        scale = { 0: "Off",
+                  1: "Low",
+                  2: "Middle",
+                  3: "High", },
+        allowedtypes = MIC | GEN4,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
         key = "q-curve",
         register = 0x35C,
         scale = { 0: "Off",
@@ -6637,12 +6753,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
-        name = "Active Power Limit",
         key = "active_power_limit",
-        native_unit_of_measurement = UnitOfPower.WATT,
-        device_class = SensorDeviceClass.POWER,
         register = 0x381,
         allowedtypes = MIC | GEN4,
+        internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_arm",
@@ -6654,6 +6768,26 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "firmware_dsp",
         register = 0x394,
         allowedtypes = MIC | GEN4,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "mppt_scan_mode_pv2",
+        register = 0x3A6,
+        scale = { 0: "Off",
+                  1: "Low",
+                  2: "Middle",
+                  3: "High", },
+        allowedtypes = MIC | GEN4,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key = "mppt_scan_mode_pv3",
+        register = 0x3A7,
+        scale = { 0: "Off",
+                  1: "Low",
+                  2: "Middle",
+                  3: "High", },
+        allowedtypes = MIC | GEN4 | MPPT3,
         internal = True,
     ),
 #####
@@ -7513,6 +7647,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('XMA'):
             invertertype = MIC | GEN2 | X1 # X1-Mini G3
             self.inverter_model = "X1-Mini"
+        elif seriesnumber.startswith('ZA4'):
+            invertertype = MIC | GEN4 | X1 # X1-Boost G4
+            self.inverter_model = "X1-Boost"
         elif seriesnumber.startswith('XST'):
             invertertype = MIC | GEN4 | X1 | MPPT3 # X1-SMART-G2
             self.inverter_model = "X1-SMART-G2"
@@ -7531,16 +7668,33 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('MU502T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC602T'):
+            invertertype = MIC | GEN | X3 # MIC X3 6kW
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU602T'):
+            invertertype = MIC | GEN | X3 # MIC X3 6kW
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC702T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MU702T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC802T'):
+            invertertype = MIC | GEN | X3 # MIC X3 8kW
         elif seriesnumber.startswith('MU802T'):
             invertertype = MIC | GEN | X3 # MIC X3
+        elif seriesnumber.startswith('MC803T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MU803T'):
             invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MC806T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU806T'):
+            invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC106T'):
             invertertype = MIC | GEN2 | X3 # MIC X3
@@ -7565,12 +7719,6 @@ class solax_plugin(plugin_base):
             invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC215T'):
-            invertertype = MIC | GEN2 | X3 # MIC X3
-            self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith('MU602T'):
-            invertertype = MIC | GEN2 | X3 # MIC X3
-            self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith('MU806T'):
             invertertype = MIC | GEN2 | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MP156T'):
