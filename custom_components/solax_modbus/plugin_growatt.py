@@ -163,6 +163,16 @@ def value_function_time_slot_1(initval, descr, datadict):
             (REGISTER_U16, time_3_end),
         ]
 
+def value_function_time_slot_clear(initval, descr, datadict):
+    return [
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+    ]
+
 def value_function_growatt_gen4time(initval, descr, datadict):
     hours = initval // 256  # Integer division to get the hours (higher 8 bits)
     minutes = initval % 256  # Modulo to get the minutes (lower 8 bits)
@@ -279,6 +289,15 @@ BUTTON_TYPES = [
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:battery-clock",
         value_function = value_function_time_slot_1,
+    ),
+    GrowattModbusButtonEntityDescription(
+        name = "Clear Time Slots",
+        key = "time_slot_clear",
+        register = 3038,
+        allowedtypes = HYBRID | GEN4,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:battery-clock",
+        value_function = value_function_time_slot_clear,
     ),
 ]
 
