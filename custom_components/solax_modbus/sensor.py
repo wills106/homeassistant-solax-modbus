@@ -39,7 +39,7 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
     curblockregs = []
     for reg in descriptions:
         descr = descriptions[reg]
-        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
+        if (descr.newblock or (not type(descr) is dict)) and ((reg - start) > block_size):
             if ((end - start) > 0):
                 _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
                 if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
