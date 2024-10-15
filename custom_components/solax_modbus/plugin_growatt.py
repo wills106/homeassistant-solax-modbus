@@ -1052,14 +1052,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "active_power_limit",
         register = 3,
         allowedtypes = ALL_GEN_GROUP,
-        internal = 
+        internal = True,
     ),
     GrowattModbusSensorEntityDescription(
         key = "reactive_power_limit",
         register = 4,
         unit = REGISTER_S16,
         allowedtypes = ALL_GEN_GROUP,
-        internal = 
+        internal = True,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Firmware Version",
