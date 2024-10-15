@@ -1,10 +1,9 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, TMPDATA_EXPIRY
+from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
-from time import time
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,23 +73,6 @@ class SolaXModbusSelect(SelectEntity):
 
     @property
     def current_option(self) -> str:
-        descr = self.entity_description
-        # Check if prevent_update is enabled
-        if descr.prevent_update:
-            # Check if temporary data hasn't expired
-            if self._hub.tmpdata_expiry.get(descr.key, 0) > time():
-                _LOGGER.debug(f"DEBUG SELECT: Prevent update: {self.entity_description.key} : {self._hub.data.get(self.entity_description.key,'None')}")
-                # Retrieve option from temporary data
-                option = self._hub.tmpdata.get(descr.key, None)    
-                _LOGGER.debug(f"DEBUG SELECT: Prevent update: {self.entity_description.key} : {option}")
-                if option is None:
-                    _LOGGER.warning(f"cannot find tmpdata for {descr.key}")
-                return option
-            else:  # If the temporary data has expired
-                if self._hub.tmpdata_expiry.get(descr.key, 0) > 0:
-                    self._hub.localsUpdated = True  # Mark for local update once
-                self._hub.tmpdata_expiry[descr.key] = 0  # Expired, reset expiry
-                
         if self._key in self._hub.data:
             return self._hub.data[self._key]
         else:
@@ -121,9 +103,6 @@ class SolaXModbusSelect(SelectEntity):
             await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
-            if self.entity_description.prevent_update: 
-                self._hub.tmpdata[self.entity_description.key] = option
-                self._hub.tmpdata_expiry[self.entity_description.key] = time() + TMPDATA_EXPIRY
             self._hub.localsUpdated = True # mark to save permanently
         self._hub.data[self._key] = option
         self.async_write_ha_state()
