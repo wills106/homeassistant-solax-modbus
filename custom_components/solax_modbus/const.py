@@ -19,6 +19,7 @@ import pathlib
 
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfReactivePower,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -29,21 +30,6 @@ from homeassistant.const import (
     UnitOfTime,
     CONF_SCAN_INTERVAL,
 )
-
-try:
-    from homeassistant.const import (
-        UnitOfReactivePower,
-    ) ## some changes maybe revert on update of hass
-except ImportError:
-    # NOTE:fallback for older homeassistant installation
-    #      likely to be removed in future version
-
-    from enum import StrEnum
-    from homeassistant.const import (
-        POWER_VOLT_AMPERE_REACTIVE
-    )
-    class UnitOfReactivePower(StrEnum):
-        VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
 
 
 # ================================= Definitions for config_flow ==========================================================
@@ -69,7 +55,6 @@ CONF_SolaX_HUB   = "solax_hub"
 CONF_BAUDRATE    = "baudrate"
 CONF_PLUGIN      = "plugin"
 CONF_READ_BATTERY = "read_battery"
-CONF_CORE_HUB = "read_core_hub"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
