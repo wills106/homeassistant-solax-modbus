@@ -876,7 +876,7 @@ SELECT_TYPES = [
 
     GrowattModbusSelectEntityDescription(
         name = "Charger Switch",
-        key = "",
+        key = "charger_switch",
         register = 3049,
         option_dict = {
                 0: "Disabled",
