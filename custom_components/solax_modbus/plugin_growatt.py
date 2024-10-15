@@ -3840,24 +3840,25 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # TL-X TL-XH
 #
 #####
-#    GrowattModbusSensorEntityDescription(
-#        name = "Inverter State",
-#        key = "inverter_state",
-#        register = 3000,
-#        register_type = REG_INPUT,
-#        unit = REGISTER_U8H, #currently not working in the integration
-#        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
-#        allowedtypes = GEN4,
-#    ),
-#    GrowattModbusSensorEntityDescription(
-#        name = "Run Mode",
-#        key = "run_mode",
-#        register = 3000,
-#        register_type = REG_INPUT,
-#        unit = REGISTER_U8L, #currently not working in the integration
-#        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
-#        allowedtypes = GEN4,
-#    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter State",
+        key = "inverter_state",
+        newblock = true,
+        register = 3000,
+        register_type = REG_INPUT,
+        unit = REGISTER_U8H, #currently not working in the integration
+        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
+        allowedtypes = GEN4,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Run Mode",
+        key = "run_mode",
+        register = 3000,
+        register_type = REG_INPUT,
+        unit = REGISTER_U8L, #currently not working in the integration
+        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
+        allowedtypes = GEN4,
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Total PV Power",
         key = "total_pv_power",
