@@ -1029,14 +1029,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "active_power_limit",
         register = 3,
         allowedtypes = ALL_GEN_GROUP,
-        internal = True,
+        internal = 
     ),
     GrowattModbusSensorEntityDescription(
         key = "reactive_power_limit",
         register = 4,
         unit = REGISTER_S16,
         allowedtypes = ALL_GEN_GROUP,
-        internal = True,
+        internal = 
     ),
     GrowattModbusSensorEntityDescription(
         name = "Firmware Version",
@@ -3843,7 +3843,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Inverter State",
         key = "inverter_state",
-        newblock = true,
+        newblock = True,
         register = 3000,
         register_type = REG_INPUT,
         unit = REGISTER_U8H, #currently not working in the integration
