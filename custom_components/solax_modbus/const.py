@@ -1,4 +1,3 @@
-
 import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -16,9 +15,9 @@ from pymodbus.payload import Endian
 from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
-
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfReactivePower,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -29,25 +28,7 @@ from homeassistant.const import (
     UnitOfTime,
     CONF_SCAN_INTERVAL,
 )
-
-try:
-    from homeassistant.const import (
-        UnitOfReactivePower,
-    ) ## some changes maybe revert on update of hass
-except ImportError:
-    # NOTE:fallback for older homeassistant installation
-    #      likely to be removed in future version
-
-    from enum import StrEnum
-    from homeassistant.const import (
-        POWER_VOLT_AMPERE_REACTIVE
-    )
-    class UnitOfReactivePower(StrEnum):
-        VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
-
-
 # ================================= Definitions for config_flow ==========================================================
-
 DOMAIN = "solax_modbus"
 INVERTER_IDENT = "inverter"
 DEFAULT_NAME = "SolaX"
@@ -69,7 +50,6 @@ CONF_SolaX_HUB   = "solax_hub"
 CONF_BAUDRATE    = "baudrate"
 CONF_PLUGIN      = "plugin"
 CONF_READ_BATTERY = "read_battery"
-CONF_CORE_HUB = "read_core_hub"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE  = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
@@ -91,9 +71,7 @@ CONF_SCAN_INTERVAL_FAST   = "scan_interval_fast"
 SCAN_GROUP_DEFAULT = CONF_SCAN_INTERVAL             # default scan group, slow; should always work
 SCAN_GROUP_MEDIUM  = CONF_SCAN_INTERVAL_MEDIUM      # medium speed scanning (energy, temp, soc...)
 SCAN_GROUP_FAST    = CONF_SCAN_INTERVAL_FAST        # fast scanning (power,...)
-
 # ================================= Definitions for Sensor Declarations =================================================
-
 REG_HOLDING = 1  # modbus holding register
 REG_INPUT   = 2  # modbus input register
 REGISTER_U16 = "_uint16"
@@ -109,14 +87,8 @@ WRITE_SINGLE_MODBUS       = 1 # use write_single_modbus command
 WRITE_MULTISINGLE_MODBUS  = 2 # use write_mutiple modbus command for single register
 WRITE_DATA_LOCAL          = 3 # write only to local data storage (not persistent)
 WRITE_MULTI_MODBUS        = 4 # use write_multiple modbus command
-
-
 _LOGGER = logging.getLogger(__name__)
-
-
-
 # ==================================== plugin base class ====================================================================
-
 @dataclass
 class base_battery_config:
     def __init__(
@@ -125,7 +97,6 @@ class base_battery_config:
         self.battery_sensor_type: list[SelectEntityDescription] | None = None
         self.battery_sensor_name_prefix: str | None = None
         self.battery_sensor_key_prefix: str | None = None
-
 @dataclass
 class plugin_base:
     plugin_name: str
@@ -140,36 +111,25 @@ class plugin_base:
     order16: int | None = None # Endian.BIG or Endian.LITTLE
     order32: int | None = None
     inverter_model: str = None
-
     def isAwake(self, datadict):
         return True # always awake by default
-
     def wakeupButton(self):
         return None # no wakeup button
-
     async def async_determineInverterType(self, hub, configdict):
         return 0
-
     async def async_determineInverterData(self, hub, configdict):
         return False
-
     def matchInverterWithMask (self, inverterspec, entitymask, serialnumber = 'not relevant', blacklist = None):
         return False
-
     def localDataCallback(self, hub): # called when local data is updated or on startup
         return True
-
     def getModel(self, new_data):
         return None
-
     def getSoftwareVersion(self, new_data):
         return None
-
     def getHardwareVersion(self, new_data):
         return None
-
 # =================================== base class for sensor entity descriptions =========================================
-
 @dataclass
 class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """ base class for modbus sensor declarations """
@@ -197,7 +157,6 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
                                    # When simply set to True, no initial value will be returned, but the block will be considered valid
     value_series: int = None # if not None, the value is part of a series of values with similar properties
                              # The name and key must contain a placeholder {} that is replaced by the preceding number
-
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
@@ -207,7 +166,6 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     value_function: callable = None #  value = function(initval, descr, datadict)
     autorepeat: str = None  # if not None: name of entity that contains autorepeat duration in seconds
-
 @dataclass
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
@@ -221,6 +179,23 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
+
+    
+          
+            
+    
+
+          
+          Expand Down
+          
+            
+    
+
+          
+          Expand Up
+    
+    @@ -365,6 +366,6 @@ def value_function_2byte_timestamp(initval, descr, datadict):
+  
     allowedtypes: int = 0 # overload with ALLDEFAULT from plugin
     register: int = None
     read_scale_exceptions: list = None
@@ -235,57 +210,43 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     initvalue: int = None # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
     prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
-
-
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
-
 def autorepeat_set(datadict, entitykey, value):
     datadict['_repeatUntil'][entitykey] = value
-
 def autorepeat_stop(datadict, entitykey):
     datadict['_repeatUntil'][entitykey] = 0
-
 def autorepeat_remaining(datadict, entitykey, timestamp):
     remaining = datadict['_repeatUntil'].get(entitykey,0) - timestamp
     return int(remaining) if remaining >0 else 0
-
 # ================================= Computed sensor value functions  =================================================
-
 def value_function_pv_power_total(initval, descr, datadict):
     return  datadict.get('pv_power_1', 0) + datadict.get('pv_power_2',0) + datadict.get('pv_power_3',0)
-
 def value_function_battery_output(initval, descr, datadict):
     val = datadict.get('battery_power_charge', 0)
     if val<0: return abs(val)
     else: return 0
-
 def value_function_battery_input(initval, descr, datadict):
     val = datadict.get('battery_power_charge', 0)
     if val>0: return val
     else: return 0
-
 def value_function_battery_output_solis(initval, descr, datadict):
     inout = datadict.get('battery_charge_direction', 0)
     val = datadict.get('battery_power', 0)
     if inout == 1: return abs(val)
     else: return 0
-
 def value_function_battery_input_solis(initval, descr, datadict):
     inout = datadict.get('battery_charge_direction', 0)
     val = datadict.get('battery_power', 0)
     if inout == 0: return val
     else: return 0
-
 def value_function_grid_import(initval, descr, datadict):
     val = datadict.get('measured_power', 0)
     if val<0: return abs(val)
     else: return 0
-
 def value_function_grid_export(initval, descr, datadict):
     val = datadict.get('measured_power', 0)
     if val>0: return val
     else: return 0
-
 def value_function_sync_rtc(initval, descr, datadict):
     now = datetime.now()
     return [ (REGISTER_U16, now.second, ),
@@ -295,14 +256,12 @@ def value_function_sync_rtc(initval, descr, datadict):
              (REGISTER_U16, now.month, ),
              (REGISTER_U16, now.year % 100, ),
            ]
-
 def value_function_sync_rtc_ymd(initval, descr, datadict):
     offset = datadict.get('sync_rtc_offset', 0)
     if isinstance(offset, float) or isinstance(offset, int):
         now = datetime.now() + timedelta(seconds=offset)
     else:
         now = datetime.now()
-
     return [ (REGISTER_U16, now.year % 100, ),
              (REGISTER_U16, now.month, ),
              (REGISTER_U16, now.day, ),
@@ -310,40 +269,33 @@ def value_function_sync_rtc_ymd(initval, descr, datadict):
              (REGISTER_U16, now.minute, ),
              (REGISTER_U16, now.second, ),
            ]
-
 def value_function_rtc(initval, descr, datadict):
     try:
         (rtc_seconds, rtc_minutes, rtc_hours, rtc_days, rtc_months, rtc_years, ) = initval
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, '%d/%m/%y %H:%M:%S') # ok since sensor.py has been adapted
     except: pass
-
 def value_function_rtc_ymd(initval, descr, datadict):
     try:
         (rtc_years, rtc_months, rtc_days, rtc_hours, rtc_minutes, rtc_seconds, ) = initval
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, '%d/%m/%y %H:%M:%S') # ok since sensor.py has been adapted
     except: pass
-
 def value_function_gen4time(initval, descr, datadict):
     h = initval % 256
     m = initval >> 8
     return f"{h:02d}:{m:02d}"
-
 def value_function_gen23time(initval, descr, datadict):
     (h,m,) = initval
     return f"{h:02d}:{m:02d}"
-
 def value_function_sofartime(initval, descr, datadict):
     m = initval % 256
     h = initval >> 8
     return f"{h:02d}:{m:02d}"
-
 def value_function_firmware(initval, descr, datadict):
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
-
 def value_function_2byte_timestamp(initval, descr, datadict):
     # Real-time data timestamp
     # Bit0-5: second, range 0-59
@@ -368,9 +320,7 @@ def value_function_2byte_timestamp(initval, descr, datadict):
         return datetime.strptime(val, '%d/%m/%y %H:%M:%S')
     except:   # noqa: E722
         pass
-
 # ================================= Computed Time Values =================================================
-
 TIME_OPTIONS = { }
 TIME_OPTIONS_GEN4 = { }
 for h in range(0,24):
