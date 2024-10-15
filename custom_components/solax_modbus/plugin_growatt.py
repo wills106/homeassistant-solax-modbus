@@ -113,6 +113,29 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_inverter_state(initval, descr, datadict):
+    inverter_state = datadict.get('register_3000', 0)
+    inverter_state = inverter_state >> 8 # Remove the lower 8 bits by right-shifting by 8 bits
+    status_dict = {
+        0: "Waiting",
+        3: "Fault",
+        4: "Flash",
+        5: "PV Bat Online",
+        6: "Bat Online"
+    }
+    return status_dict.get(inverter_state)
+    
+def value_function_run_mode(initval, descr, datadict):
+    run_mode = datadict.get('register_3000', 0)
+    run_mode = run_mode & 0xFF # Mask out the upper 8 bits, keeping only the lower 8 bits
+    run_mode_dict = {
+        0: "Standby",
+        1: "Normal",
+        3: "Fault",
+        4: "Flash"
+    }
+    return run_mode_dict.get(run_mode)
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -3841,22 +3864,22 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 #
 #####
     GrowattModbusSensorEntityDescription(
-        name = "Inverter State",
-        key = "inverter_state",
-        newblock = True,
+        key = "register_3000",
         register = 3000,
         register_type = REG_INPUT,
-        unit = REGISTER_U8H, #currently not working in the integration
-        scale = { 0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", },
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter State",
+        key = "inverter_state",
+        value_function = value_function_inverter_state,
         allowedtypes = GEN4,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Run Mode",
         key = "run_mode",
-        register = 3000,
-        register_type = REG_INPUT,
-        unit = REGISTER_U8L, #currently not working in the integration
-        scale = { 0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash", },
+        value_function = value_function_run_mode,
         allowedtypes = GEN4,
     ),
     GrowattModbusSensorEntityDescription(
