@@ -113,6 +113,14 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_battery_voltage(initval, descr, datadict):
+	bms = datadict.get('bms_monitoring_version', 0)
+	if bms == "ZECA":  #Battery system APX HV (ZECA) uses 0.1 scaling factor for battery voltage 
+		initval = initval / 10
+	else:
+		initval = initval / 100
+	return initval
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -4537,6 +4545,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
+        key = "bms_monitoring_version",
+        register = 3096, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount=2,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
         key = "today_s_battery_output_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
@@ -4773,7 +4789,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.VOLTAGE,
         register = 3169,
         register_type = REG_INPUT,
-        scale = 0.1, #doc says 0.01, but datasheet of APX HV system module for MOD / MID TL-XH (BP) inverters have operating voltage range 600-980V.
+        scale = value_function_battery_voltage, #due to different scaling factor depending on battery system, default scale 0.01
         rounding = 2,
         allowedtypes = GEN4 | HYBRID,
     ),
