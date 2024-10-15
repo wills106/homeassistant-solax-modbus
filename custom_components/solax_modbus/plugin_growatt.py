@@ -1061,13 +1061,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_STR,
         wordcount=2,
         allowedtypes = ALL_GEN_GROUP,
-		internal = true,
+	internal = True,
     ),
 	GrowattModbusSensorEntityDescription(
         key = "firmware_control_version_number",
         register = 14,
         allowedtypes = ALL_GEN_GROUP,
-        internal = true,
+        internal = True,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Firmware Control Version",
