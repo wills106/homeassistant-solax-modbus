@@ -5159,7 +5159,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "Time 1 Enabled (read)",
+        name = "Time 1 Active (read)",
         key = "time_1_enabled_read",
         value_function = value_function_time_slot_1_reverse_enabled,
         allowedtypes = GEN4 | HYBRID,
@@ -5190,7 +5190,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "Time 2 Enabled (read)",
+        name = "Time 2 Active (read)",
         key = "time_2_enabled_read",
         value_function = value_function_time_slot_2_reverse_enabled,
         allowedtypes = GEN4 | HYBRID,
@@ -5223,7 +5223,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "Time 3 Enabled (read)",
+        name = "Time 3 Active (read)",
         key = "time_3_enabled_read",
         value_function = value_function_time_slot_3_reverse_enabled,
         allowedtypes = GEN4 | HYBRID,
