@@ -113,6 +113,12 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_firmware_control_version(initval, descr, datadict):
+		fw_ascii = datadict.get('firmware_control_version_ascii', 0)
+		fw_ver = datadict.get('firmware_control_version_number', 0)
+		fw_ver = f'{fw_ver:04}' # Convert to a 4-digit decimal number
+		return f'{fw_ascii}-{fw_ver}'
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -1050,11 +1056,23 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Control Version",
-        key = "firmware_control_version",
+        key = "firmware_control_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount=2,
+        allowedtypes = ALL_GEN_GROUP,
+	internal = True,
+    ),
+	GrowattModbusSensorEntityDescription(
+        key = "firmware_control_version_number",
+        register = 14,
+        allowedtypes = ALL_GEN_GROUP,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Firmware Control Version",
+        key = "firmware_control_version",
+        value_function = value_function_firmware_control_version,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -1093,7 +1111,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 23,
         unit = REGISTER_STR,
         wordcount=5,
-        allowedtypes = ALL_GEN_GROUP,
+        allowedtypes = GEN | GEN2 | GEN3 | SPF,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -1675,17 +1693,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:dip-switch",
     ),
 
-    #GrowattModbusSensorEntityDescription(
-    #    name = "Serial Number",
-    #    key = "serialnumber",
-    #    register = 3001,
-    #    unit = REGISTER_STR,
-    #    wordcount=5,
-    #    entity_registry_enabled_default = False,
-    #    allowedtypes = GEN4,
-    #    entity_category = EntityCategory.DIAGNOSTIC,
-    #    icon = "mdi:information",
-    #),
+    GrowattModbusSensorEntityDescription(
+        name = "Serial Number",
+        key = "serialnumber",
+        register = 3001,
+        unit = REGISTER_STR,
+        wordcount=5,
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
     GrowattModbusSensorEntityDescription( # to refresh number entity
         name = "EMS Discharging Rate",
         key = "ems_discharging_rate",
