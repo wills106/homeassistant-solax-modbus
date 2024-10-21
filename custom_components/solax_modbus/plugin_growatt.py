@@ -253,6 +253,8 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_total_grid_power(initval, descr, datadict):
+    return  datadict.get('grid_power_l1', 0) + datadict.get('grid_power_l2', 0) + datadict.get('grid_power_l3', 0)
 
 def value_function_firmware_control_version(initval, descr, datadict):
 		fw_ascii = datadict.get('firmware_control_version_ascii', 0)
@@ -282,7 +284,6 @@ def value_function_run_mode(initval, descr, datadict):
         4: "Flash"
     }
     return run_mode_dict.get(run_mode)
-
 
 # ================================= Button Declarations ============================================================
 
@@ -4348,12 +4349,23 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3023,
+        register = 3023, #is output power
         register_type = REG_INPUT,
-        unit = REGISTER_U32,
+        unit = REGISTER_S32,
         scale = 0.1,
         rounding = 1,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4 | X1,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Grid Power Total",
+        key = "total_grid_power_va",
+        native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE,
+        device_class = SensorDeviceClass.APPARENT_POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        value_function = value_function_total_grid_power,
+        rounding = 1,
+        allowedtypes = GEN4 | X3,
     ),
     GrowattModbusSensorEntityDescription(
         name = "Total Grid Power",
@@ -4361,9 +4373,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3023,
+        register = 3023, #is output power
         register_type = REG_INPUT,
-        unit = REGISTER_U32,
+        unit = REGISTER_S32,
+        scale = 0.1,
+        rounding = 1,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4 | X3,
     ),
     GrowattModbusSensorEntityDescription(
