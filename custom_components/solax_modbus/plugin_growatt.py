@@ -293,6 +293,10 @@ def value_function_run_mode(initval, descr, datadict):
     }
     return run_mode_dict.get(run_mode)
 
+def value_function_inverter_module(initval, descr, datadict):
+    hexStr = "{:08x}".format(initval)
+    return (''.join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr))).upper()
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
@@ -1449,17 +1453,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
-    #GrowattModbusSensorEntityDescription(
-    #    name = "Inverter Module",
-    #    key = "inverter_module",
-    #    register = 28,
-    #    unit = REGISTER_STR,
-    #    wordcount=2,
-    #    allowedtypes = GEN,
-    #    entity_registry_enabled_default = False,
-    #    entity_category = EntityCategory.DIAGNOSTIC,
-    #    icon = "mdi:information",
-    #),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Module",
+        key = "inverter_module",
+        register = 28,
+        unit = REGISTER_U32,
+        allowedtypes = GEN | GEN3,
+        scale = value_function_inverter_module,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
     GrowattModbusSensorEntityDescription(
         name = "RTC",
         key = "rtc",
