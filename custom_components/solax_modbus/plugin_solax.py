@@ -6094,6 +6094,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = value_function_rtc,
         entity_registry_enabled_default = False,
         allowedtypes = MIC,
+        blacklist=('MC210T',),
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:clock",
     ),
@@ -6121,24 +6122,28 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   4: "Q(u)",
                   5: "FixQPower", },
         allowedtypes = MIC | GEN2 | X3,
+        blacklist=('MC210T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "active_power_limit",
         register = 0x351,
         allowedtypes = MIC | GEN2 | X3,
+        blacklist=('MC210T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_dsp",
         register = 0x352,
         allowedtypes = MIC | GEN2,
+        blacklist=('MC210T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_arm",
         register = 0x353,
         allowedtypes = MIC | GEN2,
+        blacklist=('MC210T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6148,6 +6153,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
                   1: "Unlocked",
                   2: "Unlocked - Advanced", },
         allowedtypes = MIC | GEN2 | X3,
+        blacklist=('MC210T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6157,6 +6163,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         register = 0x371,
         allowedtypes = MIC | GEN2 | X3,
+        blacklist=('MC210T',),
     ),
     SolaXModbusSensorEntityDescription(
         key = "lock_state",
