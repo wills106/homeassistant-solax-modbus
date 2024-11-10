@@ -557,6 +557,28 @@ SELECT_TYPES = [
     #
     ###
     GrowattModbusSelectEntityDescription(
+        name = "Inverter Switch",
+        key = "inverter_switch",
+        register = 0,
+        option_dict = {
+                0: "Inverter Off",
+                1: "Inverter On", },
+        allowedtypes = GEN | SPF,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Inverter Switch",
+        key = "inverter_switch",
+        register = 0,
+        option_dict = {
+                0: "Inverter Off",
+                1: "Inverter On",
+                2: "BDC Off",
+                3: "BDC On", },
+        allowedtypes = GEN2 | GEN3 | GEN4,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
         name = "Select baud rate",
         key = "select_baud_rate",
         register = 22,
@@ -1370,6 +1392,24 @@ SELECT_TYPES = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
+    GrowattModbusSensorEntityDescription(
+        key = "inverter_switch",
+        register = 0,
+        scale = { 0: "Inverter Off",
+                  1: "Inverter On", },
+        allowedtypes = GEN | SPF,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "inverter_switch",
+        register = 0,
+        scale = { 0: "Inverter Off",
+                  1: "Inverter On",
+                  2: "BDC Off",
+                  3: "BDC On", },
+        allowedtypes = GEN2 | GEN3 | GEN4,
+        internal = True,
+    ),
     GrowattModbusSensorEntityDescription(
         key = "active_power_limit",
         register = 3,

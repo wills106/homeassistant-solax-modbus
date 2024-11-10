@@ -6101,14 +6101,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "firmware_dsp",
         register = 0x33D,
         allowedtypes = MIC | GEN,
-        blacklist=('MU802T',),
+        blacklist=('MC502T', 'MU802T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
         key = "firmware_arm",
         register = 0x33E,
         allowedtypes = MIC | GEN,
-        blacklist=('MU802T',),
+        blacklist=('MC502T', 'MU802T',),
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7688,6 +7688,9 @@ class solax_plugin(plugin_base):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MU803T'):
+            invertertype = MIC | GEN | X3 # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith('MU902T'):
             invertertype = MIC | GEN | X3 # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith('MC806T'):
