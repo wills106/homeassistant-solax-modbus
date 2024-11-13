@@ -7506,6 +7506,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith('XAC'):
             invertertype = AC | GEN3 | X1 # X1AC
             self.inverter_model = "X1-AC"
+        elif seriesnumber.startswith('PRI'):
+            invertertype = AC | GEN3 | X1 # RetroFit
+            self.inverter_model = "X1-RetroFit"
         elif seriesnumber.startswith('H3DE'):
             invertertype = HYBRID | GEN3 | X3 # Gen3 X3
             self.inverter_model = f"X3-Hybrid-{seriesnumber[3:5]}kW"
@@ -7555,9 +7558,6 @@ class solax_plugin(plugin_base):
             invertertype = AC | GEN4 | X1 # RetroFit X1 7.5kW?
             self.inverter_model = f"X1-RetroFit-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
         elif seriesnumber.startswith('PRE'):
-            invertertype = AC | GEN4 | X1 # RetroFit
-            self.inverter_model = "X1-RetroFit"
-        elif seriesnumber.startswith('PRI'):
             invertertype = AC | GEN4 | X1 # RetroFit
             self.inverter_model = "X1-RetroFit"
         elif seriesnumber.startswith('H55'):
