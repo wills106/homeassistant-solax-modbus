@@ -464,6 +464,9 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ('H4502T', 1),   # Issue #418
     ('H4602A', 1),   # Issue #882
     ('H3BD', 10),    # X3-Ultra
+    ('H4752A', 1),
+    ('H3BC',10),
+    ('H34B10H', 10) # need return @jansidlo ,
 #    ('H1E', 10 ), # more specific entry comes last and wins
 ]
 
