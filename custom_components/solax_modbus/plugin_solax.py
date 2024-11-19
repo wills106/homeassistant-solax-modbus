@@ -5244,7 +5244,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key = "remaining_battery_capacity",
         native_unit_of_measurement = UnitOfEnergy.WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
-        state_class = SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default = False,
         register = 0x118,
         register_type = REG_INPUT,
