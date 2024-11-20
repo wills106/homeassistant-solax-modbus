@@ -804,6 +804,18 @@ NUMBER_TYPES = [
         icon = "mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
+        name = "Main Breaker Current Limit",
+        key = "main_breaker_current_limit",
+        register = 0x71,
+        fmt = "i",
+        native_min_value = 10,
+        native_max_value = 250,
+        native_step = 1,
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = NumberDeviceClass.CURRENT,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
+    ),
+    SolaxModbusNumberEntityDescription(
         name = "Feedin On Power",
         key = "feedin_on_power",
         register = 0xB7,
@@ -2840,6 +2852,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale = { 0: "Disabled",
                   1: "Enabled", },
         allowedtypes = HYBRID | GEN4 | GEN5,
+        internal = True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name = "Main Breaker Current Limit",
+        key = "main_breaker_current_limit",
+        register = 0xD7,
+        allowedtypes = AC | HYBRID | GEN4 | GEN5,
         internal = True,
     ),
     SolaXModbusSensorEntityDescription(
