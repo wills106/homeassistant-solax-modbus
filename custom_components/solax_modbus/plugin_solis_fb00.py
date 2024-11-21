@@ -112,36 +112,36 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 def value_function_timingmode1(initval, descr, datadict):
     return [
         (
-            "timed_charge_start_hours_1",
-            datadict.get("timed_charge_start_hours_1", 0),
+            "timed_charge_start_hours",
+            datadict.get("timed_charge_start_hours", 0),
         ),
         (
-            "timed_charge_start_minutes_1",
-            datadict.get("timed_charge_start_minutes_1", 0),
+            "timed_charge_start_minutes",
+            datadict.get("timed_charge_start_minutes", 0),
         ),
         (
-            "timed_charge_end_hours_1",
-            datadict.get("timed_charge_end_hours_1", 0),
+            "timed_charge_end_hours",
+            datadict.get("timed_charge_end_hours", 0),
         ),
         (
-            "timed_charge_end_minutes_1",
-            datadict.get("timed_charge_end_minutes_1", 0),
+            "timed_charge_end_minutes",
+            datadict.get("timed_charge_end_minutes", 0),
         ),
         (
-            "timed_discharge_start_hours_1",
-            datadict.get("timed_discharge_start_hours_1", 0),
+            "timed_discharge_start_hours",
+            datadict.get("timed_discharge_start_hours", 0),
         ),
         (
-            "timed_discharge_start_minutes_1",
-            datadict.get("timed_discharge_start_minutes_1", 0),
+            "timed_discharge_start_minutes",
+            datadict.get("timed_discharge_start_minutes", 0),
         ),
         (
-            "timed_discharge_end_hours_1",
-            datadict.get("timed_discharge_end_hours_1", 0),
+            "timed_discharge_end_hours",
+            datadict.get("timed_discharge_end_hours", 0),
         ),
         (
-            "timed_discharge_end_minutes_1",
-            datadict.get("timed_discharge_end_minutes_1", 0),
+            "timed_discharge_end_minutes",
+            datadict.get("timed_discharge_end_minutes", 0),
         ),
     ]
 
@@ -360,8 +360,8 @@ BUTTON_TYPES = [
         value_function=value_function_sync_rtc_ymd,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 1",
-        key="update_charge_discharge_times_1",
+        name="Update Charge/Discharge Times",
+        key="update_charge_discharge_times",
         register=43711,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
@@ -453,8 +453,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge Start Hours 1",
-        key="timed_charge_start_hours_1",
+        name="Timed Charge Start Hours",
+        key="timed_charge_start_hours",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -469,8 +469,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge Start Minutes 1",
-        key="timed_charge_start_minutes_1",
+        name="Timed Charge Start Minutes",
+        key="timed_charge_start_minutes",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -485,8 +485,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge End Hours 1",
-        key="timed_charge_end_hours_1",
+        name="Timed Charge End Hours",
+        key="timed_charge_end_hours",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -501,8 +501,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge End Minutes 1",
-        key="timed_charge_end_minutes_1",
+        name="Timed Charge End Minutes",
+        key="timed_charge_end_minutes",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -517,8 +517,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Discharge Start Hours 1",
-        key="timed_discharge_start_hours_1",
+        name="Timed Discharge Start Hours",
+        key="timed_discharge_start_hours",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -533,8 +533,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Discharge Start Minutes 1",
-        key="timed_discharge_start_minutes_1",
+        name="Timed Discharge Start Minutes",
+        key="timed_discharge_start_minutes",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -549,8 +549,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Discharge End Hours 1",
-        key="timed_discharge_end_hours_1",
+        name="Timed Discharge End Hours",
+        key="timed_discharge_end_hours",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -565,8 +565,8 @@ NUMBER_TYPES = [
         prevent_update=True,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Discharge End Minutes 1",
-        key="timed_discharge_end_minutes_1",
+        name="Timed Discharge End Minutes",
+        key="timed_discharge_end_minutes",
         unit=REGISTER_U16,
         fmt="i",
         initvalue=0,
@@ -1327,8 +1327,8 @@ NUMBER_TYPES = [
     ),
     # ============================ TimeSlot 1 ==============================
     SolisModbusNumberEntityDescription(
-        name="Timed Charge SOC 1",
-        key="timed_charge_soc_1",
+        name="Timed Charge SOC",
+        key="timed_charge_soc",
         register=43708,
         native_unit_of_measurement=PERCENTAGE,
         device_class=NumberDeviceClass.BATTERY,
@@ -1341,8 +1341,8 @@ NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge Volt 1",
-        key="timed_charge_volt_1",
+        name="Timed Charge Volt",
+        key="timed_charge_volt",
         register=43710,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=NumberDeviceClass.VOLTAGE,
@@ -1355,8 +1355,8 @@ NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolisModbusNumberEntityDescription(
-        name="Timed Charge Current 1",
-        key="timed_charge_current_1",
+        name="Timed Charge Current",
+        key="timed_charge_current",
         register=43709,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         icon="mdi:current-dc",
@@ -2993,8 +2993,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     # ============================ TimeSlot 1 ==============================
     SolisModbusSensorEntityDescription(
-        name="Timed Charge Start Hours 1",
-        key="timed_charge_start_hours_1",
+        name="Timed Charge Start Hours",
+        key="timed_charge_start_hours",
         register=43711,
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
@@ -3003,8 +3003,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge Start Minutes 1",
-        key="timed_charge_start_minutes_1",
+        name="Timed Charge Start Minutes",
+        key="timed_charge_start_minutes",
         register=43712,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
@@ -3013,8 +3013,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge End Hours 1",
-        key="timed_charge_end_hours_1",
+        name="Timed Charge End Hours",
+        key="timed_charge_end_hours",
         register=43713,
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
@@ -3023,8 +3023,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge End Minutes 1",
-        key="timed_charge_end_minutes_1",
+        name="Timed Charge End Minutes",
+        key="timed_charge_end_minutes",
         register=43714,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
@@ -3033,8 +3033,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge SOC 1",
-        key="timed_charge_soc_1",
+        name="Timed Charge SOC",
+        key="timed_charge_soc",
         register=43708,
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:battery-sync",
@@ -3043,8 +3043,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge Volt 1",
-        key="timed_charge_volt_1",
+        name="Timed Charge Volt",
+        key="timed_charge_volt",
         register=43710,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         scale=0.1,
@@ -3053,8 +3053,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolisModbusSensorEntityDescription(
-        name="Timed Charge Current 1",
-        key="timed_charge_current_1",
+        name="Timed Charge Current",
+        key="timed_charge_current",
         register=43709,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         icon="mdi:current-dc",
