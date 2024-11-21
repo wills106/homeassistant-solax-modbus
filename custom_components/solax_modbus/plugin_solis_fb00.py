@@ -108,8 +108,10 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+# ============================================= Charging ===========================================================
 
-def value_function_timingmode1(initval, descr, datadict):
+
+def value_function_timingmode_charge_1(initval, descr, datadict):
     return [
         (
             "timed_charge_start_hours",
@@ -127,6 +129,119 @@ def value_function_timingmode1(initval, descr, datadict):
             "timed_charge_end_minutes",
             datadict.get("timed_charge_end_minutes", 0),
         ),
+    ]
+
+
+def value_function_timingmode_charge_2(initval, descr, datadict):
+    return [
+        (
+            "timed_charge_start_hours_2",
+            datadict.get("timed_charge_start_hours_2", 0),
+        ),
+        (
+            "timed_charge_start_minutes_2",
+            datadict.get("timed_charge_start_minutes_2", 0),
+        ),
+        (
+            "timed_charge_end_hours_2",
+            datadict.get("timed_charge_end_hours_2", 0),
+        ),
+        (
+            "timed_charge_end_minutes_2",
+            datadict.get("timed_charge_end_minutes_2", 0),
+        ),
+    ]
+
+
+def value_function_timingmode_charge_3(initval, descr, datadict):
+    return [
+        (
+            "timed_charge_start_hours_3",
+            datadict.get("timed_charge_start_hours_3", 0),
+        ),
+        (
+            "timed_charge_start_minutes_3",
+            datadict.get("timed_charge_start_minutes_3", 0),
+        ),
+        (
+            "timed_charge_end_hours_3",
+            datadict.get("timed_charge_end_hours_3", 0),
+        ),
+        (
+            "timed_charge_end_minutes_3",
+            datadict.get("timed_charge_end_minutes_3", 0),
+        ),
+    ]
+
+
+def value_function_timingmode_charge_4(initval, descr, datadict):
+    return [
+        (
+            "timed_charge_start_hours_4",
+            datadict.get("timed_charge_start_hours_4", 0),
+        ),
+        (
+            "timed_charge_start_minutes_4",
+            datadict.get("timed_charge_start_minutes_4", 0),
+        ),
+        (
+            "timed_charge_end_hours_4",
+            datadict.get("timed_charge_end_hours_4", 0),
+        ),
+        (
+            "timed_charge_end_minutes_4",
+            datadict.get("timed_charge_end_minutes_4", 0),
+        ),
+    ]
+
+
+def value_function_timingmode_charge_5(initval, descr, datadict):
+    return [
+        (
+            "timed_charge_start_hours_5",
+            datadict.get("timed_charge_start_hours_5", 0),
+        ),
+        (
+            "timed_charge_start_minutes_5",
+            datadict.get("timed_charge_start_minutes_5", 0),
+        ),
+        (
+            "timed_charge_end_hours_5",
+            datadict.get("timed_charge_end_hours_5", 0),
+        ),
+        (
+            "timed_charge_end_minutes_5",
+            datadict.get("timed_charge_end_minutes_5", 0),
+        ),
+    ]
+
+
+def value_function_timingmode_charge_6(initval, descr, datadict):
+    return [
+        (
+            "timed_charge_start_hours_6",
+            datadict.get("timed_charge_start_hours_6", 0),
+        ),
+        (
+            "timed_charge_start_minutes_6",
+            datadict.get("timed_charge_start_minutes_6", 0),
+        ),
+        (
+            "timed_charge_end_hours_6",
+            datadict.get("timed_charge_end_hours_6", 0),
+        ),
+        (
+            "timed_charge_end_minutes_6",
+            datadict.get("timed_charge_end_minutes_6", 0),
+        ),
+    ]
+
+
+# ============================================ Discharging =========================================================
+
+
+def value_function_timingmode_discharge_1(initval, descr, datadict):
+    return [
         (
             "timed_discharge_start_hours",
             datadict.get("timed_discharge_start_hours", 0),
@@ -146,24 +261,8 @@ def value_function_timingmode1(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode2(initval, descr, datadict):
+def value_function_timingmode_discharge_2(initval, descr, datadict):
     return [
-        (
-            "timed_charge_start_hours_2",
-            datadict.get("timed_charge_start_hours_2", 0),
-        ),
-        (
-            "timed_charge_start_minutes_2",
-            datadict.get("timed_charge_start_minutes_2", 0),
-        ),
-        (
-            "timed_charge_end_hours_2",
-            datadict.get("timed_charge_end_hours_2", 0),
-        ),
-        (
-            "timed_charge_end_minutes_2",
-            datadict.get("timed_charge_end_minutes_2", 0),
-        ),
         (
             "timed_discharge_start_hours_2",
             datadict.get("timed_discharge_start_hours_2", 0),
@@ -183,24 +282,8 @@ def value_function_timingmode2(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode3(initval, descr, datadict):
+def value_function_timingmode_discharge_3(initval, descr, datadict):
     return [
-        (
-            "timed_charge_start_hours_3",
-            datadict.get("timed_charge_start_hours_3", 0),
-        ),
-        (
-            "timed_charge_start_minutes_3",
-            datadict.get("timed_charge_start_minutes_3", 0),
-        ),
-        (
-            "timed_charge_end_hours_3",
-            datadict.get("timed_charge_end_hours_3", 0),
-        ),
-        (
-            "timed_charge_end_minutes_3",
-            datadict.get("timed_charge_end_minutes_3", 0),
-        ),
         (
             "timed_discharge_start_hours_3",
             datadict.get("timed_discharge_start_hours_3", 0),
@@ -220,24 +303,8 @@ def value_function_timingmode3(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode4(initval, descr, datadict):
+def value_function_timingmode_discharge_4(initval, descr, datadict):
     return [
-        (
-            "timed_charge_start_hours_4",
-            datadict.get("timed_charge_start_hours_4", 0),
-        ),
-        (
-            "timed_charge_start_minutes_4",
-            datadict.get("timed_charge_start_minutes_4", 0),
-        ),
-        (
-            "timed_charge_end_hours_4",
-            datadict.get("timed_charge_end_hours_4", 0),
-        ),
-        (
-            "timed_charge_end_minutes_4",
-            datadict.get("timed_charge_end_minutes_4", 0),
-        ),
         (
             "timed_discharge_start_hours_4",
             datadict.get("timed_discharge_start_hours_4", 0),
@@ -257,24 +324,8 @@ def value_function_timingmode4(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode5(initval, descr, datadict):
+def value_function_timingmode_discharge_5(initval, descr, datadict):
     return [
-        (
-            "timed_charge_start_hours_5",
-            datadict.get("timed_charge_start_hours_5", 0),
-        ),
-        (
-            "timed_charge_start_minutes_5",
-            datadict.get("timed_charge_start_minutes_5", 0),
-        ),
-        (
-            "timed_charge_end_hours_5",
-            datadict.get("timed_charge_end_hours_5", 0),
-        ),
-        (
-            "timed_charge_end_minutes_5",
-            datadict.get("timed_charge_end_minutes_5", 0),
-        ),
         (
             "timed_discharge_start_hours_5",
             datadict.get("timed_discharge_start_hours_5", 0),
@@ -294,24 +345,8 @@ def value_function_timingmode5(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode6(initval, descr, datadict):
+def value_function_timingmode_discharge_6(initval, descr, datadict):
     return [
-        (
-            "timed_charge_start_hours_6",
-            datadict.get("timed_charge_start_hours_6", 0),
-        ),
-        (
-            "timed_charge_start_minutes_6",
-            datadict.get("timed_charge_start_minutes_6", 0),
-        ),
-        (
-            "timed_charge_end_hours_6",
-            datadict.get("timed_charge_end_hours_6", 0),
-        ),
-        (
-            "timed_charge_end_minutes_6",
-            datadict.get("timed_charge_end_minutes_6", 0),
-        ),
         (
             "timed_discharge_start_hours_6",
             datadict.get("timed_discharge_start_hours_6", 0),
@@ -360,58 +395,112 @@ BUTTON_TYPES = [
         value_function=value_function_sync_rtc_ymd,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times",
-        key="update_charge_discharge_times",
+        name="Update Charge Times",
+        key="update_charge_times",
         register=43711,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode1,
+        value_function=value_function_timingmode_charge_1,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 2",
-        key="update_charge_discharge_times_2",
+        name="Update Charge Times 2",
+        key="update_charge_times_2",
         register=43718,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode2,
+        value_function=value_function_timingmode_charge_2,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 3",
-        key="update_charge_discharge_times_3",
+        name="Update Charge Times 3",
+        key="update_charge_times_3",
         register=43725,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode3,
+        value_function=value_function_timingmode_charge_3,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 4",
-        key="update_charge_discharge_times_4",
+        name="Update Charge Times 4",
+        key="update_charge_times_4",
         register=43732,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode4,
+        value_function=value_function_timingmode_charge_4,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 5",
-        key="update_charge_discharge_times_5",
+        name="Update Charge Times 5",
+        key="update_charge_times_5",
         register=43739,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode5,
+        value_function=value_function_timingmode_charge_5,
     ),
     SolisModbusButtonEntityDescription(
-        name="Update Charge/Discharge Times 6",
-        key="update_charge_discharge_times_6",
+        name="Update Charge Times 6",
+        key="update_charge_times_6",
         register=43736,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_timingmode6,
+        value_function=value_function_timingmode_charge_6,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times",
+        key="update_discharge_times",
+        register=43753,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_1,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times 2",
+        key="update_discharge_times_2",
+        register=43760,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_2,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times 3",
+        key="update_discharge_times_3",
+        register=43767,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_3,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times 4",
+        key="update_discharge_times_4",
+        register=43774,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_4,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times 5",
+        key="update_discharge_times_5",
+        register=43781,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_5,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Update Discharge Times 6",
+        key="update_discharge_times_6",
+        register=43787,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=value_function_timingmode_discharge_6,
     ),
 ]
 
