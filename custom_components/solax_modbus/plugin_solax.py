@@ -6017,7 +6017,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        allowedtypes = AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
+        allowedtypes = AC | HYBRID | MIC | GEN | GEN2 | GEN3 | GEN4 | GEN5,
         icon = "mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
