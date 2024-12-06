@@ -6412,7 +6412,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x410,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN | X3,
+        allowedtypes = MIC | GEN | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L2",
@@ -6422,7 +6422,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x411,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN | X3,
+        allowedtypes = MIC | GEN | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "Inverter Power L3",
@@ -6432,7 +6432,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         register = 0x412,
         register_type = REG_INPUT,
-        allowedtypes = MIC | GEN | X3,
+        allowedtypes = MIC | GEN | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
         name = "PV Power 1",
