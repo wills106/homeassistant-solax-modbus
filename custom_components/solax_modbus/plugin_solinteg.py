@@ -180,8 +180,10 @@ _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mp
 def _fn_mppt_mask(v, descr, dd):
     return "off" if v == 0 else "on" if v & _mppt_mask == _mppt_mask else _flag_list(v, _mppt_list, "unknown")
 
+_nan = float('NaN')
 def value_function_house_load(initval, descr, datadict):
-    return ( datadict.get('inverter_load', 0) - datadict.get('measured_power', 0) )
+    v = datadict.get('inverter_load', _nan) - datadict.get('measured_power', _nan)
+    return None if v != v else v #test nan
 
 # =================================================================================================
 
@@ -286,7 +288,7 @@ NUMBER_TYPES = [
         register = 52503,
         fmt = "i",
         native_min_value = 5,
-        native_max_value = 50,
+        native_max_value = 100,
         native_step = 1,
         mode="box",
         scale = 0.1,
@@ -301,7 +303,7 @@ NUMBER_TYPES = [
         register = 52505,
         fmt = "i",
         native_min_value = 5,
-        native_max_value = 50,
+        native_max_value = 100,
         native_step = 1,
         mode="box",
         scale = 0.1,
@@ -316,7 +318,7 @@ NUMBER_TYPES = [
         register = 52601,
         fmt = "i",
         native_min_value = 0,
-        native_max_value = 50,
+        native_max_value = 200,
         native_step = 1,
         mode="box",
         scale = 0.1,
@@ -331,7 +333,7 @@ NUMBER_TYPES = [
         register = 52603,
         fmt = "i",
         native_min_value = 0,
-        native_max_value = 50,
+        native_max_value = 200,
         native_step = 1,
         mode="box",
         scale = 0.1,
@@ -427,6 +429,15 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:box-shadow",
     ),
+    SolintegModbusSelectEntityDescription(
+        name = "Battery Protection Relax",
+        key = "battery_soc_prot_relax",
+        register = 50012,
+        option_dict = _simple_switch,
+        entity_category = EntityCategory.CONFIG,
+        allowedtypes = HYBRID,
+        icon = "mdi:dip-switch",
+    ),
 ]
 
 # ================================= Sensor Declarations ============================================================
@@ -434,7 +445,7 @@ SELECT_TYPES = [
 SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [ 
     SolintegModbusSensorEntityDescription(
         name = "Firmware",
-        key = "firmware",
+        key = "software_version",
         register = 10011,
         #both values
         #unit = REGISTER_U32,
@@ -1176,6 +1187,13 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         internal = True,
         allowedtypes = HYBRID,
     ),
+    SolintegModbusSensorEntityDescription(
+        key = "battery_soc_prot_relax",
+        register = 50012,
+        scale = _simple_switch,
+        internal = True,
+        allowedtypes = HYBRID,
+    ),
 ]
 
 
@@ -1256,6 +1274,12 @@ class solinteg_plugin(plugin_base):
                 if serialnumber.startswith(start) : return False
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch)
 
+
+    def getSoftwareVersion(self, new_data):
+        return new_data.get("software_version", None)
+
+    def getHardwareVersion(self, new_data):
+        return new_data.get("hardware_version", None)
 
 plugin_instance = solinteg_plugin(
     plugin_name = 'solinteg',
