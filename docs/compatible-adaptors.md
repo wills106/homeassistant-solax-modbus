@@ -66,6 +66,14 @@ Note that port 8899 is also open on the LSW-3 logger, but any ModBus TCP connect
 - Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
 - SolaX only mentions Gen4 Hybrid, other inverters may work?
 
+## Wifi - RS485
+
+### [Tasmota modbus bridge on ESP8266](https://tasmota.github.io/docs/Modbus-Bridge)
+
+An ESP8266 dongle with Tasmota installed and setup as a modbus bridge works great. 
+Use a RS485 module to convert the modbus serial interface to RS485.
+This works flawless for my Solis hybrid inverter.
+
 ## Untested but should work according to the specs...
 
 ### [USR-N510 RS485 to Ethernet](https://www.pusr.com/products/1-rs485-serial-port-etherne-device-servers-usr-n510.html)
