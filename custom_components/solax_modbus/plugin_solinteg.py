@@ -11,7 +11,8 @@ _LOGGER = logging.getLogger(__name__)
 """
   Gabriel C.
   Plugin for Solinteg inverter, using ModbusTCP
-  Only basic functionality for now
+  Also works for identical devices: M-TEC Energy Butler, Wattsonic
+  Most basic functionality implemented
 """
 
 """ ============================================================================================
@@ -856,6 +857,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Bat. Min Cell Voltage ID",
         key = "battery_min_cell_voltage_id",
+        native_unit_of_measurement = "",
         register = 33014,
         allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
@@ -876,6 +878,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Bat. Max Cell Voltage ID",
         key = "battery_max_cell_voltage_id",
+        native_unit_of_measurement = "",
         register = 33012,
         allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
