@@ -24,12 +24,11 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         inverter_name_suffix = hub.inverterNameSuffix + " "
 
     entities = []
-    _LOGGER.debug(">>> Setting up switch entities:")
+
     for switch_info in plugin.SWITCH_TYPES:
         if plugin.matchInverterWithMask(
             hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist
         ):
-            _LOGGER.debug(f">>> {switch_info.name}: Included")
             if not (switch_info.name.startswith(inverter_name_suffix)):
                 switch_info.name = inverter_name_suffix + switch_info.name
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
@@ -38,10 +37,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             if switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             entities.append(switch)
-        else:
-            _LOGGER.debug(f">>> {switch.name}: Skipped")
 
-    _LOGGER.debug(f">>> Switch entities to add {entities}")
     async_add_entities(entities)
     return True
 
@@ -93,10 +89,6 @@ class SolaXModbusSwitch(SwitchEntity):
             if self._sensor_key in self._hub.data:
                 sensor_value = int(self._hub.data[self._sensor_key])
                 return (sensor_value // 2**self._bit % 2) == 1
-            else:
-                _LOGGER.debug(
-                    f">>> Unable to find {self._sensor_key} in hub.data. Available keys are: {self._hub.data.keys()}"
-                )
 
         return self._attr_is_on
 
