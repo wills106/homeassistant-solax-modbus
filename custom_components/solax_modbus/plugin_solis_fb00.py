@@ -1,10 +1,12 @@
 import logging
 from dataclasses import dataclass
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
+
+# from homeassistant.components.number import NumberEntityDescription
+# from homeassistant.components.select import SelectEntityDescription
+# from homeassistant.components.button import ButtonEntityDescription
+# from homeassistant.components.switch import SwitchEntityDescription
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-from custom_components.solax_modbus.const import *
+from .const import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,6 +98,11 @@ class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 
 
 @dataclass
+class SolisModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+
+
+@dataclass
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Modbus sensor entities."""
 
@@ -108,7 +115,14 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+
 # ============================================= Charging ===========================================================
+# This value function converts the bits to the number
+def value_function_timing_on_off(bit: int, state: int, descr: str, datadict: dict):
+    value = datadict.get(descr, 0)
+    _LOGGER.debug(f">>> Old value of {descr}: {value}")
+    new_value = (value & ~(1 << bit)) | (state << bit)
+    return new_value
 
 
 def value_function_timingmode_charge_1(initval, descr, datadict):
@@ -1414,6 +1428,18 @@ NUMBER_TYPES = [
         max_exceptions=MAX_CURRENTS,
         entity_category=EntityCategory.CONFIG,
     ),
+    SolisModbusNumberEntityDescription(
+        name="Timed Charge Discharge On Off",
+        key="timed_charge_discharge_on_off",
+        register=43707,
+        icon="mdi:switch",
+        fmt="i",
+        native_min_value=0,
+        native_max_value=4096,
+        native_step=1,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+    ),
     # ============================ TimeSlot 1 ==============================
     SolisModbusNumberEntityDescription(
         name="Timed Charge SOC",
@@ -1951,6 +1977,116 @@ NUMBER_TYPES = [
 ]
 
 # ================================= Select Declarations ============================================================
+SWITCH_TYPES = [
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 1 Enable",
+        key="timed_charge_slot_1_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=0,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 2 Enable",
+        key="timed_charge_slot_2_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=1,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 3 Enable",
+        key="timed_charge_slot_3_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=2,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 4 Enable",
+        key="timed_charge_slot_4_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=3,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 5 Enable",
+        key="timed_charge_slot_5_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=4,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Charge Slot 6 Enable",
+        key="timed_charge_slot_6_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=5,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 1 Enable",
+        key="timed_discharge_slot_1_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=6,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 2 Enable",
+        key="timed_discharge_slot_2_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=7,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 3 Enable",
+        key="timed_discharge_slot_3_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=8,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 4 Enable",
+        key="timed_discharge_slot_4_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=9,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 5 Enable",
+        key="timed_discharge_slot_5_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=10,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Timed Discharge Slot 6 Enable",
+        key="timed_discharge_slot_6_enable",
+        register=43707,
+        icon="mdi:switch",
+        register_bit=11,
+        sensor_key="timed_charge_discharge_on_off",
+        value_function=value_function_timing_on_off,
+    ),
+]
 
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
@@ -2007,6 +2143,7 @@ SELECT_TYPES = [
 ]
 
 # ================================= Sensor Declarations ============================================================
+
 
 SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     # SolisModbusSensorEntityDescription(
@@ -3387,6 +3524,15 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
+        name="Timed Charge Discharge On Off",
+        key="timed_charge_discharge_on_off",
+        register=43707,
+        icon="mdi:switch",
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolisModbusSensorEntityDescription(
         name="Timed Charge SOC",
         key="timed_charge_soc",
         register=43708,
@@ -4205,9 +4351,8 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
 ]
 
+
 # ============================ plugin declaration =================================================
-
-
 @dataclass
 class solis_fb00_plugin(plugin_base):
 
@@ -4298,6 +4443,7 @@ plugin_instance = solis_fb00_plugin(
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
+    SWITCH_TYPES=SWITCH_TYPES,
     block_size=40,
     order16=Endian.BIG,
     order32=Endian.BIG,
