@@ -112,6 +112,7 @@ WRITE_MULTI_MODBUS = 4  # use write_multiple modbus command
 
 _LOGGER = logging.getLogger(__name__)
 
+DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
 
 # ==================================== plugin base class ====================================================================
 
