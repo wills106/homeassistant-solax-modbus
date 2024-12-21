@@ -316,7 +316,7 @@ BUTTON_TYPES = [
         name="Remotecontrol Trigger",
         key="remotecontrol_trigger",
         register=0x7C,
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         value_function=value_function_remotecontrol_recompute,
@@ -548,7 +548,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Active Power",
         key="remotecontrol_active_power",
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=-6000,
         native_max_value=30000,
         native_step=100,
@@ -563,7 +563,7 @@ NUMBER_TYPES = [
         name="Remotecontrol Reactive Power",
         key="remotecontrol_reactive_power",
         unit=REGISTER_S32,
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=-4000,
         native_max_value=4000,
         native_step=100,
@@ -603,7 +603,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Import Limit",
         key="remotecontrol_import_limit",
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=0,
         native_max_value=30000,  # overwritten by MAX_EXPORT
         native_step=100,
@@ -1208,7 +1208,7 @@ SELECT_TYPES = [
             # 2: "Enabled Quantity Control",
             # 3: "Enabled SOC Target Control",
         },
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Disabled",
         icon="mdi:transmission-tower",
     ),
@@ -1221,7 +1221,7 @@ SELECT_TYPES = [
             1: "Set",
             2: "Update",
         },
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Set",
         icon="mdi:transmission-tower",
     ),
@@ -4916,7 +4916,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="eps_yield_today",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x90,
         register_type=REG_INPUT,
         scale=0.1,
@@ -5434,7 +5434,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Remaining Battery Capacity",
         key="remaining_battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=False,
         register=0x118,
@@ -7909,6 +7909,8 @@ class solax_plugin(plugin_base):
             invertertype = MIC | GEN | X3  # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC802T"):
+            invertertype = MIC | GEN | X3  # MIC X3 8kW
+        elif seriesnumber.startswith("MCU08T"):
             invertertype = MIC | GEN | X3  # MIC X3 8kW
         elif seriesnumber.startswith("MU802T"):
             invertertype = MIC | GEN | X3  # MIC X3

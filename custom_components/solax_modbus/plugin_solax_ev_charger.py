@@ -823,11 +823,11 @@ class solax_ev_charger_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
-        if seriesnumber.startswith("C1070"):
+        if seriesnumber.startswith("C107"):
             invertertype = X1 | POW7  # 7kW EV Single Phase
-        elif seriesnumber.startswith("C3110"):
+        elif seriesnumber.startswith("C311"):
             invertertype = X3 | POW11  # 11kW EV Three Phase
-        elif seriesnumber.startswith("C3220"):
+        elif seriesnumber.startswith("C322"):
             invertertype = X3 | POW22  # 22kW EV Three Phase
         # add cases here
         else:
