@@ -11,7 +11,8 @@ _LOGGER = logging.getLogger(__name__)
 """
   Gabriel C.
   Plugin for Solinteg inverter, using ModbusTCP
-  Only basic functionality for now
+  Also works for identical devices: M-TEC Energy Butler, Wattsonic
+  Most basic functionality implemented
 """
 
 """ ============================================================================================
@@ -563,7 +564,6 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 11062,
-        #scale = 0.001,
         unit = REGISTER_U32,
         scan_group = SCAN_GROUP_MPPT,
         icon = "mdi:solar-power-variant",
@@ -785,6 +785,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class = SensorDeviceClass.BATTERY,
         register = 33000,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID,
         scan_group = SCAN_GROUP_MEDIUM,
     ),
@@ -794,6 +795,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         register = 33001,
         scale = 0.01,
+        rounding = 2,
         allowedtypes = HYBRID,
         icon = "mdi:battery-heart",
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -821,6 +823,16 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolintegModbusSensorEntityDescription(
+        name = "Battery Hardware",
+        key = "battery_hardware",
+        register = 32004, 
+        #unit = REGISTER_U16,
+        scale = lambda v, *a: _bytes_str(v.to_bytes(2)),
+        allowedtypes = HYBRID,
+        icon = "mdi:information",
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    SolintegModbusSensorEntityDescription(
         name = "Battery Rated Capacity",
         key = "battery_rated_capacity",
         native_unit_of_measurement = UnitOfEnergy.WATT_HOUR,
@@ -836,6 +848,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         register = 33015,
         scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID,
         icon = "mdi:battery-heart",
         entity_registry_enabled_default = False,
@@ -844,6 +857,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Bat. Min Cell Voltage ID",
         key = "battery_min_cell_voltage_id",
+        native_unit_of_measurement = "",
         register = 33014,
         allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
@@ -855,6 +869,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         register = 33013,
         scale = 0.001,
+        rounding = 3,
         allowedtypes = HYBRID,
         icon = "mdi:battery-heart",
         entity_registry_enabled_default = False,
@@ -863,6 +878,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         name = "Bat. Max Cell Voltage ID",
         key = "battery_max_cell_voltage_id",
+        native_unit_of_measurement = "",
         register = 33012,
         allowedtypes = HYBRID,
         entity_registry_enabled_default = False,
@@ -1070,6 +1086,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register = 11004,   #0?
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default = False,
         icon = "mdi:home-import-outline",
     ),
@@ -1082,6 +1099,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register = 11002,   #0?
         unit = REGISTER_U32,
         scale = 0.01,
+        rounding = 2,
         entity_registry_enabled_default = False,
         icon = "mdi:home-export-outline",
     ),
