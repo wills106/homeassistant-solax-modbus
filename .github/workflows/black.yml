@@ -9,4 +9,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: psf/black@stable
         with:
-          options: "--line-length = 119"
+          options: "--line-length=119"
