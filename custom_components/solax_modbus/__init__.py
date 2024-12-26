@@ -61,7 +61,7 @@ _LOGGER = logging.getLogger(__name__)
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-from pymodbus.transaction import ModbusAsciiFramer, ModbusRtuFramer
+from pymodbus.framer import FramerType
 
 from .const import (
     INVERTER_IDENT,
@@ -259,10 +259,10 @@ class SolaXModbusHub:
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, framer=ModbusRtuFramer, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, framer=FramerType.Rtu, retries=6)
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=ModbusAsciiFramer, retries=6
+                    host=host, port=port, timeout=5, framer=FramerType.Ascii, retries=6
                 )
             else:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, retries=6)
