@@ -259,10 +259,10 @@ class SolaXModbusHub:
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, framer=FramerType.Rtu, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, framer=FramerType.RTU, retries=6)
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=FramerType.Ascii, retries=6
+                    host=host, port=port, timeout=5, framer=FramerType.ASCII, retries=6
                 )
             else:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, retries=6)
