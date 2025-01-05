@@ -61,7 +61,7 @@ _LOGGER = logging.getLogger(__name__)
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-from pymodbus.transaction import ModbusAsciiFramer, ModbusRtuFramer
+from pymodbus.framer import FramerType
 
 from .const import (
     INVERTER_IDENT,
