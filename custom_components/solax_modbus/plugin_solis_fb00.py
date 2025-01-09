@@ -456,7 +456,7 @@ BUTTON_TYPES = [
     SolisModbusButtonEntityDescription(
         name="Update Charge Times 6",
         key="update_charge_times_6",
-        register=43736,
+        register=43746,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
