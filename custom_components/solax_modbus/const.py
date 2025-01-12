@@ -407,7 +407,7 @@ def value_function_rtc(initval, descr, datadict):
             rtc_months,
             rtc_years,
         ) = initval
-        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
+        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years%100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
     except:
         pass
@@ -423,7 +423,7 @@ def value_function_rtc_ymd(initval, descr, datadict):
             rtc_minutes,
             rtc_seconds,
         ) = initval
-        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
+        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years%100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
     except:
         pass
