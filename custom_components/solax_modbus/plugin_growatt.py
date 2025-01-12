@@ -61,7 +61,7 @@ SENSOR_TYPES = []
 async def async_read_serialnr(hub, address):
     res = None
     try:
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=6)
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=5)
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(12).decode("ascii")
