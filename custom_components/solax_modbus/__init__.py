@@ -542,7 +542,7 @@ class SolaXModbusHub:
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.read_holding_registers(address, count, **kwargs)
+            resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
         return resp
 
     async def async_read_input_registers(self, unit, address, count):
@@ -550,7 +550,7 @@ class SolaXModbusHub:
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.read_input_registers(address, count, **kwargs)
+            resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
         return resp
 
     async def async_lowlevel_write_register(self, unit, address, payload):
@@ -597,7 +597,7 @@ class SolaXModbusHub:
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._client.write_registers(address, payload, **kwargs)
+                resp = await self._client.write_registers(address=address, values=payload, **kwargs)
             except (ConnectionException, ModbusIOException) as e:
                 original_message = str(e)
                 raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -655,7 +655,7 @@ class SolaXModbusHub:
             async with self._lock:
                 await self._check_connection()
                 try:
-                    resp = await self._client.write_registers(address, payload, **kwargs)
+                    resp = await self._client.write_registers(address=address, values=payload, **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
@@ -773,6 +773,11 @@ class SolaXModbusHub:
                 self.plugin.order16,
                 wordorder=self.plugin.order32,
             )
+            #decoder = self._client.convert_from_registers(
+            #    registers=realtime_data.registers,
+            #    data_type=client.DATATYPE.INT16,
+            #    word_order=self.plugin.order32
+            #)
             prevreg = block.start
             for reg in block.regs:
                 if (reg - prevreg) > 0:
@@ -989,7 +994,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await hub._client.read_holding_registers(address, count, **kwargs)
+                    resp = await hub._client.read_holding_registers(address=address, count=count, **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus holding registers: {original_message}") from e
@@ -1007,7 +1012,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await hub._client.read_input_registers(address, count, **kwargs)
+                    resp = await hub._client.read_input_registers(address=address, count=count, **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus input registers: {original_message}") from e
@@ -1029,7 +1034,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_register(address, payload[0], **kwargs)
+                    resp = await self._client.write_register(address=address, values=payload[0], **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
@@ -1051,7 +1056,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_registers(address, payload, **kwargs)
+                    resp = await self._client.write_registers(address=address, values=payload, **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -1116,7 +1121,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return None
                 async with hub._lock:
                     try:
-                        resp = await self._client.write_registers(address, payload, **kwargs)
+                        resp = await self._client.write_registers(address=address, values=payload, **kwargs)
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
