@@ -10,6 +10,8 @@ Most reliable and most easy installation is by replacing the LSW3 WiFi Stick Log
 
 Once installed and connected to the network it provides ModBus TCP out-of-the-box via the port 8899. Just follow the [installation](installation.md) and on the 'TCP/IP Parameters' page enter the IP address of the LSE3 Stick Logger and use 8899 as port.
 
+Please see the [FAQ](./sofar-faq.md), if you run into issues.
+
 ## Connect an RS485 USB or Ethernet Adapter
 
 1. Shutdown the inverter.

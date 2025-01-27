@@ -34,6 +34,14 @@ When using the UI you can ignore these errors.
 
 In automations and scripts these errors will cause your automation to stop. Workaround: Add `continue_on_error: true` to the YAML of your service calls that set values to the inverter. More details on `continue_on_error` can be found in the [Home Assistant documentation](https://www.home-assistant.io/docs/scripts/#continuing-on-error).
 
+## I am using the LSE-3 logger stick, but requests timeout frequently.
+
+There are multiple possible root causes for this:
+
+- You have assigned a fixed IP address in the config UI of the logger stick. To solve this, let the logger stick fetch an IP address via DHCP, but use your router configuration to assign the same IP address to the logger stick.
+- Wrong firmware. Make sure your logger stick is using the firmware version `ME_0D_270A_1.09`. The newer firmware version `ME_0D_270A_1.11` is causing issues. Older firmwares are also not reliable. If your logger stick's firmware is not the correct version, get in touch with the [SolarMan support](https://www.solarmanpv.com/supportservice/service-contact/) and ask them to update the firmware of your logger. SolarMan support will need the serial number of your logger to do this.
+- Too many requests. Especially if you also use other software that accesses the LSE-3, too many requests can lead to time out issues. Increase the request intervals to solve this issue.
+
 
 ## I have changed some values, but they seem to have no impact on the inverter's operation.
 
