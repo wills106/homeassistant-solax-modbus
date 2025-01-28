@@ -270,6 +270,14 @@ def value_function_house_load_alt(initval, descr, datadict):
     )
 
 
+def value_function_inverter_power_g5(initval, descr, datadict):
+    return (
+        datadict.get("inverter_power_l1", 0)
+        + datadict.get("inverter_power_l2", 0)
+        + datadict.get("inverter_power_l3", 0)
+    )
+
+
 def value_function_software_version_g2(initval, descr, datadict):
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
 
@@ -3906,7 +3914,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",
@@ -6244,6 +6252,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
         entity_registry_enabled_default=False,
         icon="mdi:home-lightning-bolt",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Inverter Power",
+        key="inverter_power",
+        value_function=value_function_inverter_power_g5,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=AC | HYBRID | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power Total",
