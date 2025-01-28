@@ -60,7 +60,7 @@ _LOGGER = logging.getLogger(__name__)
 #    Endian_LITTLE = Endian.LITTLE
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.framer import FramerType
 
 from .const import (
