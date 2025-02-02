@@ -1,8 +1,8 @@
 # Sofar FAQ
 
-## My RS485 Adapter does not work reliably
+## My RS485 Adaptor does not work reliably
 
-Have you double checked that the termination resistor is installed on both ends? On the adapter side make sure that it has a termination resistor in the adapter (check the adapter's manual or measure it). If this is missing add a 120 Ohm resistor between A and B to properly terminate the adapter side. On the inverter side Sofar inverters also require a termination on the last connected inverter. Note that on the COM Port the PINs 1 and 2 (A+) and PINs 3 and 4 (B-) are internally connected with each other. So if your signal cable is connected to PINs 1 and 4 you can use the PINs 2 and 3 to connect your termination resistor.
+Have you double checked that the termination resistor is installed on both ends? On the adaptor side make sure that it has a termination resistor in the adaptor (check the adaptor's manual or measure it). If this is missing add a 120 Ohm resistor between A and B to properly terminate the adaptor side. On the inverter side Sofar inverters also require a termination on the last connected inverter. Note that on the COM Port the PINs 1 and 2 (A+) and PINs 3 and 4 (B-) are internally connected with each other. So if your signal cable is connected to PINs 1 and 4 you can use the PINs 2 and 3 to connect your termination resistor.
 
 The by-far best and easiest ModBus connection is provided by the replacing the LSW-3 WiFi Stick Logger with the LSE-3 Ethernet Stick Logger. The later provides Modbus TCP out of the box via the port 8899.
 
