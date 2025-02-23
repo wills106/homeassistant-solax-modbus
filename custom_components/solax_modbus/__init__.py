@@ -60,7 +60,7 @@ _LOGGER = logging.getLogger(__name__)
 #    Endian_LITTLE = Endian.LITTLE
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
-from.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.framer import FramerType
 
 from .const import (
@@ -254,18 +254,18 @@ class SolaXModbusHub:
                 parity="N",
                 stopbits=1,
                 bytesize=8,
-                timeout=3,
+                timeout=10,
                 retries=6,
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, framer=FramerType.RTU, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=10, framer=FramerType.RTU, retries=6)
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=5, framer=FramerType.ASCII, retries=6
+                    host=host, port=port, timeout=10, framer=FramerType.ASCII, retries=6
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=5, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=10, retries=6)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
@@ -773,11 +773,11 @@ class SolaXModbusHub:
                 self.plugin.order16,
                 wordorder=self.plugin.order32,
             )
-            #decoder = self._client.convert_from_registers(
+            # decoder = self._client.convert_from_registers(
             #    registers=realtime_data.registers,
             #    data_type=client.DATATYPE.INT16,
             #    word_order=self.plugin.order32
-            #)
+            # )
             prevreg = block.start
             for reg in block.regs:
                 if (reg - prevreg) > 0:
