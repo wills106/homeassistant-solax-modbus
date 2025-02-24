@@ -2953,6 +2953,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x684,
+        ignore_readerror=True,
         newblock=True,
         unit=REGISTER_U32,
         scale=0.01,
