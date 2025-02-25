@@ -13,6 +13,7 @@ from typing import Any, Optional
 from weakref import ref as WeakRef
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
+from pymodbus.exceptions import ModbusException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -254,18 +255,18 @@ class SolaXModbusHub:
                 parity="N",
                 stopbits=1,
                 bytesize=8,
-                timeout=10,
+                timeout=15,
                 retries=6,
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=10, framer=FramerType.RTU, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=15, framer=FramerType.RTU, retries=6)
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=10, framer=FramerType.ASCII, retries=6
+                    host=host, port=port, timeout=15, framer=FramerType.ASCII, retries=6
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=10, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=15, retries=6)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
@@ -542,7 +543,12 @@ class SolaXModbusHub:
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
+            try:
+                resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
+            except ModbusException as exception_error:
+                error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
+                self._log_error(error)
+                return None
         return resp
 
     async def async_read_input_registers(self, unit, address, count):
@@ -550,7 +556,12 @@ class SolaXModbusHub:
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
+            try:
+                resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
+            except ModbusException as exception_error:
+                error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
+                self._log_error(error)
+                return None
         return resp
 
     async def async_lowlevel_write_register(self, unit, address, payload):
