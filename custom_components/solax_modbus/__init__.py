@@ -547,7 +547,7 @@ class SolaXModbusHub:
                 resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
-                self._log_error(error)
+                _LOGGER.error(error)
                 return None
         return resp
 
@@ -560,7 +560,7 @@ class SolaXModbusHub:
                 resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
-                self._log_error(error)
+                _LOGGER.error(error)
                 return None
         return resp
 
