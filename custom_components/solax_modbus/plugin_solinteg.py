@@ -207,10 +207,13 @@ def _fn_mppt_mask(v, descr, dd):
 _nan = float("NaN")
 
 
-def value_function_house_load(initval, descr, datadict):
-    v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
+def value_function_house_total_load(initval, descr, datadict):
+    v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan)
     return None if v != v else v  # test nan
 
+def value_function_house_normal_load(initval, descr, datadict):
+    v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
+    return None if v != v else v  # test nan
 
 # =================================================================================================
 
@@ -1144,15 +1147,26 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolintegModbusSensorEntityDescription(
-        name="House Load",
-        key="house_load",
-        value_function=value_function_house_load,
+        name="House Total Load",        #incl. backup
+        key="house_total_load",
+        value_function=value_function_house_total_load,
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:home",
     ),
+    SolintegModbusSensorEntityDescription(
+        name="House Normal Load",       #w/o backup
+        key="house_normal_load",
+        value_function=value_function_house_normal_load,
+        scan_group=SCAN_GROUP_FAST,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:home",
+    ),
+
     # internal sensors are only used for polling values for selects, etc
     # no need for name, etc
     SolintegModbusSensorEntityDescription(
