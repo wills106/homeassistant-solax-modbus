@@ -207,10 +207,13 @@ def _fn_mppt_mask(v, descr, dd):
 _nan = float("NaN")
 
 
-def value_function_house_load(initval, descr, datadict):
+def value_function_house_total_load(initval, descr, datadict):
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan)
     return None if v != v else v  # test nan
 
+def value_function_house_normal_load(initval, descr, datadict):
+    v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
+    return None if v != v else v  # test nan
 
 # =================================================================================================
 
@@ -295,6 +298,20 @@ BUTTON_TYPES = [
         icon="mdi:restart",
         command=1,
     ),
+    SolintegModbusButtonEntityDescription(
+        name="Off-grid",
+        key="control_offgrid_on",
+        register=50200,
+        icon="mdi:stop",
+        command=1,
+    ),
+    SolintegModbusButtonEntityDescription(
+        name="On-grid",
+        key="control_offgrid_off",
+        register=50200,
+        icon="mdi:play",
+        command=0,
+    ),
 ]
 
 # ================================= Number Declarations ============================================================
@@ -351,7 +368,7 @@ NUMBER_TYPES = [
         fmt="i",
         native_min_value=0,
         native_max_value=200,
-        native_step=1,
+        native_step=0.1,
         mode="box",
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -366,7 +383,7 @@ NUMBER_TYPES = [
         fmt="i",
         native_min_value=0,
         native_max_value=200,
-        native_step=1,
+        native_step=0.1,
         mode="box",
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -381,7 +398,7 @@ NUMBER_TYPES = [
         fmt="i",
         native_min_value=-100,
         native_max_value=100,
-        native_step=1,
+        native_step=0.1,
         unit=REGISTER_S16,
         mode="box",
         scale=0.1,
@@ -399,7 +416,16 @@ SELECT_TYPES = [
         name="Working Mode",
         key="working_mode",
         register=50000,
-        option_dict={257: "General", 258: "Economic", 259: "UPS", 512: "Off-Grid Mode"},
+        option_dict={
+            0x101: "General", 
+            0x102: "Economic", 
+            0x103: "UPS", 
+            0x104: "PeakShift",
+            0x105: "Feed-In",
+            0x200: "Off-Grid",
+            #0x301, 0x302, 0x303 : EMS Modes
+            0x400: "ToU",
+        },
         entity_category=EntityCategory.CONFIG,
         allowedtypes=HYBRID,
         icon="mdi:dip-switch",
@@ -986,7 +1012,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=30230,
         unit=REGISTER_S32,
-        scan_group=SCAN_GROUP_MEDIUM,
+        scan_group=SCAN_GROUP_FAST,
         allowedtypes=HYBRID | ALL_EPS_GROUP,
     ),
     SolintegModbusSensorEntityDescription(
@@ -1121,21 +1147,41 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolintegModbusSensorEntityDescription(
-        name="House Load",
-        key="house_load",
-        value_function=value_function_house_load,
+        name="House Total Load",        #incl. backup
+        key="house_total_load",
+        value_function=value_function_house_total_load,
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:home",
     ),
+    SolintegModbusSensorEntityDescription(
+        name="House Normal Load",       #w/o backup
+        key="house_normal_load",
+        value_function=value_function_house_normal_load,
+        scan_group=SCAN_GROUP_FAST,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:home",
+    ),
+
     # internal sensors are only used for polling values for selects, etc
     # no need for name, etc
     SolintegModbusSensorEntityDescription(
         key="working_mode",
         register=50000,
-        scale={257: "General", 258: "Economic", 259: "UPS", 512: "Off-Grid Mode"},
+        scale={
+            0x101: "General", 
+            0x102: "Economic", 
+            0x103: "UPS", 
+            0x104: "PeakShift",
+            0x105: "Feed-In",
+            0x200: "Off-Grid",
+            #0x301, 0x302, 0x303 : EMS Modes
+            0x400: "ToU",
+        },
         internal=True,
         # allowedtypes = HYBRID,
     ),
