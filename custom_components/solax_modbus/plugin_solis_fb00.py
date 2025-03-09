@@ -5,7 +5,7 @@ from dataclasses import dataclass
 # from homeassistant.components.select import SelectEntityDescription
 # from homeassistant.components.button import ButtonEntityDescription
 # from homeassistant.components.switch import SwitchEntityDescription
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from .const import *
 
 _LOGGER = logging.getLogger(__name__)

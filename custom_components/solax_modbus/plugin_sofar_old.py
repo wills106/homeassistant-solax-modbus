@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
