@@ -12,7 +12,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
-          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
+          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden",
+          "time_out" : "Modbus timeout in Sekunden"
         }
       },
       "serial": {
@@ -65,7 +66,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
-          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden"
+          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden",
+          "time_out" : "Modbus timeout in Sekunden"
         }
       },
       "serial": {

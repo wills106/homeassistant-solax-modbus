@@ -90,6 +90,8 @@ CONF_SCAN_INTERVAL_FAST = "scan_interval_fast"
 SCAN_GROUP_DEFAULT = CONF_SCAN_INTERVAL  # default scan group, slow; should always work
 SCAN_GROUP_MEDIUM = CONF_SCAN_INTERVAL_MEDIUM  # medium speed scanning (energy, temp, soc...)
 SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
+CONF_TIME_OUT = "time_out"
+DEFAULT_TIME_OUT = 5
 
 # ================================= Definitions for Sensor Declarations =================================================
 

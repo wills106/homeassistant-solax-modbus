@@ -11,7 +11,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelení režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
-          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
+          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách",
+          "time_out" : "Modbus časový limit v sekundách"
         }
       },
       "serial": {
@@ -52,7 +53,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelení režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
-          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách"
+          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách",
+          "time_out" : "Modbus časový limit v sekundách"
         }
       },
       "serial": {

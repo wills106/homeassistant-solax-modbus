@@ -14,7 +14,8 @@
           "plugin": "Inverter Type",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
           "scan_interval_medium": "Gemiddelde polling-frequenctie",
-          "scan_interval_fast": "Snelle polling-frequenctie"
+          "scan_interval_fast": "Snelle polling-frequenctie",
+          "time_out" : "Modbus time-out in seconden"
         }
       },
       "serial": {
@@ -63,7 +64,8 @@
           "plugin": "Inverter Type",
           "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
           "scan_interval_medium": "Gemiddelde polling-frequenctie",
-          "scan_interval_fast": "Snelle polling-frequenctie"
+          "scan_interval_fast": "Snelle polling-frequenctie",
+          "time_out" : "Modbus time-out in seconden"
         }
       },
       "serial": {

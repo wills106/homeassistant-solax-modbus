@@ -101,6 +101,8 @@ from .const import (
     SCAN_GROUP_DEFAULT,
     # PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
+    CONF_TIME_OUT,
+    DEFAULT_TIME_OUT,
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
@@ -242,6 +244,7 @@ class SolaXModbusHub:
                 interface = "tcp"
         serial_port = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
         baudrate = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
+        time_out = int(config.get(CONF_TIME_OUT, DEFAULT_TIME_OUT))
         _LOGGER.debug(f"Setup {DOMAIN}.{name}")
         _LOGGER.debug(f"solax serial port {serial_port} interface {interface}")
 
@@ -255,18 +258,20 @@ class SolaXModbusHub:
                 parity="N",
                 stopbits=1,
                 bytesize=8,
-                timeout=15,
+                timeout=time_out,
                 retries=6,
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=15, framer=FramerType.RTU, retries=6)
+                self._client = AsyncModbusTcpClient(
+                    host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=6
+                )
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=15, framer=FramerType.ASCII, retries=6
+                    host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=6
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=15, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=6)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
@@ -275,6 +280,7 @@ class SolaXModbusHub:
         self.interface = interface
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
+        self._time_out = int(time_out)
         self.groups = {}  # group info, below
         self.empty_interval_group = lambda: SimpleNamespace(interval=0, unsub_interval_method=None, device_groups={})
         self.empty_device_group = lambda: SimpleNamespace(

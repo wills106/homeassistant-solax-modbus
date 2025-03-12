@@ -13,7 +13,8 @@
           "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {
@@ -55,7 +56,8 @@
           "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {

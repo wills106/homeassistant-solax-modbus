@@ -11,7 +11,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
+          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren",
+          "time_out" : "Modbus timeout på sekunder"
         }
       },
       "serial": {
@@ -50,7 +51,8 @@
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren"
+          "scan_interval": "Frekvensen, i sekunder, för uppdatering av data från modbus registren",
+          "time_out" : "Modbus timeout på sekunder"
         }
       },
       "serial": {
