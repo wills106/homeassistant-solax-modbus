@@ -3718,15 +3718,6 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes=BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name="Realtime Capacity",
-        key="realtime_capacity",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=SensorDeviceClass.BATTERY,
-        register=0x900E,
-        #scale=0.1,
-        allowedtypes=BAT_BTS,
-    ),
-    SofarModbusSensorEntityDescription(
         name="Total Voltage",
         key="total_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -3757,7 +3748,6 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="SOH",
         key="soh",
         native_unit_of_measurement=PERCENTAGE,
-        device_class=SensorDeviceClass.BATTERY,
         register=0x9013,
         allowedtypes=BAT_BTS,
     ),
