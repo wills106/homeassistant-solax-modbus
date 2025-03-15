@@ -3504,7 +3504,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="work_mode",
         register=0x12E,
-        scale={0: "Disabled", 1: "Manua;", 2: "Smart Save"},
+        scale={0: "Disabled", 1: "Manual", 2: "Smart Save"},
         allowedtypes=AC | HYBRID | GEN4 | DCB,
         internal=True,
     ),
