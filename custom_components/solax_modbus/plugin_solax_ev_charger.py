@@ -21,6 +21,7 @@ An entity can be declared multiple times (with different bitmasks) if the parame
 """
 
 GEN = 0x0001  # base generation for MIC, PV, AC
+GEN1 = 0x0001
 GEN2 = 0x0002
 GEN3 = 0x0004
 GEN4 = 0x0008
