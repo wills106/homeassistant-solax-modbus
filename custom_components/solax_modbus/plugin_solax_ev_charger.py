@@ -434,7 +434,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="evse_scene",
         register=0x61C,
         allowedtypes=GEN2,
-        option_dict={
+        scale={
             0: "PV mode",
             1: "Standard mode",
             2: "OCPP mode",
@@ -507,7 +507,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="evse_mode",
         register=0x669,
         allowedtypes=GEN2,
-        option_dict={
+        scale={
             0: "Fast",
             1: "ECO",
             2: "Green",
@@ -921,8 +921,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:alert",
         allowedtypes=GEN2,
         unit=REGISTER_S32,
-        #device_class=SensorDeviceClass.NONE,
-        #state_class=SensorStateClass.TOTAL,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Firmware version",
@@ -932,8 +930,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:numeric",
         allowedtypes=GEN2,
         unit=REGISTER_S16,
-        #device_class=SensorDeviceClass.NONE,
-        #state_class=SensorStateClass.TOTAL,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Network connected",
