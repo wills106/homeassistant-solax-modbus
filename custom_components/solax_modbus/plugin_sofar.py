@@ -3677,37 +3677,6 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 
 BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
-    # SofarModbusSensorEntityDescription(
-    #     name = "total voltage",
-    #     key = "total_voltage",
-    #     native_unit_of_measurement = UnitOfElectricPotential.VOLT,
-    #     device_class = SensorDeviceClass.VOLTAGE,
-    #     register = 0x900F,
-    #     scale = 0.1,
-    #     rounding = 1,
-    #     allowedtypes = BAT_BTS,
-    # ),
-    # SofarModbusSensorEntityDescription(
-    #     name = "total current",
-    #     key = "total_current",
-    #     native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-    #     device_class = SensorDeviceClass.CURRENT,
-    #     register = 0x9010,
-    #     unit = REGISTER_S16,
-    #     scale = 0.1,
-    #     rounding = 1,
-    #     allowedtypes = BAT_BTS,
-    # ),
-    # SofarModbusSensorEntityDescription(
-    #     name = "BMS Manufacture Name",
-    #     key = "bms_manufacture_name",
-    #     register = 0x9007,
-    #     newblock = True,
-    #     unit = REGISTER_STR,
-    #     wordcount=4,
-    #     entity_category = EntityCategory.DIAGNOSTIC,
-    #     allowedtypes = BAT_BTS,
-    # ),
     SofarModbusSensorEntityDescription(
         name="BMS Version",
         key="bms_version",
@@ -3716,6 +3685,14 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         register=0x900B,
         allowedtypes=BAT_BTS,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Realtime Capacity",
+        key="realtime_capacity",
+        native_unit_of_measurement=PERCENTAGE,
+        register=0x900E,
+        allowedtypes=BAT_BTS,
+        icon="mdi:battery-clock",
     ),
     SofarModbusSensorEntityDescription(
         name="Total Voltage",
@@ -3750,6 +3727,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         register=0x9013,
         allowedtypes=BAT_BTS,
+        icon="mdi:battery-heart",
     ),
     SofarModbusSensorEntityDescription(
         name="Pack ID",
