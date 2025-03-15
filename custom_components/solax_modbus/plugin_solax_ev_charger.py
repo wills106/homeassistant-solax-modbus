@@ -25,7 +25,7 @@ GEN1 = 0x0001
 GEN2 = 0x0002
 GEN3 = 0x0004
 GEN4 = 0x0008
-ALL_GEN_GROUP = GEN2 | GEN3 | GEN4 | GEN
+ALL_GEN_GROUP = GEN1 | GEN2 | GEN3 | GEN4 | GEN
 
 X1 = 0x0100
 X3 = 0x0200
@@ -884,34 +884,12 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             8: "Suspended EVSE",
             9: "Update",
             10: "RFID Activation",
-        },
-        register_type=REG_INPUT,
-        icon="mdi:run",
-        allowedtypes=GEN1,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Run Mode",
-        key="run_mode",
-        register=0x1D,
-        scale={
-            0: "Available",
-            1: "Preparing",
-            2: "Charging",
-            3: "Finishing",
-            4: "Fault Mode",
-            5: "Unavailable",
-            6: "Reserved",
-            7: "Suspended EV",
-            8: "Suspended EVSE",
-            9: "Update",
-            10: "RFID Activation",
             11: "Start delay",
             12: "Charge paused",
             13: "Stopping",
         },
         register_type=REG_INPUT,
         icon="mdi:run",
-        allowedtypes=GEN2,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Fault code",
@@ -952,7 +930,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         allowedtypes=GEN2,
         unit=REGISTER_S16,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
-        state_class=SensorStateClass.TOTAL,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charging duration",
