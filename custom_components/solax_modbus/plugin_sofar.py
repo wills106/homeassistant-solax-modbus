@@ -153,6 +153,19 @@ def value_function_refluxcontrol(initval, descr, datadict):
     ]
 
 
+def value_function_epscontrol(initval, descr, datadict):
+    return [
+        (
+            "eps_control",
+            datadict.get("eps_control", datadict.get("eps_control")),
+        ),
+        (
+            "eps_wait_time",
+            datadict.get("eps_wait_time", datadict.get("eps_wait_time")),
+        ),
+    ]
+
+
 # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
 # def value_function_timingmode(initval, descr, datadict):
 #     return  [ ('timing_id', datadict.get('timing_id', 0), ),
@@ -245,6 +258,14 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         value_function=value_function_refluxcontrol,
+    ),
+    SofarModbusButtonEntityDescription(
+        name="EPS: Update",
+        key="eps_control_update",
+        register=0x1029,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        value_function=value_function_epscontrol,
     ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
     # SofarModbusButtonEntityDescription(
@@ -346,6 +367,19 @@ NUMBER_TYPES = [
         prevent_update=True,
         write_method=WRITE_DATA_LOCAL,
         icon="mdi:battery-sync",
+    ),
+    SofarModbusNumberEntityDescription(
+        name="EPS Wait Time",
+        key="eps_wait_time",
+        unit=REGISTER_U16,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=21600,
+        native_step=1,
+        allowedtypes=HYBRID | X3 | EPS,
+        prevent_update=True,
+        write_method=WRITE_DATA_LOCAL,
+        icon="mdi:power-plug-off",
     ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
     # SofarModbusNumberEntityDescription(
@@ -587,16 +621,17 @@ SELECT_TYPES = [
     #
     ###
     SofarModbusSelectEntityDescription(
-        name="EPS Control",
+        name="EPS Mode",
         key="eps_control",
-        register=0x1029,
+        unit=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Turn Off",
             1: "Turn On, Prohibit Cold Start",
             2: "Turn On, Enable Cold Start",
         },
         allowedtypes=HYBRID | X3 | EPS,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        icon="mdi:power-plug-off",
     ),
     # Does not work. 0x1035, 0x1036, and 0x1037 have to be written in one single chunk
     # SofarModbusSelectEntityDescription(
@@ -3122,10 +3157,9 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
     ),
     SofarModbusSensorEntityDescription(
-        name="EPS Control",
+        name="EPS Mode",
         key="eps_control",
         register=0x1029,
-        newblock=True,
         scale={
             0: "Turn Off",
             1: "Turn On, Prohibit Cold Start",
@@ -3133,6 +3167,15 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | X3 | EPS,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="EPS Wait Time",
+        key="passive_eps_wait_time",
+        register=0x102A,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID | X3 | EPS,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name="Battery Active Control",
@@ -3629,16 +3672,18 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
-        name="RO: Passive: Timeout",
-        key="ro_passive_mode_timeout",
+        name="Passive: Timeout",
+        key="passive_mode_timeout",
         register=0x1184,
+        entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
         name="Passive: Timeout Action",
-        key="ro_passive_mode_timeout_action",
+        key="passive_mode_timeout_action",
         register=0x1185,
+        entity_registry_enabled_default=False,
         scale={
             0: "Force Standby",
             1: "Return to Previous Mode",

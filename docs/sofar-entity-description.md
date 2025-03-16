@@ -11,6 +11,8 @@ Some of the entities cannot be written alone as Sofar requires several registers
 | Name | Description | Commit Button, if required |
 | ---- | ----------- | -------------------------- |
 | Energy Storage Mode | Sets the energy storage mode as described. See [Energy Storage Modes](sofar-energy-storage-modes.md) for more information. | |
+| EPS Mode | Sets the EPS mode. Typically you either want to choose 'Turn off' or 'Turn on, Prohibit Cold Start' | EPS: Update |
+| EPS Wait Time | Waiting time for emergency power supply activation. Typically '0'. | EPS: Update |
 | Passive Desired Grid Power | Set the desired power that is taken from the Grid. The system will try to achieve this level within the boundaries of the current consumption, the current production, and the boundaries set by the battery parameters below. Positive values indicate power flow from grid to the system (grid consumption). Negative values indicate power flow from system to the grid (feed-in). See [Energy Storage Modes](sofar-energy-storage-modes.md) for more information.| Passive: Update Battery Charge/Discharge |
 | Passive: Maximum Battery Power | Limit the maximum battery power. Must be greater than or equal to "Passive Minimum Battery Power". Positive values indicate charging, negative values indicate discharging. See [Energy Storage Modes](sofar-energy-storage-modes.md) for more information.| Passive: Update Battery Charge/Discharge |
 | Passive: Minimum Battery Power | Limit the minimum battery power. Must be less than or equal to "Passive Maximum Battery Power". Positive values indicate charging, negative values indicate discharging. See [Energy Storage Modes](sofar-energy-storage-modes.md) for more information.| Passive: Update Battery Charge/Discharge |
