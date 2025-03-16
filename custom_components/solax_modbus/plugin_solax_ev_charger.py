@@ -31,9 +31,9 @@ X1 = 0x0100
 X3 = 0x0200
 ALL_X_GROUP = X1 | X3
 
-POW7 = 0x0001
-POW11 = 0x0002
-POW22 = 0x0004
+POW7 = 0x0010
+POW11 = 0x0020
+POW22 = 0x0040
 ALL_POW_GROUP = POW7 | POW11 | POW22
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
@@ -222,10 +222,11 @@ SELECT_TYPES = [
         name="Start Charge Mode",
         key="start_charge_mode",
         register=0x610,
-        allowedtypes=GEN1 | ALL_POW_GROUP | ALL_X_GROUP,
+        allowedtypes=GEN2,
         option_dict={
             0: "Plug & Charge",
             1: "RFID to Charge",
+            2: "App start",
         },
         icon="mdi:lock",
     ),
@@ -233,11 +234,10 @@ SELECT_TYPES = [
         name="Start Charge Mode",
         key="start_charge_mode",
         register=0x610,
-        allowedtypes=GEN2 | ALL_POW_GROUP | ALL_X_GROUP,
+        allowedtypes=GEN1,
         option_dict={
             0: "Plug & Charge",
             1: "RFID to Charge",
-            2: "App start",
         },
         icon="mdi:lock",
     ),
@@ -315,7 +315,7 @@ SELECT_TYPES = [
         name="EVSE Mode",
         key="evse_mode",
         register=0x669,
-        allowedtypes=GEN2 | ALL_X_GROUP | ALL_POW_GROUP,
+        allowedtypes=GEN2,
         option_dict={
             0: "Fast",
             1: "ECO",
@@ -383,18 +383,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         icon="mdi:dip-switch",
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Start Charge Mode",
-        key="start_charge_mode",
-        register=0x610,
-        scale={
-            0: "Plug & Charge",
-            1: "RFID to Charge",
-            2: "App start",
-        },
-        entity_registry_enabled_default=False,
-        icon="mdi:lock",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
@@ -885,7 +873,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             8: "Suspended EVSE",
             9: "Update",
             10: "RFID Activation",
-            #11-13 perhaps only seen in Gen2
+            #11-13 perhaps only seen in Gen2 EVC or in newer firmwares
             11: "Start delay",
             12: "Charge paused",
             13: "Stopping",
@@ -1036,12 +1024,13 @@ class solax_ev_charger_plugin(plugin_base):
         # returns true if the entity needs to be created for an inverter
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (xmatch and powmatch) and not blacklisted
+        return (xmatch and powmatch and genmatch) and not blacklisted
 
 
 plugin_instance = solax_ev_charger_plugin(
