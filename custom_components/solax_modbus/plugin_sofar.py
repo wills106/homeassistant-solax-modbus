@@ -161,7 +161,7 @@ def value_function_epscontrol(initval, descr, datadict):
         ),
         (
             "eps_wait_time",
-            datadict.get("eps_wait_time", datadict.get("eps_wait_time")),
+            0, # Always 0 as this is a reserved function that should not be used.
         ),
     ]
 
@@ -379,6 +379,7 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID | X3 | EPS,
         prevent_update=True,
         write_method=WRITE_DATA_LOCAL,
+        entity_registry_enabled_default=False,
         icon="mdi:power-plug-off",
     ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
