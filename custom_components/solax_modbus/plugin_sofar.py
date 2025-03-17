@@ -2271,20 +2271,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         # entity_registry_enabled_default =  False,
-        allowedtypes=HYBRID | GEN,
-    ),
-    SofarModbusSensorEntityDescription(
-        name="PV Power Total",
-        key="pv_power_total",
-        native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        register=0x5C4,
-        newblock=True,
-        scale=0.01,
-        rounding=2,
-        # entity_registry_enabled_default =  False,
-        allowedtypes=PV | GEN,
+        allowedtypes=HYBRID | PV | GEN,
     ),
     ###
     #
