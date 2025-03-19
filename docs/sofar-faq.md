@@ -12,7 +12,7 @@ There was an issue in recent firmware versions (introduced at around V110000) th
 
 ## I am using the LSW-3 Wifi Stick Logger, but ModBus TCP does not work
 
-Even though also on the LSW-3 Wifi Stick Logger shows that port 8899 is open, Modbus TCP connection attempts time out. Replace our stick logger with the LSE-3 LAN Stick Logger.
+LSW-3 Wifi Stick Logger also listens on the port 8899 but uses proprietary solarman protocol which is supported by [ha-solarman](https://github.com/davidrapan/ha-solarman) or you need to replace your logger with the LSE-3 LAN Stick Logger.
 
 ## I am using the LSE-3 LAN Stick Logger, but the port 8899 is not open
 
