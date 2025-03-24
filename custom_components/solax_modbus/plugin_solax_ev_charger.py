@@ -21,18 +21,19 @@ An entity can be declared multiple times (with different bitmasks) if the parame
 """
 
 GEN = 0x0001  # base generation for MIC, PV, AC
+GEN1 = 0x0001
 GEN2 = 0x0002
 GEN3 = 0x0004
 GEN4 = 0x0008
-ALL_GEN_GROUP = GEN2 | GEN3 | GEN4 | GEN
+ALL_GEN_GROUP = GEN1 | GEN2 | GEN3 | GEN4 | GEN
 
 X1 = 0x0100
 X3 = 0x0200
 ALL_X_GROUP = X1 | X3
 
-POW7 = 0x0001
-POW11 = 0x0002
-POW22 = 0x0004
+POW7 = 0x0010
+POW11 = 0x0020
+POW22 = 0x0040
 ALL_POW_GROUP = POW7 | POW11 | POW22
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
@@ -141,6 +142,19 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
     ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Max Charge Current",
+        key="max_charge_current",
+        register=0x668,
+        allowedtypes=GEN2,
+        fmt="f",
+        native_min_value=6,
+        native_max_value=32,
+        native_step=0.1,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -208,6 +222,19 @@ SELECT_TYPES = [
         name="Start Charge Mode",
         key="start_charge_mode",
         register=0x610,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "Plug & Charge",
+            1: "RFID to Charge",
+            2: "App start",
+        },
+        icon="mdi:lock",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Start Charge Mode",
+        key="start_charge_mode",
+        register=0x610,
+        allowedtypes=GEN1,
         option_dict={
             0: "Plug & Charge",
             1: "RFID to Charge",
@@ -246,6 +273,18 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
+        name="EVSE Scene",
+        key="evse_scene",
+        register=0x61C,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "PV mode",
+            1: "Standard mode",
+            2: "OCPP mode",
+        },
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
         name="Charge Phase",
         key="charge_phase",
         register=0x625,
@@ -256,6 +295,7 @@ SELECT_TYPES = [
             3: "L3 Phase",
         },
         icon="mdi:dip-switch",
+        allowedtypes=X3,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
         name="Control Command",
@@ -267,7 +307,19 @@ SELECT_TYPES = [
             3: "Stop charging",
             4: "Start Charging",
             5: "Reserve",
-            6: "Cancel the Reservation",
+            6: "Cancel Reservation",
+        },
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="EVSE Mode",
+        key="evse_mode",
+        register=0x669,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "Fast",
+            1: "ECO",
+            2: "Green",
         },
         icon="mdi:dip-switch",
     ),
@@ -333,17 +385,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Start Charge Mode",
-        key="start_charge_mode",
-        register=0x610,
-        scale={
-            0: "Plug & Charge",
-            1: "RFID to Charge",
-        },
-        entity_registry_enabled_default=False,
-        icon="mdi:lock",
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
         key="boost_mode",
         register=0x613,
@@ -373,6 +414,19 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         scale={
             1: "Program New",
             0: "Program Off",
+        },
+        entity_registry_enabled_default=False,
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="EVSE Scene",
+        key="evse_scene",
+        register=0x61C,
+        allowedtypes=GEN2,
+        scale={
+            0: "PV mode",
+            1: "Standard mode",
+            2: "OCPP mode",
         },
         entity_registry_enabled_default=False,
         icon="mdi:dip-switch",
@@ -433,6 +487,19 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             4: "Start Charging",
             5: "Reserve",
             6: "Cancel the Reservation",
+        },
+        entity_registry_enabled_default=False,
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="EVSE Mode",
+        key="evse_mode",
+        register=0x669,
+        allowedtypes=GEN2,
+        scale={
+            0: "Fast",
+            1: "ECO",
+            2: "Green",
         },
         entity_registry_enabled_default=False,
         icon="mdi:dip-switch",
@@ -650,6 +717,17 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Added - Cumulative",
+        key="charge_added_cum",
+        register=0x10,
+        register_type=REG_INPUT,
+        scale=0.1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        allowedtypes=GEN2,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Added Total",
         key="charge_added_total",
         register=0x619,
@@ -660,6 +738,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
+        allowedtypes=GEN1,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current",
@@ -794,9 +873,113 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             8: "Suspended EVSE",
             9: "Update",
             10: "RFID Activation",
+            #11-13 perhaps only seen in Gen2 EVC or in newer firmwares
+            11: "Start delay",
+            12: "Charge paused",
+            13: "Stopping",
         },
         register_type=REG_INPUT,
         icon="mdi:run",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Fault code",
+        key="fault_code",
+        register=0x1E,
+        register_type=REG_INPUT,
+        icon="mdi:alert",
+        allowedtypes=GEN2,
+        unit=REGISTER_S32,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Firmware version",
+        key="firmware_version",
+        register=0x25,
+        register_type=REG_INPUT,
+        icon="mdi:numeric",
+        allowedtypes=GEN2,
+        unit=REGISTER_S16,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Network connected",
+        key="net_connected",
+        register=0x26,
+        scale={
+            0: "Not connected",
+            1: "Connected",
+        },
+        register_type=REG_INPUT,
+        icon="mdi:run",
+        allowedtypes=GEN2,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="RSSI",
+        key="rssi",
+        register=0x27,
+        register_type=REG_INPUT,
+        icon="mdi:numeric",
+        allowedtypes=GEN2,
+        unit=REGISTER_S16,
+        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charging duration",
+        key="charge_duration",
+        register=0x2B,
+        register_type=REG_INPUT,
+        icon="mdi:numeric",
+        allowedtypes=GEN2,
+        unit=REGISTER_S32,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Lock state",
+        key="lock_state",
+        register=0x2D,
+        scale={
+            0: "Unlocked",
+            1: "Locked",
+        },
+        register_type=REG_INPUT,
+        icon="mdi:lock",
+        allowedtypes=GEN2,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Main breaker limit",
+        key="mainbrk_limit",
+        register=0x2E,
+        scale={
+            0: "Not limited",
+            1: "Limited, charging",
+            2: "Stopped charging",
+        },
+        register_type=REG_INPUT,
+        icon="mdi:car-speed-limiter",
+        allowedtypes=GEN2,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Random delay state",
+        key="delay_state",
+        register=0x2F,
+        scale={
+            0: "Not in delay",
+            1: "In random delay",
+        },
+        register_type=REG_INPUT,
+        icon="mdi:progess-clock",
+        allowedtypes=GEN2,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Ban state",
+        key="ban_state",
+        register=0x30,
+        scale={
+            0: "Okay",
+            1: "Charge prohibited",
+        },
+        register_type=REG_INPUT,
+        icon="mdi:hand-back-left",
+        allowedtypes=GEN2,
     ),
 ]
 
@@ -824,11 +1007,13 @@ class solax_ev_charger_plugin(plugin_base):
 
         # derive invertertupe from seriiesnumber
         if seriesnumber.startswith("C107"):
-            invertertype = X1 | POW7  # 7kW EV Single Phase
+            invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11  # 11kW EV Three Phase
+            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22  # 22kW EV Three Phase
+            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase
+        elif seriesnumber.startswith("5020"):
+            invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
         # add cases here
         else:
             invertertype = 0
@@ -839,12 +1024,13 @@ class solax_ev_charger_plugin(plugin_base):
         # returns true if the entity needs to be created for an inverter
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
+        genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (xmatch and powmatch) and not blacklisted
+        return (xmatch and powmatch and genmatch) and not blacklisted
 
 
 plugin_instance = solax_ev_charger_plugin(
