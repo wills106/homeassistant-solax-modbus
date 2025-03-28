@@ -64,6 +64,7 @@ from pymodbus.exceptions import ConnectionException, ModbusIOException
 from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.framer import FramerType
 
+
 from .const import (
     INVERTER_IDENT,
     CONF_BAUDRATE,
@@ -96,6 +97,7 @@ from .const import (
     REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
+    REGISTER_F32,
     REGISTER_ULSB16MSB16,
     REGISTER_WORDS,
     SCAN_GROUP_DEFAULT,
@@ -664,6 +666,8 @@ class SolaXModbusHub:
                     builder.add_32bit_uint(value)
                 elif typ == REGISTER_S32:
                     builder.add_32bit_int(value)
+                elif typ == REGISTER_F32:
+                    builder.add_32bit_float(value)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             payload = builder.to_registers()
@@ -708,6 +712,8 @@ class SolaXModbusHub:
                 val = decoder.decode_16bit_int()
             elif descr.unit == REGISTER_U32:
                 val = decoder.decode_32bit_uint()
+            elif descr.unit == REGISTER_F32:
+                val = decoder.decode_32bit_float()
             elif descr.unit == REGISTER_S32:
                 val = decoder.decode_32bit_int()
             elif descr.unit == REGISTER_STR:
@@ -812,6 +818,7 @@ class SolaXModbusHub:
                     if descr.unit in (
                         REGISTER_S32,
                         REGISTER_U32,
+                        REGISTER_F32,
                         REGISTER_ULSB16MSB16,
                     ):
                         prevreg = reg + 2
@@ -1124,6 +1131,8 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     builder.add_16bit_int(value)
                 elif typ == REGISTER_U32:
                     builder.add_32bit_uint(value)
+                elif typ == REGISTER_F32:
+                    builder.add_32bit_float(value)
                 elif typ == REGISTER_S32:
                     builder.add_32bit_int(value)
                 else:

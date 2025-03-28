@@ -101,6 +101,7 @@ REGISTER_U16 = "_uint16"
 REGISTER_U32 = "_uint32"
 REGISTER_S16 = "_int16"
 REGISTER_S32 = "_int32"
+REGISTER_F32 = "_float32"  # 32-bit float
 REGISTER_ULSB16MSB16 = "_ulsb16msb16"  # probably same as REGISTER_U32 - suggest to remove later
 REGISTER_STR = "_string"  # nr of bytes must be specified in wordcount and is 2*wordcount
 REGISTER_WORDS = "_words"  # nr or words must be specified in wordcount
