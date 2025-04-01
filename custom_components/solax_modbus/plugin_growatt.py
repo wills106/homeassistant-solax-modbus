@@ -6886,9 +6886,9 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Serial Number",
-        key = "bms_2_serialnumber",
-        register = 5042,
+        name = "BMS 1 Serial Number",
+        key = "bms_1_serialnumber",
+        register = 3087,
         unit = REGISTER_STR,
         wordcount=8,
         entity_registry_enabled_default = False,
