@@ -92,7 +92,7 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order16: int = Endian.BIG
     order32: int = Endian.BIG
     unit: int = REGISTER_U16
-    register_type: int= REG_HOLDING
+    register_type: int = REG_HOLDING
 
 # ====================================== Computed value functions  =================================================
 
@@ -1559,7 +1559,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "firmware_version",
         register = 9,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount = 3,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -1569,7 +1569,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "firmware_control_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = ALL_GEN_GROUP,
 	internal = True,
     ),
@@ -1618,7 +1618,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 23,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         allowedtypes = GEN | GEN2 | GEN3 | SPF,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2201,7 +2201,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 3001,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -5092,7 +5092,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_monitoring_version",
         register = 3096, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4 | HYBRID,
         internal = True,
     ),
@@ -5644,7 +5644,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_HOLDING, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -5654,7 +5654,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -5664,7 +5664,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5674,7 +5674,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5683,8 +5683,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5258,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        allowedtypes= GEN4,
-        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5694,7 +5694,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5704,7 +5704,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5714,7 +5714,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5724,7 +5724,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5734,7 +5734,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5744,7 +5744,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5754,7 +5754,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -5768,7 +5768,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -5782,7 +5782,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -5795,7 +5795,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_HOLDING, ### HOLDING!!!
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -5809,7 +5809,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -5823,7 +5823,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -5836,7 +5836,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_HOLDING, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -5850,7 +5850,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,# maybe U32 but then change register to 5886
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),         
     GrowattModbusSensorEntityDescription(
@@ -5860,7 +5860,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_HOLDING, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
@@ -5874,7 +5874,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -5888,7 +5888,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -5901,7 +5901,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -5915,7 +5915,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -5929,7 +5929,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -5942,7 +5942,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -5956,7 +5956,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -5966,7 +5966,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -5980,7 +5980,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -5994,7 +5994,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6007,7 +6007,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6021,7 +6021,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6035,7 +6035,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6048,7 +6048,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6062,7 +6062,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6072,7 +6072,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6086,7 +6086,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6100,7 +6100,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6113,7 +6113,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6127,7 +6127,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6141,7 +6141,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6154,7 +6154,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6168,7 +6168,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6178,7 +6178,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6192,7 +6192,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6206,7 +6206,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6219,7 +6219,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6233,7 +6233,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6247,7 +6247,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6260,7 +6260,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6274,7 +6274,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6284,7 +6284,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6298,7 +6298,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6312,7 +6312,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6325,7 +6325,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6339,7 +6339,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6353,7 +6353,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6366,7 +6366,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6380,7 +6380,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6390,7 +6390,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6404,7 +6404,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6418,7 +6418,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6431,7 +6431,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6445,7 +6445,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6459,7 +6459,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6472,7 +6472,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6486,7 +6486,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6500,7 +6500,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6514,7 +6514,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
@@ -6528,7 +6528,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6542,7 +6542,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6556,7 +6556,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6570,7 +6570,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6584,7 +6584,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6598,7 +6598,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6612,7 +6612,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6626,7 +6626,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6640,7 +6640,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6654,7 +6654,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6668,7 +6668,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6682,7 +6682,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6692,7 +6692,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6706,7 +6706,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6720,7 +6720,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6733,7 +6733,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6747,7 +6747,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6761,7 +6761,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6774,7 +6774,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -6788,7 +6788,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6798,7 +6798,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -6812,7 +6812,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6826,7 +6826,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6839,7 +6839,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6853,7 +6853,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6867,7 +6867,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6880,7 +6880,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -6894,7 +6894,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6904,7 +6904,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6918,7 +6918,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6932,7 +6932,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6945,7 +6945,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -6959,7 +6959,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6973,7 +6973,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6986,7 +6986,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
@@ -7000,7 +7000,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7010,7 +7010,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -7024,7 +7024,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7038,7 +7038,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7051,7 +7051,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -7065,7 +7065,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -7079,7 +7079,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7092,7 +7092,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7106,7 +7106,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7116,7 +7116,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -7130,7 +7130,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   2: "Charging",
                   3: "Discharging" },
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7144,7 +7144,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.00390625,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7157,7 +7157,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),        
     GrowattModbusSensorEntityDescription(
@@ -7171,7 +7171,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -7185,7 +7185,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7198,7 +7198,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7212,7 +7212,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7222,7 +7222,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -7236,7 +7236,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7250,7 +7250,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
@@ -7264,7 +7264,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7278,7 +7278,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -7292,7 +7292,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7306,7 +7306,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -7320,7 +7320,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7334,7 +7334,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
@@ -7348,7 +7348,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7362,7 +7362,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7373,7 +7373,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.02,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-sync",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7384,7 +7384,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.02,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-sync",
     ),
  
@@ -7393,8 +7393,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_serialnumber",
         register = 5042,
         unit = REGISTER_STR,
-        wordcount=8,
-        entity_registry_enabled_default = True,
+        wordcount = 8,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7404,8 +7404,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_monitoring_version",
         register = 5011,
         unit = REGISTER_STR,
-        wordcount=2,
-        entity_registry_enabled_default = True,
+        wordcount = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7415,8 +7415,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_monitoring_version",
         register = 5051,
         unit = REGISTER_STR,
-        wordcount=2,
-        entity_registry_enabled_default = True,
+        wordcount = 2,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7427,7 +7427,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5400,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7438,7 +7438,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5440,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7449,7 +7449,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5480,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7460,7 +7460,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5520,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7471,7 +7471,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5560,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7482,7 +7482,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5600,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7492,8 +7492,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_serialnumber",
         register = 3087,
         unit = REGISTER_STR,
-        wordcount=8,
-        entity_registry_enabled_default = True,
+        wordcount = 8,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7504,7 +7504,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5640, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7515,7 +7515,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5680, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7526,7 +7526,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5720, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7537,7 +7537,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5760, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7548,7 +7548,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5800, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7559,7 +7559,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5840, 
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -7576,7 +7576,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -7589,7 +7589,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -7603,7 +7603,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16, ## maybe U32 if reg is 5768
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7617,7 +7617,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7631,7 +7631,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7644,7 +7644,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -7657,7 +7657,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery-heart",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -7671,7 +7671,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16, ## maybe U32 if reg is 5868
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7685,7 +7685,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7699,7 +7699,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     
@@ -8384,7 +8384,7 @@ plugin_instance = growatt_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
-    SWITCH_TYPES= [],
+    SWITCH_TYPES = [],
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
