@@ -255,14 +255,13 @@ def value_function_combined_battery_power(initval, descr, datadict):
 
 def value_function_bms_1_module_1_combined_power(initval, descr, datadict):
     watt = datadict.get('bms_1_module_1_watt',0)
-    if 0 <= watt <= 250:
+    if 0 <= watt <= 2500:
         result = watt
-    elif 6303.5 <= watt <= 6553.5:
-        result = round(-1 * (6553.6 - watt), 1)
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
     else:
         result = 0
     return result
-
 
 def value_function_bms_1_module_1_combined_current(initval, descr, datadict):
     amp = datadict.get('bms_1_module_1_amp',0)
