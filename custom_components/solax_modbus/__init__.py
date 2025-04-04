@@ -39,7 +39,6 @@ except ImportError:
     class CoreModbusHub:
         """place holder dummy"""
 
-
 from .sensor import SolaXModbusSensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -364,14 +363,14 @@ class SolaXModbusHub:
         except:
             if self.cyclecount > 5:
                 _LOGGER.info(
-                    f"no local data file found after 5 tries - is this a first time run? or didnt you modify any DATA_LOCAL entity?"
+                    f"no local data file found after 5 tries - is this a first time run? or didn't you modify any DATA_LOCAL entity?"
                 )
                 self.localsLoaded = True  # retry a couple of polling cycles - then assume non-existent"
             return
         try:
             loaded = json.load(fp)
         except:
-            _LOGGER.info("Local data file not readable. Reseting to empty")
+            _LOGGER.info("Local data file not readable. Resetting to empty")
             fp.close()
             self.saveLocalData()
             return
@@ -727,7 +726,7 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_U8H:
                 val = initval >> 8
             else:
-                _LOGGER.warning(f"undefinded unit for entity {descr.key} - setting value to zero")
+                _LOGGER.warning(f"undefined unit for entity {descr.key} - setting value to zero")
                 val = 0
         except Exception as ex:
             if self.cyclecount < 5:
