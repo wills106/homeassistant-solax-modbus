@@ -263,6 +263,117 @@ def value_function_bms_1_module_1_combined_power(initval, descr, datadict):
         result = 0
     return result
 
+def value_function_bms_1_module_2_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_1_module_2_watt',0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_1_module_3_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_1_module_3_watt',0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_1_module_4_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_1_module_4_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_1_module_5_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_1_module_5_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_1_module_6_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_1_module_6_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_1_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_1_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_2_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_2_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_3_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_3_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_4_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_4_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_5_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_5_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_2_module_6_combined_power(initval, descr, datadict):
+    watt = datadict.get('bms_2_module_6_watt', 0)
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+
 def value_function_bms_1_module_1_combined_current(initval, descr, datadict):
     amp = datadict.get('bms_1_module_1_amp',0)
     if 0 <= amp <= 250:
@@ -394,9 +505,9 @@ def value_function_battery_voltage(initval, descr, datadict):
 def value_function_total_grid_power(initval, descr, datadict):
     return  datadict.get('grid_power_l1', 0) + datadict.get('grid_power_l2', 0) + datadict.get('grid_power_l3', 0)
 
-def value_function_firmware_control_version(initval, descr, datadict):
-		fw_ascii = datadict.get('firmware_control_version_ascii', 0)
-		fw_ver = datadict.get('firmware_control_version_number', 0)
+def value_function_communication_version(initval, descr, datadict):
+		fw_ascii = datadict.get('communication_version_ascii', 0)
+		fw_ver = datadict.get('communication_version_number', 0)
 		fw_ver = f'{fw_ver:04}' # Convert to a 4-digit decimal number
 		return f'{fw_ascii}-{fw_ver}'
 
@@ -1605,8 +1716,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal = True,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Version",
-        key = "firmware_version",
+        name = "Build Version",
+        key = "build_version",
         register = 9,
         unit = REGISTER_STR,
         wordcount=3,
@@ -1616,7 +1727,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        key = "firmware_control_version_ascii",
+        key = "communication_version_ascii",
         register = 12,
         unit = REGISTER_STR,
         wordcount=2,
@@ -1624,15 +1735,15 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 	internal = True,
     ),
 	GrowattModbusSensorEntityDescription(
-        key = "firmware_control_version_number",
+        key = "communication_version_number",
         register = 14,
         allowedtypes = ALL_GEN_GROUP,
         internal = True,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Control Version",
-        key = "firmware_control_version",
-        value_function = value_function_firmware_control_version,
+        name = "Communication Version",
+        key = "communication_version",
+        value_function = value_function_communication_version,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -5650,7 +5761,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),   
-
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 1 Combined Current",
         key = "bms_1_module_1_combined_current",
@@ -5780,6 +5890,116 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         name = "BMS 1 Module 1 Combined Power",
         key = "bms_1_module_1_combined_power",
         value_function = value_function_bms_1_module_1_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 2 Combined Power",
+        key = "bms_1_module_2_combined_power",
+        value_function = value_function_bms_1_module_2_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 3 Combined Power",
+        key = "bms_1_module_3_combined_power",
+        value_function = value_function_bms_1_module_3_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 4 Combined Power",
+        key = "bms_1_module_4_combined_power",
+        value_function = value_function_bms_1_module_4_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 5 Combined Power",
+        key = "bms_1_module_5_combined_power",
+        value_function = value_function_bms_1_module_5_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 6 Combined Power",
+        key = "bms_1_module_6_combined_power",
+        value_function = value_function_bms_1_module_6_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 1 Combined Power",
+        key = "bms_2_module_1_combined_power",
+        value_function = value_function_bms_2_module_1_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 2 Combined Power",
+        key = "bms_2_module_2_combined_power",
+        value_function = value_function_bms_2_module_2_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 3 Combined Power",
+        key = "bms_2_module_3_combined_power",
+        value_function = value_function_bms_2_module_3_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 4 Combined Power",
+        key = "bms_2_module_4_combined_power",
+        value_function = value_function_bms_2_module_4_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 5 Combined Power",
+        key = "bms_2_module_5_combined_power",
+        value_function = value_function_bms_2_module_5_combined_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 6 Combined Power",
+        key = "bms_2_module_6_combined_power",
+        value_function = value_function_bms_2_module_6_combined_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -5985,7 +6205,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_HOLDING, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6091,7 +6311,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -6197,7 +6417,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6303,7 +6523,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6409,7 +6629,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6515,7 +6735,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6621,7 +6841,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6923,7 +7143,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -7029,7 +7249,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -7135,7 +7355,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
@@ -7241,7 +7461,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7347,7 +7567,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7857,7 +8077,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),    
-    
+    GrowattModbusSensorEntityDescription(
+        name = "FirmwareNew Version",
+        key = "firmwarenew_version",
+        register = 82,
+        unit = REGISTER_STR,
+        wordcount=5,
+        allowedtypes = ALL_GEN_GROUP,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
     
     
     
@@ -8465,10 +8695,11 @@ class growatt_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = await async_read_serialnr(hub, 9)
+        identifynumber                       = await async_read_serialnr(hub, 9)
+        seriesnumber                       = await async_read_serialnr(hub, 30001)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber                       = await async_read_serialnr(hub, 3001)
+            seriesnumber                       = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
@@ -8483,32 +8714,32 @@ class growatt_plugin(plugin_base):
         # SPF = SPF 
         
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
-        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
-        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
-        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
-        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
-        #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
-        #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
-        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), Hybrid TL3-XH  11kW - 30kW (MID)  
-        elif seriesnumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
-        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
+        if identifynumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
+        #elif identifynumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
+        #elif identifynumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
+        elif identifynumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
+        elif identifynumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
+        elif identifynumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
+        elif identifynumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
+        #elif identifynumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
+        #elif identifynumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
+        #elif identifynumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
+        elif identifynumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+        elif identifynumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+        elif identifynumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
+        elif identifynumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
+        elif identifynumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), Hybrid TL3-XH  11kW - 30kW (MID)  
+        elif identifynumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
+        elif identifynumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+        elif identifynumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+        #elif identifynumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
         
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {identifynumber}")
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
