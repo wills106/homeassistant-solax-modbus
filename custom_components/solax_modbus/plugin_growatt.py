@@ -253,6 +253,13 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_combined_bms_1_power(initval, descr, datadict):
+    return  datadict.get('bms_1_charge_power', 0) - datadict.get('bms_1_discharge_power',0)
+
+def value_function_combined_bms_2_power(initval, descr, datadict):
+    return  datadict.get('bms_2_charge_power', 0) - datadict.get('bms_2_discharge_power',0)
+
+
 def value_function_bms_1_module_1_combined_power(initval, descr, datadict):
     watt = datadict.get('bms_1_module_1_watt',0)
     if 0 <= watt <= 2500:
@@ -4536,6 +4543,27 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # TL-X TL-XH
 #
 #####
+
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Combined Power",
+        key = "bms_1_combined_power",
+        value_function= value_function_combined_bms_1_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN3 | GEN4,
+        icon = "mdi:battery",
+    ),
+        GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Combined Power",
+        key = "bms_2_combined_power",
+        value_function= value_function_combined_bms_2_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN3 | GEN4,
+        icon = "mdi:battery",
+    ),
     GrowattModbusSensorEntityDescription(
         key = "register_118",
         register = 118,
@@ -6192,7 +6220,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
@@ -6209,8 +6237,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 1 Total Throughput",
-        key = "bms_1_module_1_tp",
+        name = "BMS 1 Module 1 Total Output Energy",
+        key = "bms_1_module_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6298,7 +6326,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6315,8 +6343,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Total Throughput",
-        key = "bms_1_module_2_tp",
+        name = "BMS 1 Module 2 Total Output Energy",
+        key = "bms_1_module_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6404,7 +6432,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -6421,8 +6449,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Total Throughput",
-        key = "bms_1_module_3_tp",
+        name = "BMS 1 Module 3 Total Output Energy",
+        key = "bms_1_module_3_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6510,7 +6538,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6527,8 +6555,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Total Throughput",
-        key = "bms_1_module_4_tp",
+        name = "BMS 1 Module 4 Total Output Energy",
+        key = "bms_1_module_4_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6616,7 +6644,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6633,8 +6661,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Total Throughput",
-        key = "bms_1_module_5_tp",
+        name = "BMS 1 Module 5 Total Output Energy",
+        key = "bms_1_module_5_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6722,7 +6750,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -6739,8 +6767,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Total Throughput",
-        key = "bms_1_module_6_tp",
+        name = "BMS 1 Module 6 Total Output Energy",
+        key = "bms_1_module_6_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6828,7 +6856,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -6845,8 +6873,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Total Throughput",
-        key = "bms_2_module_1_tp",
+        name = "BMS 2 Module 1 Total Output Energy",
+        key = "bms_2_module_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7130,7 +7158,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
@@ -7147,8 +7175,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Total Throughput",
-        key = "bms_2_module_2_tp",
+        name = "BMS 2 Module 2 Total Output Energy",
+        key = "bms_2_module_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7236,7 +7264,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7253,8 +7281,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Total Throughput",
-        key = "bms_2_module_3_tp",
+        name = "BMS 2 Module 3 Total Output Energy",
+        key = "bms_2_module_3_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7342,7 +7370,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -7359,8 +7387,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Total Throughput",
-        key = "bms_2_module_4_tp",
+        name = "BMS 2 Module 4 Total Output Energy",
+        key = "bms_2_module_4_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7448,7 +7476,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7465,8 +7493,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Total Throughput",
-        key = "bms_2_module_5_tp",
+        name = "BMS 2 Module 5 Total Output Energy",
+        key = "bms_2_module_5_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7554,7 +7582,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
+        entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
@@ -7571,8 +7599,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Total Throughput",
-        key = "bms_2_module_6_tp",
+        name = "BMS 2 Module 6 Total Output Energy",
+        key = "bms_2_module_6_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -7968,8 +7996,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery-heart",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Total Throughput",
-        key = "bms_1_tp",
+        name = "BMS 1 Total Output Energy",
+        key = "bms_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -8036,8 +8064,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery-heart",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Total Throughput",
-        key = "bms_2_tp",
+        name = "BMS 2 Total Output Energy",
+        key = "bms_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
