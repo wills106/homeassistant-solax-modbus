@@ -5782,6 +5782,10 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     
     
     ############ NEW entities TEST #######
+
+
+
+
     GrowattModbusSensorEntityDescription(
         name = "Mode",
         key = "mode",
@@ -7797,6 +7801,63 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Max Cell Temp",
+        key = "bms_1_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4035, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Min Cell Temp",
+        key = "bms_1_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4036, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
+   GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Max Cell Temp",
+        key = "bms_2_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4143, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Min Cell Temp",
+        key = "bms_2_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4144, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),  
+
+    GrowattModbusSensorEntityDescription(
         name = "BMS 1 Monitoring Version",
         key = "bms_1_monitoring_version",
         value_function = value_function_bms_1_monitoring_version,
@@ -8106,8 +8167,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "FirmwareNew Version",
-        key = "firmwarenew_version",
+        name = "Firmware Version",
+        key = "firmware_version",
         register = 82,
         unit = REGISTER_STR,
         wordcount=5,
@@ -8767,7 +8828,7 @@ class growatt_plugin(plugin_base):
         
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {identifynumber}")
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - build version : {identifynumber}")
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
