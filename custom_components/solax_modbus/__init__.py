@@ -467,7 +467,7 @@ class SolaXModbusHub:
             for group in interval_group.device_groups.values():
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
-                    self.slowdown = 1  # return to full polling after succesfull cycle
+                    self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                 else:
