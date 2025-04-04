@@ -1005,7 +1005,7 @@ class solax_ev_charger_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: cannot find serial number for EV Charger")
             seriesnumber = "unknown"
 
-        # derive invertertupe from seriiesnumber
+        # derive invertertupe from seriesnumber
         if seriesnumber.startswith("C107"):
             invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase
         elif seriesnumber.startswith("C311"):
@@ -1014,6 +1014,8 @@ class solax_ev_charger_plugin(plugin_base):
             invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
+        elif seriesnumber.startswith("5030"):
+            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
         # add cases here
         else:
             invertertype = 0
