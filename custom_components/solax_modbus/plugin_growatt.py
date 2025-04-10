@@ -92,7 +92,7 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order16: int = Endian.BIG
     order32: int = Endian.BIG
     unit: int = REGISTER_U16
-    register_type: int= REG_HOLDING
+    register_type: int = REG_HOLDING
 
 # ====================================== Computed value functions  =================================================
 
@@ -255,34 +255,72 @@ def value_function_combined_battery_power(initval, descr, datadict):
 
 def value_function_bms_1_flag_text(initval, descr, datadict):
     bms_1_flag =  datadict.get('bms_1_flag_test', 0)
+    explanations = []
+
+    # Bit 0: ChargeEn
     if bms_1_flag & (1 << 0) and bms_1_flag & (1 << 1):
-        return "Allows charge and discharge"
+        explanations.append("Allows charging and discharging")
+
     elif bms_1_flag & (1 << 0):
-        return "Allows charge"
+        explanations.append("Allows charging")
+
+    # Bit 1: DischargeEn
     elif bms_1_flag & (1 << 1):
-        return "Allows discharge"
+        explanations.append("Allows discharging")
+
+    # Bit 8–11: WarnSubCode
+    warn_subcode = (bms_1_flag >> 8) & 0xF
+    if 0 < warn_subcode:
+        explanations.append(f"Warning subcode: {warn_subcode}")
+
+    # Bit 12–15: FaultSubCode
+    fault_subcode = (bms_1_flag >> 12) & 0xF
+    if 0 < fault_subcode:
+        explanations.append(f"Fault subcode: {fault_subcode}")
+
+    if bms_1_flag == 0:
+        return f"Standby"
     else:
-        return "Doesn't allow charge nor discharge"
+        return f"Decimal {bms_1_flag} (0x{bms_1_flag:04X}):\n" + "\n".join(explanations)
 
 def value_function_bms_2_flag_text(initval, descr, datadict):
     bms_2_flag =  datadict.get('bms_2_flag_test', 0)
+    explanations = []
+
+    # Bit 0: ChargeEn
     if bms_2_flag & (1 << 0) and bms_2_flag & (1 << 1):
-        return "Allows charge and discharge"
+        explanations.append("Allows charging and discharging")
+
     elif bms_2_flag & (1 << 0):
-        return "Allows charge"
+        explanations.append("Allows charging")
+
+    # Bit 1: DischargeEn
     elif bms_2_flag & (1 << 1):
-        return "Allows discharge"
+        explanations.append("Allows discharging")
+
+    # Bit 8–11: WarnSubCode
+    warn_subcode = (bms_2_flag >> 8) & 0xF
+    if 0 < warn_subcode:
+        explanations.append(f"Warning subcode: {warn_subcode}")
+
+    # Bit 12–15: FaultSubCode
+    fault_subcode = (bms_2_flag >> 12) & 0xF
+    if 0 < fault_subcode:
+        explanations.append(f"Fault subcode: {fault_subcode}")
+
+    if bms_2_flag == 0:
+        return f"Standby"
     else:
-        return "Doesn't allow charge nor discharge"
+        return f"Decimal {bms_2_flag} (0x{bms_2_flag:04X}):\n" + "\n".join(explanations)
 
 def value_function_bms_1_charge_req_flag_text(initval, descr, datadict):
     bms_1_flag =  datadict.get('bms_1_charge_req_flag_test', 0)
     bit_labels = {
-        0: "Bit 0: Allow discharge",
-        1: "Bit 1: Enable strong charge",
-        2: "Bit 2: Enable strong charge 2",
-        8: "Bit 8: Discharge is prohibited",
-        9: "Bit 9: Power reduction is on",
+        0: "Allow discharge",
+        1: "Enable strong charge",
+        2: "Enable strong charge 2",
+        8: "Discharge is prohibited",
+        9: "Power reduction is on",
     }
     explanations = []
     for bit, label in bit_labels.items():
@@ -291,16 +329,16 @@ def value_function_bms_1_charge_req_flag_text(initval, descr, datadict):
     if not explanations:
         return f"Allow charge and discharge"
     else:
-        return f"Decimal {bms_1_flag}:\n" + "\n".join(explanations)
+        return f"\n".join(explanations)
 
 def value_function_bms_2_charge_req_flag_text(initval, descr, datadict):
     bms_2_flag =  datadict.get('bms_2_charge_req_flag_test', 0)
     bit_labels = {
-        0: "Bit 0: Allow discharge",
-        1: "Bit 1: Enable strong charge",
-        2: "Bit 2: Enable strong charge 2",
-        8: "Bit 8: Discharge is prohibited",
-        9: "Bit 9: Power reduction is on",
+        0: "Allow discharge",
+        1: "Enable strong charge",
+        2: "Enable strong charge 2",
+        8: "Discharge is prohibited",
+        9: "Power reduction is on",
     }
     explanations = []
     for bit, label in bit_labels.items():
@@ -309,7 +347,7 @@ def value_function_bms_2_charge_req_flag_text(initval, descr, datadict):
     if not explanations:
         return f"Allow charge and discharge"
     else:
-        return f"Decimal {bms_2_flag}:\n" + "\n".join(explanations)
+        return f"\n".join(explanations)
 
 def value_function_combined_bms_1_power(initval, descr, datadict):
     return  datadict.get('bms_1_charge_power', 0) - datadict.get('bms_1_discharge_power',0)
@@ -1784,7 +1822,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "build_version",
         register = 9,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount = 3,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -1794,7 +1832,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "communication_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = ALL_GEN_GROUP,
 	internal = True,
     ),
@@ -1843,7 +1881,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 23,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         allowedtypes = GEN | GEN2 | GEN3 | SPF,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2426,7 +2464,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 3001,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -3739,7 +3777,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy",
         key = "today_s_solar_energy",
-        value_function= value_function_today_s_solar_energy,
+        value_function = value_function_today_s_solar_energy,
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3944,7 +3982,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
         key = "battery_combined_power",
-        value_function= value_function_combined_battery_power,
+        value_function = value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4604,7 +4642,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Combined Power",
         key = "bms_1_combined_power",
-        value_function= value_function_combined_bms_1_power,
+        value_function = value_function_combined_bms_1_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4614,7 +4652,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         GrowattModbusSensorEntityDescription(
         name = "BMS 2 Combined Power",
         key = "bms_2_combined_power",
-        value_function= value_function_combined_bms_2_power,
+        value_function = value_function_combined_bms_2_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -5366,7 +5404,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_monitoring_version",
         register = 3096, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4 | HYBRID,
         internal = True,
     ),
@@ -5386,7 +5424,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_control_version_ascii",
         register = 5014, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4,
         internal = True,
     ),
@@ -5402,7 +5440,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_monitoring_version_ascii",
         register = 5011, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4,
         internal = True,
     ),
@@ -5418,7 +5456,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_control_version_ascii",
         register = 5054, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4,
         internal = True,
     ),
@@ -5434,7 +5472,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_monitoring_version_ascii",
         register = 5051, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4,
         internal = True,
     ),
@@ -6127,12 +6165,52 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),   
-       GrowattModbusSensorEntityDescription(
-        name = "Inverter Warning Maincode2",
-        key = "inverter_warning_maincode2",
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Maincode Text",
+        key = "inverter_warning_maincode_text",
         register = 3106,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
+        scale = {
+            0: "Normal",
+            200: "PV string fault",
+            201: "PV string/PID quick-connect terminals abnormal",
+            202: "DC SPD function abnormal",
+            203: "PV1 or PV2 short circuited",
+            204: "Dry contact function abnormal",
+            205: "PV boost driver abnormal",
+            206: "AC SPD function abnormal",
+            207: "USB flash drive overcurrent protection",
+            208: "DC fuse blown",
+            209: "DC input voltage exceeds the upper threshold",
+            210: "PV wiring abnormal",
+            217: "BDC abnormal",
+            218: "BDC Bus disconnected",
+            219: "PID function abnormal",
+            220: "PV string disconnected",
+            221: "PV string current unbalanced",
+            300: "No utility grid connected or utility grid power failure",
+            301: "Grid voltage is beyond the permissible range",
+            302: "Grid frequency is beyond the permissible range",
+            303: "Off-grid mode, overload",
+            400: "Fan failure",
+            401: "Meter abnormal",
+            406: "Boost circuit malfunction",
+            407: "Over-temperature",
+            408: "NTC temperature sensor is broken",
+            409: "Reactive power scheduling communication failure",
+            411: "Sync signal abnormal",
+            600: "DC component excessively high in output current",
+            601: "DC component excessively high in output voltage",
+            602: "Off-grid output voltage too low",
+            603: "Off-grid output voltage too high",
+            604: "Off-grid output overcurrent",
+            605: "Off-grid bus voltage too low",
+            606: "Off-grid output overloaded",
+            607: "Communication with the backup box is abnormal",
+            608: "Backup box is abnormal",
+            609: "Balanced circuit abnormal"
+        },
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -6168,29 +6246,9 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "Inverter Fault Maincode2",
-        key = "inverter_fault_maincode2",
+        name = "Inverter Fault Maincode Text",
+        key = "inverter_fault_maincode_text",
         register = 3105,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),    
-    GrowattModbusSensorEntityDescription(
-        name = "Inverter Fault Subcode2",
-        key = "inverter_fault_subncode2",
-        register = 3107,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),    
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Fault Code",
-        key = "bms_1_fault_code",
-        register = 4010,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         scale = {
@@ -6246,6 +6304,45 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Subcode2",
+        key = "inverter_fault_subncode2",
+        register = 3107,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Fault Code",
+        key = "bms_1_fault_code",
+        register = 4010,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = {
+            0: "Normal",
+            404: "BM to PM undervoltage",  
+            406: "BM to PM transient overvoltage",  
+            407: "BM to PM open-circuited BM",  
+            408: "Over-Temp",  
+            409: "Overvoltage PM to INV transient",  
+            411: "Abnormal communication with INV/Abnormal serial communication with the master/Abnormal communication with INV/Abnormal communication with BM/Multiple Masters failure",  
+            416: "Overcurrent Transient overvoltage/Overcurrent Transient/BM to PM overcurrent",  
+            417: "Mismatched software/hardware model",  
+            419: "Inconsistent hardware/software version",  
+            500: "CAN parallel connection failed",  
+            505: "Calibration failed PM to INV voltage",  
+            506: "Open-circuited PM circuit breake/PM fuse open-circuited/PM to INV short-circuited (power cables reversed)",  
+            508: "Transient overvoltage",  
+            603: "PM to INV voltage soft start failed",  
+            700: "Temperature sensor open-circuited",  
+            707: "Overload fault"  
+            },
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
         name = "BMS 1 Warning Code",
         key = "bms_1_warning_code",
         register = 4011,
@@ -6253,45 +6350,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_U16,
         scale = {
             0: "Normal",
-            200: "PV string fault",
-            201: "PV string/PID quick-connect terminals abnormal",
-            202: "DC SPD function abnormal",
-            203: "PV1 or PV2 short circuited",
-            204: "Dry contact function abnormal",
-            205: "PV boost driver abnormal",
-            206: "AC SPD function abnormal",
-            207: "USB flash drive overcurrent protection",
-            208: "DC fuse blown",
-            209: "DC input voltage exceeds the upper threshold",
-            210: "PV wiring abnormal",
-            217: "BDC abnormal",
-            218: "BDC Bus disconnected",
-            219: "PID function abnormal",
-            220: "PV string disconnected",
-            221: "PV string current unbalanced",
-            300: "No utility grid connected or utility grid power failure",
-            301: "Grid voltage is beyond the permissible range",
-            302: "Grid frequency is beyond the permissible range",
-            303: "Off-grid mode, overload",
-            400: "Fan failure",
-            401: "Meter abnormal",
-            406: "Boost circuit malfunction",
-            407: "Over-temperature",
-            408: "NTC temperature sensor is broken",
-            409: "Reactive power scheduling communication failure",
-            411: "Sync signal abnormal",
-            600: "DC component excessively high in output current",
-            601: "DC component excessively high in output voltage",
-            602: "Off-grid output voltage too low",
-            603: "Off-grid output voltage too high",
-            604: "Off-grid output overcurrent",
-            605: "Off-grid bus voltage too low",
-            606: "Off-grid output overloaded",
-            607: "Communication with the backup box is abnormal",
-            608: "Backup box is abnormal",
-            609: "Balanced circuit abnormal",
-            703: "Battery is fully charged",
-        },        
+            404 : "Abnormal EEPROM",
+            410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
+            411 : "Parallel communication failed",
+            417 : "BM and PM software version mismatched",
+            431 : "BOOT abnormal",
+            500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
+            506 : "Warning 506, Cannot find what this means",
+            701 : "Battery not discharging",
+            702 : "Forced charge is required",
+            703 : "All modules are fully charged",
+            704 : "Battery overvoltage PM to INV",
+            705 : "PM to INV overvoltage",
+            707 : "Discharge Overload Alarm",
+            708 : "Discharge Overload Anomaly"
+        },   
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -6302,6 +6375,25 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 4118,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
+        scale = {
+            0: "Normal",
+            404: "BM to PM undervoltage",  
+            406: "BM to PM transient overvoltage",  
+            407: "BM to PM open-circuited BM",  
+            408: "Over-Temp",  
+            409: "Overvoltage PM to INV transient",  
+            411: "Abnormal communication with INV/Abnormal serial communication with the master/Abnormal communication with INV/Abnormal communication with BM/Multiple Masters failure",  
+            416: "Overcurrent Transient overvoltage/Overcurrent Transient/BM to PM overcurrent",  
+            417: "Mismatched software/hardware model",  
+            419: "Inconsistent hardware/software version",  
+            500: "CAN parallel connection failed",  
+            505: "Calibration failed PM to INV voltage",  
+            506: "Open-circuited PM circuit breake/PM fuse open-circuited/PM to INV short-circuited (power cables reversed)",  
+            508: "Transient overvoltage",  
+            603: "PM to INV voltage soft start failed",  
+            700: "Temperature sensor open-circuited",  
+            707: "Overload fault"  
+            },
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -6312,6 +6404,23 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 4119,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
+        scale = {
+            0: "Normal",
+            404 : "Abnormal EEPROM",
+            410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
+            411 : "Parallel communication failed",
+            417 : "BM and PM software version mismatched",
+            431 : "BOOT abnormal",
+            500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
+            506 : "Warning 506, Cannot find what this means",
+            701 : "Battery not discharging",
+            702 : "Forced charge is required",
+            703 : "All modules are fully charged",
+            704 : "Battery overvoltage PM to INV",
+            705 : "PM to INV overvoltage",
+            707 : "Discharge Overload Alarm",
+            708 : "Discharge Overload Anomaly"
+        },       
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -6327,10 +6436,10 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software version mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
-                701 : "Module not discharging alarm",
+                701 : "Module not discharging",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
                 704 : "Module overvoltage PM to INV",
@@ -7436,14 +7545,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 4055,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "dormancy",
-                  1: "Charge",
-                  2: "Discharge",
-                  3: "free",
-                  4: "standby",
+        scale = { 0: "Dormancy",
+                  1: "Charging",
+                  2: "Discharging",
+                  3: "Free",
+                  4: "Standby",
                   5: "Soft start",
-                  6: "fault",
-                  7: "update" },
+                  6: "Fault",
+                  7: "Updating" },
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -7454,14 +7563,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 4163,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "dormancy",
-                  1: "Charge",
-                  2: "Discharge",
-                  3: "free",
-                  4: "standby",
+        scale = { 0: "Dormancy",
+                  1: "Charging",
+                  2: "Discharging",
+                  3: "Free",
+                  4: "Standby",
                   5: "Soft start",
-                  6: "fault",
-                  7: "update" },
+                  6: "Fault",
+                  7: "Updating" },
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
@@ -8398,6 +8507,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),
+    GrowattModbusSensorEntityDescription(
+        name = "BDC's Connected",
+        key = "bdcs_connceted",
+        register = 3118,
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
+        scale = { 0: "No BDC Connected",
+                  1: "BDC 1 Connected",
+                  2: "BDC 2 Connected",
+                  3: "BDC 1 & 2 Connected",
+        },
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),   
     GrowattModbusSensorEntityDescription(
         name = "Inverter Total Module Count",
         key = "inverter_total_module_count",
@@ -9498,7 +9622,7 @@ plugin_instance = growatt_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
-    SWITCH_TYPES= [],
+    SWITCH_TYPES = [],
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
