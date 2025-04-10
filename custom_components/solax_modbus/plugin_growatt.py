@@ -3173,7 +3173,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Work Time3",
+        name = "Total Work Time",
         key = "total_work_time",
         native_unit_of_measurement = UnitOfTime.HOURS,
         device_class = SensorDeviceClass.DURATION,
@@ -3509,8 +3509,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Work Time",
-        key = "total_work_time",
+        name = "Total Work Time Hours",
+        key = "total_work_time_hours",
         native_unit_of_measurement = UnitOfTime.HOURS,
         device_class = SensorDeviceClass.DURATION,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -9207,7 +9207,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = SPF,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Work Time2",
+        name = "Total Work Time",
         key = "total_work_time",
         native_unit_of_measurement = UnitOfTime.SECONDS,
         device_class = SensorDeviceClass.DURATION,
