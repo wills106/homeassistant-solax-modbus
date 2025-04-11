@@ -254,7 +254,7 @@ def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
 def value_function_bms_1_flag_text(initval, descr, datadict):
-    bms_1_flag =  datadict.get('bms_1_flag_test', 0)
+    bms_1_flag =  datadict.get('bms_1_flag', 0)
     explanations = []
 
     # Bit 0: ChargeEn
@@ -284,7 +284,7 @@ def value_function_bms_1_flag_text(initval, descr, datadict):
         return f"Decimal {bms_1_flag} (0x{bms_1_flag:04X}):\n" + "\n".join(explanations)
 
 def value_function_bms_2_flag_text(initval, descr, datadict):
-    bms_2_flag =  datadict.get('bms_2_flag_test', 0)
+    bms_2_flag =  datadict.get('bms_2_flag', 0)
     explanations = []
 
     # Bit 0: ChargeEn
@@ -314,7 +314,7 @@ def value_function_bms_2_flag_text(initval, descr, datadict):
         return f"Decimal {bms_2_flag} (0x{bms_2_flag:04X}):\n" + "\n".join(explanations)
 
 def value_function_bms_1_charge_req_flag_text(initval, descr, datadict):
-    bms_1_flag =  datadict.get('bms_1_charge_req_flag_test', 0)
+    bms_1_flag =  datadict.get('bms_1_charge_req_flag', 0)
     bit_labels = {
         0: "Allow discharge",
         1: "Enable strong charge",
@@ -332,7 +332,7 @@ def value_function_bms_1_charge_req_flag_text(initval, descr, datadict):
         return f"\n".join(explanations)
 
 def value_function_bms_2_charge_req_flag_text(initval, descr, datadict):
-    bms_2_flag =  datadict.get('bms_2_charge_req_flag_test', 0)
+    bms_2_flag =  datadict.get('bms_2_charge_req_flag', 0)
     bit_labels = {
         0: "Allow discharge",
         1: "Enable strong charge",
@@ -4666,21 +4666,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         internal = True,
     ),
-	  GrowattModbusSensorEntityDescription(
+	GrowattModbusSensorEntityDescription(
         key = "register_119",
         register = 119,
         register_type = REG_HOLDING,
         allowedtypes = GEN4,
         internal = True,
     ),
-	  GrowattModbusSensorEntityDescription(
+	GrowattModbusSensorEntityDescription(
         key = "register_120",
         register = 120,
         register_type = REG_HOLDING,
         allowedtypes = GEN4,
         internal = True,
     ),
-	  GrowattModbusSensorEntityDescription(
+	GrowattModbusSensorEntityDescription(
         key = "register_121",
         register = 121,
         register_type = REG_HOLDING,
@@ -6329,7 +6329,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             411: "Abnormal communication with INV/Abnormal serial communication with the master/Abnormal communication with INV/Abnormal communication with BM/Multiple Masters failure",  
             416: "Overcurrent Transient overvoltage/Overcurrent Transient/BM to PM overcurrent",  
             417: "Mismatched software/hardware model",  
-            419: "Inconsistent hardware/software version",  
+            419: "Inconsistent software/hardware version",  
             500: "CAN parallel connection failed",  
             505: "Calibration failed PM to INV voltage",  
             506: "Open-circuited PM circuit breake/PM fuse open-circuited/PM to INV short-circuited (power cables reversed)",  
@@ -6349,21 +6349,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         scale = {
-            0: "Normal",
-            404 : "Abnormal EEPROM",
-            410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
-            411 : "Parallel communication failed",
-            417 : "BM and PM software version mismatched",
-            431 : "BOOT abnormal",
-            500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
-            506 : "Warning 506, Cannot find what this means",
-            701 : "Battery not discharging",
-            702 : "Forced charge is required",
-            703 : "All modules are fully charged",
-            704 : "Battery overvoltage PM to INV",
-            705 : "PM to INV overvoltage",
-            707 : "Discharge Overload Alarm",
-            708 : "Discharge Overload Anomaly"
+                0: "Normal",
+                404 : "Abnormal EEPROM",
+                410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
+                411 : "Parallel communication failed",
+                417 : "BM and PM software versions mismatched",
+                431 : "BOOT abnormal",
+                500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
+                506 : "Warning 506, meaning unknown",
+                701 : "Battery not discharging",
+                702 : "Forced charge is required",
+                703 : "All modules are fully charged",
+                704 : "PM to INV overvoltage",
+                705 : "PM to INV overvoltage",
+                707 : "Discharge Overload Alarm",
+                708 : "Discharge Overload Anomaly"
         },   
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
@@ -6385,7 +6385,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             411: "Abnormal communication with INV/Abnormal serial communication with the master/Abnormal communication with INV/Abnormal communication with BM/Multiple Masters failure",  
             416: "Overcurrent Transient overvoltage/Overcurrent Transient/BM to PM overcurrent",  
             417: "Mismatched software/hardware model",  
-            419: "Inconsistent hardware/software version",  
+            419: "Inconsistent software/hardware version",  
             500: "CAN parallel connection failed",  
             505: "Calibration failed PM to INV voltage",  
             506: "Open-circuited PM circuit breake/PM fuse open-circuited/PM to INV short-circuited (power cables reversed)",  
@@ -6405,21 +6405,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         scale = {
-            0: "Normal",
-            404 : "Abnormal EEPROM",
-            410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
-            411 : "Parallel communication failed",
-            417 : "BM and PM software version mismatched",
-            431 : "BOOT abnormal",
-            500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
-            506 : "Warning 506, Cannot find what this means",
-            701 : "Battery not discharging",
-            702 : "Forced charge is required",
-            703 : "All modules are fully charged",
-            704 : "Battery overvoltage PM to INV",
-            705 : "PM to INV overvoltage",
-            707 : "Discharge Overload Alarm",
-            708 : "Discharge Overload Anomaly"
+                0: "Normal",
+                404 : "Abnormal EEPROM",
+                410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
+                411 : "Parallel communication failed",
+                417 : "BM and PM software versions mismatched",
+                431 : "BOOT abnormal",
+                500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
+                506 : "Warning 506, meaning unknown",
+                701 : "Battery not discharging",
+                702 : "Forced charge is required",
+                703 : "All modules are fully charged",
+                704 : "PM to INV overvoltage",
+                705 : "PM to INV overvoltage",
+                707 : "Discharge Overload Alarm",
+                708 : "Discharge Overload Anomaly"
         },       
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
@@ -6436,13 +6436,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM software version mismatched",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
-                701 : "Module not discharging",
+                701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6462,13 +6462,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6488,13 +6488,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6514,13 +6514,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6540,13 +6540,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6566,13 +6566,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6592,13 +6592,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6618,13 +6618,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6644,13 +6644,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6670,13 +6670,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6696,13 +6696,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -6722,13 +6722,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                 404 : "Abnormal EEPROM",
                 410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
                 411 : "Parallel communication failed",
-                417 : "BM and PM mismatched software version",
+                417 : "BM and PM software versions mismatched",
                 431 : "BOOT abnormal",
                 500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
                 701 : "Module not discharging alarm",
                 702 : "Forced charge is required",
                 703 : "Module is fully charged",
-                704 : "Module overvoltage PM to INV",
+                704 : "PM to INV overvoltage",
                 705 : "PM to INV overvoltage",
                 707 : "Discharge Overload Alarm",
                 708 : "Discharge Overload Anomaly"
@@ -7470,8 +7470,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Flag TEST",
-        key = "bms_1_flag_test",
+        name = "BMS 1 Flag",
+        key = "bms_1_flag",
         register = 4030,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -7494,8 +7494,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Flag TEST",
-        key = "bms_2_flag_test",
+        name = "BMS 2 Flag",
+        key = "bms_2_flag",
         register = 4138,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -7504,8 +7504,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Charge Req Flag TEST",
-        key = "bms_1_charge_req_flag_test",
+        name = "BMS 1 Charge Req Flag",
+        key = "bms_1_charge_req_flag",
         register = 4054,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -7521,8 +7521,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Charge Req Flag TEST",
-        key = "bms_2_charge_req_flag_test",
+        name = "BMS 2 Charge Req Flag",
+        key = "bms_2_charge_req_flag",
         register = 4162,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
