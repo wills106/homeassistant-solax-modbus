@@ -253,6 +253,159 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
 
+def value_function_battery_warning_code(initval, descr, datadict):
+    main_code = datadict.get('battery_warning_maincode', 0)
+    sub_code = datadict.get('bnattery_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_battery_warning_code_text(initval, descr, datadict):
+    main_code = datadict.get('battery_warning_maincode', 0)
+    sub_code = datadict.get('battery_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "PV string fault",
+        (201, 0): "PV string/PID quick-connect terminals abnormal",
+        (202, 0): "DC SPD function abnormal",
+        (203, 0): "PV1 or PV2 short circuited",
+        (204, 0): "Dry contact function abnormal",
+        (205, 0): "PV boost driver abnormal",
+        (206, 0): "AC SPD function abnormal",
+        (207, 0): "USB flash drive overcurrent protection",
+        (208, 0): "DC fuse blown",
+        (209, 0): "DC input voltage exceeds the upper threshold",
+        (210, 0): "PV wiring abnormal",
+        (217, 0): "BMS abnormal",
+        (218, 0): "BMS Bus disconnected",
+        (219, 0): "PID function abnormal",
+        (220, 0): "PV string disconnected",
+        (221, 0): "PV string current unbalanced",
+        (300, 0): "No utility grid connected or utility grid power failure",
+        (301, 0): "Grid voltage is beyond the permissible range",
+        (302, 0): "Grid frequency is beyond the permissible range",
+        (303, 0): "Off-grid mode, overload",
+        (400, 0): "Fan failure",
+        (401, 0): "Meter abnormal",
+        (406, 0): "Boost circuit malfunction",
+        (407, 0): "Over-temperature",
+        (408, 0): "NTC temperature sensor is broken",
+        (409, 0): "Reactive power scheduling communication failure",
+        (411, 0): "Sync signal abnormal",
+        (600, 0): "DC component excessively high in output current",
+        (601, 0): "DC component excessively high in output voltage",
+        (602, 0): "Off-grid output voltage too low",
+        (603, 0): "Off-grid output voltage too high",
+        (604, 0): "Off-grid output overcurrent",
+        (605, 0): "Off-grid bus voltage too low",
+        (606, 0): "Off-grid output overloaded",
+        (607, 0): "Communication with the backup box is abnormal",
+        (608, 0): "Backup box is abnormal",
+        (609, 0): "Balanced circuit abnormal"
+    }
+    label = bit_labels.get((main_code, sub_code), "Unknown fault")
+    return label
+
+def value_function_inverter_warning_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_inverter_warning_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "PV string fault",
+        (201, 0): "PV string/PID quick-connect terminals abnormal",
+        (202, 0): "DC SPD function abnormal",
+        (203, 0): "PV1 or PV2 short circuited",
+        (204, 0): "Dry contact function abnormal",
+        (205, 0): "PV boost driver abnormal",
+        (206, 0): "AC SPD function abnormal",
+        (207, 0): "USB flash drive overcurrent protection",
+        (208, 0): "DC fuse blown",
+        (209, 0): "DC input voltage exceeds the upper threshold",
+        (210, 0): "PV wiring abnormal",
+        (217, 0): "BMS abnormal",
+        (218, 0): "BMS Bus disconnected",
+        (219, 0): "PID function abnormal",
+        (220, 0): "PV string disconnected",
+        (221, 0): "PV string current unbalanced",
+        (300, 0): "No utility grid connected or utility grid power failure",
+        (301, 0): "Grid voltage is beyond the permissible range",
+        (302, 0): "Grid frequency is beyond the permissible range",
+        (303, 0): "Off-grid mode, overload",
+        (400, 0): "Fan failure",
+        (401, 0): "Meter abnormal",
+        (406, 0): "Boost circuit malfunction",
+        (407, 0): "Over-temperature",
+        (408, 0): "NTC temperature sensor is broken",
+        (409, 0): "Reactive power scheduling communication failure",
+        (411, 0): "Sync signal abnormal",
+        (600, 0): "DC component excessively high in output current",
+        (601, 0): "DC component excessively high in output voltage",
+        (602, 0): "Off-grid output voltage too low",
+        (603, 0): "Off-grid output voltage too high",
+        (604, 0): "Off-grid output overcurrent",
+        (605, 0): "Off-grid bus voltage too low",
+        (606, 0): "Off-grid output overloaded",
+        (607, 0): "Communication with the backup box is abnormal",
+        (608, 0): "Backup box is abnormal",
+        (609, 0): "Balanced circuit abnormal"
+    }
+    label = bit_labels.get((main_code, sub_code), "Unknown fault")
+    return label
+
+def value_function_inverter_fault_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_inverter_fault_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    bit_labels = {
+        (0,0 ): "Normal",
+        (200, 0): "PV string fault",
+        (201, 0): "PV string/PID quick-connect terminals abnormal",
+        (202, 0): "DC SPD function abnormal",
+        (203, 0): "PV1 or PV2 short circuited",
+        (204, 0): "Dry contact function abnormal",
+        (205, 0): "PV boost driver abnormal",
+        (206, 0): "AC SPD function abnormal",
+        (207, 0): "USB flash drive overcurrent protection",
+        (208, 0): "DC fuse blown",
+        (209, 0): "DC input voltage exceeds the upper threshold",
+        (210, 0): "PV wiring abnormal",
+        (217, 0): "BMS abnormal",
+        (218, 0): "BMS Bus disconnected",
+        (219, 0): "PID function abnormal",
+        (220, 0): "PV string disconnected",
+        (221, 0): "PV string current unbalanced",
+        (300, 0): "No utility grid connected or utility grid power failure",
+        (301, 0): "Grid voltage is beyond the permissible range",
+        (302, 0): "Grid frequency is beyond the permissible range",
+        (303, 0): "Off-grid mode, overload",
+        (400, 0): "Fan failure",
+        (401, 0): "Meter abnormal",
+        (406, 0): "Boost circuit malfunction",
+        (407, 0): "Over-temperature",
+        (408, 0): "NTC temperature sensor is broken",
+        (409, 0): "Reactive power scheduling communication failure",
+        (411, 0): "Sync signal abnormal",
+        (600, 0): "DC component excessively high in output current",
+        (601, 0): "DC component excessively high in output voltage",
+        (602, 0): "Off-grid output voltage too low",
+        (603, 0): "Off-grid output voltage too high",
+        (604, 0): "Off-grid output overcurrent",
+        (605, 0): "Off-grid bus voltage too low",
+        (606, 0): "Off-grid output overloaded",
+        (607, 0): "Communication with the backup box is abnormal",
+        (608, 0): "Backup box is abnormal",
+        (609, 0): "Balanced circuit abnormal"
+        }
+    label = bit_labels.get((main_code, sub_code), "Unknown fault")
+    return label
+
 def value_function_bms_1_flag_text(initval, descr, datadict):
     bms_1_flag =  datadict.get('bms_1_flag', 0)
     explanations = []
@@ -282,6 +435,15 @@ def value_function_bms_1_flag_text(initval, descr, datadict):
         return f"Standby"
     else:
         return f"Decimal {bms_1_flag} (0x{bms_1_flag:04X}):\n" + "\n".join(explanations)
+def value_function_bms_1_warning_maincode(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_warning_maincode', 0)
+    warn_subcode = (bms_1_flag >> 8) & 0xF
+    return warn_subcode
+
+def value_function_bms_1_fault_code(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_flag', 0)
+    fault_subcode = (bms_1_flag >> 12) & 0xF
+    return fault_subcode
 
 def value_function_bms_2_flag_text(initval, descr, datadict):
     bms_2_flag =  datadict.get('bms_2_flag', 0)
@@ -2697,6 +2859,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 0,
         scale = { 0: "Waiting",
                   1: "Normal Mode",
+                  2: "?",
                   3: "Permanent Fault Mode" },
         register_type = REG_INPUT,
         allowedtypes = GEN,
@@ -3943,10 +4106,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1000,
         scale = { 0: "Waiting",
                   1: "Self Test",
+                  2: "2, ?",
                   3: "Permanent Fault Mode",
                   4: "Update Mode",
                   5: "PV Bat Online",
                   6: "Bat Online",
+                  7: "7, ?",
                   8: "Normal Mode",
                   9: "Bypass" },
         register_type = REG_INPUT,
@@ -5890,9 +6055,34 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     
     ############ NEW entities TEST #######
 
-
-
-
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Code",
+        key = "inverter_warning_code",
+        value_function = value_function_inverter_warning_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ), 
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Code",
+        key = "inverter_fault_code",
+        value_function = value_function_inverter_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Text",
+        key = "inverter_warning_text",
+        value_function = value_function_inverter_warning_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Text",
+        key = "inverter_fault_text",
+        value_function = value_function_inverter_fault_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Mode",
         key = "mode",
@@ -5920,7 +6110,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),       
-
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 3 Combined Current",
         key = "bms_1_module_3_combined_current",
@@ -5931,7 +6120,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 4 Combined Current",
         key = "bms_1_module_4_combined_current",
@@ -5942,7 +6130,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 5 Combined Current",
         key = "bms_1_module_5_combined_current",
@@ -5953,7 +6140,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 6 Combined Current",
         key = "bms_1_module_6_combined_current",
@@ -5994,7 +6180,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         icon = "mdi:battery",       
     ),
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 2 Module 4 Combined Current",
         key = "bms_2_module_4_combined_current",
@@ -6166,66 +6351,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
-        name = "Inverter Warning Maincode Text",
-        key = "inverter_warning_maincode_text",
-        register = 3106,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        scale = {
-            0: "Normal",
-            200: "PV string fault",
-            201: "PV string/PID quick-connect terminals abnormal",
-            202: "DC SPD function abnormal",
-            203: "PV1 or PV2 short circuited",
-            204: "Dry contact function abnormal",
-            205: "PV boost driver abnormal",
-            206: "AC SPD function abnormal",
-            207: "USB flash drive overcurrent protection",
-            208: "DC fuse blown",
-            209: "DC input voltage exceeds the upper threshold",
-            210: "PV wiring abnormal",
-            217: "BMS abnormal",
-            218: "BMS Bus disconnected",
-            219: "PID function abnormal",
-            220: "PV string disconnected",
-            221: "PV string current unbalanced",
-            300: "No utility grid connected or utility grid power failure",
-            301: "Grid voltage is beyond the permissible range",
-            302: "Grid frequency is beyond the permissible range",
-            303: "Off-grid mode, overload",
-            400: "Fan failure",
-            401: "Meter abnormal",
-            406: "Boost circuit malfunction",
-            407: "Over-temperature",
-            408: "NTC temperature sensor is broken",
-            409: "Reactive power scheduling communication failure",
-            411: "Sync signal abnormal",
-            600: "DC component excessively high in output current",
-            601: "DC component excessively high in output voltage",
-            602: "Off-grid output voltage too low",
-            603: "Off-grid output voltage too high",
-            604: "Off-grid output overcurrent",
-            605: "Off-grid bus voltage too low",
-            606: "Off-grid output overloaded",
-            607: "Communication with the backup box is abnormal",
-            608: "Backup box is abnormal",
-            609: "Balanced circuit abnormal"
-        },
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),      
-    GrowattModbusSensorEntityDescription(
-        name = "Inverter Warning Subcode2",
-        key = "inverter_warning_subcode2",
-        register = 3108,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),      
-    GrowattModbusSensorEntityDescription(
         name = "Inverter Fault Maincode",
         key = "inverter_fault_maincode",
         register = 105,
@@ -6246,76 +6371,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "Inverter Fault Maincode Text",
-        key = "inverter_fault_maincode_text",
-        register = 3105,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        scale = {
-            0: "Normal",
-            200: "DC arc fault has been detected",
-            201: "High leakage current detected",
-            202: "PV input voltage exceeds the upper threshold",
-            203: "PV panels have low insulation resistance",
-            204: "PV string reversely connected",
-            300: "Grid voltage is beyond the permissible range",
-            301: "AC terminals reversed",
-            302: "No utility grid connected or utility grid power failure",
-            304: "Grid frequency is beyond the permissible range",
-            305: "Overload",
-            309: "ROCOF Fault",
-            311: "Export limitation fail-safe",
-            401: "High DC component in output voltage",
-            402: "High DC component in output current",
-            403: "Output current unbalanced",
-            404: "Bus voltage sampling abnormal",
-            405: "Relay fault",
-            407: "Auto-test failed",
-            408: "Over-temperature",
-            409: "Bus voltage abnormal",
-            411: "Internal communication failure",
-            412: "Temperature sensor disconnected",
-            416: "DC/AC overcurrent protection",
-            420: "GFCI module abnormal",
-            424: "INV current waveform abnormal",
-            425: "AFCI self-test failure",
-            426: "PV current sampling abnormal",
-            427: "AC current sampling abnormal",
-            428: "BOOST short-circuited",
-            429: "BUS soft start failed",
-            600: "Off-grid output short-circuited",
-            601: "Off-grid Bus Voltage Low",
-            602: "Abnormal voltage at the off-grid terminal",
-            603: "Soft start failed",
-            604: "Off-grid output voltage abnormal",
-            605: "Balanced circuit self-test failed",
-            606: "High DC component in output voltage (off-grid)",
-            607: "Off-grid output overload",
-            608: "Off-grid parallel signal abnormal",
-            609: "Backup box is not detected",
-            610: "Off-grid split-phase voltage abnormal",
-            700: "Abnormal communication between the backup box and the inverter",
-            701: "Backup box grid-side relay failure",
-            703: "Backup box on-grid overload",
-            705: "Overheat inside the backup box"
-            },
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),    
-    GrowattModbusSensorEntityDescription(
-        name = "Inverter Fault Subcode2",
-        key = "inverter_fault_subncode2",
-        register = 3107,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = True,
-        icon = "mdi:battery",
-    ),    
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Fault Code",
-        key = "bms_1_fault_code",
+        name = "BMS 1 Fault Code Text",
+        key = "bms_1_fault_code_text",
         register = 4010,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6341,37 +6398,34 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Warning",
+        key = "bms_1_warning",
+        value_function = value_function_bms_1_warning_maincode,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Fault Code",
+        key = "bms_1_fault_code",
+        value_function = value_function_bms_1_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Warning Code",
-        key = "bms_1_warning_code",
+        name = "BMS 1 Warning Maincode",
+        key = "bms_1_warning_maincode",
         register = 4011,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = {
-                0: "Normal",
-                404 : "Abnormal EEPROM",
-                410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
-                411 : "Parallel communication failed",
-                417 : "BM and PM software versions mismatched",
-                431 : "BOOT abnormal",
-                500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
-                506 : "Warning 506, meaning unknown",
-                701 : "Battery not discharging",
-                702 : "Forced charge is required",
-                703 : "All modules are fully charged",
-                704 : "PM to INV overvoltage",
-                705 : "PM to INV overvoltage",
-                707 : "Discharge Overload Alarm",
-                708 : "Discharge Overload Anomaly"
-        },   
         allowedtypes = GEN4,
         entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Fault Code",
-        key = "bms_2_fault_code",
+        name = "BMS 2 Fault Maincode",
+        key = "bms_2_fault_maincode",
         register = 4118,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6399,8 +6453,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Warning Code",
-        key = "bms_2_warning_code",
+        name = "BMS 2 Warning Code Text",
+        key = "bms_2_warning_code_text",
         register = 4119,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
