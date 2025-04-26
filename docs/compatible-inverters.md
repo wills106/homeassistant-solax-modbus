@@ -189,6 +189,12 @@ Known Serial Numbers
 - XMA
 - XM3
 
+X1-Mini-G4
+Found to work using Modbus but does not work with any other polling period than default 15s
+
+Known Serial Numbers
+- XM4
+
 #### Three Phase
 
 X3 MIC
