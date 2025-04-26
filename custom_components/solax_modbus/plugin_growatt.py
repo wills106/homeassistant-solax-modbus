@@ -98,6 +98,8 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 def value_function_time_slot_1(initval, descr, datadict):
     def time_to_int(time_str):
+        if time_str is None: # If time_x_ entities is disabled.
+            time_str = "00:00"  # Assume "00:00" if the time string is None
         hours, minutes = map(int, time_str.split(':'))
         return (hours * 256) + minutes
 
