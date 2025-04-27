@@ -14,6 +14,7 @@ from weakref import ref as WeakRef
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
+from pymodbus.pdu import register_message
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -547,11 +548,18 @@ class SolaXModbusHub:
 
     async def async_read_holding_registers(self, unit, address, count):
         """Read holding registers."""
-        kwargs = {"slave": unit} if unit else {}
+        #kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
+                pdu_request = register_message.ReadHoldingRegistersRequest(address=address, count=count, dev_id=unit)
+                resp = await self._client.execute(False, pdu_request)
+                if resp.dev_id != pdu_request.dev_id:
+                    _LOGGER.warning("Modbus: ERROR: expected id %s but got %s, IGNORING.", pdu_request.dev_id, resp.dev_id)
+                    return None
+                if pdu_request.transaction_id != resp.transaction_id:
+                    _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
+                    return None
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -560,11 +568,18 @@ class SolaXModbusHub:
 
     async def async_read_input_registers(self, unit, address, count):
         """Read input registers."""
-        kwargs = {"slave": unit} if unit else {}
+        #kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
+                pdu_request = register_message.ReadInputRegistersRequest(address=address, count=count, dev_id=unit)
+                resp = await self._client.execute(False, pdu_request)
+                if resp.dev_id != pdu_request.dev_id:
+                    _LOGGER.warning("Modbus: ERROR: expected id %s but got %s, IGNORING.", pdu_request.dev_id, resp.dev_id)
+                    return None
+                if pdu_request.transaction_id != resp.transaction_id:
+                    _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
+                    return None
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -787,7 +802,7 @@ class SolaXModbusHub:
         except Exception as ex:
             errmsg = f"exception {str(ex)} "
         else:
-            if realtime_data.isError():
+            if realtime_data is None or realtime_data.isError():
                 errmsg = f"read_error "
         if errmsg == None:
             decoder = BinaryPayloadDecoder.fromRegisters(
