@@ -58,10 +58,23 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-async def async_read_serialnr(hub, address):
+async def async_read_buildv(hub, address):
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=5)
+        if not inverter_data.isError():
+            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
+            res = decoder.decode_string(10).decode("ascii")
+            #hub.seriesnumber = res
+    except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
+    if not res: _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
+    _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware number before potential swap: {res}")
+    return res
+
+async def async_read_serialnr(hub, address):
+    res = None
+    try:
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=3)
         if not inverter_data.isError():
             decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
             res = decoder.decode_string(10).decode("ascii")
@@ -92,7 +105,7 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order16: int = Endian.BIG
     order32: int = Endian.BIG
     unit: int = REGISTER_U16
-    register_type: int= REG_HOLDING
+    register_type: int = REG_HOLDING
 
 # ====================================== Computed value functions  =================================================
 
@@ -253,14 +266,440 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
     return  datadict.get('today_s_pv1_solar_energy', 0) + datadict.get('today_s_pv2_solar_energy',0) + datadict.get('today_s_pv3_solar_energy',0) + datadict.get('today_s_pv4_solar_energy',0)
 
 def value_function_combined_battery_power(initval, descr, datadict):
-    return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
+    return  datadict.get('bms_1_charge_power', 0) + datadict.get('bms_2_charge_power',0) - datadict.get('bms_1_discharge_power', 0) - datadict.get('bms_2_discharge_power',0)
 
-def value_function_combined_bms_current(initval, descr, datadict):
-    amp = datadict.get('bms_1_module_2_amp',0)
-    if 0 <= amp <= 250:
-        result = amp
-    elif 6303.5 <= amp <= 6553.5:
-        result = round(-1 * (6553.6 - amp), 1)
+def value_function_battery_soc(initval, descr, datadict):
+    return  datadict.get('bms_1_soc', 0) + datadict.get('bms_2_soc',0)
+
+def value_function_battery_charge_power(initval, descr, datadict):
+    return  datadict.get('bms_1_charge_power', 0) + datadict.get('bms_2_charge_power',0)
+
+def value_function_battery_discharge_power(initval, descr, datadict):
+    return  datadict.get('bms_1_discharge_power', 0) + datadict.get('bms_2_discharge_power',0)
+
+def value_function_module_status(initval, descr, datadict):
+    scale = {
+        1: "Standby",
+        2: "Charging",
+        3: "Discharging",
+        7: "Sleeping",
+    }
+    return scale.get(initval, str(initval) + " Unknown status")
+
+def value_function_inverter_warning_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_module_soc(initval, descr, datadict):
+    soc = initval / 257
+    return int(soc)
+
+def value_function_module_warning_text(initval, descr, datadict):
+    text = {
+        0: "Normal",
+        404 : "Abnormal EEPROM",
+        410 : "External oscillation abnormal/Oscillation abnormal/USB communication abnormal",
+        411 : "Parallel communication failed",
+        417 : "BM and PM software versions mismatched",
+        431 : "BOOT abnormal",
+        500 : "Abnormal CAN communication during parallel operation/BM went offline/Abnormal with PM communication",
+        701 : "Module not discharging alarm",
+        702 : "Forced charge is required",
+        703 : "Module is fully charged",
+        704 : "PM to INV overvoltage",
+        705 : "PM to INV overvoltage",
+        707 : "Discharge Overload Alarm",
+        708 : "Discharge Overload Anomaly"
+    }
+    return text.get(initval, str(initval) + " Unknown status")
+
+def value_function_inverter_warning_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "PV string fault",
+        (201, 0): "PV string/PID quick-connect terminals abnormal",
+        (202, 0): "DC SPD function abnormal",
+        (203, 0): "PV1 or PV2 short circuited",
+        (204, 0): "Dry contact function abnormal",
+        (205, 0): "PV boost driver abnormal",
+        (206, 0): "AC SPD function abnormal",
+        (207, 0): "USB flash drive overcurrent protection",
+        (208, 0): "DC fuse blown",
+        (209, 0): "DC input voltage exceeds the upper threshold",
+        (210, 0): "PV wiring abnormal",
+        (217, 0): "BMS abnormal",
+        (218, 1): "BMS Bus disconnected",
+        (219, 0): "PID function abnormal",
+        (220, 0): "PV string disconnected",
+        (221, 0): "PV string current unbalanced",
+        (300, 0): "No utility grid connected or utility grid power failure",
+        (301, 0): "Grid voltage is beyond the permissible range",
+        (302, 0): "Grid frequency is beyond the permissible range",
+        (303, 0): "Off-grid mode, overload",
+        (400, 0): "Fan failure",
+        (401, 0): "Meter abnormal",
+        (406, 0): "Boost circuit malfunction",
+        (407, 0): "Over-temperature",
+        (408, 0): "NTC temperature sensor is broken",
+        (409, 0): "Reactive power scheduling communication failure",
+        (411, 0): "Sync signal abnormal",
+        (600, 0): "DC component excessively high in output current",
+        (601, 0): "DC component excessively high in output voltage",
+        (602, 0): "Off-grid output voltage too low",
+        (603, 0): "Off-grid output voltage too high",
+        (604, 0): "Off-grid output overcurrent",
+        (605, 0): "Off-grid bus voltage too low",
+        (606, 0): "Off-grid output overloaded",
+        (607, 0): "Communication with the backup box is abnormal",
+        (608, 0): "Backup box is abnormal",
+        (609, 0): "Balanced circuit abnormal"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_inverter_fault_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_inverter_fault_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "DC arc fault has been detected",
+        (201, 0): "High leakage current detected",
+        (202, 0): "PV input voltage exceeds the upper threshold",
+        (203, 0): "PV panels have low insulation resistance",
+        (204, 0): "PV string reversely connected",
+        (300, 0): "Grid voltage is beyond the permissible range",
+        (301, 0): "AC terminals reversed",
+        (302, 0): "No utility grid connected or utility grid power failure",
+        (304, 0): "Grid frequency is beyond the permissible range",
+        (305, 0): "Overload",
+        (309, 0): "ROCOF Fault",
+        (311, 0): "Export limitation fail-safe",
+        (401, 0): "High DC component in output voltage",
+        (402, 0): "High DC component in output current",
+        (403, 0): "Output current unbalanced",
+        (404, 0): "Bus voltage sampling abnormal",
+        (405, 0): "Relay fault",
+        (407, 0): "Auto-test failed",
+        (408, 0): "Over-temperature",
+        (409, 0): "Bus voltage abnormal",
+        (411, 0): "Internal communication failure",
+        (412, 0): "Temperature sensor disconnected",
+        (416, 0): "DC/AC overcurrent protection",
+        (420, 0): "GFCI module abnormal",
+        (424, 0): "INV current waveform abnormal",
+        (425, 0): "AFCI self-test failure",
+        (426, 0): "PV current sampling abnormal",
+        (427, 0): "AC current sampling abnormal",
+        (428, 0): "BOOST short-circuited",
+        (429, 0): "BUS soft start failed",
+        (600, 0): "Off-grid output short-circuited",
+        (601, 0): "Off-grid Bus Voltage Low",
+        (602, 0): "Abnormal voltage at the off-grid terminal",
+        (603, 0): "Soft start failed",
+        (604, 0): "Off-grid output voltage abnormal",
+        (605, 0): "Balanced circuit self-test failed",
+        (606, 0): "High DC component in output voltage (off-grid)",
+        (607, 0): "Off-grid output overload",
+        (608, 0): "Off-grid parallel signal abnormal",
+        (609, 0): "Backup box is not detected",
+        (610, 0): "Off-grid split-phase voltage abnormal",
+        (700, 0): "Abnormal communication between the backup box and the inverter",
+        (701, 0): "Backup box grid-side relay failure",
+        (703, 0): "Backup box on-grid overload",
+        (705, 0): "Overheat inside the backup box"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_bms_1_flag_text(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_flag_code', 0)
+    explanations = []
+
+    # Bit 0: ChargeEn
+    if bms_1_flag & (1 << 0) and bms_1_flag & (1 << 1):
+        explanations.append("Allows charging and discharging")
+
+    elif bms_1_flag & (1 << 0):
+        explanations.append("Allows charging")
+
+    # Bit 1: DischargeEn
+    elif bms_1_flag & (1 << 1):
+        explanations.append("Allows discharging")
+
+    # Bit 8–11: WarnSubCode
+    warn_subcode = (bms_1_flag >> 8) & 0xF
+    if 0 < warn_subcode:
+        explanations.append(f"Warning subcode: {warn_subcode}")
+
+    # Bit 12–15: FaultSubCode
+    fault_subcode = (bms_1_flag >> 12) & 0xF
+    if 0 < fault_subcode:
+        explanations.append(f"Fault subcode: {fault_subcode}")
+
+    if bms_1_flag == 0:
+        return f"Standby"
+    else:
+        return f"Decimal {bms_1_flag} (0x{bms_1_flag:04X}):\n" + "\n".join(explanations)
+
+def value_function_bms_2_flag_text(initval, descr, datadict):
+    bms_2_flag =  datadict.get('bms_2_flag_code', 0)
+    explanations = []
+
+    # Bit 0: ChargeEn
+    if bms_2_flag & (1 << 0) and bms_2_flag & (1 << 1):
+        explanations.append("Allows charging and discharging")
+
+    elif bms_2_flag & (1 << 0):
+        explanations.append("Allows charging")
+
+    # Bit 1: DischargeEn
+    elif bms_2_flag & (1 << 1):
+        explanations.append("Allows discharging")
+
+    # Bit 8–11: WarnSubCode
+    warn_subcode = (bms_2_flag >> 8) & 0xF
+    if 0 < warn_subcode:
+        explanations.append(f"Warning subcode: {warn_subcode}")
+
+    # Bit 12–15: FaultSubCode
+    fault_subcode = (bms_2_flag >> 12) & 0xF
+    if 0 < fault_subcode:
+        explanations.append(f"Fault subcode: {fault_subcode}")
+
+    if bms_2_flag == 0:
+        return f"Standby"
+    else:
+        return f"Decimal {bms_2_flag} (0x{bms_2_flag:04X}):\n" + "\n".join(explanations)
+
+def value_function_bms_1_warning_subcode(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_flag_code', 0)
+    sub_code = (bms_1_flag >> 8) & 0xF
+    return sub_code
+
+def value_function_bms_2_warning_subcode(initval, descr, datadict):
+    bms_2_flag =  datadict.get('bms_2_flag_code', 0)
+    sub_code = (bms_2_flag >> 8) & 0xF
+    return sub_code
+
+def value_function_bms_1_warning_code(initval, descr, datadict):
+    main_code = datadict.get('bms_1_warning_maincode', 0)
+    sub_code = datadict.get('bms_1_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_bms_2_warning_code(initval, descr, datadict):
+    main_code = datadict.get('bms_2_warning_maincode', 0)
+    sub_code = datadict.get('bms_2_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_bms_1_warning_text(initval, descr, datadict):
+    main_code = datadict.get('bms_1_warning_maincode', 0)
+    sub_code = datadict.get('bms_1_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (404, 0): "Abnormal EEPROM",
+        (410, 0): "External oscillation abnormal",
+        (410, 1): "Oscillation abnormal",
+        (410, 2): "USB communication abnormal",
+        (411, 6): "Parallel communication failed",
+        (417, 2): "BM and PM software versions mismatched",
+        (431, 0): "BOOT abnormal",
+        (500, 0): "Abnormal CAN communication during parallel operation",
+        (500, 7): "BM went offline",
+        (500, 9): "Abnormal with PM communication",
+        (506, 0): "Warning 506, meaning unknown",
+        (701, 0): "Battery not discharging",
+        (702, 0): "Forced charge is required",
+        (703, 0): "All modules are fully charged",
+        (704, 0): "PM to INV overvoltage",
+        (705, 0): "PM to INV overvoltage",
+        (707, 0): "Discharge Overload Alarm",
+        (708, 0): "Discharge Overload Anomaly"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_bms_2_warning_text(initval, descr, datadict):
+    main_code = datadict.get('bms_2_warning_maincode', 0)
+    sub_code = datadict.get('bms_2_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (404, 0): "Abnormal EEPROM",
+        (410, 0): "External oscillation abnormal",
+        (410, 1): "Oscillation abnormal",
+        (410, 2): "USB communication abnormal",
+        (411, 6): "Parallel communication failed",
+        (417, 2): "BM and PM software versions mismatched",
+        (431, 0): "BOOT abnormal",
+        (500, 0): "Abnormal CAN communication during parallel operation",
+        (500, 7): "BM went offline",
+        (500, 9): "Abnormal with PM communication",
+        (506, 0): "Warning 506, meaning unknown",
+        (701, 0): "Battery not discharging",
+        (702, 0): "Forced charge is required",
+        (703, 0): "All modules are fully charged",
+        (704, 0): "PM to INV overvoltage",
+        (705, 0): "PM to INV overvoltage",
+        (707, 0): "Discharge Overload Alarm",
+        (708, 0): "Discharge Overload Anomaly"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_bms_1_fault_code(initval, descr, datadict):
+    main_code = datadict.get('bms_1_fault_maincode', 0)
+    sub_code = datadict.get('bms_1_fault_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_bms_2_fault_code(initval, descr, datadict):
+    main_code = datadict.get('bms_2_fault_maincode', 0)
+    sub_code = datadict.get('bms_2_fault_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_bms_1_fault_subcode(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_flag_code', 0)
+    sub_code = (bms_1_flag >> 12) & 0xF
+    return sub_code
+
+def value_function_bms_2_fault_subcode(initval, descr, datadict):
+    bms_2_flag =  datadict.get('bms_2_flag_code', 0)
+    sub_code = (bms_2_flag >> 12) & 0xF
+    return sub_code
+
+def value_function_bms_1_fault_text(initval, descr, datadict):
+    main_code = datadict.get('bms_1_fault_maincode', 0)
+    sub_code = datadict.get('bms_1_fault_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (404, 0): "BM to PM undervoltage",
+        (406, 0): "BM to PM transient overvoltage",
+        (407, 0): "BM to PM open-circuited BM",
+        (408, 0): "Over-Temp",
+        (409, 2): "Overvoltage PM to INV transient",
+        (411, 0): "Abnormal communication with INV",
+        (411, 1): "Abnormal serial communication with the master control chip",
+        (411, 2): "Abnormal communication with INV",
+        (411, 5): "Abnormal communication with BM",
+        (411, 7): "Multiple Masters parallel communication failure",
+        (416, 1): "Transient overvoltage/overcurrent",
+        (416, 2): "Transient overcurrent",
+        (416, 4): "BM to PM overcurrent",
+        (417, 0): "Mismatched software/hardware model",
+        (419, 5): "Inconsistent software/hardware version",
+        (500, 0): "CAN parallel connection failed",
+        (505, 0): "PM to INV voltage calibration failed",
+        (506, 1): "PM circuit breake open-circuited",
+        (506, 2): "PM fuse open-circuited",
+        (506, 3): "PM to INV short-circuited (power cables reversed)",
+        (508, 3): "Transient overvoltage",
+        (603, 0): "PM to INV voltage soft start failed",
+        (700, 0): "Temperature sensor open-circuited",
+        (707, 0): "Overload fault",
+        (707, 2): "Overload fault"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_bms_2_fault_text(initval, descr, datadict):
+    main_code = datadict.get('bms_2_fault_maincode', 0)
+    sub_code = datadict.get('bms_2_fault_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (404, 0): "BM to PM undervoltage",
+        (406, 0): "BM to PM transient overvoltage",
+        (407, 0): "BM to PM open-circuited BM",
+        (408, 0): "Over-Temp",
+        (409, 2): "Overvoltage PM to INV transient",
+        (411, 0): "Abnormal communication with INV",
+        (411, 1): "Abnormal serial communication with the master control chip",
+        (411, 2): "Abnormal communication with INV",
+        (411, 5): "Abnormal communication with BM",
+        (411, 7): "Multiple Masters parallel communication failure",
+        (416, 1): "Transient overvoltage/overcurrent",
+        (416, 2): "Transient overcurrent",
+        (416, 4): "BM to PM overcurrent",
+        (417, 0): "Mismatched software/hardware model",
+        (419, 5): "Inconsistent software/hardware version",
+        (500, 0): "CAN parallel connection failed",
+        (505, 0): "PM to INV voltage calibration failed",
+        (506, 1): "PM circuit breake open-circuited",
+        (506, 2): "PM fuse open-circuited",
+        (506, 3): "PM to INV short-circuited (power cables reversed)",
+        (508, 3): "Transient overvoltage",
+        (603, 0): "PM to INV voltage soft start failed",
+        (700, 0): "Temperature sensor open-circuited",
+        (707, 0): "Overload fault",
+        (707, 2): "Overload fault"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+
+def value_function_bms_1_charge_req_flag_text(initval, descr, datadict):
+    bms_1_flag =  datadict.get('bms_1_charge_req_flag', 0)
+    bit_labels = {
+        0: "Allow discharge",
+        1: "Enable strong charge",
+        2: "Enable strong charge 2",
+        8: "Discharge is prohibited",
+        9: "Power reduction is on",
+    }
+    explanations = []
+    for bit, label in bit_labels.items():
+        if bms_1_flag & (1 << bit):
+            explanations.append(label)
+    if not explanations:
+        return f"Allow charge and discharge"
+    else:
+        return f"\n".join(explanations)
+
+def value_function_bms_2_charge_req_flag_text(initval, descr, datadict):
+    bms_2_flag =  datadict.get('bms_2_charge_req_flag', 0)
+    bit_labels = {
+        0: "Allow discharge",
+        1: "Enable strong charge",
+        2: "Enable strong charge 2",
+        8: "Discharge is prohibited",
+        9: "Power reduction is on",
+    }
+    explanations = []
+    for bit, label in bit_labels.items():
+        if bms_2_flag & (1 << bit):
+            explanations.append(label)
+    if not explanations:
+        return f"Allow charge and discharge"
+    else:
+        return f"\n".join(explanations)
+
+def value_function_combined_bms_1_power(initval, descr, datadict):
+    return  datadict.get('bms_1_charge_power', 0) - datadict.get('bms_1_discharge_power',0)
+
+def value_function_combined_bms_2_power(initval, descr, datadict):
+    return  datadict.get('bms_2_charge_power', 0) - datadict.get('bms_2_discharge_power',0)
+
+def value_function_bms_module_combined_power(initval, descr, datadict):
+    watt = initval
+    if 0 <= watt <= 2500:
+        result = watt
+    elif 63035 <= watt <= 65535:
+        result = round(-1 * (65536 - watt), 1)
+    else:
+        result = 0
+    return result
+
+def value_function_bms_module_combined_current(initval, descr, datadict):
+    current = initval / 10
+    if 0 <= current <= 250:
+        result = current
+    elif 6303.5 <= current <= 6553.5:
+        result = round(-1 * (6553.6 - current), 1)
     else:
         result = 0
     return result
@@ -276,11 +715,30 @@ def value_function_battery_voltage(initval, descr, datadict):
 def value_function_total_grid_power(initval, descr, datadict):
     return  datadict.get('grid_power_l1', 0) + datadict.get('grid_power_l2', 0) + datadict.get('grid_power_l3', 0)
 
-def value_function_firmware_control_version(initval, descr, datadict):
-		fw_ascii = datadict.get('firmware_control_version_ascii', 0)
-		fw_ver = datadict.get('firmware_control_version_number', 0)
-		fw_ver = f'{fw_ver:04}' # Convert to a 4-digit decimal number
-		return f'{fw_ascii}-{fw_ver}'
+def value_function_communication_version(initval, descr, datadict):
+	fw_ascii = datadict.get('communication_version_ascii', 0)
+	fw_ver = datadict.get('communication_version_number', 0)
+	return f'{fw_ascii}-{fw_ver}'
+
+def value_function_bms_1_control_version(initval, descr, datadict):
+	fw_ascii = datadict.get('bms_1_control_version_ascii', 0)
+	fw_ver = datadict.get('bms_1_control_version_number', 0)
+	return f'{fw_ascii}-{fw_ver}'
+
+def value_function_bms_2_control_version(initval, descr, datadict):
+	fw_ascii = datadict.get('bms_2_control_version_ascii', 0)
+	fw_ver = datadict.get('bms_2_control_version_number', 0)
+	return f'{fw_ascii}-{fw_ver}'
+
+def value_function_bms_1_monitoring_version(initval, descr, datadict):
+	fw_ascii = datadict.get('bms_1_monitoring_version_ascii', 0)
+	fw_ver = datadict.get('bms_1_monitoring_version_number', 0)
+	return f'{fw_ascii}-{fw_ver}'
+
+def value_function_bms_2_monitoring_version(initval, descr, datadict):
+	fw_ascii = datadict.get('bms_2_monitoring_version_ascii', 0)
+	fw_ver = datadict.get('bms_2_monitoring_version_number', 0)
+	return f'{fw_ascii}-{fw_ver}'
 
 def value_function_inverter_state(initval, descr, datadict):
     inverter_state = datadict.get('register_3000', 0)
@@ -293,7 +751,7 @@ def value_function_inverter_state(initval, descr, datadict):
         6: "Bat Online"
     }
     return status_dict.get(inverter_state)
-    
+
 def value_function_run_mode(initval, descr, datadict):
     run_mode = datadict.get('register_3000', 0)
     run_mode = run_mode & 0xFF # Mask out the upper 8 bits, keeping only the lower 8 bits
@@ -304,6 +762,32 @@ def value_function_run_mode(initval, descr, datadict):
         4: "Flash"
     }
     return run_mode_dict.get(run_mode)
+
+def value_function_battery_code(initval, descr, datadict):
+    register_118 = datadict.get('register_118', 0)
+    register_119 = datadict.get('register_119', 0)
+    register_120 = datadict.get('register_120', 0)
+    register_121 = datadict.get('register_121', 0)
+
+    high_byte_118 = (register_118 >> 8) & 0xFF  # High byte (MSB)
+    low_byte_118 = register_118 & 0xFF 			# Low byte (LSB)
+    high_byte_119 = (register_119 >> 8) & 0xFF
+    low_byte_119 = register_119 & 0xFF
+    high_byte_120 = (register_120 >> 8) & 0xFF
+    low_byte_120 = register_120 & 0xFF
+    high_byte_121 = (register_121 >> 8) & 0xFF
+    low_byte_121 = register_121 & 0xFF
+
+    S_value = f"S{high_byte_118:02X}"
+    B_value = f"B{low_byte_118:02X}"
+    D_value = f"D{high_byte_119:02X}"
+    T_value = f"T{low_byte_119:02X}"
+    P_value = f"P{high_byte_120:02X}"
+    F_value = f"U{low_byte_120:02X}"
+    M_value_high = f"M{high_byte_121:02X}"
+    M_value_low = f"{low_byte_121:02X}"
+
+    return(f"{S_value}{B_value}{D_value}{T_value}{P_value}{F_value}{M_value_high}{M_value_low}")
 
 def value_function_inverter_module(initval, descr, datadict):
     hexStr = "{:08x}".format(initval)
@@ -585,8 +1069,8 @@ SELECT_TYPES = [
         option_dict = {
                 0: "Inverter Off",
                 1: "Inverter On",
-                2: "BDC Off",
-                3: "BDC On", },
+                2: "BMS Off",
+                3: "BMS On", },
         allowedtypes = GEN2 | GEN3 | GEN4,
         icon = "mdi:dip-switch",
     ),
@@ -1417,8 +1901,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 0,
         scale = { 0: "Inverter Off",
                   1: "Inverter On",
-                  2: "BDC Off",
-                  3: "BDC On", },
+                  2: "BMS Off",
+                  3: "BMS On", },
         allowedtypes = GEN2 | GEN3 | GEN4,
         internal = True,
     ),
@@ -1436,36 +1920,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal = True,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Version",
-        key = "firmware_version",
+        name = "Build Version",
+        key = "build_version",
         register = 9,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount = 3,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        key = "firmware_control_version_ascii",
+        key = "communication_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = ALL_GEN_GROUP,
-	internal = True,
+	    internal = True,
     ),
 	GrowattModbusSensorEntityDescription(
-        key = "firmware_control_version_number",
+        key = "communication_version_number",
         register = 14,
         allowedtypes = ALL_GEN_GROUP,
         internal = True,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Firmware Control Version",
-        key = "firmware_control_version",
-        value_function = value_function_firmware_control_version,
+        name = "Communication Version",
+        key = "communication_version",
+        value_function = value_function_communication_version,
         allowedtypes = ALL_GEN_GROUP,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
@@ -1499,7 +1983,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 23,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         allowedtypes = GEN | GEN2 | GEN3 | SPF,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2082,7 +2566,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 3001,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2315,6 +2799,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 0,
         scale = { 0: "Waiting",
                   1: "Normal Mode",
+                  2: "?",
                   3: "Permanent Fault Mode" },
         register_type = REG_INPUT,
         allowedtypes = GEN,
@@ -2793,7 +3278,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Total Work Time",
         key = "total_work_time",
-        native_unit_of_measurement = UnitOfTime.SECONDS,
+        native_unit_of_measurement = UnitOfTime.HOURS,
         device_class = SensorDeviceClass.DURATION,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 30,
@@ -3127,15 +3612,15 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Work Time",
-        key = "total_work_time",
-        native_unit_of_measurement = UnitOfTime.SECONDS,
+        name = "Total Work Time Hours",
+        key = "total_work_time_hours",
+        native_unit_of_measurement = UnitOfTime.HOURS,
         device_class = SensorDeviceClass.DURATION,
         state_class = SensorStateClass.TOTAL_INCREASING,
         register = 57,
         register_type = REG_INPUT,
         unit = REGISTER_U32,
-        scale = 0.5,
+        scale = 0.00013889,
         rounding = 1,
         allowedtypes = GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
@@ -3395,7 +3880,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy",
         key = "today_s_solar_energy",
-        value_function= value_function_today_s_solar_energy,
+        value_function = value_function_today_s_solar_energy,
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3561,10 +4046,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 1000,
         scale = { 0: "Waiting",
                   1: "Self Test",
+                  2: "2, ?",
                   3: "Permanent Fault Mode",
                   4: "Update Mode",
                   5: "PV Bat Online",
                   6: "Bat Online",
+                  7: "7, ?",
                   8: "Normal Mode",
                   9: "Bypass" },
         register_type = REG_INPUT,
@@ -3600,7 +4087,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
         key = "battery_combined_power",
-        value_function= value_function_combined_battery_power,
+        value_function = value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4256,6 +4743,55 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # TL-X TL-XH
 #
 #####
+
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Combined Power",
+        key = "bms_1_combined_power",
+        value_function = value_function_combined_bms_1_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN3 | GEN4,
+        icon = "mdi:battery",
+    ),
+        GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Combined Power",
+        key = "bms_2_combined_power",
+        value_function = value_function_combined_bms_2_power,
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        allowedtypes = GEN3 | GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "register_118",
+        register = 118,
+        register_type = REG_HOLDING,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+	GrowattModbusSensorEntityDescription(
+        key = "register_119",
+        register = 119,
+        register_type = REG_HOLDING,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+	GrowattModbusSensorEntityDescription(
+        key = "register_120",
+        register = 120,
+        register_type = REG_HOLDING,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+	GrowattModbusSensorEntityDescription(
+        key = "register_121",
+        register = 121,
+        register_type = REG_HOLDING,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
     GrowattModbusSensorEntityDescription(
         key = "register_3000",
         register = 3000,
@@ -4973,10 +5509,86 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_monitoring_version",
         register = 3096, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4 | HYBRID,
         internal = True,
     ),
+    GrowattModbusSensorEntityDescription(
+        name = "Communication Board Temperature",
+        key = "communication_board_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3097,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "bms_1_control_version_ascii",
+        register = 5014, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount = 2,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+        GrowattModbusSensorEntityDescription(
+        key = "bms_1_control_version_number",
+        register = 5016,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "bms_1_monitoring_version_ascii",
+        register = 5011, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount = 2,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+        GrowattModbusSensorEntityDescription(
+        key = "bms_1_monitoring_version_number",
+        register = 5018,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        internal = True,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        key = "bms_2_control_version_ascii",
+        register = 5054, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount = 2,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+        GrowattModbusSensorEntityDescription(
+        key = "bms_2_control_version_number",
+        register = 5056,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        internal = True,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        key = "bms_2_monitoring_version_ascii",
+        register = 5051, #used for battery voltage scaling
+        unit = REGISTER_STR,
+        wordcount = 2,
+        allowedtypes = GEN4,
+        internal = True,
+    ),
+        GrowattModbusSensorEntityDescription(
+        key = "bms_2_monitoring_version_number",
+        register = 5058,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        internal = True,
+    ),   
     GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
         key = "today_s_battery_output_energy",
@@ -5208,22 +5820,33 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4 | EPS,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Battery Voltage",
-        key = "battery_voltage",
+        name = "BMS 1 Voltage",
+        key = "bms_1_voltage",
         native_unit_of_measurement = UnitOfElectricPotential.VOLT,
         device_class = SensorDeviceClass.VOLTAGE,
-        register = 3169,
+        register = 4012,
         register_type = REG_INPUT,
-        scale = value_function_battery_voltage, #due to different scaling factor depending on battery system, default scale 0.01
+        scale = value_function_battery_voltage,
         rounding = 2,
         allowedtypes = GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Battery Current",
-        key = "battery_current",
+        name = "BMS 2 Voltage",
+        key = "bms_2_voltage",
+        native_unit_of_measurement = UnitOfElectricPotential.VOLT,
+        device_class = SensorDeviceClass.VOLTAGE,
+        register = 4120,
+        register_type = REG_INPUT,
+        scale = value_function_battery_voltage,
+        rounding = 2,
+        allowedtypes = GEN4 | HYBRID,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Current",
+        key = "bms_1_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
-        register = 3170,
+        register = 4013,
         register_type = REG_INPUT,
         unit = REGISTER_S16,
         scale = 0.1,
@@ -5231,26 +5854,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4 | HYBRID,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Battery SOC",
-        key = "battery_soc",
-        native_unit_of_measurement = PERCENTAGE,
-        device_class = SensorDeviceClass.BATTERY,
-        register = 3171,
+        name = "BMS 2 Current",
+        key = "bms_2_current",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        register = 4121,
         register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.1,
+        rounding = 1,
         allowedtypes = GEN4 | HYBRID,
     ),
+    #GrowattModbusSensorEntityDescription(              # must find how to detect if the modules are 2,5(ARK) or 5(APX) kWh
+        #name = "Battery SOC",                          # BMS 1 SoC and BMS 2 SoC can be used instead
+        #key = "battery_soc",                           # need to know kWh for each BMS to be able to calculate aggregated SoC
+        #native_unit_of_measurement = PERCENTAGE,
+        #device_class = SensorDeviceClass.BATTERY,
+        #value_function = value_function_battery_soc,
+        #allowedtypes = GEN4 | HYBRID,
+    #),
     GrowattModbusSensorEntityDescription(
         name = "Battery Discharge Power",
         key = "battery_discharge_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3178,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        scale = 0.1,
-        rounding = 1,
+        value_function = value_function_battery_discharge_power,
+        entity_registry_enabled_default = True,
+        entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = GEN4 | HYBRID,
+        icon = "mdi:solar-power"
     ),
     GrowattModbusSensorEntityDescription(
         name = "Battery Charge Power",
@@ -5258,13 +5891,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3180,
-        register_type = REG_INPUT,
-        unit = REGISTER_U32,
-        scale = 0.1,
-        rounding = 1,
+        value_function = value_function_battery_charge_power,
+        entity_registry_enabled_default = True,
+        entity_category = EntityCategory.DIAGNOSTIC,
         allowedtypes = GEN4 | HYBRID,
-    ),
+        icon = "mdi:solar-power"
+    ),    
+
     # TL-XH GEN3 load/battery/grid first priority 
     GrowattModbusSensorEntityDescription(
         key = "register_3038",
@@ -5379,26 +6012,57 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
-    
-    
+
     ############ NEW entities TEST #######
-    ######### NEW Test #############
 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Combined Current",
-        key = "bms_1_module_2_combined_current",
-        value_function = value_function_combined_bms_current,
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        state_class = SensorStateClass.MEASUREMENT,
+        name = "Inverter Warning Maincode",
+        key = "inverter_warning_maincode",
+        register = 112,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Subcode",
+        key = "inverter_warning_subcode",
+        register = 111,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Code",
+        key = "inverter_warning_code",
+        value_function = value_function_inverter_warning_code,
         allowedtypes = GEN4,
         icon = "mdi:battery",       
-    ),       
-       
+    ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Warning Code",
-        key = "bms_1_module_2_warning_code",
-        register = 5138,
+        name = "Inverter Warning Text",
+        key = "inverter_warning_text",
+        value_function = value_function_inverter_warning_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Maincode",
+        key = "inverter_fault_maincode",
+        register = 105,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Subcode",
+        key = "inverter_fault_subcode",
+        register = 107,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
@@ -5406,105 +6070,175 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Warning Code",
-        key = "bms_1_module_3_warning_code",
-        register = 5178,
+        name = "Inverter Fault Code",
+        key = "inverter_fault_code",
+        value_function = value_function_inverter_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Text",
+        key = "inverter_fault_text",
+        value_function = value_function_inverter_fault_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Mode",
+        key = "mode",
+        value_function = value_function_battery_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Combined Power",
+        key = "bms_1_module_1_combined_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5885,
+        register_type = REG_HOLDING,
+        scale = value_function_bms_module_combined_power,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Warning Maincode",
+        key = "bms_1_warning_maincode",
+        register = 4011,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Warning Subcode",
+        key = "bms_1_warning_subcode",
+        value_function = value_function_bms_1_warning_subcode,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Warning Code",
-        key = "bms_1_module_4_warning_code",
-        register = 5218,
+        name = "BMS 1 Warning Code",
+        key = "bms_1_warning_code",
+        value_function = value_function_bms_1_warning_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Warning Text",
+        key = "bms_1_warning_text",
+        value_function = value_function_bms_1_warning_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Fault Maincode",
+        key = "bms_1_fault_maincode",
+        register = 4010,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),
+    ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Warning Code",
-        key = "bms_1_module_5_warning_code",
-        register = 5258,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes= GEN4,
-        entity_registry_enabled_default = False,
+        name = "BMS 1 Fault SubCode",
+        key = "bms_1_fault_subcode",
+        value_function = value_function_bms_1_fault_subcode,
+        allowedtypes = GEN4,
         icon = "mdi:battery",
-    ),
+    ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Warning Code",
-        key = "bms_1_module_6_warning_code",
-        register = 5298,
+        name = "BMS 1 Fault Code",
+        key = "bms_1_fault_code",
+        value_function = value_function_bms_1_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Fault Text",
+        key = "bms_1_fault_text",
+        value_function = value_function_bms_1_fault_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Warning Maincode",
+        key = "bms_2_warning_maincode",
+        register = 4119,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Warning Subcode",
+        key = "bms_2_warning_subcode",
+        value_function = value_function_bms_2_warning_subcode,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Warning Code",
-        key = "bms_2_module_1_warning_code",
-        register = 5338,
+        name = "BMS 2 Warning Code",
+        key = "bms_2_warning_code",
+        value_function = value_function_bms_2_warning_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Warning Text",
+        key = "bms_2_warning_text",
+        value_function = value_function_bms_2_warning_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Fault Maincode",
+        key = "bms_2_fault_maincode",
+        register = 4118,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),
+    ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Warning Code",
-        key = "bms_2_module_2_warning_code",
-        register = 5378,
-        register_type = REG_INPUT, 
+        name = "BMS 2 Fault SubCode",
+        key = "bms_2_fault_subcode",
+        value_function = value_function_bms_2_fault_subcode,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Fault Code",
+        key = "bms_2_fault_code",
+        value_function = value_function_bms_2_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Fault Text",
+        key = "bms_2_fault_text",
+        value_function = value_function_bms_2_fault_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Status",
+        key = "bms_1_module_1_status",
+        register = 5880,
+        register_type = REG_HOLDING,
         unit = REGISTER_U16,
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Warning Code",
-        key = "bms_2_module_3_warning_code",
-        register = 5418,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
-        icon = "mdi:battery",
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Warning Code",
-        key = "bms_2_module_4_warning_code",
-        register = 5458,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
-        icon = "mdi:battery",
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Warning Code",
-        key = "bms_2_module_5_warning_code",
-        register = 5498,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
-        icon = "mdi:battery",
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Warning Code",
-        key = "bms_2_module_6_warning_code",
-        register = 5538,
-        register_type = REG_INPUT, 
-        unit = REGISTER_U16,
-        allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
-        icon = "mdi:battery",
-    ),
+    ),       
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 1 SoC",
         key = "bms_1_module_1_soc",
@@ -5514,7 +6248,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5881,
         register_type = REG_HOLDING, ### HOLDING!!!
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -5547,8 +6281,22 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 1 Total Throughput",
-        key = "bms_1_module_1_tp",
+        name = "BMS 1 Module 1 Combined Current",
+        key = "bms_1_module_1_combined_current",
+        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
+        device_class = SensorDeviceClass.CURRENT,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5884, 
+        register_type = REG_HOLDING, ### HOLDING!!!
+        unit = REGISTER_U16,
+        scale = value_function_bms_module_combined_current,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Total Output Energy",
+        key = "bms_1_module_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -5561,15 +6309,61 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),         
     GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Max Cell Temp",
+        key = "bms_1_module_1_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5890, 
+        register_type = REG_HOLDING, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Min Cell Temp",
+        key = "bms_1_module_1_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5891, 
+        register_type = REG_HOLDING, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Warning Text",
+        key = "bms_1_module_1_warning_text",
+        register = 5898,
+        register_type = REG_HOLDING, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Charge Cycles",
+        key = "bms_1_module_1_charge_cycles",
+        register = 5908, 
+        register_type = REG_HOLDING, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ), 
+    GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 2 Status",
         key = "bms_1_module_2_status",
         register = 5120,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -5583,7 +6377,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5121,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -5616,36 +6410,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Amp",
-        key = "bms_1_module_2_amp",
+        name = "BMS 1 Module 2 Combined Current",
+        key = "bms_1_module_2_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5124,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),  
+    ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Watt",
-        key = "bms_1_module_2_watt",
+        name = "BMS 1 Module 2 Combined Power",
+        key = "bms_1_module_2_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5125,
         register_type = REG_INPUT, 
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Total Throughput",
-        key = "bms_1_module_2_tp",
+        name = "BMS 1 Module 2 Total Output Energy",
+        key = "bms_1_module_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -5658,8 +6452,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Charge Cycle",
-        key = "bms_1_module_2_charge_cycle",
+        name = "BMS 1 Module 2 Max Cell Temp",
+        key = "bms_1_module_2_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5130, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 2 Min Cell Temp",
+        key = "bms_1_module_2_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5131, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),     
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 2 Warning Text",
+        key = "bms_1_module_2_warning_text",
+        register = 5138,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 2 Charge Cycles",
+        key = "bms_1_module_2_charge_cycles",
         register = 5148, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -5673,10 +6506,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5160,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -5690,7 +6520,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5161,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -5723,36 +6553,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Amp",
-        key = "bms_1_module_3_amp",
+        name = "BMS 1 Module 3 Combined Current",
+        key = "bms_1_module_3_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5164,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Watt",
-        key = "bms_1_module_3_watt",
+        name = "BMS 1 Module 3 Combined Power",
+        key = "bms_1_module_3_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5165,
         register_type = REG_INPUT, 
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Total Throughput",
-        key = "bms_1_module_3_tp",
+        name = "BMS 1 Module 3 Total Output Energy",
+        key = "bms_1_module_3_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -5765,8 +6595,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),   
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 3 Charge Cycle",
-        key = "bms_1_module_3_charge_cycle",
+        name = "BMS 1 Module 3 Max Cell Temp",
+        key = "bms_1_module_3_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5170, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 3 Min Cell Temp",
+        key = "bms_1_module_3_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5171, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 3 Warning Text",
+        key = "bms_1_module_3_warning_text",
+        register = 5178,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,       
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 3 Charge Cycles",
+        key = "bms_1_module_3_charge_cycles",
         register = 5188, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -5780,10 +6649,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5200,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -5797,7 +6663,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5201,   
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -5830,36 +6696,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Amp",
-        key = "bms_1_module_4_amp",
+        name = "BMS 1 Module 4 Combined Current",
+        key = "bms_1_module_4_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5204,   
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Watt",
-        key = "bms_1_module_4_watt",
+        name = "BMS 1 Module 4 Combined Power",
+        key = "bms_1_module_4_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5205,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Total Throughput",
-        key = "bms_1_module_4_tp",
+        name = "BMS 1 Module 4 Total Output Energy",
+        key = "bms_1_module_4_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -5872,8 +6738,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 4 Charge Cycle",
-        key = "bms_1_module_4_charge_cycle",
+        name = "BMS 1 Module 4 Max Cell Temp",
+        key = "bms_1_module_4_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5210, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 4 Min Cell Temp",
+        key = "bms_1_module_4_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5211, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 4 Warning Text",
+        key = "bms_1_module_4_warning_text",
+        register = 5218,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,  
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 4 Charge Cycles",
+        key = "bms_1_module_4_charge_cycles",
         register = 5228, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -5887,10 +6792,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5240,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -5904,7 +6806,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5241,   
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -5937,36 +6839,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Amp",
-        key = "bms_1_module_5_amp",
+        name = "BMS 1 Module 5 Combined Current",
+        key = "bms_1_module_5_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5244,   
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Watt",
-        key = "bms_1_module_5_watt",
+        name = "BMS 1 Module 5 Combined Power",
+        key = "bms_1_module_5_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5245,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Total Throughput",
-        key = "bms_1_module_5_tp",
+        name = "BMS 1 Module 5 Total Output Energy",
+        key = "bms_1_module_5_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -5979,8 +6881,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 5 Charge Cycle",
-        key = "bms_1_module_5_charge_cycle",
+        name = "BMS 1 Module 5 Max Cell Temp",
+        key = "bms_1_module_5_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5250, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 5 Min Cell Temp",
+        key = "bms_1_module_5_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5251, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 5 Warning Text",
+        key = "bms_1_module_5_warning_text",
+        register = 5258,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,   
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 5 Charge Cycles",
+        key = "bms_1_module_5_charge_cycles",
         register = 5268, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -5994,10 +6935,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5280,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6011,7 +6949,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5281, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6044,36 +6982,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Amp",
-        key = "bms_1_module_6_amp",
+        name = "BMS 1 Module 6 Combined Current",
+        key = "bms_1_module_6_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5284,   
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
-     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Watt",
-        key = "bms_1_module_6_watt",
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 6 Combined Power",
+        key = "bms_1_module_6_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5285,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Total Throughput",
-        key = "bms_1_module_6_tp",
+        name = "BMS 1 Module 6 Total Output Energy",
+        key = "bms_1_module_6_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6086,8 +7024,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 6 Charge Cycle",
-        key = "bms_1_module_6_charge_cycle",
+        name = "BMS 1 Module 6 Max Cell Temp",
+        key = "bms_1_module_6_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5290, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 6 Min Cell Temp",
+        key = "bms_1_module_6_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5291, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 6 Warning Text",
+        key = "bms_1_module_6_warning_text",
+        register = 5298,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text, 
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 6 Charge Cycles",
+        key = "bms_1_module_6_charge_cycles",
         register = 5308, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6101,10 +7078,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5320,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6118,7 +7092,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5321,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6151,36 +7125,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Amp",
-        key = "bms_2_module_1_amp",
+        name = "BMS 2 Module 1 Combined Current",
+        key = "bms_2_module_1_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5324,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Watt",
-        key = "bms_2_module_1_watt",
+        name = "BMS 2 Module 1 Combined Power",
+        key = "bms_2_module_1_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5325,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Total Throughput",
-        key = "bms_2_module_1_tp",
+        name = "BMS 2 Module 1 Total Output Energy",
+        key = "bms_2_module_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6219,10 +7193,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),        
+    ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 1 Charge Cycle",
-        key = "bms_2_module_1_charge_cycle",
+        name = "BMS 2 Module 1 Warning Text",
+        key = "bms_2_module_1_warning_text",
+        register = 5338,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text, 
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 1 Charge Cycles",
+        key = "bms_2_module_1_charge_cycles",
         register = 5348, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6236,10 +7221,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5360,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6253,7 +7235,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5361,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6286,36 +7268,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Amp",
-        key = "bms_2_module_2_amp",
+        name = "BMS 2 Module 2 Combined Current",
+        key = "bms_2_module_2_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5364,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Watt",
-        key = "bms_2_module_2_watt",
+        name = "BMS 2 Module 2 Combined Power",
+        key = "bms_2_module_2_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5365,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Total Throughput",
-        key = "bms_2_module_2_tp",
+        name = "BMS 2 Module 2 Total Output Energy",
+        key = "bms_2_module_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6328,8 +7310,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 2 Charge Cycle",
-        key = "bms_2_module_2_charge_cycle",
+        name = "BMS 2 Module 2 Max Cell Temp",
+        key = "bms_2_module_2_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5370, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 2 Min Cell Temp",
+        key = "bms_2_module_2_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5371, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 2 Warning Text",
+        key = "bms_2_module_2_warning_text",
+        register = 5378,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 2 Charge Cycles",
+        key = "bms_2_module_2_charge_cycles",
         register = 5388, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6343,10 +7364,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5400,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6360,7 +7378,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5401,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6393,36 +7411,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Amp",
-        key = "bms_2_module_3_amp",
+        name = "BMS 2 Module 3 Combined Current",
+        key = "bms_2_module_3_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5404,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Watt",
-        key = "bms_2_module_3_watt",
+        name = "BMS 2 Module 3 Combined Power",
+        key = "bms_2_module_3_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5405,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Total Throughput",
-        key = "bms_2_module_3_tp",
+        name = "BMS 2 Module 3 Total Output Energy",
+        key = "bms_2_module_3_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6435,8 +7453,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 3 Charge Cycle",
-        key = "bms_2_module_3_charge_cycle",
+        name = "BMS 2 Module 3 Max Cell Temp",
+        key = "bms_2_module_3_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5410, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 3 Min Cell Temp",
+        key = "bms_2_module_3_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5411, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 3 Warning Text",
+        key = "bms_2_module_3_warning_text",
+        register = 5418,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,       
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 3 Charge Cycles",
+        key = "bms_2_module_3_charge_cycles",
         register = 5428, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6450,10 +7507,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5440,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6467,7 +7521,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5441,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6500,36 +7554,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Amp",
-        key = "bms_2_module_4_amp",
+        name = "BMS 2 Module 4 Combined Current",
+        key = "bms_2_module_4_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5444,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Watt",
-        key = "bms_2_module_4_watt",
+        name = "BMS 2 Module 4 Combined Power",
+        key = "bms_2_module_4_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5445,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),     
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Total Throughput",
-        key = "bms_2_module_4_tp",
+        name = "BMS 2 Module 4 Total Output Energy",
+        key = "bms_2_module_4_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6542,8 +7596,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 4 Charge Cycle",
-        key = "bms_2_module_4_charge_cycle",
+        name = "BMS 2 Module 4 Max Cell Temp",
+        key = "bms_2_module_4_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5450, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 4 Min Cell Temp",
+        key = "bms_2_module_4_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5451, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 4 Warning Text",
+        key = "bms_2_module_4_warning_text",
+        register = 5458,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 4 Charge Cycles",
+        key = "bms_2_module_4_charge_cycles",
         register = 5468, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6557,10 +7650,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5480,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6574,7 +7664,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5481,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6607,36 +7697,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Amp",
-        key = "bms_2_module_5_amp",
+        name = "BMS 2 Module 5 Combined Current",
+        key = "bms_2_module_5_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5484,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Watt",
-        key = "bms_2_module_5_watt",
+        name = "BMS 2 Module 5 Combined Power",
+        key = "bms_2_module_5_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5485,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Total Throughput",
-        key = "bms_2_module_5_tp",
+        name = "BMS 2 Module 5 Total Output Energy",
+        key = "bms_2_module_5_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6649,10 +7739,49 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 5 Charge Cycle",
-        key = "bms_2_module_5_charge_cycle",
-        register = 5508, 
+        name = "BMS 2 Module 5 Max Cell Temp",
+        key = "bms_2_module_5_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5490, 
         register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 5 Min Cell Temp",
+        key = "bms_2_module_5_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5491,
+        register_type = REG_INPUT,
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 5 Warning Text",
+        key = "bms_2_module_5_warning_text",
+        register = 5498,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 5 Charge Cycles",
+        key = "bms_2_module_5_charge_cycles",
+        register = 5508,
+        register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
@@ -6664,10 +7793,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5520,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = { 0: "?",
-                  1: "Standby",
-                  2: "Charging",
-                  3: "Discharging" },
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6681,7 +7807,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5521,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.00390625,
+        scale = value_function_module_soc,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-50",
@@ -6714,36 +7840,36 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Amp",
-        key = "bms_2_module_6_amp",
+        name = "BMS 2 Module 6 Combined Current",
+        key = "bms_2_module_6_combined_current",
         native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
         device_class = SensorDeviceClass.CURRENT,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5524,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = 0.1,        
+        scale = value_function_bms_module_combined_current,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Watt",
-        key = "bms_2_module_6_watt",
+        name = "BMS 2 Module 6 Combined Power",
+        key = "bms_2_module_6_combined_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
         register = 5525,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
+        scale = value_function_bms_module_combined_power,
         unit = REGISTER_U16,
-        scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),  
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Total Throughput",
-        key = "bms_2_module_6_tp",
+        name = "BMS 2 Module 6 Total Output Energy",
+        key = "bms_2_module_6_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -6756,8 +7882,47 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module 6 Charge Cycle",
-        key = "bms_2_module_6_charge_cycle",
+        name = "BMS 2 Module 6 Max Cell Temp",
+        key = "bms_2_module_6_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5530, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 6 Min Cell Temp",
+        key = "bms_2_module_6_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5531, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 6 Warning Text",
+        key = "bms_2_module_6_warning_text",
+        register = 5538,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = value_function_module_warning_text,    
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module 6 Charge Cycles",
+        key = "bms_2_module_6_charge_cycles",
         register = 5548, 
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
@@ -6766,60 +7931,320 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery",
     ), 
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Module Count",
-        key = "bms_2_module_count",
-        register = 5076, 
+        name = "BMS 1 Flag Code",
+        key = "bms_1_flag_code",
+        register = 4030,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Flag Text",
+        key = "bms_1_flag_text",
+        value_function = value_function_bms_1_flag_text,
+        allowedtypes = GEN4,
+        icon = "mdi:information",
+    ),     
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Flag Code",
+        key = "bms_2_flag_code",
+        register = 4138,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Flag Text",
+        key = "bms_2_flag_text",
+        value_function = value_function_bms_2_flag_text,
+        allowedtypes = GEN4,
+        icon = "mdi:information",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Charge Req. Flag Code",
+        key = "bms_1_charge_req_flag_code",
+        register = 4054,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Charge Req. Flag text",
+        key = "bms_1_charge_req_flag_text",
+        value_function = value_function_bms_1_charge_req_flag_text,
+        allowedtypes = GEN4,
+        icon = "mdi:information",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Charge Req. Flag Code",
+        key = "bms_2_charge_req_flag_code",
+        register = 4162,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Charge Req. Flag text",
+        key = "bms_2_charge_req_flag_text",
+        value_function = value_function_bms_2_charge_req_flag_text,
+        allowedtypes = GEN4,
+        icon = "mdi:information",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Status",
+        key = "bms_1_status",
+        register = 4055,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = {
+                0: "Dormancy",
+                1: "Charging",
+                2: "Discharging",
+                3: "Free",
+                4: "Standby",
+                5: "Soft start",
+                6: "Fault",
+                7: "Updating"
+        },
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Status",
+        key = "bms_2_status",
+        register = 4163,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = {
+                0: "Dormancy",
+                1: "Charging",
+                2: "Discharging",
+                3: "Free",
+                4: "Standby",
+                5: "Soft start",
+                6: "Fault",
+                7: "Updating"
+        },
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+        GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Temp A",
+        key = "bms_1_temp_a",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4019, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Temp B",
+        key = "bms_1_temp_b",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4020, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Temp A",
+        key = "bms_2_temp_a",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4127, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Temp B",
+        key = "bms_2_temp_b",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4128, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),       
+    GrowattModbusSensorEntityDescription(
+        name = "BMS's Connected",
+        key = "bmss_connceted",
+        register = 3118,
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
+        scale = {
+                0: "No BMS Connected",
+                1: "BMS 1 Connected",
+                2: "BMS 2 Connected",
+                3: "BMS 1 & 2 Connected",
+        },
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Total Module Count",
+        key = "inverter_total_module_count",
+        register = 185,
         register_type = REG_HOLDING, ### HOLDING!!!
         unit = REGISTER_U16,
-        scale = 0.02,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module Count",
+        key = "bms_1_module_count",
+        register = 4041, 
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module Count",
+        key = "bms_2_module_count",
+        register = 4149,
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-sync",
     ),
-	
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Serial Number",
+        key = "bms_1_serialnumber",
+        register = 5002,
+        unit = REGISTER_STR,
+        wordcount = 8,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),
     GrowattModbusSensorEntityDescription(
         name = "BMS 2 Serial Number",
         key = "bms_2_serialnumber",
         register = 5042,
         unit = REGISTER_STR,
-        wordcount=8,
+        wordcount = 8,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Monitoring Version",
-        key = "bms_2_monitoring_version",
-        register = 5051,
-        unit = REGISTER_STR,
-        wordcount=2,
-        entity_registry_enabled_default = False,
+        name = "BMS 1 Max Cell Temp",
+        key = "bms_1_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4035, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
         allowedtypes = GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Monitoring Version",
-        key = "bms_2_monitoring_version",
-        register = 5051,
-        unit = REGISTER_STR,
-        wordcount=2,
-        entity_registry_enabled_default = False,
+        name = "BMS 1 Min Cell Temp",
+        key = "bms_1_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4036, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
         allowedtypes = GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Max Cell Temp",
+        key = "bms_2_max_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4143, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Min Cell Temp",
+        key = "bms_2_min_cell_temp",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 4144, 
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        scale = 0.1,        
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Monitoring Version",
         key = "bms_1_monitoring_version",
-        register = 5011,
-        unit = REGISTER_STR,
-        wordcount=2,
-        entity_registry_enabled_default = False,
+        value_function = value_function_bms_1_monitoring_version,
         allowedtypes = GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Monitoring Version",
+        key = "bms_2_monitoring_version",
+        value_function = value_function_bms_2_monitoring_version,
+        allowedtypes = GEN4,
+        icon = "mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Control Version",
+        key = "bms_1_control_version",
+        value_function = value_function_bms_1_control_version,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Control Version",
+        key = "bms_2_control_version",
+        value_function = value_function_bms_2_control_version,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
     ),
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 1 Serial Number",
@@ -6827,7 +8252,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5400,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
@@ -6882,17 +8307,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5600,
         unit = REGISTER_STR,
         wordcount = 8,
-        entity_registry_enabled_default = False,
-        allowedtypes = GEN4,
-        entity_category = EntityCategory.DIAGNOSTIC,
-        icon = "mdi:information",
-    ),
-    GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Serial Number",
-        key = "bms_1_serialnumber",
-        register = 3087,
-        unit = REGISTER_STR,
-        wordcount=8,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6964,19 +8378,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
-   
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 SoC",
         key = "bms_1_soc",
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 5777,
+        register = 4058,
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         icon = "mdi:battery-50",
     ),       
     GrowattModbusSensorEntityDescription(
@@ -6985,25 +8397,25 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 5778,
+        register = 4065,
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         icon = "mdi:battery-heart",
     ),       
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Total Throughput",
-        key = "bms_1_tp",
+        name = "BMS 1 Total Output Energy",
+        key = "bms_1_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
-        register = 5769,  # maybe 5768 and U32
+        register = 4025,
         register_type = REG_INPUT, 
-        unit = REGISTER_U16, ## maybe U32 if reg is 5768
+        unit = REGISTER_U32,
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7012,12 +8424,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3331,  
+        register = 4023,  
         register_type = REG_INPUT, 
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7026,12 +8438,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3334,  
+        register = 4021,  
         register_type = REG_INPUT, 
         unit = REGISTER_U32, 
         scale = 0.1,        
         allowedtypes = GEN4,
-        entity_registry_enabled_default = False,
+        entity_registry_enabled_default = True,
         icon = "mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -7040,7 +8452,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 5877,
+        register = 4166,
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
@@ -7053,7 +8465,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = PERCENTAGE,
         device_class = SensorDeviceClass.BATTERY,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 5878,
+        register = 4173,
         register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
@@ -7061,14 +8473,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery-heart",
     ),      
     GrowattModbusSensorEntityDescription(
-        name = "BMS 2 Total Throughput",
-        key = "bms_2_tp",
+        name = "BMS 2 Total Output Energy",
+        key = "bms_2_toe",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
-        register = 5869,  # maybe 5868 and U32
+        register = 4133,
         register_type = REG_INPUT, 
-        unit = REGISTER_U16, ## maybe U32 if reg is 5868
+        unit = REGISTER_U32,
         scale = 0.1,        
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
@@ -7080,7 +8492,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3336,  
+        register = 4131,  
         register_type = REG_INPUT, 
         unit = REGISTER_U32, 
         scale = 0.1,        
@@ -7094,7 +8506,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
-        register = 3338,  
+        register = 4129,  
         register_type = REG_INPUT, 
         unit = REGISTER_U32, 
         scale = 0.1,        
@@ -7102,9 +8514,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
-    
-    
-    
+    GrowattModbusSensorEntityDescription(
+        name = "Firmware Version",
+        key = "firmware_version",
+        register = 82,
+        unit = REGISTER_STR,
+        wordcount = 5,
+        allowedtypes = ALL_GEN_GROUP,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),    
     
     #####
     #
@@ -7710,11 +9130,12 @@ class growatt_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = await async_read_serialnr(hub, 9)
+        identifynumber = await async_read_serialnr(hub, 9)
+        seriesnumber = await async_read_buildv(hub, 30001)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber                       = await async_read_serialnr(hub, 3001)
-        if not seriesnumber:
+            seriesnumber = await async_read_buildv(hub, 9)
+        if not hub.seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
 
@@ -7728,32 +9149,32 @@ class growatt_plugin(plugin_base):
         # SPF = SPF 
         
         # derive invertertype from seriiesnumber
-        if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
-        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
-        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
-        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
-        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
-        #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
-        #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
-        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), Hybrid TL3-XH  11kW - 30kW (MID)  
-        elif seriesnumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
-        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
+        if identifynumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
+        #elif identifynumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
+        #elif identifynumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
+        elif identifynumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
+        elif identifynumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
+        elif identifynumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
+        elif identifynumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
+        #elif identifynumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
+        #elif identifynumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
+        #elif identifynumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
+        elif identifynumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+        elif identifynumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+        elif identifynumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
+        elif identifynumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
+        elif identifynumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
+        elif identifynumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), Hybrid TL3-XH  11kW - 30kW (MID)  
+        elif identifynumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
+        elif identifynumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+        elif identifynumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+        #elif identifynumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
         
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
+            _LOGGER.error(f"unrecognized {hub.name} inverter type - build version : {identifynumber}")
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -7784,7 +9205,7 @@ plugin_instance = growatt_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
-    SWITCH_TYPES= [],
+    SWITCH_TYPES = [],
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
