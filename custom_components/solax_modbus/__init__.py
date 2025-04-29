@@ -576,10 +576,10 @@ class SolaXModbusHub:
             try:
                 pdu_request = register_message.ReadInputRegistersRequest(address=address, count=count, dev_id=unit)
                 resp = await self._client.execute(False, pdu_request)
-                if resp.dev_id != pdu_request.dev_id:
+                if resp.transaction_id!=0 and resp.dev_id != pdu_request.dev_id:
                     _LOGGER.warning("Modbus: ERROR: expected id %s but got %s, IGNORING.", pdu_request.dev_id, resp.dev_id)
                     return None
-                if pdu_request.transaction_id != resp.transaction_id:
+                if resp.transaction_id!=0 and pdu_request.transaction_id != resp.transaction_id:
                     _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
                     return None
             except ModbusException as exception_error:
