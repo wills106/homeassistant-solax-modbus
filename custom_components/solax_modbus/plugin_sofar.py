@@ -3815,8 +3815,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         value_series=16,
     ),
     SofarModbusSensorEntityDescription(
-        name="cell min voltage",
-        key="cell_min_voltage",
+        name="cell max voltage",
+        key="cell_max_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x9069,
@@ -3825,8 +3825,8 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         allowedtypes=BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
-        name="cell max voltage",
-        key="cell_max_voltage",
+        name="cell min voltage",
+        key="cell_min_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x906A,
