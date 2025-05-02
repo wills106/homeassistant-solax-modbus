@@ -45,17 +45,27 @@ Only Ethernet mode tested so far.
 
 [AliExpress](https://www.aliexpress.com/item/32888961582.html)
 
-### For Sofar Solar: LAN Stick Logger LSE-3
+### For Sofar Solar
 
-Easy to install: Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger. However it comes with some caveats. See the [Sofar FAQ](./sofar-faq.md) for more information.
+#### WiFi Stick Logger LSW-3
 
-![Image of LSE-3 Logger](images/adaptor-rs485-sofar-lse3-logger.png)
+The standard LSW-3 Wifi logger that comes with the inverter.
 
-Configure the connection to its IP address on port 8899.
+![Image of LSW-3 Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
+
+Tested with LSE-3 firmware version LSW3_15_270A_1.65.
+
+Please see the [Sofar Installation](sofar-installation.md) for more information.
+
+#### LAN Stick Logger LSE-3
+
+Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger.
+
+![Image of LSE-3 Logger](images/adaptor-sofar-lse3-lan-logger.png)
 
 Tested with LSE-3 firmware version ME_0D_270A_1.09.
 
-Note that port 8899 is also open on the LSW-3 logger, but any ModBus TCP connection attempts time out here.
+Please see the [Sofar Installation](sofar-installation.md) for more information.
 
 ### [SolaX PocketWiFi 3.0](https://www.solaxpower.com/monitoring-dongles/)
 
