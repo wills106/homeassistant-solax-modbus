@@ -108,6 +108,13 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ====================================== Computed value functions  =================================================
 
+# This value function converts the bits to the number
+def mutate_bit_in_register(bit: int, state: int, descr: str, datadict: dict):
+    value = datadict.get(descr, 0)
+    _LOGGER.debug(f">>> Old value of {descr}: {value}")
+    new_value = (value & ~(1 << bit)) | (state << bit)
+    return new_value
+
 
 def value_function_timingmode(initval, descr, datadict):
     return [
@@ -830,9 +837,96 @@ NUMBER_TYPES = [
         max_exceptions=MAX_CURRENTS,
         entity_category=EntityCategory.CONFIG,
     ),
+    SolisModbusNumberEntityDescription(
+        name="Special Settings",
+        key="special_settings",
+        register=43249,
+        icon="mdi:switch",
+        fmt="i",
+        native_min_value=0,
+        native_max_value=4096,
+        native_step=1,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
+
+SWITCH_TYPES = [
+    SolisModbusSwitchEntityDescription(
+        name="MPPT Parallel Function",
+        key="mppt_parallel_function",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=0,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="IgFollow",
+        key="timed_charge_slot_2_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=1,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Relay protection",
+        key="timed_charge_slot_3_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=2,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="I-leak protection",
+        key="timed_charge_slot_4_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=3,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="PV iso Protection",
+        key="timed_charge_slot_5_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=4,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Grid-interference protection",
+        key="timed_charge_slot_6_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=5,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="DC component of grid current protection switch",
+        key="timed_discharge_slot_1_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=6,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Const Voltage Mode Enable",
+        key="timed_discharge_slot_2_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=7,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+]
 
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
@@ -2603,7 +2697,7 @@ plugin_instance = solis_plugin(
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
-    SWITCH_TYPES=[],
+    SWITCH_TYPES=SWITCH_TYPES,
     block_size=40,
     order16=Endian.BIG,
     order32=Endian.BIG,
