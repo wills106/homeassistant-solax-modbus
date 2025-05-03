@@ -6,7 +6,7 @@ How to install the RS485 connection to your Sofar Solar inverter hardware.
 
 The LSW-3 WiFi stick comes with the inverter and can be used with this integration directly. However there is one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time.
 
-But once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistan integration then.
+But once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration then.
 
 ![Image of LSW-3 WiFi Stick Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
 
@@ -19,7 +19,7 @@ But once configured, instead of the SolarMan portal you will be able to monitor 
 5. Under 'Working mode' switch from 'Data collection' to 'transparency'. Note that this will cancel your stick's communication with the SolarMan portal.
    ![Working mode setting](images/installation-sofar-working-mode.png)
 
-6. Click on 'Save' and then on 'Restart'
+6. Click on 'Save' and then on 'Restart'.
 7. Configure the homeassistant-solax-modbus integration as described on the [installation](installation.md) page.
 8. On the first page select `TCP / Ethernet` as interface. Configure the rest as appropriate. Click on 'Submit'.
 9. On the page 'TCP/IP Parameters' enter the IP address that you have assigned to the LSW-3 stick in your router. Select '8899' as port and choose 'Modbus RTU over TCP'.

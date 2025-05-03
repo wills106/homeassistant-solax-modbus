@@ -22,7 +22,7 @@ Running a port scanner like nmap on the LSE-3's IP address does not report port 
 
 I have seen that it might take a while until the port 8899 gets opened by the LAN stick logger. Try again the next day.
 
-If that does still not help check the LAN stick loggers Firmware: Open the web interface at `http://\<LSE-3 IP Address\>` and on the 'Status' page expand the 'Device Information'. Check that the Firmware version is 'ME_0D_270A_1.09' or newer.
+If that does still not help check the LAN stick loggers Firmware: Open the web interface at `http://\<LSE-3 IP Address\>` and on the 'Status' page expand the 'Device Information'. Check that the Firmware version is 'ME_0D_270A_1.09'.
 
 ## Using the LSE-3 logger stick, write requests fail with errors.
 
@@ -30,7 +30,7 @@ You are using the LSE-3 logger stick to connect home assistant to your Sofar Sol
 
 `Modbus Error: [Input/Output] ERROR: No response received after 3 retries`
 
-There is an issue with the LSE-3 logger stick that does not return response codes for write requests in the standard format. Thus the write attempt is considered as failed, even though it was successful.
+There is an issue with the LSE-3 logger stick in the 'Data collection' working mode that does not return response codes for write requests in the standard format. Thus the write attempt is considered as failed, even though it was successful.
 
 When using the UI you can ignore these errors.
 
@@ -43,10 +43,10 @@ In general we recommend using the working mode 'Transparency' or use a RS-485 Mo
 There are multiple possible root causes for this:
 
 - You have assigned a fixed IP address in the config UI of the logger stick. To solve this, let the logger stick fetch an IP address via DHCP, but use your router configuration to assign the same IP address to the logger stick.
-- Wrong firmware. Make sure your logger stick is using the firmware version `ME_0D_270A_1.09`. The newer firmware version `ME_0D_270A_1.11` is causing issues. Older firmwares are also not reliable. If your logger stick's firmware is not the correct version, get in touch with the [SolarMan support](https://www.solarmanpv.com/supportservice/service-contact/) and ask them to update the firmware of your logger. SolarMan support will need the serial number of your logger to do this.
+- Wrong firmware while using the 'Data collection' working mode. Make sure your logger stick is using the firmware version `ME_0D_270A_1.09`. The newer firmware version `ME_0D_270A_1.11` is causing issues. Older firmwares are also not reliable. If your logger stick's firmware is not the correct version, get in touch with the [SolarMan support](https://www.solarmanpv.com/supportservice/service-contact/) and ask them to update the firmware of your logger. SolarMan support will need the serial number of your logger to do this.
 - Too many requests. Especially if you also use other software that accesses the LSE-3, too many requests can lead to time out issues. Increase the request intervals to solve this issue.
 
-In general we can no longer recommend the LSE-3. Instead we recommend a RS-485 Modbus TCP adaptor.
+In general we recommend using the working mode 'Transparency' or use a RS-485 Modbus TCP adaptor instead. See the [Sofar installation](sofar-installation.md) for more details.
 
 
 ## I have changed some values, but they seem to have no impact on the inverter's operation.
