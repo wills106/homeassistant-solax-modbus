@@ -8,23 +8,25 @@ Have you double checked that the termination resistor is installed on both ends?
 
 There was an issue in recent firmware versions (introduced at around V110000) that cause the firmware communication to fail after a few hours. Install a newer firmware of at least version V110051.
 
-## I am using the LSW-3 Wifi Stick Logger, but ModBus TCP does not work
+## I am using either the LSW-3 or LSE-3 stick logger, but my inverter's app does not receive any updates any more
 
-Even though also on the LSW-3 Wifi Stick Logger shows that port 8899 is open, Modbus TCP connection attempts time out. 
+This is the known drawback, when using the working mode 'Transparency'. If you need to keep the SolarMan/SofarView/... app running while being able to use this integration at the same time, we recommend to use an RS485 adaptor instead. See the [Sofar installation](sofar-installation.md) for more details.
 
-We recommend using a RS-485 Modbus TCP adaptor instead.
+## I am using the LSW-3 Wifi stick logger, but the integration is receiving no values
 
-## I am using the LSE-3 LAN Stick Logger, but the port 8899 is not open
+The LSE-3 Wifi stick logger only works, when the working mode is set to 'Transparency'. See the [Sofar installation](sofar-installation.md) for more details.
+
+## I am using the LSE-3 LAN stick logger, but the port 8899 is not open
 
 Running a port scanner like nmap on the LSE-3's IP address does not report port 8899 as being open.
 
-I have seen that it might take a while until the port 8899 gets opened by the LAN Stick Logger. Try again the next day.
+I have seen that it might take a while until the port 8899 gets opened by the LAN stick logger. Try again the next day.
 
-If that does still not help check the LAN Stick Loggers Firmware: Open the web interface at `http://\<LSE-3 IP Address\>` and on the 'Status' page expand the 'Device Information'. Check that the Firmware version is 'ME_0D_270A_1.09' or newer.
+If that does still not help check the LAN stick loggers Firmware: Open the web interface at `http://\<LSE-3 IP Address\>` and on the 'Status' page expand the 'Device Information'. Check that the Firmware version is 'ME_0D_270A_1.09' or newer.
 
 ## Using the LSE-3 logger stick, write requests fail with errors.
 
-You are using the LSE-3 logger stick to connect home assistant to your Sofar Solar inverter. When setting values you get error messages like the following:
+You are using the LSE-3 logger stick to connect home assistant to your Sofar Solar inverter and you are using the working mode 'Data collection'. When setting values you get error messages like the following:
 
 `Modbus Error: [Input/Output] ERROR: No response received after 3 retries`
 
@@ -34,7 +36,7 @@ When using the UI you can ignore these errors.
 
 In automations and scripts these errors will cause your automation to stop. Workaround: Add `continue_on_error: true` to the YAML of your service calls that set values to the inverter. More details on `continue_on_error` can be found in the [Home Assistant documentation](https://www.home-assistant.io/docs/scripts/#continuing-on-error).
 
-In general we can no longer recommend the LSE-3. Instead we recommend a RS-485 Modbus TCP adaptor.
+In general we recommend using the working mode 'Transparency' or use a RS-485 Modbus TCP adaptor instead. See the [Sofar installation](sofar-installation.md) for more details.
 
 ## I am using the LSE-3 logger stick, but requests timeout frequently.
 
