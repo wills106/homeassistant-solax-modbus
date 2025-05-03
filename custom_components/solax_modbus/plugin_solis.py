@@ -93,6 +93,11 @@ class SolisModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 @dataclass
 class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+    
+
+@dataclass
+class SolisModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
 @dataclass
@@ -865,7 +870,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="IgFollow",
-        key="timed_charge_slot_2_enable",
+        key="igfollow",
         register=43249,
         icon="mdi:switch",
         register_bit=1,
@@ -874,7 +879,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="Relay protection",
-        key="timed_charge_slot_3_enable",
+        key="relay_protection",
         register=43249,
         icon="mdi:switch",
         register_bit=2,
@@ -883,7 +888,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="I-leak protection",
-        key="timed_charge_slot_4_enable",
+        key="i_leak_protection",
         register=43249,
         icon="mdi:switch",
         register_bit=3,
@@ -892,7 +897,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="PV iso Protection",
-        key="timed_charge_slot_5_enable",
+        key="pv_iso_protection",
         register=43249,
         icon="mdi:switch",
         register_bit=4,
@@ -901,7 +906,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="Grid-interference protection",
-        key="timed_charge_slot_6_enable",
+        key="grid_interference_protection",
         register=43249,
         icon="mdi:switch",
         register_bit=5,
@@ -910,7 +915,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="DC component of grid current protection switch",
-        key="timed_discharge_slot_1_enable",
+        key="dc_component_of_grid_current_protection_switch",
         register=43249,
         icon="mdi:switch",
         register_bit=6,
@@ -919,7 +924,7 @@ SWITCH_TYPES = [
     ),
     SolisModbusSwitchEntityDescription(
         name="Const Voltage Mode Enable",
-        key="timed_discharge_slot_2_enable",
+        key="const_voltage_mode_enable",
         register=43249,
         icon="mdi:switch",
         register_bit=7,
@@ -2601,6 +2606,15 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-clock",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Special Settings",
+        key="special_settings",
+        register=43249,
+        icon="mdi:switch",
+        entity_registry_enabled_default=True,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
     ),
 ]
 
