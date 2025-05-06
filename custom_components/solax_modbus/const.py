@@ -282,7 +282,8 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 
 
 def value_function_pv_power_total(initval, descr, datadict):
-    return datadict.get("pv_power_1", 0) + datadict.get("pv_power_2", 0) + datadict.get("pv_power_3", 0)
+    vals = [v for k, v in datadict.items() if k.startswith("pv_power_")]
+    return None if any(p is None for p in vals) else sum(vals)
 
 
 def value_function_battery_output(initval, descr, datadict):
