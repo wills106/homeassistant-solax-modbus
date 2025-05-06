@@ -2,19 +2,46 @@
 
 How to install the RS485 connection to your Sofar Solar inverter hardware.
 
-## LSE3 Stick Logger
+## LSW-3 WiFi Stick Logger
 
-The easiest installation is by replacing the LSW3 WiFi Stick Logger that comes with the inverter with the LSE3 Ethernet Stick Logger. You just need to replace the stick, plugin the Ethernet cable and you are ready to go. However it comes with a couple of caveats as you can see in the [FAQ](./sofar-faq.md).
+The LSW-3 WiFi stick comes with the inverter and can be used with this integration directly. However there is one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time.
 
-![Image of installed LSE3 Stick Logger](images/installation-sofar-lse3-stick-logger.png)
+But once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration then.
 
-Once installed and connected to the network it provides ModBus TCP out-of-the-box via the port 8899. Just follow the [installation](installation.md) and on the 'TCP/IP Parameters' page enter the IP address of the LSE3 Stick Logger and use 8899 as port.
+![Image of LSW-3 WiFi Stick Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
+
+### Configuration
+
+1. In your internet router, find the connected LSW-3 stick logger and assign a fixed IP address to it. You have to do this through your internet router. **Do not assign a fixed IP address in the stick's administration UI directly - this will cause problems**.
+2. Open the LSW-3 Web UI at `http://<ip-address>` and login using the default username `admin` and default password `admin`.
+3. Open this page in your browser: `http://<ip-address>/config_hide.html`
+4. This will open a hidden configuration page with additional configuration options.
+5. Under 'Working mode' switch from 'Data collection' to 'transparency'. Note that this will cancel your stick's communication with the SolarMan portal.
+   ![Working mode setting](images/installation-sofar-working-mode.png)
+
+6. Click on 'Save' and then on 'Restart'.
+7. Configure the homeassistant-solax-modbus integration as described on the [installation](installation.md) page.
+8. On the first page select `TCP / Ethernet` as interface. Configure the rest as appropriate. Click on 'Submit'.
+9. On the page 'TCP/IP Parameters' enter the IP address that you have assigned to the LSW-3 stick in your router. Select '8899' as port and choose 'Modbus RTU over TCP'.
+   ![TCP/IP Parameters](images/installation-sofar-setup-tcpip.png) 
+
+## LSE-3 LAN Stick Logger
+
+The LSE-3 LAN stick logger is an alternative to the LSW-3 WiFi stick logger that connects over LAN cable instead of WiFi. 
+
+In contrast to the LSW-3 you can also use it with SolarMan and this integration in parallel at the same time. The default working mode speaks some sort of Modbus TCP with some incompatibilities besides its SolarMan protocol. However this parallel use comes with a couple of caveats as you can see in the [FAQ](./sofar-faq.md) and some reliability issues. **Therefore we do not recommend to run this integration with the LSE-3 in the default 'Data collection' working mode**. We recommend to use the same 'Transparency' working mode as described above for the LSW-3 Wifi stick logger.
+
+![Image of installed LSE-3 LAN Stick Logger](images/installation-sofar-lse3-stick-logger.png)
+
+However, if you still want to use your LSE-3 LAN logger stick in the default working mode 'Data collection' with this integration nevertheless, here is how to do this:
+
+Once installed and connected to the network using a fixed IP address assigned though your router it provides ModBus TCP out-of-the-box via the port 8899. Just follow the [installation](installation.md) and on the 'TCP/IP Parameters' page enter the IP address of the LSE3 Stick Logger and use 8899 as port and choose 'Modbus TCP'.
 
 Please see the [FAQ](./sofar-faq.md), if you run into issues.
 
 ## Connect an RS485 USB or Ethernet Adaptor
 
-This is a bit more complicated, however the recommended solution.
+This is a bit more complicated, however the recommended solution, if you want to keep your logger stick connected to the SolarMan portal, while also being able to use this integration at the same time.
 
 1. Shutdown the inverter.
 2. Disassemble the COM port connector: Unscrew the rear end from the connector. 
