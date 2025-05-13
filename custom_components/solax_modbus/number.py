@@ -1,5 +1,5 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, TMPDATA_EXPIRY
+from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS, TMPDATA_EXPIRY
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
@@ -73,6 +73,7 @@ class SolaXModbusNumber(NumberEntity):
         self._key = number_info.key
         self._register = number_info.register
         self._fmt = number_info.fmt
+        self._unit = number_info.unit
         self._attr_native_min_value = number_info.native_min_value
         self._attr_native_max_value = number_info.native_max_value
         self._attr_scale = number_info.scale
@@ -169,16 +170,27 @@ class SolaXModbusNumber(NumberEntity):
             payload = int(value / (self._attr_scale * self.entity_description.read_scale))
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(
-                f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale}"
+                f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
             )
             await self._hub.async_write_registers_single(
                 unit=self._modbus_addr, address=self._register, payload=payload
             )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(
-                f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale}"
+                f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
             )
             await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+        elif self._write_method == WRITE_MULTI_MODBUS:
+            pl = [
+                (
+                    self._unit,
+                    payload,
+                ),
+            ]
+            _LOGGER.info(
+                f"writing {self._platform_name} {self._key} number register {self._register} value {pl} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
+            )
+            await self._hub.async_write_registers_multi(unit=self._modbus_addr, address=self._register, payload=pl)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             # corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
