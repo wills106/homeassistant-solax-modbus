@@ -140,7 +140,7 @@ Turns on backup mode in self use mode. Only difference is that `selfuse_backup_s
 
 ## selfuse_nightcharge_upper_soc
 
-Target battery charge for night charging. Note my inverter overshoots this value, so your experience may vary.
+The upper battery SoC from grid in Selfuse mode, if `selfuse_night_charge_enable` is enabled.
 
 ## shadow_fix_function_level
 
