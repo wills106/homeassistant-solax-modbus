@@ -16,7 +16,7 @@ Current charge percentage of your batteries. Note this might not be accurate whe
 
 ## battery_charge_upper_soc
 
-
+Upper limit of battery SoC. Overrides any other battery SoC upper limits.
 
 ## battery_charge_max_current & battery_discharge_max_current
 
@@ -32,7 +32,7 @@ Amount of energy your inverter stored to the battery today (either from PV or ch
 
 ## battery_power_charge & battery_current_charge
 
-Current current & power your battery is charged with. Negative values mean the battery is drained.
+Actual current & power the battery is charged with. Negative values mean the battery is discharged.
 
 ## battery_state_of_health
 
@@ -44,7 +44,7 @@ Shows the internal battery temperature. Could help you to decide if you need to 
 
 ## battery_voltage_charge
 
-Current voltage of your batteries. Works only if batteries are used at the moment.
+Actual voltage of the battery. Zero, if inverter is in Idle mode.
 
 ## charger_use_mode
 
@@ -76,11 +76,11 @@ This is just my opinion, anyone is free to fix this. Used when you want to insta
 
 ## grid_import & grid_export
 
-Current power your house network imports & exports to the grid. Requires either a Modbus smart meter or CT clamps installed.
+Current power your house network imports & exports to the grid.
 
 ## hotstandby
 
-
+Enables the inverter to switch self to StandBy mode, if load is low (about 100 W). In StandBy mode the inverter has lower consumption and does not power the load. If the load rises, the inverter leaves StandBy mode in 5 minutes.
 
 ## house_load
 
