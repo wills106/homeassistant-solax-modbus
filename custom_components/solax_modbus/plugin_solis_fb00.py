@@ -510,7 +510,7 @@ BUTTON_TYPES = [
     SolisModbusButtonEntityDescription(
         name="Update Discharge Times 6",
         key="update_discharge_times_6",
-        register=43787,
+        register=43788,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
