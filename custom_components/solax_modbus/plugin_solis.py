@@ -93,6 +93,11 @@ class SolisModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
 @dataclass
 class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+    
+
+@dataclass
+class SolisModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
 @dataclass
@@ -107,6 +112,13 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
+
+# This value function converts the bits to the number
+def mutate_bit_in_register(bit: int, state: int, descr: str, datadict: dict):
+    value = datadict.get(descr, 0)
+    _LOGGER.debug(f">>> Old value of {descr}: {value}")
+    new_value = (value & ~(1 << bit)) | (state << bit)
+    return new_value
 
 
 def value_function_timingmode(initval, descr, datadict):
@@ -830,9 +842,96 @@ NUMBER_TYPES = [
         max_exceptions=MAX_CURRENTS,
         entity_category=EntityCategory.CONFIG,
     ),
+    SolisModbusNumberEntityDescription(
+        name="Special Settings",
+        key="special_settings",
+        register=43249,
+        icon="mdi:switch",
+        fmt="i",
+        native_min_value=0,
+        native_max_value=4096,
+        native_step=1,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
+
+SWITCH_TYPES = [
+    SolisModbusSwitchEntityDescription(
+        name="MPPT Parallel Function",
+        key="mppt_parallel_function",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=0,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="IgFollow",
+        key="igfollow",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=1,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Relay protection",
+        key="relay_protection",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=2,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="I-leak protection",
+        key="i_leak_protection",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=3,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="PV iso Protection",
+        key="pv_iso_protection",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=4,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Grid-interference protection",
+        key="grid_interference_protection",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=5,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="DC component of grid current protection switch",
+        key="dc_component_of_grid_current_protection_switch",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=6,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+    SolisModbusSwitchEntityDescription(
+        name="Const Voltage Mode Enable",
+        key="const_voltage_mode_enable",
+        register=43249,
+        icon="mdi:switch",
+        register_bit=7,
+        sensor_key="special_settings",
+        value_function=mutate_bit_in_register,
+    ),
+]
 
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
@@ -2508,6 +2607,15 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-clock",
     ),
+    SolisModbusSensorEntityDescription(
+        name="Special Settings",
+        key="special_settings",
+        register=43249,
+        icon="mdi:switch",
+        entity_registry_enabled_default=True,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+    ),
 ]
 
 # ============================ plugin declaration =================================================
@@ -2603,7 +2711,7 @@ plugin_instance = solis_plugin(
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
-    SWITCH_TYPES=[],
+    SWITCH_TYPES=SWITCH_TYPES,
     block_size=40,
     order16=Endian.BIG,
     order32=Endian.BIG,
