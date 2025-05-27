@@ -403,6 +403,7 @@ MAX_CURRENTS = [
     ("H475", 30),  # Gen4 X1 7.5kW
     ("PRE", 30),  # Gen4 X1 RetroFit
     ("PRI", 30),  # Gen4 X1 RetroFit
+    ("H53", 50),  # Gen5 X1-IES
     ("H55", 50),  # Gen5 X1-IES
     ("H56", 50),  # Gen5 X1-IES
     ("H58", 50),  # Gen5 X1-IES
@@ -8101,6 +8102,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("PRE"):
             invertertype = AC | GEN4 | X1  # RetroFit
             self.inverter_model = "X1-RetroFit"
+        elif seriesnumber.startswith("H53"):
+            invertertype = HYBRID | GEN5 | X1  # X1-IES 3.7kW?
+            self.inverter_model = f"X1-IES-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
         elif seriesnumber.startswith("H55"):
             invertertype = HYBRID | GEN5 | X1 | MPPT3  # X1-IES 5kW?
             self.inverter_model = f"X1-IES-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
