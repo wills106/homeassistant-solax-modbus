@@ -4536,7 +4536,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="battery_output_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL, #1300
         icon="mdi:battery-arrow-down",
         register=0x1D,
         register_type=REG_INPUT,
@@ -4550,7 +4550,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="battery_input_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL, #1300
         icon="mdi:battery-arrow-up",
         register=0x20,
         register_type=REG_INPUT,
@@ -4577,7 +4577,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="battery_input_energy_total",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL, #1300
         icon="mdi:battery-arrow-up",
         register=0x21,
         register_type=REG_INPUT,
@@ -6617,6 +6617,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x33D,
         allowedtypes=MIC | GEN,
         blacklist=(
+            "MC402T",
             "MC502T",
             "MU802T",
         ),
@@ -6627,6 +6628,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x33E,
         allowedtypes=MIC | GEN,
         blacklist=(
+            "MC402T",
             "MC502T",
             "MU802T",
         ),
@@ -8195,6 +8197,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("XB3"):
             invertertype = MIC | GEN2 | X1  # X1-Boost
             self.inverter_model = "X1-Boost"
+        elif seriesnumber.startswith("XAT"):
+            invertertype = MIC | GEN2 | X1  # X1-Mini G3 #1340
+            self.inverter_model = "X1-Mini"
         elif seriesnumber.startswith("XM3"):
             invertertype = MIC | GEN2 | X1  # X1-Mini G3
             self.inverter_model = "X1-Mini"
@@ -8221,6 +8226,9 @@ class solax_plugin(plugin_base):
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC203T"):
             invertertype = MIC | GEN | X3  # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith("MC402T"):
+            invertertype = MIC | GEN | X3  # MIC X3 #1339
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC502T"):
             invertertype = MIC | GEN | X3  # MIC X3
