@@ -15,34 +15,33 @@ This override also applies to "External Generation Max Charge" "Remotecontrol Ac
 
 ## Self Use
 For most people, this will be the most common mode of operation.
+
 In this mode, the home load will come from following sources in the given priority:
 
 - Solar, for the amount of solar energy available
-- Battery, as long as the battery State Of Charge (SOC) is above the "Selfuse Discharge Min SOC" level
+- Battery, as long as the battery State Of Charge (SOC) is above the "Selfuse Discharge Min SOC" parameter
 - Grid, for the remaining missing power
 
-Excess solar energy will go to Battery first, till the battery reaches the nearly full level.
-Once the battery is nearly full (95%), excess energy will go to the grid. Once the battery is completely full, all excess energy will go to the grid.
+Excess solar energy will go to the battery first, then to the grid.
+The power sent to the grid is limited with the "Export Control User Limit" parameter.
+The battery charge and discharge currents is limited with the "Battery Charge Max Current" and "Battery Discharge Max Current" parameters.
+The battery upper charge level is limited with the "Battery Charge Upper SOC" parameter.
 
-The power sent to the grid can be limited with the "Export Control User Limit" parameter.
-Battery charge and discharge currents can be limited with the "Battery Charge Max Current" and "Battery Discharge Max Current" parameters.
-
-Attention: The description above assumes that the charger time window is inactive, and that the discharge time window is active. If you would set the charger window to active for a certain time period, the battery may charge from grid.
+Attention: The description above assumes that the charger time window is inactive, and that the discharge time window is active. If you would set the charger window to active for a certain time period, the battery may charge from grid up to "Selfuse Nightcharge Upper SOC" parameter.
 
 ## Feedin Priority
-In Feedin Priority mode, the home load comes from following sources in the given priority:
+In this mode, the home load comes from following sources in the given priority:
 
 - Solar
 - Grid
 
-Excess solar energy will go to the grid. If the grid power has been limited with the "Export Control User Limit" parameter, the remaining surplus power will go to the battery.
+Excess solar energy will go to the grid. If the grid power has been limited with the "Export Control User Limit" parameter, the remaining surplus power will go to the battery up to the smaller of "Battery Charge Upper SOC" and "Feedin Nightcharge Upper SOC" parameter.
 
 The battery will not discharge (unless the discharge time window is active). 
-In this mode, **during the charging time window**, the battery may still be charged with excess solar energy (if the grid export is limited), up to the "Feedin ??? SOC" limit. During the active discharge time window, no battery charging occurs.
+In this mode, **during the charging time window**, the battery may still be charged with excess solar energy (if the grid export is limited), up to the "Feedin Nightcharge Upper SOC" parameter. During the active discharge time window, no battery charging occurs.
 
 attention:
-
-- if the charging time window is active, the grid will load battery and power the home load. 
+- if the charging time window is active, the grid will charge the battery and power the home load
 > - if the discharge time window is active, battery will discharge to power the home load up to the set discharge limit
 
 ## Manual Mode

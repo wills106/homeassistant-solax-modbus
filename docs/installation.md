@@ -31,19 +31,32 @@ Now it's only needed to add your inverter to Home Assistant.
     - Navigate to your `Devices & services`.
     - Click `ADD INTEGRATION`
     - Search and select `SolaX Inverter Modbus`
+
 - You can have multiple instances of this Integration, just change the default Prefix from SolaX to something else. Ie. `SolaX Main` or `SolaX Southwest`.
-- Select correct Modbus address, look at your inverter if the default one does not work.
+
+- Enter correct Modbus address of your inverter - look at your inverter setting, if the default one does not work.
+- Select your inverter type.
+- Check Emergency Power Option to load entities about EPS.
+- Check Dry Contact Box to load entities about Dry Contact.
+
 ![](images/integration-setup.png)
-- Only Sofar and Solinteg take advantage of the different poll speeds. "The default polling interval of the modbus registers in seconds" is the one to reduce from 15 if required. Do not try and poll quicker that 5s on Inverters with a baud of 9600.
+
+- Only Sofar and Solinteg take advantage of the different poll speeds. "The default polling interval of the modbus registers in seconds" is the one to reduce from 15 if required. Do not try and poll quicker that 5 s on inverters with a baud of 9600.
+
 - If you use RS485 to Ethernet adaptor:
     - Enter IP address of your adaptor.
+
 ![](images/integration-setup-tcpip.png)
+
 - If you use RS485 to USB adaptor:
     - Select the right port.
       - If your installation has a tendancy to swap between ttyUSB0 and ttyUSB1 you can define it by the id
       - /dev/serial/by-id/usb-xyz
     - Enter correct baud rate that does match setting on your inverter.
+
 ![](images/integration-setup-usb.png)
+
 - If you use Hass core HUB:
     - Enter the hub name.
+
 ![](images/integration-setup-corehub.png)
