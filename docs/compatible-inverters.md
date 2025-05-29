@@ -200,7 +200,7 @@ Known Serial Numbers
 X3 MIC
 
 On Gen1 Modbus Power Meter support is provided with Firmware Arm 1.38 and above.
-Gen2 does not provide reading from a Modbus Power Meter at present.
+Gen2 does not provide reading from a Modbus Power Meter at present & requires Firmware 1.17 and above.
 
 > Must be connected by serial Modbus.
 > Don't poll below 5s, don't perform initial connection while Inverter asleep!
