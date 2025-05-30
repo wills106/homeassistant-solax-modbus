@@ -4222,7 +4222,7 @@ class battery_config(base_battery_config):
                 serial = str(decoder.decode_string(self.batt_pack_model_len * 2).decode("ascii"))
                 return serial
         except:
-            _LOGGER.warn(f"Cannot read batt pack serial")
+            _LOGGER.warning(f"Cannot read batt pack serial")
             return None
 
     async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
