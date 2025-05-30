@@ -205,7 +205,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # When simply set to True, no initial value will be returned, but the block will be considered valid
     value_series: int = None  # if not None, the value is part of a series of values with similar properties
     # The name and key must contain a placeholder {} that is replaced by the preceding number
-
+    min_value: int = None
+    max_value: int = None
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):

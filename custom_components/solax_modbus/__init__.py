@@ -768,7 +768,9 @@ class SolaXModbusHub:
         if val == None:  # E.g. if errors have occurred during readout
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
-            return_value = descr.scale.get(val, "Unknown")
+            if val not in descr.scale:
+                raise ModbusIOException(f"Modbus value {val} not found in scale mapping for {descr.key}")
+            return_value = descr.scale[val]
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
@@ -776,6 +778,12 @@ class SolaXModbusHub:
                 return_value = round(val * descr.scale, descr.rounding)
             except:
                 return_value = val  # probably a REGISTER_WORDS instance
+            min_val = getattr(descr, "min_value", None)
+            max_val = getattr(descr, "max_value", None)
+            if min_val is not None and return_value < min_val:
+                raise ModbusIOException(f"Value {return_value} of '{descr.key}' lower than {min_val}")
+            if max_val is not None and return_value > max_val:
+                raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (self.tmpdata_expiry.get(descr.key, 0) == 0) and (
             (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)
