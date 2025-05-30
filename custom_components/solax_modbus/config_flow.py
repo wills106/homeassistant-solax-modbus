@@ -20,7 +20,10 @@ from homeassistant.const import (
     MINOR_VERSION,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import selector
+from homeassistant.helpers import (
+    config_validation as cv,
+    selector,
+)
 from homeassistant.helpers.schema_config_entry_flow import (
     SchemaCommonFlowHandler,
     SchemaConfigFlowHandler,
@@ -32,6 +35,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
 from .const import (
     DEFAULT_NAME,
     DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_POWER_KW,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_INTERFACE,
@@ -42,6 +46,7 @@ from .const import (
     DEFAULT_TCP_TYPE,
     CONF_TCP_TYPE,
     CONF_INVERTER_NAME_SUFFIX,
+    CONF_INVERTER_POWER_KW,
     CONF_READ_EPS,
     CONF_READ_DCB,
     CONF_READ_PM,
@@ -125,6 +130,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_INVERTER_NAME_SUFFIX, description={"suggested_value": DEFAULT_INVERTER_NAME_SUFFIX}): str,
+        vol.Optional(CONF_INVERTER_POWER_KW, default=DEFAULT_INVERTER_POWER_KW): cv.positive_int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
@@ -145,6 +151,7 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL_MEDIUM, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_INVERTER_NAME_SUFFIX): str,
+        vol.Optional(CONF_INVERTER_POWER_KW, default=DEFAULT_INVERTER_POWER_KW): cv.positive_int,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,

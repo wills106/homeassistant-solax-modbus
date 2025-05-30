@@ -23,6 +23,16 @@ from homeassistant.const import (
     CONF_PORT,
     EVENT_HOMEASSISTANT_STARTED,
     Platform,
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfTime,
+    CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
@@ -77,8 +87,10 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_INVERTER_NAME_SUFFIX,
+    CONF_INVERTER_POWER_KW,
     CONF_CORE_HUB,
     DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_POWER_KW,
     DEFAULT_BAUDRATE,
     DEFAULT_INTERFACE,
     DEFAULT_MODBUS_ADDR,
@@ -278,6 +290,7 @@ class SolaXModbusHub:
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
+        self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
         self._modbus_addr = modbus_addr
         self._seriesnumber = "still unknown"
         self.interface = interface
@@ -778,8 +791,28 @@ class SolaXModbusHub:
                 return_value = round(val * descr.scale, descr.rounding)
             except:
                 return_value = val  # probably a REGISTER_WORDS instance
-            min_val = getattr(descr, "min_value", None)
-            max_val = getattr(descr, "max_value", None)
+            if descr.native_unit_of_measurement == UnitOfFrequency.HERTZ:
+                min_val = getattr(descr, "min_value", 20)
+                max_val = getattr(descr, "max_value", 80)
+            if descr.native_unit_of_measurement == PERCENTAGE:
+                min_val = getattr(descr, "min_value", 0)
+                max_val = getattr(descr, "max_value", 100)
+            elif descr.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
+                min_val = getattr(descr, "min_value", -100)
+                max_val = getattr(descr, "max_value", 200)
+            elif descr.native_unit_of_measurement == UnitOfPower.KILO_WATT:
+                min_val = getattr(descr, "min_value", -self.inverterPowerKw *2)
+                max_val = getattr(descr, "max_value", +self.inverterPowerKw *2)
+            elif descr.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE:
+                min_val = getattr(descr, "min_value", -self.inverterPowerKw *2)
+                max_val = getattr(descr, "max_value", +self.inverterPowerKw *2)
+            elif descr.native_unit_of_measurement == UnitOfElectricPotential.VOLT:
+                min_val = getattr(descr, "min_value", 0)
+                max_val = getattr(descr, "max_value", 2000)
+            else:
+                min_val = getattr(descr, "min_value", None)
+                max_val = getattr(descr, "max_value", None)
+
             if min_val is not None and return_value < min_val:
                 raise ModbusIOException(f"Value {return_value} of '{descr.key}' lower than {min_val}")
             if max_val is not None and return_value > max_val:
