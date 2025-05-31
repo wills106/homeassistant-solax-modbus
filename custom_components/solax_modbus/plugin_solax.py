@@ -7382,6 +7382,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x408,
         register_type=REG_INPUT,
+        unit=REGISTER_S16,
         allowedtypes=MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
