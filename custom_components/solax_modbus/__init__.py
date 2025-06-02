@@ -781,9 +781,7 @@ class SolaXModbusHub:
         if val == None:  # E.g. if errors have occurred during readout
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
-            if val not in descr.scale:
-                raise ModbusIOException(f"Modbus value {val} not found in scale mapping for {descr.key}")
-            return_value = descr.scale[val]
+            return_value = descr.scale.get(val, "Unknown")
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
