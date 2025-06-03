@@ -267,6 +267,13 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         value_function=value_function_epscontrol,
     ),
+    SofarModbusButtonEntityDescription(
+        name="IV Curve Scan",
+        key="IV_curve_scan",
+        register=0x1027,
+        command=1,
+        allowedtypes=HYBRID,
+    ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
     # SofarModbusButtonEntityDescription(
     #     name = "Timing: Control",
