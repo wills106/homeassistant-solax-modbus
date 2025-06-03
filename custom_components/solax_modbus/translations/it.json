@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Definisci la connessione Modbus del tuo inverter",
+        "data": {
+          "name": "Prefisso da utilizzare per i sensori dell’inverter",
+          "read_modbus_addr": "Indirizzo Modbus dell’inverter",
+          "interface": "Interfaccia",
+          "inverter_name_suffix": "Suffisso del nome dell’inverter",
+          "read_eps": "Opzione alimentazione d’emergenza (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Modalità parallela (Master-Slave)",
+          "plugin": "Seleziona il tipo di inverter",
+          "scan_interval": "Intervallo di polling predefinito dei registri Modbus (secondi)",
+          "scan_interval_medium": "Intervallo di polling medio",
+          "scan_interval_fast": "Intervallo di polling veloce",
+          "time_out": "Timeout in secondi"
+        }
+      },
+      "serial": {
+        "title": "Parametri interfaccia seriale",
+        "data": {
+          "read_serial_port": "Nome della porta seriale",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "Parametri TCP/IP",
+        "data": {
+          "host": "Indirizzo IP dell’inverter o dell’interfaccia Modbus",
+          "port": "Porta TCP su cui collegarsi all’inverter",
+          "tcp_type": "Variante Modbus TCP"
+        }
+      },
+      "battery": {
+        "title": "Lettura dei moduli batteria",
+        "data": {
+          "read_battery": "Abilita lettura"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Il dispositivo è già configurato",
+      "name_already_used": "Il nome è già stato utilizzato o non è valido",
+      "invalid_host": "Indirizzo IP non valido"
+    },
+    "abort": {
+      "already_configured": "Il dispositivo è già configurato"
+    }
+  },
+
+  "options": {
+    "step": {
+      "init": {
+        "title": "Definisci la connessione Modbus del tuo inverter",
+        "data": {
+          "name": "Prefisso da utilizzare per i sensori dell’inverter",
+          "read_modbus_addr": "Indirizzo Modbus dell’inverter",
+          "interface": "Interfaccia",
+          "inverter_name_suffix": "Suffisso del nome dell’inverter",
+          "read_eps": "Opzione alimentazione d’emergenza (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Modalità parallela (Master-Slave)",
+          "plugin": "Seleziona il tipo di inverter",
+          "scan_interval": "Intervallo di polling dei registri Modbus (secondi)",
+          "scan_interval_medium": "Intervallo di polling medio",
+          "scan_interval_fast": "Intervallo di polling veloce"
+        }
+      },
+      "serial": {
+        "title": "Parametri interfaccia seriale",
+        "data": {
+          "read_serial_port": "Nome della porta seriale",
+          "baudrate": "Baudrate"
+        }
+      },
+      "tcp": {
+        "title": "Parametri TCP/IP",
+        "data": {
+          "host": "Indirizzo IP dell’inverter o dell’interfaccia Modbus",
+          "port": "Porta TCP su cui collegarsi all’inverter"
+        }
+      },
+      "battery": {
+        "title": "Lettura dei moduli batteria",
+        "data": {
+          "read_battery": "Abilita lettura"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Il dispositivo è già configurato",
+      "name_already_used": "Il nome è già stato utilizzato o non è valido",
+      "invalid_host": "Indirizzo IP non valido"
+    },
+    "abort": {
+      "already_configured": "Il dispositivo è già configurato"
+    }
+  }
+}
