@@ -261,7 +261,10 @@ def value_function_combined_bms_current(initval, descr, datadict):
         result = amp
     elif 6303.5 <= amp <= 6553.5:
         result = round(-1 * (6553.6 - amp), 1)
-        
+    else:
+        result = 0
+    return result
+    
 def value_function_module_status(initval, descr, datadict):
     scale = {
         1: "Standby",
@@ -270,9 +273,6 @@ def value_function_module_status(initval, descr, datadict):
         7: "Sleeping",
     }
     return scale.get(initval, str(initval) + " Unknown status")
-    else:
-        result = 0
-    return result
 
 def value_function_battery_voltage(initval, descr, datadict):
 	bms = datadict.get('bms_monitoring_version', 0)
