@@ -6800,17 +6800,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-                                          
-                                         
-                        
-                            
-                    
-                                                
-                            
-                                                    
-                                 
-      
-                                         
         name = "BMS 1 Monitoring Version",
         key = "bms_1_monitoring_version",
         register = 5011,
