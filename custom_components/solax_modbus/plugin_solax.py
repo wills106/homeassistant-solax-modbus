@@ -2545,10 +2545,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="MateBox enabled",
         key="matebox_enabled",
         register=0x1E,
-        scale={
-            0: "disabled",
-            1: "enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN4 | GEN5,
         icon="mdi:dip-switch",
@@ -2878,10 +2875,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="selfuse_night_charge_enable",
         register=0x93,
         unit=REGISTER_U8L,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -2986,10 +2980,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="charge_and_discharge_period2_enable",
         register=0x9B,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3061,20 +3052,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="extend_bms_setting",
         register=0xA2,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="battery_heating",
         register=0xA3,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3227,10 +3212,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="mppt",
         register=0xBC,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3271,19 +3253,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Grid Service",
         key="grid_service",
         register=0xFC,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=HYBRID | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         key="backup_gridcharge",
         register=0xFD,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN3,
         internal=True,
     ),
@@ -3313,10 +3289,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="wAS4777 Power Manager",
         key="was4777_power_manager",
         register=0x102,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3,
         icon="mdi:information",
@@ -3325,20 +3298,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="DRM Function Enable",
         key="drm_function_enable",
         register=0x102,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
         key="cloud_control",
         register=0x103,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN3,
         internal=True,
     ),
@@ -3357,10 +3324,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Global MPPT Function",
         key="global_mppt_function",
         register=0x104,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN3,
         icon="mdi:sun-compass",
@@ -3381,10 +3345,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Grid Service X3",
         key="grid_service_x3",
         register=0x105,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN3 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -3398,10 +3359,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Meter Function",
         key="meter_function",
         register=0x108,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -3450,10 +3408,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="EPS Auto Restart",
         key="eps_auto_restart",
         register=0x10C,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -3506,10 +3461,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="discharge_cut_off_point_different",
         register=0x111,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
         internal=True,
     ),
@@ -3534,10 +3486,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Earth Detect X3",
         key="earth_detect_x3",
         register=0x114,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN3 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -3589,10 +3538,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="FVRT Function",
         key="fvrt_function",
         register=0x116,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
@@ -3629,10 +3575,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Shut Down",
         key="shut_down",
         register=0x11C,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
@@ -3640,20 +3583,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Micro Grid",
         key="micro_grid",
         register=0x11D,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
         key="selfuse_mode_backup",
         register=0x11E,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3667,10 +3604,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="lease_mode",
         register=0x120,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3732,10 +3666,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="schedule",
         register=0x129,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4,
         internal=True,
     ),
@@ -3921,10 +3852,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="peakshaving_charge_from_grid",
         register=0x155,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
@@ -3961,20 +3889,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="ct_cycle_detection",
         register=0x160,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="eps_mode_without_battery",
         register=0x161,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | EPS,
         internal=True,
     ),
@@ -4009,10 +3931,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="generator_time_2",
         register=0x166,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | DCB,
         internal=True,
     ),
@@ -4047,10 +3966,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="generator_charge",
         register=0x16B,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | DCB,
         internal=True,
     ),
@@ -4098,10 +4014,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="generator_time_2",
         register=0x128,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN5 | DCB,
         internal=True,
     ),
@@ -4136,10 +4049,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="generator_charge",
         register=0x12D,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN5 | DCB,
         internal=True,
     ),

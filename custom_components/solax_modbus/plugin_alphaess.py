@@ -950,10 +950,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
     AlphaESSModbusSensorEntityDescription(
         key="3phase_unbalanced_mode",
         register=0x811,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=GEN | X3,
         internal=True,
     ),

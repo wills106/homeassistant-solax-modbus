@@ -272,7 +272,7 @@ def value_function_module_status(initval, descr, datadict):
         3: "Discharging",
         7: "Sleeping",
     }
-    return scale.get(initval, str(initval) + " Unknown status")
+    return scale.get(initval, str(initval) + " Unknown Status")
 
 def value_function_battery_voltage(initval, descr, datadict):
 	bms = datadict.get('bms_monitoring_version', 0)

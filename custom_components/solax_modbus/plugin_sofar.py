@@ -3189,10 +3189,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Battery Active Control",
         key="battery_active_control",
         register=0x102B,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
     ),
@@ -3200,10 +3197,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Parallel Control",
         key="parallel_control",
         register=0x1035,
-        scale={
-            0: "Disabled",
-            1: "Enabled",
-        },
+        scale=value_function_disabled_enabled,
         allowedtypes=HYBRID | PV | X3 | PM,
     ),
     SofarModbusSensorEntityDescription(
