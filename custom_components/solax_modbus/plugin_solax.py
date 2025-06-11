@@ -414,6 +414,7 @@ MAX_CURRENTS = [
     ("H34C", 30),  # Gen4 X3 C
     ("H34T", 25),  # Gen4 X3 T
     ("H35A", 50),  # Gen5 X3-IES A
+    ("H35F", 50),  # Gen5 X3-IES F
     ("H3BC", 60),  # Gen5 X3 Ultra C
     ("H3BD", 60),  # Gen5 X3 Ultra D
     ("H3BF", 60),  # Gen5 X3 Ultra F
@@ -515,6 +516,13 @@ MAX_EXPORT = [
     ("H35A10", 10000),  # Gen5 X3-IES A
     ("H35A12", 12000),  # Gen5 X3-IES A
     ("H35A15", 15000),  # Gen5 X3-IES A
+    ("H35F04", 4000),  # Gen5 X3-IES F
+    ("H35F05", 5000),  # Gen5 X3-IES F
+    ("H35F06", 6000),  # Gen5 X3-IES F
+    ("H35F08", 8000),  # Gen5 X3-IES F
+    ("H35F10", 10000),  # Gen5 X3-IES F
+    ("H35F12", 12000),  # Gen5 X3-IES F
+    ("H35F15", 15000),  # Gen5 X3-IES F
     ("H3BC15", 15000),  # Gen5 X3 Ultra C
     ("H3BC19", 19999),  # Gen5 X3 Ultra C
     ("H3BC20", 20000),  # Gen5 X3 Ultra C
@@ -8053,10 +8061,16 @@ class solax_plugin(plugin_base):
             invertertype = AC | GEN4 | X3  # Gen4 X3 FIT
             self.inverter_model = "X3-RetroFit"
         elif seriesnumber.startswith("H35A0"):
-            invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW A
             self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
         elif seriesnumber.startswith("H35A1"):
-            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW A
+            self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
+        elif seriesnumber.startswith("H35F0"):
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW F
+            self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
+        elif seriesnumber.startswith("H35F1"):
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW F
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("H3BC15"):
             invertertype = HYBRID | GEN5 | X3  # X3 Ultra C
