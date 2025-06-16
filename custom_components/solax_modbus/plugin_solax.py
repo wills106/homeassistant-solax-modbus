@@ -1401,6 +1401,17 @@ NUMBER_TYPES = [
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaxModbusNumberEntityDescription(
+        name="PV Limit",
+        key="pv_limit",
+        register=0x60F,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=MIC | GEN2 | X3,
+    ),
+    SolaxModbusNumberEntityDescription(
         name="Active Power Limit",
         key="active_power_limit",
         register=0x669,
