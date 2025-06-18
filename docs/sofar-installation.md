@@ -62,15 +62,11 @@ Tested with firmware:
 
 Does not work with newer firmware.
 
-This has one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time.
+This has one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time. However once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration then.
 
 Also note that Modbus RTU over TCP can only talk to one client. You have to use Modbus Proxy, if you access the logger stick with more than one client.
 
-But once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration then.
-
 ![Image of LSW-3 WiFi Stick Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
-
-### Configuration
 
 1. In your internet router, find the connected LSW-3 stick logger and assign a fixed IP address to it. You have to do this through your internet router. **Do not assign a fixed IP address in the stick's administration UI directly - this will cause problems**.
 2. Open the LSW-3 Web UI at `http://<ip-address>` and login using the default username `admin` and default password `admin`.
