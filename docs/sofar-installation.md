@@ -47,7 +47,7 @@ The LSW-3 WiFi stick comes with the inverter and **may** be used with this integ
 
 Tested with firmware:
 - Inverter: V121202
-- LSW:  LSW3_15_MQTT_270A_1.22 (Note: if you got this firmware from Sofar Solar via a cloud update it may not work. In this case get the firmware file and update the LSW using the local web interface by uploading this firmware file to the logger stick)
+- LSW:  LSW3_15_MQTT_270A_1.22 with Extended System Version V1.1.00.04 (you can see this in the Solarman portal under devices on the logger's device data tab. Extendedn System Version V1.1.00.0F does not work for example).
 
 Simply connect to the LSW using the logger sticks IP address (make sure that you have assigned a fixed IP address in your router) and the port `8899`. If that does not work, try using a Modbus proxy in between as explained above.
 
