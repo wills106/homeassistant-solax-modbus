@@ -1,6 +1,6 @@
 # Sofar Installation
 
-How to install the RS485 connection to your Sofar Solar inverter hardware.
+How to establish the connection to your Sofar Solar inverter hardware.
 
 ## General recommendation: Use a Modbus Proxy
 
@@ -46,6 +46,7 @@ The LSW-3 WiFi stick comes with the inverter and **may** be used with this integ
 ### Modbus TCP
 
 Tested with firmware:
+
 - Inverter: V121202
 - LSW:  LSW3_15_MQTT_270A_1.22 with Extended System Version V1.1.00.04 (you can see this in the Solarman portal under devices on the logger's device data tab. Extendedn System Version V1.1.00.0F does not work for example).
 
@@ -57,6 +58,7 @@ Note: This works while the logger stick is using the working mode 'Data collecti
 ### Transparency mode using Modbus RTU over TCP
 
 Tested with firmware:
+
 - Inverter: v113562
 - LSW:  LSW3_15_270A_1.09
 
