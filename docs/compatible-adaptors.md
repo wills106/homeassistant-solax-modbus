@@ -53,8 +53,6 @@ The standard LSW-3 Wifi logger that comes with the inverter.
 
 ![Image of LSW-3 Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
 
-Tested with LSE-3 firmware version LSW3_15_270A_1.65.
-
 Please see the [Sofar Installation](sofar-installation.md) for more information.
 
 #### LAN Stick Logger LSE-3
@@ -62,8 +60,6 @@ Please see the [Sofar Installation](sofar-installation.md) for more information.
 Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger.
 
 ![Image of LSE-3 Logger](images/adaptor-sofar-lse3-lan-logger.png)
-
-Tested with LSE-3 firmware version ME_0D_270A_1.09.
 
 Please see the [Sofar Installation](sofar-installation.md) for more information.
 

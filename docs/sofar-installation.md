@@ -4,6 +4,8 @@ How to establish the connection to your Sofar Solar inverter hardware.
 
 ## General recommendation: Use a Modbus Proxy
 
+**Note:** If you use an RS485 to Modbus TCP ethernet adaptor you may ignore this section. Many RS485 to Modbus TCP adaptors have a Modbus proxy built in.
+
 If you experience issues with the reliability of the communication, especially (but not limited to) when you are accessing the Modbus interface with more clients besides Home Assistant at the same time, we recommend to try using a Modbus Proxy. A Modbus Proxy can mediate between the inverter's interface (RS485 serial, Modbus TCP, Modbus TCP over RTU) and multiple clients. You can install a Modbus proxy as a [standalone service](https://github.com/tiagocoutinho/modbus-proxy), you can use the Home Assistant [Modbus Proxy Add-on](https://github.com/Akulatraxas/ha-modbusproxy) or use the embedded Modbus proxy that comes with [EVCC](https://docs.evcc.io/en/docs/reference/configuration/modbusproxy).
 
 Important in this case: Only the Modbus proxy must connect to your inverter directly. All other clients must connect to the proxy.
@@ -48,7 +50,7 @@ The LSW-3 WiFi stick comes with the inverter and **may** be used with this integ
 Tested with firmware:
 
 - Inverter: V121202
-- LSW:  LSW3_15_MQTT_270A_1.22 with Extended System Version V1.1.00.04 (you can see this in the Solarman portal under devices on the logger's device data tab. Extendedn System Version V1.1.00.0F does not work for example).
+- LSW:  LSW3_15_MQTT_270A_1.22 with Extended System Version V1.1.00.04 (you can see this in the Solarman portal under devices on the logger's device data tab. Extended System Version V1.1.00.0F does not work for example).
 
 Simply connect to the LSW using the logger sticks IP address (make sure that you have assigned a fixed IP address in your router) and the port `8899`. If that does not work, try using a Modbus proxy in between as explained above.
 
