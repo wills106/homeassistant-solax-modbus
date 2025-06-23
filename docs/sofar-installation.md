@@ -93,7 +93,7 @@ Tested with firmware:
 
 The LSE-3 LAN stick logger is an alternative to the LSW-3 WiFi stick logger that connects over LAN cable instead of WiFi. 
 
-In contrast to the LSW-3 you can also use it with SolarMan and this integration in parallel at the same time. The default working mode speaks some sort of Modbus TCP with some incompatibilities besides its SolarMan protocol. However this parallel use comes with a couple of caveats as you can see in the [FAQ](./sofar-faq.md) and some reliability issues. **Therefore we do not recommend to run this integration with the LSE-3 in the default 'Data collection' working mode**. We recommend to use the same 'Transparency' working mode as described above for the LSW-3 Wifi stick logger.
+The default working mode speaks some sort of Modbus TCP with some incompatibilities in parallel to the SolarMan protocol. However this parallel use comes with a couple of caveats as you can see in the [FAQ](./sofar-faq.md) and some reliability issues. **Therefore we do not recommend to run this integration with the LSE-3 in the default 'Data collection' working mode**. We recommend to use the same 'Transparency' working mode as described above for the LSW-3 Wifi stick logger.
 
 ![Image of installed LSE-3 LAN Stick Logger](images/installation-sofar-lse3-stick-logger.png)
 
