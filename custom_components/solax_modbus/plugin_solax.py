@@ -170,7 +170,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             power_control == "Disabled"
     elif power_control == "Disabled":
         ap_target = target
-        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
+        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled - ?? is this used ??
     old_ap_target = ap_target
     ap_target = min(ap_target, import_limit - houseload_brut)
     # _LOGGER.warning(f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
@@ -230,14 +230,11 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
         #    ap_target = target - houseload_nett  # subtract house load
         #else:
         #    ap_target = target - houseload_brut
-        power_control = "Mode 8 - PV and Bat control - Duration"
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
         pvlimit = 0 
         pushmode_power = - import_limit
-        power_control = "Mode 8 - PV and Bat control - Duration"
     elif power_control == "Disabled":
-        power_control = "Mode 8 - PV and Bat control - Duration" # "Disabled" would not be a valid option
-        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
+        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled - ??? is this used ??
     # limit import to max import (capacity tarif in some countries)
     old_pushmode_power = pushmode_power
     excess_import = houseload - pv - pushmode_power - import_limit
@@ -250,7 +247,7 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
     res = [
         (
             "remotecontrol_power_control_mode",
-            power_control,
+            "Mode 8 - PV and Bat control - Duration",
         ),
         (
             "remotecontrol_set_type",
