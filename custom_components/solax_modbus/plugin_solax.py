@@ -211,9 +211,9 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
     # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
     power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
     set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
-    pvlimit = datadict.get("remotecontrol_pv_power_limit")
+    pvlimit = datadict.get("remotecontrol_pv_power_limit",10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
-    target_soc = datadict.get("remotecontrol_target_soc_9")
+    target_soc = datadict.get("remotecontrol_target_soc_9", 95)
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
@@ -238,7 +238,7 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
         ap_target = target - pv  # subtract house load and pv
         power_control = "Enabled Power Control"
     elif power_control == "Disabled":
-        ap_target = target
+        power_control = "Mode 8 - PV and Bat control - Duration" # "Disabled" would not be a valid option
         autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
 
     old_pushmode_power = pushmode_power
