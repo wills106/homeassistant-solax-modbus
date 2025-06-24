@@ -217,6 +217,7 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
+    timeout = datadict.get("remotecontrol_timeout",0)
     pv = datadict.get("pv_power_total", 0)
     houseload = value_function_house_load(initval, descr, datadict)
 
@@ -266,6 +267,9 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
         (
             "remotecontrol_duration",
             rc_duration,
+        ),
+        (   "remotecontrol_timeout"
+            timeout,
         ),
     ]
     if power_control == "Disabled":
@@ -748,13 +752,25 @@ NUMBER_TYPES = [
         name="Remotecontrol Target SOC (Mode 9)",
         key="remotecontrol_target_soc_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        native_min_value=-8000,
-        native_max_value=30000,  
-        native_step=100,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=NumberDeviceClass.POWER,
-        initvalue=0,  
-        unit=REGISTER_S32, # positive discharge; negative charge
+        native_min_value=-0,
+        native_max_value=100,  
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        initvalue=95,  
+        unit=REGISTER_U16, #
+        write_method=WRITE_DATA_LOCAL,
+    ),
+        SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Timeout",
+        key="remotecontrol_timeout",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=0,
+        native_max_value=300,  
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        initvalue=0,
+        icon="mdi:home-clock",
+        unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
     ),
 
