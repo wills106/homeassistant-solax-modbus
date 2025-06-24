@@ -237,10 +237,10 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
     elif power_control == "Disabled":
         power_control = "Mode 8 - PV and Bat control - Duration" # "Disabled" would not be a valid option
         autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
-
+    # limit import to max import (capacity tarif in some countries)
     old_pushmode_power = pushmode_power
     excess_import = houseload - pv - pushmode_power - import_limit
-    if excess_import > 0: pushmode_power = pushmode_power - excess_import
+    if excess_import > 0: pushmode_power = pushmode_power + excess_import # reduce import
 
     if old_pushmode_power != pushmode_power:
         _LOGGER.debug(
