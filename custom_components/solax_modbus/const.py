@@ -95,6 +95,11 @@ SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
 
+# ================================= Button autorepeat initval codes for button value_functions ==========================
+BUTTONREPEAT_FIRST = 0  # first manual trigger click
+BUTTONREPEAT_LOOP  = 1  # automated loop
+BUTTONREPEAT_POST = -1 # final call after autoduration expired - no action needed in most cases
+
 # ================================= Definitions for Sensor Declarations =================================================
 
 REG_HOLDING = 1  # modbus holding register
@@ -275,6 +280,8 @@ def autorepeat_set(datadict, entitykey, value):
 def autorepeat_stop(datadict, entitykey):
     datadict["_repeatUntil"][entitykey] = 0
 
+def autorepeat_stop_with_postaction(datadict, entitykey):
+    datadict["_repeatUntil"][entitykey] = 1
 
 def autorepeat_remaining(datadict, entitykey, timestamp):
     remaining = datadict["_repeatUntil"].get(entitykey, 0) - timestamp
@@ -284,7 +291,8 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
-def value_function_pv_power_total(initval, descr, datadict):
+def value_function_pv_power_total(initval, descr, datadict): # this function can be enhanced to handle undefined values better
+    datadict.pop("pv_power_total", None)
     vals = [v for k, v in datadict.items() if k.startswith("pv_power_")]
     return None if any(p is None for p in vals) else sum(vals)
 
