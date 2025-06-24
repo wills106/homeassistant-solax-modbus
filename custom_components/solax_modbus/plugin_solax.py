@@ -234,9 +234,6 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
         pvlimit = 0 
         pushmode_power = - import_limit
         power_control = "Mode 8 - PV and Bat control - Duration"
-    elif power_control == "Enabled Battery Control":  # alternative computation for Power Control
-        ap_target = target - pv  # subtract house load and pv
-        power_control = "Enabled Power Control"
     elif power_control == "Disabled":
         power_control = "Mode 8 - PV and Bat control - Duration" # "Disabled" would not be a valid option
         autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
@@ -1602,9 +1599,11 @@ SELECT_TYPES = [
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
-            0: "disabled", # not in documentation, should not be sent to device
-            8: "Mode 8 - PV and BAT control - Duration",
-            9: "Mode 9 - PV and BAT control - Target SOC", 
+            0:  "disabled", # not in documentation, should not be sent to device
+            8:  "Mode 8 - PV and BAT control - Duration",
+            81: "Negative Injection Price",
+            82: "Negative Injection and Consumption Price",
+            9:  "Mode 9 - PV and BAT control - Target SOC",  
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Disabled",
