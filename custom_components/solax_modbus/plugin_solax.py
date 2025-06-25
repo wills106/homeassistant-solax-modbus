@@ -265,7 +265,7 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
-        (   "remotecontrol_timeout"
+        (   "remotecontrol_timeout",
             timeout,
         ),
     ]
