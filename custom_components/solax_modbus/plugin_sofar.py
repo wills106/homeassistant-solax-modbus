@@ -240,7 +240,7 @@ BUTTON_TYPES = [
         register=0x1184,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
-        icon="mdi:battery-clock",
+        icon="mdi:timer",
         value_function=value_function_passive_timeout,
     ),
     # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
