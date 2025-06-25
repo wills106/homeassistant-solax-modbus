@@ -199,10 +199,11 @@ _mppt_dd = {0: "off", 0x7FFF: "on"}  # dict uses 16 bit signed!?, 0xffff not pos
 _mppt_mask = 0xFF  # max 8 mppts
 _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
 
+def _fn_mppt_mask_ex(v, _mask):
+    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, v)
 
 def _fn_mppt_mask(v, descr, dd):
-    return "off" if v == 0 else "on" if v & _mppt_mask == _mppt_mask else _flag_list(v, _mppt_list, "unknown")
-
+    return _fn_mppt_mask_ex(v, _mppt_mask)
 
 _nan = float("NaN")
 
@@ -407,6 +408,22 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:export",
     ),
+    SolintegModbusNumberEntityDescription(
+        name="Import Limit",
+        key="import_limit_value",
+        register=50009,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=100,
+        native_step=0.1,
+        unit=REGISTER_U16,
+        mode="box",
+        scale=0.1,
+        native_unit_of_measurement= UnitOfPower.KILO_WATT,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:import",
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -455,6 +472,15 @@ SELECT_TYPES = [
         option_dict=_simple_switch,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:export",
+    ),
+    SolintegModbusSelectEntityDescription(
+        name="Import Limit Switch",
+        key="import_limit_switch",
+        register=50007,
+        option_dict=_simple_switch,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:scale-unbalanced",
     ),
     SolintegModbusSelectEntityDescription(
         name="Battery SOC Protection On Grid",
@@ -1214,6 +1240,19 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolintegModbusSensorEntityDescription(
+        key="import_limit_switch",
+        register=50007,
+        scale=_simple_switch,
+        internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="import_limit_value",
+        register=50009,
+        unit=REGISTER_U16,
+        scale=0.1,
+        internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
         key="ups_function",
         register=50001,
         scale=_simple_switch,
@@ -1311,9 +1350,9 @@ class solinteg_plugin(plugin_base):
 
         if invertertype > 0:
             data = hub.data
+            _self_mppt_mask = 2**mppt - 1  # mask
             # prepare mppt list
-            data["mppt_count"] = mppt
-            data["mppt_mask"] = 2**mppt - 1  # mask
+            #data["mppt_mask"] = _self_mppt_mask
             sel_dd = _mppt_dd.copy()  # copy
             for i in range(mppt):
                 sel_dd[2**i] = f"mppt{i+1}"
@@ -1321,6 +1360,15 @@ class solinteg_plugin(plugin_base):
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
                     sel.option_dict = sel_dd
+                    break
+
+            #use own mask
+            def _self_fn_mppt_mask(v, descr, dd):
+                return _fn_mppt_mask_ex(v, _self_mppt_mask)
+
+            for sel in self.SENSOR_TYPES:
+                if sel.key == "shadow_scan":
+                    sel.scale = _self_fn_mppt_mask
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
