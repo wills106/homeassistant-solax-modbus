@@ -200,14 +200,14 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             rc_duration,
         ),
     ]
-    if power_control == "Disabled":
-        autorepeat_stop(datadict, descr.key)
+    if power_control == "Disabled": autorepeat_stop(datadict, descr.key)
+    else:                           autorepeat_stop(datadict, "powercontrolmode8_trigger") # stop the other loop
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
 
 
 
-def value_function_powercontrolmode_recompute(initval, descr, datadict):
+def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
     power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
     set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
@@ -269,8 +269,8 @@ def value_function_powercontrolmode_recompute(initval, descr, datadict):
             timeout,
         ),
     ]
-    if power_control == "Disabled":
-        autorepeat_stop(datadict, descr.key)
+    if power_control == "Disabled": autorepeat_stop(datadict, descr.key)
+    else:                           autorepeat_stop(datadict,"remotecontrol_trigger") # stop the other loop
     _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
     return res
 
@@ -400,13 +400,13 @@ BUTTON_TYPES = [
         autorepeat="remotecontrol_autorepeat_duration",
     ),
     SolaxModbusButtonEntityDescription(
-        name="PowerControlMode Trigger",
-        key="powercontrolmode_trigger",
+        name="PowerControlMode 8 Trigger",
+        key="powercontrolmode8_trigger",
         register=0xA0,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_powercontrolmode_recompute,
+        value_function=value_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
     ),
     SolaxModbusButtonEntityDescription(
@@ -1616,7 +1616,7 @@ SELECT_TYPES = [
             8:  "Mode 8 - PV and BAT control - Duration",
             81: "Negative Injection Price",
             82: "Negative Injection and Consumption Price",
-            9:  "Mode 9 - PV and BAT control - Target SOC",  
+            # 9:  "Mode 9 - PV and BAT control - Target SOC",  
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Disabled",
