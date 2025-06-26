@@ -247,7 +247,7 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     res = [
         (
             "remotecontrol_power_control_mode",
-            "Mode 8 - PV and Bat control - Duration",
+            "Mode 8 - PV and BAT control - Duration",
         ),
         (
             "remotecontrol_set_type",
