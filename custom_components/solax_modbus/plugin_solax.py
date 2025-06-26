@@ -213,12 +213,13 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
     pvlimit = datadict.get("remotecontrol_pv_power_limit",10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
-    target_soc = datadict.get("remotecontrol_target_soc_9", 95)
+    target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
     timeout = datadict.get("remotecontrol_timeout",0)
     pv = datadict.get("pv_power_total", 0)
+    target_soc = datadict.get("")
     houseload = value_function_house_load(initval, descr, datadict)
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
@@ -746,14 +747,14 @@ NUMBER_TYPES = [
         write_method=WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (Mode 9)",
-        key="remotecontrol_target_soc_9",
+        name="Remotecontrol Target SOC (Mode 8, 9)",
+        key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=-0,
         native_max_value=100,  
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        initvalue=95,  
+        initvalue=95,
         unit=REGISTER_U16, #
         write_method=WRITE_DATA_LOCAL,
     ),
