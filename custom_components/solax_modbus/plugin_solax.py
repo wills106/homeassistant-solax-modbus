@@ -132,6 +132,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
+    timeout = datadict.get("remotecontrol_timeout",0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
@@ -222,7 +223,6 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     battery_capacity = datadict.get("battery_capacity", 0)
     timeout = datadict.get("remotecontrol_timeout",0)
     pv = datadict.get("pv_power_total", 0)
-    target_soc = datadict.get("")
     houseload = value_function_house_load(initval, descr, datadict)
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
