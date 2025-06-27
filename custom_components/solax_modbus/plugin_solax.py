@@ -297,8 +297,9 @@ def valuefunction_firmware_g4(initval, descr, datadict):
 
 
 def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
-    return autorepeat_remaining(datadict, "remotecontrol_trigger", time())
-
+    mode_1to7 = autorepeat_remaining(datadict, "remotecontrol_trigger", time())
+    mode_8to9 = autorepeat_remaining(datadict, "powercontrolmode8_trigger", time())
+    return max(mode_1to7, mode_8to9)
 
 def value_function_battery_power_charge(initval, descr, datadict):
     return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
