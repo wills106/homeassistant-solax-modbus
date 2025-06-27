@@ -392,7 +392,9 @@ class SolaXModbusHub:
         else:
             if loaded.get("_version") == self.DATAFORMAT_VERSION:
                 for desc in self.writeLocals:
-                    self.data[desc] = loaded.get(desc)
+                    val = loaded.get(desc)
+                    if val != None: self.data[desc] = val
+                    else: self.data[desc] = self.writeLocals[desc].initvalue # first time initialisation
             else:
                 _LOGGER.warning(f"local persistent data lost - please reinitialize {self.writeLocals.keys()}")
             fp.close()
