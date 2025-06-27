@@ -1613,7 +1613,7 @@ SELECT_TYPES = [
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
-            0:  "disabled", # not in documentation, should not be sent to device
+            0:  "Disabled", # not in documentation, should not be sent to device
             8:  "Mode 8 - PV and BAT control - Duration",
             81: "Negative Injection Price",
             82: "Negative Injection and Consumption Price",
