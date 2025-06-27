@@ -199,6 +199,9 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
+        (  "remotecontrol_timeout",
+            timeout,
+        ),
     ]
     if power_control == "Disabled": autorepeat_stop(datadict, descr.key)
     else:                           autorepeat_stop(datadict, "powercontrolmode8_trigger") # stop the other loop
