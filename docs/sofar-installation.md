@@ -88,8 +88,8 @@ Also note that Modbus RTU over TCP can only talk to one client. You have to use 
 ## LSE-3 LAN Stick Logger
 
 Tested with firmware:
-- Inverter: v113562
-- LSE:  LSW3_15_270A_1.09
+- Inverter: V1137620
+- LSE: ME_0E_270A_1.11-D1
 
 The LSE-3 LAN stick logger is an alternative to the LSW-3 WiFi stick logger that connects over LAN cable instead of WiFi. 
 
