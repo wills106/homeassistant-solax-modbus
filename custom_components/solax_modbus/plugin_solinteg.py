@@ -151,44 +151,23 @@ def _model_str(val):
 
 def _flag_list(v, flags, empty=""):
     # v int, flags array of bit/string, empty string
-    v = format(v, "b")  # [::-1] #optimized, don't reverse each time
-    n = len(v)
     ret = []
-    for i in range(0, min(n, len(flags))):
-        if v[n - i - 1] == "1":
-            ret.append(flags[i])
-
+    n = len(flags)
+    for i in range(0, n):
+        if v == 0: break
+        if v & 1 : ret.append(flags[i])
+        v = v >> 1
+    if v > 0: #unknown flags?
+        ret.append("unk:0x"+format(v<<n, "x"))
     return empty if not ret else ",".join(ret)
 
 
-_op_flags = [
-    "WorkMode Abn.",
-    "Emergency Stop",
-    "DC Abn.",
-    "Mains Abn.",
-    "OffGrid Dis.",
-    "Batt. Abn.",
-    "Cmd Stop",
-    "Soc Lowerand No PV",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",  # 8x unused
-    "Cmd PowerLimit",
-    "OverFreq PowerLimit",
-    "OverTemp PowerLimit",
-    "OverCurr PowerLimit",
-    "Reactive PowerLimit",
-    "Feed in Grid PowerLimit",
-    "Slow Loading",
-    "OverVolt PowerLimit",
-    "System PowerLim",
-]
 
+def _fn_flags(flags, empty=""):
+    return lambda v, *a: _flag_list(v, flags, empty)
+
+def _fn_simple_hex(v, descr, dd):
+    return "0x{:x}".format(v)
 
 def _fw_str(wa, *a):
     ba = [b for w in wa for b in w.to_bytes(2)]
@@ -199,10 +178,11 @@ _mppt_dd = {0: "off", 0x7FFF: "on"}  # dict uses 16 bit signed!?, 0xffff not pos
 _mppt_mask = 0xFF  # max 8 mppts
 _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
 
+def _fn_mppt_mask_ex(v, _mask):
+    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, v)
 
 def _fn_mppt_mask(v, descr, dd):
-    return "off" if v == 0 else "on" if v & _mppt_mask == _mppt_mask else _flag_list(v, _mppt_list, "unknown")
-
+    return _fn_mppt_mask_ex(v, _mppt_mask)
 
 _nan = float("NaN")
 
@@ -407,6 +387,22 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:export",
     ),
+    SolintegModbusNumberEntityDescription(
+        name="Import Limit",
+        key="import_limit_value",
+        register=50009,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=100,
+        native_step=0.1,
+        unit=REGISTER_U16,
+        mode="box",
+        scale=0.1,
+        native_unit_of_measurement= UnitOfPower.KILO_WATT,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:import",
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -455,6 +451,15 @@ SELECT_TYPES = [
         option_dict=_simple_switch,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:export",
+    ),
+    SolintegModbusSelectEntityDescription(
+        name="Import Limit Switch",
+        key="import_limit_switch",
+        register=50007,
+        option_dict=_simple_switch,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:scale-unbalanced",
     ),
     SolintegModbusSelectEntityDescription(
         name="Battery SOC Protection On Grid",
@@ -530,7 +535,117 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10110,
         unit=REGISTER_U32,
-        scale=lambda v, *a: _flag_list(v, _op_flags, "ok"),
+        scale=_fn_flags([
+            "WorkMode Abn.",
+            "Emergency Stop",
+            "DC Abn.",
+            "Mains Abn.",
+            "OffGrid Dis.",
+            "Batt. Abn.",
+            "Cmd Stop",
+            "SocLow&NoPV",
+            "B8",# unused
+            "B9",
+            "B10",
+            "B11",
+            "B12",
+            "B13",
+            "OffGrid",
+            "B15",
+            "Cmd PLim",
+            "OFreq PLim",
+            "OTemp PLim",
+            "OCurr PLim",
+            "Reactive PLim",
+            "Exp PLim",
+            "Slow Loading",
+            "OVolt PLim",
+            "System PLim",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags1",
+        key="fault_flags1",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10112,
+        unit=REGISTER_U32,
+        #scale=_fn_simple_hex,
+        scale=_fn_flags([
+            "Mains Lost",
+            "Grid Voltage Fault",
+            "Grid Frequency Fault",
+            "DCI Fault",
+            "ISO Over Limitation",
+            "GFCI Fault",
+            "PV Over Voltage",
+            "Bus Voltage Fault",
+            "Inverter OverTemperature",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags2",
+        key="fault_flags2",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10114,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "",
+            "SPI Fault",
+            "E2 Fault",
+            "GFCI Device Fault",
+            "AC Transducer Fault",
+            "Relay Check Fail",
+            "Internal Fan Fault",
+            "External Fan Fault",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags3",
+        key="fault_flags3",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10120,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "Bus Hardware Fault", #?
+            "PV Power Low",
+            "Batt.Voltage Fault",
+            "BAK Voltage Fault",
+            "Bus Voltage Low",
+            "Sys Hardware Fault",
+            "BAK Over Power",
+            "Inverter Over Voltage",
+            "Inverter Over Freq",
+            "Inverter Over Current",
+            "Phase Order Err",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault ARM Flags1",
+        key="fault_arm_flags1",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=18000,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "SCI Fault",
+            "FLASH Fault",
+            "Meter Comm Fault",
+            "BMS Comm Fault",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault ARM Flags2",
+        key="fault_arm_flags2",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=18004,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "BMS Comm Fault",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Energy Generation Total",
@@ -1214,6 +1329,19 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolintegModbusSensorEntityDescription(
+        key="import_limit_switch",
+        register=50007,
+        scale=_simple_switch,
+        internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="import_limit_value",
+        register=50009,
+        unit=REGISTER_U16,
+        scale=0.1,
+        internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
         key="ups_function",
         register=50001,
         scale=_simple_switch,
@@ -1311,9 +1439,9 @@ class solinteg_plugin(plugin_base):
 
         if invertertype > 0:
             data = hub.data
+            _self_mppt_mask = 2**mppt - 1  # mask
             # prepare mppt list
-            data["mppt_count"] = mppt
-            data["mppt_mask"] = 2**mppt - 1  # mask
+            #data["mppt_mask"] = _self_mppt_mask
             sel_dd = _mppt_dd.copy()  # copy
             for i in range(mppt):
                 sel_dd[2**i] = f"mppt{i+1}"
@@ -1321,6 +1449,12 @@ class solinteg_plugin(plugin_base):
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
                     sel.option_dict = sel_dd
+                    break
+
+            #use own mask
+            for sel in self.SENSOR_TYPES:
+                if sel.key == "shadow_scan":
+                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
