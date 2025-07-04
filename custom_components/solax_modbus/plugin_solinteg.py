@@ -151,44 +151,23 @@ def _model_str(val):
 
 def _flag_list(v, flags, empty=""):
     # v int, flags array of bit/string, empty string
-    v = format(v, "b")  # [::-1] #optimized, don't reverse each time
-    n = len(v)
     ret = []
-    for i in range(0, min(n, len(flags))):
-        if v[n - i - 1] == "1":
-            ret.append(flags[i])
-
+    n = len(flags)
+    for i in range(0, n):
+        if v == 0: break
+        if v & 1 : ret.append(flags[i])
+        v = v >> 1
+    if v > 0: #unknown flags?
+        ret.append("unk:0x"+format(v<<n, "x"))
     return empty if not ret else ",".join(ret)
 
 
-_op_flags = [
-    "WorkMode Abn.",
-    "Emergency Stop",
-    "DC Abn.",
-    "Mains Abn.",
-    "OffGrid Dis.",
-    "Batt. Abn.",
-    "Cmd Stop",
-    "Soc Lowerand No PV",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",  # 8x unused
-    "Cmd PowerLimit",
-    "OverFreq PowerLimit",
-    "OverTemp PowerLimit",
-    "OverCurr PowerLimit",
-    "Reactive PowerLimit",
-    "Feed in Grid PowerLimit",
-    "Slow Loading",
-    "OverVolt PowerLimit",
-    "System PowerLim",
-]
 
+def _fn_flags(flags, empty=""):
+    return lambda v, *a: _flag_list(v, flags, empty)
+
+def _fn_simple_hex(v, descr, dd):
+    return "0x{:x}".format(v)
 
 def _fw_str(wa, *a):
     ba = [b for w in wa for b in w.to_bytes(2)]
@@ -556,7 +535,117 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10110,
         unit=REGISTER_U32,
-        scale=lambda v, *a: _flag_list(v, _op_flags, "ok"),
+        scale=_fn_flags([
+            "WorkMode Abn.",
+            "Emergency Stop",
+            "DC Abn.",
+            "Mains Abn.",
+            "OffGrid Dis.",
+            "Batt. Abn.",
+            "Cmd Stop",
+            "SocLow&NoPV",
+            "B8",# unused
+            "B9",
+            "B10",
+            "B11",
+            "B12",
+            "B13",
+            "OffGrid",
+            "B15",
+            "Cmd PLim",
+            "OFreq PLim",
+            "OTemp PLim",
+            "OCurr PLim",
+            "Reactive PLim",
+            "Exp PLim",
+            "Slow Loading",
+            "OVolt PLim",
+            "System PLim",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags1",
+        key="fault_flags1",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10112,
+        unit=REGISTER_U32,
+        #scale=_fn_simple_hex,
+        scale=_fn_flags([
+            "Mains Lost",
+            "Grid Voltage Fault",
+            "Grid Frequency Fault",
+            "DCI Fault",
+            "ISO Over Limitation",
+            "GFCI Fault",
+            "PV Over Voltage",
+            "Bus Voltage Fault",
+            "Inverter OverTemperature",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags2",
+        key="fault_flags2",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10114,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "",
+            "SPI Fault",
+            "E2 Fault",
+            "GFCI Device Fault",
+            "AC Transducer Fault",
+            "Relay Check Fail",
+            "Internal Fan Fault",
+            "External Fan Fault",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault Flags3",
+        key="fault_flags3",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=10120,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "Bus Hardware Fault", #?
+            "PV Power Low",
+            "Batt.Voltage Fault",
+            "BAK Voltage Fault",
+            "Bus Voltage Low",
+            "Sys Hardware Fault",
+            "BAK Over Power",
+            "Inverter Over Voltage",
+            "Inverter Over Freq",
+            "Inverter Over Current",
+            "Phase Order Err",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault ARM Flags1",
+        key="fault_arm_flags1",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=18000,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "SCI Fault",
+            "FLASH Fault",
+            "Meter Comm Fault",
+            "BMS Comm Fault",
+        ]),
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Fault ARM Flags2",
+        key="fault_arm_flags2",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=18004,
+        unit=REGISTER_U32,
+        scale=_fn_flags([
+            "BMS Comm Fault",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Energy Generation Total",
@@ -1363,12 +1452,9 @@ class solinteg_plugin(plugin_base):
                     break
 
             #use own mask
-            def _self_fn_mppt_mask(v, descr, dd):
-                return _fn_mppt_mask_ex(v, _self_mppt_mask)
-
             for sel in self.SENSOR_TYPES:
                 if sel.key == "shadow_scan":
-                    sel.scale = _self_fn_mppt_mask
+                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
