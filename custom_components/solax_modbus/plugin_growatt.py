@@ -2082,8 +2082,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
-    ),
-    
+    ),    
     GrowattModbusSelectEntityDescription(
         name = "Time 5 Begin",
         key = "time_5_begin",
@@ -2133,9 +2132,6 @@ SELECT_TYPES = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
     ),
-    
-    # Samma mönster för Time 6 till 9:
-    
     GrowattModbusSelectEntityDescription(
         name = "Time 6 Begin",
         key = "time_6_begin",
@@ -2184,8 +2180,7 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
-    ),
-    
+    ),    
     GrowattModbusSelectEntityDescription(
         name = "Time 7 Begin",
         key = "time_7_begin",
@@ -2235,7 +2230,6 @@ SELECT_TYPES = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
     ),
-    
     GrowattModbusSelectEntityDescription(
         name = "Time 8 Begin",
         key = "time_8_begin",
@@ -2285,7 +2279,6 @@ SELECT_TYPES = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
     ),
-    
     GrowattModbusSelectEntityDescription(
         name = "Time 9 Begin",
         key = "time_9_begin",
@@ -2335,8 +2328,6 @@ SELECT_TYPES = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
     ),
-
-
     ###
     #
     # SPF Selects
@@ -9563,11 +9554,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         name = "BMS 1 Monitoring Version",
         key = "bms_1_monitoring_version",
         value_function = value_function_bms_1_monitoring_version,
-							
-					
-												
         allowedtypes = GEN4,
-													
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9658,17 +9645,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:information",
     ),
     GrowattModbusSensorEntityDescription(
-									 
-								   
-						
-							
-					
-												
-							
-													
-								 
-	  
-										 
         name = "BMS 2 Module 1 Serial Number", 
         key = "bms_2_module_1_serialnumber", 
         register = 5640, 
