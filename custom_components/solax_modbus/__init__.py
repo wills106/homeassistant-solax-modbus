@@ -159,7 +159,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Set up a SolaX mobus."""
+    """Set up a SolaX modbus."""
     _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
     config = entry.options
     plugin_name = config[CONF_PLUGIN]
@@ -214,7 +214,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 async def async_unload_entry(hass, entry):
-    """Unload SolaX mobus entry."""
+    """Unload SolaX modbus entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     hass.data[DOMAIN].pop(entry.options["name"])
@@ -378,14 +378,14 @@ class SolaXModbusHub:
         except:
             if self.cyclecount > 5:
                 _LOGGER.info(
-                    f"no local data file found after 5 tries - is this a first time run? or didnt you modify any DATA_LOCAL entity?"
+                    f"no local data file found after 5 tries - is this a first time run? or didn't you modify any DATA_LOCAL entity?"
                 )
                 self.localsLoaded = True  # retry a couple of polling cycles - then assume non-existent"
             return
         try:
             loaded = json.load(fp)
         except:
-            _LOGGER.info("Local data file not readable. Reseting to empty")
+            _LOGGER.info("Local data file not readable. Resetting to empty")
             fp.close()
             self.saveLocalData()
             return
@@ -482,7 +482,7 @@ class SolaXModbusHub:
             for group in interval_group.device_groups.values():
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
-                    self.slowdown = 1  # return to full polling after succesfull cycle
+                    self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                 else:
@@ -635,7 +635,7 @@ class SolaXModbusHub:
                 _LOGGER.warning("cannot wakeup inverter: no awake button found")
             return res
 
-    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for regiater que
+    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         kwargs = {"slave": unit} if unit else {}
         builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
@@ -651,9 +651,9 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
         return resp
 
-    async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for regiater que
+    async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi.
-        unit is the modbus address of the device that will be writen to
+        unit is the modbus address of the device that will be written to
         address us the start register address
         payload is a list of tuples containing
             - a select or number entity keys names or alternatively REGISTER_xx type declarations
@@ -1047,7 +1047,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return None
                 else:
                     if hub:
-                        # upbdate weak reference handle to refere to
+                        # update weak reference handle to refer to
                         # the actual CoreModbusHub object
                         self._hub = WeakRef(hub, self._hub_closed_now)
                         continue
@@ -1121,7 +1121,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError(f"Error writing single Modbus input register: core modbus access failed") from e
 
-    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for regiater que
+    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
         builder.reset()
@@ -1142,11 +1142,11 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
             return resp
         except (TypeError, AttributeError) as e:
-            raise HomeAssistantError(f"Error writing single Modbus Modbus registers: core modbus access failed") from e
+            raise HomeAssistantError(f"Error writing single Modbus registers: core modbus access failed") from e
 
-    async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for regiater que
+    async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi.
-        unit is the modbus address of the device that will be writen to
+        unit is the modbus address of the device that will be written to
         address us the start register address
         payload is a list of tuples containing
             - a select or number entity keys names or alternatively REGISTER_xx type declarations
@@ -1209,7 +1209,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return resp
             except (TypeError, AttributeError) as e:
                 raise HomeAssistantError(
-                    f"Error writing single Modbus Modbus registers: core modbus access failed"
+                    f"Error writing single Modbus registers: core modbus access failed"
                 ) from e
         else:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
