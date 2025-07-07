@@ -3763,7 +3763,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN2 | GEN3 | GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:timelapse",	
-    )
+    ),
     GrowattModbusSensorEntityDescription(
         name = "Reactive Power",
         key = "reactive_power",
