@@ -494,7 +494,117 @@ def value_function_inverter_state(initval, descr, datadict):
         6: "Bat Online"
     }
     return status_dict.get(inverter_state)
-    
+
+def value_function_inverter_warning_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_inverter_warning_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_warning_maincode', 0)
+    sub_code = datadict.get('inverter_warning_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "PV string fault",
+        (201, 0): "PV string/PID quick-connect terminals abnormal",
+        (202, 0): "DC SPD function abnormal",
+        (203, 0): "PV1 or PV2 short circuited",
+        (204, 0): "Dry contact function abnormal",
+        (205, 0): "PV boost driver abnormal",
+        (206, 0): "AC SPD function abnormal",
+        (207, 0): "USB flash drive overcurrent protection",
+        (208, 0): "DC fuse blown",
+        (209, 0): "DC input voltage exceeds the upper threshold",
+        (210, 0): "PV wiring abnormal",
+        (217, 0): "BMS abnormal",
+        (218, 1): "BMS Bus disconnected",
+        (219, 0): "PID function abnormal",
+        (220, 0): "PV string disconnected",
+        (221, 0): "PV string current unbalanced",
+        (300, 0): "No utility grid connected or utility grid power failure",
+        (301, 0): "Grid voltage is beyond the permissible range",
+        (302, 0): "Grid frequency is beyond the permissible range",
+        (303, 0): "Off-grid mode, overload",
+        (400, 0): "Fan failure",
+        (401, 0): "Meter abnormal",
+        (406, 0): "Boost circuit malfunction",
+        (407, 0): "Over-temperature",
+        (408, 0): "NTC temperature sensor is broken",
+        (409, 0): "Reactive power scheduling communication failure",
+        (411, 0): "Sync signal abnormal",
+        (600, 0): "DC component excessively high in output current",
+        (601, 0): "DC component excessively high in output voltage",
+        (602, 0): "Off-grid output voltage too low",
+        (603, 0): "Off-grid output voltage too high",
+        (604, 0): "Off-grid output overcurrent",
+        (605, 0): "Off-grid bus voltage too low",
+        (606, 0): "Off-grid output overloaded",
+        (607, 0): "Communication with the backup box is abnormal",
+        (608, 0): "Backup box is abnormal",
+        (609, 0): "Balanced circuit abnormal"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+
+def value_function_inverter_fault_code(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    return f'{main_code}({sub_code})'
+
+def value_function_inverter_fault_text(initval, descr, datadict):
+    main_code = datadict.get('inverter_fault_maincode', 0)
+    sub_code = datadict.get('inverter_fault_subcode', 0)
+    bit_labels = {
+        (0, 0): "Normal",
+        (200, 0): "DC arc fault has been detected",
+        (201, 0): "High leakage current detected",
+        (202, 0): "PV input voltage exceeds the upper threshold",
+        (203, 0): "PV panels have low insulation resistance",
+        (204, 0): "PV string reversely connected",
+        (300, 0): "Grid voltage is beyond the permissible range",
+        (301, 0): "AC terminals reversed",
+        (302, 0): "No utility grid connected or utility grid power failure",
+        (304, 0): "Grid frequency is beyond the permissible range",
+        (305, 0): "Overload",
+        (309, 0): "ROCOF Fault",
+        (311, 0): "Export limitation fail-safe",
+        (401, 0): "High DC component in output voltage",
+        (402, 0): "High DC component in output current",
+        (403, 0): "Output current unbalanced",
+        (404, 0): "Bus voltage sampling abnormal",
+        (405, 0): "Relay fault",
+        (407, 0): "Auto-test failed",
+        (408, 0): "Over-temperature",
+        (409, 0): "Bus voltage abnormal",
+        (411, 0): "Internal communication failure",
+        (412, 0): "Temperature sensor disconnected",
+        (416, 0): "DC/AC overcurrent protection",
+        (420, 0): "GFCI module abnormal",
+        (424, 0): "INV current waveform abnormal",
+        (425, 0): "AFCI self-test failure",
+        (426, 0): "PV current sampling abnormal",
+        (427, 0): "AC current sampling abnormal",
+        (428, 0): "BOOST short-circuited",
+        (429, 0): "BUS soft start failed",
+        (600, 0): "Off-grid output short-circuited",
+        (601, 0): "Off-grid Bus Voltage Low",
+        (602, 0): "Abnormal voltage at the off-grid terminal",
+        (603, 0): "Soft start failed",
+        (604, 0): "Off-grid output voltage abnormal",
+        (605, 0): "Balanced circuit self-test failed",
+        (606, 0): "High DC component in output voltage (off-grid)",
+        (607, 0): "Off-grid output overload",
+        (608, 0): "Off-grid parallel signal abnormal",
+        (609, 0): "Backup box is not detected",
+        (610, 0): "Off-grid split-phase voltage abnormal",
+        (700, 0): "Abnormal communication between the backup box and the inverter",
+        (701, 0): "Backup box grid-side relay failure",
+        (703, 0): "Backup box on-grid overload",
+        (705, 0): "Overheat inside the backup box"
+    }
+    label = bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return label
+	
 def value_function_run_mode(initval, descr, datadict):
     run_mode = datadict.get('register_3000', 0)
     run_mode = run_mode & 0xFF # Mask out the upper 8 bits, keeping only the lower 8 bits
@@ -3640,6 +3750,20 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:timelapse",
     ),
     GrowattModbusSensorEntityDescription(
+        name = "Total Work Time Hours",
+        key = "total_work_time_hours",
+        native_unit_of_measurement = UnitOfTime.HOURS,
+        device_class = SensorDeviceClass.DURATION,
+        state_class = SensorStateClass.TOTAL_INCREASING,
+        register = 57,
+        register_type = REG_INPUT,
+        unit = REGISTER_U32,
+        scale = 0.00013889,
+        rounding = 1,
+        allowedtypes = GEN2 | GEN3 | GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:timelapse",	
+    GrowattModbusSensorEntityDescription(
         name = "Reactive Power",
         key = "reactive_power",
         native_unit_of_measurement = UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
@@ -5478,6 +5602,18 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal = True,
     ),
     GrowattModbusSensorEntityDescription(
+        name = "Communication Board Temperature",
+        key = "communication_board_temperature",
+        native_unit_of_measurement = UnitOfTemperature.CELSIUS,
+        device_class = SensorDeviceClass.TEMPERATURE,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3097,
+        register_type = REG_INPUT,
+        scale = 0.1,
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),	    
+    GrowattModbusSensorEntityDescription(
         name = "Today's Battery Output Energy",
         key = "today_s_battery_output_energy",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
@@ -6113,10 +6249,212 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
-    
-    ############ NEW entities TEST #######
-    ######### NEW Test #############
-
+		GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Maincode",
+        key = "inverter_warning_maincode",
+        register = 112,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),      
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Subcode",
+        key = "inverter_warning_subcode",
+        register = 111,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Code",
+        key = "inverter_warning_code",
+        value_function = value_function_inverter_warning_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",       
+    ), 
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Warning Text",
+        key = "inverter_warning_text",
+        value_function = value_function_inverter_warning_text,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+		GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Maincode",
+        key = "inverter_fault_maincode",
+        register = 105,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Subcode",
+        key = "inverter_fault_subcode",
+        register = 107,
+        register_type = REG_INPUT, 
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Code",
+        key = "inverter_fault_code",
+        value_function = value_function_inverter_fault_code,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Inverter Fault Text",
+        key = "inverter_fault_text",
+        value_function = value_function_inverter_fault_text,
+	      allowedtypes = GEN4,
+	      icon = "mdi:battery",
+    ),			
+    GrowattModbusSensorEntityDescription(
+        name = "Peak Shaving Active",
+        key = "peak_shaving_enable",
+        register = 3306,
+        register_type = REG_HOLDING,        
+        scale = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Peak Import Limit",
+        key = "peak_import_limit",
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3307,
+        register_type = REG_HOLDING,
+        scale = 0.1,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Peak Export Limit",
+        key = "peak_export_limit",
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3308,
+        register_type = REG_HOLDING,
+        scale = 0.1,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Reserved SoC for Peak Shaving Active",
+        key = "reserved_soc_peak_shaving_enable",
+        register = 3309,
+        register_type = REG_HOLDING,        
+        scale = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        allowedtypes = GEN4,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:dip-switch",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Reserved SoC for Peak Shaving",
+        key = "reserved_soc_peak_shaving",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3310,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),     
+    GrowattModbusSensorEntityDescription(
+        name = "Max charge power from grid",
+        key = "max_charge_power_from_grid",
+        native_unit_of_measurement = UnitOfPower.KILO_WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3311,
+        scale = 0.1,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Charge Stop SOC from Grid",
+        key = "charge_stop_soc_from_grid",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 3312,
+        register_type = REG_HOLDING,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),         
+		GrowattModbusSensorEntityDescription(
+        name = "Inverter Total Module Count",
+        key = "inverter_total_module_count",
+        register = 185,
+        register_type = REG_HOLDING, ### HOLDING!!!
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),   
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module Count",
+        key = "bms_1_module_count",
+        register = 4041, 
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Module Count",
+        key = "bms_2_module_count",
+        register = 4149,
+        register_type = REG_INPUT, ### HOLDING!!!
+        unit = REGISTER_U16,
+        allowedtypes = GEN4,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-sync",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Module 1 Combined Power",
+        key = "bms_1_module_1_combined_power",
+        native_unit_of_measurement = UnitOfPower.WATT,
+        device_class = SensorDeviceClass.POWER,
+        state_class = SensorStateClass.MEASUREMENT,
+        register = 5885,
+        register_type = REG_HOLDING,
+        scale = value_function_bms_module_combined_power,
+        unit = REGISTER_U16,
+        entity_registry_enabled_default = True,
+        allowedtypes = GEN4,
+        icon = "mdi:battery",
+    ),			
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 2 Combined Current",
         key = "bms_1_module_2_combined_current",
@@ -6126,18 +6464,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         state_class = SensorStateClass.MEASUREMENT,
         allowedtypes = GEN4,
         icon = "mdi:battery",       
-    ),       
-       
+    ),
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 2 Warning Code",
         key = "bms_1_module_2_warning_code",
         register = 5138,
-        register_type = REG_INPUT, 
+        register_type = REG_INPUT,
         unit = REGISTER_U16,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
-    ),  
+    ),
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 3 Warning Code",
         key = "bms_1_module_3_warning_code",
@@ -6796,7 +7133,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
-     GrowattModbusSensorEntityDescription(
+		GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 6 Watt",
         key = "bms_1_module_6_watt",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -7674,8 +8011,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
-   
-    
     GrowattModbusSensorEntityDescription(
         name = "BMS 1 SoC",
         key = "bms_1_soc",
@@ -7744,6 +8079,26 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
+		GrowattModbusSensorEntityDescription(
+        name = "BMS 1 Awake Modules",
+        key = "bms_1_awake_modules",
+        register = 4078,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.02,
+        rounding = 0,
+        allowedtypes = GEN4,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "BMS 2 Awake Modules",
+        key = "bms_2_awake_modules",
+        register = 4186,
+        register_type = REG_INPUT,
+        unit = REGISTER_S16,
+        scale = 0.02,
+        rounding = 0,
+        allowedtypes = GEN4,
+    ),  
     GrowattModbusSensorEntityDescription(
         name = "BMS 2 SoC",
         key = "bms_2_soc",
