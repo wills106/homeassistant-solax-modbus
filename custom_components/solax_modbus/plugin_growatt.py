@@ -92,11 +92,49 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order16: int = Endian.BIG
     order32: int = Endian.BIG
     unit: int = REGISTER_U16
-    register_type: int= REG_HOLDING
+    register_type: int = REG_HOLDING
 
 # ====================================== Computed value functions  =================================================
-
 def value_function_time_slot_1(initval, descr, datadict):
+    def time_to_int(time_str):
+        if time_str is None:
+            time_str = "00:00"
+        hours, minutes = map(int, time_str.split(':'))
+        return (hours * 256) + minutes
+
+    results = []
+
+    for i in range(1, 10):
+        begin_key = f"time_{i}_begin"
+        end_key = f"time_{i}_end"
+        enabled_key = f"time_{i}_enabled"
+        mode_key = f"time_{i}_mode"
+
+        begin_raw = datadict.get(begin_key, "00:00")
+        end_raw = datadict.get(end_key, "00:00")
+        enabled = datadict.get(enabled_key, "Disabled")
+        mode = datadict.get(mode_key, "Load First")
+
+        begin = time_to_int(begin_raw)
+        end = time_to_int(end_raw)
+
+        if enabled == "Enabled":
+            begin += 32768
+        if mode == "Battery First":
+            begin += 8192
+        elif mode == "Grid First":
+            begin += 16384
+
+        if time_to_int(end_raw) < time_to_int(begin_raw):
+            _LOGGER.error(f"Growatt: Time {i} Begin cannot be smaller than Time {i} End")
+        else:
+            results.append((REGISTER_U16, begin))
+            results.append((REGISTER_U16, end))
+
+    return results
+
+##### new def but save the old for safety
+def value_function_time_slot_old(initval, descr, datadict):
     def time_to_int(time_str):
         if time_str is None: # If time_x_ entities is disabled.
             time_str = "00:00"  # Assume "00:00" if the time string is None
@@ -165,7 +203,7 @@ def value_function_time_slot_1(initval, descr, datadict):
             (REGISTER_U16, time_3_end),
         ]
 
-def value_function_time_slot_clear(initval, descr, datadict):
+def value_function_time_slots_clear_1_4(initval, descr, datadict):
     return [
         (REGISTER_U16, 0),
         (REGISTER_U16, 0),
@@ -173,8 +211,24 @@ def value_function_time_slot_clear(initval, descr, datadict):
         (REGISTER_U16, 0),
         (REGISTER_U16, 0),
         (REGISTER_U16, 0),
+	(REGISTER_U16, 0),
+	(REGISTER_U16, 0),
     ]
 
+def value_function_time_slots_clear_5_9(initval, descr, datadict):
+    return [
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+        (REGISTER_U16, 0),
+    ]
+	
 def value_function_growatt_gen4time(initval, descr, datadict):
     hours = initval // 256  # Integer division to get the hours (higher 8 bits)
     minutes = initval % 256  # Modulo to get the minutes (lower 8 bits)
@@ -201,6 +255,48 @@ def value_function_time_slot_3_reverse_begin(initval, descr, datadict):
     minutes = initval % 256  # Modulo to get the minutes
     return f"{hours:02}:{minutes:02}"
 
+def value_function_time_slot_4_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3044', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
+def value_function_time_slot_5_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3050', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
+def value_function_time_slot_6_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3052', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
+def value_function_time_slot_7_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3054', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
+def value_function_time_slot_8_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3056', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
+def value_function_time_slot_9_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_3058', 0)
+    initval = initval & 0x1FFF
+    hours = initval // 256
+    minutes = initval % 256
+    return f"{hours:02}:{minutes:02}"
+
 def value_function_time_slot_1_reverse_enabled(initval, descr, datadict):
     time_1_enabled = datadict.get('register_3038', 0) # need to use a read entity to avoid overwriting the select
     if int(time_1_enabled) & (1 << 15): # Check if bit 15 is set 
@@ -209,15 +305,57 @@ def value_function_time_slot_1_reverse_enabled(initval, descr, datadict):
         return "Disabled"
 
 def value_function_time_slot_2_reverse_enabled(initval, descr, datadict):
-    time_1_enabled = datadict.get('register_3040', 0) # need to use a read entity to avoid overwriting the select
-    if int(time_1_enabled) & (1 << 15): # Check if bit 15 is set 
+    time_2_enabled = datadict.get('register_3040', 0) # need to use a read entity to avoid overwriting the select
+    if int(time_2_enabled) & (1 << 15): # Check if bit 15 is set 
         return "Enabled"
     else:
         return "Disabled"
 
 def value_function_time_slot_3_reverse_enabled(initval, descr, datadict):
-    time_1_enabled = datadict.get('register_3042', 0) # need to use a read entity to avoid overwriting the select
-    if int(time_1_enabled) & (1 << 15): # Check if bit 15 is set 
+    time_3_enabled = datadict.get('register_3042', 0) # need to use a read entity to avoid overwriting the select
+    if int(time_3_enabled) & (1 << 15): # Check if bit 15 is set 
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_4_reverse_enabled(initval, descr, datadict):
+    time_4_enabled = datadict.get('register_3044', 0)
+    if int(time_4_enabled) & (1 << 15):
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_5_reverse_enabled(initval, descr, datadict):
+    time_5_enabled = datadict.get('register_3050', 0)
+    if int(time_5_enabled) & (1 << 15):
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_6_reverse_enabled(initval, descr, datadict):
+    time_6_enabled = datadict.get('register_3052', 0)
+    if int(time_6_enabled) & (1 << 15):
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_7_reverse_enabled(initval, descr, datadict):
+    time_7_enabled = datadict.get('register_3054', 0)
+    if int(time_7_enabled) & (1 << 15):
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_8_reverse_enabled(initval, descr, datadict):
+    time_8_enabled = datadict.get('register_3056', 0)
+    if int(time_8_enabled) & (1 << 15):
+        return "Enabled"
+    else:
+        return "Disabled"
+
+def value_function_time_slot_9_reverse_enabled(initval, descr, datadict):
+    time_9_enabled = datadict.get('register_3058', 0)
+    if int(time_9_enabled) & (1 << 15):
         return "Enabled"
     else:
         return "Disabled"
@@ -232,21 +370,75 @@ def value_function_time_slot_1_reverse_mode(initval, descr, datadict):
         return "Load First"
 
 def value_function_time_slot_2_reverse_mode(initval, descr, datadict):
-    time_1_mode = datadict.get('register_3040', 0) # need to use a read entity to avoid overwriting the select
-    if int(time_1_mode) & (1 << 14): # Check bit 14 first for "Grid First" (1 << 14)
+    time_2_mode = datadict.get('register_3040', 0) # need to use a read entity to avoid overwriting the select
+    if int(time_2_mode) & (1 << 14): # Check bit 14 first for "Grid First" (1 << 14)
         return "Grid First"
-    elif int(time_1_mode ) & (1 << 13): # Check bit 13 for "Battery First" (1 << 13)
+    elif int(time_2_mode ) & (1 << 13): # Check bit 13 for "Battery First" (1 << 13)
         return "Battery First"
     else: # Default case if neither bit 13 nor bit 14 is set
         return "Load First"
 
 def value_function_time_slot_3_reverse_mode(initval, descr, datadict):
-    time_1_mode = datadict.get('register_3042', 0) # need to use a read entity to avoid overwriting the select
-    if int(time_1_mode) & (1 << 14): # Check bit 14 first for "Grid First" (1 << 14)
+    time_3_mode = datadict.get('register_3042', 0) # need to use a read entity to avoid overwriting the select
+    if int(time_3_mode) & (1 << 14): # Check bit 14 first for "Grid First" (1 << 14)
         return "Grid First"
-    elif int(time_1_mode ) & (1 << 13): # Check bit 13 for "Battery First" (1 << 13)
+    elif int(time_3_mode ) & (1 << 13): # Check bit 13 for "Battery First" (1 << 13)
         return "Battery First"
     else: # Default case if neither bit 13 nor bit 14 is set
+        return "Load First"
+
+def value_function_time_slot_4_reverse_mode(initval, descr, datadict):
+    time_4_mode = datadict.get('register_3044', 0)
+    if int(time_4_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_4_mode) & (1 << 13):
+        return "Battery First"
+    else:
+        return "Load First"
+
+def value_function_time_slot_5_reverse_mode(initval, descr, datadict):
+    time_5_mode = datadict.get('register_3050', 0)
+    if int(time_5_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_5_mode) & (1 << 13):
+        return "Battery First"
+    else:
+        return "Load First"
+
+def value_function_time_slot_6_reverse_mode(initval, descr, datadict):
+    time_6_mode = datadict.get('register_3052', 0)
+    if int(time_6_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_6_mode) & (1 << 13):
+        return "Battery First"
+    else:
+        return "Load First"
+
+def value_function_time_slot_7_reverse_mode(initval, descr, datadict):
+    time_7_mode = datadict.get('register_3054', 0)
+    if int(time_7_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_7_mode) & (1 << 13):
+        return "Battery First"
+    else:
+        return "Load First"
+
+def value_function_time_slot_8_reverse_mode(initval, descr, datadict):
+    time_8_mode = datadict.get('register_3056', 0)
+    if int(time_8_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_8_mode) & (1 << 13):
+        return "Battery First"
+    else:
+        return "Load First"
+
+def value_function_time_slot_9_reverse_mode(initval, descr, datadict):
+    time_9_mode = datadict.get('register_3058', 0)
+    if int(time_9_mode) & (1 << 14):
+        return "Grid First"
+    elif int(time_9_mode) & (1 << 13):
+        return "Battery First"
+    else:
         return "Load First"
 
 def value_function_today_s_solar_energy(initval, descr, datadict):
@@ -356,14 +548,23 @@ BUTTON_TYPES = [
         value_function = value_function_time_slot_1,
     ),
     GrowattModbusButtonEntityDescription(
-        name = "Clear Time Slots",
-        key = "time_slot_clear",
+        name = "Clear Time Slots 1-4",
+        key = "time_slot_clear_1_4",
         register = 3038,
         allowedtypes = HYBRID | GEN4,
         write_method = WRITE_MULTI_MODBUS,
         icon = "mdi:battery-clock",
-        value_function = value_function_time_slot_clear,
+        value_function = value_function_time_slots_clear_1_4,
     ),
+    GrowattModbusButtonEntityDescription(
+        name = "Clear Time Slots 5-9",
+        key = "time_slot_clear_5-9",
+        register = 3050,
+        allowedtypes = HYBRID | GEN4,
+        write_method = WRITE_MULTI_MODBUS,
+        icon = "mdi:battery-clock",
+        value_function = value_function_time_slots_clear_5_9,
+    ),	
 ]
 
 # ================================= Number Declarations ============================================================
@@ -1105,7 +1306,6 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:dip-switch",
     ),
-
     GrowattModbusSelectEntityDescription(
         name = "Priority",
         key = "priority",
@@ -1118,7 +1318,6 @@ SELECT_TYPES = [
         entity_category = EntityCategory.CONFIG,
         icon = "mdi:run",
     ),
-
     GrowattModbusSelectEntityDescription(
         name = "Charger Switch",
         key = "charger_switch",
@@ -1286,6 +1485,301 @@ SELECT_TYPES = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery-clock",
     ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 4 Begin",
+        key = "time_4_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 4 End",
+        key = "time_4_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 4 Mode",
+        key = "time_4_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 4 Active",
+        key = "time_4_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),    
+    GrowattModbusSelectEntityDescription(
+        name = "Time 5 Begin",
+        key = "time_5_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 5 End",
+        key = "time_5_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 5 Mode",
+        key = "time_5_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 5 Active",
+        key = "time_5_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 6 Begin",
+        key = "time_6_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 6 End",
+        key = "time_6_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 6 Mode",
+        key = "time_6_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 6 Active",
+        key = "time_6_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 7 Begin",
+        key = "time_7_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 7 End",
+        key = "time_7_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 7 Mode",
+        key = "time_7_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 7 Active",
+        key = "time_7_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 8 Begin",
+        key = "time_8_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 8 End",
+        key = "time_8_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 8 Mode",
+        key = "time_8_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 8 Active",
+        key = "time_8_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 9 Begin",
+        key = "time_9_begin",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 9 End",
+        key = "time_9_end",
+        option_dict = TIME_OPTIONS_GEN4,
+        write_method = WRITE_DATA_LOCAL,
+        unit = REGISTER_U16,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 9 Mode",
+        key = "time_9_mode",
+        option_dict = {
+                0: "Load First",
+                1: "Battery First",
+                2: "Grid First",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "Time 9 Active",
+        key = "time_9_enabled",
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled",
+            },
+        write_method = WRITE_DATA_LOCAL,
+        allowedtypes = HYBRID | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = False,
+        icon = "mdi:battery-clock",
+    ),
+
     ###
     #
     # SPF Selects
@@ -1449,7 +1943,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "firmware_version",
         register = 9,
         unit = REGISTER_STR,
-        wordcount=3,
+        wordcount = 3,
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -1459,9 +1953,9 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "firmware_control_version_ascii",
         register = 12,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = ALL_GEN_GROUP,
-	internal = True,
+				internal = True,
     ),
 	GrowattModbusSensorEntityDescription(
         key = "firmware_control_version_number",
@@ -1508,7 +2002,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 23,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         allowedtypes = GEN | GEN2 | GEN3 | SPF,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -1741,7 +2235,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:dip-switch",
     ),
-
     GrowattModbusSensorEntityDescription(
         name = "Battery Type",
         key = "battery_type",
@@ -2091,7 +2584,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "serialnumber",
         register = 3001,
         unit = REGISTER_STR,
-        wordcount=5,
+        wordcount = 5,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -2176,11 +2669,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   1: "60", },
         allowedtypes = HYBRID | AC | GEN4 | EPS,
     ),
-
-
-
-
-
 
     ###
     #
@@ -3405,7 +3893,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Today's Solar Energy",
         key = "today_s_solar_energy",
-        value_function= value_function_today_s_solar_energy,
+        value_function = value_function_today_s_solar_energy,
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
         state_class = SensorStateClass.TOTAL_INCREASING,
@@ -3612,7 +4100,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Battery Combined Power",
         key = "battery_combined_power",
-        value_function= value_function_combined_battery_power,
+        value_function = value_function_combined_battery_power,
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
         state_class = SensorStateClass.MEASUREMENT,
@@ -4985,7 +5473,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_monitoring_version",
         register = 3096, #used for battery voltage scaling
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         allowedtypes = GEN4 | HYBRID,
         internal = True,
     ),
@@ -5296,6 +5784,42 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4 | HYBRID,
         internal = True,
     ),  
+		GrowattModbusSensorEntityDescription(
+        key = "register_3044",
+        register = 3044,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        key = "register_3050",
+        register = 3050,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        key = "register_3052",
+        register = 3052,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        key = "register_3054",
+        register = 3054,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        key = "register_3056",
+        register = 3056,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        key = "register_3058",
+        register = 3058,
+        allowedtypes = GEN4 | HYBRID,
+        internal = True,
+    ),  
     GrowattModbusSensorEntityDescription(
         name = "Time 1 Begin (read)",
         key = "time_1_begin_read",
@@ -5391,7 +5915,204 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),
-    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 4 Begin (read)",
+        key = "time_4_begin_read",
+        value_function = value_function_time_slot_4_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 4 Mode (read)",
+        key = "time_4_mode_read",
+        value_function = value_function_time_slot_4_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 4 Active (read)",
+        key = "time_4_enabled_read",
+        value_function = value_function_time_slot_4_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 4 End (read)",
+        key = "time_4_end_read",
+        register = 3045,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 5 Begin (read)",
+        key = "time_5_begin_read",
+        value_function = value_function_time_slot_5_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 5 Mode (read)",
+        key = "time_5_mode_read",
+        value_function = value_function_time_slot_5_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 5 Active (read)",
+        key = "time_5_enabled_read",
+        value_function = value_function_time_slot_5_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 5 End (read)",
+        key = "time_5_end_read",
+        register = 3051,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 6 Begin (read)",
+        key = "time_6_begin_read",
+        value_function = value_function_time_slot_6_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 6 Mode (read)",
+        key = "time_6_mode_read",
+        value_function = value_function_time_slot_6_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 6 Active (read)",
+        key = "time_6_enabled_read",
+        value_function = value_function_time_slot_6_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 6 End (read)",
+        key = "time_6_end_read",
+        register = 3053,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 7 Begin (read)",
+        key = "time_7_begin_read",
+        value_function = value_function_time_slot_7_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 7 Mode (read)",
+        key = "time_7_mode_read",
+        value_function = value_function_time_slot_7_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 7 Active (read)",
+        key = "time_7_enabled_read",
+        value_function = value_function_time_slot_7_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 7 End (read)",
+        key = "time_7_end_read",
+        register = 3055,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 8 Begin (read)",
+        key = "time_8_begin_read",
+        value_function = value_function_time_slot_8_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 8 Mode (read)",
+        key = "time_8_mode_read",
+        value_function = value_function_time_slot_8_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 8 Active (read)",
+        key = "time_8_enabled_read",
+        value_function = value_function_time_slot_8_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 8 End (read)",
+        key = "time_8_end_read",
+        register = 3057,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        name = "Time 9 Begin (read)",
+        key = "time_9_begin_read",
+        value_function = value_function_time_slot_9_reverse_begin,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 9 Mode (read)",
+        key = "time_9_mode_read",
+        value_function = value_function_time_slot_9_reverse_mode,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),  
+    GrowattModbusSensorEntityDescription(
+        name = "Time 9 Active (read)",
+        key = "time_9_enabled_read",
+        value_function = value_function_time_slot_9_reverse_enabled,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Time 9 End (read)",
+        key = "time_9_end_read",
+        register = 3059,
+        scale = value_function_growatt_gen4time,
+        allowedtypes = GEN4 | HYBRID,
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
+    ),
     
     ############ NEW entities TEST #######
     ######### NEW Test #############
@@ -5443,7 +6164,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5258,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        allowedtypes= GEN4,
+        allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
@@ -5599,7 +6320,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 5120,
         register_type = REG_INPUT, 
         unit = REGISTER_U16,
-        scale = value_function_module_status,                          
+        scale = value_function_module_status,
         allowedtypes = GEN4,
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
@@ -6782,7 +7503,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_serialnumber",
         register = 5042,
         unit = REGISTER_STR,
-        wordcount=8,
+        wordcount = 8,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6793,7 +7514,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_2_monitoring_version",
         register = 5051,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6804,7 +7525,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_monitoring_version",
         register = 5011,
         unit = REGISTER_STR,
-        wordcount=2,
+        wordcount = 2,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6881,7 +7602,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "bms_1_serialnumber",
         register = 3087,
         unit = REGISTER_STR,
-        wordcount=8,
+        wordcount = 8,
         entity_registry_enabled_default = False,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -7699,10 +8420,10 @@ class growatt_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber                       = await async_read_serialnr(hub, 9)
+        seriesnumber = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber                       = await async_read_serialnr(hub, 3001)
+            seriesnumber = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
@@ -7734,7 +8455,7 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
         elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
         elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), Hybrid TL3-XH  11kW - 30kW (MID)  
+        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)  
         elif seriesnumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
         elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
         elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
@@ -7773,7 +8494,7 @@ plugin_instance = growatt_plugin(
     NUMBER_TYPES = NUMBER_TYPES,
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
-    SWITCH_TYPES= [],
+    SWITCH_TYPES = [],
     block_size = 100,
     order16 = Endian.BIG,
     order32 = Endian.BIG,
