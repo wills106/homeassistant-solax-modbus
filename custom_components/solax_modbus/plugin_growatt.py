@@ -1410,7 +1410,7 @@ SELECT_TYPES = [
     ),
 ]
 
-# ================================= Sennsor Declarations ============================================================
+# ================================= Sensor Declarations ============================================================
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
@@ -1488,9 +1488,9 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   3: "Espanol",
                   4: "Francais",
                   5: "Hanyu",
-                  6: "Polskie",
+                  6: "Polski",
                   7: "Portugues",
-                  8: "Magyar nyelv", },
+                  8: "Magyar", },
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
         icon = "mdi:translate-variant",
@@ -7716,7 +7716,7 @@ class growatt_plugin(plugin_base):
         # TL3-XH (MID) = GEN4
         # SPF = SPF 
         
-        # derive invertertype from seriiesnumber
+        # derive invertertype from seriesnumber
         if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
         #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
         #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
