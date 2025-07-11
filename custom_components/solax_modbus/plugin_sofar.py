@@ -231,6 +231,7 @@ BUTTON_TYPES = [
         register=0x1187,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-check",
         value_function=value_function_passivemode,
     ),
     SofarModbusButtonEntityDescription(
@@ -239,6 +240,7 @@ BUTTON_TYPES = [
         register=0x1184,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:timer",
         value_function=value_function_passive_timeout,
     ),
     # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
@@ -255,8 +257,9 @@ BUTTON_TYPES = [
         name="FeedIn: Update",
         key="feedin_limitation_mode",
         register=0x1023,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
         write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:transmission-tower-import",
         value_function=value_function_refluxcontrol,
     ),
     SofarModbusButtonEntityDescription(
@@ -265,6 +268,7 @@ BUTTON_TYPES = [
         register=0x1029,
         allowedtypes=HYBRID,
         write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:power-plug-off",
         value_function=value_function_epscontrol,
     ),
     SofarModbusButtonEntityDescription(
@@ -272,6 +276,7 @@ BUTTON_TYPES = [
         key="IV_curve_scan",
         register=0x1027,
         command=1,
+        icon="mdi:chart-bell-curve",
         allowedtypes=HYBRID,
     ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
@@ -370,10 +375,10 @@ NUMBER_TYPES = [
         native_max_value=20000,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
         prevent_update=True,
         write_method=WRITE_DATA_LOCAL,
-        icon="mdi:battery-sync",
+        icon="mdi:transmission-tower-import",
     ),
     SofarModbusNumberEntityDescription(
         name="EPS Wait Time",
@@ -499,8 +504,9 @@ SELECT_TYPES = [
             1: "Enabled - Feed-in limitation",
             2: "Enabled - 3-phase limit",
         },
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
         write_method=WRITE_DATA_LOCAL,
+        icon="mdi:transmission-tower-import",
     ),
     # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
     # SofarModbusSelectEntityDescription(
@@ -3154,7 +3160,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x1023,
         scale={0: "Disabled", 1: "Enabled - Feed-in limitation", 2: "Enabled - 3-phase limit"},
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower-import",
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="FeedIn: Maximum Power",
@@ -3162,7 +3169,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x1024,
         scale=100,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower-import",
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="EPS Mode",
