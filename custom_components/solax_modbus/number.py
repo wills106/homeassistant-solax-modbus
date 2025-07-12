@@ -148,18 +148,18 @@ class SolaXModbusNumber(NumberEntity):
             except:
                 val = self._hub.data[self._key]
             return val
-        else:  # first time initialize
-            if descr.initvalue == None:
-                return None
-            else:
-                res = descr.initvalue
-                if self._attr_native_max_value != None:
-                    res = min(res, self._attr_native_max_value)
-                if self._attr_native_min_value != None:
-                    res = max(res, self._attr_native_min_value)
-                self._hub.data[self._key] = res
-                # _LOGGER.warning(f"****** (debug) initializing {self._key}  = {res}")
-                return res
+        #else:  # first time initialize
+        #    if descr.initvalue == None:
+        #        return None
+        #    else:
+        #        res = descr.initvalue
+        #        if self._attr_native_max_value != None:
+        #            res = min(res, self._attr_native_max_value)
+        #        if self._attr_native_min_value != None:
+        #            res = max(res, self._attr_native_min_value)
+        #        self._hub.data[self._key] = res
+        #        # _LOGGER.warning(f"****** (debug) initializing {self._key}  = {res}")
+        #        return res
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""

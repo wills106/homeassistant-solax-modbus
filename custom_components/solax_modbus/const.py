@@ -284,7 +284,8 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
-def value_function_pv_power_total(initval, descr, datadict):
+def value_function_pv_power_total(initval, descr, datadict): # this function can be enhanced to handle undefined values better
+    datadict.pop("pv_power_total", None)
     vals = [v for k, v in datadict.items() if k.startswith("pv_power_")]
     return None if any(p is None for p in vals) else sum(vals)
 
