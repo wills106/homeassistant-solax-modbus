@@ -912,7 +912,8 @@ class SolaXModbusHub:
         else:
             _LOGGER.debug(f"device group inverter")
 
-        data = {"_repeatUntil": self.data["_repeatUntil"]}
+        #data = {"_repeatUntil": self.data["_repeatUntil"]} # removed for issue #1440
+        data = self.data # issue #1440 - is an alias, not a copy
         res = True
         for block in group.holdingBlocks:
             res = res and await self.async_read_modbus_block(data, block, "holding")
@@ -933,8 +934,8 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"device group check not success")
                 return True
 
-        for key, value in data.items():
-            self.data[key] = value
+        #for key, value in data.items(): # removed for issue #1440
+        #    self.data[key] = value # removed for issue #1440
 
         if res and self.writequeue and self.plugin.isAwake(self.data):  # self.awakeplugin(self.data):
             # process outstanding write requests
