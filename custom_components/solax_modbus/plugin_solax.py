@@ -231,8 +231,10 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pass # capping of import is done later
     elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
-        pushmode_power = houseload - pv
-        if battery_capacity >= target_soc: pvlimit = houseload
+        if battery_capacity >= 92: pvlimit = houseload + abs(pvlimit) * (100.0 - battery_capacity)/20.0 # slow down charging - nearly full
+        _LOGGER.info(f"pvlimit {pvlimit} batcap {battery_capacity}") 
+        pushmode_power = houseload - pv # or should we use pvlimit ?
+    
         #if target < 0:
         #    ap_target = target - houseload_nett  # subtract house load
         #else:
