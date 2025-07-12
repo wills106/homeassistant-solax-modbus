@@ -947,7 +947,7 @@ class SolaXModbusHub:
         for (
             k,
             v,
-        ) in self.data["_repeatUntil"].items():
+        ) in list(self.data["_repeatUntil"].items()): # use a list copy because dict may change during iteration
             if self.last_ts < v:
                 buttondescr = self.computedButtons[k]
                 payload = buttondescr.value_function(0, buttondescr, self.data)

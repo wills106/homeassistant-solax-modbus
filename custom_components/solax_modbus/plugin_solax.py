@@ -204,8 +204,11 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             timeout,
         ),
     ]
-    if power_control == "Disabled": autorepeat_stop(datadict, descr.key)
-    else:                           autorepeat_stop(datadict, "powercontrolmode8_trigger") # stop the other loop
+    if power_control == "Disabled": 
+        _LOGGER.info("Stopping mode 1 loop")
+        autorepeat_stop(datadict, descr.key)
+        datadict["remotecontrol_power_control_mode"] = "Disabled" # disable the mode8 remotecontrol loop 
+        autorepeat_stop(datadict, "remotecontrol8_trigger")
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return res
 
@@ -275,8 +278,9 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     ]
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
-        autorepeat_stop(datadict,"remotecontrol_trigger")
-    else: autorepeat_stop(datadict,"remotecontrol_trigger") # stop the other loop anyway
+        _LOGGER.info("Stopping mode 8 loop")
+        datadict["remotecontrol_power_control"] = "Disabled" # disable the other remotecontrol Mode 8 loop 
+        autorepeat_set(datadict,"remotecontrol_trigger", time() + 15) # trigger the mode 8 loop for a few seconds to terminate remotecontrol mode 1
     _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
     return res
 
