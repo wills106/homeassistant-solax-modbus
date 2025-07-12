@@ -538,7 +538,7 @@ def value_function_inverter_warning_text(initval, descr, datadict):
         (608, 0): "Backup box is abnormal",
         (609, 0): "Balanced circuit abnormal"
     }
-    return bit_labels.get((main_code, sub_code), f"Unknown warning (main_code={main_code}, sub_code={sub_code})")
+    return bit_labels.get((main_code, sub_code), f"Unknown Warning (main_code={main_code}, sub_code={sub_code})")
 
 def value_function_module_warning_text(initval, descr, datadict):
     text = {
@@ -557,7 +557,7 @@ def value_function_module_warning_text(initval, descr, datadict):
         707 : "Discharge Overload Alarm",
         708 : "Discharge Overload Anomaly"
     }
-    return text.get(initval, str(initval) + " Unknown status")
+    return text.get(initval, str(initval) + " Unknown Warning")
 
 def value_function_inverter_fault_text(initval, descr, datadict):
     main_code = datadict.get('inverter_fault_maincode', 0)
@@ -610,7 +610,7 @@ def value_function_inverter_fault_text(initval, descr, datadict):
         (703, 0): "Backup box on-grid overload",
         (705, 0): "Overheat inside the backup box"
     }
-    return bit_labels.get((main_code, sub_code), f"Unknown fault (main_code={main_code}, sub_code={sub_code})")
+    return bit_labels.get((main_code, sub_code), f"Unknown Fault (main_code={main_code}, sub_code={sub_code})")
 	
 def value_function_run_mode(initval, descr, datadict):
     run_mode = datadict.get('register_3000', 0)
