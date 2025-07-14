@@ -118,6 +118,9 @@ from .const import (
     SLEEPMODE_LASTAWAKE,
     CONF_TIME_OUT,
     DEFAULT_TIME_OUT,
+    BUTTONREPEAT_FIRST,
+    BUTTONREPEAT_LOOP,
+    BUTTONREPEAT_POST,
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
@@ -944,20 +947,34 @@ class SolaXModbusHub:
                 val = self.writequeue.get(addr)
                 await self.async_write_register(self._modbus_addr, addr, val)
             self.writequeue = {}  # make sure we do not write multiple times
+
+        # execute autorepeat buttons
         self.last_ts = time()
         for (
             k,
             v,
         ) in list(self.data["_repeatUntil"].items()): # use a list copy because dict may change during iteration
+            buttondescr = self.computedButtons[k]
             if self.last_ts < v:
-                buttondescr = self.computedButtons[k]
-                payload = buttondescr.value_function(0, buttondescr, self.data)
+                payload = buttondescr.value_function(BUTTONREPEAT_LOOP, buttondescr, self.data) # initval = 1 means autorepeat run
                 _LOGGER.debug(f"ready to repeat button {k} data: {payload}")
                 await self.async_write_registers_multi(
                     unit=self._modbus_addr,
                     address=buttondescr.register,
                     payload=payload,
                 )
+            else: # expired autorepeats
+                if self.data["_repeatUntil"][k] > 0: # expired recently
+                    self.data["_repeatUntil"][k] = 0 # mark as finally expired, no further buttonrepeat post after this one
+                    _LOGGER.info(f"calling final value function POST for {k} with initval {BUTTONREPEAT_POST}")
+                    payload = buttondescr.value_function(BUTTONREPEAT_POST, buttondescr, self.data)  # None means no final call after expiration
+                    if payload: 
+                        _LOGGER.info(f"terminating loop {k} - ready to send final payload data: {payload}")
+                        await self.async_write_registers_multi(
+                            unit=self._modbus_addr,
+                            address=buttondescr.register,
+                            payload=payload,
+                        )
         return res
 
 

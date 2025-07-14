@@ -1,6 +1,6 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS
-from .const import autorepeat_set
+from .const import autorepeat_set, BUTTONREPEAT_FIRST
 from homeassistant.components.button import PLATFORM_SCHEMA, ButtonEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
@@ -85,7 +85,7 @@ class SolaXModbusButton(ButtonEntity):
                 duration = self._hub.data.get(self.button_info.autorepeat, 0)
                 autorepeat_set(self._hub.data, self.button_info.key, time() + duration - 0.5 )
             if self.button_info.value_function:
-                res = self.button_info.value_function(0, self.button_info, self._hub.data )
+                res = self.button_info.value_function(BUTTONREPEAT_FIRST, self.button_info, self._hub.data ) # initval = 0 means first manual run
                 if res:
                     _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
                     await self._hub.async_write_registers_multi(
