@@ -1,4 +1,5 @@
-# Modbus Power Control (remotecontrol power)
+# Modbus Power Control (remotecontrol power) - OLD - has been replaced by solax-mode1-modbus-power-control.md page
+
 
 ## Why use Modbus power control?
 
