@@ -1,4 +1,4 @@
-## This page describes features that will appear in the near future
+## This page describes features that will appear in the near future - OLD has been replaced by solax-mode1-modbus-power-control page
 
 ## Why use Modbus power control?
 
