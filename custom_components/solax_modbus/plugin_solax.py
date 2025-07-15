@@ -228,7 +228,9 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
     # initval = BUTTONREPEAT_FIRST means first run; 
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
     # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
-    if initval == BUTTONREPEAT_POST: return None
+    if initval == BUTTONREPEAT_POST: 
+        datadict["remotecontrol_power_control_mode"] = "Disabled" 
+        return [ ( "remotecontrol_power_control_mode", "Disabled", ) ]
     # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
     power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
     curmode = datadict.get("modbus_power_control", "unknown")
@@ -290,7 +292,7 @@ def value_function_powercontrolmode8_recompute(initval, descr, datadict):
         ),
     ]
     if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
-        _LOGGER.warning(f"autorepeat mode 8 changed to {curmode}; battery: {battery_capacity}; from_mode: {power_control}") 
+        _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}") 
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
         _LOGGER.info("Stopping mode 8 loop")
