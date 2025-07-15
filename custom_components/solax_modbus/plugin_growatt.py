@@ -2703,7 +2703,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         unit = REGISTER_STR,
         wordcount = 5,
         entity_registry_enabled_default = False,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),
@@ -5603,7 +5603,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register = 3097,
         register_type = REG_INPUT,
         scale = 0.1,
-        allowedtypes = GEN4 | HYBRID,
+        allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),	    
     GrowattModbusSensorEntityDescription(
@@ -7188,7 +7188,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),    
-		GrowattModbusSensorEntityDescription(
+    GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 6 Watt",
         key = "bms_1_module_6_watt",
         native_unit_of_measurement = UnitOfPower.WATT,
@@ -8162,7 +8162,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_registry_enabled_default = False,
         icon = "mdi:battery",
     ),
-		GrowattModbusSensorEntityDescription(
+    GrowattModbusSensorEntityDescription(
         name = "BMS 1 Awake Modules",
         key = "bms_1_awake_modules",
         register = 4078,
