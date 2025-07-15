@@ -1,6 +1,6 @@
 # Developer guide
 
-This section describes some internal mechanisms of this integration. It is mainly meant for plugin developers, but can only be used by the integration core developers.
+This section describes some internal mechanisms of this integration. It is mainly meant for plugin developers, but can also be used by the integration core developers.
 
 Following sections will appear some day:
 ## Attributes for entities
