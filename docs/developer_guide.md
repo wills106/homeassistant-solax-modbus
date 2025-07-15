@@ -29,7 +29,7 @@ To be completed
 To be completed
 
 
-## autorepeat mechanism for buttons
+## Autorepeat mechanism for buttons
 
 A button can have the attribute autorepeat, an attribute that specifies the entity_key of the entity that holds the duration over which the button press will be repeated automatically.
 If a button has the autorepeat attribute autorepeat, the button declaration must also have a value_function attribute. The specified value function will be called for each autorepeat loop interation.
