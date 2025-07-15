@@ -46,4 +46,4 @@ In the future, the return value may be extended to allow other types of writes (
 The write_multiple list is a list of tuples [ (entity key name, entity value,), ... ]. Instead of the entity_key_name, a register type can also be specified like REGISTER_U16.
 The system will automatically compute the length of the write_multiple payload to be executed.
 
-The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's value_function's call. This could be enhanced as using global variables is not considered a best practice.
+The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's value_function's call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent.
