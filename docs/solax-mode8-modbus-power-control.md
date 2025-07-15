@@ -20,10 +20,11 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 * This mechanism will only work on the most recent firmware versions; previous versions do not support mode 8 or 9. I am running Firmware: DSP v1.52 ARM v1.50 at the time of my testing
 
 
-### KNOWN BUGS: (Work in progress):
+### KNOWN ISSUES: (Work in progress):
 * When the battery gets fully charged (or when the specified duration expires), the systems sometimes seems to automatically change to mode6 (Self consume - Charge an Discharge), this mode does not limit PV anymore and may export power when prices are still negative. Further observation is necassary to understand this.
 * The remotecontrol_duration parameter (not to be confused with autorepeat duration) seems to be ignored by the Solax firmwre and mode 8 remains active for a longer time. This can be overcome by using an automation that sets the mode 8 to disabled. We are working on an automatic deactivation when the autorepeat_duration expires.
-* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button
+* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button.
+* The inverter may take some time to reduce the PV power, it can take a minute or more before the target is reached.
 
 ***
 ## Solax Gen4 approach for Mode 8
