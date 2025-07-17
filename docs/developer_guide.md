@@ -100,17 +100,17 @@ A button can have the attribute autorepeat, an attribute that specifies the enti
 If a button has the attribute **autorepeat**, the button declaration must also have a `value_function` attribute. The specified value function will be called for each autorepeat loop interation.
 The meaning of the parameters of a button autorepeat value_function is:
 
-* initval: either `BUTTONREPEAT_FIRST`, `BUTTONREPEAT_LOOP`, `BUTTONREPEAT_POST`
-    * `BUTTONREPEAT_FIRST` indicates it is the first call, usually a manual button press
-    * `BUTTONREPEAT_LOOP` indicates subsequent autorepeated calls
-    * `BUTTONREPEAT_POST` is called after the loop is finished 
-* descr: the entity description object of the button
-* datadict: the dictionary with all the known entity values
+- initval: either `BUTTONREPEAT_FIRST`, `BUTTONREPEAT_LOOP`, `BUTTONREPEAT_POST`
+    - `BUTTONREPEAT_FIRST` indicates it is the first call, usually a manual button press
+    - `BUTTONREPEAT_LOOP` indicates subsequent autorepeated calls
+    - `BUTTONREPEAT_POST` is called after the loop is finished 
+- descr: the entity description object of the button
+- datadict: the dictionary with all the known entity values
   
 In its current form, the function should return a dictionary containing following items: 
-    * `action`: the modbus type of write to be executed: currently only MODBUS_WRITE_MULTI is suppored, but the other writes can be easily added later.
-    * `register` (optional): if not specified, the register address for the autorepeat button will be used
-    * `data`: a list of tuples `[ (entity_key, value,), ....]` that represents the payload of a write_multiple command that starts at the modbus register addres. Instead of the entity_key_name, a register type can also be specified like `REGISTER_U16`. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario. In the future, the `data` structure may be modified to allow other types of writes.
+- `action`: the modbus type of write to be executed: currently only MODBUS_WRITE_MULTI is suppored, but the other writes can be easily added later.
+- `register` (optional): if not specified, the register address for the autorepeat button will be used
+- `data`: a list of tuples `[ (entity_key, value,), ....]` that represents the payload of a write_multiple command that starts at the modbus register addres. Instead of the entity_key_name, a register type can also be specified like `REGISTER_U16`. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario. In the future, the `data` structure may be modified to allow other types of writes.
   
 The system will automatically convert the data to the modbus low level format, and compute the length of the write_multiple payload to be written to modbus.
 
