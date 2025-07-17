@@ -1,4 +1,6 @@
-## This page describes features that will appear in the near future
+## Solax Mode 8 Modbus Power Control (autorepeat)
+
+This page describes features that will appear in the near future
 
 ## Why use Modbus power control?
 
