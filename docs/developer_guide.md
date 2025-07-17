@@ -5,9 +5,9 @@ This section describes some internal mechanisms of this integration. It is mainl
 Following sections will appear some day:
 ## Attributes for entities
 
-Entities are declared in the plugin_xxx.py files.
+Entities are declared in the `plugin_xxx.py` files.
 Each type of entity may support different attributes.
-The entity types are also briefly documented in the const.py file.
+The entity types are also briefly documented in the `const.py` file.
 
 ### Common attributes for all entities
 
@@ -77,43 +77,43 @@ To be documented:
 To be documented:
 
 * _register_bit_: int = None
-* _write_method_: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+* _write_method_: int = `WRITE_SINGLE_MODBUS`  # `WRITE_SINGLE_MOBUS` or `WRITE_MULTI_MODBUS` or `WRITE_DATA_LOCAL`
 * _sensor_key_: str = None  # The associated sensor key
 * _initvalue_: int = None  # initial default value for WRITE_DATA_LOCAL entities
 
 
 ## Local Data Entities
-The integration can create entities that have no corresponding modbus register. These entities can be used as parameter for automations or as parameter of an autorepeat loop. These local data entities have the attribute **write_method=WRITE_LOCAL_DATA**.
-Their initial value is determined by attribute **initval**.
-Local variables are made persistent across reboots as they are stored in the config/SolaX_data.json file periodically after a change of data.
+The integration can create entities that have no corresponding modbus register. These entities can be used as parameter for automations or as parameter of an autorepeat loop. These local data entities have the attribute `write_method=WRITE_LOCAL_DATA`.
+Their initial value is determined by attribute `initval`.
+Local variables are made persistent across reboots as they are stored in the `config/SolaX_data.json` file periodically after a change of data.
 Documentation to be completed ...
 
 ## Scan groups for differentiated polling
 Some inverter plugins use different scan groups (to differentiate between slowly changing sensor entities and entities that are updated frequently?)
-To be documented 
+To be documented ...
 
 
 
 ## Autorepeat mechanism for buttons
 
 A button can have the attribute autorepeat, an attribute that specifies the entity_key of the entity that holds the duration over which the button press will be repeated automatically.
-If a button has the attribute **autorepeat**, the button declaration must also have a value_function attribute. The specified value function will be called for each autorepeat loop interation.
+If a button has the attribute **autorepeat**, the button declaration must also have a `value_function` attribute. The specified value function will be called for each autorepeat loop interation.
 The meaning of the parameters of a button autorepeat value_function is:
 
-* initval: either BUTTONREPEAT_FIRST, BUTTONREPEAT_LOOP, BUTTONREPEAT_POST
-    * BUTTONREPEAT_FIRST indicates it is the first call, usually a manual button press
-    * BUTTONREPEAT_LOOP indicates subsequent autorepeated calls
-    * BUTTONREPEAT_POST is called after the loop is finished 
+* initval: either `BUTTONREPEAT_FIRST`, `BUTTONREPEAT_LOOP`, `BUTTONREPEAT_POST`
+    * `BUTTONREPEAT_FIRST` indicates it is the first call, usually a manual button press
+    * `BUTTONREPEAT_LOOP` indicates subsequent autorepeated calls
+    * `BUTTONREPEAT_POST` is called after the loop is finished 
 * descr: the entity description object of the button
 * datadict: the dictionary with all the known entity values
   
 In its current form, the function should return a dictionary containing following items:
  * action: the modbus type of write to be executed: currently only MODBUS_WRITE_MULTI is suppored, but the other writes can be easily added later.
  * register (optional): if not specified, the register address for the autorepeat button will be used
- * data: a list of tuples [ (entity_key, value,), ....] that represents the payload of a write_multiple command that starts at the modbus register addres. Instead of the entity_key_name, a register type can also be specified like REGISTER_U16. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario.
+ * data: a list of tuples `[ (entity_key, value,), ....]` that represents the payload of a write_multiple command that starts at the modbus register addres. Instead of the entity_key_name, a register type can also be specified like `REGISTER_U16`. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario.
 
 In the future, the return value may be extended to allow other types of writes (to different addresses).
 The system will automatically compute the length of the write_multiple payload to be executed.
 
-The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's value_function's call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent.
+The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's `value_function`'s call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent. Storing data in the `datadict` dictionary may work in future versions, please use a name that cannot conflict with other entities.
 ____
