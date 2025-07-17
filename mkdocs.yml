@@ -25,6 +25,7 @@ nav:
 - Compatible RS485 Adaptors: compatible-adaptors.md
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
+- Developer Guide: developer_guide.md
 - Growatt:
   - FAQ: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
@@ -38,9 +39,11 @@ nav:
   - FAQ: solax-faq.md
   - Firmware update: solax-firmware-update.md
   - Entity description: solax-entity-description.md
-  - Modbus Power Control (remotecontrol power): modbus-power-control.md
   - SolaX Gen2 & Gen3 Modes of Operation: solax-G23-operation-modes.md
   - SolaX Gen4 Modes of Operation: solax-G4-operation-modes.md
+  - Solax Mode 1 Modbus Power Control: solax-mode1-modbus-power-control.md
+  - Solax Mode 8 Modbus Power Control: solax-mode8-modbus-power-control.md
+  - (old) Solax Modbus Power Control (remotecontrol power): modbus-power-control-OLD.md
 - Solis:
   - FAQ - WIP: solis-faq.md
   - Solis Modes of Operation - WIP: solis-operation-modes.md
