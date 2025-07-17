@@ -21,9 +21,9 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 
 
 ### KNOWN ISSUES: (Work in progress):
-* When the battery gets fully charged (or when the specified duration expires), the systems sometimes seems to automatically change to mode6 (Self consume - Charge an Discharge), this mode does not limit PV anymore and may export power when prices are still negative. Further observation is necassary to understand this.
-* The remotecontrol_duration parameter (not to be confused with autorepeat duration) seems to be ignored by the Solax firmwre and mode 8 remains active for a longer time. This can be overcome by using an automation that sets the mode 8 to disabled. We are working on an automatic deactivation when the autorepeat_duration expires.
-* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button.
+* When the battery gets fully charged (or when the specified duration expires), the systems sometimes seems to automatically change to mode 6 (Self consume - Charge an Discharge), this mode does not limit PV anymore and may export power when prices are still negative. Further observation is necassary to understand this.
+* The remotecontrol_duration parameter (not to be confused with autorepeat duration) seems to be ignored by the Solax firmware and mode 8 remains active for a longer time. This can be overcome by using an automation that sets the mode 8 to disabled. We are working on an automatic deactivation when the autorepeat_duration expires.
+* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button (this issue should be solved now).
 * The inverter may take some time to reduce the PV power, it can take a minute or more before the target is reached.
 
 ***
@@ -36,17 +36,17 @@ The integration hides this complexity and implements one button to trigger a sin
 
 * **powercontrolmode8_trigger**: trigger button for activating mode 8
 * **remotecontrol_power_control_mode**: Select the submode:
-  * **Disabled**
-  * **Mode 8 - PV and Bat control - Duration**: this is the manual fixed mode that uses fixed remeotecontrol_pv_power_limit and fixed remotecontrol_push_mode_8_9 settings. The same behavior can probably be achieved with the _direct version of the entities (without autorepeat loop)
-  * **Negative Injection Price**: in this submode, PV will charge the battery and feed the house load, but once the battery is fully charged, PV will be reduced to house load so that no export takes place. The autorepeat mechanism is essential to adapt to the varying PV power or house load. If there is still some remaining export (probably because there is a limit on the possible charging power), reduce the remotecontrol_pv_power_limit parameter. In this submode, remotecontrol_pv_power_limit will be interpreted as maximum battery charge power.
-  * **Negative Injection and Consumption Price**: In this submode, PV will be limited to zero and battery will be charged from the grid (house load also from grid)
-* remotecontrol_pv_power_limit: maximum PV power; is automatically recomputed in the Negative Price submodes. an initial max value is needed however
-* remotecontrol_push_mode_power_8_9: positive numbers are discharge, negative numbers charge; is automatically computed in the Negative Price submodes
-* remotecontrol_import_limit: can be used to limit the maximum import from grid. This limmitation is active in all submodes, so make sure to set this parameter to a proper value. Please note that the import limitation will only work as long as the battery is not empty. In regions where the maximum import has a financial impact (e.g. part of Belgium), the autorepeat approach may have an advantage over the _direct alternative.
-* remotecontrol_target_soc_8_9 (not yet used)
-* remotecontrol_duration: we recommend to keep the default value of 20s
-* remotecontrol_autorepeat_duration: typically a couple of hours - e..g duration of the negative price
-* remotecontrol_timeout: can be left 0 or set to a few seconds more than the polling interval
+    * **Disabled**
+    * **Mode 8 - PV and Bat control - Duration**: this is the manual fixed mode that uses fixed remeotecontrol_pv_power_limit and fixed remotecontrol_push_mode_8_9 settings. The same behavior can probably be achieved with the _direct version of the entities (without autorepeat loop)
+    * **Negative Injection Price**: in this submode, PV will charge the battery and feed the house load, but once the battery is fully charged, PV will be reduced to house load so that no export takes place. The autorepeat mechanism is essential to adapt to the varying PV power or house load. If there is still some remaining export (probably because there is a limit on the possible charging power), reduce the remotecontrol_pv_power_limit parameter. In this submode, remotecontrol_pv_power_limit will be interpreted as maximum battery charge power.
+    * **Negative Injection and Consumption Price**: In this submode, PV will be limited to zero and battery will be charged from the grid (house load also from grid)
+* **remotecontrol_pv_power_limit**: maximum PV power; is automatically recomputed in the Negative Price submodes. an initial max value is needed however
+* **remotecontrol_push_mode_power_8_9**: positive numbers are discharge, negative numbers charge; is automatically computed in the Negative Price submodes
+* **remotecontrol_import_limit**: can be used to limit the maximum import from grid. This limmitation is active in all submodes, so make sure to set this parameter to a proper value. Please note that the import limitation will only work as long as the battery is not empty. In regions where the maximum import has a financial impact (e.g. part of Belgium), the autorepeat approach may have an advantage over the _direct alternative.
+* **remotecontrol_target_soc_8_9* (not yet used)
+* **remotecontrol_duration**: we recommend to keep the default value of 20s
+* **remotecontrol_autorepeat_duration**: typically a couple of hours - e..g duration of the negative price
+* **remotecontrol_timeout**: can be left 0 or set to a few seconds more than the polling interval; unclear how to use this
 
 
 With these parameters a power control dashboard card can be created:
