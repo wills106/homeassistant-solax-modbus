@@ -35,7 +35,7 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 
 The Solax Gen4 inverters and higher use a modbus write_multiple_registers command.
 On the Gen4, these actions are not stored in EEPROM, so they can be executed frequently.
-The integration hides this complexity and implements one button to trigger a single or repeated update(s). The action behind this button is configurable through 6 parameter entities.
+The integration hides this complexity and implements one button to trigger a single or repeated update(s). The action behind this button is configurable through following parameter entities:
 
 * **powercontrolmode8_trigger**: trigger button for activating mode 8 loop
 * **remotecontrol_power_control_mode**: Select the submode:
@@ -60,6 +60,8 @@ With these parameters a power control dashboard card can be created:
 
 Modifying these parameters has no direct effect, the autorepeat loop is only activated when the trigger button is pressed.
 For deactivating these modes, select "Disabled"; clicking the trigger button again is normally not needed for deactivation of the loop.
+
+The current state of the modbus power control mechanism can be examined with entity `solax_modbus_power_control`. If Mode 8 is active, it will show `Individual Setting - Duration Mode`
 
 ## Example automation: Negative injection prices
 This sample automation will activate the 'Negative Injection Price' mode when the battery is nearly full. We deliberately do not activate it whenever injection prices are negative, to reduce the inaccuracies of the relatively slow autorepeat loop.
