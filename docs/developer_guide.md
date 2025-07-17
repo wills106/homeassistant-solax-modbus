@@ -101,9 +101,9 @@ If a button has the autorepeat attribute autorepeat, the button declaration must
 The meaning of the parameters of a button value function is:
 
 * initval: either BUTTONREPEAT_FIRST, BUTTONREPEAT_LOOP, BUTTONREPEAT_POST
-  * BUTTONREPEAT_FIRST indicates it is the first call, usually a manual button press
-  * BUTTONREPEAT_LOOP indicates subsequent autorepeated calls
-  * BUTTONREPEAT_POST is called after the loop is finished 
+    * BUTTONREPEAT_FIRST indicates it is the first call, usually a manual button press
+    * BUTTONREPEAT_LOOP indicates subsequent autorepeated calls
+    * BUTTONREPEAT_POST is called after the loop is finished 
 * descr: the entity description object of the button
 * datadict: the dictionary with all the known entity values
   
