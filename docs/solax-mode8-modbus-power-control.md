@@ -1,6 +1,7 @@
 ## Solax Mode 8 Modbus Power Control (autorepeat)
 
-This page describes features that will appear in the near future
+This page describes features that will appear in the near future.
+Not to be confused with the remotecontrol_xxx_direct approach.
 
 ## Why use Modbus power control?
 
