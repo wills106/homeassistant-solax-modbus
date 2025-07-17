@@ -36,7 +36,7 @@ The integration hides this complexity and implements one button to trigger a sin
 
 * **powercontrolmode8_trigger**: trigger button for activating mode 8 loop
 * **remotecontrol_power_control_mode**: Select the submode:
-    * **Disabled**
+    * **Disabled**: changing to Disabled also deactivates the loop mechanism
     * **Mode 8 - PV and Bat control - Duration**: this is the manual fixed mode that uses fixed remeotecontrol_pv_power_limit and fixed remotecontrol_push_mode_8_9 settings. The same behavior can probably be achieved with the _direct version of the entities (without autorepeat loop)
     * **Negative Injection Price**: in this submode, PV will charge the battery and feed the house load, but once the battery is fully charged, PV will be reduced to house load so that no export takes place. The autorepeat mechanism is essential to adapt to the varying PV power or house load. If there is still some remaining export (probably because there is a limit on the possible charging power), reduce the remotecontrol_pv_power_limit parameter. In this submode, remotecontrol_pv_power_limit will be interpreted as maximum battery charge power.
     * **Negative Injection and Consumption Price**: In this submode, PV will be limited to zero and battery will be charged from the grid (house load also from grid)
@@ -56,7 +56,7 @@ With these parameters a power control dashboard card can be created:
 
 
 Modifying these parameters has no direct effect, the autorepeat loop is only activated when the trigger button is pressed.
-For deactivating these modes, select "Disabled" and click the trigger button again.
+For deactivating these modes, select "Disabled"; clicking the trigger button again is normally not needed for deactivation of the loop.
 
 ## Example automation: Negative injection prices
 This sample automation will activate the 'Negative Injection Price' mode when the battery is nearly full. We deliberately do not activate it whenever injection prices are negative, to reduce the inaccuracies of the relatively slow autorepeat loop.
