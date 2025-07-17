@@ -97,8 +97,8 @@ To be documented
 ## Autorepeat mechanism for buttons
 
 A button can have the attribute autorepeat, an attribute that specifies the entity_key of the entity that holds the duration over which the button press will be repeated automatically.
-If a button has the autorepeat attribute autorepeat, the button declaration must also have a value_function attribute. The specified value function will be called for each autorepeat loop interation.
-The meaning of the parameters of a button value function is:
+If a button has the attribute **autorepeat**, the button declaration must also have a value_function attribute. The specified value function will be called for each autorepeat loop interation.
+The meaning of the parameters of a button autorepeat value_function is:
 
 * initval: either BUTTONREPEAT_FIRST, BUTTONREPEAT_LOOP, BUTTONREPEAT_POST
     * BUTTONREPEAT_FIRST indicates it is the first call, usually a manual button press
