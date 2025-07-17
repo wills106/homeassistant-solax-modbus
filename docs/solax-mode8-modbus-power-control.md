@@ -34,7 +34,7 @@ The Solax Gen4 inverters and higher use a modbus write_multiple_registers comman
 On the Gen4, these actions are not stored in EEPROM, so they can be executed frequently.
 The integration hides this complexity and implements one button to trigger a single or repeated update(s). The action behind this button is configurable through 6 parameter entities.
 
-* **powercontrolmode8_trigger**: trigger button for activating mode 8
+* **powercontrolmode8_trigger**: trigger button for activating mode 8 loop
 * **remotecontrol_power_control_mode**: Select the submode:
     * **Disabled**
     * **Mode 8 - PV and Bat control - Duration**: this is the manual fixed mode that uses fixed remeotecontrol_pv_power_limit and fixed remotecontrol_push_mode_8_9 settings. The same behavior can probably be achieved with the _direct version of the entities (without autorepeat loop)
