@@ -1,3 +1,7 @@
+## Solax Mode 1 Modbus Power Control (autorepeat)
+
+Not to be confused with the remotecontrol_xxxx_direct approach.
+
 ## Why use Modbus power control?
 
 Normal power controls are written to EEPROM, so there are not well suited for use in automations as the automation might write too often. 
