@@ -119,19 +119,25 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_remotecontrol_recompute(initval, descr, datadict):
+def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
+    # initval = BUTTONREPEAT_FIRST means first run; 
+    # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
+    # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
+
+    # terminate expiring loop by disabling remotecontrol
+    if initval == BUTTONREPEAT_POST: return { 'action': WRITE_MULTI_MODBUS, 'data': [  ( "remotecontrol_power_control", "Disabled", ), ] }
+
     power_control = datadict.get("remotecontrol_power_control", "Disabled")
     set_type = datadict.get("remotecontrol_set_type", "Set")  # other options did not work
     target = datadict.get("remotecontrol_active_power", 0)
     reactive_power = datadict.get("remotecontrol_reactive_power", 0)
     rc_duration = datadict.get("remotecontrol_duration", 20)
-    ap_up = datadict.get("active_power_upper", 0)
-    ap_lo = datadict.get("active_power_lower", 0)
     reap_up = datadict.get("reactive_power_upper", 0)
-    reap_lo = datadict.get("reactive_power_lower", 0)
+    reap_lo = datadict.get("reactive_power_lower", 0) 
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
+    timeout = datadict.get("remotecontrol_timeout",0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
@@ -170,13 +176,12 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             power_control == "Disabled"
     elif power_control == "Disabled":
         ap_target = target
-        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
     ap_target = min(ap_target, import_limit - houseload_brut)
-    # _LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
+    # _LOGGER.warning(f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
         _LOGGER.debug(
-            f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}"
+            f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}"
         )
     res = [
         (
@@ -199,12 +204,96 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
+        (  "remotecontrol_timeout",
+            timeout,
+        ),
     ]
+    if power_control == "Disabled": 
+        _LOGGER.info("Stopping mode 1 loop")
+        autorepeat_stop(datadict, descr.key)
+        datadict["remotecontrol_power_control_mode"] = "Disabled" # disable the mode8 remotecontrol loop 
+        autorepeat_stop(datadict, "powercontrolmode8_trigger")
+    _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
+    return { 'action': WRITE_MULTI_MODBUS, 'data': res }
+
+
+
+def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
+    # initval = BUTTONREPEAT_FIRST means first run; 
+    # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
+    # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
+    if initval == BUTTONREPEAT_POST: return { 'action': WRITE_MULTI_MODBUS, 'data' :[ ( "remotecontrol_power_control_mode", "Disabled", ) ] }
+    # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
+    power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
+    curmode = datadict.get("modbus_power_control", "unknown")
+    set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
+    setpvlimit = datadict.get("remotecontrol_pv_power_limit",10000)
+    pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
+    target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
+    rc_duration = datadict.get("remotecontrol_duration", 20)
+    import_limit = datadict.get("remotecontrol_import_limit", 20000)
+    battery_capacity = datadict.get("battery_capacity", 0)
+    timeout = datadict.get("remotecontrol_timeout",0)
+    pv = datadict.get("pv_power_total", 0)
+    houseload = value_function_house_load(initval, descr, datadict)
+
+    if power_control == "Mode 8 - PV and BAT control - Duration":
+        pvlimit = setpvlimit # import capping is done later
+    elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
+        pushmode_power = houseload - pv
+        if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0 # slow down charging - nearly full
+        else: pvlimit = setpvlimit + houseload
+        _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
+
+    elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
+        pvlimit = 0 
+        pushmode_power = houseload - import_limit
+    elif power_control == "Disabled":
+        pvlimit = setpvlimit
+    # limit import to max import (capacity tarif in some countries)
+    old_pushmode_power = pushmode_power
+    excess_import = houseload - pv - pushmode_power - import_limit
+    if excess_import > 0: pushmode_power = pushmode_power + excess_import # reduce import
+
+    if old_pushmode_power != pushmode_power:
+        _LOGGER.debug(
+            f"import shaving: old_pushmode¨power:{old_pushmode_power} new pushmode_power:{pushmode_power}"
+        )
+    res = [
+        (
+            "remotecontrol_power_control_mode",
+            "Mode 8 - PV and BAT control - Duration",
+        ),
+        (
+            "remotecontrol_set_type",
+            set_type,
+        ),
+        (
+            "remotecontrol_pv_power_limit",
+            pvlimit,
+        ), 
+        (
+            "remotecontrol_push_mode_power_8_9",
+            pushmode_power,
+        ),
+        (
+            "remotecontrol_duration",
+            rc_duration,
+        ),
+        (   "remotecontrol_timeout",
+            timeout,
+        ),
+    ]
+    if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
+        _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}") 
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
-    _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
-    return res
-
+        _LOGGER.info("Stopping mode 8 loop by disabling mode 1")
+        return {'action': WRITE_MULTI_MODBUS, 'register': 0x7C , 'data': [  ( "remotecontrol_power_control", "Disabled", ), ]}
+        #datadict["remotecontrol_power_control"] = "Disabled" # disable the remotecontrol Mode 1 loop 
+        #autorepeat_stop_with_postaction(datadict,"remotecontrol_trigger") # trigger the remotecontrol mode 1 button for a single BUTTONREPEAT_POST action
+    _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
+    return { 'action': WRITE_MULTI_MODBUS, 'data': res }
 
 def value_function_byteswapserial(initval, descr, datadict):
     if initval and not initval.startswith(("M", "X")):
@@ -225,8 +314,9 @@ def valuefunction_firmware_g4(initval, descr, datadict):
 
 
 def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
-    return autorepeat_remaining(datadict, "remotecontrol_trigger", time())
-
+    mode_1to7 = autorepeat_remaining(datadict, "remotecontrol_trigger", time())
+    mode_8to9 = autorepeat_remaining(datadict, "powercontrolmode8_trigger", time())
+    return max(mode_1to7, mode_8to9)
 
 def value_function_battery_power_charge(initval, descr, datadict):
     return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
@@ -328,7 +418,17 @@ BUTTON_TYPES = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_remotecontrol_recompute,
+        value_function=autorepeat_function_remotecontrol_recompute,
+        autorepeat="remotecontrol_autorepeat_duration",
+    ),
+    SolaxModbusButtonEntityDescription(
+        name="PowerControlMode 8 Trigger",
+        key="powercontrolmode8_trigger",
+        register=0xA0,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
     ),
     SolaxModbusButtonEntityDescription(
@@ -639,6 +739,60 @@ NUMBER_TYPES = [
         unit=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
     ),
+
+
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol PV Power Limit (Mode 8, 9)",
+        key="remotecontrol_pv_power_limit",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=0,
+        native_max_value=30000,  
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        initvalue=30000, 
+        unit=REGISTER_U32,
+        write_method=WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Push Mode Power (Mode 8, 9)",
+        key="remotecontrol_push_mode_power_8_9",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=-8000,
+        native_max_value=30000,  
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        initvalue=0,  
+        unit=REGISTER_S32, # positive discharge; negative charge
+        write_method=WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Target SOC (Mode 8, 9)",
+        key="remotecontrol_target_soc_8_9",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=-0,
+        native_max_value=100,  
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        initvalue=95,
+        unit=REGISTER_U16, #
+        write_method=WRITE_DATA_LOCAL,
+    ),
+        SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Timeout",
+        key="remotecontrol_timeout",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=0,
+        native_max_value=300,  
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        initvalue=0,
+        icon="mdi:home-clock",
+        unit=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
+    ),
+
     SolaxModbusNumberEntityDescription(
         name="Config Export Control Limit Readscale",
         key="config_export_control_limit_readscale",
@@ -1472,6 +1626,22 @@ SELECT_TYPES = [
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Set",
+        icon="mdi:transmission-tower",
+    ),
+     SolaxModbusSelectEntityDescription(
+        name="Remotecontrol Power Control Mode",
+        key="remotecontrol_power_control_mode",
+        unit=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
+        option_dict={
+            0:  "Disabled", # not in documentation, should not be sent to device
+            8:  "Mode 8 - PV and BAT control - Duration",
+            81: "Negative Injection Price",
+            82: "Negative Injection and Consumption Price",
+            # 9:  "Mode 9 - PV and BAT control - Target SOC",  
+        },
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        initvalue="Disabled",
         icon="mdi:transmission-tower",
     ),
     ###
@@ -2412,10 +2582,10 @@ SELECT_TYPES = [
             3: "Enable SOC Target Control Mode",
             4: "Push Power-Positive/Negative Mode",
             5: "Push Power – Zero Mode",
-            6: "Self-Consume -Charge/Discharge Mode",
-            7: "Self-Consume-Charge Only Mode",
-            8: "Individual Setting – Duration Mode",
-            9: "Individual Setting – Target SOC Mode",
+            6: "Self-Consume - Charge/Discharge Mode",
+            7: "Self-Consume - Charge Only Mode",
+            8: "Individual Setting - Duration Mode",
+            9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         initvalue="Disabled",
@@ -2441,8 +2611,8 @@ SELECT_TYPES = [
         write_method=WRITE_MULTISINGLE_MODBUS,
         option_dict={
             0: "Disabled",
-            8: "Individual Setting – Duration Mode",
-            9: "Individual Setting – Target SOC Mode",
+            8: "Individual Setting - Duration Mode",
+            9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes= HYBRID | GEN4,
         initvalue="Disabled",
@@ -5613,8 +5783,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             5: "Push Power - Zero Mode",
             6: "Self Consume - C/D Mode",
             7: "Self Consume - Charge Only Mode",
-            8: "Individual Setting – Duration Mode",
-            9: "Individual Setting – Target SOC Mode",
+            8: "Individual Setting - Duration Mode",
+            9: "Individual Setting - Target SOC Mode",
         },
         icon="mdi:dip-switch",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,

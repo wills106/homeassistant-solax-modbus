@@ -456,3 +456,4 @@ class BinaryPayloadDecoder:
         :param nbytes: The number of bytes to skip
         """
         self._pointer += nbytes
+        
