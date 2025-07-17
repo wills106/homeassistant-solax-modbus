@@ -83,8 +83,9 @@ To be documented:
 
 
 ## Local Data Entities
-The integration can create entities that have no corresponding modbus register. These entities can be used as parameter for automations or as parameter of an Autorepeat loop. These local data entities have the attribute **write_method=WRITE_LOCAL_DATA**.
+The integration can create entities that have no corresponding modbus register. These entities can be used as parameter for automations or as parameter of an autorepeat loop. These local data entities have the attribute **write_method=WRITE_LOCAL_DATA**.
 Their initial value is determined by attribute **initval**.
+Local variables are made persistent across reboots as they are stored in the config/SolaX_data.json file periodically after a change of data.
 Documentation to be completed ...
 
 ## Scan groups for differentiated polling
