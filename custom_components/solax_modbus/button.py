@@ -92,9 +92,8 @@ class SolaXModbusButton(ButtonEntity):
                         data   = res.get('data', None)
                         action = res.get('action')
                         if not action: _LOGGER.error(f"autorepeat value function for {self._key} must return dict containing action")
-                    else: data = res
-                    _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
-                    if action == WRITE_MULTI_MODBUS:
-                        await self._hub.async_write_registers_multi(
-                            unit=self._modbus_addr, address=reg, payload=data
-                        )
+                        _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
+                        if action == WRITE_MULTI_MODBUS:
+                            await self._hub.async_write_registers_multi( unit=self._modbus_addr, address=reg, payload=data )
+                    else:
+                        await self._hub.async_write_registers_multi( unit=self._modbus_addr, address=self._register, payload=res )
