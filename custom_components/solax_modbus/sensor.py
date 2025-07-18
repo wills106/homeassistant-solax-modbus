@@ -31,8 +31,17 @@ class block():
     descriptions: Any = None
     regs: Any = None # sorted list of registers used in this block
 
+def is_entity_enabled(hass, entity_id): # Check if the entity is enabled in Home Assistant
+    state = hass.states.get(entity_id)
+    if state is None:
+        _LOGGER.debug(f"Entity {entity_id} not found in state manager, assuming disabled. Not added to read block")
+        return False
+    if state.state in ['unavailable', 'unknown']: # Check if the entity state is 'unavailable' or 'unknown'
+        return True
+    # If none of the above conditions are met, assume the entity is enabled
+    return True
 
-def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
+def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror, hass ):
     start = INVALID_START
     end = 0
     blocks = []
@@ -55,17 +64,28 @@ def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
         if start == INVALID_START: start = reg
         if type(descr) is dict: end = reg+1 # couple of byte values
         else:
-            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
+            
             if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
                 if (descr.wordcount): end = reg+descr.wordcount
                 else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
             elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
             else: end = reg + 1
-        curblockregs.append(reg)
+            
+        ##
+        # Check if the entity is enabled in Home Assistant or is internal before appending
+        entity_id = f"sensor.growatt_{descr.key}"
+        if is_entity_enabled(hass, entity_id) or descr.internal:
+            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
+            curblockregs.append(reg)
+
     if ((end-start)>0): # close last block
         #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
         newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
         blocks.append(newblock)
+
+    # Remove empty blocks before returning the blocks.
+    blocks = [b for b in blocks if b.regs]
+
     return blocks
 
 # ========================================================================================================================
@@ -183,8 +203,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             hub_device_group = hub_interval_group.device_groups.setdefault(device_name, hub.empty_device_group())
             hub_device_group.readPreparation = device_group.readPreparation
             hub_device_group.readFollowUp = device_group.readFollowUp
-            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror, hass)
+            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror, hass)
             hub.computedSensors = computedRegs
 
             for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
