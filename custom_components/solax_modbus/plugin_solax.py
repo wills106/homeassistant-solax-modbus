@@ -4678,7 +4678,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
+    ),
+        SolaXModbusSensorEntityDescription(
+        name="Battery Output Energy Total",  # Need revisit these  
+        key="battery_output_energy_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL, #1300
+        icon="mdi:battery-arrow-down",
+        register=0x1D,
+        register_type=REG_INPUT,
+        scale=0.001,
+        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Input Energy Total",
@@ -4719,7 +4733,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Input Energy Total",
+        key="battery_input_energy_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL, #1300
+        icon="mdi:battery-arrow-up",
+        register=0x21,
+        register_type=REG_INPUT,
+        scale=0.001,
+        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Package Number",
