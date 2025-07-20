@@ -6747,16 +6747,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:battery-sync",
     ),		
     GrowattModbusSensorEntityDescription(
-        name = "BMS 1 Module 2 Combined Current",
-        key = "bms_1_module_2_combined_current",
-        value_function = value_function_combined_bms_current,
-        native_unit_of_measurement = UnitOfElectricCurrent.AMPERE,
-        device_class = SensorDeviceClass.CURRENT,
-        state_class = SensorStateClass.MEASUREMENT,
-        allowedtypes = GEN4 | HYBRID,
-        icon = "mdi:battery",       
-    ),
-		GrowattModbusSensorEntityDescription(
         name = "BMS 1 Module 1 Warning Text",
         key = "bms_1_module_1_warning_text",
         register = 5898,
