@@ -586,6 +586,16 @@ def value_function_bms_module_combined_power(initval, descr, datadict):
         result = 0
     return result
 
+def value_function_bms_module_combined_current(initval, descr, datadict):
+    current = initval / 10
+    if 0 <= current <= 250:
+        result = current
+    elif 6303.5 <= current <= 6553.5:
+        result = round(-1 * (6553.6 - current), 1)
+    else:
+        result = 0
+    return result
+
 def value_function_total_grid_power(initval, descr, datadict):
     return  datadict.get('grid_power_l1', 0) + datadict.get('grid_power_l2', 0) + datadict.get('grid_power_l3', 0)
 
