@@ -17,56 +17,84 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 _LOGGER = logging.getLogger(__name__)
 
-INVALID_START = 99999
 
 
 # =================================== sorting and grouping of entities ================================================
 
-@dataclass
-class block():
-    start: int = None # start address of the block
-    end: int = None # end address of the block
-    #order16: int = None # byte endian for 16bit registers
-    #order32: int = None # word endian for 32bit registers
-    descriptions: Any = None
-    regs: Any = None # sorted list of registers used in this block
 
 
-def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
+""" MOVED TO __init__.py
+def splitInBlocks( descriptions, hub ):
     start = INVALID_START
     end = 0
     blocks = []
+    block_size = hub.plugin.block_size
+    auto_block_ignore_readerror = hub.plugin.auto_block_ignore_readerror
     curblockregs = []
-    for reg in descriptions:
-        descr = descriptions[reg]
-        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
-            if ((end - start) > 0):
-                _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
-                if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
-                    descr.ignore_readerror = auto_block_ignore_readerror
-                #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-                newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
-                blocks.append(newblock)
-                start = INVALID_START
-                end = 0
-                curblockregs = []
-            else: _LOGGER.info(f"newblock declaration found for empty block")
+    for reg, descr in descriptions.items():
+        d_ignore_readerror = auto_block_ignore_readerror
+        if type(descr) is dict: # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
+            d_newblock = False
+            d_enabled = False
+            for sub, d in descr.items():
+                entity_id = f"sensor.{hub.name}_{d.key}"
+                d_enabled = d_enabled or is_entity_enabled(hub._hass, entity_id) or d.internal
+                d_newblock = d_newblock or d.newblock 
+                d_unit = d.unit
+                d_wordcount = 1 # not used here
+                d_key = d.key # does not matter which key we use here
+                d_regtype = d.register_type
+        else: # normal entity
+            entity_id = f"sensor.{hub.name}_{descr.key}"
+            d_enabled = is_entity_enabled(hub._hass, entity_id) or descr.internal
+            d_newblock = descr.newblock
+            d_unit = descr.unit
+            d_wordcount = descr.wordcount
+            d_key = descr.key
+            d_regtype = descr.register_type # HOLDING or INPUT
 
-        if start == INVALID_START: start = reg
-        if type(descr) is dict: end = reg+1 # couple of byte values
-        else:
-            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
-            if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
-                if (descr.wordcount): end = reg+descr.wordcount
-                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
-            elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
+        if d_enabled:
+            if (d_newblock or ((reg - start) > block_size)):
+                if ((end - start) > 0):
+                    _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
+                    if  ( (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False) ) and not d_newblock: # automatically created block
+                        if type(descr) is dict: 
+                            for sub, d in descr.items():
+                                if d.ignore_readerror is False: d.ignore_readerror = auto_block_ignore_readerror
+                        else: 
+                            if descr.ignore_readerror is False: descr.ignore_readerror = auto_block_ignore_readerror
+                    #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+                    newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
+                    blocks.append(newblock)
+                    start = INVALID_START
+                    end = 0
+                    curblockregs = []
+            else: _LOGGER.debug(f"newblock declaration found for empty block")
+
+            if start == INVALID_START: start = reg
+
+            _LOGGER.debug(f"adding register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+            if d_unit in (REGISTER_STR, REGISTER_WORDS,):
+                if (d_wordcount): end = reg+d_wordcount
+                else: _LOGGER.warning(f"invalid or missing missing wordcount for {d_key}")
+            elif d_unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
             else: end = reg + 1
-        curblockregs.append(reg)
+            _LOGGER.debug(f"adding type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+            curblockregs.append(reg)
+        else:
+            _LOGGER.debug(f"ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+
+
     if ((end-start)>0): # close last block
         #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
         newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
         blocks.append(newblock)
+    # Remove empty blocks before returning the blocks. - is this needed ??
+    #before = len(blocks)
+    #blocks = [b for b in blocks if b.regs] # needed ??
+    #_LOGGER.info(f"***debug***: {before} blocks before cleanup empty blocks, after: {len(blocks)}")
     return blocks
+"""
 
 # ========================================================================================================================
 
@@ -169,6 +197,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities(entities)
     _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
+    hub.computedSensors = computedRegs
+    hub.rebuild_blocks(groups) #, computedRegs)
+    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
+    return True
+
+
+    """ MOVED TO __init__.py
     for interval, interval_group in groups.items():
         _LOGGER.debug(f"{hub_name} group: {interval}")
         for device_name, device_group in interval_group.items():
@@ -183,17 +218,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
             hub_device_group = hub_interval_group.device_groups.setdefault(device_name, hub.empty_device_group())
             hub_device_group.readPreparation = device_group.readPreparation
             hub_device_group.readFollowUp = device_group.readFollowUp
-            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
+            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror, hub)
+            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror, hub)
             hub.computedSensors = computedRegs
 
             for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
             for i in hub_device_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
             _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
             _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
-
     _LOGGER.info(f"computedRegs: {hub.computedSensors}")
     return True
+    """
+
+
+
 
 def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo,
                  sensor_types, name_prefix, key_prefix, readPreparation, readFollowUp):  # noqa: D103

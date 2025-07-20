@@ -203,8 +203,11 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
     value_function: callable = None  #  value = function(initval, descr, datadict)
     wordcount: int = None  # only for unit = REGISTER_STR and REGISTER_WORDS
-    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO or SLEEPMODE_NONE
-    ignore_readerror: bool = False  # if not False, ignore read errors for this block and return this static value
+    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
+    ignore_readerror: bool = False  # not strictly boolean: boolean or static other value 
+    # if False, read errors will invalidate the data
+    # if True, data will remain untouched
+    # if not False nor True (e.g. a number): ignore read errors for this block and return this static value
     # A failing block read will be accepted as valid block if the first entity of the block contains a non-False ignore_readerror attribute.
     # The other entitties of the block can also have an ignore_readerror attribute that determines the value returned upon failure
     # so typically this attribute can be set to None or "Unknown" or any other value
@@ -265,9 +268,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
-    prevent_update: bool = (
-        False  # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
-    )
+    prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
+                                  # update only when read value changes
 
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
