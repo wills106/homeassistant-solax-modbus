@@ -56,6 +56,8 @@ except ImportError:
 
 
 from .sensor import SolaXModbusSensor
+from .sensor import empty_device_group_lambda
+from .sensor import empty_interval_group_lambda
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -326,14 +328,8 @@ class SolaXModbusHub:
         self._baudrate = int(baudrate)
         self._time_out = int(time_out)
         self.groups = {}  # group info, below
-        self.empty_interval_group = lambda: SimpleNamespace(interval=0, unsub_interval_method=None, device_groups={})
-        self.empty_device_group = lambda: SimpleNamespace(
-            sensors=[],
-            inputBlocks={},
-            holdingBlocks={},
-            readPreparation=None,  # function to call before read group
-            readFollowUp=None,  # function to call after read group
-        )
+        self.empty_interval_group = empty_interval_group_lambda
+        self.empty_device_group = empty_device_group_lambda
         self.data = {"_repeatUntil": {}}  # _repeatuntil contains button autorepeat expiry times
         self.tmpdata = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
         self.tmpdata_expiry = {}  # expiry timestamps for tempdata
@@ -476,7 +472,7 @@ class SolaXModbusHub:
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
         grp.sensors.append(sensor)
-        self.blocks_changed = True # will force blocks to be recomputed; probably not needed since HA reinitializes if sensors are added
+        self.blocks_changed = True # will force rebuild_blocks to be called
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
@@ -505,8 +501,7 @@ class SolaXModbusHub:
 
                 if not self.groups:
                     await self.async_close()
-        #self.blocks_changed = True # will force blocks to be recomputed  - Gives problems with interval namespace
-
+        self.blocks_changed = True # will force rebuild_blocks to be called 
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
@@ -515,7 +510,7 @@ class SolaXModbusHub:
         if not interval_group.device_groups:
             return
         if self.blocks_changed:
-            self.rebuild_blocks(self.groups) # not needed ?
+            self.rebuild_blocks(self.groups) # not needed as HA seems to reload when entitites are added?
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
             for group in interval_group.device_groups.values():
                 update_result = await self.async_read_modbus_data(group)
@@ -1098,7 +1093,7 @@ class SolaXModbusHub:
         _LOGGER.info(f"rebuilding groups and blocks - pre: {groups.keys()}")
         for interval, interval_group in groups.items():
             _LOGGER.info(f"***debug*** rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
-            for device_name, device_group in interval_group.items():
+            for device_name, device_group in interval_group.device_groups.items():
                 holdingRegs = dict(sorted(device_group.holdingRegs.items()))
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
                 hub_interval_group = self.groups.setdefault(interval, self.empty_interval_group())
