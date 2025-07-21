@@ -505,7 +505,7 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
-        _LOGGER.debug(f"coordinator initiated refresh_modbus_data call")
+        _LOGGER.debug(f"scan_group timer initiated refresh_modbus_data call")
         self.cyclecount = self.cyclecount + 1
         if not interval_group.device_groups:
             return
@@ -576,8 +576,8 @@ class SolaXModbusHub:
 
     async def async_connect(self):
         #result = False
-        _LOGGER.info(
-            f"***Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
+        _LOGGER.debug(
+            f"Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
         )
         await self._client.connect()
 
@@ -910,9 +910,9 @@ class SolaXModbusHub:
             return True
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
-            _LOGGER.debug(f"**** failed {typ} block {errmsg} start {block.start} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
+            _LOGGER.debug(f"failed {typ} block {errmsg} start {block.start} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
             if (firstdescr.ignore_readerror is not False):  # ignore block read errors and return static data
-                _LOGGER.debug(f"**** failed block analysis started firstignore: {firstdescr.ignore_readerror}")
+                _LOGGER.debug(f"failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
                     if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
@@ -921,13 +921,13 @@ class SolaXModbusHub:
                         d_ignore = descr.ignore_readerror
                         d_key = descr.key
                         if (d_ignore is not True) and (d_ignore is not False):
-                            _LOGGER.info(f"***** returning static {d_key} = {d_ignore}")
+                            _LOGGER.debug(f"returning static {d_key} = {d_ignore}")
                             data[d_key] = d_ignore  # return something static
                         else:
                             if d_ignore is False: # remove potentially faulty data
                                 popped = data.pop(d_key, None) # added 20250716
-                                _LOGGER.info(f"***debug*** popping {d_key} = {popped}")
-                            else: _LOGGER.info(f"***debug*** not touching {d_key} ")
+                                _LOGGER.debug(f"popping {d_key} = {popped}")
+                            else: _LOGGER.debug(f"not touching {d_key} ")
                 return True
             else: # dont ignore readerrors
                 if self.slowdown == 1:
@@ -1018,6 +1018,9 @@ class SolaXModbusHub:
                             )
         return res
 
+
+# --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
+
     def splitInBlocks( self, descriptions):
         start = INVALID_START
         end = 0
@@ -1092,7 +1095,7 @@ class SolaXModbusHub:
     def rebuild_blocks(self, groups): #, computedRegs):
         _LOGGER.info(f"rebuilding groups and blocks - pre: {groups.keys()}")
         for interval, interval_group in groups.items():
-            _LOGGER.info(f"***debug*** rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
+            _LOGGER.debug(f"rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
             for device_name, device_group in interval_group.device_groups.items():
                 holdingRegs = dict(sorted(device_group.holdingRegs.items()))
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
@@ -1109,6 +1112,9 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
         _LOGGER.info(f"done rebuilding groups and blocks - post: {groups.keys()}")
+
+# ---------------------------------------------------------------------------------------------------------------------------------
+
 
 class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     """Thread safe wrapper class for pymodbus."""
