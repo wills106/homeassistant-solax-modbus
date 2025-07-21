@@ -19,7 +19,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
-empty_interval_group_lambda = lambda: SimpleNamespace(interval=0, unsub_interval_method=None, device_groups={})
+empty_interval_group_lambda = lambda: SimpleNamespace(
+            interval=0,
+            unsub_interval_method=None,
+            device_groups={}
+        )
 empty_device_group_lambda   =  lambda: SimpleNamespace(
             sensors=[],
             holdingRegs  = {}, 
@@ -38,7 +42,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     entities = []
-    groups = {}
+    initial_groups = {}
 
     computedRegs = {}
 
@@ -62,7 +66,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
         inverter_name_suffix = hub.inverterNameSuffix + " "
 
-    entityToList(hub, hub_name, entities, groups, empty_device_group_lambda, computedRegs, hub.device_info,
+    entityToList(hub, hub_name, entities, initial_groups, empty_device_group_lambda, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
@@ -120,15 +124,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         model=batt_pack_model)
                 return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
 
-            entityToList(hub, hub_name, entities, groups, empty_device_group_lambda, computedRegs, device_info_battery,
+            entityToList(hub, hub_name, entities, initial_groups, empty_device_group_lambda, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)
 
     async_add_entities(entities)
-    _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
     hub.computedSensors = computedRegs
-    hub.rebuild_blocks(groups) #, computedRegs) # first time call
-    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
+    hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
+    _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
     return True
 
 
@@ -203,6 +206,7 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
             else:
                 inputRegs[newdescr.register] = newdescr
         else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
+
 
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""

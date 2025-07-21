@@ -358,6 +358,7 @@ class SolaXModbusHub:
         self.entry = entry
         self.device_info = None
         self.blocks_changed = False
+        self.initial_groups = {} # as returned by the sensor setup 
 
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
@@ -464,13 +465,14 @@ class SolaXModbusHub:
             async def _refresh(_now: Optional[int] = None) -> None:
                 await self._check_connection()
                 await self.async_refresh_modbus_data(interval_group, _now)
-
+            _LOGGER.info(f"starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval)
             )
 
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
+        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True # will force rebuild_blocks to be called
 
@@ -487,14 +489,16 @@ class SolaXModbusHub:
         if grp is None:
             return
 
-        _LOGGER.debug(f"remove sensor {sensor.entity_description.key}")
+        _LOGGER.info(f"remove sensor {sensor.entity_description.key} remaining:{len(grp.sensors)} ")
         grp.sensors.remove(sensor)
 
         if not grp.sensors:
+            _LOGGER.info(f"removing device group {device_key}")
             interval_group.device_groups.pop(device_key)
 
             if not interval_group.device_groups:
                 # stop the interval timer upon removal of last device group from interval group
+                _LOGGER.info(f"removing interval group {interval}")
                 interval_group.unsub_interval_method()
                 interval_group.unsub_interval_method = None
                 self.groups.pop(interval)
@@ -505,12 +509,12 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
-        _LOGGER.debug(f"scan_group timer initiated refresh_modbus_data call")
+        _LOGGER.debug(f"scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         self.cyclecount = self.cyclecount + 1
         if not interval_group.device_groups:
             return
         if self.blocks_changed:
-            self.rebuild_blocks(self.groups) # not needed as HA seems to reload when entitites are added?
+            self.rebuild_blocks(self.initial_groups) 
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
             for group in interval_group.device_groups.values():
                 update_result = await self.async_read_modbus_data(group)
@@ -1089,16 +1093,19 @@ class SolaXModbusHub:
         # Remove empty blocks before returning the blocks. - is this needed ??
         #before = len(blocks)
         #blocks = [b for b in blocks if b.regs] # needed ??
-        #_LOGGER.info(f"***debug***: {before} blocks before cleanup empty blocks, after: {len(blocks)}")
         return blocks
 
-    def rebuild_blocks(self, groups): #, computedRegs):
-        _LOGGER.info(f"rebuilding groups and blocks - pre: {groups.keys()}")
-        for interval, interval_group in groups.items():
-            _LOGGER.debug(f"rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
+    def rebuild_blocks(self, initial_groups): #, computedRegs):
+        _LOGGER.info(f"rebuilding groups and blocks - pre: {initial_groups.keys()}")
+        self.initial_groups = initial_groups
+        for interval, interval_group in initial_groups.items():
+            _LOGGER.info(f"*** rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
             for device_name, device_group in interval_group.device_groups.items():
+                _LOGGER.info(f"*** rebuild for device {device_name} in interval {interval}")
                 holdingRegs = dict(sorted(device_group.holdingRegs.items()))
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
+                _LOGGER.info(f"***debug*** rebuilding pre1 - len holdingRegs: {len(holdingRegs)} inputRegs: {len(inputRegs)}")
+                # update the hub groups
                 hub_interval_group = self.groups.setdefault(interval, self.empty_interval_group())
                 hub_device_group = hub_interval_group.device_groups.setdefault(device_name, self.empty_device_group())
                 hub_device_group.readPreparation = device_group.readPreparation
@@ -1111,7 +1118,7 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
-        _LOGGER.info(f"done rebuilding groups and blocks - post: {groups.keys()}")
+        _LOGGER.info(f"done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
