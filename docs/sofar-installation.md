@@ -15,8 +15,8 @@ Important in this case: Only the Modbus proxy must connect to your inverter dire
 This is a bit more complicated than using the below logger stick configurations, however this is the recommended solution for the following reasons:
 
 - RS-485 is a supported interface from Sofar Solar, while the logger stick alternatives are not supported.
-- The communication with the logger sticks proofed to change depending on inverter and logger stick firmware updates. And it's not guaranteed that it will still work after the next update.
-- As the logger stick are inofficial interfaces that are not designed, the protocols may not follow the Modbus standards always.
+- The communication with the logger sticks proofed to change with inverter and logger stick firmware updates. It's not guaranteed that it will still work after the next update.
+- As the logger sticks are inofficial interfaces that are not officially supported by Sofar, the protocols may not always follow the Modbus standards.
 - Does not interfere with the communication to the SolarMan or Sofar Cloud portals.
 
 To install an RS485 Adaptor follow these steps:
@@ -64,9 +64,9 @@ Tested with firmware:
 - Inverter: v113562
 - LSW:  LSW3_15_270A_1.09
 
-Does not work with newer firmware.
+Does not work with newer firmwares.
 
-This has one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time. However once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration then.
+This has one drawback: You can either use it with the SolarMan portal or with this integration. You can't use it with both at the same time. However once configured, instead of the SolarMan portal you will be able to monitor your inverter with our Home Assistant integration.
 
 Also note that Modbus RTU over TCP can only talk to one client. You have to use Modbus Proxy, if you access the logger stick with more than one client.
 
@@ -88,6 +88,7 @@ Also note that Modbus RTU over TCP can only talk to one client. You have to use 
 ## LSE-3 LAN Stick Logger
 
 Tested with firmware:
+
 - Inverter: V1137620
 - LSE: ME_0E_270A_1.11-D1
 
