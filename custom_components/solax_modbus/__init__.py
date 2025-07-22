@@ -1111,12 +1111,10 @@ class SolaXModbusHub:
         _LOGGER.info(f"rebuilding groups and blocks - pre: {initial_groups.keys()}")
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():
-            _LOGGER.info(f"*** rebuild_block {self._name} interval: {interval} interval_group type: {type(interval_group)}")
             for device_name, device_group in interval_group.device_groups.items():
-                _LOGGER.info(f"*** rebuild for device {device_name} in interval {interval}")
+                _LOGGER.info(f"rebuild for device {device_name} in interval {interval}")
                 holdingRegs = dict(sorted(device_group.holdingRegs.items()))
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
-                _LOGGER.info(f"***debug*** rebuilding pre1 - len holdingRegs: {len(holdingRegs)} inputRegs: {len(inputRegs)}")
                 # update the hub groups
                 hub_interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
                 hub_device_group = hub_interval_group.device_groups.setdefault(device_name, empty_hub_device_group_lambda())
