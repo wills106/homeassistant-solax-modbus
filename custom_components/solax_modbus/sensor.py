@@ -19,22 +19,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
-empty_interval_group_lambda = lambda: SimpleNamespace(
+empty_input_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
-            unsub_interval_method=None,
             device_groups={}
         )
-empty_device_group_lambda   =  lambda: SimpleNamespace(
-            sensors=[],
-            holdingRegs  = {}, 
-            inputRegs    = {}, #
-            inputBlocks={},
-            holdingBlocks={},
-            readPreparation=None,  # function to call before read group
-            readFollowUp=None,  # function to call after read group
+
+empty_input_device_group_lambda = lambda: SimpleNamespace(
+        holdingRegs  = {},
+        inputRegs    = {},
+        readPreparation = None,
+        readFollowUp = None,
         )
-
-
 
 async def async_setup_entry(hass, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
@@ -66,7 +61,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
         inverter_name_suffix = hub.inverterNameSuffix + " "
 
-    entityToList(hub, hub_name, entities, initial_groups, empty_device_group_lambda, computedRegs, hub.device_info,
+    entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
@@ -124,7 +119,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         model=batt_pack_model)
                 return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
 
-            entityToList(hub, hub_name, entities, initial_groups, empty_device_group_lambda, computedRegs, device_info_battery,
+            entityToList(hub, hub_name, entities, initial_groups, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)
 
     async_add_entities(entities)
@@ -137,7 +132,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
 
-def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo,
+def entityToList(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo,
                  sensor_types, name_prefix, key_prefix, readPreparation, readFollowUp):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
@@ -148,7 +143,7 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
                     newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
-                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                    entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
             else:
                 newdescr = copy(sensor_description)
                 try:
@@ -157,9 +152,9 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                    newdescr.name = newdescr.name
                    
                 newdescr.key = key_prefix + newdescr.key
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
-def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -182,9 +177,9 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
-        interval_group = groups.setdefault(hub.entity_group(sensor), empty_interval_group_lambda())
+        interval_group = groups.setdefault(hub.entity_group(sensor), empty_input_interval_group_lambda())
         device_group_key = hub.device_group_key(device_info)
-        device_group = interval_group.device_groups.setdefault(device_group_key, empty_device_group_lambda())
+        device_group = interval_group.device_groups.setdefault(device_group_key, empty_input_device_group_lambda())
         holdingRegs  = device_group.holdingRegs
         inputRegs    = device_group.inputRegs
         device_group.readPreparation = readPreparation

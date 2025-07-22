@@ -56,8 +56,7 @@ except ImportError:
 
 
 from .sensor import SolaXModbusSensor
-from .sensor import empty_device_group_lambda
-from .sensor import empty_interval_group_lambda
+
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -135,6 +134,21 @@ from .const import (
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
 # seriesnumber = 'unknown'
+
+
+empty_hub_interval_group_lambda = lambda: SimpleNamespace(
+            interval=0,
+            unsub_interval_method=None,
+            device_groups={}
+        )
+empty_hub_device_group_lambda = lambda: SimpleNamespace(
+            sensors=[],
+            inputBlocks={},
+            holdingBlocks={},
+            readPreparation=None,  # function to call before read group
+            readFollowUp=None,  # function to call after read group
+        )
+
 
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -328,8 +342,6 @@ class SolaXModbusHub:
         self._baudrate = int(baudrate)
         self._time_out = int(time_out)
         self.groups = {}  # group info, below
-        self.empty_interval_group = empty_interval_group_lambda
-        self.empty_device_group = empty_device_group_lambda
         self.data = {"_repeatUntil": {}}  # _repeatuntil contains button autorepeat expiry times
         self.tmpdata = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
         self.tmpdata_expiry = {}  # expiry timestamps for tempdata
@@ -358,7 +370,7 @@ class SolaXModbusHub:
         self.entry = entry
         self.device_info = None
         self.blocks_changed = False
-        self.initial_groups = {} # as returned by the sensor setup 
+        self.initial_groups = {} # as returned by the sensor setup - holdingRegs and inputRegs should not change 
 
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
@@ -458,7 +470,7 @@ class SolaXModbusHub:
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         interval = self.entity_group(sensor)
-        interval_group = self.groups.setdefault(interval, self.empty_interval_group())
+        interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
         if not interval_group.device_groups:
             interval_group.interval = interval
 
@@ -471,7 +483,7 @@ class SolaXModbusHub:
             )
 
         device_key = self.device_group_key(sensor.device_info)
-        grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
+        grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug(f"adding sensor {sensor.entity_description.key} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True # will force rebuild_blocks to be called
@@ -489,11 +501,11 @@ class SolaXModbusHub:
         if grp is None:
             return
 
-        _LOGGER.info(f"remove sensor {sensor.entity_description.key} remaining:{len(grp.sensors)} ")
+        _LOGGER.debug(f"remove sensor {sensor.entity_description.key} remaining:{len(grp.sensors)} ")
         grp.sensors.remove(sensor)
 
         if not grp.sensors:
-            _LOGGER.info(f"removing device group {device_key}")
+            _LOGGER.debug(f"removing device group {device_key}")
             interval_group.device_groups.pop(device_key)
 
             if not interval_group.device_groups:
@@ -1106,8 +1118,8 @@ class SolaXModbusHub:
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
                 _LOGGER.info(f"***debug*** rebuilding pre1 - len holdingRegs: {len(holdingRegs)} inputRegs: {len(inputRegs)}")
                 # update the hub groups
-                hub_interval_group = self.groups.setdefault(interval, self.empty_interval_group())
-                hub_device_group = hub_interval_group.device_groups.setdefault(device_name, self.empty_device_group())
+                hub_interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
+                hub_device_group = hub_interval_group.device_groups.setdefault(device_name, empty_hub_device_group_lambda())
                 hub_device_group.readPreparation = device_group.readPreparation
                 hub_device_group.readFollowUp = device_group.readFollowUp
                 hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
