@@ -811,6 +811,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-4-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_4_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -820,6 +821,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-5-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_5_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -829,6 +831,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-6-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_6_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -838,6 +841,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-7-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_7_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -847,6 +851,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-8-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_8_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -856,6 +861,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:numeric-9-circle",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_9_update,
     ),
     GrowattModbusButtonEntityDescription(
@@ -892,6 +898,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_4_clear,
     ),
     GrowattModbusButtonEntityDescription(
@@ -901,6 +908,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_5_clear,
     ),
     GrowattModbusButtonEntityDescription(
@@ -910,6 +918,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_6_clear,
     ),
     GrowattModbusButtonEntityDescription(
@@ -919,6 +928,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_7_clear,
     ),
     GrowattModbusButtonEntityDescription(
@@ -928,6 +938,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_8_clear,
     ),
     GrowattModbusButtonEntityDescription(
@@ -937,6 +948,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
+        entity_registry_enabled_default = False,
         value_function=value_function_time_9_clear,
     ),
 
