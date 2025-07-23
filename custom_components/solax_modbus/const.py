@@ -119,7 +119,6 @@ WRITE_MULTISINGLE_MODBUS = 2  # use write_mutiple modbus command for single regi
 WRITE_DATA_LOCAL = 3  # write only to local data storage (not persistent)
 WRITE_MULTI_MODBUS = 4  # use write_multiple modbus command
 
-
 _LOGGER = logging.getLogger(__name__)
 
 DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
@@ -293,10 +292,26 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
+
+
+"""
 def value_function_pv_power_total(initval, descr, datadict): 
     single_or_oldsum = datadict.pop("pv_power_total", None)
     vals = [v for k, v in datadict.items() if k.startswith("pv_power_")] # multi string inverter ?
     return single_or_oldsum if any(p is None for p in vals) else sum(vals) # if so, return sum, else single value
+"""
+MAX_PVSTRINGS = 10
+def value_function_pv_power_total(initval, descr, datadict): 
+    # changed: for performance reasons, we should not iterate over the entire datadict every polling cyle (contains hundreds ...)
+    total = 0
+    i = 1
+    while i <= MAX_PVSTRINGS:
+        v = datadict.get(f"pv_power_{i}", None)
+        if v is None:
+            break
+        else: total += v 
+        i += 1
+    return total
 
 
 def value_function_battery_output(initval, descr, datadict):
