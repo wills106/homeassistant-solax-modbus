@@ -293,10 +293,10 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
-def value_function_pv_power_total(initval, descr, datadict): # this function can be enhanced to handle undefined values better
-    datadict.pop("pv_power_total", None)
-    vals = [v for k, v in datadict.items() if k.startswith("pv_power_")]
-    return None if any(p is None for p in vals) else sum(vals)
+def value_function_pv_power_total(initval, descr, datadict): 
+    single_or_oldsum = datadict.pop("pv_power_total", None)
+    vals = [v for k, v in datadict.items() if k.startswith("pv_power_")] # multi string inverter ?
+    return single_or_oldsum if any(p is None for p in vals) else sum(vals) # if so, return sum, else single value
 
 
 def value_function_battery_output(initval, descr, datadict):
