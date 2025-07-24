@@ -1706,7 +1706,7 @@ SELECT_TYPES = [
         icon = "mdi:run",
     ),
     GrowattModbusSelectEntityDescription(
-        name = "Charger Switch",
+        name = "Allow Grid Charge",
         key = "charger_switch",
         register = 3049,
         option_dict = {
