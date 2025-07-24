@@ -188,6 +188,8 @@ Known Serial Numbers
 - XB3
 - XMA
 - XM3
+- XBE
+- XAU
 
 X1-Mini-G4
 Found to work using Modbus but does not work with any other polling period than default 15s
