@@ -92,6 +92,7 @@ CONF_SCAN_INTERVAL_FAST = "scan_interval_fast"
 SCAN_GROUP_DEFAULT = CONF_SCAN_INTERVAL  # default scan group, slow; should always work
 SCAN_GROUP_MEDIUM = CONF_SCAN_INTERVAL_MEDIUM  # medium speed scanning (energy, temp, soc...)
 SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
+SCAN_GROUP_AUTO = "auto"  # _MEDIUM for temperatures, frequency and energy (kWh), otherwise _DEFAULT
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
 
@@ -151,6 +152,10 @@ class plugin_base:
     order16: int | None = None  # Endian.BIG or Endian.LITTLE
     order32: int | None = None
     inverter_model: str = None
+    default_holding_scangroup: str = SCAN_GROUP_DEFAULT  
+    default_input_scangroup: str = SCAN_GROUP_DEFAULT   # or SCAN_GROUP_AUTO
+    auto_default_scangroup: str = SCAN_GROUP_FAST, # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_slow_scangroup: str = SCAN_GROUP_MEDIUM, # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
 
     def isAwake(self, datadict):
         return True  # always awake by default
@@ -194,7 +199,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     blacklist: list = None
     register: int = -1  # initialize with invalid register
     rounding: int = 1
-    register_type: int = None  # REGISTER_HOLDING or REGISTER_INPUT or REG_DATA
+    register_type: int = None  # REG_HOLDING or REG_INPUT or REG_DATA
     unit: int = None  # e.g. REGISTER_U16
     scan_group: int = None  # <=0 -> default group
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc

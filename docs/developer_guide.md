@@ -90,8 +90,32 @@ Documentation to be completed ...
 
 ## Scan groups for differentiated polling
 Some inverter plugins use different scan groups (to differentiate between slowly changing sensor entities and entities that are updated frequently?)
-To be documented ...
+This is determined by the presence of attribute scan_group on sensor entities.
+The scan_group attribute can take following values: SCAN_GROUP_DEFAULT, SCAN_GROUP_MEDIUM,  SCAN_GROUP_FAST or SCAN_GROUP_AUTO
+If no scan_group is specified, the plugin-specific default will be used. There can be a different default for holding and input registers. See the plugin declaration at the end of your plugin. Example: 
+```
+plugin_instance = solax_plugin(
+    plugin_name="SolaX",
+    plugin_manufacturer="SolaX Power",
+    SENSOR_TYPES=SENSOR_TYPES_MAIN,
+    NUMBER_TYPES=NUMBER_TYPES,
+    BUTTON_TYPES=BUTTON_TYPES,
+    SELECT_TYPES=SELECT_TYPES,
+    SWITCH_TYPES=[],
+    block_size=100,
+    order16=Endian.BIG,
+    order32=Endian.LITTLE,
+    auto_block_ignore_readerror=True,
+    default_holding_scangroup=SCAN_GROUP_DEFAULT, 
+    default_input_scangroup=SCAN_GROUP_AUTO,
+    auto_default_scangroup=SCAN_GROUP_FAST,
+    auto_slow_scangroup=SCAN_GROUP_MEDIUM,
+)
+``` 
+The actual polling speed for each group is determined during initial or subsequent configuration of the intergration (config_flow).
+If the 3 polling group times are set to the same value, the system will act as if there is only one scangroup (they are merged together by interval time)
 
+If SCAN_GROUP_AUTO is chosen for `default_input_scangroup` or `default_holding_scangroup`, entities without a `scan_group` declararation will get the value specified in `plugin.auto_slow_scangroup` if their native unit is slowly changing like temperatures or kWh .., otherwise the value specified in `plugin.auto_default_scangroup`
 
 
 ## Autorepeat mechanism for buttons

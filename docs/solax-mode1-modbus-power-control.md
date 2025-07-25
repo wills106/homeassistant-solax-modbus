@@ -19,11 +19,13 @@ The work described here uses mode 1 from the Solax KB document: [KB document : S
 A similar autorepeat mechanism is under development for mode 8
 
 ### Note:
-For people using external tasks to control the power, the _remotecontrol_xxx_direct_ versions of the entities could be used. This is outside the scope if this wiki page.
+ - For people using external tasks to control the power, the _remotecontrol_xxx_direct_ versions of the entities could be used. This is outside the scope if this wiki page.
+ - If you use modbus power control autorepeat loops, make sure the polling interval for the fastest scangroup is sufficiently low e.g. 3-5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
 
 ***
 ## Solax Gen4 approach - Mode 1
 ***
+
 
 The Solax Gen4 inverters and higher use a modbus write_multiple_registers command.
 On the Gen4, these actions are not stored in EEPROM, so they can be executed frequently.
