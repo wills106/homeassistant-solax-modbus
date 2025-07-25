@@ -17,58 +17,19 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 _LOGGER = logging.getLogger(__name__)
 
-INVALID_START = 99999
 
 
-# =================================== sorting and grouping of entities ================================================
+empty_input_interval_group_lambda = lambda: SimpleNamespace(
+            interval=0,
+            device_groups={}
+        )
 
-@dataclass
-class block():
-    start: int = None # start address of the block
-    end: int = None # end address of the block
-    #order16: int = None # byte endian for 16bit registers
-    #order32: int = None # word endian for 32bit registers
-    descriptions: Any = None
-    regs: Any = None # sorted list of registers used in this block
-
-
-def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
-    start = INVALID_START
-    end = 0
-    blocks = []
-    curblockregs = []
-    for reg in descriptions:
-        descr = descriptions[reg]
-        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
-            if ((end - start) > 0):
-                _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
-                if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
-                    descr.ignore_readerror = auto_block_ignore_readerror
-                #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-                newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
-                blocks.append(newblock)
-                start = INVALID_START
-                end = 0
-                curblockregs = []
-            else: _LOGGER.info(f"newblock declaration found for empty block")
-
-        if start == INVALID_START: start = reg
-        if type(descr) is dict: end = reg+1 # couple of byte values
-        else:
-            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
-            if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
-                if (descr.wordcount): end = reg+descr.wordcount
-                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
-            elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
-            else: end = reg + 1
-        curblockregs.append(reg)
-    if ((end-start)>0): # close last block
-        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-        newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
-        blocks.append(newblock)
-    return blocks
-
-# ========================================================================================================================
+empty_input_device_group_lambda = lambda: SimpleNamespace(
+        holdingRegs  = {},
+        inputRegs    = {},
+        readPreparation = None,
+        readFollowUp = None,
+        )
 
 async def async_setup_entry(hass, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
@@ -76,13 +37,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     entities = []
-    groups = {}
-    newgrp = lambda: SimpleNamespace(
-        holdingRegs  = {},
-        inputRegs    = {},
-        readPreparation = None,
-        readFollowUp = None,
-        )
+    initial_groups = {}
+
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
@@ -105,7 +61,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
         inverter_name_suffix = hub.inverterNameSuffix + " "
 
-    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
+    entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
@@ -163,39 +119,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         model=batt_pack_model)
                 return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
 
-            entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery,
+            entityToList(hub, hub_name, entities, initial_groups, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)
 
     async_add_entities(entities)
-    _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
-    for interval, interval_group in groups.items():
-        _LOGGER.debug(f"{hub_name} group: {interval}")
-        for device_name, device_group in interval_group.items():
-            # sort the registers for this type of inverter
-            holdingRegs = dict(sorted(device_group.holdingRegs.items()))
-            inputRegs   = dict(sorted(device_group.inputRegs.items()))
-            # check for consistency
-            #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-            #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-            # split in blocks and store results
-            hub_interval_group = hub.groups.setdefault(interval, hub.empty_interval_group())
-            hub_device_group = hub_interval_group.device_groups.setdefault(device_name, hub.empty_device_group())
-            hub_device_group.readPreparation = device_group.readPreparation
-            hub_device_group.readFollowUp = device_group.readFollowUp
-            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub.computedSensors = computedRegs
-
-            for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-            for i in hub_device_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-            _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
-            _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
-
-    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
+    hub.computedSensors = computedRegs
+    hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
+    _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
     return True
 
-def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo,
+
+
+
+def entityToList(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo,
                  sensor_types, name_prefix, key_prefix, readPreparation, readFollowUp):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
@@ -206,7 +143,7 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
                     newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
-                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                    entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
             else:
                 newdescr = copy(sensor_description)
                 try:
@@ -215,9 +152,9 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                    newdescr.name = newdescr.name
                    
                 newdescr.key = key_prefix + newdescr.key
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
-def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -240,9 +177,9 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
         else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
-        interval_group = groups.setdefault(hub.entity_group(sensor), {})
+        interval_group = groups.setdefault(hub.entity_group(sensor), empty_input_interval_group_lambda())
         device_group_key = hub.device_group_key(device_info)
-        device_group = interval_group.setdefault(device_group_key, newgrp())
+        device_group = interval_group.device_groups.setdefault(device_group_key, empty_input_device_group_lambda())
         holdingRegs  = device_group.holdingRegs
         inputRegs    = device_group.inputRegs
         device_group.readPreparation = readPreparation
@@ -264,6 +201,7 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
             else:
                 inputRegs[newdescr.register] = newdescr
         else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
+
 
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""

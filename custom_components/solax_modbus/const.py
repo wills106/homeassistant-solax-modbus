@@ -119,7 +119,6 @@ WRITE_MULTISINGLE_MODBUS = 2  # use write_mutiple modbus command for single regi
 WRITE_DATA_LOCAL = 3  # write only to local data storage (not persistent)
 WRITE_MULTI_MODBUS = 4  # use write_multiple modbus command
 
-
 _LOGGER = logging.getLogger(__name__)
 
 DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
@@ -203,8 +202,11 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
     value_function: callable = None  #  value = function(initval, descr, datadict)
     wordcount: int = None  # only for unit = REGISTER_STR and REGISTER_WORDS
-    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO or SLEEPMODE_NONE
-    ignore_readerror: bool = False  # if not False, ignore read errors for this block and return this static value
+    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
+    ignore_readerror: bool = False  # not strictly boolean: boolean or static other value 
+    # if False, read errors will invalidate the data
+    # if True, data will remain untouched
+    # if not False nor True (e.g. a number): ignore read errors for this block and return this static value
     # A failing block read will be accepted as valid block if the first entity of the block contains a non-False ignore_readerror attribute.
     # The other entitties of the block can also have an ignore_readerror attribute that determines the value returned upon failure
     # so typically this attribute can be set to None or "Unknown" or any other value
@@ -265,9 +267,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
-    prevent_update: bool = (
-        False  # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
-    )
+    prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
+                                  # update only when read value changes
 
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
@@ -291,11 +292,18 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
-def value_function_pv_power_total(initval, descr, datadict): # this function can be enhanced to handle undefined values better
-    datadict.pop("pv_power_total", None)
-    vals = [v for k, v in datadict.items() if k.startswith("pv_power_")]
-    return None if any(p is None for p in vals) else sum(vals)
-
+MAX_PVSTRINGS = 10
+def value_function_pv_power_total(initval, descr, datadict): 
+    # changed: for performance reasons, we should not iterate over the entire datadict every polling cyle (contains hundreds ...)
+    total = 0
+    i = 1
+    while i <= MAX_PVSTRINGS:
+        v = datadict.get(f"pv_power_{i}", None)
+        if v is None:
+            break
+        else: total += v 
+        i += 1
+    return total
 
 def value_function_battery_output(initval, descr, datadict):
     val = datadict.get("battery_power_charge", 0)

@@ -4284,7 +4284,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=AC | HYBRID,
     ),
-    SolaXModbusSensorEntityDescription(
+    SolaXModbusSensorEntityDescription( # unclear why we do not merge with next decl
         name="Inverter Power",
         key="inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -4293,9 +4293,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN6,
     ),
-    SolaXModbusSensorEntityDescription(
+    SolaXModbusSensorEntityDescription( # unclear why we do not merge with previous decl
         name="Inverter Power",
         key="inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -4304,7 +4304,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN5 | X1,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6 | X1,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",

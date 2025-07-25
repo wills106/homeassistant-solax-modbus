@@ -15,7 +15,7 @@ from weakref import ref as WeakRef
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import register_message
-
+from dataclasses import dataclass, replace
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
@@ -40,6 +40,10 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 
+RETRIES = 0 # was 6
+INVALID_START = 99999
+
+
 try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
 except ImportError:
@@ -52,6 +56,7 @@ except ImportError:
 
 
 from .sensor import SolaXModbusSensor
+
 
 _LOGGER = logging.getLogger(__name__)
 # try: # pymodbus 3.0.x
@@ -129,6 +134,21 @@ from .const import (
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
 # seriesnumber = 'unknown'
+
+
+empty_hub_interval_group_lambda = lambda: SimpleNamespace(
+            interval=0,
+            unsub_interval_method=None,
+            device_groups={}
+        )
+empty_hub_device_group_lambda = lambda: SimpleNamespace(
+            sensors=[],
+            inputBlocks={},
+            holdingBlocks={},
+            readPreparation=None,  # function to call before read group
+            readFollowUp=None,  # function to call after read group
+        )
+
 
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -236,6 +256,24 @@ def Gen4Timestring(numb):
     m = numb >> 8
     return f"{h:02d}:{m:02d}"
 
+def is_entity_enabled(hass, entity_id): # Check if the entity is enabled in Home Assistant
+    state = hass.states.get(entity_id)
+    if state is None:
+        _LOGGER.debug(f"Entity {entity_id} not found in state manager, assuming disabled. Not added to read block")
+        return False
+    if state.state in ['unavailable', 'unknown']: # Check if the entity state is 'unavailable' or 'unknown'
+        return True
+    # If none of the above conditions are met, assume the entity is enabled
+    return True
+
+@dataclass
+class block():
+    start: int = None # start address of the block
+    end: int = None # end address of the block
+    #order16: int = None # byte endian for 16bit registers
+    #order32: int = None # word endian for 32bit registers
+    descriptions: Any = None
+    regs: Any = None # sorted list of registers used in this block
 
 class SolaXModbusHub:
     """Thread safe wrapper class for pymodbus."""
@@ -280,19 +318,19 @@ class SolaXModbusHub:
                 stopbits=1,
                 bytesize=8,
                 timeout=time_out,
-                retries=6,
+                retries=RETRIES,
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=6
+                    host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=RETRIES
                 )
             elif tcp_type == "ascii":
                 self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=6
+                    host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES
                 )
             else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=6)
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
         self._lock = asyncio.Lock()
         self._name = name
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
@@ -304,14 +342,6 @@ class SolaXModbusHub:
         self._baudrate = int(baudrate)
         self._time_out = int(time_out)
         self.groups = {}  # group info, below
-        self.empty_interval_group = lambda: SimpleNamespace(interval=0, unsub_interval_method=None, device_groups={})
-        self.empty_device_group = lambda: SimpleNamespace(
-            sensors=[],
-            inputBlocks={},
-            holdingBlocks={},
-            readPreparation=None,  # function to call before read group
-            readFollowUp=None,  # function to call after read group
-        )
         self.data = {"_repeatUntil": {}}  # _repeatuntil contains button autorepeat expiry times
         self.tmpdata = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
         self.tmpdata_expiry = {}  # expiry timestamps for tempdata
@@ -339,11 +369,15 @@ class SolaXModbusHub:
         self.config = config
         self.entry = entry
         self.device_info = None
+        self.blocks_changed = False
+        self.initial_groups = {} # as returned by the sensor setup - holdingRegs and inputRegs should not change 
 
         _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
+
     async def async_init(self, *args: Any) -> None:  # noqa: D102
         while self._invertertype in (None, 0):
+            await self.async_connect()
             await self._check_connection()
             self._invertertype = await self.plugin.async_determineInverterType(self, self.config)
 
@@ -436,21 +470,23 @@ class SolaXModbusHub:
         """Listen for data updates."""
         # This is the first sensor, set up interval.
         interval = self.entity_group(sensor)
-        interval_group = self.groups.setdefault(interval, self.empty_interval_group())
+        interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
         if not interval_group.device_groups:
             interval_group.interval = interval
 
             async def _refresh(_now: Optional[int] = None) -> None:
                 await self._check_connection()
                 await self.async_refresh_modbus_data(interval_group, _now)
-
+            _LOGGER.info(f"starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval)
             )
 
         device_key = self.device_group_key(sensor.device_info)
-        grp = interval_group.device_groups.setdefault(device_key, self.empty_device_group())
+        grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
+        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} ")
         grp.sensors.append(sensor)
+        self.blocks_changed = True # will force rebuild_blocks to be called
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
@@ -465,36 +501,42 @@ class SolaXModbusHub:
         if grp is None:
             return
 
-        _LOGGER.debug(f"remove sensor {sensor.entity_description.key}")
+        _LOGGER.debug(f"remove sensor {sensor.entity_description.key} remaining:{len(grp.sensors)} ")
         grp.sensors.remove(sensor)
 
         if not grp.sensors:
+            _LOGGER.debug(f"removing device group {device_key}")
             interval_group.device_groups.pop(device_key)
 
             if not interval_group.device_groups:
                 # stop the interval timer upon removal of last device group from interval group
+                _LOGGER.info(f"removing interval group {interval}")
                 interval_group.unsub_interval_method()
                 interval_group.unsub_interval_method = None
                 self.groups.pop(interval)
 
                 if not self.groups:
                     await self.async_close()
+        self.blocks_changed = True # will force rebuild_blocks to be called 
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
+        _LOGGER.debug(f"scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         self.cyclecount = self.cyclecount + 1
         if not interval_group.device_groups:
             return
-
+        if self.blocks_changed:
+            self.rebuild_blocks(self.initial_groups) 
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
             for group in interval_group.device_groups.values():
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
+                    if self.slowdown > 1: _LOGGER.info(f"communication restored, resuming normal speed after slowdown")
                     self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                 else:
-                    _LOGGER.debug(f"assuming sleep mode - slowing down by factor 10")
+                    if self.slowdown <=1: _LOGGER.info(f"modbus group read failed - assuming sleep mode - slowing down by factor 10" )
                     self.slowdown = 10
                     for i in self.sleepnone:
                         self.data.pop(i, None)
@@ -536,37 +578,24 @@ class SolaXModbusHub:
     #    if not self._client.connected:
     #        async with self._lock:
     #            await self._client.connect()
-
+    
     async def _check_connection(self):
         if not self._client.connected:
             _LOGGER.info("Inverter is not connected, trying to connect")
-            return await self.async_connect()
-
+            await self.async_connect()
+            await asyncio.sleep(1)
         return self._client.connected
 
+
+    async def is_online(self):
+        return self._client.connected and (self.slowdown == 1)
+
     async def async_connect(self):
-        result = False
-
+        #result = False
         _LOGGER.debug(
-            "Trying to connect to Inverter at %s:%s",
-            self._client.comm_params.host,
-            self._client.comm_params.port,
+            f"Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
         )
-
-        result = await self._client.connect()
-        if result:
-            _LOGGER.info(
-                "Inverter connected at %s:%s",
-                self._client.comm_params.host,
-                self._client.comm_params.port,
-            )
-        else:
-            _LOGGER.warning(
-                "Unable to connect to Inverter at %s:%s",
-                self._client.comm_params.host,
-                self._client.comm_params.port,
-            )
-        return result
+        await self._client.connect()
 
     async def async_read_holding_registers(self, unit, address, count):
         """Read holding registers."""
@@ -709,15 +738,17 @@ class SolaXModbusHub:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             payload = builder.to_registers()
             # for easier debugging, make next line a _LOGGER.info line
-            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
-            async with self._lock:
-                await self._check_connection()
-                try:
-                    resp = await self._client.write_registers(address=address, values=payload, **kwargs)
-                except (ConnectionException, ModbusIOException) as e:
-                    original_message = str(e)
-                    raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
-            return resp
+            online = await self.is_online()
+            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload} online: {online} ")
+            if online: 
+                async with self._lock:
+                    try:
+                        resp = await self._client.write_registers(address=address, values=payload, **kwargs)
+                    except (ConnectionException, ModbusIOException) as e:
+                        original_message = str(e)
+                        raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
+                return resp
+            else: return None
         else:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
             return None
@@ -824,10 +855,9 @@ class SolaXModbusHub:
             if max_val is not None and return_value > max_val:
                 raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
-        if (self.tmpdata_expiry.get(descr.key, 0) == 0) and (
-            (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data)
-        ):
-            data[descr.key] = return_value  # case prevent_update number
+        if ((self.tmpdata_expiry.get(descr.key, 0) == 0) 
+        and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
+                data[descr.key] = return_value  # case prevent_update number
 
     async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
@@ -850,6 +880,7 @@ class SolaXModbusHub:
                 )
         except Exception as ex:
             errmsg = f"exception {str(ex)} "
+            _LOGGER.debug(f"exception reading {typ} {block.start} {errmsg}")
         else:
             if realtime_data is None or realtime_data.isError():
                 errmsg = f"read_error "
@@ -895,14 +926,26 @@ class SolaXModbusHub:
             return True
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
-            if firstdescr.ignore_readerror != False:  # ignore block read errors and return static data
+            _LOGGER.debug(f"failed {typ} block {errmsg} start {block.start} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
+            if (firstdescr.ignore_readerror is not False):  # ignore block read errors and return static data
+                _LOGGER.debug(f"failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
-                    if not (type(descr) is dict):
-                        if (descr.ignore_readerror != True) and (descr.ignore_readerror != False):
-                            data[descr.key] = descr.ignore_readerror  # return something static
+                    if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
+                    else: l = { descr.key: descr, } # normal case, one entity
+                    for k, d in l.items():
+                        d_ignore = descr.ignore_readerror
+                        d_key = descr.key
+                        if (d_ignore is not True) and (d_ignore is not False):
+                            _LOGGER.debug(f"returning static {d_key} = {d_ignore}")
+                            data[d_key] = d_ignore  # return something static
+                        else:
+                            if d_ignore is False: # remove potentially faulty data
+                                popped = data.pop(d_key, None) # added 20250716
+                                _LOGGER.debug(f"popping {d_key} = {popped}")
+                            else: _LOGGER.debug(f"not touching {d_key} ")
                 return True
-            else:
+            else: # dont ignore readerrors
                 if self.slowdown == 1:
                     _LOGGER.info(
                         f"{errmsg}: {self.name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
@@ -918,12 +961,14 @@ class SolaXModbusHub:
         else:
             _LOGGER.debug(f"device group inverter")
 
-        data = {"_repeatUntil": self.data["_repeatUntil"]} # remove for issue #1440 but then does not recognize comm errors
-        #data = self.data # add for issue #1440 - is an alias, not a copy - but then does not recognize communication errors anymore
+        #data = {"_repeatUntil": self.data["_repeatUntil"]} # remove for issue #1440 but then does not recognize comm errors
+        data = self.data # is an alias, not a copy (issue #1440)
         res = True
         for block in group.holdingBlocks:
+            _LOGGER.debug(f"** trying to read holding block {block.start} {res}")
             res = res and await self.async_read_modbus_block(data, block, "holding")
         for block in group.inputBlocks:
+            _LOGGER.debug(f"** trying to read input block {block.start} {res}")
             res = res and await self.async_read_modbus_block(data, block, "input")
 
         if self.localsUpdated:
@@ -940,8 +985,8 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"device group check not success")
                 return True
 
-        for key, value in data.items(): # remove for issue #1440, but then does not recognize communication errors anymore
-            self.data[key] = value # remove for issue #1440, but then comm errors are not detected
+        #for key, value in data.items(): # remove for issue #1440, but then does not recognize communication errors anymore
+        #    self.data[key] = value # remove for issue #1440, but then comm errors are not detected
 
         if res and self.writequeue and self.plugin.isAwake(self.data):  # self.awakeplugin(self.data):
             # process outstanding write requests
@@ -988,6 +1033,104 @@ class SolaXModbusHub:
                                 payload=payload.get('data'),
                             )
         return res
+
+
+# --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
+
+    def splitInBlocks( self, descriptions):
+        start = INVALID_START
+        end = 0
+        blocks = []
+        block_size = self.plugin.block_size
+        auto_block_ignore_readerror = self.plugin.auto_block_ignore_readerror
+        curblockregs = []
+        for reg, descr in descriptions.items():
+            d_ignore_readerror = auto_block_ignore_readerror
+            if type(descr) is dict: # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
+                d_newblock = False
+                d_enabled = False
+                for sub, d in descr.items():
+                    entity_id = f"sensor.{self._name}_{d.key}"
+                    d_enabled = d_enabled or is_entity_enabled(self._hass, entity_id) or d.internal
+                    d_newblock = d_newblock or d.newblock 
+                    d_unit = d.unit
+                    d_wordcount = 1 # not used here
+                    d_key = d.key # does not matter which key we use here
+                    d_regtype = d.register_type
+            else: # normal entity
+                entity_id = f"sensor.{self._name}_{descr.key}"
+                d_enabled = is_entity_enabled(self._hass, entity_id) or descr.internal
+                d_newblock = descr.newblock
+                d_unit = descr.unit
+                d_wordcount = descr.wordcount
+                d_key = descr.key
+                d_regtype = descr.register_type # HOLDING or INPUT
+
+            if d_enabled:
+                if (d_newblock or ((reg - start) > block_size)):
+                    if ((end - start) > 0):
+                        _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
+                        if  ( (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False) ) and not d_newblock: # automatically created block
+                            if type(descr) is dict: 
+                                for sub, d in descr.items():
+                                    if d.ignore_readerror is False: d.ignore_readerror = auto_block_ignore_readerror
+                            else: 
+                                if descr.ignore_readerror is False: descr.ignore_readerror = auto_block_ignore_readerror
+                        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+                        newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
+                        blocks.append(newblock)
+                        start = INVALID_START
+                        end = 0
+                        curblockregs = []
+                else: _LOGGER.debug(f"newblock declaration found for empty block")
+
+                if start == INVALID_START: start = reg
+
+                _LOGGER.debug(f"adding register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+                if d_unit in (REGISTER_STR, REGISTER_WORDS,):
+                    if (d_wordcount): end = reg+d_wordcount
+                    else: _LOGGER.warning(f"invalid or missing missing wordcount for {d_key}")
+                elif d_unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
+                else: end = reg + 1
+                _LOGGER.debug(f"adding type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+                curblockregs.append(reg)
+            else:
+                _LOGGER.debug(f"ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+
+
+        if ((end-start)>0): # close last block
+            #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
+            newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
+            blocks.append(newblock)
+        # Remove empty blocks before returning the blocks. - is this needed ??
+        #before = len(blocks)
+        #blocks = [b for b in blocks if b.regs] # needed ??
+        return blocks
+
+    def rebuild_blocks(self, initial_groups): #, computedRegs):
+        _LOGGER.info(f"rebuilding groups and blocks - pre: {initial_groups.keys()}")
+        self.initial_groups = initial_groups
+        for interval, interval_group in initial_groups.items():
+            for device_name, device_group in interval_group.device_groups.items():
+                _LOGGER.info(f"rebuild for device {device_name} in interval {interval}")
+                holdingRegs = dict(sorted(device_group.holdingRegs.items()))
+                inputRegs   = dict(sorted(device_group.inputRegs.items()))
+                # update the hub groups
+                hub_interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
+                hub_device_group = hub_interval_group.device_groups.setdefault(device_name, empty_hub_device_group_lambda())
+                hub_device_group.readPreparation = device_group.readPreparation
+                hub_device_group.readFollowUp = device_group.readFollowUp
+                hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
+                hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
+                #self.computedSensors = computedRegs # moved outside the loops
+                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{self._name} interval {interval} dev {device_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{self._name} interval {interval} dev {device_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+                _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
+                _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
+        self.blocks_changed = False
+        _LOGGER.info(f"done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
+
+# ---------------------------------------------------------------------------------------------------------------------------------
 
 
 class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
