@@ -1142,8 +1142,8 @@ class SolaXModbusHub:
                 hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
                 hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
                 #self.computedSensors = computedRegs # moved outside the loops
-                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{self._name} interval {interval} dev {device_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{self._name} interval {interval} dev {device_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
+                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
