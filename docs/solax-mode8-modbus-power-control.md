@@ -21,6 +21,7 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 * For people using external tasks to control the power, the _remotecontrol_xxx_direct_ versions of the entities could be used. This is outside the scope if this wiki page.
 * Although the addition of Mode 8 in new firmwares is a big enhancement, we still feel there is a missing mode that focusses on the grid interface and can limit the PV in case of negative prices. Our Mode 8 autorepeat loop tries to emulate this, but can only adjust every polling cycle, a firmware based solution could react faster.
 * This mechanism will only work on the most recent firmware versions; previous versions do not support mode 8 or 9. I am running Firmware: DSP v1.52 ARM v1.50 at the time of my testing
+* If you use modbus power control autorepeat loops, make sure the polling interval for the fastest scangroup is sufficiently low e.g. 3-5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
 
 
 ### KNOWN ISSUES: (Work in progress):

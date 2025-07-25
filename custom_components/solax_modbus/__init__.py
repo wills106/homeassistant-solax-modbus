@@ -119,6 +119,8 @@ from .const import (
     REGISTER_ULSB16MSB16,
     REGISTER_WORDS,
     SCAN_GROUP_DEFAULT,
+    SCAN_GROUP_MEDIUM,
+    SCAN_GROUP_AUTO,
     # PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
     CONF_TIME_OUT,
@@ -129,6 +131,8 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
     WRITE_MULTISINGLE_MODBUS,
+    REG_HOLDING,
+    REG_INPUT,
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
@@ -443,17 +447,33 @@ class SolaXModbusHub:
 
     # end of save and load section
 
-    def entity_group(self, sensor):
+    def entity_group(self, sensor): # seems to be called for non-sensor entities also - strange
         # scan group
         g = getattr(sensor.entity_description, "scan_group", None)
         if not g:
-            g = SCAN_GROUP_DEFAULT
+            regtype = getattr(sensor.entity_description, "register_type", None)
+            if   regtype == REG_HOLDING: g = self.plugin.default_holding_scangroup
+            elif regtype == REG_INPUT:   g = self.plugin.default_input_scangroup
+            else: g = SCAN_GROUP_DEFAULT # should not occur
+
+        if g == SCAN_GROUP_AUTO:
+            unit = getattr(sensor.entity_description, "native_unit_of_measurement", None)
+            if unit in (  # slow changing values
+                    UnitOfEnergy.WATT_HOUR, 
+                    UnitOfEnergy.KILO_WATT_HOUR,
+                    UnitOfFrequency.HERTZ,
+                    UnitOfTemperature.CELSIUS,
+                    UnitOfTemperature.FAHRENHEIT,
+                    UnitOfTemperature.KELVIN,
+                    UnitOfTime.HOURS,
+                ):
+                g = self.plugin.auto_slow_scangroup
+            else: g = self.plugin.auto_default_scangroup
         # scan interval
         g = self.config.get(g, None)
         # when declared but not present in config, use default; this MUST exist
         if not g:
             g = self.config[SCAN_GROUP_DEFAULT]
-
         return g
 
     def device_group_key(self, device_info: DeviceInfo):
