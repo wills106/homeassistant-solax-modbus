@@ -466,9 +466,8 @@ class SolaXModbusHub:
                     UnitOfTemperature.FAHRENHEIT,
                     UnitOfTemperature.KELVIN,
                     UnitOfTime.HOURS,
-                ):
-                g = self.plugin.auto_slow_scangroup
-            else: g = self.plugin.auto_default_scangroup
+                ): g = self.plugin.auto_slow_scangroup
+            else:  g = self.plugin.auto_default_scangroup
         # scan interval
         g = self.config.get(g, None)
         # when declared but not present in config, use default; this MUST exist
