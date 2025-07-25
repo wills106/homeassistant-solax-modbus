@@ -4284,7 +4284,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=AC | HYBRID,
     ),
-    SolaXModbusSensorEntityDescription( # unclear why we do not merge with next decl
+    SolaXModbusSensorEntityDescription( 
         name="Inverter Power",
         key="inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -4293,9 +4293,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN6,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
     ),
-    SolaXModbusSensorEntityDescription( # unclear why we do not merge with previous decl
+    SolaXModbusSensorEntityDescription(
         name="Inverter Power",
         key="inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
