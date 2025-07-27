@@ -3377,7 +3377,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         register=0xB8,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=HYBRID | GEN4 | GEN5 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="EPS frequency",
@@ -3386,7 +3386,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0xB9,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | GEN4 | GEN5,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="Language",
@@ -4969,7 +4969,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.01,
         rounding=2,
-        allowedtypes=AC | HYBRID | EPS,
+        allowedtypes=AC | HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="Today's Solar Energy",
