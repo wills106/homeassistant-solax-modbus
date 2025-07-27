@@ -80,6 +80,10 @@ To be documented:
 * _write_method_: int = `WRITE_SINGLE_MODBUS`  # `WRITE_SINGLE_MOBUS` or `WRITE_MULTI_MODBUS` or `WRITE_DATA_LOCAL`
 * _sensor_key_: str = None  # The associated sensor key
 * _initvalue_: int = None  # initial default value for WRITE_DATA_LOCAL entities
+* _value_function_: callable = None
+
+Currently switch entities are used when the modbus register contains different switches in one modbus register. 
+If a switch entity has a `value_function, the value function will take 4 parameters: bit, state, key, datadict). The value function must extract the bit and return the state of that single bit.
 
 
 ## Local Data Entities

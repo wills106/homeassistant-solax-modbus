@@ -163,7 +163,7 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
-    _LOGGER.debug("solax data %d", hass.data)
+    #_LOGGER.debug("solax data %d", hass.data)
     return True
 
 
@@ -190,7 +190,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX modbus."""
-    _LOGGER.debug(f"setup entries - data: {entry.data}, options: {entry.options}")
+    _LOGGER.info(f"setup config entries - data: {entry.data}, options: {entry.options}")
     config = entry.options
     plugin_name = config[CONF_PLUGIN]
 
@@ -376,7 +376,7 @@ class SolaXModbusHub:
         self.blocks_changed = False
         self.initial_groups = {} # as returned by the sensor setup - holdingRegs and inputRegs should not change 
 
-        _LOGGER.debug("solax modbushub done %s", self.__dict__)
+        #_LOGGER.debug("solax modbushub done %s", self.__dict__)
 
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
@@ -447,14 +447,16 @@ class SolaXModbusHub:
 
     # end of save and load section
 
-    def entity_group(self, sensor): # seems to be called for non-sensor entities also - strange
+    def scan_group(self, sensor): # seems to be called for non-sensor entities also - strange
         # scan group
         g = getattr(sensor.entity_description, "scan_group", None)
         if not g:
             regtype = getattr(sensor.entity_description, "register_type", None)
             if   regtype == REG_HOLDING: g = self.plugin.default_holding_scangroup
             elif regtype == REG_INPUT:   g = self.plugin.default_input_scangroup
-            else: g = SCAN_GROUP_DEFAULT # should not occur
+            else: 
+                _LOGGER.debug(f"**** default scan_group for {sensor.entity_description.key} returned {g} - {SCAN_GROUP_DEFAULT}")
+                g = SCAN_GROUP_DEFAULT # should not occur
 
         if g == SCAN_GROUP_AUTO:
             unit = getattr(sensor.entity_description, "native_unit_of_measurement", None)
@@ -471,8 +473,10 @@ class SolaXModbusHub:
         # scan interval
         g = self.config.get(g, None)
         # when declared but not present in config, use default; this MUST exist
-        if not g:
+        if g is None:
+            _LOGGER.warning(f"Fast or Medium scan groups do not seem to exist in config: {g} using default {self.config[SCAN_GROUP_DEFAULT]}")
             g = self.config[SCAN_GROUP_DEFAULT]
+        else: _LOGGER.debug(f"**** returning scan_group interval {g} for {sensor.entity_description.key}")
         return g
 
     def device_group_key(self, device_info: DeviceInfo):
@@ -488,7 +492,7 @@ class SolaXModbusHub:
     async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
         # This is the first sensor, set up interval.
-        interval = self.entity_group(sensor)
+        interval = self.scan_group(sensor)
         interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
         if not interval_group.device_groups:
             interval_group.interval = interval
@@ -510,7 +514,7 @@ class SolaXModbusHub:
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
         """Remove data update."""
-        interval = self.entity_group(sensor)
+        interval = self.scan_group(sensor)
         interval_group = self.groups.get(interval, None)
         if interval_group is None:
             return
@@ -1144,8 +1148,8 @@ class SolaXModbusHub:
                 #self.computedSensors = computedRegs # moved outside the loops
                 for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 for i in hub_device_group.inputBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
-                _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
-                _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
+                #_LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
+                #_LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
         _LOGGER.info(f"done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
 

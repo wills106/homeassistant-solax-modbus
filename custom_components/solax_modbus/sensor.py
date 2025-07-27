@@ -177,7 +177,7 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
         else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
-        interval_group = groups.setdefault(hub.entity_group(sensor), empty_input_interval_group_lambda())
+        interval_group = groups.setdefault(hub.scan_group(sensor), empty_input_interval_group_lambda())
         device_group_key = hub.device_group_key(device_info)
         device_group = interval_group.device_groups.setdefault(device_group_key, empty_input_device_group_lambda())
         holdingRegs  = device_group.holdingRegs
