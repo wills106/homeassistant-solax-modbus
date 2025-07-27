@@ -263,7 +263,7 @@ def Gen4Timestring(numb):
 def is_entity_enabled(hass, entity_id): # Check if the entity is enabled in Home Assistant
     state = hass.states.get(entity_id)
     if state is None:
-        _LOGGER.debug(f"Entity {entity_id} not found in state manager, assuming disabled. Not added to read block")
+        _LOGGER.debug(f"Entity {entity_id} not found in state manager, assuming disabled - skipping unless declared internal")
         return False
     if state.state in ['unavailable', 'unknown']: # Check if the entity state is 'unavailable' or 'unknown'
         return True
