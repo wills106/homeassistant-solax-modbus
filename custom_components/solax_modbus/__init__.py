@@ -260,15 +260,14 @@ def Gen4Timestring(numb):
     m = numb >> 8
     return f"{h:02d}:{m:02d}"
 
-def is_entity_enabled(hass, entity_id): # Check if the entity is enabled in Home Assistant
-    state = hass.states.get(entity_id)
-    if state is None:
-        _LOGGER.debug(f"Entity {entity_id} not found in state manager, assuming disabled - skipping unless declared internal")
-        return False
-    if state.state in ['unavailable', 'unknown']: # Check if the entity state is 'unavailable' or 'unknown'
-        return True
-    # If none of the above conditions are met, assume the entity is enabled
-    return True
+def is_entity_enabled(hass, hubname, key): # Check if the entity is enabled in Home Assistant
+    for platform in ("sensor", "number", "select", "switch",):
+        state = hass.states.get(f"{platform}.{hubname}_{key}")
+        if state is not None:
+            return True
+    _LOGGER.debug(f"Entity sensor.{hubname}_{key} not found in state manager, assuming disabled - skipping unless declared internal")
+    return False
+
 
 @dataclass
 class block():
@@ -1073,12 +1072,7 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = ( d_enabled or d_internal 
-                        or is_entity_enabled(self._hass, f"sensor_{self._name}_{descr.key}")
-                        or is_entity_enabled(self._hass, f"number_{self._name}_{descr.key}") # number with the same id
-                        or is_entity_enabled(self._hass, f"select_{self._name}_{descr.key}") # select
-                        or is_entity_enabled(self._hass, f"switch_{self._name}_{descr.key}") # 
-                    )
+                    d_enabled = d_enabled or d.internal or is_entity_enabled(self._hass, self._name, d.key)
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1086,12 +1080,7 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = ( descr.internal
-                    or is_entity_enabled(self._hass, f"sensor_{self._name}_{descr.key}")
-                    or is_entity_enabled(self._hass, f"number_{self._name}_{descr.key}") # number with the same id
-                    or is_entity_enabled(self._hass, f"select_{self._name}_{descr.key}") # select
-                    or is_entity_enabled(self._hass, f"switch_{self._name}_{descr.key}") # 
-                )
+                d_enabled = descr.internal or is_entity_enabled(self._hass, self._name, descr.key) 
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount
