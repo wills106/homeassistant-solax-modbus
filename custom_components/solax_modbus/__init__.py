@@ -1082,7 +1082,12 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = is_entity_enabled(self._hass, entity_id) or descr.internal
+                d_enabled = ( descr.internal
+                    or is_entity_enabled(self._hass, f"sensor.{self._name}_{descr.key}")
+                    or is_entity_enabled(self._hass, f"number.{self._name}_{descr.key}") # number with the same id
+                    or is_entity_enabled(self._hass, f"select.{self._name}_{descr.key}") # select
+                    or is_entity_enabled(self._hass, f"switch.{self._name}_{descr.key}") # 
+                )
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount
