@@ -551,7 +551,7 @@ class SolaXModbusHub:
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups) 
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in interval_group.device_groups.values():
+            for group in list(interval_group.device_groups.values()):
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
                     if self.slowdown > 1: _LOGGER.info(f"communication restored, resuming normal speed after slowdown")
@@ -954,9 +954,9 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
-                    if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
-                    else: l = { descr.key: descr, } # normal case, one entity
-                    for k, d in l.items():
+                    if type(descr) is dict: l = descr.items()
+                    else: l = {descr.key: descr}.items()
+                    for k, d in l:
                         d_ignore = descr.ignore_readerror
                         d_key = descr.key
                         if (d_ignore is not True) and (d_ignore is not False):
