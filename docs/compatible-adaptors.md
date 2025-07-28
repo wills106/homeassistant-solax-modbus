@@ -76,6 +76,13 @@ An ESP8266 dongle with Tasmota installed and setup as a modbus bridge works grea
 Use a RS485 module to convert the modbus serial interface to RS485.
 This works flawless for my Solis hybrid inverter.
 
+### [ESPHome Modbus Bridge on ESP32 (Wi-Fi/Ethernet)](https://github.com/rosenrot00/esphome_modbus_bridge)
+
+Running ESPHome as a Modbus TCP to RTU bridge, the setup provides stable and reliable communication through an ESP32.
+An RS485 transceiver manages the UART-to-RS485 conversion, enabling data exchange.
+I’ve tested this setup successfully with a SolaX hybrid inverter, and currently have it running with power supplied directly from the inverter’s 12V output.
+For ethernet connectivity, I’m using the WT32-ETH01 module.
+
 ## Untested but should work according to the specs...
 
 ### [USR-N510 RS485 to Ethernet](https://www.pusr.com/products/1-rs485-serial-port-etherne-device-servers-usr-n510.html)
