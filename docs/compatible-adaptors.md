@@ -80,8 +80,8 @@ This works flawless for my Solis hybrid inverter.
 
 Running ESPHome as a Modbus TCP to RTU bridge, the setup provides stable and reliable communication through an ESP32.
 An RS485 transceiver manages the UART-to-RS485 conversion, enabling data exchange.
-I’ve tested this setup successfully with a SolaX hybrid inverter, and currently have it running with power supplied directly from the inverter’s 12V output.
-For ethernet connectivity, I’m using the WT32-ETH01 module.
+This setup has been successfully tested with a SolaX hybrid inverter and runs reliably when powered directly from the inverter’s 12V output.
+For Ethernet connectivity, an ESP32 module such as the WT32-ETH01 can be used.
 
 ## Untested but should work according to the specs...
 
