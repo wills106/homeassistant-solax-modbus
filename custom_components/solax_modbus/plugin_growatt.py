@@ -2443,7 +2443,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         native_unit_of_measurement="kΩ",
         state_class=SensorStateClass.MEASUREMENT,
-        # Per Modbus Protocol v1.24, this value is also at register 3087.
         # Register 200 is used to avoid a conflict with the 'BMS 1 Serial Number' 
         # entity on some GEN4 hybrid models (e.g., TL-XH) which uses 3087.
         # Confirmed working on GEN4 PV models (MIC 600TL-X).
