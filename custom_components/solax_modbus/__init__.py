@@ -261,13 +261,15 @@ def Gen4Timestring(numb):
     return f"{h:02d}:{m:02d}"
 
 def is_entity_enabled(hass, hubname, key): # Check if the entity is enabled in Home Assistant
+    """
     for platform in ("sensor", "number", "select", "switch",):
         state = hass.states.get(f"{platform}.{hubname}_{key}")
         if state is not None:
             return True
     _LOGGER.debug(f"Entity sensor.{hubname}_{key} not found in state manager, assuming disabled - skipping unless declared internal")
     return False
-
+    """
+    return True # temporary solution for issue #1490
 
 @dataclass
 class block():
