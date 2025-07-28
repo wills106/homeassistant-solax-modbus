@@ -1073,8 +1073,12 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    entity_id = f"sensor.{self._name}_{d.key}"
-                    d_enabled = d_enabled or is_entity_enabled(self._hass, entity_id) or d.internal
+                    d_enabled = ( d_enabled or d_internal 
+                        or is_entity_enabled(self._hass, f"sensor_{self._name}_{descr.key}")
+                        or is_entity_enabled(self._hass, f"number_{self._name}_{descr.key}") # number with the same id
+                        or is_entity_enabled(self._hass, f"select_{self._name}_{descr.key}") # select
+                        or is_entity_enabled(self._hass, f"switch_{self._name}_{descr.key}") # 
+                    )
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1083,10 +1087,10 @@ class SolaXModbusHub:
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
                 d_enabled = ( descr.internal
-                    or is_entity_enabled(self._hass, f"sensor.{self._name}_{descr.key}")
-                    or is_entity_enabled(self._hass, f"number.{self._name}_{descr.key}") # number with the same id
-                    or is_entity_enabled(self._hass, f"select.{self._name}_{descr.key}") # select
-                    or is_entity_enabled(self._hass, f"switch.{self._name}_{descr.key}") # 
+                    or is_entity_enabled(self._hass, f"sensor_{self._name}_{descr.key}")
+                    or is_entity_enabled(self._hass, f"number_{self._name}_{descr.key}") # number with the same id
+                    or is_entity_enabled(self._hass, f"select_{self._name}_{descr.key}") # select
+                    or is_entity_enabled(self._hass, f"switch_{self._name}_{descr.key}") # 
                 )
                 d_newblock = descr.newblock
                 d_unit = descr.unit
