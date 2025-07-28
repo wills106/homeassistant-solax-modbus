@@ -2436,6 +2436,22 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN2 | GEN3 | GEN4,
         internal = True,
     ),
+    GrowattModbusSensorEntityDescription(
+        name="PV Isolation Resistance",
+        key="pv_isolation_resistance",
+        register=200,
+        register_type=REG_INPUT,
+        native_unit_of_measurement="kΩ",
+        state_class=SensorStateClass.MEASUREMENT,
+        # Per Modbus Protocol v1.24, this value is also at register 3087.
+        # Register 200 is used to avoid a conflict with the 'BMS 1 Serial Number' 
+        # entity on some GEN4 hybrid models (e.g., TL-XH) which uses 3087.
+        # Confirmed working on GEN4 PV models (MIC 600TL-X).
+        allowedtypes=GEN2 | GEN3 | GEN4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=True,
+        icon="mdi:omega",
+    ),
 
     # Not documented, source: https://www.photovoltaikforum.com/thread/192228-growatt-sph-modbus-rtu-rj45-pinout-und-register-beschreibung/?postID=3017838#post3017838
     GrowattModbusSensorEntityDescription(
