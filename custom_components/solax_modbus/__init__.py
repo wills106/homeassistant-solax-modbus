@@ -268,10 +268,10 @@ def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabl
     registry = er.async_get(hass)
     entity_entry = registry.async_get(entity_id)
     # If an entity is not in the registry, it is probably a new one.
-    # Apply the default specified in the descriptor
+    # return True #Apply the default specified in the descriptor
     if entity_entry is None:
         _LOGGER.debug(f"Entity {entity_id} not found in entity registry, applying default {descriptor.entity_registry_enabled_default}")
-        return descriptor.entity_registry_enabled_default
+        return True #descriptor.entity_registry_enabled_default
         
     # Otherwise, return the inverse of the 'disabled' attribute
     if entity_entry.disabled:
@@ -501,6 +501,7 @@ class SolaXModbusHub:
     @callback
     async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
+        # attention, this function is not only called for sensors also for number, select
         # This is the first sensor, set up interval.
         interval = self.scan_group(sensor)
         interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
@@ -561,7 +562,7 @@ class SolaXModbusHub:
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups) 
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in interval_group.device_groups.values():
+            for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
                     if self.slowdown > 1: _LOGGER.info(f"communication restored, resuming normal speed after slowdown")
@@ -851,6 +852,7 @@ class SolaXModbusHub:
         """
 
         if val == None:  # E.g. if errors have occurred during readout
+            #_LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
             return_value = descr.scale.get(val, "Unknown")
@@ -890,6 +892,7 @@ class SolaXModbusHub:
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if ((self.tmpdata_expiry.get(descr.key, 0) == 0) 
         and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
+                #_LOGGER.info(f"****tmp*** returning data for {descr.key}: {return_value}")
                 data[descr.key] = return_value  # case prevent_update number
 
     async def async_read_modbus_block(self, data, block, typ):
@@ -965,8 +968,8 @@ class SolaXModbusHub:
                 for reg in block.regs:
                     descr = block.descriptions[reg]
                     if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
-                    else: l = { descr.key: descr, } # normal case, one entity
-                    for k, d in l.items():
+                    else: l = { descr.key: descr, }.items() # normal case, one entity
+                    for k, d in l:
                         d_ignore = descr.ignore_readerror
                         d_key = descr.key
                         if (d_ignore is not True) and (d_ignore is not False):
