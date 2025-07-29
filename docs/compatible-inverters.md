@@ -189,6 +189,7 @@ Known Serial Numbers
 - XMA
 - XM3
 - XBE
+- XBU
 - XAU
 
 X1-Mini-G4
