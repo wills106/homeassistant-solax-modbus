@@ -524,7 +524,7 @@ class SolaXModbusHub:
 
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
-        _LOGGER.debug(f"*** debug *** adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
+        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True # will force rebuild_blocks to be called
 
