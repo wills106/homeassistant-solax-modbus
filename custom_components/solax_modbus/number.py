@@ -98,12 +98,12 @@ class SolaXModbusNumber(NumberEntity):
         self.entity_description = number_info
         self._write_method = number_info.write_method
 
-    #async def async_added_to_hass(self) -> None:
-    #    """Register callbacks."""
-    #    await self._hub.async_add_solax_modbus_sensor(self)
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks."""
+        await self._hub.async_add_solax_modbus_sensor(self)
 
-    #async def async_will_remove_from_hass(self) -> None:
-    #    await self._hub.async_remove_solax_modbus_sensor(self)
+    async def async_will_remove_from_hass(self) -> None:
+        await self._hub.async_remove_solax_modbus_sensor(self)
 
     """ remove duplicate declaration
     async def async_set_value(self, native_value: float) -> None:

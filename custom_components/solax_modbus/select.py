@@ -62,12 +62,12 @@ class SolaXModbusSelect(SelectEntity):
         self._write_method = select_info.write_method
 
     
-    ##sync def async_added_to_hass(self):
-    #    """Register callbacks."""
-    #    await self._hub.async_add_solax_modbus_sensor(self)
+    async def async_added_to_hass(self):
+        """Register callbacks."""
+        await self._hub.async_add_solax_modbus_sensor(self)
 
-    #async def async_will_remove_from_hass(self) -> None:
-    #    await self._hub.async_remove_solax_modbus_sensor(self)
+    async def async_will_remove_from_hass(self) -> None:
+        await self._hub.async_remove_solax_modbus_sensor(self)
 
 
     @callback

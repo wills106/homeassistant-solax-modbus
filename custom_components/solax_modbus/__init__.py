@@ -39,8 +39,9 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers import entity_registry as er 
 
-RETRIES = 0 # was 6
+RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
 
 
@@ -260,16 +261,29 @@ def Gen4Timestring(numb):
     m = numb >> 8
     return f"{h:02d}:{m:02d}"
 
-def is_entity_enabled(hass, hubname, key): # Check if the entity is enabled in Home Assistant
-    """
-    for platform in ("sensor", "number", "select", "switch",):
-        state = hass.states.get(f"{platform}.{hubname}_{key}")
-        if state is not None:
-            return True
-    _LOGGER.debug(f"Entity sensor.{hubname}_{key} not found in state manager, assuming disabled - skipping unless declared internal")
-    return False
-    """
-    return True # temporary solution for issue #1490
+
+def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabled in Home Assistant
+    unique_id = f"{hubname}_{descriptor.key}"
+    platform = "sensor"
+    #Check if an entity is enabled in the entity registry
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
+    entity_entry = registry.async_get(entity_id)
+
+    # If an entity is not in the registry, it is probably a new one.
+    # return True #Apply the default specified in the descriptor
+    if entity_entry is None:
+        _LOGGER.debug(f"Entity {unique_id} not found in entity registry, "
+         f"applying default {descriptor.entity_registry_enabled_default}"
+         )
+        return descriptor.entity_registry_enabled_default
+        
+    # Otherwise, return the inverse of the 'disabled' attribute
+    if entity_entry.disabled:
+        _LOGGER.debug(f"Entity {entity_id} is disabled, not adding to read block.")
+        return False
+    return True
+
 
 @dataclass
 class block():
@@ -489,9 +503,11 @@ class SolaXModbusHub:
 
         return key
 
+    # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
     async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
+        # attention, this function is not only called for sensors also for number, select
         # This is the first sensor, set up interval.
         interval = self.scan_group(sensor)
         interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
@@ -508,9 +524,10 @@ class SolaXModbusHub:
 
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
-        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} ")
+        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True # will force rebuild_blocks to be called
+
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
@@ -552,7 +569,7 @@ class SolaXModbusHub:
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups) 
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in interval_group.device_groups.values():
+            for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
                     if self.slowdown > 1: _LOGGER.info(f"communication restored, resuming normal speed after slowdown")
@@ -842,6 +859,7 @@ class SolaXModbusHub:
         """
 
         if val == None:  # E.g. if errors have occurred during readout
+            #_LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
             return_value = descr.scale.get(val, "Unknown")
@@ -881,6 +899,7 @@ class SolaXModbusHub:
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if ((self.tmpdata_expiry.get(descr.key, 0) == 0) 
         and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
+                #_LOGGER.info(f"****tmp*** returning data for {descr.key}: {return_value}")
                 data[descr.key] = return_value  # case prevent_update number
 
     async def async_read_modbus_block(self, data, block, typ):
@@ -956,8 +975,8 @@ class SolaXModbusHub:
                 for reg in block.regs:
                     descr = block.descriptions[reg]
                     if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
-                    else: l = { descr.key: descr, } # normal case, one entity
-                    for k, d in l.items():
+                    else: l = { descr.key: descr, }.items() # normal case, one entity
+                    for k, d in l:
                         d_ignore = descr.ignore_readerror
                         d_key = descr.key
                         if (d_ignore is not True) and (d_ignore is not False):
@@ -1074,7 +1093,7 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = d_enabled or d.internal or is_entity_enabled(self._hass, self._name, d.key)
+                    d_enabled = d_enabled or d.internal or is_entity_enabled(self._hass, self._name, d) 
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1082,7 +1101,7 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = descr.internal or is_entity_enabled(self._hass, self._name, descr.key) 
+                d_enabled = descr.internal or is_entity_enabled(self._hass, self._name, descr) 
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount
