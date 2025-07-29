@@ -267,7 +267,7 @@ def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabl
     platform = "sensor"
     #Check if an entity is enabled in the entity registry
     registry = er.async_get(hass)
-    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
+    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id) # strange, platform and domain should be swapped, but that did not work
     entity_entry = registry.async_get(entity_id)
 
     # If an entity is not in the registry, it is probably a new one.
