@@ -41,7 +41,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er 
 
-RETRIES = 0 # was 6
+RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
 
 
@@ -263,15 +263,20 @@ def Gen4Timestring(numb):
 
 
 def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabled in Home Assistant
-    entity_id = f"sensor.{hubname}_{descriptor.key}"
-    """Check if an entity is enabled in the entity registry."""
+    unique_id = f"{hubname}_{descriptor.key}"
+    platform = "sensor"
+    #Check if an entity is enabled in the entity registry
     registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
     entity_entry = registry.async_get(entity_id)
+
     # If an entity is not in the registry, it is probably a new one.
     # return True #Apply the default specified in the descriptor
     if entity_entry is None:
-        _LOGGER.debug(f"Entity {entity_id} not found in entity registry, applying default {descriptor.entity_registry_enabled_default}")
-        return True #descriptor.entity_registry_enabled_default
+        _LOGGER.debug(f"Entity {unique_id} not found in entity registry, "
+         f"applying default {descriptor.entity_registry_enabled_default}"
+         )
+        return descriptor.entity_registry_enabled_default
         
     # Otherwise, return the inverse of the 'disabled' attribute
     if entity_entry.disabled:
@@ -498,6 +503,7 @@ class SolaXModbusHub:
 
         return key
 
+    # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
     async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
         """Listen for data updates."""
@@ -518,9 +524,10 @@ class SolaXModbusHub:
 
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
-        _LOGGER.debug(f"adding sensor {sensor.entity_description.key} ")
+        _LOGGER.debug(f"*** debug *** adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True # will force rebuild_blocks to be called
+
 
     @callback
     async def async_remove_solax_modbus_sensor(self, sensor):
