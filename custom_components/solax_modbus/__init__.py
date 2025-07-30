@@ -282,11 +282,10 @@ def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabl
             if res: return True
         
         # Otherwise, return the inverse of the 'disabled' attribute
-        if entity_entry.disabled:
-            _LOGGER.debug(f"Entity {entity_id} is disabled, not adding to read block.")
-            res = False
-            break # continue loop - test with next platform
-        return True
+        elif entity_entry.disabled:
+            _LOGGER.debug(f"Entity {entity_id} is disabled, scanning other platforms.")
+            res = False # and continue checking other platforms
+        else: return True
     return res # this may never be reached
 
 
