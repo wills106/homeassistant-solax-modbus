@@ -274,7 +274,7 @@ def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabl
 
         # If an entity is not in the registry, it is probably a new one.
         # return True #Apply the default specified in the descriptor
-        if (entity_entry is None) and (platform == "sensor"):
+        if entity_entry is None
             _LOGGER.debug(f"Entity {entity_id} not found in entity registry, "
              f"applying default {descriptor.entity_registry_enabled_default}"
              )
