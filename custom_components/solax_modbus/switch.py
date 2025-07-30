@@ -51,7 +51,7 @@ class SolaXModbusSwitch(SwitchEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        self.entity_id = f"switch.{platform_name}_{switch_info.key}"
+        #self.entity_id = f"switch.{platform_name}_{switch_info.key}"
         self._name = switch_info.name
         self._key = switch_info.key
         self._register = switch_info.register

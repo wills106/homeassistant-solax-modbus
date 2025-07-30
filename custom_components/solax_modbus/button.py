@@ -52,7 +52,7 @@ class SolaXModbusButton(ButtonEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        self.entity_id = "button." + platform_name + "_" + button_info.key
+        #self.entity_id = "button." + platform_name + "_" + button_info.key
         self._name = button_info.name
         self._key = button_info.key
         self.button_info = button_info
