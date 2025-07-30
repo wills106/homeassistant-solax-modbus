@@ -264,25 +264,30 @@ def Gen4Timestring(numb):
 
 def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabled in Home Assistant
     unique_id = f"{hubname}_{descriptor.key}"
-    platform = "sensor"
-    #Check if an entity is enabled in the entity registry
-    registry = er.async_get(hass)
-    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id) # strange, platform and domain should be swapped, but that did not work
-    entity_entry = registry.async_get(entity_id)
+    platforms = ("sensor", "select", "number", "switch",) # if correcpondig entity in other platform is enabled, return enabled
+    res = False
+    for platform in platforms:
+        #Check if an entity is enabled in the entity registry
+        registry = er.async_get(hass)
+        entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id) # strange, platform and domain should be swapped, but that did not work
+        entity_entry = registry.async_get(entity_id)
 
-    # If an entity is not in the registry, it is probably a new one.
-    # return True #Apply the default specified in the descriptor
-    if entity_entry is None:
-        _LOGGER.debug(f"Entity {unique_id} not found in entity registry, "
-         f"applying default {descriptor.entity_registry_enabled_default}"
-         )
-        return descriptor.entity_registry_enabled_default
+        # If an entity is not in the registry, it is probably a new one.
+        # return True #Apply the default specified in the descriptor
+        if entity_entry is None:
+            _LOGGER.debug(f"Entity {entity_id} not found in entity registry, "
+             f"applying default {descriptor.entity_registry_enabled_default}"
+             )
+            res = descriptor.entity_registry_enabled_default
+            if res: return True
         
-    # Otherwise, return the inverse of the 'disabled' attribute
-    if entity_entry.disabled:
-        _LOGGER.debug(f"Entity {entity_id} is disabled, not adding to read block.")
-        return False
-    return True
+        # Otherwise, return the inverse of the 'disabled' attribute
+        if entity_entry.disabled:
+            _LOGGER.debug(f"Entity {entity_id} is disabled, not adding to read block.")
+            res = False
+            break # continue loop - test with next platform
+        return True
+    return res # this may never be reached
 
 
 @dataclass
