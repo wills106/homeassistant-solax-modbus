@@ -68,7 +68,7 @@ class SolaXModbusNumber(NumberEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        self.entity_id = "number." + platform_name + "_" + number_info.key
+        #self.entity_id = "number." + platform_name + "_" + number_info.key
         self._name = number_info.name
         self._key = number_info.key
         self._register = number_info.register

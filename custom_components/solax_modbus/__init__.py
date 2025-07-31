@@ -39,7 +39,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers import entity_registry as er 
+
 
 RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -56,7 +56,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor
+from .sensor import SolaXModbusSensor, is_entity_enabled
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -262,28 +262,6 @@ def Gen4Timestring(numb):
     return f"{h:02d}:{m:02d}"
 
 
-def is_entity_enabled(hass, hubname, descriptor): # Check if the entity is enabled in Home Assistant
-    unique_id = f"{hubname}_{descriptor.key}"
-    platform = "sensor"
-    #Check if an entity is enabled in the entity registry
-    registry = er.async_get(hass)
-    entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
-    entity_entry = registry.async_get(entity_id)
-
-    # If an entity is not in the registry, it is probably a new one.
-    # return True #Apply the default specified in the descriptor
-    if entity_entry is None:
-        _LOGGER.debug(f"Entity {unique_id} not found in entity registry, "
-         f"applying default {descriptor.entity_registry_enabled_default}"
-         )
-        return descriptor.entity_registry_enabled_default
-        
-    # Otherwise, return the inverse of the 'disabled' attribute
-    if entity_entry.disabled:
-        _LOGGER.debug(f"Entity {entity_id} is disabled, not adding to read block.")
-        return False
-    return True
-
 
 @dataclass
 class block():
@@ -373,6 +351,7 @@ class SolaXModbusHub:
         self.computedSwitches = {}
         self.sensorEntities = {}  # all sensor entities, indexed by key
         self.numberEntities = {}  # all number entities, indexed by key
+        self.selectEntities = {}
         self.switchEntities = {}
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
@@ -470,7 +449,7 @@ class SolaXModbusHub:
             if   regtype == REG_HOLDING: g = self.plugin.default_holding_scangroup
             elif regtype == REG_INPUT:   g = self.plugin.default_input_scangroup
             else: 
-                _LOGGER.debug(f"**** default scan_group for {sensor.entity_description.key} returned {g} - {SCAN_GROUP_DEFAULT}")
+                _LOGGER.debug(f"default scan_group for {sensor.entity_description.key} returned {g} - {SCAN_GROUP_DEFAULT}")
                 g = SCAN_GROUP_DEFAULT # should not occur
 
         if g == SCAN_GROUP_AUTO:
@@ -491,7 +470,7 @@ class SolaXModbusHub:
         if g is None:
             _LOGGER.warning(f"Fast or Medium scan groups do not seem to exist in config: {g} using default {self.config[SCAN_GROUP_DEFAULT]}")
             g = self.config[SCAN_GROUP_DEFAULT]
-        else: _LOGGER.debug(f"**** returning scan_group interval {g} for {sensor.entity_description.key}")
+        else: _LOGGER.debug(f"returning scan_group interval {g} for {sensor.entity_description.key}")
         return g
 
     def device_group_key(self, device_info: DeviceInfo):
@@ -502,6 +481,7 @@ class SolaXModbusHub:
             key = identifier[1] + "_" + identifier[2]
 
         return key
+
 
     # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
@@ -1019,9 +999,12 @@ class SolaXModbusHub:
             self.plugin.localDataCallback(self)
         if not self.localsLoaded:
             await self._hass.async_add_executor_job(self.loadLocalData)
-        for reg in self.computedSensors:
-            descr = self.computedSensors[reg]
-            data[descr.key] = descr.value_function(0, descr, data)
+        for key in self.computedSensors:
+            descr = self.computedSensors[key]
+            data[key] = descr.value_function(0, descr, data)
+            sens = self.sensorEntities[key]
+            #_LOGGER.debug(f"quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
+            if sens and not descr.internal: sens.modbus_data_updated() # publish state to GUI and automations faster
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
@@ -1093,7 +1076,7 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = d_enabled or d.internal or is_entity_enabled(self._hass, self._name, d) 
+                    d_enabled = d_enabled or is_entity_enabled(self._hass, self, d) or d.internal
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1101,7 +1084,7 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = descr.internal or is_entity_enabled(self._hass, self._name, descr) 
+                d_enabled = is_entity_enabled(self._hass, self, descr) or descr.internal
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount

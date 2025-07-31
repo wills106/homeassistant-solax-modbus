@@ -1697,7 +1697,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register=33149,
         register_type=REG_INPUT,
         unit=REGISTER_S32,
-        entity_registry_enabled_default=False,
+        #entity_registry_enabled_default=False, # bug #1495 value function from const.py relies on this, so should not be disabled
         allowedtypes=HYBRID,
         icon="mdi:home",
     ),
