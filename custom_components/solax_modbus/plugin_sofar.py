@@ -4220,4 +4220,8 @@ plugin_instance = sofar_plugin(
     order16=Endian.BIG,
     order32=Endian.BIG,
     auto_block_ignore_readerror=True,
+    default_holding_scangroup = SCAN_GROUP_DEFAULT,  
+    default_input_scangroup = SCAN_GROUP_DEFAULT,   # or SCAN_GROUP_AUTO
+    auto_default_scangroup = SCAN_GROUP_FAST, # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_slow_scangroup = SCAN_GROUP_MEDIUM, # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
 )

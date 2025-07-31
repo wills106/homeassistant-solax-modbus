@@ -154,8 +154,8 @@ class plugin_base:
     inverter_model: str = None
     default_holding_scangroup: str = SCAN_GROUP_DEFAULT  
     default_input_scangroup: str = SCAN_GROUP_DEFAULT   # or SCAN_GROUP_AUTO
-    auto_default_scangroup: str = SCAN_GROUP_FAST, # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
-    auto_slow_scangroup: str = SCAN_GROUP_MEDIUM, # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_default_scangroup: str = SCAN_GROUP_FAST # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_slow_scangroup: str = SCAN_GROUP_MEDIUM # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
 
     def isAwake(self, datadict):
         return True  # always awake by default
