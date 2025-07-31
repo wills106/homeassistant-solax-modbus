@@ -35,34 +35,25 @@ def is_entity_enabled(hass, hub, descriptor): # Check if the entity is enabled i
     """ 
     Check if an entity is enabled in the entity registry, checking across multiple platforms. 
     """ 
-    unique_id = f"{hub._name}_{descriptor.key}" 
-    platforms = ("sensor",) # makes no sense to search the others platforms , "select", "number", "switch", "button") 
+    unique_id     = f"{hub._name}_{descriptor.key}" 
+    unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
+    platforms = ("sensor", "select", "number", "switch", "button") 
     registry = er.async_get(hass)
 
     entity_found = False 
     # First, check if there is an existing enabled entity in the registry for this unique_id. 
     for platform in platforms: 
         entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
-        _LOGGER.debug(f"entity_id for {unique_id} on platform {platform} is now {entity_id}")
+        if entity_id: _LOGGER.debug(f"entity_id for {unique_id} on platform {platform} is now {entity_id}")
+        else: 
+            entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
+            _LOGGER.debug(f"entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
         if entity_id:
             entity_found = True
             entity_entry = registry.async_get(entity_id) 
             if entity_entry and not entity_entry.disabled: 
                 _LOGGER.debug(f"Entity {entity_id} is enabled, returning True.")
                 return True # Found an enabled entity, no need to check further 
-    # check the other platforms in a quickfix way
-    d =  hub.selectEntities.get(descriptor.key) 
-    if d and d.entity_registry_enabled_default: 
-        _LOGGER.debug(f"++++++++++++++++++++++++++++++++ entity enabled because select is enabled {unique_id} by default")
-        return True # temporary dirty fix 
-    d =  hub.numberEntities.get(descriptor.key)
-    if d and d.entity_registry_enabled_default:
-        _LOGGER.debug(f"++++++++++++++++++++++++++++++++ entity enabled because number is enabled {unique_id} by default")
-        return True # temporary dirty fix 
-    d =  hub.switchEntities.get(descriptor.key)
-    if d and d.entity_registry_enabled_default: 
-        _LOGGER.debug(f"++++++++++++++++++++++++++++++++ entity enabled because switch is enabled {unique_id} by default")
-        return True # temporary dirty fix 
     # If we get here, no enabled entity was found across all platforms.
     if entity_found: 
         # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice. 
