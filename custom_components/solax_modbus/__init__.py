@@ -1151,7 +1151,7 @@ class SolaXModbusHub:
                         start = INVALID_START
                         end = 0
                         curblockregs = []
-                else: _LOGGER.debug(f"newblock declaration found for empty block")
+                    else: _LOGGER.debug(f"newblock declaration found for empty block")
 
                 if start == INVALID_START: start = reg
 
