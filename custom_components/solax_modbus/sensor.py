@@ -31,47 +31,19 @@ empty_input_device_group_lambda = lambda: SimpleNamespace(
         readFollowUp = None,
         )
 
-def should_register_be_loaded(hass, hub, descriptor): # Check if the entity is enabled in Home Assistant 
-    """ 
-    Check if an entity is enabled in the entity registry, checking across multiple platforms. 
-    """ 
+def is_entity_enabled(hass, hub, descriptor): 
+    # simple test, more complex counterpart is should_register_be_loaded
     unique_id     = f"{hub._name}_{descriptor.key}" 
-    unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
-    platforms = ("sensor", "select", "number", "switch", "button") 
     registry = er.async_get(hass)
-
-    entity_found = False 
-    # First, check if there is an existing enabled entity in the registry for this unique_id. 
-    for platform in platforms: 
-        entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
-        if entity_id: _LOGGER.debug(f"entity_id for {unique_id} on platform {platform} is now {entity_id}")
-        else: 
-            entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
-            _LOGGER.debug(f"entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
-        if entity_id:
-            entity_found = True
-            entity_entry = registry.async_get(entity_id) 
-            if entity_entry and not entity_entry.disabled: 
-                _LOGGER.debug(f"Entity {entity_id} is enabled, returning True.")
-                return True # Found an enabled entity, no need to check further 
-    # If we get here, no enabled entity was found across all platforms.
-    if entity_found: 
-        # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice. 
-        _LOGGER.debug(f"Entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
-        return False
-    else: 
-        # No entity exists for this unique_id on any platform. Treat it as a new entity. 
-        _LOGGER.debug(f"Entity with unique_id {unique_id} not found in entity registry, checking defaults ")
-        if descriptor.entity_registry_enabled_default: return True
-        # check the other platforms descriptors
-        d =  hub.selectEntities.get(descriptor.key) 
-        if d and d.entity_registry_enabled_default: return True
-        d =  hub.numberEntities.get(descriptor.key)
-        if d and d.entity_registry_enabled_default: return True
-        d =  hub.switchEntities.get(descriptor.key)
-        if d and d.entity_registry_enabled_default: return True
-        _LOGGER.debug(f"Entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
-        return False 
+    entity_id = registry.async_get_entity_id('sensor', DOMAIN, unique_id) 
+    if entity_id:
+        entity_entry = registry.async_get(entity_id) 
+        if entity_entry and not entity_entry.disabled: 
+            _LOGGER.debug(f"is_entity_enabled: {entity_id} is enabled, returning True.")
+            return True # Found an enabled entity, no need to check further 
+        else:
+            _LOGGER.debug(f"is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
+            return descriptor.entity_registry_enabled_default
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -215,7 +187,7 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
-        enabled = should_register_be_loaded(hub._hass, hub, newdescr) # dont compute disabled entities anymore
+        enabled = is_entity_enabled(hub._hass, hub, newdescr) # dont compute disabled entities anymore
         if newdescr.value_function and enabled: #*** dont compute disabled entities anymore
             computedRegs[newdescr.key] = newdescr
         else: 

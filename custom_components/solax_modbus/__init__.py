@@ -39,7 +39,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-
+from homeassistant.helpers import entity_registry as er 
 
 RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -56,7 +56,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor, should_register_be_loaded
+from .sensor import SolaXModbusSensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -154,6 +154,48 @@ empty_hub_device_group_lambda = lambda: SimpleNamespace(
             readFollowUp=None,  # function to call after read group
         )
 
+
+def should_register_be_loaded(hass, hub, descriptor): 
+    """ 
+    Check if an entity is enabled in the entity registry, checking across multiple platforms. 
+    """ 
+    if descriptor.internal: return True
+    unique_id     = f"{hub._name}_{descriptor.key}" 
+    unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
+    platforms = ("sensor", "select", "number", "switch", "button") 
+    registry = er.async_get(hass)
+    entity_found = False 
+    # First, check if there is an existing enabled entity in the registry for this unique_id. 
+    for platform in platforms: 
+        entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
+        if entity_id: _LOGGER.debug(f"entity_id for {unique_id} on platform {platform} is now {entity_id}")
+        else: 
+            entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
+            _LOGGER.debug(f"entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
+        if entity_id:
+            entity_found = True
+            entity_entry = registry.async_get(entity_id) 
+            if entity_entry and not entity_entry.disabled: 
+                _LOGGER.debug(f"Entity {entity_id} is enabled, returning True.")
+                return True # Found an enabled entity, no need to check further 
+    # If we get here, no enabled entity was found across all platforms.
+    if entity_found: 
+        # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice. 
+        _LOGGER.debug(f"Entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        return False
+    else: 
+        # No entity exists for this unique_id on any platform. Treat it as a new entity. 
+        _LOGGER.debug(f"Entity with unique_id {unique_id} not found in entity registry, checking defaults ")
+        if descriptor.entity_registry_enabled_default: return True
+        # check the other platforms descriptors
+        d =  hub.selectEntities.get(descriptor.key) 
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.numberEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.switchEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        _LOGGER.debug(f"Entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        return False 
 
 
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -1076,7 +1118,7 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = d_enabled or should_register_be_loaded(self._hass, self, d) or d.internal
+                    d_enabled = d_enabled or should_register_be_loaded(self._hass, self, d)
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1084,7 +1126,7 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = should_register_be_loaded(self._hass, self, descr) or descr.internal
+                d_enabled = should_register_be_loaded(self._hass, self, descr)
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount
