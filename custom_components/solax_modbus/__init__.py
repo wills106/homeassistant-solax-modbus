@@ -159,7 +159,9 @@ def should_register_be_loaded(hass, hub, descriptor):
     """ 
     Check if an entity is enabled in the entity registry, checking across multiple platforms. 
     """ 
-    if descriptor.internal: return True
+    if descriptor.internal: 
+        _LOGGER.debug(f"should be loaded: entity with key {descriptor.key} is internal, returning True.")
+        return True
     unique_id     = f"{hub._name}_{descriptor.key}" 
     unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
     platforms = ("sensor", "select", "number", "switch", "button") 
@@ -168,24 +170,24 @@ def should_register_be_loaded(hass, hub, descriptor):
     # First, check if there is an existing enabled entity in the registry for this unique_id. 
     for platform in platforms: 
         entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
-        if entity_id: _LOGGER.debug(f"entity_id for {unique_id} on platform {platform} is now {entity_id}")
+        if entity_id: _LOGGER.debug(f"should be loaded: entity_id for {unique_id} on platform {platform} is now {entity_id}")
         else: 
             entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
-            _LOGGER.debug(f"entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
+            _LOGGER.debug(f"should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
         if entity_id:
             entity_found = True
             entity_entry = registry.async_get(entity_id) 
             if entity_entry and not entity_entry.disabled: 
-                _LOGGER.debug(f"Entity {entity_id} is enabled, returning True.")
+                _LOGGER.debug(f"should be loaded: Entity {entity_id} is enabled, returning True.")
                 return True # Found an enabled entity, no need to check further 
     # If we get here, no enabled entity was found across all platforms.
     if entity_found: 
         # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice. 
-        _LOGGER.debug(f"Entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        _LOGGER.debug(f"should be loaded: entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
         return False
     else: 
         # No entity exists for this unique_id on any platform. Treat it as a new entity. 
-        _LOGGER.debug(f"Entity with unique_id {unique_id} not found in entity registry, checking defaults ")
+        _LOGGER.debug(f"should be loaded: entity with unique_id {unique_id} not found in entity registry, checking defaults ")
         if descriptor.entity_registry_enabled_default: return True
         # check the other platforms descriptors
         d =  hub.selectEntities.get(descriptor.key) 
@@ -194,7 +196,7 @@ def should_register_be_loaded(hass, hub, descriptor):
         if d and d.entity_registry_enabled_default: return True
         d =  hub.switchEntities.get(descriptor.key)
         if d and d.entity_registry_enabled_default: return True
-        _LOGGER.debug(f"Entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        _LOGGER.debug(f"should be loaded: entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
         return False 
 
 
