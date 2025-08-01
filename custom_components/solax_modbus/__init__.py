@@ -56,7 +56,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor, is_entity_enabled
+from .sensor import SolaXModbusSensor, should_register_be_loaded
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -1076,7 +1076,7 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = d_enabled or is_entity_enabled(self._hass, self, d) or d.internal
+                    d_enabled = d_enabled or should_register_be_loaded(self._hass, self, d) or d.internal
                     d_newblock = d_newblock or d.newblock 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
@@ -1084,7 +1084,7 @@ class SolaXModbusHub:
                     d_regtype = d.register_type
             else: # normal entity
                 entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = is_entity_enabled(self._hass, self, descr) or descr.internal
+                d_enabled = should_register_be_loaded(self._hass, self, descr) or descr.internal
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount

@@ -31,7 +31,7 @@ empty_input_device_group_lambda = lambda: SimpleNamespace(
         readFollowUp = None,
         )
 
-def is_entity_enabled(hass, hub, descriptor): # Check if the entity is enabled in Home Assistant 
+def should_register_be_loaded(hass, hub, descriptor): # Check if the entity is enabled in Home Assistant 
     """ 
     Check if an entity is enabled in the entity registry, checking across multiple platforms. 
     """ 
@@ -61,8 +61,17 @@ def is_entity_enabled(hass, hub, descriptor): # Check if the entity is enabled i
         return False
     else: 
         # No entity exists for this unique_id on any platform. Treat it as a new entity. 
-        _LOGGER.debug(f"Entity with unique_id {unique_id} not found in entity registry, " f"applying default: {descriptor.entity_registry_enabled_default}")
-        return descriptor.entity_registry_enabled_default
+        _LOGGER.debug(f"Entity with unique_id {unique_id} not found in entity registry, checking defaults ")
+        if descriptor.entity_registry_enabled_default: return True
+        # check the other platforms descriptors
+        d =  hub.selectEntities.get(descriptor.key) 
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.numberEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.switchEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        _LOGGER.debug(f"Entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        return False 
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -206,7 +215,7 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
-        enabled = is_entity_enabled(hub._hass, hub, newdescr) # dont compute disabled entities anymore
+        enabled = should_register_be_loaded(hub._hass, hub, newdescr) # dont compute disabled entities anymore
         if newdescr.value_function and enabled: #*** dont compute disabled entities anymore
             computedRegs[newdescr.key] = newdescr
         else: 
