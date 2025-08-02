@@ -164,7 +164,7 @@ def should_register_be_loaded(hass, hub, descriptor):
         return True
     unique_id     = f"{hub._name}_{descriptor.key}" 
     unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
-    platforms = ("sensor", "select", "number", "switch", "button") 
+    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON) 
     registry = er.async_get(hass)
     entity_found = False 
     # First, check if there is an existing enabled entity in the registry for this unique_id. 
@@ -399,7 +399,7 @@ class SolaXModbusHub:
         self.numberEntities = {}  # all number entities, indexed by key
         self.selectEntities = {}
         self.switchEntities = {}
-        self.entity_dependencies = {} # Maps a control entity key to its data source sensor key
+        self.entity_dependencies = {} # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero = []  # sensors that will be set to zero in sleepmode
@@ -443,6 +443,7 @@ class SolaXModbusHub:
         )
 
         await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+
 
     # save and load local data entity values to make them persistent
     DATAFORMAT_VERSION = 1
@@ -545,11 +546,11 @@ class SolaXModbusHub:
             async def _refresh(_now: Optional[int] = None) -> None:
                 await self._check_connection()
                 await self.async_refresh_modbus_data(interval_group, _now)
+
             _LOGGER.info(f"starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval)
             )
-
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug(f"adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
@@ -1113,12 +1114,13 @@ class SolaXModbusHub:
 
     def _is_dependency_for_enabled_control(self, sensor_key: str) -> bool:
         """Check if a sensor is a required data source for any enabled control."""
-        control_key = self.entity_dependencies.get(sensor_key, None)
-        if control_key:
+        control_keys = self.entity_dependencies.get(sensor_key, [])
+        for control_key in control_keys:  # usually zero or one key
             # This sensor is a dependency. Now, is the control that needs it enabled?
             # We can reuse the logic from should_register_be_loaded, but we need to find the correct descriptor first.
-            control_descr = None
-            if                       self.selectEntities.get(control_key): control_desc = self.selectEntities.get(control_key).entity_description
+            control_descr = None 
+            # currently, a sensor can only have one associated control
+            if                         self.selectEntities.get(control_key): control_desc = self.selectEntities.get(control_key).entity_description
             if (not control_descr) and self.numberEntities.get(control_key): control_desc = self.numberEntities.get(control_key).entity_description
             if (not control_descr) and self.switchEntities.get(control_key): control_desc = self.switchEntities.get(control_key).entity_description
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):

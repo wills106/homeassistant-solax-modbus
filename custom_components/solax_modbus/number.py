@@ -48,7 +48,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 hub.writeLocals[newdescr.key] = newdescr
             # Use the explicit sensor_key if provided, otherwise fall back to the number's own key.
             dependency_key = getattr(newdescr, 'sensor_key', newdescr.key)
-            if dependency_key != newdescr.key: hub.entity_dependencies[dependency_key] = newdescr.key
+            if dependency_key != newdescr.key: hub.entity_dependencies.setdefault(dependency_key, []).append(newdescr.key) # can be more than one
             hub.numberEntities[newdescr.key] = number
             entities.append(number)
     async_add_entities(entities)
