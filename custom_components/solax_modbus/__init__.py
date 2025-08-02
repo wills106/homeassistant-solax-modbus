@@ -39,7 +39,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-
+from homeassistant.helpers import entity_registry as er 
 
 RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -56,7 +56,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor, is_entity_enabled
+from .sensor import SolaXModbusSensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -153,6 +153,52 @@ empty_hub_device_group_lambda = lambda: SimpleNamespace(
             readPreparation=None,  # function to call before read group
             readFollowUp=None,  # function to call after read group
         )
+
+
+def should_register_be_loaded(hass, hub, descriptor): 
+    """ 
+    Check if an entity is enabled in the entity registry, checking across multiple platforms. 
+    """ 
+    if descriptor.internal: 
+        _LOGGER.debug(f"should be loaded: entity with key {descriptor.key} is internal, returning True.")
+        return True
+    unique_id     = f"{hub._name}_{descriptor.key}" 
+    unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
+    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON) 
+    registry = er.async_get(hass)
+    entity_found = False 
+    # First, check if there is an existing enabled entity in the registry for this unique_id. 
+    for platform in platforms: 
+        entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
+        if entity_id: _LOGGER.debug(f"should be loaded: entity_id for {unique_id} on platform {platform} is now {entity_id}")
+        else: 
+            entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
+            _LOGGER.debug(f"should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
+        if entity_id:
+            entity_found = True
+            entity_entry = registry.async_get(entity_id) 
+            if entity_entry and not entity_entry.disabled: 
+                _LOGGER.debug(f"should be loaded: Entity {entity_id} is enabled, returning True.")
+                return True # Found an enabled entity, no need to check further 
+    # If we get here, no enabled entity was found across all platforms.
+    if entity_found: 
+        # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice. 
+        _LOGGER.debug(f"should be loaded: entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        return False
+    else: 
+        # No entity exists for this unique_id on any platform. Treat it as a new entity. 
+        _LOGGER.debug(f"should be loaded: entity with unique_id {unique_id} not found in entity registry, checking defaults ")
+        if descriptor.entity_registry_enabled_default: return True
+        # check the other platforms descriptors
+        d =  hub.selectEntities.get(descriptor.key) 
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.numberEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        d =  hub.switchEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default: return True
+        _LOGGER.debug(f"should be loaded: entity_default with unique_id {unique_id} was found but is disabled across all relevant platforms.")
+        return False 
+
 
 
 
@@ -353,6 +399,7 @@ class SolaXModbusHub:
         self.numberEntities = {}  # all number entities, indexed by key
         self.selectEntities = {}
         self.switchEntities = {}
+        self.entity_dependencies = {} # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero = []  # sensors that will be set to zero in sleepmode
@@ -397,8 +444,10 @@ class SolaXModbusHub:
 
         await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
 
+
     # save and load local data entity values to make them persistent
     DATAFORMAT_VERSION = 1
+
 
     def saveLocalData(self):
         tosave = {"_version": self.DATAFORMAT_VERSION}
@@ -497,11 +546,11 @@ class SolaXModbusHub:
             async def _refresh(_now: Optional[int] = None) -> None:
                 await self._check_connection()
                 await self.async_refresh_modbus_data(interval_group, _now)
+
             _LOGGER.info(f"starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(
                 self._hass, _refresh, timedelta(seconds=interval)
             )
-
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug(f"adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
@@ -999,8 +1048,8 @@ class SolaXModbusHub:
             self.plugin.localDataCallback(self)
         if not self.localsLoaded:
             await self._hass.async_add_executor_job(self.loadLocalData)
-        for key in self.computedSensors:
-            descr = self.computedSensors[key]
+        for key, descr in self.computedSensors.items():
+            # Do NOT call modbus_data_updated() from here Race Condition:it calls hub.rebuild_blocks() before async_add_entities is called.
             data[key] = descr.value_function(0, descr, data)
             sens = self.sensorEntities[key]
             #_LOGGER.debug(f"quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
@@ -1061,6 +1110,24 @@ class SolaXModbusHub:
         return res
 
 
+# --------------------------------------------- Check if sensor is a dependency -----------------------------------------------
+
+    def _is_dependency_for_enabled_control(self, sensor_key: str) -> bool:
+        """Check if a sensor is a required data source for any enabled control."""
+        control_keys = self.entity_dependencies.get(sensor_key, [])
+        for control_key in control_keys:  # usually zero or one key
+            # This sensor is a dependency. Now, is the control that needs it enabled?
+            # We can reuse the logic from should_register_be_loaded, but we need to find the correct descriptor first.
+            control_descr = None 
+            # currently, a sensor can only have one associated control
+            if                         self.selectEntities.get(control_key): control_desc = self.selectEntities.get(control_key).entity_description
+            if (not control_descr) and self.numberEntities.get(control_key): control_desc = self.numberEntities.get(control_key).entity_description
+            if (not control_descr) and self.switchEntities.get(control_key): control_desc = self.switchEntities.get(control_key).entity_description
+            if control_descr and should_register_be_loaded(self._hass, self, control_descr):
+                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control '{control_key}'.")
+                return True
+        return False
+
 # --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
 
     def splitInBlocks( self, descriptions):
@@ -1076,15 +1143,24 @@ class SolaXModbusHub:
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
-                    d_enabled = d_enabled or is_entity_enabled(self._hass, self, d) or d.internal
-                    d_newblock = d_newblock or d.newblock 
+                    #d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
+                    if should_register_be_loaded(self._hass, self, d): # *** CHANGED LINE: logic delegated to new function
+                        d_enabled = True
+                        break 
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
                     d_key = d.key # does not matter which key we use here
                     d_regtype = d.register_type
             else: # normal entity
-                entity_id = f"sensor.{self._name}_{descr.key}"
-                d_enabled = is_entity_enabled(self._hass, self, descr) or descr.internal
+                # 1. First, check if the entity itself should be loaded based on its own state or defaults.
+                d_enabled = should_register_be_loaded(self._hass, self, descr)
+
+                # 2. If it's disabled, check if it's a required dependency for another ENABLED control.
+                if not d_enabled:
+                    if self._is_dependency_for_enabled_control(descr.key):
+                        d_enabled = True
+                        _LOGGER.debug(f"Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
+
                 d_newblock = descr.newblock
                 d_unit = descr.unit
                 d_wordcount = descr.wordcount
@@ -1107,7 +1183,7 @@ class SolaXModbusHub:
                         start = INVALID_START
                         end = 0
                         curblockregs = []
-                else: _LOGGER.debug(f"newblock declaration found for empty block")
+                    else: _LOGGER.debug(f"newblock declaration found for empty block")
 
                 if start == INVALID_START: start = reg
 
