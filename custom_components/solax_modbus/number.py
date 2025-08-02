@@ -42,9 +42,13 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         ):
             if not (newdescr.name.startswith(inverter_name_suffix)):
                 newdescr.name = inverter_name_suffix + newdescr.name
+
             number = SolaXModbusNumber(hub_name, hub, modbus_addr, hub.device_info, newdescr)
-            if newdescr.write_method == WRITE_DATA_LOCAL:
+            if newdescr.write_method == WRITE_DATA_LOCAL:         
                 hub.writeLocals[newdescr.key] = newdescr
+            # Use the explicit sensor_key if provided, otherwise fall back to the number's own key.
+            dependency_key = getattr(newdescr, 'sensor_key', newdescr.key)
+            if dependency_key != newdescr.key: hub.entity_dependencies[dependency_key] = newdescr.key
             hub.numberEntities[newdescr.key] = number
             entities.append(number)
     async_add_entities(entities)
