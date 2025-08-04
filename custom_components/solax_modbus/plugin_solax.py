@@ -8501,7 +8501,7 @@ class solax_plugin(plugin_base):
             invertertype = HYBRID | GEN6 | X3  # X3-HYB-G4 PRO
             if kw_value >= 8:
                 invertertype |= MPPT3
-            self.inverter_model = f"X3-G4PRO-{kw_value}kW"
+            self.inverter_model = f"X3-G4PRO-{kw_value}kW"  #datasheet name X3-HYB-4.0-P
         elif seriesnumber.startswith("XAU"):
             invertertype = MIC | GEN2 | X1  # X1-Boost
             self.inverter_model = "X1-Boost"
