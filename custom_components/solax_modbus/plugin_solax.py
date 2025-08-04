@@ -8496,27 +8496,12 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("H3BG30"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra G
             self.inverter_model = "X3-Ultra-30kW"
-        elif seriesnumber.startswith("10K04"):
-            invertertype = HYBRID | GEN6 | X3  # X3 G4 PRO ?
-            self.inverter_model = "X3-G4PRO-4kW"
-        elif seriesnumber.startswith("10K05"):
-            invertertype = HYBRID | GEN6 | X3  # X3 G4 PRO ?
-            self.inverter_model = "X3-G4PRO-5kW"
-        elif seriesnumber.startswith("10K06"):
-            invertertype = HYBRID | GEN6 | X3  # X3 G4 PRO ?
-            self.inverter_model = "X3-G4PRO-6kW"
-        elif seriesnumber.startswith("10K08"):
-            invertertype = HYBRID | GEN6 | MPPT3 | X3  # X3 G4 PRO ?
-            self.inverter_model = "X3-G4PRO-8kW"
-        elif seriesnumber.startswith("10K0A"):
-            invertertype = HYBRID | GEN6 | MPPT3 | X3  # X3 G4 PRO 10kW
-            self.inverter_model = "X3-G4PRO-10kW"
-        elif seriesnumber.startswith("10K12"):
-            invertertype = HYBRID | GEN6 | MPPT3 | X3  # X3 G4 PRO ?
-            self.inverter_model = "X3-G4PRO-12kW"
-        elif seriesnumber.startswith("10K0F"):
-            invertertype = HYBRID | GEN6 | MPPT3 | X3  # X3 G4 PRO #1484
-            self.inverter_model = "X3-G4PRO-15kW"
+        elif seriesnumber.startswith("10K"):
+            kw_value = int(seriesnumber[3:5], 16) 
+            invertertype = HYBRID | GEN6 | X3  # X3-HYB-G4 PRO
+            if kw_value >= 8:
+                invertertype |= MPPT3
+            self.inverter_model = f"X3-G4PRO-{kw_value}kW"  #datasheet name X3-HYB-4.0-P
         elif seriesnumber.startswith("XAU"):
             invertertype = MIC | GEN2 | X1  # X1-Boost
             self.inverter_model = "X1-Boost"
