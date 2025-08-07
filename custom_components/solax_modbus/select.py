@@ -32,6 +32,9 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 if (select_info.initvalue is not None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info
             hub.selectEntities[select_info.key] = select
+            # Use the explicit sensor_key if provided, otherwise fall back to the select's own key.
+            dependency_key = getattr(select_info, 'sensor_key', select_info.key)
+            if dependency_key != select_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(select_info.key) # can be more than one
             entities.append(select)
 
     async_add_entities(entities)
