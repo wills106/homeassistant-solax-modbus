@@ -38,3 +38,8 @@ There are no active developers with this setup, so we have limited ability to re
 - Ensure all inverters have a different modbus address
 - Try setting longer polling frequency (double or more)
 - Check baudrate is the same on all inverters
+
+## The maximum export limit is too low
+
+For systems with a parallel mode setup, the default export limit can be too low.
+To adapt this, there is a disabled entity called `config_max_export`. If you enable that entity, you can configure your own export limit (may require a restart).
