@@ -7,7 +7,25 @@ Always also check vendor specific FAQ pages:
 - [SolaX Power](solax-faq.md)
 - [Sofar Solar](sofar-faq.md)
 
-## Detailed Error Log
+
+## Produce a debug log file with startup info
+When reporting an issue, we recommend or may ask you to attach a debug log that includes a HA restart.
+Not only the error messages are of interest, but also the information on how blocks are composed and read may be needed to resolve an issue.
+The easiest way to temporarily enable debug loggging is:
+- go to Settings -> Devices and services
+- Select the Solax Modbus integration
+- In the right corner aboven you will find a dropdown that allows you to enable debug logging: <img width="2358" height="742" alt="image" src="https://github.com/user-attachments/assets/d6089849-5671-46ec-b875-552b8ca1591c" />
+- Restart HA (e.g. by going to Developer Tools > -> YAML tab -> Restart
+- Give HA sufficient time to restart and wait until all services are loaded
+- Go back to the Settings -> Devices and Services -> Solax modbus page and disable debug logging
+- You will now have the option to download the debug log file
+
+In case you forget to disable debug mode, the system will automatically disable it after a while (at next restart ?)
+
+
+
+
+## Detailed Log - alternative way
 [![Open your Home Assistant instance and display logs.](https://my.home-assistant.io/badges/logs.svg)](https://my.home-assistant.io/redirect/logs/)
 
 Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
