@@ -8403,18 +8403,14 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("H58"):
             invertertype = HYBRID | GEN5 | X1 | MPPT3  # X1-IES 8kW
             self.inverter_model = f"X1-IES-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
-        elif seriesnumber.startswith("10M05"):
-            invertertype = AC | GEN6 | X1 | MPPT3  # X1-VAST-5K ?
-            self.inverter_model = "X1-VAST-5kW"
-        elif seriesnumber.startswith("10M06"):
-            invertertype = AC | GEN6 | X1 | MPPT3  # X1-VAST-6K ?
-            self.inverter_model = "X1-VAST-6kW"
-        elif seriesnumber.startswith("10M08"):
-            invertertype = AC | GEN6 | X1 | MPPT4  # X1-VAST-8K
-            self.inverter_model = "X1-VAST-8kW"
-        elif seriesnumber.startswith("10M0A"):
-            invertertype = AC | GEN6 | X1 | MPPT4  # X1-VAST-10K
-            self.inverter_model = "X1-VAST-10kW"
+        elif seriesnumber.startswith("10M"):
+            kw_value = int(seriesnumber[3:5], 16)
+            invertertype = AC | GEN6 | X1
+            if kw_value < 8:
+                invertertype |= MPPT3
+            else:
+                invertertype |= MPPT4
+            self.inverter_model = f"X1-VAST-{kw_value}kW"  # datasheet name X1-VAST-6K
         elif seriesnumber.startswith("H31"):
             invertertype = HYBRID | GEN4 | X3  # TIGO TSI X3
             self.inverter_model = "X3-TIGO TSI"
@@ -8614,21 +8610,12 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MP156T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith("MPT08"):
-            invertertype = MIC | GEN2 | X3  # MIC PRO X3
-            self.inverter_model = "X3-MIC PRO-8kW"
-        elif seriesnumber.startswith("MPT1"):
-            invertertype = MIC | GEN2 | X3  # MIC PRO X3 10-17kW
-            self.inverter_model = f"X3-MIC PRO-{seriesnumber[3:5]}kW"
-        elif seriesnumber.startswith("MPT20"):
-            invertertype = MIC | GEN2 | X3  # MIC PRO X3
-            self.inverter_model = "X3-MIC PRO-20kW"
-        elif seriesnumber.startswith("MPT25"):
-            invertertype = MIC | GEN2 | X3 | MPPT3  # MIC PRO X3
-            self.inverter_model = "X3-MIC PRO-25kW"
-        elif seriesnumber.startswith("MPT30"):
-            invertertype = MIC | GEN2 | X3 | MPPT3  # MIC PRO X3
-            self.inverter_model = "X3-MIC PRO-30kW"
+        elif seriesnumber.startswith("MPT"):
+            kw_value = int(seriesnumber[3:5])
+            invertertype = MIC | GEN2 | X3
+            if kw_value >= 25:
+                invertertype |= MPPT3
+            self.inverter_model = f"X3-MIC PRO-{kw_value}kW"  # datasheet name X3-MIC-3K-G2
         elif seriesnumber.startswith("MAX"):
             invertertype = MAX  # MAX G1
             self.inverter_model = "X3-MAX"
