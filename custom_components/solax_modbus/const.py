@@ -154,8 +154,8 @@ class plugin_base:
     inverter_model: str = None
     default_holding_scangroup: str = SCAN_GROUP_DEFAULT  
     default_input_scangroup: str = SCAN_GROUP_DEFAULT   # or SCAN_GROUP_AUTO
-    auto_default_scangroup: str = SCAN_GROUP_FAST, # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
-    auto_slow_scangroup: str = SCAN_GROUP_MEDIUM, # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_default_scangroup: str = SCAN_GROUP_FAST # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
+    auto_slow_scangroup: str = SCAN_GROUP_MEDIUM # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
 
     def isAwake(self, datadict):
         return True  # always awake by default
@@ -243,7 +243,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
-
+    sensor_key: str = None # specify only when corresponding sensor has a different key name
 
 @dataclass
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
@@ -274,6 +274,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
     prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
                                   # update only when read value changes
+    sensor_key: str = None # only specify this if corresponding sensor has a different key name
 
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
