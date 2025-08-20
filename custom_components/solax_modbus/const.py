@@ -12,10 +12,17 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
+from enum import Enum
 try:
     from pymodbus.constants import Endian  # for pymodbus < 3.0
 except ImportError:
-    from pymodbus.payload import Endian    # for pymodbus >= 3.0
+    try:        
+        from pymodbus.payload import Endian    # for pymodbus >= 3.0
+    except Exception:
+        class Endian(str, Enum):
+            AUTO = "@"
+            BIG = ">"
+            LITTLE = "<"        
 from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
