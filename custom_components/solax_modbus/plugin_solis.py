@@ -1593,7 +1593,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register=33135,
         register_type=REG_INPUT, 
         #entity_registry_enabled_default=False, # issue 1523
-        internal = True
+        internal = True,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
