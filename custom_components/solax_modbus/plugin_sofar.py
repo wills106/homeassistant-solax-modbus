@@ -3290,6 +3290,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="BatConfig: Charging Voltage",
         key="bat_config_charging_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        newblock=True, #added issue #1543
         register=0x1048,
         scale=0.1,
         rounding=1,
