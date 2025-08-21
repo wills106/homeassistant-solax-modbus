@@ -36,7 +36,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 hub.computedSwitches[switch_info.key] = switch_info
             if switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
-            dependency_key = getattr(select_info, 'sensor_key', switch_info.key)
+            dependency_key = getattr(switch_info, 'sensor_key', switch_info.key)
             if dependency_key != switch_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(switch_info.key) # can be more than one
             hub.switchEntities[switch_info.key] = switch # Store the switch entity
             entities.append(switch)
@@ -46,7 +46,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 
 
 class SolaXModbusSwitch(SwitchEntity):
-    """Representation of an SolaX Modbus select."""
+    """Representation of an SolaX Modbus switch."""
 
     def __init__(self, platform_name, hub, modbus_addr, device_info, switch_info) -> None:
         super().__init__()
