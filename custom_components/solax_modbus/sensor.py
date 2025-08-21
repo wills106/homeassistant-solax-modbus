@@ -31,7 +31,7 @@ empty_input_device_group_lambda = lambda: SimpleNamespace(
         readFollowUp = None,
         )
 
-def is_entity_enabled(hass, hub, descriptor): 
+def is_entity_enabled(hass, hub, descriptor, use_default = False): 
     # simple test, more complex counterpart is should_register_be_loaded
     unique_id     = f"{hub._name}_{descriptor.key}" 
     registry = er.async_get(hass)
@@ -42,8 +42,10 @@ def is_entity_enabled(hass, hub, descriptor):
             _LOGGER.debug(f"is_entity_enabled: {entity_id} is enabled, returning True.")
             return True # Found an enabled entity, no need to check further 
         else:
-            _LOGGER.debug(f"is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
-            return descriptor.entity_registry_enabled_default
+            if use_default: 
+                _LOGGER.debug(f"is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
+                return descriptor.entity_registry_enabled_default
+            else: return False
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -187,7 +189,7 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
-        enabled = is_entity_enabled(hub._hass, hub, newdescr) # dont compute disabled entities anymore
+        enabled = is_entity_enabled(hub._hass, hub, newdescr, use_default = True) # dont compute disabled entities anymore
         if newdescr.value_function and enabled: #*** dont compute disabled entities anymore
             computedRegs[newdescr.key] = newdescr
         else: 
