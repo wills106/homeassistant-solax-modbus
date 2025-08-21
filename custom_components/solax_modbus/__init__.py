@@ -56,7 +56,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor
+from .sensor import SolaXModbusSensor, is_entity_enabled
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -1052,8 +1052,8 @@ class SolaXModbusHub:
             # Do NOT call modbus_data_updated() from here Race Condition:it calls hub.rebuild_blocks() before async_add_entities is called.
             data[key] = descr.value_function(0, descr, data)
             sens = self.sensorEntities[key]
-            #_LOGGER.debug(f"quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
-            if sens and not descr.internal: sens.modbus_data_updated() # publish state to GUI and automations faster
+            _LOGGER.debug(f"quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
+            if sens and is_entity_enabled(self._hass, self, descr) and not descr.internal: sens.modbus_data_updated() # publish state to GUI and automations faster
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
