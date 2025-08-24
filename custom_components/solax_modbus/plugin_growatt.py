@@ -5763,7 +5763,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon = "mdi:home-export-outline",
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Today's Load",
+        name = "Today's Load Energy",
         key = "today_s_yield",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
@@ -5776,7 +5776,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Load",
+        name = "Total Load Energy",
         key = "total_yield",
         native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR,
         device_class = SensorDeviceClass.ENERGY,
