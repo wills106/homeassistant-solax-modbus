@@ -3951,7 +3951,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN,
-        entity_registry_enabled_default = False,
+        #entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -3966,7 +3966,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN,
-        entity_registry_enabled_default = False,
+        #entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -4124,7 +4124,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN2 | GEN3 | X3 | ALL_MPPT_GROUP,
-        entity_registry_enabled_default = False,
+        #entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -4154,7 +4154,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale = 0.1,
         rounding = 1,
         allowedtypes = GEN2 | GEN3 | X3 | MPPT4 | MPPT6 | MPPT8 | MPPT10,
-        entity_registry_enabled_default = False,
+        #entity_registry_enabled_default = False,
         icon = "mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
