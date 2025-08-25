@@ -25,10 +25,10 @@ In case you forget to disable debug mode, the system will automatically disable 
 
 
 
-## Detailed Log - alternative way
+## Detailed Log - alternative way (in case the integration cannot even be installed)
 [![Open your Home Assistant instance and display logs.](https://my.home-assistant.io/badges/logs.svg)](https://my.home-assistant.io/redirect/logs/)
 
-Settings → System → Logs > at bottom of page press “LOAD FULL LOGS”
+Settings → System → Logs > dropdown at top right corner > “LOAD FULL LOGS”
 Now the full logs are loaded. If you scroll down, you will see them. Once the full logs are shown, you can either use the search function in your browser to search for “solax” related entries or use the search entry field on top of the page.
 Search for solax and report us the logs. Make sure to replace sensitive information by xxxx (if any)
 
@@ -37,6 +37,7 @@ If the log doesn't return anything useful add the following to your `configurati
 logger:
   default: info
 ```
+You could also chose debug instead of info, but don't forget to disable debug mode again.
 
 ## Detected blocking call
 
