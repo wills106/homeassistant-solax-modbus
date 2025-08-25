@@ -1039,9 +1039,11 @@ class SolaXModbusHub:
         for block in group.holdingBlocks:
             _LOGGER.debug(f"{self._name}: ** trying to read holding block {block.start} {res}")
             res = res and await self.async_read_modbus_block(data, block, "holding")
+        _LOGGER.debug(f"{self._name}: holding block reads done")
         for block in group.inputBlocks:
             _LOGGER.debug(f"{self._name}: ** trying to read input block {block.start} {res}")
             res = res and await self.async_read_modbus_block(data, block, "input")
+        _LOGGER.debug(f"{self._name}: input block reads done")
 
         if self.localsUpdated:
             await self._hass.async_add_executor_job(self.saveLocalData)
