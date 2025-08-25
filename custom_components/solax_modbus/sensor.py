@@ -39,11 +39,11 @@ def is_entity_enabled(hass, hub, descriptor, use_default = False):
     if entity_id:
         entity_entry = registry.async_get(entity_id) 
         if entity_entry and not entity_entry.disabled: 
-            _LOGGER.debug(f"is_entity_enabled: {entity_id} is enabled, returning True.")
+            _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} is enabled, returning True.")
             return True # Found an enabled entity, no need to check further 
         else:
             if use_default: 
-                _LOGGER.debug(f"is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
+                _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
                 return descriptor.entity_registry_enabled_default
             else: return False
 
