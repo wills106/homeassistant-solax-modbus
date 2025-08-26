@@ -591,7 +591,7 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
         """Time to update."""
-        _LOGGER.debug(f"scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
+        _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         self.cyclecount = self.cyclecount + 1
         if not interval_group.device_groups:
             return
@@ -841,8 +841,8 @@ class SolaXModbusHub:
     def treat_address(self, data, decoder, descr, initval=0):
         return_value = None
         val = None
-        if self.cyclecount < 5:
-            _LOGGER.debug(f"treating {self._name} register 0x{descr.register:02x} : {descr.key}")
+        if self.cyclecount < 20:
+            _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if descr.unit == REGISTER_U16:
                 val = decoder.decode_16bit_uint()
@@ -933,7 +933,7 @@ class SolaXModbusHub:
 
     async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
-        if self.cyclecount < 5:
+        if self.cyclecount < 20:
             _LOGGER.debug(
                 f"{self._name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
             )
@@ -952,7 +952,7 @@ class SolaXModbusHub:
                 )
         except Exception as ex:
             errmsg = f"exception {str(ex)} "
-            _LOGGER.debug(f"exception reading {typ} {block.start} {errmsg}")
+            _LOGGER.debug(f"{self._name}: exception reading {typ} {block.start} {errmsg}")
         else:
             if realtime_data is None or realtime_data.isError():
                 errmsg = f"read_error "
@@ -998,7 +998,7 @@ class SolaXModbusHub:
             return True
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
-            _LOGGER.debug(f"{self._name}: failed {typ} block {errmsg} start {block.start} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
+            _LOGGER.debug(f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
             if (firstdescr.ignore_readerror is not False):  # ignore block read errors and return static data
                 _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
@@ -1009,18 +1009,18 @@ class SolaXModbusHub:
                         d_ignore = descr.ignore_readerror
                         d_key = descr.key
                         if (d_ignore is not True) and (d_ignore is not False):
-                            _LOGGER.debug(f"returning static {d_key} = {d_ignore}")
+                            _LOGGER.debug(f"{self._name}: returning static {d_key} = {d_ignore}")
                             data[d_key] = d_ignore  # return something static
                         else:
                             if d_ignore is False: # remove potentially faulty data
                                 popped = data.pop(d_key, None) # added 20250716
-                                _LOGGER.debug(f"popping {d_key} = {popped}")
-                            else: _LOGGER.debug(f"not touching {d_key} ")
+                                _LOGGER.debug(f"{self._name}: popping {d_key} = {popped}")
+                            else: _LOGGER.debug(f"{self._name}: not touching {d_key} ")
                 return True
             else: # dont ignore readerrors
                 if self.slowdown == 1:
                     _LOGGER.info(
-                        f"{errmsg}: {self._name} cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
+                        f"{self._name} : {errmsg}: cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
                         exc_info=True,
                     )
                 return False
@@ -1028,22 +1028,22 @@ class SolaXModbusHub:
     async def async_read_modbus_registers_all(self, group):
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
-                _LOGGER.info(f"device group read cancel")
+                _LOGGER.info(f"{self._name}: device group read cancel")
                 return True
         else:
-            _LOGGER.debug(f"device group inverter")
+            _LOGGER.debug(f"{self._name}: device group inverter")
 
         #data = {"_repeatUntil": self.data["_repeatUntil"]} # remove for issue #1440 but then does not recognize comm errors
         data = self.data # is an alias, not a copy (issue #1440)
         res = True
         for block in group.holdingBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read holding block {block.start} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} {res}")
             res = res and await self.async_read_modbus_block(data, block, "holding")
-        _LOGGER.debug(f"{self._name}: holding block reads done")
+            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done {res}")
         for block in group.inputBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read input block {block.start} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} {res}")
             res = res and await self.async_read_modbus_block(data, block, "input")
-        _LOGGER.debug(f"{self._name}: input block reads done")
+            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done {res}")
 
         if self.localsUpdated:
             await self._hass.async_add_executor_job(self.saveLocalData)
