@@ -602,7 +602,7 @@ class SolaXModbusHub:
             for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
-                    if self.slowdown > 1: _LOGGER.info(f"{self.core_hub_name}: communication restored, resuming normal speed after slowdown")
+                    if self.slowdown > 1: _LOGGER.info(f"{self._name}: communication restored, resuming normal speed after slowdown")
                     self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
