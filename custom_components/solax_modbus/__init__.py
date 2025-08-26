@@ -173,7 +173,7 @@ def should_register_be_loaded(hass, hub, descriptor):
         if entity_id: _LOGGER.debug(f"{hub.name}: should be loaded: entity_id for {unique_id} on platform {platform} is now {entity_id}")
         else: 
             entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
-            _LOGGER.debug(f"should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
+            _LOGGER.debug(f"{hub.name}: should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
         if entity_id:
             entity_found = True
             entity_entry = registry.async_get(entity_id) 
