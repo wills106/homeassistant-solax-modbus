@@ -10,8 +10,9 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/wills106/homsassistant-solax-modbus/issues",
   "requirements": ["pymodbus>=3.8.3"],
-  "version": "2025.08.3"
+  "version": "2025.08.4"
 }
+
 
 
 
