@@ -143,7 +143,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     #now the groups are available
     hub.computedSensors = computedRegs
     hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
-    _LOGGER.debug(f"computedRegs: {hub.computedSensors}")
+    _LOGGER.debug(f"{hub.name}: computedRegs: {hub.computedSensors}")
     return True
 
 

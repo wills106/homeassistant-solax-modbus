@@ -43,6 +43,7 @@ from homeassistant.helpers import entity_registry as er
 
 RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
+VERBOSE_CYCLES = 20
 
 
 try:
@@ -601,7 +602,7 @@ class SolaXModbusHub:
             for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
                 update_result = await self.async_read_modbus_data(group)
                 if update_result:
-                    if self.slowdown > 1: _LOGGER.info(f"{self.core_hub_name}: communication restored, resuming normal speed after slowdown")
+                    if self.slowdown > 1: _LOGGER.info(f"{self._name}: communication restored, resuming normal speed after slowdown")
                     self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
@@ -841,7 +842,7 @@ class SolaXModbusHub:
     def treat_address(self, data, decoder, descr, initval=0):
         return_value = None
         val = None
-        if self.cyclecount < 20:
+        if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if descr.unit == REGISTER_U16:
@@ -868,7 +869,7 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"{self._name}: undefinded unit for entity {descr.key} - setting value to zero")
                 val = 0
         except Exception as ex:
-            if self.cyclecount < 5:
+            if self.cyclecount < VERBOSE_CYCLES:
                 _LOGGER.warning(
                     f"{self._name}: read failed at 0x{descr.register:02x}: {descr.key}",
                     exc_info=True,
@@ -933,7 +934,7 @@ class SolaXModbusHub:
 
     async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
-        if self.cyclecount < 20:
+        if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
                 f"{self._name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
             )
@@ -971,7 +972,7 @@ class SolaXModbusHub:
             for reg in block.regs:
                 if (reg - prevreg) > 0:
                     decoder.skip_bytes((reg - prevreg) * 2)
-                    if self.cyclecount < 5:
+                    if self.cyclecount < VERBOSE_CYCLES:
                         _LOGGER.debug(f"skipping bytes {(reg-prevreg) * 2}")
                 descr = block.descriptions[reg]
                 if type(descr) is dict:  #  set of byte values
@@ -1211,11 +1212,11 @@ class SolaXModbusHub:
         return blocks
 
     def rebuild_blocks(self, initial_groups): #, computedRegs):
-        _LOGGER.info(f"rebuilding groups and blocks - pre: {initial_groups.keys()}")
+        _LOGGER.info(f"{self._name}: rebuilding groups and blocks - pre: {initial_groups.keys()}")
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():
             for device_name, device_group in interval_group.device_groups.items():
-                _LOGGER.info(f"rebuild for device {device_name} in interval {interval}")
+                _LOGGER.info(f"{self._name}: rebuild for device {device_name} in interval {interval}")
                 holdingRegs = dict(sorted(device_group.holdingRegs.items()))
                 inputRegs   = dict(sorted(device_group.inputRegs.items()))
                 # update the hub groups
