@@ -6962,6 +6962,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         },
         allowedtypes=MIC | GEN2 | X3,
         internal=True,
+        newblock=True, # trying to resolve issue #1491 section described by @mapotn
     ),
     SolaXModbusSensorEntityDescription(
         name="Export Power Limit",
