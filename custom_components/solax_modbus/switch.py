@@ -101,7 +101,7 @@ class SolaXModbusSwitch(SwitchEntity):
             sensvalue = self._hub.data.get(self._sensor_key, None)
             if sensvalue: sensor_value = int(sensvalue)
             else: 
-                _LOGGER.error(f"{self._hub.name} Sensor {self._sensor_key} corresponding to switch {self._key} bit {self._bit} has no integer value {sensvalue}")
+                _LOGGER.error(f"{self._hub.name}: Sensor {self._sensor_key} corresponding to switch {self._key} bit {self._bit} has no integer value {sensvalue}")
                 sensor_value = 0 # probably completely wrong, but at least we can continue with other entities
             return bool(sensor_value & (1 << self._bit))
 
