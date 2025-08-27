@@ -16,7 +16,7 @@ The easiest way to temporarily enable debug loggging is:
 - Select the Solax Modbus integration
 - In the right corner aboven you will find a dropdown that allows you to enable debug logging: <img width="2358" height="742" alt="image" src="https://github.com/user-attachments/assets/d6089849-5671-46ec-b875-552b8ca1591c" />
 - Restart HA (e.g. by going to Developer Tools > -> YAML tab -> Restart
-- Give HA sufficient time to restart and wait until all services are loaded
+- Give HA sufficient time to restart and wait until all services are loaded. _Please make sure you wait long enough to catch sufficient logs (minimum 2 minutes)_
 - Go back to the Settings -> Devices and Services -> Solax modbus page and disable debug logging
 - You will now have the option to download the debug log file
 
