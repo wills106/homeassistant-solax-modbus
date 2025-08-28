@@ -1285,7 +1285,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return hub
             except (TypeError, AttributeError):
                 pass
-        _LOGGER.info(f"{self._name}:Inverter is not connected, trying to connect")
+        _LOGGER.info(f"{self._name}: Inverter is not connected, trying to connect")
         return await self.async_connect(hub)
 
     def _hub_closed_now(self, ref_obj):
