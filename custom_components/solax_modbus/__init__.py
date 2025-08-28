@@ -936,7 +936,7 @@ class SolaXModbusHub:
         errmsg = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
-                f"{self._name} modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
+                f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
             )
         try:
             if typ == "input":
@@ -1177,9 +1177,13 @@ class SolaXModbusHub:
                         if  ( (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False) ) and not d_newblock: # automatically created block
                             if type(descr) is dict: 
                                 for sub, d in descr.items():
-                                    if d.ignore_readerror is False: d.ignore_readerror = auto_block_ignore_readerror
+                                    if d.ignore_readerror is False: 
+                                        d.ignore_readerror = auto_block_ignore_readerror
+                                        d_ignore_readerror = d_ignore_readerror or d.ignore_readerror
                             else: 
-                                if descr.ignore_readerror is False: descr.ignore_readerror = auto_block_ignore_readerror
+                                if descr.ignore_readerror is False: 
+                                    descr.ignore_readerror = auto_block_ignore_readerror
+                                    d_ignore_readerror = descr.ignore_readerror
                         #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                         newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
                         blocks.append(newblock)
@@ -1190,7 +1194,7 @@ class SolaXModbusHub:
 
                 if start == INVALID_START: start = reg
 
-                _LOGGER.debug(f"{self._name}: adding register 0x{reg:x} {d_key} to block with start 0x{start:x}")
+                _LOGGER.debug(f"{self._name}: adding register 0x{reg:x} {d_key} to block with start 0x{start:x} ignore_readerror:{d_ignore_readerror}")
                 if d_unit in (REGISTER_STR, REGISTER_WORDS,):
                     if (d_wordcount): end = reg+d_wordcount
                     else: _LOGGER.warning(f"{self._name}: invalid or missing missing wordcount for {d_key}")
