@@ -1058,7 +1058,7 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
             if sens and (not descr.internal):  
                 try: sens.modbus_data_updated() # publish state to GUI and automations faster - assuming enabled, otherwise exception
-                except Exception: _LOGGER.debug(f"{self._name}: cannot send updat for {key} - probably disabled ")
+                except Exception: _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
@@ -1285,7 +1285,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return hub
             except (TypeError, AttributeError):
                 pass
-        _LOGGER.info(f"{self._name}:Inverter is not connected, trying to connect")
+        _LOGGER.info(f"{self._name}: Inverter is not connected, trying to connect")
         return await self.async_connect(hub)
 
     def _hub_closed_now(self, ref_obj):
