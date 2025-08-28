@@ -97,7 +97,7 @@ class SolaXModbusSwitch(SwitchEntity):
             return self._attr_is_on
 
         # Otherwise, return the sensor state
-        if self._sensor_key and self._sensor_key in self._hub.data:
+        if self._sensor_key and (self._sensor_key in self._hub.data):
             sensvalue = self._hub.data.get(self._sensor_key, None)
             if sensvalue is not None: sensor_value = int(sensvalue)
             else: 
