@@ -1058,7 +1058,7 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
             if sens and (not descr.internal):  
                 try: sens.modbus_data_updated() # publish state to GUI and automations faster - assuming enabled, otherwise exception
-                except: _LOGGER.debug(f"{self._name}: cannot send updat for {key} - probably disabled ")
+                except: _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
