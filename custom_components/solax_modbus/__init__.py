@@ -57,7 +57,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor, is_entity_enabled
+from .sensor import SolaXModbusSensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -652,7 +652,7 @@ class SolaXModbusHub:
     
     async def _check_connection(self):
         if not self._client.connected:
-            _LOGGER.info("Inverter is not connected, trying to connect")
+            _LOGGER.info(f"{self._name}: Inverter is not connected, trying to connect")
             await self.async_connect()
             await asyncio.sleep(1)
         return self._client.connected
@@ -664,7 +664,7 @@ class SolaXModbusHub:
     async def async_connect(self):
         #result = False
         _LOGGER.debug(
-            f"Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
+            f"{self._name}: Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
         )
         await self._client.connect()
 
@@ -1038,13 +1038,13 @@ class SolaXModbusHub:
         data = self.data # is an alias, not a copy (issue #1440)
         res = True
         for block in group.holdingBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} previous res:{res}")
             res = res and await self.async_read_modbus_block(data, block, "holding")
-            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done {res}")
+            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done; new res: {res}")
         for block in group.inputBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} previous res: {res}")
             res = res and await self.async_read_modbus_block(data, block, "input")
-            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done {res}")
+            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done; new res: {res}")
 
         if self.localsUpdated:
             await self._hass.async_add_executor_job(self.saveLocalData)
@@ -1056,7 +1056,9 @@ class SolaXModbusHub:
             data[key] = descr.value_function(0, descr, data)
             sens = self.sensorEntities[key]
             _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
-            if sens and is_entity_enabled(self._hass, self, descr) and not descr.internal: sens.modbus_data_updated() # publish state to GUI and automations faster
+            if sens and (not descr.internal):  
+                try: sens.modbus_data_updated() # publish state to GUI and automations faster - assuming enabled, otherwise exception
+                except: _LOGGER.debug(f"{self._name}: cannot send updat for {key} - probably disabled ")
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
@@ -1283,7 +1285,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return hub
             except (TypeError, AttributeError):
                 pass
-        _LOGGER.info("Inverter is not connected, trying to connect")
+        _LOGGER.info(f"{self._name}:Inverter is not connected, trying to connect")
         return await self.async_connect(hub)
 
     def _hub_closed_now(self, ref_obj):
