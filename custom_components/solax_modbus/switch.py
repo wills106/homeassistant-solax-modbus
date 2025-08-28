@@ -93,7 +93,7 @@ class SolaXModbusSwitch(SwitchEntity):
     def is_on(self):
         """Return the state of the switch."""
         # Prioritize user action within debounce time
-        if self._last_command_time and datetime.now() - self._last_command_time < DEBOUNCE_TIME:
+        if self._last_command_time and ((datetime.now() - self._last_command_time) < DEBOUNCE_TIME):
             return self._attr_is_on
 
         # Otherwise, return the sensor state
