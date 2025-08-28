@@ -720,8 +720,8 @@ NUMBER_TYPES = [
         icon="mdi:home-clock",
         initvalue=0,  # seconds -
         native_min_value=0,
-        native_max_value=28800,
-        native_step=600,
+        native_max_value=172800,
+        native_step=1,
         fmt="i",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method=WRITE_DATA_LOCAL,
@@ -6962,6 +6962,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         },
         allowedtypes=MIC | GEN2 | X3,
         internal=True,
+        newblock=True, # trying to resolve issue #1491 section described by @mapotn
     ),
     SolaXModbusSensorEntityDescription(
         name="Export Power Limit",
