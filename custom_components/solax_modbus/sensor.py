@@ -47,8 +47,7 @@ def is_entity_enabled(hass, hub, descriptor, use_default = False):
     if use_default: 
         _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
         return descriptor.entity_registry_enabled_default
-    else:
-        return False
+    return False
 
 
 
