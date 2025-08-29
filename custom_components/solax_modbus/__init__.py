@@ -418,6 +418,14 @@ class SolaXModbusHub:
         self.blocks_changed = False
         self.initial_groups = {} # as returned by the sensor setup - holdingRegs and inputRegs should not change 
 
+        # Bad register handling (startup bisect + deferred recheck)
+        # bad_regs: definitively bad entity base-addresses (per register type)
+        # bad_recheck: candidates found by bisect that must be revalidated later
+        self.bad_regs = {"holding": set(), "input": set()}
+        self.bad_recheck = {"holding": set(), "input": set()}
+        self._did_initial_bisect = False
+        self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
+
         #_LOGGER.debug("solax modbushub done %s", self.__dict__)
 
 
@@ -1133,7 +1141,7 @@ class SolaXModbusHub:
 
 # --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
 
-    def splitInBlocks( self, descriptions):
+    def splitInBlocks(self, descriptions):
         start = INVALID_START
         end = 0
         blocks = []
@@ -1142,19 +1150,19 @@ class SolaXModbusHub:
         curblockregs = []
         for reg, descr in descriptions.items():
             d_ignore_readerror = auto_block_ignore_readerror
-            if type(descr) is dict: # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
+            if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
                 d_newblock = False
                 d_enabled = False
                 for sub, d in descr.items():
                     #d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
-                    if should_register_be_loaded(self._hass, self, d): # *** CHANGED LINE: logic delegated to new function
+                    if should_register_be_loaded(self._hass, self, d):
                         d_enabled = True
-                        break 
+                        break
                     d_unit = d.unit
                     d_wordcount = 1 # not used here
                     d_key = d.key # does not matter which key we use here
                     d_regtype = d.register_type
-            else: # normal entity
+            else:  # normal entity
                 # 1. First, check if the entity itself should be loaded based on its own state or defaults.
                 d_enabled = should_register_be_loaded(self._hass, self, descr)
 
@@ -1175,44 +1183,58 @@ class SolaXModbusHub:
                     if ((end - start) > 0):
                         _LOGGER.debug(f"{self._name}: Starting new block at 0x{reg:x} ")
                         if  ( (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False) ) and not d_newblock: # automatically created block
-                            if type(descr) is dict: 
+                            if type(descr) is dict:
                                 for sub, d in descr.items():
-                                    if d.ignore_readerror is False: 
+                                    if d.ignore_readerror is False:
                                         d.ignore_readerror = auto_block_ignore_readerror
                                         d_ignore_readerror = d_ignore_readerror or d.ignore_readerror
-                            else: 
-                                if descr.ignore_readerror is False: 
+                            else:
+                                if descr.ignore_readerror is False:
                                     descr.ignore_readerror = auto_block_ignore_readerror
                                     d_ignore_readerror = descr.ignore_readerror
-                        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-                        newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
+                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
                         blocks.append(newblock)
                         start = INVALID_START
                         end = 0
                         curblockregs = []
-                    else: _LOGGER.debug(f"{self._name}: newblock declaration found for empty block")
+                    else:
+                        _LOGGER.debug(f"{self._name}: newblock declaration found for empty block")
 
-                if start == INVALID_START: start = reg
+                if start == INVALID_START:
+                    start = reg
+
+                # Skip definitively bad entity bases and split blocks at bad boundaries
+                typ_key = "holding" if d_regtype == REG_HOLDING else "input"
+                if reg in self.bad_regs[typ_key]:
+                    # Close current block if it already has content
+                    if ((end - start) > 0):
+                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
+                        blocks.append(newblock)
+                    # Reset for next block after the bad address
+                    start = INVALID_START
+                    end = 0
+                    curblockregs = []
+                    _LOGGER.debug(f"{self._name}: skipping bad {typ_key} register 0x{reg:x}")
+                    continue
 
                 _LOGGER.debug(f"{self._name}: adding register 0x{reg:x} {d_key} to block with start 0x{start:x} ignore_readerror:{d_ignore_readerror}")
                 if d_unit in (REGISTER_STR, REGISTER_WORDS,):
-                    if (d_wordcount): end = reg+d_wordcount
-                    else: _LOGGER.warning(f"{self._name}: invalid or missing missing wordcount for {d_key}")
-                elif d_unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
-                else: end = reg + 1
+                    if (d_wordcount):
+                        end = reg + d_wordcount
+                    else:
+                        _LOGGER.warning(f"{self._name}: invalid or missing missing wordcount for {d_key}")
+                elif d_unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):
+                    end = reg + 2
+                else:
+                    end = reg + 1
                 _LOGGER.debug(f"{self._name}: adding type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
                 curblockregs.append(reg)
             else:
                 _LOGGER.debug(f"{self._name}: ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
 
-
-        if ((end-start)>0): # close last block
-            #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-            newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
+        if ((end - start) > 0):  # close last block
+            newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
             blocks.append(newblock)
-        # Remove empty blocks before returning the blocks. - is this needed ??
-        #before = len(blocks)
-        #blocks = [b for b in blocks if b.regs] # needed ??
         return blocks
 
     def rebuild_blocks(self, initial_groups): #, computedRegs):
@@ -1237,6 +1259,184 @@ class SolaXModbusHub:
                 #_LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
         _LOGGER.info(f"{self._name}: done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
+
+        # Trigger a single initial bisect run (non-blocking) after the very first build
+        if not self._did_initial_bisect:
+            self._did_initial_bisect = True
+            # run in background to avoid delaying the polling loop
+            self._hass.loop.create_task(self._run_initial_bisect_for_all_groups())
+
+
+    async def _run_initial_bisect_for_all_groups(self):
+        """Run a one-time bisect over all current blocks to discover unreadable entity bases.
+        The result updates self.bad_recheck and schedules a delayed revalidation.
+        """
+        # If not online, postpone once to avoid mislabeling during startup flaps
+        if not await self.is_online():
+            _LOGGER.info(f"{self._name}: initial bisect postponed (offline)")
+            await asyncio.sleep(5)
+            if not await self.is_online():
+                _LOGGER.info(f"{self._name}: initial bisect skipped (still offline)")
+                return
+
+        # Walk through all currently built groups/blocks
+        for interval_group in self.groups.values():
+            for dev_group in interval_group.device_groups.values():
+                for blk in getattr(dev_group, "holdingBlocks", []):
+                    await self._initial_bisect_block(blk, "holding")
+                for blk in getattr(dev_group, "inputBlocks", []):
+                    await self._initial_bisect_block(blk, "input")
+
+        # If no suspects were identified by the initial bisect, log that explicitly
+        if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
+            _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
+
+        # Re-validate candidates after a short grace period
+        self._hass.loop.create_task(self._recheck_bad_after(30))
+
+    async def _initial_bisect_block(self, block_obj, typ):
+        """Bisect a block once at startup. Operates on *entity bases* only, so multi-register
+        entities (U32/STR/WORDS) are never split apart. No value decoding happens here."""
+        try:
+            await self._read_block_with_bisect_once(block_obj, typ)
+        except Exception as ex:
+            _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
+
+    async def _read_block_with_bisect_once(self, block_obj, typ, depth=0):
+        """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
+        list into halves and probe recursively until single-entity blocks are found.
+        Single-entity failures are added to bad_recheck (not yet definitive)."""
+        if await self._probe_block(block_obj, typ):
+            return True
+
+        # Avoid false positives when transport is down / slowed
+        if not await self.is_online():
+            return False
+
+        regs = block_obj.regs or []
+        if depth >= self.bisect_max_depth or len(regs) <= 1:
+            if len(regs) == 1:
+                addr = regs[0]
+                self.bad_recheck[typ].add(addr)
+                _LOGGER.debug(f"{self._name}: candidate bad {typ} entity base 0x{addr:x}")
+            return True
+
+        # Split entity-base list (keeps multi-register entities intact)
+        mid = len(regs) // 2
+        left = self._subblock_entity_span(block_obj, 0, mid)
+        right = self._subblock_entity_span(block_obj, mid, len(regs))
+
+        await self._read_block_with_bisect_once(left, typ, depth + 1)
+        await self._read_block_with_bisect_once(right, typ, depth + 1)
+        return True
+
+    def _entity_span_end(self, desc_map, base_reg):
+        """Compute end address (exclusive) for a single entity starting at base_reg based on its unit.
+        This ensures we never split STR/WORDS or 32-bit entities."""
+        descr = desc_map.get(base_reg)
+        if descr is None:
+            return base_reg + 1
+        # If the descriptor is a dict of byte-split entities (U8H/U8L), they share the same 16-bit reg
+        if isinstance(descr, dict):
+            return base_reg + 1
+        unit = getattr(descr, "unit", None)
+        if unit in (REGISTER_S32, REGISTER_U32, REGISTER_F32, REGISTER_ULSB16MSB16):
+            return base_reg + 2
+        if unit in (REGISTER_STR, REGISTER_WORDS):
+            wc = getattr(descr, "wordcount", 1) or 1
+            return base_reg + wc
+        return base_reg + 1
+
+    def _subblock_entity_span(self, block_obj, i0, i1):
+        """Create a sub-block using entity-base indices [i0, i1), computing a correct exclusive end
+        based on the last entity's span. This preserves multi-register entities on reads."""
+        regs = block_obj.regs[i0:i1]
+        # start is the first entity base
+        start = regs[0]
+        # end must honor the last entity's full span
+        last_base = regs[-1]
+        end = self._entity_span_end(block_obj.descriptions, last_base)
+        return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
+
+    async def _probe_block(self, block_obj, typ):
+        """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
+        Returns True if the read returns a non-error response; False on error/timeout."""
+        count = max(0, block_obj.end - block_obj.start)
+        if count <= 0:
+            return True
+        try:
+            if typ == "input":
+                resp = await self.async_read_input_registers(
+                    unit=self._modbus_addr, address=block_obj.start, count=count
+                )
+            else:
+                resp = await self.async_read_holding_registers(
+                    unit=self._modbus_addr, address=block_obj.start, count=count
+                )
+            if resp is None:
+                return False
+            is_err = getattr(resp, "isError", lambda: False)()
+            return not is_err
+        except Exception as ex:
+            _LOGGER.debug(f"{self._name}: probe {typ} 0x{block_obj.start:x}-0x{block_obj.end:x} failed: {ex}")
+            return False
+
+    async def _recheck_bad_after(self, seconds):
+        """After a grace period, re-validate all candidate bad entity bases. Only reproducible
+        failures are promoted to definitive bad_regs; otherwise the candidate is dropped."""
+        await asyncio.sleep(seconds)
+        confirmed_any = False
+        for typ in ("holding", "input"):
+            candidates = list(self.bad_recheck[typ])
+            for addr in candidates:
+                ok = False
+                # Probe exactly the entity span for this base address (size-aware)
+                # Build a minimal block for this single entity
+                # We need a description map; if not available here, probe just 1 reg as a fallback
+                try:
+                    desc_map = None
+                    # Try to find any currently built block that contains this base to derive size
+                    for interval_group in self.groups.values():
+                        for dev_group in interval_group.device_groups.values():
+                            blocks = getattr(dev_group, "holdingBlocks", []) if typ == "holding" else getattr(dev_group, "inputBlocks", [])
+                            for blk in blocks:
+                                if addr in (blk.regs or []):
+                                    desc_map = blk.descriptions
+                                    break
+                            if desc_map is not None:
+                                break
+                        if desc_map is not None:
+                            break
+                    if desc_map is not None:
+                        end = self._entity_span_end(desc_map, addr)
+                    else:
+                        end = addr + 1
+                    single = block(start=addr, end=end, descriptions=None, regs=[addr])
+                except Exception:
+                    single = block(start=addr, end=addr + 1, descriptions=None, regs=[addr])
+
+                # Try a few times in quick succession to avoid transient network spikes
+                for _ in range(3):
+                    if await self.is_online() and await self._probe_block(single, typ):
+                        ok = True
+                        break
+                    await asyncio.sleep(0.05)
+
+                if ok:
+                    self.bad_recheck[typ].discard(addr)
+                    _LOGGER.info(f"{self._name}: entity base 0x{addr:x} ({typ}) recovered on recheck")
+                else:
+                    self.bad_regs[typ].add(addr)
+                    self.bad_recheck[typ].discard(addr)
+                    confirmed_any = True
+                    _LOGGER.warning(f"{self._name}: confirmed bad {typ} entity base 0x{addr:x}")
+
+        if confirmed_any:
+            # Force blocks to be rebuilt so future bulk reads exclude confirmed-bad bases
+            self.blocks_changed = True
+        else:
+            # No candidates remained bad on recheck; make that visible in logs
+            _LOGGER.debug(f"{self._name}: no bad registers confirmed on recheck.")
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
