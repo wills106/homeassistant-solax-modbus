@@ -412,7 +412,7 @@ BUTTON_TYPES = [
         value_function=value_function_sync_rtc,
     ),
     SolaxModbusButtonEntityDescription(
-        name="Remotecontrol Trigger",
+        name="Remotecontrol Trigger (mode 1-7)",
         key="remotecontrol_trigger",
         register=0x7C,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
@@ -422,7 +422,7 @@ BUTTON_TYPES = [
         autorepeat="remotecontrol_autorepeat_duration",
     ),
     SolaxModbusButtonEntityDescription(
-        name="PowerControlMode 8 Trigger",
+        name="PowerControlMode Trigger (mode 8/9)",
         key="powercontrolmode8_trigger",
         register=0xA0,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
@@ -672,10 +672,10 @@ NUMBER_TYPES = [
     #
     ###
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Active Power",
+        name="Remotecontrol Active Power (mode 1)",
         key="remotecontrol_active_power",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        native_min_value=-6000,
+        native_min_value=-30000,
         native_max_value=30000,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -684,9 +684,11 @@ NUMBER_TYPES = [
         min_exceptions_minus=MAX_EXPORT,  # negative
         unit=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Reactive Power",
+        name="Remotecontrol Reactive Power (mode 1)",
         key="remotecontrol_reactive_power",
         unit=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
@@ -697,23 +699,26 @@ NUMBER_TYPES = [
         device_class=NumberDeviceClass.REACTIVE_POWER,
         initvalue=0,
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration",
+        name="Remotecontrol Duration (mode 1-8)",
         key="remotecontrol_duration",
         unit=REGISTER_U16,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         icon="mdi:home-clock",
         initvalue=20,  # seconds
-        native_min_value=10,
-        native_max_value=360,
+        native_min_value=0,
+        native_max_value=28800,
         native_step=1,
         fmt="i",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method=WRITE_DATA_LOCAL,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Autorepeat Duration",
+        name="Remotecontrol Autorepeat Duration (mode 1-9)",
         key="remotecontrol_autorepeat_duration",
         unit=REGISTER_U16,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
@@ -725,9 +730,10 @@ NUMBER_TYPES = [
         fmt="i",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method=WRITE_DATA_LOCAL,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Import Limit",
+        name="Remotecontrol Import Limit (mode 1-9)",
         key="remotecontrol_import_limit",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=0,
@@ -738,11 +744,13 @@ NUMBER_TYPES = [
         initvalue=20000,  # will be reduced to MAX
         unit=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
 
 
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol PV Power Limit (Mode 8, 9)",
+        name="Remotecontrol PV Power Limit (mode 8/9)",
         key="remotecontrol_pv_power_limit",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=0,
@@ -753,12 +761,14 @@ NUMBER_TYPES = [
         initvalue=30000, 
         unit=REGISTER_U32,
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (Mode 8, 9)",
+        name="Remotecontrol Push Mode Power (mode 8/9)",
         key="remotecontrol_push_mode_power_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        native_min_value=-8000,
+        native_min_value=-30000,
         native_max_value=30000,  
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -766,9 +776,11 @@ NUMBER_TYPES = [
         initvalue=0,  
         unit=REGISTER_S32, # positive discharge; negative charge
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (Mode 8, 9)",
+        name="Remotecontrol Target SOC (mode 9)",
         key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=-0,
@@ -778,19 +790,23 @@ NUMBER_TYPES = [
         initvalue=95,
         unit=REGISTER_U16, #
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
-        SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Timeout",
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Timeout (mode 1-9)",
         key="remotecontrol_timeout",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=0,
-        native_max_value=300,  
+        native_max_value=28800,
         native_step=1,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         initvalue=0,
         icon="mdi:home-clock",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
     ),
 
     SolaxModbusNumberEntityDescription(
@@ -1376,7 +1392,7 @@ NUMBER_TYPES = [
     #
     #####
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Active Power (mode 1 direct)",
+        name="Remotecontrol Active Power (mode 1; direct)",
         key="remotecontrol_active_power_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1390,9 +1406,10 @@ NUMBER_TYPES = [
         #min_exceptions_minus=MAX_EXPORT,  # negative
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Reactive Power (mode 1 direct)",
+        name="Remotecontrol Reactive Power (mode 1; direct)",
         key="remotecontrol_reactive_power_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1405,9 +1422,10 @@ NUMBER_TYPES = [
         initvalue=0,
         write_method=WRITE_MULTI_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration (mode 1 direct)",
+        name="Remotecontrol Duration (mode 1; direct)",
         key="remotecontrol_duration_direct",
         unit=REGISTER_U16,
         fmt="i",
@@ -1415,14 +1433,15 @@ NUMBER_TYPES = [
         icon="mdi:home-clock",
         initvalue=60,  # seconds
         native_min_value=0,
-        native_max_value=3600,
+        native_max_value=28800,
         native_step=60,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method=WRITE_SINGLE_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 3 direct)",
+        name="Remotecontrol Target SOC (mode 3; direct)",
         key="remotecontrol_target_soc_direct",
         register=0x83,
         unit=REGISTER_U16,
@@ -1433,9 +1452,10 @@ NUMBER_TYPES = [
         native_unit_of_measurement=PERCENTAGE,
         write_method=WRITE_SINGLE_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target Energy (mode 2 direct)",
+        name="Remotecontrol Target Energy (mode 2; direct)",
         key="remotecontrol_target_energy_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1448,9 +1468,10 @@ NUMBER_TYPES = [
         initvalue=0,
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Charge/Discharge Power (mode 2,3 direct)",
+        name="Remotecontrol Charge/Discharge Power (mode 2/3; direct)",
         key="remotecontrol_charge_discharge_power_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1463,9 +1484,10 @@ NUMBER_TYPES = [
         initvalue=0,
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol TimeOut (direct)",
+        name="Remotecontrol TimeOut (mode 1-7; direct)",
         key="remotecontrol_timeout_direct",
         unit=REGISTER_U16,
         fmt="i",
@@ -1478,9 +1500,10 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method = WRITE_MULTISINGLE_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (mode 4 direct)",
+        name="Remotecontrol Push Mode Power (mode 4; direct)",
         key="remotecontrol_push_mode_power_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1493,24 +1516,26 @@ NUMBER_TYPES = [
         initvalue=0,
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol PV Power Limit (mode 8,9 direct)",
+        name="Remotecontrol PV Power Limit (mode 8/9, direct)",
         key="remotecontrol_pv_power_limit_direct",
         unit=REGISTER_U32,
         fmt="i",
         register=0xA2,
         native_min_value=0,
-        native_max_value=15000,
+        native_max_value=30000,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=15000,
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= HYBRID | GEN4,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (mode 8,9 direct)",
+        name="Remotecontrol Push Mode Power (mode 8/9; direct)",
         key="remotecontrol_push_mode_power_8_9_direct",
         unit=REGISTER_S32,
         fmt="i",
@@ -1523,9 +1548,10 @@ NUMBER_TYPES = [
         initvalue=0,
         write_method = WRITE_MULTI_MODBUS,
         allowedtypes= HYBRID | GEN4,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration (mode 8 direct)",
+        name="Remotecontrol Duration (mode 8; direct)",
         key="remotecontrol_duration_8_direct",
         unit=REGISTER_U16,
         fmt="i",
@@ -1538,9 +1564,10 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method=WRITE_MULTISINGLE_MODBUS,
         allowedtypes= HYBRID | GEN4,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 9 direct)",
+        name="Remotecontrol Target SOC (mode 9; direct)",
         key="remotecontrol_target_soc_9_direct",
         register=0xA6,
         unit=REGISTER_U16,
@@ -1552,9 +1579,10 @@ NUMBER_TYPES = [
         native_unit_of_measurement=PERCENTAGE,
         write_method=WRITE_MULTISINGLE_MODBUS,
         allowedtypes= HYBRID | GEN4,
+        suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol TimeOut (mode 8,9 direct)",
+        name="Remotecontrol TimeOut (mode 8/9; direct)",
         key="remotecontrol_timeout_8_9_direct",
         unit=REGISTER_U16,
         fmt="i",
@@ -1567,6 +1595,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfTime.SECONDS,
         write_method = WRITE_MULTISINGLE_MODBUS,
         allowedtypes= HYBRID | GEN4,
+        suggested_display_precision=0,
     ),
     #####
     #
@@ -1631,7 +1660,7 @@ SELECT_TYPES = [
     #
     ###
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control",
+        name="Remotecontrol Power Control (mode 1-9)",
         key="remotecontrol_power_control",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -1651,7 +1680,7 @@ SELECT_TYPES = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Set Type",
+        name="Remotecontrol Set Type (mode 1-9)",
         key="remotecontrol_set_type",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -1664,7 +1693,7 @@ SELECT_TYPES = [
         icon="mdi:transmission-tower",
     ),
      SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control Mode",
+        name="Remotecontrol Power Control Mode (mode 8/9)",
         key="remotecontrol_power_control_mode",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -2640,20 +2669,20 @@ SELECT_TYPES = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="RemoteControl Target Set Type (direct)",
+        name="RemoteControl Target Set Type (mode 8/9; direct)",
         key="remote_control_target_set_type_direct",
         register=0x7D,
         write_method=WRITE_MULTISINGLE_MODBUS,
         option_dict={
-            1: "set",
-            2: "update",
+            1: "Set",
+            2: "Update",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="set",
+        initvalue="Set",
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="RemoteControl Power Control Mode (direct)",
+        name="RemoteControl Power Control Mode (mode 8/9; direct)",
         key="remote_control_power_control_mode_direct",
         register=0xA0,
         write_method=WRITE_MULTISINGLE_MODBUS,
@@ -2667,16 +2696,16 @@ SELECT_TYPES = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Power Control Mode Target Set Type (direct)",
+        name="Power Control Mode Target Set Type (mode 8/9; direct)",
         key="power_control_mode_target_set_type_direct",
         register=0xA1,
         write_method=WRITE_MULTISINGLE_MODBUS,
         option_dict={
-            1: "set",
-            2: "update",
+            1: "Set",
+            2: "Update",
         },
         allowedtypes= HYBRID | GEN4,
-        initvalue="set",
+        initvalue="Set",
         icon="mdi:transmission-tower",
     ),
     #####
