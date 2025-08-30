@@ -1592,8 +1592,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key="battery_charge_direction",
         register=33135,
         register_type=REG_INPUT, 
-        #entity_registry_enabled_default=False, # issue 1523
-        #internal = True,
+        entity_registry_enabled_default=False, 
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -1698,7 +1697,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register=33149,
         register_type=REG_INPUT,
         unit=REGISTER_S32,
-        #entity_registry_enabled_default=False, # bug #1495 value function from const.py relies on this, so should not be disabled
+        entity_registry_enabled_default=False, # bug #1495 value function from const.py relies on this, so should not be disabled
         allowedtypes=HYBRID,
         icon="mdi:home",
     ),
@@ -1710,6 +1709,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_input_solis,
         allowedtypes=HYBRID,
+        depends_on=("battery_power","battery_charge_direction",),
         icon="mdi:battery-arrow-up",
     ),
     SolisModbusSensorEntityDescription(
@@ -1719,6 +1719,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_output_solis,
+        depends_on=("battery_power","battery_charge_direction",),
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-down",
     ),
