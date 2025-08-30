@@ -224,6 +224,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # The name and key must contain a placeholder {} that is replaced by the preceding number
     min_value: int = None
     max_value: int = None
+    depends_on: list = None # list of modbus register keys that must be read
 
 @dataclass
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
