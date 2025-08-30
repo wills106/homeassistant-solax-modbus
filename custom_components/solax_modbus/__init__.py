@@ -936,7 +936,7 @@ class SolaXModbusHub:
         errmsg = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
-                f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
+                f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} regs: {block.regs}"
             )
         try:
             if typ == "input":
@@ -1124,12 +1124,13 @@ class SolaXModbusHub:
             # This sensor is a dependency. Now, is the control that needs it enabled?
             # We can reuse the logic from should_register_be_loaded, but we need to find the correct descriptor first.
             control_descr = None 
-            # currently, a sensor can only have one associated control
-            if                         self.selectEntities.get(control_key): control_desc = self.selectEntities.get(control_key).entity_description
-            if (not control_descr) and self.numberEntities.get(control_key): control_desc = self.numberEntities.get(control_key).entity_description
-            if (not control_descr) and self.switchEntities.get(control_key): control_desc = self.switchEntities.get(control_key).entity_description
+            # currently, a sensor can only have one associated control - is this comment still true???
+            if                         self.selectEntities.get(control_key):   control_descr = self.selectEntities.get(control_key).entity_description
+            if (not control_descr) and self.numberEntities.get(control_key):   control_descr = self.numberEntities.get(control_key).entity_description
+            if (not control_descr) and self.switchEntities.get(control_key):   control_descr = self.switchEntities.get(control_key).entity_description
+            if (not control_descr) and self.sensorEntities.get(control_key):   control_descr = self.sensorEntities.get(control_key).entity_description 
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):
-                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control '{control_key}'.")
+                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'.")
                 return True
         return False
 
@@ -1164,7 +1165,7 @@ class SolaXModbusHub:
                 if not d_enabled:
                     if self._is_dependency_for_enabled_control(descr.key):
                         d_enabled = True
-                        _LOGGER.debug(f"{self._name}:Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
+                        _LOGGER.debug(f"{self._name}: Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
 
                 d_newblock = descr.newblock
                 d_unit = descr.unit
@@ -1233,8 +1234,8 @@ class SolaXModbusHub:
                 hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
                 hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
                 #self.computedSensors = computedRegs # moved outside the loops
-                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
-                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{self._name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{self._name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 #_LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 #_LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False

@@ -186,6 +186,13 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     )
 
     hub.sensorEntities[newdescr.key] = sensor
+    # register dependency chain
+    deplist = newdescr.depends_on
+    if isinstance(deplist, str): deplist = (deplist, )
+    if isinstance(deplist, (list, tuple,)):
+        _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
+        for dep_on in newdescr.depends_on: # register inter-sensor dependencies (e.g. for value functions)
+            if dep_on != newdescr.key: hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key) # can be more than one
     #internal sensors are only used for polling values for selects, etc
     if not getattr(newdescr,"internal",None):
         entities.append(sensor)
