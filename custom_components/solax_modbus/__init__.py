@@ -57,7 +57,7 @@ except ImportError:
         """place holder dummy"""
 
 
-from .sensor import SolaXModbusSensor, is_entity_enabled
+from .sensor import SolaXModbusSensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -667,7 +667,7 @@ class SolaXModbusHub:
     
     async def _check_connection(self):
         if not self._client.connected:
-            _LOGGER.info("Inverter is not connected, trying to connect")
+            _LOGGER.info(f"{self._name}: Inverter is not connected, trying to connect")
             await self.async_connect()
             await asyncio.sleep(1)
         return self._client.connected
@@ -679,7 +679,7 @@ class SolaXModbusHub:
     async def async_connect(self):
         #result = False
         _LOGGER.debug(
-            f"Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
+            f"{self._name}: Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
         )
         await self._client.connect()
 
@@ -951,7 +951,7 @@ class SolaXModbusHub:
         errmsg = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
-                f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} \nregs: {block.regs}"
+                f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} regs: {block.regs}"
             )
         try:
             if typ == "input":
@@ -1053,13 +1053,13 @@ class SolaXModbusHub:
         data = self.data # is an alias, not a copy (issue #1440)
         res = True
         for block in group.holdingBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} previous res:{res}")
             res = res and await self.async_read_modbus_block(data, block, "holding")
-            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done {res}")
+            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done; new res: {res}")
         for block in group.inputBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} previous res: {res}")
             res = res and await self.async_read_modbus_block(data, block, "input")
-            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done {res}")
+            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done; new res: {res}")
 
         if self.localsUpdated:
             await self._hass.async_add_executor_job(self.saveLocalData)
@@ -1071,7 +1071,9 @@ class SolaXModbusHub:
             data[key] = descr.value_function(0, descr, data)
             sens = self.sensorEntities[key]
             _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
-            if sens and is_entity_enabled(self._hass, self, descr) and not descr.internal: sens.modbus_data_updated() # publish state to GUI and automations faster
+            if sens and (not descr.internal):  
+                try: sens.modbus_data_updated() # publish state to GUI and automations faster - assuming enabled, otherwise exception
+                except Exception: _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
@@ -1137,12 +1139,13 @@ class SolaXModbusHub:
             # This sensor is a dependency. Now, is the control that needs it enabled?
             # We can reuse the logic from should_register_be_loaded, but we need to find the correct descriptor first.
             control_descr = None 
-            # currently, a sensor can only have one associated control
-            if                         self.selectEntities.get(control_key): control_desc = self.selectEntities.get(control_key).entity_description
-            if (not control_descr) and self.numberEntities.get(control_key): control_desc = self.numberEntities.get(control_key).entity_description
-            if (not control_descr) and self.switchEntities.get(control_key): control_desc = self.switchEntities.get(control_key).entity_description
+            # currently, a sensor can only have one associated control - is this comment still true???
+            if                         self.selectEntities.get(control_key):   control_descr = self.selectEntities.get(control_key).entity_description
+            if (not control_descr) and self.numberEntities.get(control_key):   control_descr = self.numberEntities.get(control_key).entity_description
+            if (not control_descr) and self.switchEntities.get(control_key):   control_descr = self.switchEntities.get(control_key).entity_description
+            if (not control_descr) and self.sensorEntities.get(control_key):   control_descr = self.sensorEntities.get(control_key).entity_description 
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):
-                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control '{control_key}'.")
+                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'.")
                 return True
         return False
 
@@ -1162,7 +1165,7 @@ class SolaXModbusHub:
                 d_enabled = False
                 for sub, d in descr.items():
                     #d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
-                    if should_register_be_loaded(self._hass, self, d):
+                    if should_register_be_loaded(self._hass, self, d): # *** CHANGED LINE: logic delegated to new function
                         d_enabled = True
                         break
                     d_unit = d.unit
@@ -1177,7 +1180,7 @@ class SolaXModbusHub:
                 if not d_enabled:
                     if self._is_dependency_for_enabled_control(descr.key):
                         d_enabled = True
-                        _LOGGER.debug(f"{self._name}:Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
+                        _LOGGER.debug(f"{self._name}: Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
 
                 d_newblock = descr.newblock
                 d_unit = descr.unit
@@ -1199,6 +1202,7 @@ class SolaXModbusHub:
                                 if descr.ignore_readerror is False:
                                     descr.ignore_readerror = auto_block_ignore_readerror
                                     d_ignore_readerror = descr.ignore_readerror
+                        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                         newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
                         blocks.append(newblock)
                         start = INVALID_START
@@ -1227,7 +1231,7 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"{self._name}: adding register 0x{reg:x} {d_key} to block with start 0x{start:x} ignore_readerror:{d_ignore_readerror}")
                 if d_unit in (REGISTER_STR, REGISTER_WORDS,):
                     if (d_wordcount):
-                        end = reg + d_wordcount
+                        end = reg+d_wordcount
                     else:
                         _LOGGER.warning(f"{self._name}: invalid or missing missing wordcount for {d_key}")
                 elif d_unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):
@@ -1239,7 +1243,9 @@ class SolaXModbusHub:
             else:
                 _LOGGER.debug(f"{self._name}: ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
 
-        if ((end - start) > 0):  # close last block
+
+        if ((end-start)>0): # close last block
+            #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
             newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
             blocks.append(newblock)
         return blocks
@@ -1260,12 +1266,13 @@ class SolaXModbusHub:
                 hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
                 hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
                 #self.computedSensors = computedRegs # moved outside the loops
-                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
-                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{device_name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{self._name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                for i in hub_device_group.inputBlocks: _LOGGER.info(f"{self._name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 #_LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 #_LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
         _LOGGER.info(f"{self._name}: done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
+
 
         # Trigger a single initial bisect run (non-blocking) after the very first build
         if not self._did_initial_bisect:
@@ -1300,7 +1307,7 @@ class SolaXModbusHub:
         # If no suspects were identified by the initial bisect, log that explicitly
         if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
             _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
-
+            
         # Probing completed – enable polling
         self._probe_ready.set()
 
@@ -1371,6 +1378,12 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
+    """ Error simulation block """
+    INPUT_ERROR_ADDR = 0x1003
+    HOLDING_ERROR_ADDR = 0x1003
+
+    """ End of error simulation block """
+
     async def _probe_block(self, block_obj, typ):
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
         Returns True if the read returns a non-error response; False on error/timeout."""
@@ -1379,13 +1392,20 @@ class SolaXModbusHub:
             return True
         try:
             if typ == "input":
-                resp = await self.async_read_input_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                if False: #(INPUT_ERROR_ADDR >= block_obj.start) and (INPUT_ERROR_ADDR < block_obj.end):
+                    _LOGGER.warning(f"***** input start: {block_obj.start} end: {block_obj.end}")
+                    resp = None # PLEASE REMOVE
+                else:
+                    resp = await self.async_read_input_registers(
+                        unit=self._modbus_addr, address=block_obj.start, count=count
+                    )
             else:
-                resp = await self.async_read_holding_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                if False: #(HOLDING_ERROR_ADDR >= block_obj.start) and (HOLDING_ERROR_ADDR < (block_obj.end)):
+                    _LOGGER.warning(f"***** holding start: {block_obj.start} end: {block_obj.end}")
+                    resp = None # PLEASE REMOVE
+                else: resp = await self.async_read_holding_registers(
+                        unit=self._modbus_addr, address=block_obj.start, count=count
+                    )
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
@@ -1496,7 +1516,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return hub
             except (TypeError, AttributeError):
                 pass
-        _LOGGER.info("Inverter is not connected, trying to connect")
+        _LOGGER.info(f"{self._name}: Inverter is not connected, trying to connect")
         return await self.async_connect(hub)
 
     def _hub_closed_now(self, ref_obj):
