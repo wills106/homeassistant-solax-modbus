@@ -46,8 +46,6 @@ INVALID_START = 99999
 VERBOSE_CYCLES = 20
 
 
-INPUT_ERROR_ADDR = 0x12345   # FOR TESTING ONLY
-HOLDING_ERROR_ADDR = 0x12345 # FOR TESTING ONLY
 
 try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
@@ -1389,19 +1387,9 @@ class SolaXModbusHub:
             return True
         try:
             if typ == "input":
-                if (INPUT_ERROR_ADDR >= block_obj.start) and (INPUT_ERROR_ADDR < block_obj.end): # TESTING ONLY - REMOVE LATER
-                    resp = None # PLEASE REMOVE
-                else: # PLEASE REMOVE THIS ELSE LATER
-                    resp = await self.async_read_input_registers(
-                        unit=self._modbus_addr, address=block_obj.start, count=count
-                    )
+                resp = await self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             else:
-                if (HOLDING_ERROR_ADDR >= block_obj.start) and (HOLDING_ERROR_ADDR < (block_obj.end)): # TESTING ONLY - REMOVE LATER
-                    resp = None # PLEASE REMOVE
-                else: # PLEASE REMOVE THIS ELSE LATER
-                    resp = await self.async_read_holding_registers(
-                        unit=self._modbus_addr, address=block_obj.start, count=count
-                    )
+                resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
