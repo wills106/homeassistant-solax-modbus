@@ -46,6 +46,9 @@ INVALID_START = 99999
 VERBOSE_CYCLES = 20
 
 
+INPUT_ERROR_ADDR = 0x12345   # FOR TESTING ONLY
+HOLDING_ERROR_ADDR = 0x12345 # FOR TESTING ONLY
+
 try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
 except ImportError:
@@ -1307,7 +1310,7 @@ class SolaXModbusHub:
         # If no suspects were identified by the initial bisect, log that explicitly
         if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
             _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
-            
+
         # Probing completed – enable polling
         self._probe_ready.set()
 
@@ -1378,12 +1381,6 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
-    """ Error simulation block """
-    INPUT_ERROR_ADDR = 0x1003
-    HOLDING_ERROR_ADDR = 0x1003
-
-    """ End of error simulation block """
-
     async def _probe_block(self, block_obj, typ):
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
         Returns True if the read returns a non-error response; False on error/timeout."""
@@ -1392,18 +1389,17 @@ class SolaXModbusHub:
             return True
         try:
             if typ == "input":
-                if False: #(INPUT_ERROR_ADDR >= block_obj.start) and (INPUT_ERROR_ADDR < block_obj.end):
-                    _LOGGER.warning(f"***** input start: {block_obj.start} end: {block_obj.end}")
+                if (INPUT_ERROR_ADDR >= block_obj.start) and (INPUT_ERROR_ADDR < block_obj.end): # TESTING ONLY - REMOVE LATER
                     resp = None # PLEASE REMOVE
-                else:
+                else: # PLEASE REMOVE THIS ELSE LATER
                     resp = await self.async_read_input_registers(
                         unit=self._modbus_addr, address=block_obj.start, count=count
                     )
             else:
-                if False: #(HOLDING_ERROR_ADDR >= block_obj.start) and (HOLDING_ERROR_ADDR < (block_obj.end)):
-                    _LOGGER.warning(f"***** holding start: {block_obj.start} end: {block_obj.end}")
+                if (HOLDING_ERROR_ADDR >= block_obj.start) and (HOLDING_ERROR_ADDR < (block_obj.end)): # TESTING ONLY - REMOVE LATER
                     resp = None # PLEASE REMOVE
-                else: resp = await self.async_read_holding_registers(
+                else: # PLEASE REMOVE THIS ELSE LATER
+                    resp = await self.async_read_holding_registers(
                         unit=self._modbus_addr, address=block_obj.start, count=count
                     )
             if resp is None:
