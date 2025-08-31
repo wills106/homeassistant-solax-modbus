@@ -426,6 +426,9 @@ class SolaXModbusHub:
         self._did_initial_bisect = False
         self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
 
+        # Gate normal polling until initial probe completes
+        self._probe_ready = asyncio.Event()
+
         #_LOGGER.debug("solax modbushub done %s", self.__dict__)
 
 
@@ -602,10 +605,14 @@ class SolaXModbusHub:
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         self.cyclecount = self.cyclecount + 1
+        # Do not start normal polling until initial probe is done
+        if not self._probe_ready.is_set():
+            _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
+            return
         if not interval_group.device_groups:
             return
         if self.blocks_changed:
-            self.rebuild_blocks(self.initial_groups) 
+            self.rebuild_blocks(self.initial_groups)
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
             for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
                 update_result = await self.async_read_modbus_data(group)
@@ -1270,7 +1277,9 @@ class SolaXModbusHub:
         # Trigger a single initial bisect run (non-blocking) after the very first build
         if not self._did_initial_bisect:
             self._did_initial_bisect = True
-            # run in background to avoid delaying the polling loop
+            # hold off normal polling until probe finishes
+            self._probe_ready.clear()
+            # run in background to avoid delaying the event loop
             self._hass.loop.create_task(self._run_initial_bisect_for_all_groups())
 
 
@@ -1283,7 +1292,8 @@ class SolaXModbusHub:
             _LOGGER.info(f"{self._name}: initial bisect postponed (offline)")
             await asyncio.sleep(5)
             if not await self.is_online():
-                _LOGGER.info(f"{self._name}: initial bisect skipped (still offline)")
+                _LOGGER.info(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
+                self._probe_ready.set()
                 return
 
         # Walk through all currently built groups/blocks
@@ -1297,6 +1307,9 @@ class SolaXModbusHub:
         # If no suspects were identified by the initial bisect, log that explicitly
         if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
             _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
+            
+        # Probing completed – enable polling
+        self._probe_ready.set()
 
         # Re-validate candidates after a short grace period
         self._hass.loop.create_task(self._recheck_bad_after(30))
@@ -1365,6 +1378,12 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
+    """ Error simulation block """
+    INPUT_ERROR_ADDR = 0x1003
+    HOLDING_ERROR_ADDR = 0x1003
+
+    """ End of error simulation block """
+
     async def _probe_block(self, block_obj, typ):
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
         Returns True if the read returns a non-error response; False on error/timeout."""
@@ -1373,13 +1392,20 @@ class SolaXModbusHub:
             return True
         try:
             if typ == "input":
-                resp = await self.async_read_input_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                if False: #(INPUT_ERROR_ADDR >= block_obj.start) and (INPUT_ERROR_ADDR < block_obj.end):
+                    _LOGGER.warning(f"***** input start: {block_obj.start} end: {block_obj.end}")
+                    resp = None # PLEASE REMOVE
+                else:
+                    resp = await self.async_read_input_registers(
+                        unit=self._modbus_addr, address=block_obj.start, count=count
+                    )
             else:
-                resp = await self.async_read_holding_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                if False: #(HOLDING_ERROR_ADDR >= block_obj.start) and (HOLDING_ERROR_ADDR < (block_obj.end)):
+                    _LOGGER.warning(f"***** holding start: {block_obj.start} end: {block_obj.end}")
+                    resp = None # PLEASE REMOVE
+                else: resp = await self.async_read_holding_registers(
+                        unit=self._modbus_addr, address=block_obj.start, count=count
+                    )
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
