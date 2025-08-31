@@ -31,6 +31,7 @@ empty_input_device_group_lambda = lambda: SimpleNamespace(
         readFollowUp = None,
         )
 
+
 def is_entity_enabled(hass, hub, descriptor, use_default = False): 
     # simple test, more complex counterpart is should_register_be_loaded
     unique_id     = f"{hub._name}_{descriptor.key}" 
@@ -41,11 +42,13 @@ def is_entity_enabled(hass, hub, descriptor, use_default = False):
         if entity_entry and not entity_entry.disabled: 
             _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} is enabled, returning True.")
             return True # Found an enabled entity, no need to check further 
-        else:
-            if use_default: 
-                _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
-                return descriptor.entity_registry_enabled_default
-            else: return False
+    else:
+        _LOGGER.info(f"{hub.name}: entity {unique_id} not found in registry")
+    if use_default: 
+        _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
+        return descriptor.entity_registry_enabled_default
+    return False
+
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -143,7 +146,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     #now the groups are available
     hub.computedSensors = computedRegs
     hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
-    _LOGGER.debug(f"{hub.name}: computedRegs: {hub.computedSensors}")
+    _LOGGER.info(f"{hub.name}: computedRegs: {hub.computedSensors}")
     return True
 
 
@@ -183,6 +186,13 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     )
 
     hub.sensorEntities[newdescr.key] = sensor
+    # register dependency chain
+    deplist = newdescr.depends_on
+    if isinstance(deplist, str): deplist = (deplist, )
+    if isinstance(deplist, (list, tuple,)):
+        _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
+        for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+            if dep_on != newdescr.key: hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key) # can be more than one
     #internal sensors are only used for polling values for selects, etc
     if not getattr(newdescr,"internal",None):
         entities.append(sensor)
@@ -190,10 +200,11 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
         enabled = is_entity_enabled(hub._hass, hub, newdescr, use_default = True) # dont compute disabled entities anymore
-        if newdescr.value_function and enabled: #*** dont compute disabled entities anymore
+        #if not enabled: _LOGGER.info(f"is_entity_enabled called for disabled entity {newdescr.key}")
+        if newdescr.value_function and (enabled or newdescr.internal): #*** dont compute disabled entities anymore unless internal
             computedRegs[newdescr.key] = newdescr
         else: 
-            if enabled: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
+            if enabled: _LOGGER.warning(f"{hub_name}: entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
         interval_group = groups.setdefault(hub.scan_group(sensor), empty_input_interval_group_lambda())
@@ -209,17 +220,17 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
                 if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
                     first = holdingRegs[newdescr.register]
                     holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
+                else: _LOGGER.warning(f"{hub_name}: holding register already used: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 holdingRegs[newdescr.register] = newdescr
         elif newdescr.register_type == REG_INPUT:
             if newdescr.register in inputRegs: # duplicate or 2 bytes in one register ?
                 first = inputRegs[newdescr.register]
                 inputRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                _LOGGER.warning(f"input register already declared: 0x{newdescr.register:x} {newdescr.key}")
+                _LOGGER.warning(f"{hub_name}: input register already declared: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 inputRegs[newdescr.register] = newdescr
-        else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
+        else: _LOGGER.warning(f"{hub_name}: entity declaration without register_type found: {newdescr.key}")
 
 
 class SolaXModbusSensor(SensorEntity):

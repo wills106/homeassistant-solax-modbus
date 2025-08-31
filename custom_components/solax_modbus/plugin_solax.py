@@ -6875,6 +6875,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=AC | HYBRID,
         entity_registry_enabled_default=False,
+        depends_on=("pv_power_1", "pv_power_2", "pv_power_3",),
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -6894,6 +6895,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=HYBRID,
+        depends_on=("pv_power_1", "pv_power_2", "pv_power_3", "pv_power_4", ),
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(

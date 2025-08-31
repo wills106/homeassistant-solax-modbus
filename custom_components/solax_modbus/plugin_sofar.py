@@ -233,6 +233,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-check",
         value_function=value_function_passivemode,
+        depends_on= ("passive_mode_grid_power", "passive_mode_battery_power_min", "passive_mode_battery_power_max",),
     ),
     SofarModbusButtonEntityDescription(
         name="Passive: Update Timeout",
@@ -242,6 +243,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:timer",
         value_function=value_function_passive_timeout,
+        depends_on=("passive_mode_timeout", "passive_mode_timeout_action", ),
     ),
     # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
     SofarModbusButtonEntityDescription(
@@ -261,6 +263,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:transmission-tower-import",
         value_function=value_function_refluxcontrol,
+        depends_on=("feedin_limitation_mode", "feedin_max_power",),
     ),
     SofarModbusButtonEntityDescription(
         name="EPS: Update",
@@ -270,6 +273,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:power-plug-off",
         value_function=value_function_epscontrol,
+        depends_on=("eps_control", "eps_wait_time", ),
     ),
     SofarModbusButtonEntityDescription(
         name="IV Curve Scan",
