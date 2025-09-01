@@ -235,7 +235,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     value_function: callable = None  #  value = function(initval, descr, datadict)
     autorepeat: str = None  # if not None: name of entity that contains autorepeat duration in seconds
-
+    depends_on: list = None # list of modbus register keys that must be read
 
 @dataclass
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
@@ -259,7 +259,6 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     sensor_key: str = None  # The associated sensor key
     value_function: callable = None  # Value function used to determine the new sensor value when the switch changes
-
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -546,4 +545,5 @@ for h in range(0, 24):
         ):  # add extra entry 23:59
             TIME_OPTIONS[(m + 4) * 256 + h] = f"{h:02}:{m+4:02}"
             TIME_OPTIONS_GEN4[h * 256 + m + 4] = f"{h:02}:{m+4:02}"
+
 
