@@ -40,6 +40,9 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er 
+from .pymodbus_compat import DATATYPE, convert_to_registers, convert_from_registers, pymodbus_version_info
+from pymodbus.exceptions import ConnectionException, ModbusIOException
+from pymodbus.framer import FramerType
 
 RETRIES = 1  #was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -62,6 +65,7 @@ from .sensor import SolaXModbusSensor
 
 
 _LOGGER = logging.getLogger(__name__)
+
 # try: # pymodbus 3.0.x
 
 #    UNIT_OR_SLAVE = 'slave'
@@ -78,9 +82,9 @@ _LOGGER = logging.getLogger(__name__)
 # else:
 #    Endian_BIG = Endian.BIG
 #    Endian_LITTLE = Endian.LITTLE
-from pymodbus.constants import Endian
+#from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
-from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+#from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.framer import FramerType
 
 
@@ -335,6 +339,7 @@ class SolaXModbusHub:
         port = config.get(CONF_PORT, DEFAULT_PORT)
         tcp_type = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
         modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
+        _LOGGER.info(f"{name}: creating hub - using pymodbus version {pymodbus_version_info()}")
         if modbus_addr == None:
             modbus_addr = DEFAULT_MODBUS_ADDR
             _LOGGER.warning(
@@ -727,14 +732,10 @@ class SolaXModbusHub:
 
     async def async_lowlevel_write_register(self, unit, address, payload):
         kwargs = {"slave": unit} if unit else {}
-        # builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
-        builder.add_16bit_int(payload)
-        payload = builder.to_registers()
+        regs = convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
-            resp = await self._client.write_register(address, payload[0], **kwargs)
+            resp = await self._client.write_register(address, regs[0], **kwargs)
         return resp
 
     async def async_write_register(self, unit, address, payload):
@@ -762,14 +763,11 @@ class SolaXModbusHub:
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         kwargs = {"slave": unit} if unit else {}
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
-        builder.add_16bit_int(payload)
-        payload = builder.to_registers()
+        regs = convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._client.write_registers(address=address, values=payload, **kwargs)
+                resp = await self._client.write_registers(address=address, values=regs, **kwargs)
             except (ConnectionException, ModbusIOException) as e:
                 original_message = str(e)
                 raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -788,9 +786,8 @@ class SolaXModbusHub:
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         kwargs = {"slave": unit} if unit else {}
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
         if isinstance(payload, list):
+            regs_out = []
             for (
                 key,
                 value,
@@ -811,26 +808,21 @@ class SolaXModbusHub:
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
                     value = int(value)
                     typ = descr.unit
-                if typ == REGISTER_U16:
-                    builder.add_16bit_uint(value)
-                elif typ == REGISTER_S16:
-                    builder.add_16bit_int(value)
-                elif typ == REGISTER_U32:
-                    builder.add_32bit_uint(value)
-                elif typ == REGISTER_S32:
-                    builder.add_32bit_int(value)
-                elif typ == REGISTER_F32:
-                    builder.add_32bit_float(value)
+
+                if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DATATYPE.UINT16,  self.plugin.order32)
+                elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DATATYPE.INT16,   self.plugin.order32)
+                elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DATATYPE.UINT32,  self.plugin.order32)
+                elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DATATYPE.FLOAT32, self.plugin.order32)
+                elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DATATYPE.INT32,   self.plugin.order32)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
-            payload = builder.to_registers()
             # for easier debugging, make next line a _LOGGER.info line
             online = await self.is_online()
-            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload} online: {online} ")
+            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out} online: {online} ")
             if online: 
                 async with self._lock:
                     try:
-                        resp = await self._client.write_registers(address=address, values=payload, **kwargs)
+                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
@@ -855,35 +847,48 @@ class SolaXModbusHub:
             res = False
         return res
 
-    def treat_address(self, data, decoder, descr, initval=0):
+    def treat_address(self, data, regs, idx, descr, initval=0, advance=True):
         return_value = None
         val = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
         try:
             if descr.unit == REGISTER_U16:
-                val = decoder.decode_16bit_uint()
+                val = convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16,  self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_S16:
-                val = decoder.decode_16bit_int()
+                val = convert_from_registers(regs[idx:idx+1], DATATYPE.INT16,   self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_U32:
-                val = decoder.decode_32bit_uint()
+                val = convert_from_registers(regs[idx:idx+2], DATATYPE.UINT32,  self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_F32:
-                val = decoder.decode_32bit_float()
+                val = convert_from_registers(regs[idx:idx+2], DATATYPE.FLOAT32, self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_S32:
-                val = decoder.decode_32bit_int()
+                val = convert_from_registers(regs[idx:idx+2], DATATYPE.INT32,   self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_STR:
-                val = str(decoder.decode_string(descr.wordcount * 2).decode("ascii"))
+                wc = descr.wordcount or 0
+                raw = convert_from_registers(regs[idx:idx+wc], DATATYPE.STRING, self.plugin.order32); words_used = wc
+                val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             elif descr.unit == REGISTER_WORDS:
-                val = [decoder.decode_16bit_uint() for val in range(descr.wordcount)]
+                wc = descr.wordcount or 0
+                val = [convert_from_registers(regs[idx+i:idx+i+1], DATATYPE.UINT16,  self.plugin.order32) for i in range(wc)]; words_used = wc
             elif descr.unit == REGISTER_ULSB16MSB16:
-                val = decoder.decode_16bit_uint() + decoder.decode_16bit_uint() * 256 * 256
+                lo = convert_from_registers(regs[idx:idx+1],   DATATYPE.UINT16, self.plugin.order32)
+                hi = convert_from_registers(regs[idx+1:idx+2], DATATYPE.UINT16, self.plugin.order32)
+                val = (hi + lo * 65536) if self.plugin.order32 == "big" else (lo + hi * 65536); words_used = 2
             elif descr.unit == REGISTER_U8L:
-                val = initval % 256
+                if advance:
+                    base = convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32); words_used = 1
+                    val = base % 256
+                else:
+                    val = initval % 256; words_used = 0
             elif descr.unit == REGISTER_U8H:
-                val = initval >> 8
+                if advance:
+                    base = convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32); words_used = 1
+                    val = base >> 8
+                else:
+                    val = initval >> 8; words_used = 0
             else:
                 _LOGGER.warning(f"{self._name}: undefinded unit for entity {descr.key} - setting value to zero")
-                val = 0
+                val = 0; words_used = 0
         except Exception as ex:
             if self.cyclecount < VERBOSE_CYCLES:
                 _LOGGER.warning(
@@ -944,9 +949,10 @@ class SolaXModbusHub:
                 raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if ((self.tmpdata_expiry.get(descr.key, 0) == 0) 
-        and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
+            and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
                 #_LOGGER.info(f"****tmp*** returning data for {descr.key}: {return_value}")
-                data[descr.key] = return_value  # case prevent_update number
+            data[descr.key] = return_value  # case prevent_update number
+        return idx + (words_used if advance else 0)
 
     async def async_read_modbus_block(self, data, block, typ):
         errmsg = None
@@ -974,44 +980,24 @@ class SolaXModbusHub:
             if realtime_data is None or realtime_data.isError():
                 errmsg = f"read_error "
         if errmsg == None:
-            decoder = BinaryPayloadDecoder.fromRegisters(
-                realtime_data.registers,
-                self.plugin.order16,
-                wordorder=self.plugin.order32,
-            )
-            # decoder = self._client.convert_from_registers(
-            #    registers=realtime_data.registers,
-            #    data_type=client.DATATYPE.INT16,
-            #    word_order=self.plugin.order32
-            # )
-            prevreg = block.start
+            regs = realtime_data.registers
+            idx = 0
             for reg in block.regs:
-                if (reg - prevreg) > 0:
-                    decoder.skip_bytes((reg - prevreg) * 2)
-                    if self.cyclecount < VERBOSE_CYCLES:
-                        _LOGGER.debug(f"skipping bytes {(reg-prevreg) * 2}")
+                expected_idx = reg - block.start
+                if idx < expected_idx:
+                    if self.cyclecount < 5 and expected_idx > idx:
+                        _LOGGER.debug(f"skipping bytes {(expected_idx - idx) * 2}")
+                    idx = expected_idx
+
                 descr = block.descriptions[reg]
-                if type(descr) is dict:  #  set of byte values
-                    val = decoder.decode_16bit_uint()
+
+                if isinstance(descr, dict):
+                    base16 = convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32)
                     for k in descr:
-                        self.treat_address(data, decoder, descr[k], val)
-                    prevreg = reg + 1
-                else:  # single value
-                    self.treat_address(data, decoder, descr)
-                    if descr.unit in (
-                        REGISTER_S32,
-                        REGISTER_U32,
-                        REGISTER_F32,
-                        REGISTER_ULSB16MSB16,
-                    ):
-                        prevreg = reg + 2
-                    elif descr.unit in (
-                        REGISTER_STR,
-                        REGISTER_WORDS,
-                    ):
-                        prevreg = reg + descr.wordcount
-                    else:
-                        prevreg = reg + 1
+                        self.treat_address(data, regs, idx, descr[k], initval=base16, advance=False)
+                    idx += 1
+                else:
+                    idx = self.treat_address(data, regs, idx, descr, initval=0, advance=True)
             return True
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
@@ -1600,11 +1586,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         return resp
 
     async def async_lowlevel_write_register(self, unit, address, payload):
-        # builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
-        builder.add_16bit_int(payload)
-        payload = builder.to_registers()
+        regs = convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
@@ -1613,7 +1595,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_register(address=address, values=payload[0], **kwargs)
+                    resp = await self._client.write_register(address=address, values=regs[0], **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
@@ -1623,10 +1605,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
-        builder.add_16bit_int(payload)
-        payload = builder.to_registers()
+        regs = convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
@@ -1635,7 +1614,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_registers(address=address, values=payload, **kwargs)
+                    resp = await self._client.write_registers(address=address, values=regs, **kwargs)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -1680,21 +1659,17 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
                     value = int(value)
                     typ = descr.unit
-                if typ == REGISTER_U16:
-                    builder.add_16bit_uint(value)
-                elif typ == REGISTER_S16:
-                    builder.add_16bit_int(value)
-                elif typ == REGISTER_U32:
-                    builder.add_32bit_uint(value)
-                elif typ == REGISTER_F32:
-                    builder.add_32bit_float(value)
-                elif typ == REGISTER_S32:
-                    builder.add_32bit_int(value)
+
+                if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DATATYPE.UINT16,  self.plugin.order32)
+                elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DATATYPE.INT16,   self.plugin.order32)
+                elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DATATYPE.UINT32,  self.plugin.order32)
+                elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DATATYPE.FLOAT32, self.plugin.order32)
+                elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DATATYPE.INT32,   self.plugin.order32)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             payload = builder.to_registers()
             # for easier debugging, make next line a _LOGGER.info line
-            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {payload}")
+            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
             async with self._lock:
                 hub = await self._check_connection()
             try:
@@ -1702,7 +1677,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return None
                 async with hub._lock:
                     try:
-                        resp = await self._client.write_registers(address=address, values=payload, **kwargs)
+                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
