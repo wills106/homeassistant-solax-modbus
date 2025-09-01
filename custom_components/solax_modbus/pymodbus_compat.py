@@ -127,7 +127,7 @@ else:
                 LITTLE = "<"     
         # Legacy path – both byte and word order are supported and applied.
         def _old_endian(e):
-            return _OldEndian.BIG if _endian_str(e) == "big" else _OldEndian.LITTLE
+            return _OldEndian.BIG if e == "big" else _OldEndian.LITTLE
 
         def convert_to_registers(value, dt: DATATYPE, wordorder):
             b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
@@ -147,7 +147,7 @@ else:
                                                   wordorder=_old_endian(wordorder))
             if   dt == DATATYPE.UINT16:  return d.decode_16bit_uint()
             elif dt == DATATYPE.INT16:   return d.decode_16bit_int()
-            elif dt == DATATYPE.UINT32:  return tmp #d.decode_32bit_uint()
+            elif dt == DATATYPE.UINT32:  return d.decode_32bit_uint()
             elif dt == DATATYPE.INT32:   return d.decode_32bit_int()
             elif dt == DATATYPE.FLOAT32: return d.decode_32bit_float()
             elif dt == DATATYPE.STRING:  return d.decode_string(len(regs) * 2)
