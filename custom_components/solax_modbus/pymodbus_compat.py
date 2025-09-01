@@ -126,9 +126,8 @@ else:
         def _old_endian(e):
             return _OldEndian.BIG if _endian_str(e) == "big" else _OldEndian.LITTLE
 
-        def convert_to_registers(value, data_type: str, wordorder):
+        def convert_to_registers(value, dt: DATATYPE, wordorder):
             b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
-            dt = data_type.lower()
             if   dt == DATATYPE.UINT16:  b.add_16bit_uint(int(value))
             elif dt == DATATYPE.INT16:   b.add_16bit_int(int(value))
             elif dt == DATATYPE.UINT32:  b.add_32bit_uint(int(value))
@@ -139,11 +138,10 @@ else:
                 raise ValueError(f"Unsupported data_type: {data_type}")
             return b.to_registers()
 
-        def convert_from_registers(regs, data_type: str, wordorder):
+        def convert_from_registers(regs, dt: DATATYPE, wordorder):
             d = BinaryPayloadDecoder.fromRegisters(list(regs),
                                                   byteorder=_OldEndian.BIG, # all our plugins use this 
                                                   wordorder=_old_endian(wordorder))
-            dt = data_type.lower()
             if   dt == DATATYPE.UINT16:  return d.decode_16bit_uint()
             elif dt == DATATYPE.INT16:   return d.decode_16bit_int()
             elif dt == DATATYPE.UINT32:  return d.decode_32bit_uint()
