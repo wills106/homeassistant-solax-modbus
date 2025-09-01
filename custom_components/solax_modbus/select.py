@@ -32,6 +32,14 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 if (select_info.initvalue is not None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info
             hub.selectEntities[select_info.key] = select
+
+            # register dependency chain
+            deplist = select_info.depends_on
+            if isinstance(deplist, str): deplist = (deplist, )
+            if isinstance(deplist, (list, tuple,)):
+                _LOGGER.debug(f"{hub.name}: {select_info.key} depends on entities {deplist}")
+                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != select_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(select_info.key) # can be more than one
             # Use the explicit sensor_key if provided, otherwise fall back to the select's own key.
             dependency_key = getattr(select_info, 'sensor_key', select_info.key)
             if dependency_key != select_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(select_info.key) # can be more than one

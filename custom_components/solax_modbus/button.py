@@ -33,6 +33,15 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
             if button_info.value_function: hub.computedButtons[button_info.key] = button_info
             elif button_info.command == None: _LOGGER.warning(f"button without command and without value_function found: {button_info.key}")
+
+            # register dependency chain
+            deplist = button_info.depends_on
+            if isinstance(deplist, str): deplist = (deplist, )
+            if isinstance(deplist, (list, tuple,)):
+                _LOGGER.debug(f"{hub.name}: {button_info.key} depends on entities {deplist}")
+                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != button_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(button_info.key) # can be more than one
+
     async_add_entities(entities)
     _LOGGER.info(f"hub.wakeuButton: {hub.wakeupButton}")
     return True
