@@ -115,10 +115,13 @@ else:
         try:
             from pymodbus.constants import Endian as _OldEndian  # type: ignore
         except Exception:
-            class _OldEndian(Enum):
-                BIG = "big"
-                LITTLE = "little"
-
+            #class _OldEndian(Enum):
+            #    BIG = "big"
+            #    LITTLE = "little"
+            class _OldEndian(str, Enum):
+                AUTO = "@"
+                BIG = ">"
+                LITTLE = "<"     
         # Legacy path – both byte and word order are supported and applied.
         def _old_endian(e):
             return _OldEndian.BIG if _endian_str(e) == "big" else _OldEndian.LITTLE
