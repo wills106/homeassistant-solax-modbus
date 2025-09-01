@@ -1636,9 +1636,8 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         kwargs = {"slave": unit} if unit else {}
-        builder = BinaryPayloadBuilder(byteorder=self.plugin.order16, wordorder=self.plugin.order32)
-        builder.reset()
         if isinstance(payload, list):
+            regs_out = []
             for (
                 key,
                 value,
