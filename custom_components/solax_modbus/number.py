@@ -51,12 +51,12 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             if dependency_key != newdescr.key: hub.entity_dependencies.setdefault(dependency_key, []).append(newdescr.key) # can be more than one
 
             # register dependency chain
-            deplist = number_info.depends_on
+            deplist = newdescr.depends_on
             if isinstance(deplist, str): deplist = (deplist, )
             if isinstance(deplist, (list, tuple,)):
-                _LOGGER.debug(f"{hub.name}: {number_info.key} depends on entities {deplist}")
+                _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
                 for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
-                    if dep_on != number_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(number_info.key) # can be more than one
+                    if dep_on != newdescr.key: hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key) # can be more than one
 
             hub.numberEntities[newdescr.key] = number
             entities.append(number)
