@@ -68,15 +68,18 @@ except Exception:
 # Always prefer the new API for pymodbus >= 3.9.0 (where the deprecation warning appears)
 # For older versions, try new API if present; otherwise fallback to legacy payload API.
 _USE_NEW_API = _PM_VER >= _v("3.9.0")
-
+_new_api_loaded = _USE_NEW_API
 # Try to import new API
+
+""" does not work
 _new_api_loaded = False
 try:
-    from pymodbus import convert_from_registers as _cfr, convert_to_registers as _ctr
+    from pymodbus.client.mixin import convert_from_registers as _cfr , convert_to_registers as _ctr
+    #from pymodbus.client import convert_from_registers as _cfr, convert_to_registers as _ctr
     _new_api_loaded = True
 except Exception:
     _new_api_loaded = False
-
+"""
 
 def pymodbus_version_info():
     return f"pymodbus version {_PM_VER}, use new api: {_USE_NEW_API} new api loaded: {_new_api_loaded}"
@@ -85,31 +88,31 @@ def pymodbus_version_info():
 if _USE_NEW_API and _new_api_loaded:
     # New helpers do not support a separate byte order – only word order.
     # Keep the `byteorder` parameter for caller-compat, but ignore it here.
-    def convert_to_registers(value, data_type: str, wordorder):
+    def convert_to_registers(client, value, data_type: str, wordorder):
         try:
-            return _ctr(value, data_type, word_order=wordorder)
+            return client.convert_to_registers(value, data_type, word_order=wordorder)
         except TypeError:
             return None # better to generate an error than to continue with wrong word order
 
-    def convert_from_registers(regs, data_type: str, wordorder):
+    def convert_from_registers(client, regs, data_type: str, wordorder):
         try:
-            return _cfr(regs, data_type, word_order=wordorder)
+            return client.convert_from_registers(regs, data_type, word_order=wordorder)
         except TypeError:
             return None # better to generate an error than to continue with wrong word order
 
 else:
     # Older pymodbus or new API unavailable – try new API first, then legacy
-    if _new_api_loaded:
+    if False: # was _new_api_loaded:
         # New helpers available on some older versions – they still only honor word order.
-        def convert_to_registers(value, data_type: str, wordorder):
+        def convert_to_registers(client, value, data_type: str, wordorder):
             try:
-                return _ctr(value, data_type, word_order=wordorder)
+                return client.convert_to_registers(value, data_type, word_order=wordorder)
             except TypeError:
                 return None # better to generate an error than to continue with wrong word order
 
-        def convert_from_registers(regs, data_type: str, wordorder):
+        def convert_from_registers(client, regs, data_type: str, wordorder):
             try:
-                return _cfr(regs, data_type, word_order=wordorder)
+                return client.convert_to_registers(regs, data_type, word_order=wordorder)
             except TypeError:
                 return None  # better to generate an error than to continue with wrong word order
     else:
@@ -129,7 +132,7 @@ else:
         def _old_endian(e):
             return _OldEndian.BIG if e == "big" else _OldEndian.LITTLE
 
-        def convert_to_registers(value, dt: DATATYPE, wordorder):
+        def convert_to_registers(client, value, dt: DATATYPE, wordorder):
             b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
             if   dt == DATATYPE.UINT16:  b.add_16bit_uint(int(value))
             elif dt == DATATYPE.INT16:   b.add_16bit_int(int(value))
@@ -141,7 +144,7 @@ else:
                 raise ValueError(f"Unsupported data_type: {data_type}")
             return b.to_registers()
 
-        def convert_from_registers(regs, dt: DATATYPE, wordorder):
+        def convert_from_registers(client, regs, dt: DATATYPE, wordorder):
             d = BinaryPayloadDecoder.fromRegisters(list(regs),
                                                   byteorder=_OldEndian.BIG, # all our plugins use this 
                                                   wordorder=_old_endian(wordorder))
