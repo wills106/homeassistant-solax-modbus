@@ -40,7 +40,8 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er 
-from .pymodbus_compat import DATATYPE, convert_to_registers, convert_from_registers, pymodbus_version_info
+from .pymodbus_compat import convert_to_registers, convert_from_registers, pymodbus_version_info
+from .pymodbus_compat import compat_DATATYPE
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.framer import FramerType
 
@@ -333,6 +334,7 @@ class SolaXModbusHub:
         plugin,
         entry,
     ):
+        global DATATYPE
         config = entry.options
         name = config[CONF_NAME]
         host = config.get(CONF_HOST, None)
@@ -383,6 +385,10 @@ class SolaXModbusHub:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
         self._lock = asyncio.Lock()
         self._name = name
+        DATATYPE = getattr(self._client, "DATATYPE", None) # new style pymodbus
+        if DATATYPE is None:
+            DATATYPE = compat_DATATYPE
+            _LOGGER.warning(f"{name} probably using old pymodbus version - compat fallback")        
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
         self._modbus_addr = modbus_addr

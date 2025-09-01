@@ -30,33 +30,21 @@ except Exception:
         LITTLE = "little"
 
 
-try:
-    from pymodbus.client.mixin import DATATYPE
-except Exception:
-    class DATATYPE(Enum):
-        """Datatype enum (name and internal data), used for convert_* calls."""
-        INT16 = ("h", 1)
-        UINT16 = ("H", 1)
-        INT32 = ("i", 2)
-        UINT32 = ("I", 2)
-        INT64 = ("q", 4)
-        UINT64 = ("Q", 4)
-        FLOAT32 = ("f", 2)
-        FLOAT64 = ("d", 4)
-        STRING = ("s", 0)
-        BITS = ("bits", 0)
 
-"""
-def _endian_str(e) -> str:
-    try:
-        v = getattr(e, "value", None)
-        if isinstance(v, str):
-            return v
-        return getattr(e, "name", "BIG").lower()
-    except Exception:
-        s = str(e).lower()
-        return "big" if "big" in s else "little"
-"""
+class compat_DATATYPE(Enum):
+    """Datatype enum (name and internal data), used for convert_* calls."""
+    INT16 = ("h", 1)
+    UINT16 = ("H", 1)
+    INT32 = ("i", 2)
+    UINT32 = ("I", 2)
+    INT64 = ("q", 4)
+    UINT64 = ("Q", 4)
+    FLOAT32 = ("f", 2)
+    FLOAT64 = ("d", 4)
+    STRING = ("s", 0)
+    BITS = ("bits", 0)
+
+
 
 # Decide based on installed pymodbus version
 try:
@@ -102,7 +90,9 @@ if _USE_NEW_API and _new_api_loaded:
 
 else:
     # Older pymodbus or new API unavailable – try new API first, then legacy
-    if False: # was _new_api_loaded:
+    if False: 
+        pass # was _new_api_loaded: # I BELIEVE WE CAN REMOVE THIS BLOCK 
+        """
         # New helpers available on some older versions – they still only honor word order.
         def convert_to_registers(client, value, data_type: str, wordorder):
             try:
@@ -115,6 +105,7 @@ else:
                 return client.convert_to_registers(regs, data_type, word_order=wordorder)
             except TypeError:
                 return None  # better to generate an error than to continue with wrong word order
+        """
     else:
         # Final fallback – legacy payload API (<3.2 or very old)
         from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore
@@ -131,6 +122,8 @@ else:
         # Legacy path – both byte and word order are supported and applied.
         def _old_endian(e):
             return _OldEndian.BIG if e == "big" else _OldEndian.LITTLE
+
+
 
         def convert_to_registers(client, value, dt: DATATYPE, wordorder):
             b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
