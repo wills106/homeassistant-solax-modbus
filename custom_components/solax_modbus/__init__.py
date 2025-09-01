@@ -852,6 +852,7 @@ class SolaXModbusHub:
         val = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
+        words_used = 0
         try:
             if descr.unit == REGISTER_U16:
                 val = convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16,  self.plugin.order32); words_used = 1

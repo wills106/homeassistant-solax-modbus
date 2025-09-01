@@ -4,6 +4,8 @@ import logging
 from enum import Enum
 
 
+_LOGGER = logging.getLogger(__name__)
+
 # Version parsing – prefer packaging, fallback to a tiny tuple parser
 try:
     from packaging.version import parse as _v  # type: ignore
@@ -44,7 +46,7 @@ except Exception:
         STRING = ("s", 0)
         BITS = ("bits", 0)
 
-
+"""
 def _endian_str(e) -> str:
     try:
         v = getattr(e, "value", None)
@@ -54,6 +56,7 @@ def _endian_str(e) -> str:
     except Exception:
         s = str(e).lower()
         return "big" if "big" in s else "little"
+"""
 
 # Decide based on installed pymodbus version
 try:
@@ -84,13 +87,13 @@ if _USE_NEW_API and _new_api_loaded:
     # Keep the `byteorder` parameter for caller-compat, but ignore it here.
     def convert_to_registers(value, data_type: str, wordorder):
         try:
-            return _ctr(value, data_type, word_order=_endian_str(wordorder))
+            return _ctr(value, data_type, word_order=wordorder)
         except TypeError:
             return None # better to generate an error than to continue with wrong word order
 
     def convert_from_registers(regs, data_type: str, wordorder):
         try:
-            return _cfr(regs, data_type, word_order=_endian_str(wordorder))
+            return _cfr(regs, data_type, word_order=wordorder)
         except TypeError:
             return None # better to generate an error than to continue with wrong word order
 
@@ -100,13 +103,13 @@ else:
         # New helpers available on some older versions – they still only honor word order.
         def convert_to_registers(value, data_type: str, wordorder):
             try:
-                return _ctr(value, data_type, word_order=_endian_str(wordorder))
+                return _ctr(value, data_type, word_order=wordorder)
             except TypeError:
                 return None # better to generate an error than to continue with wrong word order
 
         def convert_from_registers(regs, data_type: str, wordorder):
             try:
-                return _cfr(regs, data_type, word_order=_endian_str(wordorder))
+                return _cfr(regs, data_type, word_order=wordorder)
             except TypeError:
                 return None  # better to generate an error than to continue with wrong word order
     else:
@@ -144,7 +147,7 @@ else:
                                                   wordorder=_old_endian(wordorder))
             if   dt == DATATYPE.UINT16:  return d.decode_16bit_uint()
             elif dt == DATATYPE.INT16:   return d.decode_16bit_int()
-            elif dt == DATATYPE.UINT32:  return d.decode_32bit_uint()
+            elif dt == DATATYPE.UINT32:  return tmp #d.decode_32bit_uint()
             elif dt == DATATYPE.INT32:   return d.decode_32bit_int()
             elif dt == DATATYPE.FLOAT32: return d.decode_32bit_float()
             elif dt == DATATYPE.STRING:  return d.decode_string(len(regs) * 2)
