@@ -235,7 +235,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     value_function: callable = None  #  value = function(initval, descr, datadict)
     autorepeat: str = None  # if not None: name of entity that contains autorepeat duration in seconds
-    depends_on: list = None # list of modbus register keys that must be read
+    depends_on: list = None  # list of modbus register keys that must be read
 
 
 @dataclass
