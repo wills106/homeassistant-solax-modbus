@@ -38,6 +38,15 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             dependency_key = getattr(switch_info, 'sensor_key', switch_info.key)
             if dependency_key != switch_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(switch_info.key) # can be more than one
+
+            # register dependency chain
+            deplist = switch_info.depends_on
+            if isinstance(deplist, str): deplist = (deplist, )
+            if isinstance(deplist, (list, tuple,)):
+                _LOGGER.debug(f"{hub.name}: {switch_info.key} depends on entities {deplist}")
+                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != switch_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(switch_info.key) # can be more than one
+
             hub.switchEntities[switch_info.key] = switch # Store the switch entity
             entities.append(switch)
 

@@ -42,7 +42,6 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
                     if dep_on != button_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(button_info.key) # can be more than one
 
-
     async_add_entities(entities)
     _LOGGER.info(f"hub.wakeuButton: {hub.wakeupButton}")
     return True

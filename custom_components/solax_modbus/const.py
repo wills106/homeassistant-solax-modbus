@@ -249,6 +249,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
     sensor_key: str = None # specify only when corresponding sensor has a different key name
+    depends_on: list = None # list of modbus register keys that must be read
 
 @dataclass
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
@@ -260,7 +261,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     sensor_key: str = None  # The associated sensor key
     value_function: callable = None  # Value function used to determine the new sensor value when the switch changes
-
+    depends_on: list = None # list of modbus register keys that must be read
 
 @dataclass
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -280,7 +281,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
                                   # update only when read value changes
     sensor_key: str = None # only specify this if corresponding sensor has a different key name
-
+    depends_on: list = None # list of modbus register keys that must be read
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
 
