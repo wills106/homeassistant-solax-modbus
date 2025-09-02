@@ -92,14 +92,6 @@ def pymodbus_version_info() -> str:
 if _convert_to and _convert_from:
     convert_to_registers = _convert_to
     convert_from_registers = _convert_from
-    #def convert_to_registers(value, data_type: str | DataType, wordorder) -> list[int]:
-    #    """Clientless conversion using pymodbus' module-level helper (new API).
-    #    Only word_order is honored in the new helpers.
-    #    """
-    #    return _convert_to(value, data_type, word_order=_word_order_str(wordorder))
-
-    #def convert_from_registers(regs, data_type: str | DataType, wordorder):
-    #    return _convert_from(regs, data_type, word_order=_word_order_str(wordorder))
 
 else:
     try:
