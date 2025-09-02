@@ -64,28 +64,9 @@ except ImportError:
 
 from .sensor import SolaXModbusSensor
 
-
 _LOGGER = logging.getLogger(__name__)
 
-# try: # pymodbus 3.0.x
-
-#    UNIT_OR_SLAVE = 'slave'
-#    _LOGGER.warning("using pymodbus library 3.x")
-# except: # pymodbus 2.5.3
-#    from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
-#    UNIT_OR_SLAVE = 'unit'
-#    _LOGGER.warning("using pymodbus library 2.x")
-# import pymodbus
-# _LOGGER.debug(f"pymodbus client version: { pymodbus.__version__ }")
-# if pymodbus.__version__.startswith('3.3') or pymodbus.__version.startswith('3.0'):
-#    Endian_BIG = Endian.big
-#    Endian_LITTLE = Endian.little
-# else:
-#    Endian_BIG = Endian.BIG
-#    Endian_LITTLE = Endian.LITTLE
-#from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
-#from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
 from pymodbus.framer import FramerType
 
 
@@ -334,7 +315,7 @@ class SolaXModbusHub:
         plugin,
         entry,
     ):
-    
+
         config = entry.options
         name = config[CONF_NAME]
         host = config.get(CONF_HOST, None)
