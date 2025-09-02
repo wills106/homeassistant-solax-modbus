@@ -30,12 +30,6 @@ except Exception:
     pymodbus = None  # type: ignore
     _PM_VER = _v("0.0.0")
 
-# Always prefer the new API for pymodbus >= 3.9.0 (where the deprecation warning appears)
-# For older versions, try new API if present; otherwise fallback to legacy payload API.
-_USE_NEW_API = _PM_VER >= _v("3.9.0")
-
-
-
 # ---------------- Public DataType enum (single source of truth) ------
 # Prefer the official pymodbus DATATYPE if available (future-proof), otherwise use a local enum.
 _DataTypeAlias = getattr(pymodbus, "DATATYPE", None) if pymodbus is not None else None
@@ -56,8 +50,6 @@ else:
         BITS = ("bits", 0)
 
 # ---------------- Helpers to normalize inputs ------------------------
-#def _dt_str(x) -> str:
-#    return x.value if isinstance(x, DataType) else str(x).lower()
 
 def _word_order_str(x) -> str:
     # normalize to "big" | "little"
@@ -69,29 +61,114 @@ def _word_order_str(x) -> str:
         return v.lower()
     return "big"
 
-# ---------------- Try to access new helpers (≥ 3.9) ------------------
+# ---------------- Try to access new helpers (introduced in 3.8; location varies by build) ------------------
 _convert_to   = None
 _convert_from = None
-if _USE_NEW_API and pymodbus and pymodbus.client and pymodbus.client.mixin and pymodbus.client.mixin.ModbusClientMixin :
-    _convert_to = getattr(pymodbus.client.mixin.ModbusClientMixin, "convert_to_registers", None)
-    _convert_from = getattr(pymodbus.client.mixin.ModbusClientMixin, "convert_from_registers", None)
-    if not callable(_convert_to) or not callable(_convert_from):
+if pymodbus is not None:
+    # 1) Preferred: module-level helpers (some newer builds)
+    _convert_to   = getattr(pymodbus, "convert_to_registers", None)
+    _convert_from = getattr(pymodbus, "convert_from_registers", None)
+
+    # 2) Fallback: free functions in mixin module (some 3.9.x builds)
+    if not (callable(_convert_to) and callable(_convert_from)):
+        try:
+            from pymodbus.client import mixin as _mixin  # type: ignore
+        except Exception:
+            _mixin = None
+        if _mixin is not None:
+            _convert_to   = getattr(_mixin, "convert_to_registers", None)
+            _convert_from = getattr(_mixin, "convert_from_registers", None)
+
+    # 3) Fallback: classmethods on ModbusClientMixin (your 3.9.2 shows them here)
+    if not (callable(_convert_to) and callable(_convert_from)):
+        try:
+            from pymodbus.client.mixin import ModbusClientMixin as _MCM  # type: ignore
+        except Exception:
+            _MCM = None
+        if _MCM is not None:
+            _convert_to   = getattr(_MCM, "convert_to_registers", None)
+            _convert_from = getattr(_MCM, "convert_from_registers", None)
+
+    if not (callable(_convert_to) and callable(_convert_from)):
         _convert_to = _convert_from = None
+
+# --- Ensure dt is the exact enum class PyModbus expects (DATATYPE) ---
+_DT_TARGET = None
+try:
+    if pymodbus is not None:
+        # 1) Module-level enum (preferred in newer builds)
+        _DT_TARGET = getattr(pymodbus, "DATATYPE", None)
+        # 2) Fallback: mixin module enum
+        if _DT_TARGET is None:
+            try:
+                from pymodbus.client import mixin as _mixin  # type: ignore
+            except Exception:
+                _mixin = None
+            if _mixin is not None:
+                _DT_TARGET = getattr(_mixin, "DATATYPE", None)
+        # 3) Fallback: enum on ModbusClientMixin class (seen in some 3.9.2 builds)
+        if _DT_TARGET is None:
+            try:
+                from pymodbus.client.mixin import ModbusClientMixin as _MCM  # type: ignore
+            except Exception:
+                _MCM = None
+            if _MCM is not None:
+                _DT_TARGET = getattr(_MCM, "DATATYPE", None)
+except Exception:
+    _DT_TARGET = None
+
+def _coerce_dt(dt):
+    """Return dt as the exact pymodbus.DATATYPE member if possible.
+    Accepts local DataType, pymodbus.DATATYPE, or other enum-like with .name.
+    """
+    if _DT_TARGET is None:
+        return dt
+    # already correct enum class
+    try:
+        if isinstance(dt, _DT_TARGET):
+            return dt
+    except Exception:
+        pass
+    # enum-like: map by name
+    name = getattr(dt, "name", None)
+    if isinstance(name, str) and hasattr(_DT_TARGET, name):
+        return getattr(_DT_TARGET, name)
+    return dt
 
 
 # ---------------- Public info string ---------------------------------
 def pymodbus_version_info() -> str:
-    return (
-        f"pymodbus version {_PM_VER}, use new api: {_USE_NEW_API} "
-        f"new api loaded: {bool(_convert_to and _convert_from)}"
-    )
+    use_new = bool(_convert_to and _convert_from)
+    return f"pymodbus version {_PM_VER}, new api loaded: {use_new}"
 
 
-# ---------------- New helper API path (≥ 3.9.0) ----------------------
+# ---------------- New helper API path (helpers found; applies to 3.8+ builds) ----------------------
 
 if _convert_to and _convert_from:
-    convert_to_registers = _convert_to
-    convert_from_registers = _convert_from
+    def convert_to_registers(value, dt: DataType, wordorder, string_encoding: str = "utf-8"):
+        dtc = _coerce_dt(dt)
+        wo  = _word_order_str(wordorder)
+        # Try modern signature first (3.9+/some 3.8 builds)
+        try:
+            return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)
+        except TypeError:
+            # Older 3.8 helper may only accept positional word order (and no string_encoding kw)
+            try:
+                return _convert_to(value, dtc, wo)
+            except TypeError:
+                # Final fallback: call without word order (library default)
+                return _convert_to(value, dtc)
+
+    def convert_from_registers(regs, dt: DataType, wordorder, string_encoding: str = "utf-8"):
+        dtc = _coerce_dt(dt)
+        wo  = _word_order_str(wordorder)
+        try:
+            return _convert_from(regs, dtc, word_order=wo, string_encoding=string_encoding)
+        except TypeError:
+            try:
+                return _convert_from(regs, dtc, wo)
+            except TypeError:
+                return _convert_from(regs, dtc)
 
 else:
     try:
@@ -135,5 +212,3 @@ else:
         elif dt == DataType.STRING:  return d.decode_string(len(regs) * 2)
         else:
             raise ValueError(f"Unsupported data_type: {dt}")
-
-
