@@ -12,10 +12,6 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
-#try:
-#    from pymodbus.constants import Endian  # for pymodbus < 3.0
-#except ImportError:
-#    from pymodbus.payload import Endian    # for pymodbus >= 3.0
 from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
