@@ -41,7 +41,6 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
 from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info
-#from .pymodbus_compat import check_modbus_compat
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.framer import FramerType
 
