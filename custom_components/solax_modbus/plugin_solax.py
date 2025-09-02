@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
-from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
 
@@ -63,20 +63,21 @@ SENSOR_TYPES = []
 
 # ====================== find inverter type and details ===========================================
 
-
 async def async_read_serialnr(hub, address):
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(14).decode("ascii")
+            # Decode 7 registers (14 bytes) as string using clientless compat helper
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if address == 0x300:
+                # Some devices report swapped bytes; preserve the existing swap workaround
                 if res and not res.startswith(("M", "X")):
-                    ba = bytearray(res, "ascii")  # convert to bytearray for swapping
-                    ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.LITTLE ?
-                    res = str(ba, "ascii")  # convert back to string
+                    ba = bytearray(res, "ascii")
+                    ba[0::2], ba[1::2] = ba[1::2], ba[0::2]
+                    res = str(ba, "ascii")
                     hub.seriesnumber = res
             hub.seriesnumber = res
     except Exception as ex:
