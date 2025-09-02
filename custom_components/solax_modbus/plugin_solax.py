@@ -520,6 +520,7 @@ MAX_CURRENTS = [
     ("H3BD", 60),  # Gen5 X3 Ultra D
     ("H3BF", 60),  # Gen5 X3 Ultra F
     ("H3BG", 60),  # Gen5 X3 Ultra G
+    ("10K", 25),  # Gen6 X3-Pro-G4
     ### All known Inverters added
 ]
 
