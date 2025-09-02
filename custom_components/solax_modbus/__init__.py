@@ -1651,7 +1651,6 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DataType.INT32,   self.plugin.order32)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
-            payload = builder.to_registers()
             # for easier debugging, make next line a _LOGGER.info line
             _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
             async with self._lock:
