@@ -18,7 +18,7 @@ from array import array
 # pylint: disable=missing-type-doc
 from struct import pack, unpack
 
-from .const import Endian
+from .pymodbus_compat import _OldEndian as Endian
 from pymodbus.exceptions import ParameterException
 from pymodbus.logging import Log
 
