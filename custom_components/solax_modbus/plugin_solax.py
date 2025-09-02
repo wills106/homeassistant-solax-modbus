@@ -521,6 +521,7 @@ MAX_CURRENTS = [
     ("H3BF", 60),  # Gen5 X3 Ultra F
     ("H3BG", 60),  # Gen5 X3 Ultra G
     ("10K", 25),  # Gen6 X3-Pro-G4
+    ("8021", 80),  # X3-Aelio #1555
     ### All known Inverters added
 ]
 
@@ -646,6 +647,7 @@ MAX_EXPORT = [
     ("H3BG20", 20000),  # Gen5 X3 Ultra G
     ("H3BG25", 25000),  # Gen5 X3 Ultra G
     ("H3BG30", 30000),  # Gen5 X3 Ultra G
+    ("8021", 60000),  # X3-Aelio #1555
     ### All known Inverters added
 ]
 
@@ -4931,8 +4933,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PV Power 3",
-        key="pv_power_3",
+        name="PV Power 4",
+        key="pv_power_4",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -8567,6 +8569,9 @@ class solax_plugin(plugin_base):
             if kw_value >= 8:
                 invertertype |= MPPT3
             self.inverter_model = f"X3-G4PRO-{kw_value}kW"  #datasheet name X3-HYB-4.0-P
+        elif seriesnumber.startswith("8021"):
+            invertertype = HYBRID | GEN6 | MPPT4 | X3  # X3-Aelio #1555, Contains 5 or 6 MPPT depending on size
+            self.inverter_model = "X3-Aelio"
         elif seriesnumber.startswith("XAU"):
             invertertype = MIC | GEN2 | X1  # X1-Boost
             self.inverter_model = "X1-Boost"
