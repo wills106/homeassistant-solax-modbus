@@ -522,6 +522,7 @@ MAX_CURRENTS = [
     ("H3BF", 60),  # Gen5 X3 Ultra F
     ("H3BG", 60),  # Gen5 X3 Ultra G
     ("10K", 25),  # Gen6 X3-Pro-G4
+    ("8021", 80),  # X3-Aelio #1555
     ### All known Inverters added
 ]
 
@@ -647,6 +648,7 @@ MAX_EXPORT = [
     ("H3BG20", 20000),  # Gen5 X3 Ultra G
     ("H3BG25", 25000),  # Gen5 X3 Ultra G
     ("H3BG30", 30000),  # Gen5 X3 Ultra G
+    ("8021", 60000),  # X3-Aelio #1555
     ### All known Inverters added
 ]
 
