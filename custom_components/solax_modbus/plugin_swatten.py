@@ -631,7 +631,7 @@ plugin_instance = swatten_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
-    order16 = Endian.BIG,
-    order32 = Endian.LITTLE,
+    #order16 = Endian.BIG,
+    order32 = "little",
     auto_block_ignore_readerror = True
     )

@@ -12,17 +12,6 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
-from enum import Enum
-try:
-    from pymodbus.constants import Endian  # for pymodbus < 3.0
-except ImportError:
-    try:        
-        from pymodbus.payload import Endian    # for pymodbus >= 3.0
-    except Exception:
-        class Endian(str, Enum):
-            AUTO = "@"
-            BIG = ">"
-            LITTLE = "<"        
 from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
 import pathlib
@@ -159,8 +148,8 @@ class plugin_base:
     auto_block_ignore_readerror: bool | None = (
         None  # if True or False, inserts a ignore_readerror statement for each block
     )
-    order16: int | None = None  # Endian.BIG or Endian.LITTLE
-    order32: int | None = None
+    #order16: str | None = None # ignored since 2025.09 - assuming "big" for all plugins
+    order32: str | None = None # "big" or "little" - used to be Endian.BIG or Endian.LITTLE
     inverter_model: str = None
     default_holding_scangroup: str = SCAN_GROUP_DEFAULT  
     default_input_scangroup: str = SCAN_GROUP_DEFAULT   # or SCAN_GROUP_AUTO

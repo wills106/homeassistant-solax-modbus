@@ -490,7 +490,7 @@ plugin_instance = solis_old_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=48,
-    order16=Endian.BIG,
-    order32=Endian.BIG,
+    #order16=Endian.BIG,
+    order32="big",
     auto_block_ignore_readerror=True,
 )
