@@ -27,6 +27,7 @@ try:
     import pymodbus
     _PM_VER = _v(getattr(pymodbus, "__version__", "0.0.0"))
 except Exception:
+    pymodbus = None  # type: ignore
     _PM_VER = _v("0.0.0")
 
 # Always prefer the new API for pymodbus >= 3.9.0 (where the deprecation warning appears)
@@ -35,86 +36,112 @@ _USE_NEW_API = _PM_VER >= _v("3.9.0")
 
 
 
+# ---------------- Public DataType enum (single source of truth) ------
+# Prefer the official pymodbus DATATYPE if available (future-proof), otherwise use a local enum.
+_DataTypeAlias = getattr(pymodbus, "DATATYPE", None) if pymodbus is not None else None
+if _DataTypeAlias is not None:
+    DataType = _DataTypeAlias  # alias to official enum (values are expected to stringify to new helper tokens)
+else:
+    class DataType(Enum):
+        """Datatype enum (name and internal data), used for convert_* calls."""
+        INT16 = ("h", 1)
+        UINT16 = ("H", 1)
+        INT32 = ("i", 2)
+        UINT32 = ("I", 2)
+        INT64 = ("q", 4)
+        UINT64 = ("Q", 4)
+        FLOAT32 = ("f", 2)
+        FLOAT64 = ("d", 4)
+        STRING = ("s", 0)
+        BITS = ("bits", 0)
 
-class compat_DATATYPE(Enum):
-    """Datatype enum (name and internal data), used for convert_* calls."""
-    INT16 = ("h", 1)
-    UINT16 = ("H", 1)
-    INT32 = ("i", 2)
-    UINT32 = ("I", 2)
-    INT64 = ("q", 4)
-    UINT64 = ("Q", 4)
-    FLOAT32 = ("f", 2)
-    FLOAT64 = ("d", 4)
-    STRING = ("s", 0)
-    BITS = ("bits", 0)
+# ---------------- Helpers to normalize inputs ------------------------
+#def _dt_str(x) -> str:
+#    return x.value if isinstance(x, DataType) else str(x).lower()
+
+def _word_order_str(x) -> str:
+    # normalize to "big" | "little"
+    if isinstance(x, str):
+        s = x.lower()
+        return s if s in ("big", "little") else "big"
+    v = getattr(x, "value", None)
+    if isinstance(v, str) and v.lower() in ("big", "little"):
+        return v.lower()
+    return "big"
+
+# ---------------- Try to access new helpers (≥ 3.9) ------------------
+_convert_to   = None
+_convert_from = None
+if _USE_NEW_API and pymodbus and pymodbus.client and pymodbus.client.mixin and pymodbus.client.mixin.ModbusClientMixin :
+    _convert_to = getattr(pymodbus.client.mixin.ModbusClientMixin, "convert_to_registers", None)
+    _convert_from = getattr(pymodbus.client.mixin.ModbusClientMixin, "convert_from_registers", None)
+    if not callable(_convert_to) or not callable(_convert_from):
+        _convert_to = _convert_from = None
 
 
-def check_modbus_compat(name, client, force_old_api = False):
-    dt = getattr(client, "DATATYPE", None) # new style pymodbus
-    if dt is None:
-        _new_api_loaded = False
-        DATATYPE = compat_DATATYPE
-        _LOGGER.warning(f"{name} probably using old pymodbus version - compat fallback")
-        client.DATATYPE = DATATYPE
-    else:
-        _new_api_loaded = True
+# ---------------- Public info string ---------------------------------
+def pymodbus_version_info() -> str:
+    return (
+        f"pymodbus version {_PM_VER}, use new api: {_USE_NEW_API} "
+        f"new api loaded: {bool(_convert_to and _convert_from)}"
+    )
 
 
-    if not _new_api_loaded or force_old_api:
+# ---------------- New helper API path (≥ 3.9.0) ----------------------
 
-        # Final fallback – legacy payload API (<3.2 or very old)
-        global BinaryPayloadBuilder
-        global BinaryPayloadDecoder
+if _convert_to and _convert_from:
+    convert_to_registers = _convert_to
+    convert_from_registers = _convert_from
+    #def convert_to_registers(value, data_type: str | DataType, wordorder) -> list[int]:
+    #    """Clientless conversion using pymodbus' module-level helper (new API).
+    #    Only word_order is honored in the new helpers.
+    #    """
+    #    return _convert_to(value, data_type, word_order=_word_order_str(wordorder))
 
-        try:
-            from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore
-        except Exception: 
-            from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore - Should not be needed anymore
+    #def convert_from_registers(regs, data_type: str | DataType, wordorder):
+    #    return _convert_from(regs, data_type, word_order=_word_order_str(wordorder))
 
-        try:
-            from pymodbus.constants import Endian as _OldEndian  # type: ignore
-        except Exception:
-            #class _OldEndian(Enum):
-            #    BIG = "big"
-            #    LITTLE = "little"
-            class _OldEndian(str, Enum):
-                AUTO = "@"
-                BIG = ">"
-                LITTLE = "<"     
+else:
+    try:
+        from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore
+    except Exception: 
+        from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore - Should not be needed anymore
+
+    try:
+        from pymodbus.constants import Endian as _OldEndian  # type: ignore
+    except Exception:
+        class _OldEndian(str, Enum):
+            AUTO = "@"
+            BIG = ">"
+            LITTLE = "<"     
 
         # Legacy path – both byte and word order are supported and applied.
-        def _old_endian(e):
-            return _OldEndian.BIG if e == "big" else _OldEndian.LITTLE
+    def _old_endian(e):
+        return _OldEndian.BIG if _word_order_str(e) == "big" else _OldEndian.LITTLE
 
-        def convert_to_registers(client, value, dt: DATATYPE, wordorder):
-            b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
-            if   dt == DATATYPE.UINT16:  b.add_16bit_uint(int(value))
-            elif dt == DATATYPE.INT16:   b.add_16bit_int(int(value))
-            elif dt == DATATYPE.UINT32:  b.add_32bit_uint(int(value))
-            elif dt == DATATYPE.INT32:   b.add_32bit_int(int(value))
-            elif dt == DATATYPE.FLOAT32: b.add_32bit_float(float(value))
-            elif dt == DATATYPE.STRING:  b.add_string(str(value))
-            else:
-                raise ValueError(f"Unsupported data_type: {data_type}")
-            return b.to_registers()
+    def convert_to_registers(value, dt: DataType, wordorder):
+        b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
+        if   dt == DataType.UINT16:  b.add_16bit_uint(int(value))
+        elif dt == DataType.INT16:   b.add_16bit_int(int(value))
+        elif dt == DataType.UINT32:  b.add_32bit_uint(int(value))
+        elif dt == DataType.INT32:   b.add_32bit_int(int(value))
+        elif dt == DataType.FLOAT32: b.add_32bit_float(float(value))
+        elif dt == DataType.STRING:  b.add_string(str(value))
+        else:
+            raise ValueError(f"Unsupported data_type: {data_type}")
+        return b.to_registers()
 
-        def convert_from_registers(client, regs, dt: DATATYPE, wordorder):
-            d = BinaryPayloadDecoder.fromRegisters(list(regs),
-                                                  byteorder=_OldEndian.BIG, # all our plugins use this 
-                                                  wordorder=_old_endian(wordorder))
-            if   dt == DATATYPE.UINT16:  return d.decode_16bit_uint()
-            elif dt == DATATYPE.INT16:   return d.decode_16bit_int()
-            elif dt == DATATYPE.UINT32:  return d.decode_32bit_uint()
-            elif dt == DATATYPE.INT32:   return d.decode_32bit_int()
-            elif dt == DATATYPE.FLOAT32: return d.decode_32bit_float()
-            elif dt == DATATYPE.STRING:  return d.decode_string(len(regs) * 2)
-            else:
-                raise ValueError(f"Unsupported data_type: {data_type}")
-
-    if getattr(client, "convert_to_registers", None) is None: client.convert_to_registers = convert_to_registers
-    if getattr(client, "convert_from_registers", None) is None: client.convert_from_registers = convert_from_registers
-
-    return f"pymodbus version {_PM_VER}, use new api: {_USE_NEW_API} new api loaded: {_new_api_loaded}"
+    def convert_from_registers(regs, dt: DataType, wordorder):
+        d = BinaryPayloadDecoder.fromRegisters(list(regs),
+                                                byteorder=_OldEndian.BIG, # all our plugins use this 
+                                                wordorder=_old_endian(wordorder))
+        if   dt == DataType.UINT16:  return d.decode_16bit_uint()
+        elif dt == DataType.INT16:   return d.decode_16bit_int()
+        elif dt == DataType.UINT32:  return d.decode_32bit_uint()
+        elif dt == DataType.INT32:   return d.decode_32bit_int()
+        elif dt == DataType.FLOAT32: return d.decode_32bit_float()
+        elif dt == DataType.STRING:  return d.decode_string(len(regs) * 2)
+        else:
+            raise ValueError(f"Unsupported data_type: {data_type}")
 
 

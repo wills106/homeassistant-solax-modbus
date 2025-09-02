@@ -39,8 +39,9 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers import entity_registry as er 
-from .pymodbus_compat import check_modbus_compat
+from homeassistant.helpers import entity_registry as er
+from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info
+#from .pymodbus_compat import check_modbus_compat
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.framer import FramerType
 
@@ -333,7 +334,7 @@ class SolaXModbusHub:
         plugin,
         entry,
     ):
-        global DATATYPE
+    
         config = entry.options
         name = config[CONF_NAME]
         host = config.get(CONF_HOST, None)
@@ -384,9 +385,7 @@ class SolaXModbusHub:
         self._lock = asyncio.Lock()
         self._name = name
         # following call will modify and extend client in case old modbus API needs to be used
-        modbus_info = check_modbus_compat(name, self._client, force_old_api = False) 
-        _LOGGER.info(f"{name}: using pymodbus version {modbus_info}")
-        DATATYPE = self._client.DATATYPE  # modified by check_modbus_compat
+        _LOGGER.info(f"{name}: using pymodbus version {pymodbus_version_info()}")
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
@@ -737,7 +736,7 @@ class SolaXModbusHub:
 
     async def async_lowlevel_write_register(self, unit, address, payload):
         kwargs = {"slave": unit} if unit else {}
-        regs = self._client.convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
+        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
             resp = await self._client.write_register(address, regs[0], **kwargs)
@@ -768,7 +767,7 @@ class SolaXModbusHub:
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         kwargs = {"slave": unit} if unit else {}
-        regs = self._client.convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
+        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
             try:
@@ -814,11 +813,11 @@ class SolaXModbusHub:
                     value = int(value)
                     typ = descr.unit
 
-                if   typ == REGISTER_U16: regs_out += self._client.convert_to_registers(value, DATATYPE.UINT16,  self.plugin.order32)
-                elif typ == REGISTER_S16: regs_out += self._client.convert_to_registers(value, DATATYPE.INT16,   self.plugin.order32)
-                elif typ == REGISTER_U32: regs_out += self._client.convert_to_registers(value, DATATYPE.UINT32,  self.plugin.order32)
-                elif typ == REGISTER_F32: regs_out += self._client.convert_to_registers(value, DATATYPE.FLOAT32, self.plugin.order32)
-                elif typ == REGISTER_S32: regs_out += self._client.convert_to_registers(value, DATATYPE.INT32,   self.plugin.order32)
+                if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DataType.UINT16,  self.plugin.order32)
+                elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DataType.INT16,   self.plugin.order32)
+                elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DataType.UINT32,  self.plugin.order32)
+                elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)
+                elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DataType.INT32,   self.plugin.order32)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             # for easier debugging, make next line a _LOGGER.info line
@@ -860,35 +859,35 @@ class SolaXModbusHub:
         words_used = 0
         try:
             if descr.unit == REGISTER_U16:
-                val = self._client.convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16,  self.plugin.order32); words_used = 1
+                val = convert_from_registers(regs[idx:idx+1], DataType.UINT16,  self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_S16:
-                val = self._client.convert_from_registers(regs[idx:idx+1], DATATYPE.INT16,   self.plugin.order32); words_used = 1
+                val = convert_from_registers(regs[idx:idx+1], DataType.INT16,   self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_U32:
-                val = self._client.convert_from_registers(regs[idx:idx+2], DATATYPE.UINT32,  self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.UINT32,  self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_F32:
-                val = self._client.convert_from_registers(regs[idx:idx+2], DATATYPE.FLOAT32, self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.FLOAT32, self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_S32:
-                val = self._client.convert_from_registers(regs[idx:idx+2], DATATYPE.INT32,   self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.INT32,   self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_STR:
                 wc = descr.wordcount or 0
-                raw = self._client.convert_from_registers(regs[idx:idx+wc], DATATYPE.STRING, self.plugin.order32); words_used = wc
+                raw = convert_from_registers(regs[idx:idx+wc], DataType.STRING, self.plugin.order32); words_used = wc
                 val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             elif descr.unit == REGISTER_WORDS:
                 wc = descr.wordcount or 0
-                val = [self._client.convert_from_registers(regs[idx+i:idx+i+1], DATATYPE.UINT16,  self.plugin.order32) for i in range(wc)]; words_used = wc
+                val = [convert_from_registers(regs[idx+i:idx+i+1], DataType.UINT16,  self.plugin.order32) for i in range(wc)]; words_used = wc
             elif descr.unit == REGISTER_ULSB16MSB16:
-                lo = self._client.convert_from_registers(regs[idx:idx+1],   DATATYPE.UINT16, self.plugin.order32)
-                hi = self._client.convert_from_registers(regs[idx+1:idx+2], DATATYPE.UINT16, self.plugin.order32)
+                lo = convert_from_registers(regs[idx:idx+1],   DataType.UINT16, self.plugin.order32)
+                hi = convert_from_registers(regs[idx+1:idx+2], DataType.UINT16, self.plugin.order32)
                 val = (hi + lo * 65536) if self.plugin.order32 == "big" else (lo + hi * 65536); words_used = 2
             elif descr.unit == REGISTER_U8L:
                 if advance:
-                    base = self._client.convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32); words_used = 1
+                    base = convert_from_registers(regs[idx:idx+1], DataType.UINT16, self.plugin.order32); words_used = 1
                     val = base % 256
                 else:
                     val = initval % 256; words_used = 0
             elif descr.unit == REGISTER_U8H:
                 if advance:
-                    base = self._client.convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32); words_used = 1
+                    base = convert_from_registers(regs[idx:idx+1], DataType.UINT16, self.plugin.order32); words_used = 1
                     val = base >> 8
                 else:
                     val = initval >> 8; words_used = 0
@@ -998,7 +997,7 @@ class SolaXModbusHub:
                 descr = block.descriptions[reg]
 
                 if isinstance(descr, dict):
-                    base16 = self._client.convert_from_registers(regs[idx:idx+1], DATATYPE.UINT16, self.plugin.order32)
+                    base16 = convert_from_registers(regs[idx:idx+1], DataType.UINT16, self.plugin.order32)
                     for k in descr:
                         self.treat_address(data, regs, idx, descr[k], initval=base16, advance=False)
                     idx += 1
@@ -1592,7 +1591,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         return resp
 
     async def async_lowlevel_write_register(self, unit, address, payload):
-        regs = self._client.convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
+        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
@@ -1611,7 +1610,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        regs = self._client.convert_to_registers(int(payload), DATATYPE.INT16, self.plugin.order32)
+        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         kwargs = {"slave": unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
@@ -1665,11 +1664,11 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     value = int(value)
                     typ = descr.unit
 
-                if   typ == REGISTER_U16: regs_out += self._client.convert_to_registers(value, DATATYPE.UINT16,  self.plugin.order32)
-                elif typ == REGISTER_S16: regs_out += self._client.convert_to_registers(value, DATATYPE.INT16,   self.plugin.order32)
-                elif typ == REGISTER_U32: regs_out += self._client.convert_to_registers(value, DATATYPE.UINT32,  self.plugin.order32)
-                elif typ == REGISTER_F32: regs_out += self._client.convert_to_registers(value, DATATYPE.FLOAT32, self.plugin.order32)
-                elif typ == REGISTER_S32: regs_out += self._client.convert_to_registers(value, DATATYPE.INT32,   self.plugin.order32)
+                if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DataType.UINT16,  self.plugin.order32)
+                elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DataType.INT16,   self.plugin.order32)
+                elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DataType.UINT32,  self.plugin.order32)
+                elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)
+                elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DataType.INT32,   self.plugin.order32)
                 else:
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             payload = builder.to_registers()
