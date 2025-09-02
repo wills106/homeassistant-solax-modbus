@@ -120,7 +120,7 @@ else:
         elif dt == DataType.FLOAT32: b.add_32bit_float(float(value))
         elif dt == DataType.STRING:  b.add_string(str(value))
         else:
-            raise ValueError(f"Unsupported data_type: {data_type}")
+            raise ValueError(f"Unsupported data_type: {dt}")
         return b.to_registers()
 
     def convert_from_registers(regs, dt: DataType, wordorder):
@@ -134,6 +134,6 @@ else:
         elif dt == DataType.FLOAT32: return d.decode_32bit_float()
         elif dt == DataType.STRING:  return d.decode_string(len(regs) * 2)
         else:
-            raise ValueError(f"Unsupported data_type: {data_type}")
+            raise ValueError(f"Unsupported data_type: {dt}")
 
 
