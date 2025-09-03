@@ -2,6 +2,7 @@
 from __future__ import annotations
 import logging
 from enum import Enum
+import inspect
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -105,6 +106,20 @@ if pymodbus is not None:
             _convert_from = getattr(_MCM, "convert_from_registers", None)
 
     if not (callable(_convert_to) and callable(_convert_from)):
+        _convert_to = _convert_from = None
+
+# Reject helper functions that don't support word_order (e.g., very old 3.x builds)
+if _convert_to and _convert_from:
+    def _helper_supports_word_order(func) -> bool:
+        try:
+            sig = inspect.signature(func)
+            # Accept if explicit kw exists, or function has at least 4 params (self, value, dt, word_order)
+            return ("word_order" in sig.parameters) or (len(sig.parameters) >= 4)
+        except Exception:
+            # If we cannot introspect, assume new helper is ok
+            return True
+    if not (_helper_supports_word_order(_convert_to) and _helper_supports_word_order(_convert_from)):
+        _LOGGER.debug("compat: helpers found but without word_order support; falling back to legacy payload path")
         _convert_to = _convert_from = None
 
 # --- Ensure dt is the exact enum class PyModbus expects (DATATYPE) ---
