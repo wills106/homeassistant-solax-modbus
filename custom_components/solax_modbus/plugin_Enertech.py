@@ -87,9 +87,9 @@ class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
     unit: int = REGISTER_U16  # Default unit (16-bit)
     register_type: int = REG_HOLDING  # Holding register type
-    order32: int = Endian.BIG  # Default 32-bit endianness
+    order32: str = "big"  # Default 32-bit endianness
 
-    def __init__(self, *args, order32=Endian.BIG, **kwargs):
+    def __init__(self, *args, order32="big", **kwargs):
         super().__init__(*args, **kwargs)
         self.order32 = order32  # Assign order32
         
@@ -546,7 +546,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
         wordcount=2,
         scale = 0.1,
         allowedtypes = ALLDEFAULT,
-        order32 = Endian.BIG,
+        order32 = "big",
         icon = "mdi:solar-power-variant",
     ),
     # ================================= declare not found ============================================================
@@ -1261,7 +1261,7 @@ plugin_instance = Enertech_plugin(
     SELECT_TYPES = SELECT_TYPES,
     SWITCH_TYPES = SWITCH_TYPES,
     block_size = 100,
-    #order16 = Endian.BIG,
+    #order16 = "big",
     order32 = "big",
     auto_block_ignore_readerror = True
     )
