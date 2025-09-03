@@ -40,7 +40,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
-from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info
+from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info, ADDR_KW
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.framer import FramerType
 
@@ -715,7 +715,7 @@ class SolaXModbusHub:
         return resp
 
     async def async_lowlevel_write_register(self, unit, address, payload):
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
@@ -746,7 +746,7 @@ class SolaXModbusHub:
 
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
         async with self._lock:
             await self._check_connection()
@@ -769,7 +769,7 @@ class SolaXModbusHub:
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         if isinstance(payload, list):
             regs_out = []
             for (
@@ -1536,7 +1536,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_read_holding_registers(self, unit, address, count):
         """Read holding registers."""
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -1554,7 +1554,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_read_input_registers(self, unit, address, count):
         """Read input registers."""
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -1572,7 +1572,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_lowlevel_write_register(self, unit, address, payload):
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -1591,7 +1591,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -1620,7 +1620,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
-        kwargs = {"slave": unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit else {}
         if isinstance(payload, list):
             regs_out = []
             for (
