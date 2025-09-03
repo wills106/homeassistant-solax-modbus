@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
-from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
 
@@ -63,8 +63,8 @@ async def async_read_serialnr(hub, address):
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=5)
         if inverter_data and not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(10).decode("ascii")
+            raw = convert_from_registers(inverter_data.registers[0:5], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
@@ -89,8 +89,6 @@ class GrowattModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Growatt Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.BIG
-    order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
@@ -9414,7 +9412,7 @@ plugin_instance = growatt_plugin(
     SELECT_TYPES = SELECT_TYPES,
     SWITCH_TYPES = [],
     block_size = 100,
-    order16 = Endian.BIG,
-    order32 = Endian.BIG,
+    #order16 = "big",
+    order32 = "big",
     auto_block_ignore_readerror = True
     )

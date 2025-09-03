@@ -5,7 +5,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import UnitOfTime
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
 
@@ -60,8 +60,8 @@ async def async_read_serialnr(hub, address):
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=4)
         if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(8).decode("ascii")
+            raw = convert_from_registers(inverter_data.registers[0:4], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
@@ -87,9 +87,9 @@ class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
     unit: int = REGISTER_U16  # Default unit (16-bit)
     register_type: int = REG_HOLDING  # Holding register type
-    order32: int = Endian.BIG  # Default 32-bit endianness
+    order32: str = "big"  # Default 32-bit endianness
 
-    def __init__(self, *args, order32=Endian.BIG, **kwargs):
+    def __init__(self, *args, order32="big", **kwargs):
         super().__init__(*args, **kwargs)
         self.order32 = order32  # Assign order32
         
@@ -546,7 +546,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
         wordcount=2,
         scale = 0.1,
         allowedtypes = ALLDEFAULT,
-        order32 = Endian.BIG,
+        order32 = "big",
         icon = "mdi:solar-power-variant",
     ),
     # ================================= declare not found ============================================================
@@ -1261,7 +1261,7 @@ plugin_instance = Enertech_plugin(
     SELECT_TYPES = SELECT_TYPES,
     SWITCH_TYPES = SWITCH_TYPES,
     block_size = 100,
-    order16 = Endian.BIG,
-    order32 = Endian.BIG,
+    #order16 = "big",
+    order32 = "big",
     auto_block_ignore_readerror = True
     )

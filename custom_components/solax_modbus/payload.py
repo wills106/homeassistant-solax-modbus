@@ -18,7 +18,16 @@ from array import array
 # pylint: disable=missing-type-doc
 from struct import pack, unpack
 
-from pymodbus.constants import Endian
+# ---- this does not belong to const anymore - this code should disappear soon
+try:
+    from pymodbus.constants import Endian
+except Exception:
+    class Endian(str, Enum):
+        AUTO = "@"
+        BIG = ">"
+        LITTLE = "<"  
+# --------------------------------------------------------------------------   
+
 from pymodbus.exceptions import ParameterException
 from pymodbus.logging import Log
 

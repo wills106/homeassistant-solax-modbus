@@ -20,7 +20,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 
-from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
 from datetime import datetime
@@ -903,15 +903,16 @@ class sunway_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine SunWay inverter type")
-        
+
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=10000, count=4)
-        
-        if inverter_data.isError():
+
+        if inverter_data is None or inverter_data.isError():
             _LOGGER.error(f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address.")
             return 0
-            
-        decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-        seriesnumber = decoder.decode_string(8).decode("ascii").strip()
+
+        raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")
+        seriesnumber = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        seriesnumber = seriesnumber.strip()
         hub.seriesnumber = seriesnumber
         _LOGGER.info(f"{hub.name}: Inverter serial number: {seriesnumber}")
 
@@ -944,7 +945,7 @@ plugin_instance = sunway_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     block_size=100,
-    order16=Endian.BIG,
-    order32=Endian.BIG,
+    #order16="big",
+    order32="big",
     auto_block_ignore_readerror=True,
 )

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
-from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,8 +69,8 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
     try:
         data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=count)
         if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(count * 2).decode("ascii")
+            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.Little ?
@@ -91,8 +91,8 @@ async def _read_model(hub, address=10008):
     try:
         data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
         if not data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_16bit_uint()
+            raw = convert_from_registers(inverter_data.registers[0:1], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub._invertertype = res
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
@@ -935,6 +935,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         # register = 30256, not needed, take sign from power
         # scale = {0: "discharging", 1: "charging"},
         value_function=lambda v, d, dd: ["discharge", "charge"][dd.get("battery_power", 0) <= 0],
+        depends_on= ("battery_power", ),
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         scan_group=SCAN_GROUP_MEDIUM,
@@ -1265,6 +1266,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Total Load",        #incl. backup
         key="house_total_load",
         value_function=value_function_house_total_load,
+        depends_on= ("inverter_load", "measured_power", ),
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1275,6 +1277,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Normal Load",       #w/o backup
         key="house_normal_load",
         value_function=value_function_house_normal_load,
+        depends_on= ("inverter_load", "measured_power", "backup_power", ),
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1499,7 +1502,7 @@ plugin_instance = solinteg_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=120,
-    order16=Endian.BIG,
-    order32=Endian.BIG,
+    #order16=Endian.BIG,
+    order32="big",
     # auto_block_ignore_readerror = True
 )
