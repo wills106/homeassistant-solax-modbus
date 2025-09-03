@@ -4628,7 +4628,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         },
         scan_group = SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
+        icon="mdi:state-machine",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS Connect State",
+        key="bms_connect_state",
+        entity_registry_enabled_default=False,
+        register=0x17,
+        scale={
+            0: "Connected",
+            1: "Disconnected",
+        },
+        scan_group = SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        allowedtypes=AC | HYBRID | GEN6,
         icon="mdi:state-machine",
     ),
     SolaXModbusSensorEntityDescription(
