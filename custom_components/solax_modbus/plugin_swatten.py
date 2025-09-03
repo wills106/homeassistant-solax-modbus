@@ -89,8 +89,8 @@ class SwattenModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Swatten Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.BIG
-    order32: int = Endian.BIG
+    order16: str = "big"
+    order32: str = "big"
     unit: int = REGISTER_U16
     register_type: int= REG_HOLDING
 
@@ -631,7 +631,7 @@ plugin_instance = swatten_plugin(
     BUTTON_TYPES = BUTTON_TYPES,
     SELECT_TYPES = SELECT_TYPES,
     block_size = 100,
-    #order16 = Endian.BIG,
+    #order16 = "big",
     order32 = "little",
     auto_block_ignore_readerror = True
     )
