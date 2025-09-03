@@ -5,7 +5,7 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import UnitOfTime
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
+from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
 
@@ -60,8 +60,8 @@ async def async_read_serialnr(hub, address):
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=4)
         if not inverter_data.isError():
-            decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-            res = decoder.decode_string(8).decode("ascii")
+            raw = convert_from_registers(inverter_data.registers[0:4], DataType.STRING, "big")
+            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception as ex: _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res: _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
