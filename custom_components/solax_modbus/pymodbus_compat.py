@@ -6,7 +6,7 @@ from enum import Enum
 
 _LOGGER = logging.getLogger(__name__)
 
-_STARTING = 10 # debug/inof output restricted to startup
+_STARTING = 10 # debug/info output restricted to startup
 
 # Version parsing – prefer packaging, fallback to a tiny tuple parser
 try:
