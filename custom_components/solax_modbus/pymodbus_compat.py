@@ -177,7 +177,7 @@ if _convert_to and _convert_from:
                 _LOGGER.info(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
             dtc = _coerce_dt(dt)
             wo  = _word_order_str(wordorder)
-            try: # unlikely this does not throw exception - normal case is fasttrack
+            try: # unlikely this will not throw an exception - normal case is fasttrack
                 return _convert_from(regs, dtc, word_order=wo, string_encoding=string_encoding) 
             except TypeError:
                 try:
