@@ -210,7 +210,7 @@ if _convert_to and _convert_from:
             dtc = _coerce_dt(dt)
             wo  = _word_order_str(wordorder)
             try:
-            return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)
+                return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)
             except TypeError:
                 # Older 3.8 helper may only accept positional word order (and no string_encoding kw)
                 return _convert_to(value, dtc, wo)
