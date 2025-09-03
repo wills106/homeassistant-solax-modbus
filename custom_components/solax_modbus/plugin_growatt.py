@@ -89,8 +89,6 @@ class GrowattModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Growatt Modbus sensor entities."""
     allowedtypes: int = ALLDEFAULT # maybe 0x0000 (nothing) is a better default choice
-    order16: int = Endian.BIG
-    order32: int = Endian.BIG
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
