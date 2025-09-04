@@ -1365,7 +1365,7 @@ class SolaXModbusHub:
             if typ == "input":
                 resp = await self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             else:
-                _LOGGER.info(f"***info***{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}  ")
+                _LOGGER.info(f"{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}  ")
                 resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
                 #if (FAILING_REG >= block_obj.start) and (FAILING_REG < (block_obj.start + count)): resp = None # ***** DEBUG CODE
             if resp is None:
