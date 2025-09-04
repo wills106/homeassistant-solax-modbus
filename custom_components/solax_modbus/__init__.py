@@ -792,14 +792,16 @@ class SolaXModbusHub:
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
                     value = int(value)
                     typ = descr.unit
-
-                if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DataType.UINT16,  self.plugin.order32)
-                elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DataType.INT16,   self.plugin.order32)
-                elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DataType.UINT32,  self.plugin.order32)
-                elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)
-                elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DataType.INT32,   self.plugin.order32)
-                else:
-                    _LOGGER.error(f"unsupported unit type: {typ} for {key}")
+                try:
+                    if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DataType.UINT16,  self.plugin.order32)
+                    elif typ == REGISTER_S16: regs_out += convert_to_registers(value, DataType.INT16,   self.plugin.order32)
+                    elif typ == REGISTER_U32: regs_out += convert_to_registers(value, DataType.UINT32,  self.plugin.order32)
+                    elif typ == REGISTER_F32: regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)
+                    elif typ == REGISTER_S32: regs_out += convert_to_registers(value, DataType.INT32,   self.plugin.order32)
+                    else:
+                        _LOGGER.error(f"unsupported unit type: {typ} for {key}")
+                except Exception as ex:
+                    _LOGGER.error(f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exeption {ex}")
             # for easier debugging, make next line a _LOGGER.info line
             online = await self.is_online()
             _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out} online: {online} ")
@@ -1277,7 +1279,7 @@ class SolaXModbusHub:
 
         # If no suspects were identified by the initial bisect, log that explicitly
         if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
-            _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
+            _LOGGER.info(f"{self._name}: initial bisect found no suspect registers.")
 
         # Probing completed – enable polling
         self._probe_ready.set()
@@ -1291,7 +1293,7 @@ class SolaXModbusHub:
         try:
             await self._read_block_with_bisect_once(block_obj, typ)
         except Exception as ex:
-            _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
+            _LOGGER.info(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
 
     async def _read_block_with_bisect_once(self, block_obj, typ, depth=0):
         """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
@@ -1302,14 +1304,16 @@ class SolaXModbusHub:
 
         # Avoid false positives when transport is down / slowed
         if not await self.is_online():
+            _LOGGER.info(f"{self._name}: assuming offline during bisect")
             return False
-
+            
+        _LOGGER.info(f"{self._name}: probe not fully ok: depth {depth}/{self.bisect_max_depth} len: {len(block_obj.regs) or []}")
         regs = block_obj.regs or []
         if depth >= self.bisect_max_depth or len(regs) <= 1:
             if len(regs) == 1:
                 addr = regs[0]
                 self.bad_recheck[typ].add(addr)
-                _LOGGER.debug(f"{self._name}: candidate bad {typ} entity base 0x{addr:x}")
+                _LOGGER.info(f"{self._name}: candidate bad {typ} entity base 0x{addr:x}")
             return True
 
         # Split entity-base list (keeps multi-register entities intact)
@@ -1349,9 +1353,11 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
+
     async def _probe_block(self, block_obj, typ):
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
         Returns True if the read returns a non-error response; False on error/timeout."""
+        FAILING_REG = 0x160 # ****** DEBUG CODE
         count = max(0, block_obj.end - block_obj.start)
         if count <= 0:
             return True
@@ -1359,13 +1365,15 @@ class SolaXModbusHub:
             if typ == "input":
                 resp = await self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             else:
+                _LOGGER.info(f"***info***{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}  ")
                 resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
+                if (FAILING_REG >= block_obj.start) and (FAILING_REG < (block_obj.start + count)): resp = None # ***** DEBUG CODE
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
             return not is_err
         except Exception as ex:
-            _LOGGER.debug(f"{self._name}: probe {typ} 0x{block_obj.start:x}-0x{block_obj.end:x} failed: {ex}")
+            _LOGGER.info(f"{self._name}: probe {typ} 0x{block_obj.start:x}-0x{block_obj.end:x} failed: {ex}")
             return False
 
     async def _recheck_bad_after(self, seconds):
@@ -1423,7 +1431,7 @@ class SolaXModbusHub:
             self.blocks_changed = True
         else:
             # No candidates remained bad on recheck; make that visible in logs
-            _LOGGER.debug(f"{self._name}: no bad registers confirmed on recheck.")
+            _LOGGER.info(f"{self._name}: no bad registers confirmed on recheck.")
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 

@@ -243,6 +243,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
         if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0  + 60# slow down charging - nearly full
         else: pvlimit = setpvlimit + houseload + 60 # inverter overhead 40
+        pvlimit=max(0,pvlimit)
         pushmode_power = houseload - max(pv, pvlimit) # + 30 # inverter overhead
         _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
 
