@@ -994,16 +994,15 @@ class SolaXModbusHub:
                     if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
                     else: l = { descr.key: descr, }.items() # normal case, one entity
                     for k, d in l:
-                        d_ignore = descr.ignore_readerror
-                        d_key = descr.key
+                        d_ignore = d.ignore_readerror
                         if (d_ignore is not True) and (d_ignore is not False):
                             _LOGGER.debug(f"{self._name}: returning static {d_key} = {d_ignore}")
-                            data[d_key] = d_ignore  # return something static
+                            data[k] = d_ignore  # return something static
                         else:
                             if d_ignore is False: # remove potentially faulty data
-                                popped = data.pop(d_key, None) # added 20250716
-                                _LOGGER.debug(f"{self._name}: popping {d_key} = {popped}")
-                            else: _LOGGER.debug(f"{self._name}: not touching {d_key} ")
+                                popped = data.pop(k, None) # added 20250716
+                                _LOGGER.debug(f"{self._name}: popping {k} = {popped}")
+                            else: _LOGGER.debug(f"{self._name}: not touching {k} ")
                 return True
             else: # dont ignore readerrors
                 if self.slowdown == 1:
