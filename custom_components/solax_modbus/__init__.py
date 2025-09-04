@@ -1357,7 +1357,7 @@ class SolaXModbusHub:
     async def _probe_block(self, block_obj, typ):
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
         Returns True if the read returns a non-error response; False on error/timeout."""
-        FAILING_REG = 0x160 # ****** DEBUG CODE
+        #FAILING_REG = 0x160 # ****** DEBUG CODE
         count = max(0, block_obj.end - block_obj.start)
         if count <= 0:
             return True
@@ -1367,7 +1367,7 @@ class SolaXModbusHub:
             else:
                 _LOGGER.info(f"***info***{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}  ")
                 resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
-                if (FAILING_REG >= block_obj.start) and (FAILING_REG < (block_obj.start + count)): resp = None # ***** DEBUG CODE
+                #if (FAILING_REG >= block_obj.start) and (FAILING_REG < (block_obj.start + count)): resp = None # ***** DEBUG CODE
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
