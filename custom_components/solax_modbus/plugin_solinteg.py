@@ -67,9 +67,9 @@ _simple_switch = {0: "off", 1: "on"}
 async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
     res = None
     try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=count)
-        if not data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=count)
+        if inverter_data is not None and not inverter_data.isError():
+            raw = convert_from_registers(inverter_data.registers[0:count], DataType.STRING, "big")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -89,10 +89,9 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
 async def _read_model(hub, address=10008):
     res = None
     try:
-        data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
-        if not data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:1], DataType.STRING, "big")
-            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if inverter_data is not None and not inverter_data.isError():
+            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
             hub._invertertype = res
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
@@ -1421,8 +1420,12 @@ class solinteg_plugin(plugin_base):
             seriesnumber = "unknown"
 
         model = await _read_model(hub)
-        self.inverter_model = _model_str(model)  # as string
-        bh, bl = model // 256, model % 256
+        if model is None:
+            _LOGGER.error(f"{hub.name}: could not read model at 0x{10008:x}")
+            bh, bl = 0, 0
+        else:
+            self.inverter_model = _model_str(model)  # as string
+            bh, bl = model // 256, model % 256
 
         invertertype = 0
         if bh in [30, 31, 32]:
