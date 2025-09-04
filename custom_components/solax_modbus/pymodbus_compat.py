@@ -7,6 +7,8 @@ import inspect
 
 _LOGGER = logging.getLogger(__name__)
 
+_STARTING = 10 # debug/info output restricted to startup
+
 # Version parsing – prefer packaging, fallback to a tiny tuple parser
 try:
     from packaging.version import parse as _v  # type: ignore
@@ -187,40 +189,53 @@ def pymodbus_version_info() -> str:
 # ---------------- New helper API path (helpers found; applies to 3.8+ builds) ----------------------
 
 if _convert_to and _convert_from:
-    def convert_to_registers(value, dt: DataType, wordorder, string_encoding: str = "utf-8"):
-        # Fast-path: exact enum + correct word_order string → call directly
-        if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
+
+    # start assuming fasttrack  - no coerce or wordorder adaption needed
+    convert_to_registers = _convert_to
+    convert_from_registers = _convert_from
+    DataType = _DT_TARGET
+
+    if _PM_VER < _v("3.9.2") : # not fast track, overwrite functions
+
+        def convert_to_registers(value, dt: DataType, wordorder, string_encoding: str = "utf-8"):
+            # Fast-path: exact enum + correct word_order string → call directly
+            if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
+                try:
+                    return _convert_to(value, dt, word_order=wordorder, string_encoding=string_encoding)
+                except TypeError:
+                    # Older helper with positional word order
+                    return _convert_to(value, dt, wordorder)
+
+            # Compat-path: accept local enum / mixed inputs
+            dtc = _coerce_dt(dt)
+            wo  = _word_order_str(wordorder)
             try:
-                return _convert_to(value, dt, word_order=wordorder, string_encoding=string_encoding)
+                return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)
             except TypeError:
-                # Older helper with positional word order
-                return _convert_to(value, dt, wordorder)
+                # Older 3.8 helper may only accept positional word order (and no string_encoding kw)
+                return _convert_to(value, dtc, wo)
 
-        # Compat-path: accept local enum / mixed inputs
-        dtc = _coerce_dt(dt)
-        wo  = _word_order_str(wordorder)
-        try:
-            return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)
-        except TypeError:
-            # Older 3.8 helper may only accept positional word order (and no string_encoding kw)
-            return _convert_to(value, dtc, wo)
+        def convert_from_registers(regs, dt: DataType, wordorder, string_encoding: str = "utf-8"):
+            global _STARTING
+            if _STARTING >0:
+                _STARTING -= 1
+                _LOGGER.info(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
+            # Fast-path: exact enum + correct word_order string → call directly
+            if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
+                try:
+                    return _convert_from(regs, dt, word_order=wordorder, string_encoding=string_encoding)
+                except TypeError:
+                    # Older helper with positional word order
+                    return _convert_from(regs, dt, wordorder)
 
-    def convert_from_registers(regs, dt: DataType, wordorder, string_encoding: str = "utf-8"):
-        # Fast-path: exact enum + correct word_order string → call directly
-        if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
+            # Compat-path: accept local enum / mixed inputs
+            dtc = _coerce_dt(dt)
+            wo  = _word_order_str(wordorder)
             try:
-                return _convert_from(regs, dt, word_order=wordorder, string_encoding=string_encoding)
+                return _convert_from(regs, dtc, word_order=wo, string_encoding=string_encoding)
             except TypeError:
-                # Older helper with positional word order
-                return _convert_from(regs, dt, wordorder)
+                return _convert_from(regs, dtc, wo)
 
-        # Compat-path: accept local enum / mixed inputs
-        dtc = _coerce_dt(dt)
-        wo  = _word_order_str(wordorder)
-        try:
-            return _convert_from(regs, dtc, word_order=wo, string_encoding=string_encoding)
-        except TypeError:
-            return _convert_from(regs, dtc, wo)
 
 else:
     try:
@@ -253,6 +268,7 @@ else:
         return b.to_registers()
 
     def convert_from_registers(regs, dt: DataType, wordorder):
+        if _STARTING>0: _LOGGER.warning(f"using fallback pymodbus BinaryPayloadBuilder - pymodbus {_PM_VER}")
         d = BinaryPayloadDecoder.fromRegisters(list(regs),
                                                 byteorder=_OldEndian.BIG, # all our plugins use this 
                                                 wordorder=_old_endian(wordorder))
