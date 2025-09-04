@@ -1420,8 +1420,12 @@ class solinteg_plugin(plugin_base):
             seriesnumber = "unknown"
 
         model = await _read_model(hub)
-        self.inverter_model = _model_str(model)  # as string
-        bh, bl = model // 256, model % 256
+        if model is None:
+            _LOGGER.error(f"{hub.name}: could not read model at 0x{10008:x}")
+            bh, bl = 0, 0
+        else:
+            self.inverter_model = _model_str(model)  # as string
+            bh, bl = model // 256, model % 256
 
         invertertype = 0
         if bh in [30, 31, 32]:
