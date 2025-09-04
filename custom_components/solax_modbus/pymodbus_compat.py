@@ -240,8 +240,8 @@ if _convert_to and _convert_from:
 else:
     try:
         from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore
-    except Exception: 
-        from .payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore - Should not be needed anymore
+    except Exception:
+        raise ImportError("The installed pymodbus version is too old and does not provide BinaryPayloadBuilder/Decoder. Please upgrade to pymodbus >= 3.8.")
 
     try:
         from pymodbus.constants import Endian as _OldEndian  # type: ignore
