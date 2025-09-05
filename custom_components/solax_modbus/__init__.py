@@ -688,7 +688,7 @@ class SolaXModbusHub:
                     _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
                     return None
             except ModbusException as exception_error:
-                error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
+                error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
                 return None
 
@@ -709,7 +709,7 @@ class SolaXModbusHub:
                     _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
                     return None
             except ModbusException as exception_error:
-                error = f"Error: device: {unit} address: {address} -> {exception_error!s}"
+                error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
                 return None
         return resp
