@@ -5048,6 +5048,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
+        name="EPS Frequency - Alt",
+        key="eps_frequency_alt",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x4F,
+        register_type=REG_INPUT,
+        scale=0.01,
+        rounding=2,
+        allowedtypes=AC | HYBRID | GEN6 | X1 | EPS,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Today's Solar Energy",
         key="today_s_solar_energy",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
