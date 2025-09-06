@@ -14,6 +14,7 @@ from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.helpers.entity import EntityCategory
 from datetime import datetime, timedelta
 from dataclasses import dataclass, replace
+from typing import Optional
 import pathlib
 
 from homeassistant.const import (
@@ -278,6 +279,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
                                   # update only when read value changes
     sensor_key: str = None # only specify this if corresponding sensor has a different key name
     depends_on: list = None # list of modbus register keys that must be read
+    suggested_display_precision: Optional[int] = None
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
 
@@ -544,4 +546,3 @@ for h in range(0, 24):
         ):  # add extra entry 23:59
             TIME_OPTIONS[(m + 4) * 256 + h] = f"{h:02}:{m+4:02}"
             TIME_OPTIONS_GEN4[h * 256 + m + 4] = f"{h:02}:{m+4:02}"
-
