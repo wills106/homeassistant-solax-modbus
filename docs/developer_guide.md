@@ -16,6 +16,7 @@ Most of the attributes are optional or have a meaningfull default value
  * _allowedtypes_: int = 0  # overload with ALLDEFAULT from plugin
  * _register_
  * _blacklist_: # None or list of serial number prefixes like ["XRE",] for which the entity will not appear
+ * _depends_on_: list of entity key names that are required to compute this entity (value_function needs the referenced entities in its computation)
 
 To be completed
 
@@ -107,8 +108,7 @@ plugin_instance = solax_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    order16=Endian.BIG,
-    order32=Endian.LITTLE,
+    order32="little",
     auto_block_ignore_readerror=True,
     default_holding_scangroup=SCAN_GROUP_DEFAULT, 
     default_input_scangroup=SCAN_GROUP_AUTO,
