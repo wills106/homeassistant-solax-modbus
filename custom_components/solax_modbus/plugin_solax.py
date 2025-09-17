@@ -8509,7 +8509,7 @@ class solax_plugin(plugin_base):
             self.inverter_model = f"X1-IES-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
         elif seriesnumber.startswith("10M"):
             kw_value = int(seriesnumber[3:5], 16)
-            invertertype = AC | GEN6 | X1
+            invertertype = AC | HYBRID | GEN6 | X1
             if kw_value < 8:
                 invertertype |= MPPT3
             else:
