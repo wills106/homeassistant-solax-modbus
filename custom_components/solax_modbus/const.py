@@ -546,4 +546,3 @@ for h in range(0, 24):
         ):  # add extra entry 23:59
             TIME_OPTIONS[(m + 4) * 256 + h] = f"{h:02}:{m+4:02}"
             TIME_OPTIONS_GEN4[h * 256 + m + 4] = f"{h:02}:{m+4:02}"
-
