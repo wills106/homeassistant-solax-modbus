@@ -146,7 +146,7 @@ class SolaXModbusNumber(NumberEntity):
                     _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
                 if descr.read_scale and self._hub.tmpdata[self._key]:
-                    res = val * descr.read_scale
+                    res = val #* descr.read_scale
                 else:
                     res = val
                 # _LOGGER.debug(f"prevent_update returning native value {descr.key} : {res}")
@@ -156,11 +156,12 @@ class SolaXModbusNumber(NumberEntity):
                     self._hub.localsUpdated = True
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
-            try:
-                val = self._hub.data[self._key] * descr.read_scale
-            except:
-                val = self._hub.data[self._key]
-            return val
+            return self._hub.data[self._key]
+            #try:
+            #    val = self._hub.data[self._key] * descr.read_scale
+            #except:
+            #    val = self._hub.data[self._key]
+            #return val
         #else:  # first time initialize
         #    if descr.initvalue == None:
         #        return None
@@ -214,6 +215,6 @@ class SolaXModbusNumber(NumberEntity):
                 self._hub.tmpdata_expiry[self.entity_description.key] = time() + TMPDATA_EXPIRY
                 # corresponding_sensor.async_write_ha_state()
             self._hub.localsUpdated = True  # mark to save permanently
-        self._hub.data[self._key] = value / self.entity_description.read_scale
+        self._hub.data[self._key] = value #/ self.entity_description.read_scale
         # _LOGGER.info(f"*** data written part 2 {self._key}: {self._hub.data[self._key]}")
         self.async_write_ha_state()  # is this needed ?
