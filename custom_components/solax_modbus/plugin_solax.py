@@ -1665,7 +1665,7 @@ SELECT_TYPES = [
     #
     ###
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control (mode 1-9)",
+        name="Remotecontrol Power Control (mode 1)",
         key="remotecontrol_power_control",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
