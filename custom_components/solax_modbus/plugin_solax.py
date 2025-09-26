@@ -1875,7 +1875,7 @@ SELECT_TYPES = [
             4: "PeakShaving",
             5: "Smart Schedule",
         },
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3020,7 +3020,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             4: "PeakShaving",
             5: "Smart Schedule",
         },
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(

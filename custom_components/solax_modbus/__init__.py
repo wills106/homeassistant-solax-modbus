@@ -835,6 +835,7 @@ class SolaXModbusHub:
 
     def treat_address(self, data, regs, idx, descr, initval=0, advance=True):
         return_value = None
+        read_scale = descr.read_scale # read scale might still be wrong the first polling cycle
         val = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
@@ -905,7 +906,7 @@ class SolaXModbusHub:
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
             try:
-                return_value = round(val * descr.scale, descr.rounding)
+                return_value = round(val * descr.scale * read_scale, descr.rounding)
             except:
                 return_value = val  # probably a REGISTER_WORDS instance
             if descr.native_unit_of_measurement == UnitOfFrequency.HERTZ:
@@ -936,9 +937,10 @@ class SolaXModbusHub:
                 raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if ((self.tmpdata_expiry.get(descr.key, 0) == 0) 
-            and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )):
-                #_LOGGER.info(f"****tmp*** returning data for {descr.key}: {return_value}")
-            data[descr.key] = return_value  # case prevent_update number
+            and ( (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data) )
+            and (self.localsLoaded or not descr.read_scale_exceptions) # ignore as long as read scale is not adapted; may delay real startup a bit
+            ): 
+            data[descr.key] = return_value # case prevent_update number
         return idx + (words_used if advance else 0)
 
     async def async_read_modbus_block(self, data, block, typ):
