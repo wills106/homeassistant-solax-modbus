@@ -8,6 +8,7 @@ import importlib
 import json
 import logging
 from time import time
+import time as _mtime
 from types import ModuleType, SimpleNamespace
 from typing import Any, Optional
 from weakref import ref as WeakRef
@@ -131,7 +132,9 @@ PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR,
 empty_hub_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
             unsub_interval_method=None,
-            device_groups={}
+            device_groups={},
+            poll_lock=asyncio.Lock(),
+            pending_rerun=False,
         )
 empty_hub_device_group_lambda = lambda: SimpleNamespace(
             sensors=[],
@@ -534,6 +537,7 @@ class SolaXModbusHub:
         return key
 
 
+
     # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
     async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
@@ -546,8 +550,39 @@ class SolaXModbusHub:
             interval_group.interval = interval
 
             async def _refresh(_now: Optional[int] = None) -> None:
-                await self._check_connection()
-                await self.async_refresh_modbus_data(interval_group, _now)
+                secs = interval_group.interval
+                self.cyclecount += 1
+                cycle_id = self.cyclecount
+                _LOGGER.debug(f"{self._name}: [{secs}s] poll started – cycle #{cycle_id}")
+                # If a previous cycle is still running, mark a catch-up and return quickly.
+                if interval_group.poll_lock.locked():
+                    interval_group.pending_rerun = True
+                    _LOGGER.debug(f"{self._name}: [{secs}s] overrun – previous poll still running; scheduling immediate catch-up after it finishes")
+                    return
+
+                # Run cycles back-to-back if a tick was missed while running (catch-up mode)
+                while True:
+                    start = _mtime.monotonic()
+                    async with interval_group.poll_lock:
+                        await self._check_connection()
+                        agg_res, updated_sensors = await self.async_refresh_modbus_data(interval_group, _now, cycle_id=cycle_id)
+                    elapsed = _mtime.monotonic() - start
+                    _LOGGER.debug(
+                        f"{self._name}: [{secs}s] poll finished – cycle #{cycle_id}, "
+                        f"duration={int(elapsed*1000)} ms, ok={agg_res}, "
+                        f"sensors={updated_sensors}, slowdown={self.slowdown}"
+                    )
+
+                    # If the configured interval is shorter than the actual run time, inform once per cycle
+                    if elapsed >= (interval_group.interval or 0):
+                        _LOGGER.debug(f"{self._name}: [{secs}s] interval too short – cycle took {elapsed:.3f}s ≥ interval {interval_group.interval}s; running at max possible speed")
+
+                    # Immediate catch-up if a tick arrived during our run
+                    if getattr(interval_group, "pending_rerun", False):
+                        interval_group.pending_rerun = False
+                        # Loop again immediately (no sleep) to catch up once
+                        continue
+                    break
 
             _LOGGER.info(f"{self._name}: starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(
@@ -591,10 +626,10 @@ class SolaXModbusHub:
                     await self.async_close()
         self.blocks_changed = True # will force rebuild_blocks to be called 
 
-    async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None) -> None:
+    async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None, cycle_id=None):
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
-        self.cyclecount = self.cyclecount + 1
+        # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
         # Do not start normal polling until initial probe is done
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
@@ -603,14 +638,19 @@ class SolaXModbusHub:
             return
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
+        agg_res = True  # aggregate result across all device groups in this interval
+        updated_sensors = 0  # how many entities were pushed this cycle
+        # Use cyclecount from caller, not increment here
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
             for group in list(interval_group.device_groups.values()): # not sure if this does not break things or affects performance
-                update_result = await self.async_read_modbus_data(group)
-                if update_result:
+                group_result = await self.async_read_modbus_data(group)
+                agg_res = agg_res and group_result
+                if group_result:
                     if self.slowdown > 1: _LOGGER.info(f"{self._name}: communication restored, resuming normal speed after slowdown")
                     self.slowdown = 1  # return to full polling after successful cycle
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
+                    updated_sensors += len(group.sensors)
                 else:
                     if self.slowdown <=1: _LOGGER.info(f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10" )
                     self.slowdown = 10
@@ -621,6 +661,8 @@ class SolaXModbusHub:
                     # self.data = {} # invalidate data - do we want this ??
 
                 _LOGGER.debug(f"{self._name}: device group read done")
+        # Return aggregate result and updated sensor count to caller for logging
+        return agg_res, updated_sensors
 
     @property
     def invertertype(self):
