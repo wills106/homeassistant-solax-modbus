@@ -43,3 +43,7 @@ There are no active developers with this setup, so we have limited ability to re
 
 For systems with a parallel mode setup, the default export limit can be too low.
 To adapt this, there is a disabled entity called `config_max_export`. If you enable that entity, you can configure your own export limit (may require a restart).
+
+## The export_control_user limit is wrong by a factor 10
+
+Some inverters behave differently compared to the other inverters of same model. To correct this, we have created a normally disabled control entity namded `config_export_control_limit_readscale`. Enablethis entity (please wait 30 seconds to let it appear) and set it to either 0.1, 1.0 or 10.0. The scaling should now be fine with one of these 3 scaling factors.

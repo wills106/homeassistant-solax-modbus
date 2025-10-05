@@ -50,10 +50,11 @@ ALL_PM_GROUP = PM
 
 MPPT3 = 0x40000
 MPPT4 = 0x80000
-MPPT6 = 0x100000
-MPPT8 = 0x200000
-MPPT10 = 0x400000
-ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+MPPT5 = 0x100000
+MPPT6 = 0x200000
+MPPT8 = 0x400000
+MPPT10 = 0x800000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT5 | MPPT6 | MPPT8 | MPPT10
 
 ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | X1 | X3
 
@@ -1665,7 +1666,7 @@ SELECT_TYPES = [
     #
     ###
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control (mode 1-9)",
+        name="Remotecontrol Power Control (mode 1)",
         key="remotecontrol_power_control",
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -4898,6 +4899,39 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Voltage 4",
+        key="pv_voltage_4",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=0x28,
+        scale=0.1,
+        register_type=REG_INPUT,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Voltage 5",
+        key="pv_voltage_5",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=0x29,
+        scale=0.1,
+        register_type=REG_INPUT,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Voltage 6",
+        key="pv_voltage_6",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=0x2A,
+        scale=0.1,
+        register_type=REG_INPUT,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT6,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="PV Voltage 3",
         key="pv_voltage_3",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -4907,6 +4941,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID | GEN6 | MPPT3 | MPPT4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Current 4",
+        key="pv_current_4",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        register=0x2B,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
+        icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 3",
@@ -4921,6 +4967,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Current 5",
+        key="pv_current_5",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        register=0x2C,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="PV Power 3",
         key="pv_power_3",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -4929,6 +4987,29 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2C,
         register_type=REG_INPUT,
         allowedtypes=HYBRID | GEN6 | MPPT3 | MPPT4,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Current 6",
+        key="pv_current_6",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        register=0x2D,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=HYBRID | GEN5 | MPPT6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power 4",
+        key="pv_power_4",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x2E,
+        register_type=REG_INPUT,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -4943,6 +5024,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN6 | MPPT4,
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Power 5",
+        key="pv_power_5",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x2F,
+        register_type=REG_INPUT,
+        allowedtypes=HYBRID | GEN5 | MPPT5 | MPPT6,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="PV Current 4",
         key="pv_current_4",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -4953,6 +5045,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=HYBRID | GEN6 | MPPT4,
         icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power 6",
+        key="pv_power_6",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x30,
+        register_type=REG_INPUT,
+        allowedtypes=HYBRID | GEN5 | MPPT6,
+        icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Power 4",
@@ -6141,7 +6244,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         rounding=1,
-        allowedtypes=HYBRID | GEN5 | MPPT3,
+        allowedtypes=HYBRID | GEN5 | MPPT3 | MPPT5 | MPPT6,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 3",
@@ -6162,7 +6265,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x124,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN5 | MPPT3,
+        allowedtypes=HYBRID | GEN5 | MPPT3 | MPPT5 | MPPT6,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8603,7 +8706,7 @@ class solax_plugin(plugin_base):
                 invertertype |= MPPT3
             self.inverter_model = f"X3-G4PRO-{kw_value}kW"  #datasheet name X3-HYB-4.0-P
         elif seriesnumber.startswith("8021"):
-            invertertype = HYBRID | GEN6 | MPPT4 | X3  # X3-Aelio #1555, Contains 5 or 6 MPPT depending on size
+            invertertype = HYBRID | GEN5 | MPPT5 | X3  # X3-Aelio #1555, Contains 5 or 6 MPPT depending on size
             self.inverter_model = "X3-Aelio"
         elif seriesnumber.startswith("XAU"):
             invertertype = MIC | GEN2 | X1  # X1-Boost
