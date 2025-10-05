@@ -245,10 +245,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit # import capping is done later
     elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
+        houseload = max(0, houseload)
         if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0  + 60# slow down charging - nearly full
         else: pvlimit = setpvlimit + houseload + 60 # inverter overhead 40
         pvlimit=max(0,pvlimit)
-        pushmode_power = houseload - min(pv, pvlimit) - 90 + pv/20 # some kind of correction for losses
+        pushmode_power = houseload - min(pv, pvlimit) - 90 + pv/14 # some kind of empiric correction for losses - machine learning would be better
         _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
 
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
