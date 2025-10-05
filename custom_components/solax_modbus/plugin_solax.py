@@ -224,7 +224,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     # initval = BUTTONREPEAT_FIRST means first run; 
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
     # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
-    if initval == BUTTONREPEAT_POST: return { 'action': WRITE_MULTI_MODBUS, 'data' :[ ( "remotecontrol_power_control_mode", "Disabled", ) ] }
+    if initval == BUTTONREPEAT_POST: 
+        datadict["remotecontrol_current_pushmode_power"] = None
+        datadict["remotecontrol_current_pv_power_limit"] = None
+        return { 'action': WRITE_MULTI_MODBUS, 'data' :[ ( "remotecontrol_power_control_mode", "Disabled", ) ] }
     # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
     power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
     curmode = datadict.get("modbus_power_control", "unknown")
@@ -245,7 +248,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0  + 60# slow down charging - nearly full
         else: pvlimit = setpvlimit + houseload + 60 # inverter overhead 40
         pvlimit=max(0,pvlimit)
-        pushmode_power = houseload - max(pv, pvlimit) # + 30 # inverter overhead
+        pushmode_power = houseload - min(pv, pvlimit) - 90 # + 30 # inverter overhead
         _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
 
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
@@ -287,6 +290,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             timeout,
         ),
     ]
+    datadict["remotecontrol_current_pushmode_power"] = pushmode_power
+    datadict["remotecontrol_current_pv_power_limit"] = pvlimit
     if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
         _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}") 
     if power_control == "Disabled":
@@ -320,6 +325,12 @@ def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
     mode_1to7 = autorepeat_remaining(datadict, "remotecontrol_trigger", time())
     mode_8to9 = autorepeat_remaining(datadict, "powercontrolmode8_trigger", time())
     return max(mode_1to7, mode_8to9)
+
+def value_function_remotecontrol_current_pushmode_power(initval, descr, datadict):
+    return datadict.get(descr.key, None)
+
+def value_function_remotecontrol_current_pv_power_limit(initval, descr, datadict):
+    return datadict.get(descr.key, None)
 
 def value_function_battery_power_charge(initval, descr, datadict):
     return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
@@ -7045,6 +7056,28 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         value_function=value_function_remotecontrol_autorepeat_remaining,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         icon="mdi:home-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remotecontrol current PV power limit",
+        key="remotecontrol_current_pv_power_limit",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_remotecontrol_current_pv_power_limit,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
+        icon="mdi:solar-power-variant",
+        entity_registry_enabled_default=False,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remotecontrol current pushmode power",
+        key="remotecontrol_current_pushmode_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_remotecontrol_current_pushmode_power,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        icon="mdi:solar-power-variant",
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False,
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
