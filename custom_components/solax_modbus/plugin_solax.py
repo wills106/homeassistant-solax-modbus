@@ -1738,7 +1738,7 @@ SELECT_TYPES = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         option_dict={
             0xA0:  "VPP Off", # not in documentation, should not be sent to device
-            0xA1: "default choice" ,
+            0xA1: "default choice",
         },
         initvalue=0xA1,
         unit=REGISTER_U16,
