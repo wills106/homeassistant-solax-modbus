@@ -249,7 +249,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         houseload = max(0, houseload)
         if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0  + 60# slow down charging - nearly full
         else: pvlimit = setpvlimit + houseload + 60 # inverter overhead 40
-        pvlimit=max(houseload,pvlimit)
+        pvlimit = max(houseload, pvlimit)
         pushmode_power = houseload - min(pv, pvlimit) - 90 + pv/14 # some kind of empiric correction for losses - machine learning would be better
         _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
 
