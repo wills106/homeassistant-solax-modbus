@@ -1658,7 +1658,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=MIC | GEN2 | X3,
+        allowedtypes=MIC | X3,
     ),
     SolaxModbusNumberEntityDescription(
         name="Active Power Limit",
@@ -4746,6 +4746,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
+        name="BDC Status",
+        key="bdc_status",
+        register=0x19,
+        scale={
+            0: "Discharge",
+            1: "Charge",
+            2: "Stop",
+        },
+        register_type=REG_INPUT,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Grid Status",
         key="grid_status",
         entity_registry_enabled_default=False,
@@ -7157,6 +7169,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=MIC,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="pv_limit",
+        register=0x32F,
+        allowedtypes=MIC | GEN | X3,
+        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_dsp",

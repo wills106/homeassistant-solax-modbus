@@ -633,9 +633,9 @@ class SolaXModbusHub:
         # Do not start normal polling until initial probe is done
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
-            return
+            return False, 0
         if not interval_group.device_groups:
-            return
+            return True, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
         agg_res = True  # aggregate result across all device groups in this interval
@@ -1721,3 +1721,4 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         else:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
         return None
+
