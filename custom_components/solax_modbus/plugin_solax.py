@@ -268,7 +268,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
 
     if old_pushmode_power != pushmode_power:
         _LOGGER.debug(
-            f"import shaving: old_pushmode¨power:{old_pushmode_power} new pushmode_power:{pushmode_power}"
+            f"import shaving: old_pushmode_power:{old_pushmode_power} new pushmode_power:{pushmode_power}"
         )
     # res sequence only valid for mode 8 and  submodes of mode 8
     res = [
