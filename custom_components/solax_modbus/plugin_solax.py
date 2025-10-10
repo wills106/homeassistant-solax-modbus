@@ -4728,6 +4728,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
+        name="BDC Status",
+        key="bdc_status",
+        register=0x19,
+        scale={
+            0: "Discharge",
+            1: "Charge",
+            2: "Stop",
+        },
+        register_type=REG_INPUT,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Grid Status",
         key="grid_status",
         entity_registry_enabled_default=False,
