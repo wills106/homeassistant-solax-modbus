@@ -1653,7 +1653,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=MIC | GEN2 | X3,
+        allowedtypes=MIC | X3,
     ),
     SolaxModbusNumberEntityDescription(
         name="Active Power Limit",
@@ -7151,6 +7151,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=MIC,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="pv_limit",
+        register=0x32F,
+        allowedtypes=MIC | GEN | X3,
+        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_dsp",
