@@ -258,6 +258,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         pushmode_power = houseload - import_limit
     elif power_control == "Enabled Grid Control": 
         pushmode_power = pushmode_power + houseload - pv
+        pvlimit = setpvlimit
     elif power_control == "Disabled":
         pvlimit = setpvlimit
     # limit import to max import (capacity tarif in some countries)
