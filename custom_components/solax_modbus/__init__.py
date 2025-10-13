@@ -716,43 +716,44 @@ class SolaXModbusHub:
         await self._client.connect()
 
     async def async_read_holding_registers(self, unit, address, count):
-        """Read holding registers."""
-        #kwargs = {"slave": unit} if unit else {}
+        """Read holding registers using high-level pymodbus API."""
         async with self._lock:
             await self._check_connection()
             try:
-                pdu_request = register_message.ReadHoldingRegistersRequest(address=address, count=count, dev_id=unit)
-                resp = await self._client.execute(False, pdu_request)
-                if resp.transaction_id!=0 and resp.dev_id != pdu_request.dev_id:
-                    _LOGGER.warning("Modbus: ERROR: expected id %s but got %s, IGNORING.", pdu_request.dev_id, resp.dev_id)
-                    return None
-                if resp.transaction_id!=0 and pdu_request.transaction_id != resp.transaction_id:
-                    _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
-                    return None
+                # Use high-level API; unit key is provided via ADDR_KW for compatibility
+                kwargs = {ADDR_KW: unit} if unit else {}
+                resp = await self._client.read_holding_registers(address=address, count=count, **kwargs)
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
+                # Flush transport: close + short pause + reconnect to clear any late/queued frames
+                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
+                try:
+                    self._client.close()
+                finally:
+                    await asyncio.sleep(0.2)
+                    await self._client.connect()
                 return None
-
         return resp
 
     async def async_read_input_registers(self, unit, address, count):
-        """Read input registers."""
-        #kwargs = {"slave": unit} if unit else {}
+        """Read input registers using high-level pymodbus API."""
         async with self._lock:
             await self._check_connection()
             try:
-                pdu_request = register_message.ReadInputRegistersRequest(address=address, count=count, dev_id=unit)
-                resp = await self._client.execute(False, pdu_request)
-                if resp.transaction_id!=0 and resp.dev_id != pdu_request.dev_id:
-                    _LOGGER.warning("Modbus: ERROR: expected id %s but got %s, IGNORING.", pdu_request.dev_id, resp.dev_id)
-                    return None
-                if resp.transaction_id!=0 and pdu_request.transaction_id != resp.transaction_id:
-                    _LOGGER.warning("Modbus: ERROR: expected transaction %s but got %s, IGNORING.", pdu_request.transaction_id, resp.transaction_id)
-                    return None
+                # Use high-level API; unit key is provided via ADDR_KW for compatibility
+                kwargs = {ADDR_KW: unit} if unit else {}
+                resp = await self._client.read_input_registers(address=address, count=count, **kwargs)
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
+                # Flush transport: close + short pause + reconnect to clear any late/queued frames
+                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
+                try:
+                    self._client.close()
+                finally:
+                    await asyncio.sleep(0.2)
+                    await self._client.connect()
                 return None
         return resp
 
@@ -1033,7 +1034,7 @@ class SolaXModbusHub:
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
             _LOGGER.debug(f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
-            if (firstdescr.ignore_readerror is not False):  # ignore block read errors and return static data
+            if (firstdescr.ignore_readerror is False):  # dont ignore block read errors and return static data
                 _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
@@ -1050,7 +1051,7 @@ class SolaXModbusHub:
                                 _LOGGER.debug(f"{self._name}: popping {k} = {popped}")
                             else: _LOGGER.debug(f"{self._name}: not touching {k} ")
                 return True
-            else: # dont ignore readerrors
+            else: # ignore readerrors and keep old data
                 if self.slowdown == 1:
                     _LOGGER.info(
                         f"{self._name} : {errmsg}: cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
@@ -1721,4 +1722,3 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         else:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
         return None
-
