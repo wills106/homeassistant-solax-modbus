@@ -1033,7 +1033,7 @@ class SolaXModbusHub:
         else:  # block read failure
             firstdescr = block.descriptions[block.start]  # check only first item in block
             _LOGGER.debug(f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}")
-            if (firstdescr.ignore_readerror is not False):  # ignore block read errors and return static data
+            if (firstdescr.ignore_readerror is False):  # dont ignore block read errors and return static data
                 _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
@@ -1050,7 +1050,7 @@ class SolaXModbusHub:
                                 _LOGGER.debug(f"{self._name}: popping {k} = {popped}")
                             else: _LOGGER.debug(f"{self._name}: not touching {k} ")
                 return True
-            else: # dont ignore readerrors
+            else: # ignore readerrors and keep old data
                 if self.slowdown == 1:
                     _LOGGER.info(
                         f"{self._name} : {errmsg}: cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
