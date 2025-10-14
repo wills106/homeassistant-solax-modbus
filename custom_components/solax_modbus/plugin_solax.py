@@ -139,7 +139,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
-    timeout = datadict.get("remotecontrol_timeout",0)
+    #timeout = datadict.get("remotecontrol_timeout",0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
@@ -206,9 +206,9 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
-        (  "remotecontrol_timeout",
-            timeout,
-        ),
+        #(  "remotecontrol_timeout_next_motion", # not in documentation as next parameter
+        #    timeout_motion, # not in documentation as consecutive parameter
+        #),
     ]
     if power_control == "Disabled": 
         _LOGGER.info("Stopping mode 1 loop")
@@ -238,23 +238,27 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
-    timeout = datadict.get("remotecontrol_timeout",0)
+    timeout_motion = datadict.get("remotecontrol_timeout_next_motion",0xA0)
     pv = datadict.get("pv_power_total", 0)
     houseload = value_function_house_load(initval, descr, datadict)
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit # import capping is done later
     elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
+        measured = datadict.get("measured_power", 0) # positive for export, negative for import - for future correction purposes
         houseload = max(0, houseload)
         if battery_capacity >= 92: pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity)/15.0  + 60# slow down charging - nearly full
         else: pvlimit = setpvlimit + houseload + 60 # inverter overhead 40
-        pvlimit=max(0,pvlimit)
+        pvlimit = max(houseload, pvlimit)
         pushmode_power = houseload - min(pv, pvlimit) - 90 + pv/14 # some kind of empiric correction for losses - machine learning would be better
         _LOGGER.debug(f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}") 
 
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
         pvlimit = 0 
         pushmode_power = houseload - import_limit
+    elif power_control == "Enabled Grid Control": 
+        pushmode_power = pushmode_power + houseload - pv
+        pvlimit = setpvlimit
     elif power_control == "Disabled":
         pvlimit = setpvlimit
     # limit import to max import (capacity tarif in some countries)
@@ -264,8 +268,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
 
     if old_pushmode_power != pushmode_power:
         _LOGGER.debug(
-            f"import shaving: old_pushmode¨power:{old_pushmode_power} new pushmode_power:{pushmode_power}"
+            f"import shaving: old_pushmode_power:{old_pushmode_power} new pushmode_power:{pushmode_power}"
         )
+    # res sequence only valid for mode 8 and  submodes of mode 8
     res = [
         (
             "remotecontrol_power_control_mode",
@@ -287,8 +292,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
-        (   "remotecontrol_timeout",
-            timeout,
+        (   "remotecontrol_timeout_next_motion",
+            timeout_motion,
         ),
     ]
     datadict["remotecontrol_current_pushmode_power"] = pushmode_power
@@ -811,22 +816,22 @@ NUMBER_TYPES = [
         fmt="i",
         suggested_display_precision=0,
     ),
-    SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Timeout (mode 1-9)",
-        key="remotecontrol_timeout",
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        native_min_value=0,
-        native_max_value=28800,
-        native_step=1,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        initvalue=0,
-        icon="mdi:home-clock",
-        unit=REGISTER_U16,
-        write_method=WRITE_DATA_LOCAL,
-        fmt="i",
-        suggested_display_precision=0,
-    ),
-
+    SolaxModbusNumberEntityDescription(   # not used in recent protocol documentation
+        name="Remotecontrol Timeout (mode 1-9)", # to be removed
+        key="remotecontrol_timeout", # to be removed
+        allowedtypes=AC | HYBRID | GEN4 | GEN5, #to be removed
+        native_min_value=0, # to be removed
+        native_max_value=28800, # to be removed
+        native_step=1, # to be removed
+        native_unit_of_measurement=UnitOfTime.SECONDS, # to be removed
+        initvalue=0, # to be removed
+        icon="mdi:home-clock", # to be removed
+        unit=REGISTER_U16, # to be removed
+        write_method=WRITE_DATA_LOCAL, # to be removed
+        fmt="i", # to be removed
+        suggested_display_precision=0, # to be removed
+        entity_registry_enabled_default=False, # to be removed
+    ), # to be removed
     SolaxModbusNumberEntityDescription(
         name="Config Export Control Limit Readscale",
         key="config_export_control_limit_readscale",
@@ -1720,11 +1725,24 @@ SELECT_TYPES = [
             8:  "Mode 8 - PV and BAT control - Duration",
             81: "Negative Injection Price",
             82: "Negative Injection and Consumption Price",
+            83: "Enabled Grid Control",
             # 9:  "Mode 9 - PV and BAT control - Target SOC",  
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         initvalue="Disabled",
         icon="mdi:transmission-tower",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Remotecontrol Timeout Next Motion (mode 1-9)",
+        key="remotecontrol_timeout_next_motion",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        option_dict={
+            0xA0:  "VPP Off", # not in documentation, should not be sent to device
+            0xA1: "default choice",
+        },
+        initvalue=0xA1,
+        unit=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
     ),
     ###
     #
