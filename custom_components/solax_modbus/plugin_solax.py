@@ -7328,7 +7328,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key="pv_limit",
-        register=0x32F,
+        register=0x332,
         allowedtypes=MIC | GEN | X3,
         internal=True,
     ),
