@@ -31,7 +31,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             button = SolaXModbusButton( hub_name, hub, modbus_addr, hub.device_info, button_info )
             entities.append(button)
             if button_info.key == plugin.wakeupButton(): hub.wakeupButton = button_info
-            if button_info.value_function: hub.computedButtons[button_info.key] = button_info
+            if button_info.value_function: hub.computedEntities[button_info.key] = button_info
             elif button_info.command == None: _LOGGER.warning(f"button without command and without value_function found: {button_info.key}")
 
             # register dependency chain
