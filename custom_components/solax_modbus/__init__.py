@@ -1058,16 +1058,31 @@ class SolaXModbusHub:
                     value = int(value)
                 else:
                     descr = self.writeLocals[key]
-                    if hasattr(descr, "reverse_option_dict"):
-                        value = descr.reverse_option_dict[value]  # string to int
+                    # --- Begin safer reverse_option_dict mapping logic ---
+                    if hasattr(descr, "reverse_option_dict") and descr.reverse_option_dict:
+                        # Only map label->int if value is a str; if already numeric, keep as-is
+                        if isinstance(value, str):
+                            mapped = descr.reverse_option_dict.get(value)
+                            if mapped is None:
+                                # Accept numeric-like strings, else warn and leave as-is
+                                try:
+                                    value = int(value)
+                                except Exception:
+                                    _LOGGER.warning(f"{self._name}: unknown option '{value}' for {getattr(descr, 'key', '?')}; leaving value unchanged")
+                            else:
+                                value = mapped
+                        # if value is already int, leave it
                     elif callable(descr.scale):  # function to call ?
                         value = descr.scale(value, descr, self.data)
                     else:  # apply simple numeric scaling and rounding if not a list of words
                         try:
                             value = value * descr.scale
-                        except:
+                        except Exception:
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
-                    value = int(value)
+                    try:
+                        value = int(value)
+                    except Exception:
+                        _LOGGER.warning(f"{self._name}: could not cast '{value}' to int for {getattr(descr, 'key', '?')}; leaving value unchanged")
                     typ = descr.unit
                 try:
                     if   typ == REGISTER_U16: regs_out += convert_to_registers(value, DataType.UINT16,  self.plugin.order32)
