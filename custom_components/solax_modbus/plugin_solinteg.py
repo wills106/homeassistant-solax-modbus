@@ -1428,6 +1428,39 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         internal=True,
         allowedtypes=HYBRID,
     ),
+    SolintegModbusSensorEntityDescription(
+        name="Inverter Voltage L1",
+        key="grid_voltage_l1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=11009,
+        scale=0.1,
+        allowedtypes=X3,
+        icon="mdi:current-ac",
+    ), 
+    SolintegModbusSensorEntityDescription(
+        name="Inverter Voltage L2",
+        key="grid_voltage_l2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=11011,
+        scale=0.1,
+        allowedtypes=X3,
+        icon="mdi:current-ac",
+    ), 
+    SolintegModbusSensorEntityDescription(
+        name="Inverter Voltage L3",
+        key="grid_voltage_l3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        scan_group=SCAN_GROUP_MEDIUM,
+        register=11013,
+        scale=0.1,
+        allowedtypes=X3,
+        icon="mdi:current-ac",
+    ),
 ]
 
 
@@ -1539,3 +1572,4 @@ plugin_instance = solinteg_plugin(
     order32="big",
     # auto_block_ignore_readerror = True
 )
+
