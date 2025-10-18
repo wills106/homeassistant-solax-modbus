@@ -120,9 +120,7 @@ from .const import (
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
-
-# seriesnumber = 'unknown'
-
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 empty_hub_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
@@ -1604,7 +1602,7 @@ class SolaXModbusHub:
         await self._read_block_with_bisect_once(left, typ, depth + 1)
         await self._read_block_with_bisect_once(right, typ, depth + 1)
         return True
-    
+
     async def _recheck_bad_after(self, seconds):
         """After a grace period, re-validate all candidate bad entity bases. Only reproducible
         failures are promoted to definitive bad_regs; otherwise the candidate is dropped."""
