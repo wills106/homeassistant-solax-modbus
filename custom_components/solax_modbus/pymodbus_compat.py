@@ -182,7 +182,7 @@ def pymodbus_version_info() -> str:
     use_new = bool(_convert_to and _convert_from)
     fast_path_possible = bool(_DT_TARGET is not None and use_new)
     msg = f"pymodbus version {_PM_VER}, new api loaded: {use_new}, fast-path available: {fast_path_possible}"
-    _LOGGER.debug(msg)
+    #_LOGGER.debug(msg)
     return msg
 
 
