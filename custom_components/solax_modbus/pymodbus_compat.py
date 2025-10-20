@@ -219,7 +219,7 @@ if _convert_to and _convert_from:
             global _STARTING
             if _STARTING >0:
                 _STARTING -= 1
-                _LOGGER.info(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
+                _LOGGER.debug(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
             # Fast-path: exact enum + correct word_order string → call directly
             if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
