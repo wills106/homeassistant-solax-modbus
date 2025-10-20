@@ -238,7 +238,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
-    timeout_motion = datadict.get("remotecontrol_timeout_next_motion",0xA0)
+    timeout_motion = datadict.get("remotecontrol_timeout_next_motion","VPP Off")
     pv = datadict.get("pv_power_total", 0)
     houseload = value_function_house_load(initval, descr, datadict)
 
@@ -1893,7 +1893,7 @@ SELECT_TYPES = [
         key="remotecontrol_timeout_next_motion",
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         option_dict={
-            0xA0:  "VPP Off", # not in documentation, should not be sent to device
+            0xA0:  "VPP Off", 
             0xA1: "default choice",
         },
         initvalue=0xA1,
