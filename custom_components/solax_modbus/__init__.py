@@ -1844,7 +1844,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_read_holding_registers(self, unit, address, count):
         """Read holding registers."""
-        kwargs = {ADDR_KW: unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
         async with self._lock:
@@ -1864,7 +1864,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
             
     async def async_read_input_registers(self, unit, address, count):
         """Read input registers."""
-        kwargs = {ADDR_KW: unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
         async with self._lock:
@@ -1887,7 +1887,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         Write a single register using the Core hub's client.
         """
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
-        kwargs = {ADDR_KW: unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
         async with self._lock:
@@ -1908,7 +1908,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
-        kwargs = {ADDR_KW: unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -1937,7 +1937,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
-        kwargs = {ADDR_KW: unit} if unit else {}
+        kwargs = {ADDR_KW: unit} if unit is not None else {}
         if isinstance(payload, list):
             regs_out = []
             for (
