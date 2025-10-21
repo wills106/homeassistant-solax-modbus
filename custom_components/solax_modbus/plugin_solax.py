@@ -139,7 +139,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
-    rc_timeout = datadict.get("remotecontrol_timeout",0)
+    rc_timeout = datadict.get("remotecontrol_timeout", 0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
