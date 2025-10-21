@@ -182,7 +182,7 @@ def pymodbus_version_info() -> str:
     use_new = bool(_convert_to and _convert_from)
     fast_path_possible = bool(_DT_TARGET is not None and use_new)
     msg = f"pymodbus version {_PM_VER}, new api loaded: {use_new}, fast-path available: {fast_path_possible}"
-    _LOGGER.debug(msg)
+    #_LOGGER.debug(msg)
     return msg
 
 
@@ -219,7 +219,7 @@ if _convert_to and _convert_from:
             global _STARTING
             if _STARTING >0:
                 _STARTING -= 1
-                _LOGGER.info(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
+                _LOGGER.debug(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
             # Fast-path: exact enum + correct word_order string → call directly
             if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
