@@ -1,6 +1,7 @@
 site_name: Homeassistant SolaX modbus integration
 site_description: The Description
 repo_url: https://github.com/wills106/homeassistant-solax-modbus
+edit_uri: edit/main/docs/
 theme:
   name: readthedocs
   highlightjs: true
