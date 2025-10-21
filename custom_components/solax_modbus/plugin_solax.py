@@ -6455,7 +6455,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x123,
         scale=0.1,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN5 | MPPT3,
+        allowedtypes=HYBRID | GEN5 | MPPT3 | MPPT5 | MPPT6,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
