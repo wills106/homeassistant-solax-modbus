@@ -139,7 +139,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
-    #timeout = datadict.get("remotecontrol_timeout",0)
+    rc_timeout = datadict.get("remotecontrol_timeout", 0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
@@ -206,9 +206,21 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
             "remotecontrol_duration",
             rc_duration,
         ),
-        #(  "remotecontrol_timeout_next_motion", # not in documentation as next parameter
-        #    timeout_motion, # not in documentation as consecutive parameter
-        #),
+        (   # dummy fill address 0x83
+            REGISTER_U16,
+            0, # dummy target soc, should be ignored by system in mode 1
+        ),
+        (   # dummy fill address 0x84-85
+            REGISTER_U32,
+            0, # dummy target energy Wh, should be ignored by system in mode 1
+        ),
+        (   # dummy fill address 0x86-87
+            REGISTER_S32,
+            0, # dummy target charge/discharge power, should be ignored by system in mode 1
+        ),
+        (  "remotecontrol_timeout", # not in documentation as next parameter
+            rc_timeout, # not in documentation as consecutive parameter
+        ),
     ]
     if power_control == "Disabled": 
         _LOGGER.info("Stopping mode 1 loop")
@@ -238,6 +250,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
+    rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion","VPP Off")
     pv = datadict.get("pv_power_total", 0)
     houseload = value_function_house_load(initval, descr, datadict)
@@ -432,6 +445,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         (
             "remotecontrol_duration",
             rc_duration,
+        ),
+        (   "remotecontrol_timeout",
+            rc_timeout,
         ),
         (   "remotecontrol_timeout_next_motion",
             timeout_motion,
@@ -988,22 +1004,21 @@ NUMBER_TYPES = [
         fmt="i",
         suggested_display_precision=0,
     ),
-    SolaxModbusNumberEntityDescription(   # not used in recent protocol documentation
-        name="Remotecontrol Timeout (mode 1-9)", # to be removed
-        key="remotecontrol_timeout", # to be removed
-        allowedtypes=AC | HYBRID | GEN4 | GEN5, #to be removed
-        native_min_value=0, # to be removed
-        native_max_value=28800, # to be removed
-        native_step=1, # to be removed
-        native_unit_of_measurement=UnitOfTime.SECONDS, # to be removed
-        initvalue=0, # to be removed
-        icon="mdi:home-clock", # to be removed
-        unit=REGISTER_U16, # to be removed
-        write_method=WRITE_DATA_LOCAL, # to be removed
-        fmt="i", # to be removed
-        suggested_display_precision=0, # to be removed
-        entity_registry_enabled_default=False, # to be removed
-    ), # to be removed
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Timeout (mode 1-9)",
+        key="remotecontrol_timeout",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        native_min_value=0,
+        native_max_value=28800,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        initvalue=0,
+        icon="mdi:home-clock",
+        unit=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
+    ),
     SolaxModbusNumberEntityDescription(
         name="Config Export Control Limit Readscale",
         key="config_export_control_limit_readscale",
