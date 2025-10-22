@@ -529,6 +529,23 @@ def value_function_inverter_power_g5(initval, descr, datadict):
         + datadict.get("inverter_power_l3", 0)
     )
 
+def value_function_battery_capacity_gen5(initval, descr, datadict):
+    # Check if total capacity has a sane value, if so return that
+    total_charge = datadict.get("battery_total_capacity_charge", 0)
+    if (total_charge > 0):
+        return ( total_charge )
+    # Otherwise try to use the correct battery capacity field
+    bat1_charge = datadict.get("battery_1_capacity_charge", 0)
+    bat2_charge = datadict.get("battery_2_capacity_charge", 0)
+    # Use the lesser if both available
+    if ((bat1_charge > 0) and (bat2_charge > 0)):
+        return ( min(bat2_charge, bat1_charge) )
+    # Otherwise use whichever is available
+    if (bat1_charge > 0):
+        return ( bat1_charge ) # batt 1 available, use that
+    if (bat2_charge > 0):
+        return ( bat2_charge ) # batt 2 available, use that
+    return 0
 
 def value_function_software_version_g2(initval, descr, datadict):
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
@@ -4935,6 +4952,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1C,
         register_type=REG_INPUT,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 ,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Capacity",
+        key="battery_capacity",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        value_function=value_function_battery_capacity_gen5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 1 Capacity",
