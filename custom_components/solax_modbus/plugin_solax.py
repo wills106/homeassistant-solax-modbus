@@ -862,6 +862,11 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     #    ('H1E', 10 ), # more specific entry comes last and wins
 ]
 
+CHARGE_SCALE_EXCEPTIONS = [
+    ("802", 10),  # assuming all Aelio #1590
+    #    ('H1E', 1 ), # more specific entry comes last and wins
+]
+
 NUMBER_TYPES = [
     ###
     #
@@ -4855,6 +4860,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        read_scale_exceptions=CHARGE_SCALE_EXCEPTIONS,
         icon="mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
@@ -4959,6 +4965,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:transmission-tower",
     ),
     SolaXModbusSensorEntityDescription(
+        name="MPPT Count",
+        key="mppt_count",
+        register=0x1B,
+        register_type=REG_INPUT,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
         key="battery_capacity",
         native_unit_of_measurement=PERCENTAGE,
@@ -4966,7 +4979,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1C,
         register_type=REG_INPUT,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 ,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
