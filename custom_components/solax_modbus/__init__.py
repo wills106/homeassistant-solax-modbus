@@ -346,20 +346,22 @@ async def async_unload_entry(hass, entry):
         except Exception as ex:
             _LOGGER.warning(f"{name}: error during hub stop: {ex}")
 
-    # Unload platforms only if they were actually loaded, otherwise HA may raise
+    # Unload platforms - this must succeed for reload to work properly
+    unload_ok = True
     if entry.state == ConfigEntryState.LOADED:
         try:
             unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-        except ValueError:
-            unload_ok = True
-    else:
-        unload_ok = True
+            if not unload_ok:
+                _LOGGER.error(f"{name}: failed to unload platforms")
+        except Exception as ex:
+            _LOGGER.error(f"{name}: error during platform unload: {ex}")
+            unload_ok = False
 
-    # Ensure removal from hass.data even if unload was skipped
+    # Ensure removal from hass.data
     try:
         hass.data.get(DOMAIN, {}).pop(name, None)
-    except Exception:
-        pass
+    except Exception as ex:
+        _LOGGER.warning(f"{name}: error removing from hass.data: {ex}")
 
     return unload_ok
 
