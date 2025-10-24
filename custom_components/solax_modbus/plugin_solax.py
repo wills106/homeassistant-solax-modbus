@@ -459,8 +459,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}") 
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
-        _LOGGER.info("Stopping mode 8 loop by disabling mode 1")
-        return {'action': WRITE_MULTI_MODBUS, 'register': 0x7C , 'data': [  ( "remotecontrol_power_control", "Disabled", ), ]}
+        _LOGGER.info("Stopping mode 8 loop by disabling mode 8")
+        return {'action': WRITE_MULTI_MODBUS, 'register': 0xA0 , 'data': [  ( "remotecontrol_power_control_mode", "Disabled", ), ]} # was 0x7C
         #datadict["remotecontrol_power_control"] = "Disabled" # disable the remotecontrol Mode 1 loop 
         #autorepeat_stop_with_postaction(datadict,"remotecontrol_trigger") # trigger the remotecontrol mode 1 button for a single BUTTONREPEAT_POST action
     _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
@@ -1913,7 +1913,7 @@ SELECT_TYPES = [
         unit=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
-            0:  "Disabled", # not in documentation, should not be sent to device
+            0:  "Disabled", # not in older documentation, in recent docs added
             8:  "Mode 8 - PV and BAT control - Duration",
             81: "Negative Injection Price",
             82: "Negative Injection and Consumption Price",
