@@ -271,11 +271,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     except Exception:
         existing = None
     if existing and (old_hub := existing.get("hub")):
-        _LOGGER.info(f"{old_name}: stopping previous hub before creating a new connection")
+        _LOGGER.info(f"{old_name}: stopping previous hub and unloading platforms for reload")
         try:
             await old_hub.async_stop()
         except Exception as ex:
             _LOGGER.warning(f"{old_name}: error while stopping previous hub: {ex}")
+        
+        # Unload platforms so they can be reloaded with the new hub
+        # This is necessary for reload_config_entry to work properly
+        if old_hub._platforms_forwarded:
+            try:
+                _LOGGER.debug(f"{old_name}: unloading platforms for reload")
+                unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+                if unload_ok:
+                    _LOGGER.debug(f"{old_name}: platforms unloaded successfully")
+                else:
+                    _LOGGER.warning(f"{old_name}: platform unload returned False")
+            except Exception as ex:
+                _LOGGER.warning(f"{old_name}: error unloading platforms during reload: {ex}")
+        
         hass.data.get(DOMAIN, {}).pop(old_name, None)
 
     plugin_name = config[CONF_PLUGIN]
@@ -577,8 +591,21 @@ class SolaXModbusHub:
             _LOGGER.info(f"{self._name}: init aborted – stopping during init")
             return
 
-        await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
-        self._platforms_forwarded = True
+        # Forward platforms for this config entry
+        # Platforms should be unloaded before reload, so this should always succeed
+        if not self._platforms_forwarded:
+            try:
+                await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+                self._platforms_forwarded = True
+                _LOGGER.debug(f"{self._name}: platforms forwarded successfully")
+            except ValueError as ex:
+                # If platforms are already set up, log warning but continue
+                # This shouldn't happen if unload worked properly, but handle gracefully
+                _LOGGER.warning(f"{self._name}: platforms already forwarded - reload may not work correctly: {ex}")
+                self._platforms_forwarded = True
+        else:
+            _LOGGER.debug(f"{self._name}: platforms already forwarded on this hub instance, skipping")
+        
         self._init_task = None
 
     async def _deferred_setup_loop(self, interval: int = 30):
