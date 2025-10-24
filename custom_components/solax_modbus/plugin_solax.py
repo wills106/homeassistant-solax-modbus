@@ -139,7 +139,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     meas = datadict.get("measured_power", 0)
     pv = datadict.get("pv_power_total", 0)
-    rc_timeout = datadict.get("remotecontrol_timeout",0)
+    rc_timeout = datadict.get("remotecontrol_timeout", 0)
     houseload_nett = datadict.get("inverter_power", 0) - meas
     houseload_brut = pv - datadict.get("battery_power_charge", 0) - meas
     # Current SoC for capacity related calculations like Battery Hold/No Discharge
@@ -545,6 +545,23 @@ def value_function_inverter_power_g5(initval, descr, datadict):
         + datadict.get("inverter_power_l3", 0)
     )
 
+def value_function_battery_capacity_gen5(initval, descr, datadict):
+    # Check if total capacity has a sane value, if so return that
+    total_charge = datadict.get("battery_total_capacity_charge", 0)
+    if (total_charge > 0):
+        return ( total_charge )
+    # Otherwise try to use the correct battery capacity field
+    bat1_charge = datadict.get("battery_1_capacity_charge", 0)
+    bat2_charge = datadict.get("battery_2_capacity_charge", 0)
+    # Use the lesser if both available
+    if ((bat1_charge > 0) and (bat2_charge > 0)):
+        return ( min(bat2_charge, bat1_charge) )
+    # Otherwise use whichever is available
+    if (bat1_charge > 0):
+        return ( bat1_charge ) # batt 1 available, use that
+    if (bat2_charge > 0):
+        return ( bat2_charge ) # batt 2 available, use that
+    return 0
 
 def value_function_software_version_g2(initval, descr, datadict):
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
@@ -843,6 +860,11 @@ EXPORT_LIMIT_SCALE_EXCEPTIONS = [
     ("H3BC", 10),
     ("H34B10H", 10),  # need return @jansidlo ,
     #    ('H1E', 10 ), # more specific entry comes last and wins
+]
+
+CHARGE_SCALE_EXCEPTIONS = [
+    ("802", 10),  # assuming all Aelio #1590
+    #    ('H1E', 1 ), # more specific entry comes last and wins
 ]
 
 NUMBER_TYPES = [
@@ -4838,6 +4860,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        read_scale_exceptions=CHARGE_SCALE_EXCEPTIONS,
         icon="mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
@@ -4942,6 +4965,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:transmission-tower",
     ),
     SolaXModbusSensorEntityDescription(
+        name="MPPT Count",
+        key="mppt_count",
+        register=0x1B,
+        register_type=REG_INPUT,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
         key="battery_capacity",
         native_unit_of_measurement=PERCENTAGE,
@@ -4949,7 +4979,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1C,
         register_type=REG_INPUT,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 ,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Capacity",
+        key="battery_capacity",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        value_function=value_function_battery_capacity_gen5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 1 Capacity",
