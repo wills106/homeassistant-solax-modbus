@@ -255,6 +255,14 @@ def _load_plugin(plugin_name: str) -> ModuleType:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX modbus."""
     _LOGGER.debug(f"setup config entries - data: {entry.data}, options: {entry.options}")
+    
+    # Ensure DOMAIN dict exists (needed for reload support)
+    # async_setup() only runs once at HA startup, but async_setup_entry()
+    # runs for each config entry AND during reloads, so we must ensure
+    # the domain dictionary exists before using it
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
+    
     config = entry.options
     # Stop a previously running hub with the same name before creating a new one
     old_name = config.get(CONF_NAME)
