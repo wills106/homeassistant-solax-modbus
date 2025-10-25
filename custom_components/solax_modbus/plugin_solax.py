@@ -240,7 +240,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
 def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available):
     # Determines max rate for charging battery
     
-    # User cap (% of BMS max charge power)
+    # User cap (% of BMS max charge power).
     factor_pct = datadict.get("export_first_battery_charge_limit_8_9", 100)
     try:
         f = max(0.0, min(1.0, float(factor_pct) / 100.0))
@@ -258,13 +258,16 @@ def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
         reg_a = datadict.get("battery_charge_max_current", 20)
         bms_cap_w = int(reg_a * (batt_v if isinstance(batt_v, (int, float)) and batt_v > 0 else 360))
 
+    # Cap BMS charge to user defined percentage. f is in range 0-1 so this is always same or lower
     pct_cap_w = int(f * bms_cap_w)
     
     # If battery can be charged
     if battery_capacity < max_charge_soc:
-        bms_charge_cap = min(bms_cap_w, max(0, available))
-        desired_charge = int(min(bms_charge_cap, pct_cap_w))
+        # Limit to charge rate to lesser of the available
+        # power and the %age capped charge limit.
+        desired_charge = int(max(0, min(available, pct_cap_w)))
     else:
+        # Can't charge the battery
         desired_charge = 0
         
     return desired_charge, bms_cap_w, pct_cap_w
@@ -316,7 +319,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         export_limit = datadict.get("export_control_user_limit", 30000)
         
         # SOC bounds
-        max_charge_soc    = datadict.get("battery_charge_upper_soc", 100)
+        max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
         
         # Local copies
         pvlimit = setpvlimit
