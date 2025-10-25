@@ -1896,22 +1896,26 @@ NUMBER_TYPES = [
         name="EV Charger Address",
         key="ev_charger_address",
         register=0xF9,
+        sensor_key="ev_charger_address",
         fmt="i",
         native_min_value=0,
         native_max_value=255,
         native_step=1,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:ev-station",
     ),
     SolaxModbusNumberEntityDescription(
         name="Adapt Box G2 Address",
         key="adapt_box_g2_address",
         register=0xFB,
+        sensor_key="adapt_box_g2_address",
         fmt="i",
         native_min_value=0,
         native_max_value=255,
         native_step=1,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:connection",
     ),
 ]
@@ -1919,25 +1923,6 @@ NUMBER_TYPES = [
 # ================================= Switch Declarations ============================================================
 
 SWITCH_TYPES = [
-    ###
-    #
-    # Gen4 Missing Registers - Switch Entities
-    #
-    ###
-    SolaXModbusSwitchEntityDescription(
-        name="VPP Exit Idle Enable",
-        key="vpp_exit_idle_enable",
-        register=0xF4,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        icon="mdi:power-plug",
-    ),
-    SolaXModbusSwitchEntityDescription(
-        name="Fast CT Check Enable",
-        key="fast_ct_check_enable",
-        register=0xF5,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        icon="mdi:current-ac",
-    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -2553,6 +2538,30 @@ SELECT_TYPES = [
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | EPS,
         icon="mdi:dip-switch",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="VPP Exit Idle Enable",
+        key="vpp_exit_idle_enable",
+        register=0xF4,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:power-plug",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Fast CT Check Enable",
+        key="fast_ct_check_enable",
+        register=0xF5,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:current-ac",
     ),
     #####
     #
@@ -4614,6 +4623,48 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="generator_charge_soc",
         register=0x12E,
         allowedtypes=AC | HYBRID | GEN5 | GEN6 | DCB,
+        internal=True,
+    ),
+    #####
+    #
+    # Gen4 Missing Registers - Internal Sensors for Switch Reading
+    # Note: These read from holding registers for current state
+    #
+    #####
+    SolaXModbusSensorEntityDescription(
+        key="vpp_exit_idle_enable",
+        register=0xB4,
+        register_type=REG_HOLDING,
+        scale=value_function_disabled_enabled,
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="fast_ct_check_enable",
+        register=0xB3,
+        register_type=REG_HOLDING,
+        scale=value_function_disabled_enabled,
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    #####
+    #
+    # Gen4 Missing Registers - Internal Sensors for Number Reading
+    # Note: These read from holding registers for current values
+    #
+    #####
+    SolaXModbusSensorEntityDescription(
+        key="ev_charger_address",
+        register=0x15C,
+        register_type=REG_HOLDING,
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="adapt_box_g2_address",
+        register=0x15E,
+        register_type=REG_HOLDING,
+        allowedtypes=AC | HYBRID | GEN4,
         internal=True,
     ),
     #####
