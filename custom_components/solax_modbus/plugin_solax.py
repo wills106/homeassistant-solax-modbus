@@ -1581,6 +1581,7 @@ NUMBER_TYPES = [
         native_step=1,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         icon="mdi:ev-station",
     ),
     SolaxModbusNumberEntityDescription(
@@ -1592,7 +1593,7 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=255,
         native_step=1,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:connection",
     ),
@@ -2535,6 +2536,7 @@ SELECT_TYPES = [
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         icon="mdi:power-plug",
     ),
     SolaxModbusSelectEntityDescription(
@@ -2547,6 +2549,7 @@ SELECT_TYPES = [
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         icon="mdi:current-ac",
     ),
     SolaxModbusSelectEntityDescription(
