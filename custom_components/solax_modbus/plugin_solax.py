@@ -1998,24 +1998,26 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription(
         name="Meter 1 Direction",
         key="meter_1_direction",
-        register=0x010B,
+        register=0x00A4,
         option_dict={
             0: "Positive",
             1: "Negative",
         },
         allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:meter-electric",
     ),
     SolaxModbusSelectEntityDescription(
         name="Meter 2 Direction",
         key="meter_2_direction",
-        register=0x010C,
+        register=0x00A5,
         option_dict={
             0: "Positive",
             1: "Negative",
         },
         allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:meter-electric",
     ),
