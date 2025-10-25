@@ -1996,6 +1996,32 @@ SELECT_TYPES = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
+        name="Meter 1 Direction",
+        key="meter_1_direction",
+        register=0x00A4,
+        option_dict={
+            0: "Positive",
+            1: "Negative",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        icon="mdi:meter-electric",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Meter 2 Direction",
+        key="meter_2_direction",
+        register=0x00A5,
+        option_dict={
+            0: "Positive",
+            1: "Negative",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        icon="mdi:meter-electric",
+    ),
+    SolaxModbusSelectEntityDescription(
         name="Charge and Discharge Period2 Enable",
         key="charge_and_discharge_period2_enable",
         register=0x6C,
@@ -4020,6 +4046,26 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN3 | GEN4 | GEN5,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:meter-electric",
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="meter_1_direction",
+        register=0x010B,
+        scale={
+            0: "Positive",
+            1: "Negative",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="meter_2_direction",
+        register=0x010C,
+        scale={
+            0: "Positive",
+            1: "Negative",
+        },
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="meter_1_direction",
