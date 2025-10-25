@@ -237,7 +237,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     return { 'action': WRITE_MULTI_MODBUS, 'data': res }
 
 
-def autorepeat_bms_charge(battery_capacity, max_charge_soc, available):
+def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available):
     # Determines max rate for charging battery
     
     # User cap (% of BMS max charge power)
@@ -265,7 +265,7 @@ def autorepeat_bms_charge(battery_capacity, max_charge_soc, available):
     else:
         desired_charge = 0
         
-    return (desired_charge, bms_cap_w, pct_cap_w)
+    return desired_charge, bms_cap_w, pct_cap_w
 
 
 def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
@@ -305,13 +305,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
         pvlimit = 0 
         pushmode_power = houseload - import_limit
-    elif power_control == "Enabled No Discharge"
+    elif power_control == "Enabled No Discharge":
         # --- Battery No-Discharge (Mode 8 custom)
         # Split PV surplus into (a) battery charging up to charge rate limit (b) grid export if any excess
         # In deficit (house load > PV), prevent battery discharge, making up difference by importing from grid
         
-        DEADBAND_W = 100  # deadband around zero net flow to avoid flicker
-
         # Export limit no readscale:
         export_limit = datadict.get("export_control_user_limit", 30000)
         
@@ -325,18 +323,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         # Debug inputs
         _LOGGER.debug(
             f"[Mode8 No-Discharge] inputs pv={pv}W hl={houseload}W "
-            f"soc={battery_capacity}% max_soc={max_charge_soc}% pvlimit={pvlimit}}W"
-        )
-
-        # Optional probes (if available)
-        measured_power = datadict.get("measured_power", None)
-        grid_export_s = datadict.get("grid_export", None)
-        grid_import_s = datadict.get("grid_import", None)
-        _LOGGER.debug(
-            "[Mode8 Export-First] probes: "
-            f"measured_power={measured_power if measured_power is not None else 'n/a'} "
-            f"grid_export={grid_export_s if grid_export_s is not None else 'n/a'} "
-            f"grid_import={grid_import_s if grid_import_s is not None else 'n/a'}"
+            f"soc={battery_capacity}% max_soc={max_charge_soc}% pvlimit={pvlimit}W"
         )
 
         # Surplus path: charge battery (within BMS and user cap), exporting any excess.
@@ -344,26 +331,28 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             surplus = pv - houseload
 
             # Battery gets surplus PV up to BMS limit
-            (desired_charge, bms_cap_w, pct_cap_w) = autorepeat_bms_charge_cap(battery_capacity, max_charge_soc, surplus)
+            desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
             pushmode_power = -desired_charge
 
             # If there is any left over, it goes to the grid
-            rest_for_grid = max(0, surplus - desired_charge)
-            if rest_for_grid > export_limit
+            surplus_export = max(0, surplus - desired_charge)
+            export_within_cap = min(export_limit, surplus_export)
+            if surplus_export > export_limit:
                 # Unless we've exceded the export limit, in which case limit the PV too
-                pvlimit = pv - (rest_for_grid - export_limit)
-                rest_for_grid = export_limit
+                pvlimit = pv - (surplus_export - export_limit)
+                surplus_export = export_limit
 
             _LOGGER.debug(
-                f"[Mode8 No-Discharge] export-first: surplus={surplus}W within_bms={desired_charge}W rest={rest_for_grid}W"
+                f"[Mode8 No-Discharge] export-first: surplus={surplus}W within_bms={desired_charge}W "
+                f"surplus_export={surplus_export}W within_cap={export_within_cap}W pvlimit={pvlimit}W "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
             )
    
-        else
+        else:
             # Deficit path: hold battery SoC
             deficit = houseload - pv
 
-            pushmode_power = 0;
+            pushmode_power = 0
             _LOGGER.debug(f"[Mode8 No-Discharge] deficit: deficit={deficit}W hold-soc={battery_capacity}% chosen_push={pushmode_power}W")
 
         # Final debug and state
@@ -415,7 +404,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             export_within_cap = min(export_limit, surplus)
             rest_for_batt = max(0, surplus - export_within_cap)
 
-            (desired_charge, bms_cap_w, pct_cap_w) = autorepeat_bms_charge_cap(battery_capacity, max_charge_soc, rest_for_batt)
+            desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, rest_for_batt)
             pushmode_power = -desired_charge
 
             _LOGGER.debug(
@@ -2047,6 +2036,7 @@ SELECT_TYPES = [
             82: "Negative Injection and Consumption Price",
             83: "Export-First Battery Limit",
             84: "Enabled Grid Control",
+            85: "Enabled No Discharge",
             # 9:  "Mode 9 - PV and BAT control - Target SOC",  
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
