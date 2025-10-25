@@ -1571,6 +1571,32 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaxModbusNumberEntityDescription(
+        name="EV Charger Address",
+        key="ev_charger_address",
+        register=0xF9,
+        sensor_key="ev_charger_address",
+        fmt="i",
+        native_min_value=0,
+        native_max_value=255,
+        native_step=1,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:ev-station",
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Adapt Box G2 Address",
+        key="adapt_box_g2_address",
+        register=0xFB,
+        sensor_key="adapt_box_g2_address",
+        fmt="i",
+        native_min_value=0,
+        native_max_value=255,
+        native_step=1,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:connection",
+    ),
+    SolaxModbusNumberEntityDescription(
         name="Generator Charge SOC",
         key="generator_charge_soc",
         register=0x10A,
@@ -1887,37 +1913,6 @@ NUMBER_TYPES = [
         device_class=NumberDeviceClass.POWER,
         allowedtypes=MIC | GEN4,
     ),
-    ###
-    #
-    # Gen4 Missing Registers - Number Entities
-    #
-    ###
-    SolaxModbusNumberEntityDescription(
-        name="EV Charger Address",
-        key="ev_charger_address",
-        register=0xF9,
-        sensor_key="ev_charger_address",
-        fmt="i",
-        native_min_value=0,
-        native_max_value=255,
-        native_step=1,
-        allowedtypes=AC | HYBRID | GEN4,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:ev-station",
-    ),
-    SolaxModbusNumberEntityDescription(
-        name="Adapt Box G2 Address",
-        key="adapt_box_g2_address",
-        register=0xFB,
-        sensor_key="adapt_box_g2_address",
-        fmt="i",
-        native_min_value=0,
-        native_max_value=255,
-        native_step=1,
-        allowedtypes=AC | HYBRID | GEN4,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:connection",
-    ),
 ]
 
 # ================================= Switch Declarations ============================================================
@@ -2045,7 +2040,7 @@ SELECT_TYPES = [
             0: "Positive",
             1: "Negative",
         },
-        allowedtypes=AC | HYBRID | GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:meter-electric",
@@ -2058,7 +2053,7 @@ SELECT_TYPES = [
             0: "Positive",
             1: "Negative",
         },
-        allowedtypes=AC | HYBRID | GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:meter-electric",
@@ -2531,6 +2526,30 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
+        name="VPP Exit Idle Enable",
+        key="vpp_exit_idle_enable",
+        register=0xF4,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:power-plug",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Fast CT Check Enable",
+        key="fast_ct_check_enable",
+        register=0xF5,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:current-ac",
+    ),
+    SolaxModbusSelectEntityDescription(
         name="Shadow Fix Function Level PV3 (GMPPT)",
         key="shadow_fix3_enable",
         register=0xFC,
@@ -2564,30 +2583,6 @@ SELECT_TYPES = [
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | EPS,
         icon="mdi:dip-switch",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="VPP Exit Idle Enable",
-        key="vpp_exit_idle_enable",
-        register=0xF4,
-        option_dict={
-            0: "Disabled",
-            1: "Enabled",
-        },
-        allowedtypes=AC | HYBRID | GEN4,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:power-plug",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="Fast CT Check Enable",
-        key="fast_ct_check_enable",
-        register=0xF5,
-        option_dict={
-            0: "Disabled",
-            1: "Enabled",
-        },
-        allowedtypes=AC | HYBRID | GEN4,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:current-ac",
     ),
     #####
     #
@@ -3724,6 +3719,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
+        key="fast_ct_check_enable",
+        register=0xB3,
+        register_type=REG_HOLDING,
+        scale=value_function_disabled_enabled,
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
         key="allow_grid_charge",
         register=0xB4,
         scale={
@@ -3733,6 +3736,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             3: "Both Allowed",
         },
         allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="vpp_exit_idle_enable",
+        register=0xB4,
+        register_type=REG_HOLDING,
+        scale=value_function_disabled_enabled,
+        allowedtypes=AC | HYBRID | GEN4,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4120,7 +4131,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             0: "Positive",
             1: "Negative",
         },
-        allowedtypes=AC | HYBRID | GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4130,7 +4141,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             0: "Positive",
             1: "Negative",
         },
-        allowedtypes=AC | HYBRID | GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4487,6 +4498,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
+        key="ev_charger_address",
+        register=0x15C,
+        register_type=REG_HOLDING,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="adapt_box_g2_address",
+        register=0x15E,
+        register_type=REG_HOLDING,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
         key="shadow_fix3_enable",
         register=0x15F,
         scale={
@@ -4669,48 +4694,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="generator_charge_soc",
         register=0x12E,
         allowedtypes=AC | HYBRID | GEN5 | GEN6 | DCB,
-        internal=True,
-    ),
-    #####
-    #
-    # Gen4 Missing Registers - Internal Sensors for Switch Reading
-    # Note: These read from holding registers for current state
-    #
-    #####
-    SolaXModbusSensorEntityDescription(
-        key="vpp_exit_idle_enable",
-        register=0xB4,
-        register_type=REG_HOLDING,
-        scale=value_function_disabled_enabled,
-        allowedtypes=AC | HYBRID | GEN4,
-        internal=True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        key="fast_ct_check_enable",
-        register=0xB3,
-        register_type=REG_HOLDING,
-        scale=value_function_disabled_enabled,
-        allowedtypes=AC | HYBRID | GEN4,
-        internal=True,
-    ),
-    #####
-    #
-    # Gen4 Missing Registers - Internal Sensors for Number Reading
-    # Note: These read from holding registers for current values
-    #
-    #####
-    SolaXModbusSensorEntityDescription(
-        key="ev_charger_address",
-        register=0x15C,
-        register_type=REG_HOLDING,
-        allowedtypes=AC | HYBRID | GEN4,
-        internal=True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        key="adapt_box_g2_address",
-        register=0x15E,
-        register_type=REG_HOLDING,
-        allowedtypes=AC | HYBRID | GEN4,
         internal=True,
     ),
     #####
@@ -9144,6 +9127,9 @@ class solax_plugin(plugin_base):
             self.inverter_model = "X3-Ultra-19.9kW"
         elif seriesnumber.startswith("H3BC20"):
             invertertype = HYBRID | GEN5 | X3  # X3 Ultra C
+            self.inverter_model = "X3-Ultra-20kW"
+        elif seriesnumber.startswith("H3BC20K"):
+            invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra 20KP C #1668
             self.inverter_model = "X3-Ultra-20kW"
         elif seriesnumber.startswith("H3BC25"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra C
