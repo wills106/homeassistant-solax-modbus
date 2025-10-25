@@ -249,7 +249,9 @@ def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
 
     # BMS charge capability approximation
     bms_a = datadict.get("bms_charge_max_current", None)
-    batt_v = datadict.get("battery_1_voltage_charge", None) or datadict.get("battery_voltage_charge", None)
+    batt_v = (datadict.get("battery_1_voltage_charge", None) or
+              datadict.get("battery_2_voltage_charge", None) or
+              datadict.get("battery_voltage_charge", None))
     if isinstance(bms_a, (int, float)) and isinstance(batt_v, (int, float)) and bms_a > 0 and batt_v > 0:
         bms_cap_w = int(bms_a * batt_v)
     else:
