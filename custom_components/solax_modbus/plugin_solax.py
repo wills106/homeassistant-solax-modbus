@@ -1814,6 +1814,23 @@ NUMBER_TYPES = [
     ),
     #####
     #
+    # Boost
+    #
+    #####
+    SolaxModbusNumberEntityDescription(
+        name="Export Power Limit",
+        key="export_power_limit",
+        register=0x604,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=MIC | GEN2 | X1,
+    ),
+    #####
+    #
     # MIC
     #
     #####
@@ -7424,6 +7441,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:clock",
     ),
     SolaXModbusSensorEntityDescription(
+        key="export_power_limit",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        register=0x31E,
+        internal=True,
+        allowedtypes=MIC | GEN2 | X1,
+    ),
+    SolaXModbusSensorEntityDescription(
         key="pv_limit",
         register=0x332,
         allowedtypes=MIC | GEN | X3,
@@ -7495,11 +7520,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Export Power Limit",
         key="export_power_limit",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x371,
+        internal=True,
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8042,7 +8067,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        register=0x705,
+        register=0x704,
         register_type=REG_INPUT,
         unit=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X3,
@@ -8053,7 +8078,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        register=0x707,
+        register=0x706,
         register_type=REG_INPUT,
         unit=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X3,
@@ -8064,9 +8089,45 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
+        register=0x708,
+        register_type=REG_INPUT,
+        unit=REGISTER_S32,
+        allowedtypes=MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Measured Power L1 Alt",
+        key="measured_power_l1_alt",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x705,
+        register_type=REG_INPUT,
+        unit=REGISTER_S32,
+        entity_registry_enabled_default=False,
+        allowedtypes=MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Measured Power L2 Alt",
+        key="measured_power_l2_alt",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x707,
+        register_type=REG_INPUT,
+        unit=REGISTER_S32,
+        entity_registry_enabled_default=False,
+        allowedtypes=MIC | GEN2 | X3,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Measured Power L3 Alt",
+        key="measured_power_l3_alt",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
         register=0x709,
         register_type=REG_INPUT,
         unit=REGISTER_S32,
+        entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN2 | X3,
     ),
     #####
