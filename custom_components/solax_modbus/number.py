@@ -2,7 +2,7 @@ from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_A
 from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS, TMPDATA_EXPIRY
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity
+from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity, NumberMode
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from dataclasses import dataclass, replace
@@ -110,6 +110,9 @@ class SolaXModbusNumber(NumberEntity):
         self._state = number_info.state  # not used AFAIK
         self.entity_description = number_info
         self._write_method = number_info.write_method
+        # Force box mode for address entities
+        if self._key in ["ev_charger_address", "adapt_box_g2_address"]:
+            self._attr_mode = NumberMode.BOX
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
