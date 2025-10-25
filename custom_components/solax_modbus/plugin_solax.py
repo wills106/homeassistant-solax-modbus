@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.components.switch import SwitchEntityDescription
 from .pymodbus_compat import DataType, convert_from_registers
 from custom_components.solax_modbus.const import *
 from time import time
@@ -116,6 +117,11 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
+
+
+@dataclass
+class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
 # ====================================== Computed value functions  =================================================
@@ -1880,6 +1886,57 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         allowedtypes=MIC | GEN4,
+    ),
+    ###
+    #
+    # Gen4 Missing Registers - Number Entities
+    #
+    ###
+    SolaxModbusNumberEntityDescription(
+        name="EV Charger Address",
+        key="ev_charger_address",
+        register=0xF9,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=255,
+        native_step=1,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        icon="mdi:ev-station",
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Adapt Box G2 Address",
+        key="adapt_box_g2_address",
+        register=0xFB,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=255,
+        native_step=1,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        icon="mdi:connection",
+    ),
+]
+
+# ================================= Switch Declarations ============================================================
+
+SWITCH_TYPES = [
+    ###
+    #
+    # Gen4 Missing Registers - Switch Entities
+    #
+    ###
+    SolaXModbusSwitchEntityDescription(
+        name="VPP Exit Idle Enable",
+        key="vpp_exit_idle_enable",
+        register=0xF4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        icon="mdi:power-plug",
+    ),
+    SolaXModbusSwitchEntityDescription(
+        name="Fast CT Check Enable",
+        key="fast_ct_check_enable",
+        register=0xF5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        icon="mdi:current-ac",
     ),
 ]
 
@@ -9266,7 +9323,7 @@ plugin_instance = solax_plugin(
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
-    SWITCH_TYPES=[],
+    SWITCH_TYPES=SWITCH_TYPES,
     block_size=100,
     #order16=Endian.BIG,
     order32="little",
