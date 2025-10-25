@@ -7397,11 +7397,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Export Power Limit",
         key="export_power_limit",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x31E,
+        internal=True,
         allowedtypes=MIC | GEN2 | X1,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7476,11 +7476,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Export Power Limit",
         key="export_power_limit",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x371,
+        internal=True,
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
