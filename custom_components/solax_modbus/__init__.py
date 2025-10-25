@@ -1334,7 +1334,7 @@ class SolaXModbusHub:
                     for k, d in l:
                         d_ignore = d.ignore_readerror
                         if (d_ignore is not True) and (d_ignore is not False):
-                            _LOGGER.debug(f"{self._name}: returning static {d_key} = {d_ignore}")
+                            _LOGGER.debug(f"{self._name}: returning static {k} = {d_ignore}")
                             data[k] = d_ignore  # return something static
                         else:
                             if d_ignore is False: # remove potentially faulty data
@@ -1412,7 +1412,7 @@ class SolaXModbusHub:
                 if payload:
                     reg = payload.get("register", buttondescr.register)
                     action = payload.get("action")
-                    if not action: __LOGGER.error(f"autorepeat value function for {k} must return dict containing action")
+                    if not action: _LOGGER.error(f"autorepeat value function for {k} must return dict containing action")
                     else:
                         if action == WRITE_MULTI_MODBUS:
                             _LOGGER.debug(f"**debug** ready to repeat button {k} data: {payload}")
