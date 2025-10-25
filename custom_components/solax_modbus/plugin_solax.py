@@ -348,7 +348,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 surplus_export = export_limit
 
             _LOGGER.debug(
-                f"[Mode8 No-Discharge] export-first: surplus={surplus}W within_bms={desired_charge}W "
+                f"[Mode8 No-Discharge] charge-first: surplus={surplus}W within_bms={desired_charge}W "
                 f"surplus_export={surplus_export}W within_cap={export_within_cap}W pvlimit={pvlimit}W "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
             )
