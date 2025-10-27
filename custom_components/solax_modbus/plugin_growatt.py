@@ -1214,7 +1214,6 @@ NUMBER_TYPES = [
         allowedtypes = GEN4 | HYBRID,
         write_method = WRITE_SINGLE_MODBUS,
         icon = "mdi:battery-arrow-down",
-        entity_registry_enabled_default = False,
         entity_category = EntityCategory.CONFIG,
     ),
     GrowattModbusNumberEntityDescription(
@@ -1228,19 +1227,10 @@ NUMBER_TYPES = [
         native_step = 1,
         fmt = "i",
         write_method = WRITE_SINGLE_MODBUS,        
-        entity_registry_enabled_default = True,
         entity_category = EntityCategory.CONFIG,        
         allowedtypes = GEN4 | HYBRID,
         icon = "mdi:battery",
-    ),        
-    
-    
-    
-    
-    
-    
-    
-    
+    ),    
 ]
 
 
@@ -2585,6 +2575,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   4: "LG ver 4",},
         register = 700,
         allowedtypes = GEN4,
+		entity_registry_enabled_default = False,
     ),
     ###
     #  Battery First 4-6
