@@ -2576,7 +2576,16 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN3,
         icon = "mdi:battery-sync",
     ),
-
+    GrowattModbusSensorEntityDescription( ### See if this a way to detect ARK/APX
+        name = "BMS Type",
+        key = "bms_type",
+        scale = { 0: "ARO ARK?",
+                  1: "LG ver 3", 
+                  2: "APX HV", 
+                  4: "LG ver 4",},
+        register = 700,
+        allowedtypes = GEN4,
+    ),
     ###
     #  Battery First 4-6
     ###
