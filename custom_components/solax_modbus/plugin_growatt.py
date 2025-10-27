@@ -8830,7 +8830,20 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category = EntityCategory.DIAGNOSTIC,
         icon = "mdi:information",
     ),	
-
+    GrowattModbusSensorEntityDescription(
+        name = "VPP Status", 
+        key = "vpp_status", 
+        register = 30100, 
+        register_type = REG_HOLDING,
+        scale = {
+            0: "Disabled",
+            1: "Enabled",
+            },
+        entity_registry_enabled_default = False,
+        allowedtypes = GEN4 | HYBRID,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        icon = "mdi:information",
+    ),	
 
 
 
