@@ -1233,14 +1233,8 @@ class SolaXModbusHub:
         """
 
         # Plugin-level validation hook
-        if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
-            _LOGGER.info(f"[DEBUG] PM U32 before validation: {descr.key}={val}, has_func={hasattr(self.plugin_module, 'validate_register_data')}")
-        
         if hasattr(self.plugin_module, 'validate_register_data'):
             val = self.plugin_module.validate_register_data(descr, val, data)
-        
-        if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
-            _LOGGER.info(f"[DEBUG] PM U32 after validation: {descr.key}={val}")
 
         if val == None:  # E.g. if errors have occurred during readout
             #_LOGGER.warning(f"****tmp*** treating {descr.key} failed")
