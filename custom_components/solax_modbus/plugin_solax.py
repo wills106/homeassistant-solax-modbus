@@ -49,6 +49,41 @@ ALL_DCB_GROUP = DCB
 PM = 0x20000
 ALL_PM_GROUP = PM
 
+# ============================================================================
+# Plugin-Level Register Validation
+# ============================================================================
+
+# Global storage for last known good values
+_pm_last_known_values = {}
+
+def validate_register_data(descr, value, datadict):
+    """
+    Validate PM U32 sensors for overflow corruption.
+    
+    Detects 0xFFFFFF00 pattern from uninitialized slave registers and
+    returns the last known good value.
+    """
+    global _pm_last_known_values
+    
+    # PM U32 sensors only (filter by key prefix)
+    if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
+        # Handle None from core errors
+        if value is None:
+            last_value = _pm_last_known_values.get(descr.key, 0)
+            _LOGGER.warning(f"PM sensor {descr.key} received None -> using last: {last_value}W")
+            return last_value
+        
+        # Handle U32 overflow pattern
+        if value >= 0xFFFFFF00:
+            last_value = _pm_last_known_values.get(descr.key, 0)
+            _LOGGER.warning(f"PM U32 overflow {descr.key}: 0x{value:08X} -> using last: {last_value}W")
+            return last_value
+        
+        # Store valid values for future use
+        _pm_last_known_values[descr.key] = value
+    
+    return value
+
 MPPT3 = 0x40000
 MPPT4 = 0x80000
 MPPT5 = 0x100000
@@ -125,6 +160,7 @@ class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
+
 
 
 def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
@@ -6891,6 +6927,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="pm_pv_current_1",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
         register=0x1F6,
         register_type=REG_INPUT,
         unit=REGISTER_U32,
@@ -6904,6 +6941,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="pm_pv_current_2",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
         register=0x1F8,
         register_type=REG_INPUT,
         unit=REGISTER_U32,
