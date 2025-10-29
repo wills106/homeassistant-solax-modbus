@@ -722,11 +722,14 @@ def value_function_pm_total_house_load(initval, descr, datadict):
     grid_power = datadict.get("measured_power", 0)
     pv_power = datadict.get("pm_total_pv_power", 0)
     battery_power = datadict.get("pm_battery_power_charge", 0)
+    # Note: pm_battery_power_charge represents grid-to-battery charging only
+    # It does NOT include PV contribution to battery charging
     
     # Method 1: Inverter-based calculation (inverter perspective)
     inverter_method = pm_inverter_power - grid_power
     
-    # Method 2: Physics-based calculation (energy conservation: PV - Grid - Battery = House)
+    # Method 2: Physics-based calculation (energy conservation: PV - Grid - Battery_from_grid = House)
+    # Since battery_power is grid-to-battery only, this correctly calculates house load
     physics_method = pv_power - grid_power - battery_power
     
     # Apply delta correction during remote control if delta is reasonable (< 25%)

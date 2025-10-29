@@ -156,7 +156,11 @@ When parallel mode is detected, the integration exposes additional PM (Parallel 
 - `pm_total_pv_power`: Combined PV production from all inverters
 - `pm_total_inverter_power`: Combined inverter power output
 - `pm_total_house_load`: Total house consumption (with delta correction)
-- `pm_battery_power_charge`: Total battery charging power across all units
+- `pm_battery_power_charge`: Battery charging power from grid across all units
+  - ⚠️ **Important**: This represents **grid contribution to battery charging only**
+  - Does **NOT include PV contribution** to battery charging
+  - Total battery power = `pm_battery_power_charge` + PV contribution to battery
+  - Example: 28kW charging with 12kW PV → sensor shows ~28kW (grid only), actual total ~40kW
 
 ### Individual Inverter Sensors
 - `pm_pv_power_1`, `pm_pv_power_2`: PV power per PV input across all inverters
@@ -211,6 +215,18 @@ The integration uses two independent calculation methods:
 2. **Physics Method**: `pv_power - grid_power - battery_power`
    - Based on energy conservation
    - More accurate during remote control
+   - **Note**: Uses `battery_power` which represents grid-to-battery charging only
+   - This correctly calculates house load since PV-to-battery is already accounted for in the `pv_power` term
+
+**Why the Physics Method Works:**
+The physics method uses `pm_battery_power_charge` (grid-to-battery only), which is correct because:
+```
+House = PV - Grid - Battery_from_grid
+```
+PV contribution to battery is implicitly handled since:
+- `pv_power` includes all PV production (to house + to battery + to grid)
+- `battery_power` only counts grid-to-battery (not PV-to-battery)
+- The difference correctly isolates house consumption
 
 ### Delta Correction
 ```python

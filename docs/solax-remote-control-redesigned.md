@@ -236,7 +236,9 @@ In parallel mode systems, multiple inverters work together:
 - `parallel_setting`: "Master", "Slave", or "Free"
 - `pm_total_inverter_power`: Total power from all inverters (Master + Slaves)
 - `pm_total_pv_power`: Total PV power from all inverters
-- `pm_battery_power_charge`: Total battery charging power from all inverters
+- `pm_battery_power_charge`: Battery charging power from grid only (does NOT include PV contribution)
+  - ⚠️ **Critical**: This sensor shows **grid-to-battery charging only**
+  - Total battery charging = `pm_battery_power_charge` + PV contribution
 - `single_inverter_power`: Power from individual inverter (for comparison)
 
 ### Parallel Mode Power Flow
