@@ -1,8 +1,9 @@
 name: HACS Action
 
 on:
-  push:
-  pull_request:
+  # Disabled for development fork - HACS validation only needed in upstream
+  # push:
+  # pull_request:
   schedule:
     - cron: "0 0 * * *"
 
