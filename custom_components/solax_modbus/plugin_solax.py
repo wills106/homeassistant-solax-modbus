@@ -49,6 +49,41 @@ ALL_DCB_GROUP = DCB
 PM = 0x20000
 ALL_PM_GROUP = PM
 
+# ============================================================================
+# Plugin-Level Register Validation
+# ============================================================================
+
+# Global storage for last known good values
+_pm_last_known_values = {}
+
+def validate_register_data(descr, value, datadict):
+    """
+    Validate PM U32 sensors for overflow corruption.
+    
+    Detects 0xFFFFFF00 pattern from uninitialized slave registers and
+    returns the last known good value.
+    """
+    global _pm_last_known_values
+    
+    # PM U32 sensors only (filter by key prefix)
+    if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
+        # Handle None from core errors
+        if value is None:
+            last_value = _pm_last_known_values.get(descr.key, 0)
+            _LOGGER.warning(f"PM sensor {descr.key} received None -> using last: {last_value}W")
+            return last_value
+        
+        # Handle U32 overflow pattern
+        if value >= 0xFFFFFF00:
+            last_value = _pm_last_known_values.get(descr.key, 0)
+            _LOGGER.warning(f"PM U32 overflow {descr.key}: 0x{value:08X} -> using last: {last_value}W")
+            return last_value
+        
+        # Store valid values for future use
+        _pm_last_known_values[descr.key] = value
+    
+    return value
+
 MPPT3 = 0x40000
 MPPT4 = 0x80000
 MPPT5 = 0x100000
@@ -125,49 +160,6 @@ class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
-
-# Global dictionary to store last known good values for PM sensors
-_pm_last_known_values = {}
-
-def value_function_pm_overflow_protection(initval, descr, datadict):
-    """Handle PM register overflow by preserving last known good value."""
-    global _pm_last_known_values
-    
-    # Get the raw value from the corresponding raw sensor
-    raw_key = descr.key + "_raw"
-    raw_value = datadict.get(raw_key, initval)
-    
-    # Debug logging to see if function is being called
-    _LOGGER.info(f"[PM_OVERFLOW_DEBUG] {descr.key}: raw_value={raw_value}")
-    
-    # Handle None values from core integration errors
-    if raw_value is None:
-        # Use last known good value if available
-        last_value = _pm_last_known_values.get(descr.key)
-        if last_value is not None:
-            _LOGGER.warning(f"PM sensor {descr.key} received None from core -> using last known value: {last_value}")
-            return last_value
-        else:
-            _LOGGER.warning(f"PM sensor {descr.key} received None from core -> no previous value available, using 0")
-            return 0
-    
-    # Check if this is an overflow value (U32 pattern like 0xFFFFFF00 or higher)
-    if raw_value is not None and raw_value >= 0xFFFFFF00:  # U32 overflow pattern
-        # Use last known good value if available
-        last_value = _pm_last_known_values.get(descr.key)
-        if last_value is not None:
-            _LOGGER.warning(f"PM overflow detected for {descr.key}: {raw_value} (0x{raw_value:08X}) -> using last known value: {last_value}")
-            return last_value
-        else:
-            _LOGGER.warning(f"PM overflow detected for {descr.key}: {raw_value} (0x{raw_value:08X}) -> no previous value available, using 0")
-            return 0
-    
-    # Value is valid, store it as last known good value
-    if raw_value is not None:
-        _pm_last_known_values[descr.key] = raw_value
-    
-    return raw_value
-
 
 def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     """
@@ -7157,38 +7149,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        depends_on=("pm_pv_power_1_raw",),
-        value_function=value_function_pm_overflow_protection,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        icon="mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="PM PV Power 1 Raw",
-        key="pm_pv_power_1_raw",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
         register=0x1F2,
         register_type=REG_INPUT,
         unit=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
-        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="PM PV Power 2",
         key="pm_pv_power_2",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        depends_on=("pm_pv_power_2_raw",),
-        value_function=value_function_pm_overflow_protection,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        icon="mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="PM PV Power 2 Raw",
-        key="pm_pv_power_2_raw",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -7197,24 +7166,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
-        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="PM PV Current 1",
         key="pm_pv_current_1",
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        state_class=SensorStateClass.MEASUREMENT,
-        depends_on=("pm_pv_current_1_raw",),
-        value_function=value_function_pm_overflow_protection,
-        scale=0.1,
-        rounding=1,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        icon="mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="PM PV Current 1 Raw",
-        key="pm_pv_current_1_raw",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -7225,24 +7180,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
-        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="PM PV Current 2",
         key="pm_pv_current_2",
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        state_class=SensorStateClass.MEASUREMENT,
-        depends_on=("pm_pv_current_2_raw",),
-        value_function=value_function_pm_overflow_protection,
-        scale=0.1,
-        rounding=1,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        icon="mdi:current-dc",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="PM PV Current 2 Raw",
-        key="pm_pv_current_2_raw",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -7253,7 +7194,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
-        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="PM Battery Power Charge",

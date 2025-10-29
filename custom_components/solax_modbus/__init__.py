@@ -1231,6 +1231,10 @@ class SolaXModbusHub:
                 self.tmpdata_expiry[descr.key] = 0 # update locals only once
         """
 
+        # Plugin-level validation hook
+        if hasattr(self.plugin, 'validate_register_data'):
+            val = self.plugin.validate_register_data(descr, val, data)
+
         if val == None:  # E.g. if errors have occurred during readout
             #_LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
