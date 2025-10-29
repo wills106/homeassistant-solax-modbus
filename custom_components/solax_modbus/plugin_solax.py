@@ -65,10 +65,6 @@ def validate_register_data(descr, value, datadict):
     """
     global _pm_last_known_values
     
-    # Debug: Log every call to see if function is being invoked
-    if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
-        _LOGGER.info(f"[VALIDATION] PM U32 sensor {descr.key}: value={value}")
-    
     # PM U32 sensors only (filter by key prefix)
     if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
         # Handle None from core errors
