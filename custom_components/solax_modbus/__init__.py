@@ -503,6 +503,7 @@ class SolaXModbusHub:
         self.writequeue = {}  # queue requests when inverter is in sleep mode
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
         self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
+        self.plugin_module = plugin  # Store plugin module for accessing module-level functions
         self.wakeupButton = None
         self._invertertype = None
         self.localsUpdated = False
@@ -1233,10 +1234,10 @@ class SolaXModbusHub:
 
         # Plugin-level validation hook
         if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
-            _LOGGER.info(f"[DEBUG] PM U32 before validation: {descr.key}={val}, has_func={hasattr(self.plugin, 'validate_register_data')}")
+            _LOGGER.info(f"[DEBUG] PM U32 before validation: {descr.key}={val}, has_func={hasattr(self.plugin_module, 'validate_register_data')}")
         
-        if hasattr(self.plugin, 'validate_register_data'):
-            val = self.plugin.validate_register_data(descr, val, data)
+        if hasattr(self.plugin_module, 'validate_register_data'):
+            val = self.plugin_module.validate_register_data(descr, val, data)
         
         if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
             _LOGGER.info(f"[DEBUG] PM U32 after validation: {descr.key}={val}")
