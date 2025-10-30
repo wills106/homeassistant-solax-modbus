@@ -504,6 +504,7 @@ class SolaXModbusHub:
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
         self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
+        self._validate_register_func = getattr(plugin, 'validate_register_data', None)  # Cache function reference
         self.wakeupButton = None
         self._invertertype = None
         self.localsUpdated = False
@@ -1233,8 +1234,8 @@ class SolaXModbusHub:
         """
 
         # Plugin-level validation hook
-        if hasattr(self.plugin_module, 'validate_register_data'):
-            val = self.plugin_module.validate_register_data(descr, val, data)
+        if self._validate_register_func is not None:
+            val = self._validate_register_func(descr, val, data)
 
         if val == None:  # E.g. if errors have occurred during readout
             #_LOGGER.warning(f"****tmp*** treating {descr.key} failed")
