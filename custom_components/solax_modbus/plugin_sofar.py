@@ -682,7 +682,7 @@ SELECT_TYPES = [
             0: "Off",
             1: "On",
         },
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
         write_method=WRITE_MULTISINGLE_MODBUS,
     ),
     SofarModbusSelectEntityDescription(
@@ -3502,7 +3502,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
             1: "On",
         },
         internal=True,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Charger Use Mode",
@@ -4168,6 +4168,8 @@ class sofar_plugin(plugin_base):
             invertertype = PV | X3  # Older Probably 3phase
         elif seriesnumber.startswith("SJ2"):
             invertertype = PV | X3  # Older Probably 3phase
+        elif seriesnumber.startswith("SS1"):
+            invertertype = PV | X3 | GEN
         # elif seriesnumber.startswith('SM1E'):  plugin_sofar_old
         # elif seriesnumber.startswith('ZM1E'):  plugin_sofar_old
 
