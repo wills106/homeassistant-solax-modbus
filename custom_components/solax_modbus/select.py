@@ -1,9 +1,11 @@
 from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
 from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
+from .const import autorepeat_set, autorepeat_stop, BUTTONREPEAT_FIRST
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from typing import Any, Dict, Optional
+from time import time
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +34,9 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 if (select_info.initvalue is not None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info
             hub.selectEntities[select_info.key] = select
+            # Register autorepeat selects in computedEntities so they can use the unified autorepeat loop
+            if select_info.value_function:
+                hub.computedEntities[select_info.key] = select_info
 
             # register dependency chain
             deplist = select_info.depends_on
@@ -120,4 +125,11 @@ class SolaXModbusSelect(SelectEntity):
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             self._hub.localsUpdated = True # mark to save permanently
         self._hub.data[self._key] = option
+
+        # Handle autorepeat for selects with value_function (same pattern as buttons)
+        if self.entity_description.value_function:
+            res = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
+            if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
+                autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
+
         self.async_write_ha_state()
