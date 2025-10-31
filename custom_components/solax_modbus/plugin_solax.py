@@ -6972,7 +6972,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=HYBRID | GEN5,
+        allowedtypes=HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 2 Current Charge",
@@ -6983,7 +6983,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=HYBRID | GEN5,
+        allowedtypes=HYBRID | GEN5 | GEN6,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -6995,7 +6995,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x129,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=HYBRID | GEN5,
+        allowedtypes=HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7005,7 +7005,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         register=0x12D,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN5,
+        allowedtypes=HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Total Capacity",
@@ -7015,7 +7015,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x12E,
         scan_group = SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN5,
+        allowedtypes=HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 2 Temperature",
@@ -7026,7 +7026,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x132,
         register_type=REG_INPUT,
         unit=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -9447,7 +9447,7 @@ class solax_plugin(plugin_base):
             self.inverter_model = f"X1-IES-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
         elif seriesnumber.startswith("10M"):
             kw_value = int(seriesnumber[3:5], 16)
-            invertertype = AC | HYBRID | GEN6 | X1
+            invertertype = HYBRID | GEN6 | X1
             if kw_value < 8:
                 invertertype |= MPPT3
             else:
