@@ -53,3 +53,11 @@ To adapt this, there is a disabled entity called `config_max_export`. If you ena
 ## The export_control_user limit is wrong by a factor 10
 
 Some inverters behave differently compared to the other inverters of same model. To correct this, we have created a normally disabled control entity namded `config_export_control_limit_readscale`. Enablethis entity (please wait 30 seconds to let it appear) and set it to either 0.1, 1.0 or 10.0. The scaling should now be fine with one of these 3 scaling factors.
+
+## After remote control, inverter oscillates between import and export with SoC >= 98%
+
+When finishing remote control (setting mode to Disabled) when the battery SoC is around 98% or higher, some inverters will oscillate between import and export, and keep doing so until the SoC drops to 97% or a large (>>1kW) load is applied. The cause of this behaviour is currently unknown. Refer to [issue #1658](https://github.com/wills106/homeassistant-solax-modbus/issues/1658).
+
+As a workaround, the "Battery Charge Upper SOC" entity (`number.solax_battery_charge_upper_soc`) can be used to limit the SoC of the battery. Setting this to 97% prevents the undesirable behaviour at the expense of stopping the battery reaching full charge outside the remote control session.
+
+
