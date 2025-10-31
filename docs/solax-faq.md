@@ -31,13 +31,19 @@ Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
 - Restart your rooter and then reload the integration in Home Assistant.
 - If that doesn't work you can unplug PocketWifi 3.0 for 30 seconds and plug it in again, then reload the integration.
 
-## I have multiple inverters in master-slave mode and I can't connect to them via Modbus
+## I have multiple inverters in parallel mode (master-slave) and need help with configuration
 
-There are no active developers with this setup, so we have limited ability to resolve this issue, but here are common problems to check:
+**Good news:** The integration now has full support for parallel mode systems with active testing and validation!
 
-- Ensure all inverters have a different modbus address
-- Try setting longer polling frequency (double or more)
-- Check baudrate is the same on all inverters
+For comprehensive guidance on parallel mode setup, configuration, and troubleshooting, see: **[SolaX Parallel Mode Documentation](solax-parallel-mode.md)**
+
+Quick tips:
+- You can connect to individual inverters if they have separate LAN/WAN interfaces
+- PM (Parallel Mode) sensors appear when connecting to the master inverter
+- Remote control **only works through the master inverter**
+- Master automatically aggregates data from all inverters in parallel mode
+
+For detailed setup instructions, sensor descriptions, and troubleshooting, refer to the parallel mode documentation above.
 
 ## The maximum export limit is too low
 
