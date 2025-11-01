@@ -461,8 +461,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     elif power_control == "Export-First Battery Limit":
         # --- Export-First Battery Limit (Mode 8 custom) ---
         # Split PV surplus into (a) grid export up to the configured cap and (b) battery charging.
-        # The user percentage limits battery charge power relative to BMS max (0–100%).
         # In deficit (house load > PV), discharge the battery up to the deficit (respecting min SOC).
+        # In surplus, battery is NOT used to trim export to cap; PV is clamped if needed.
 
         DEADBAND_W = 100  # deadband around zero net flow to avoid flicker
 
@@ -495,20 +495,38 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             f"grid_import={grid_import_s if grid_import_s is not None else 'n/a'}"
         )
 
-        # Surplus path: export first (up to cap), then charge battery with the remainder (within BMS and user cap).
         if pv >= houseload:
+            # Surplus path: export as much as allowed, battery only charges from excess beyond cap, PV is clamped to avoid export overshoot.
             surplus = pv - houseload
 
-            export_within_cap = min(export_limit, surplus)
-            rest_for_batt = max(0, surplus - export_within_cap)
+            # Keep a small undershoot margin on export to avoid micro-discharge from battery
+            export_margin_w = int(datadict.get("export_first_export_margin_w", 50) or 0)
+            export_target = max(0, min(export_limit, surplus) - max(0, export_margin_w))
+
+            # Export up to target, remainder for battery charging
+            export_within_cap = export_target
+            rest_for_batt = max(0, surplus - export_target)
 
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, rest_for_batt)
             pushmode_power = -desired_charge
 
             _LOGGER.debug(
-                f"[Mode8 Export-First] export-first: surplus={surplus}W within_cap={export_within_cap}W rest={rest_for_batt}W "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
+                f"[Mode8 Export-First] export-first: surplus={surplus}W export_target={export_within_cap}W rest={rest_for_batt}W "
+                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W (margin={export_margin_w}W)"
             )
+
+            # If export would exceed the target after charging, clamp PV to keep export ≤ export_target (not just cap)
+            surplus_export = max(0, surplus - desired_charge)
+            # Clamp PV so that export ≤ export_target (not just cap)
+            if surplus_export > export_target:
+                pvlimit = max(0, pv - (surplus_export - export_target))
+                _LOGGER.debug(
+                    f"[Mode8 Export-First] pv clamp: surplus_export={surplus_export}W > target={export_target}W (cap={export_limit}W, margin={export_margin_w}W) -> pvlimit={pvlimit}W"
+                )
+            else:
+                _LOGGER.debug(
+                    f"[Mode8 Export-First] pv unclamped: export_target={export_target}W (cap={export_limit}W, margin={export_margin_w}W)"
+                )
 
         else:
             # Deficit path: discharge battery up to current deficit (if SOC allows).
@@ -527,30 +545,32 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         else:
             _LOGGER.debug(f"[Mode8 Export-First] deadband not applied: pv>hl={pv>=houseload}, push>=0={pushmode_power>=0}, |net|={abs(net_flow)}")
 
-        # Export feedback (shortfall): if measured export is below the cap beyond a small margin, reduce charging a bit.
-        # Small, bounded nudge; no PID or slew logic.
-        try:
-            measured_export = int(datadict.get("grid_export", 0) or 0)
-        except Exception:
-            measured_export = 0
-        fb_deadband = int(datadict.get("export_feedback_deadband_w", 100) or 100)   # minimal gap before correcting
-        fb_max_nudge = int(datadict.get("export_feedback_max_w", 400) or 400)       # clamp per cycle
-        if pv >= houseload and pushmode_power < 0:
-            shortfall = export_limit - measured_export
-            if shortfall > fb_deadband:
-                nudge = min(shortfall, fb_max_nudge)
-                pushmode_power += nudge   # make charge less negative → increases export
-                if pushmode_power > 0:
-                    pushmode_power = 0   # do not flip to discharge in surplus
-                _LOGGER.debug(f"[Mode8 Export-First] export feedback: +{nudge}W (measured={measured_export}W, cap={export_limit}W)")
+        # Surplus feedback blocks are now disabled by default unless explicitly enabled
+        if datadict.get("export_first_feedback_enabled", False):
+            # Export feedback (shortfall): if measured export is below the cap beyond a small margin, reduce charging a bit.
+            # Small, bounded nudge; no PID or slew logic.
+            try:
+                measured_export = int(datadict.get("grid_export", 0) or 0)
+            except Exception:
+                measured_export = 0
+            fb_deadband = int(datadict.get("export_feedback_deadband_w", 100) or 100)   # minimal gap before correcting
+            fb_max_nudge = int(datadict.get("export_feedback_max_w", 400) or 400)       # clamp per cycle
+            if pv >= houseload and pushmode_power < 0:
+                shortfall = export_limit - measured_export
+                if shortfall > fb_deadband:
+                    nudge = min(shortfall, fb_max_nudge)
+                    pushmode_power += nudge   # make charge less negative → increases export
+                    if pushmode_power > 0:
+                        pushmode_power = 0   # do not flip to discharge in surplus
+                    _LOGGER.debug(f"[Mode8 Export-First] export feedback: +{nudge}W (measured={measured_export}W, cap={export_limit}W)")
 
-        # Export feedback (overshoot): if measured export exceeds the cap beyond the margin, increase charging a bit.
-        if pv >= houseload and pushmode_power <= 0:
-            overshoot = measured_export - export_limit
-            if overshoot > fb_deadband:
-                nudge = min(overshoot, fb_max_nudge)
-                pushmode_power -= nudge   # charge a bit more → lowers export
-                _LOGGER.debug(f"[Mode8 Export-First] export overshoot feedback: -{nudge}W (measured={measured_export}W, cap={export_limit}W)")
+            # Export feedback (overshoot): if measured export exceeds the cap beyond the margin, increase charging a bit.
+            if pv >= houseload and pushmode_power <= 0:
+                overshoot = measured_export - export_limit
+                if overshoot > fb_deadband:
+                    nudge = min(overshoot, fb_max_nudge)
+                    pushmode_power -= nudge   # charge a bit more → lowers export
+                    _LOGGER.debug(f"[Mode8 Export-First] export overshoot feedback: -{nudge}W (measured={measured_export}W, cap={export_limit}W)")
 
         # Discharge feedback (deficit): if we still see export while discharging, trim discharge a bit.
         # Uses same fb_deadband/fb_max_nudge as surplus feedback to keep behavior bounded.
@@ -559,6 +579,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 measured_export = int(datadict.get("grid_export", 0) or 0)
             except Exception:
                 measured_export = 0
+            fb_deadband = int(datadict.get("export_feedback_deadband_w", 100) or 100)   # minimal gap before correcting
+            fb_max_nudge = int(datadict.get("export_feedback_max_w", 400) or 400)       # clamp per cycle
             if measured_export > fb_deadband:
                 nudge = min(measured_export, fb_max_nudge)
                 pushmode_power = max(0, pushmode_power - nudge)
