@@ -460,9 +460,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     
     elif power_control == "Export-First Battery Limit":
         # --- Export-First Battery Limit (Mode 8 custom) ---
-        # Split PV surplus into (a) grid export up to the configured cap and (b) battery charging.
-        # In deficit (house load > PV), discharge the battery up to the deficit (respecting min SOC).
-        # In surplus, battery is NOT used to trim export to cap; PV is clamped if needed.
+        # Controller goals (no PV limit adjustments in this mode):
+        # 1) If PV < house load (deficit): discharge the battery up to the deficit (respecting min SOC); any remaining deficit is imported from the grid.
+        # 2) If PV ≥ house load (surplus): export up to the configured grid cap (export_limit) and route any remaining surplus into the battery (respecting BMS and user % cap).
+        #    The PV power limit is not modified by this controller; no MPPT clamping is performed here.
 
         DEADBAND_W = 100  # deadband around zero net flow to avoid flicker
 
@@ -496,7 +497,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         )
 
         if pv >= houseload:
-            # Surplus path: export as much as allowed, battery only charges from excess beyond cap, PV is clamped to avoid export overshoot.
+            # Surplus path: export as much as allowed, battery only charges from excess beyond cap.
             surplus = pv - houseload
 
             # Keep a small undershoot margin on export to avoid micro-discharge from battery
@@ -514,19 +515,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 f"[Mode8 Export-First] export-first: surplus={surplus}W export_target={export_within_cap}W rest={rest_for_batt}W "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W (margin={export_margin_w}W)"
             )
-
-            # If export would exceed the target after charging, clamp PV to keep export ≤ export_target (not just cap)
-            surplus_export = max(0, surplus - desired_charge)
-            # Clamp PV so that export ≤ export_target (not just cap)
-            if surplus_export > export_target:
-                pvlimit = max(0, pv - (surplus_export - export_target))
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] pv clamp: surplus_export={surplus_export}W > target={export_target}W (cap={export_limit}W, margin={export_margin_w}W) -> pvlimit={pvlimit}W"
-                )
-            else:
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] pv unclamped: export_target={export_target}W (cap={export_limit}W, margin={export_margin_w}W)"
-                )
+            _LOGGER.debug("[Mode8 Export-First] pv clamp disabled in this mode; PV limit remains unchanged")
 
         else:
             # Deficit path: discharge battery up to current deficit (if SOC allows).
