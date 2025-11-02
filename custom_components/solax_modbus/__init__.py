@@ -777,11 +777,21 @@ class SolaXModbusHub:
                     if elapsed >= (interval_group.interval or 0):
                         _LOGGER.debug(f"{self._name}: [{secs}s] interval too short – cycle took {elapsed:.3f}s ≥ interval {interval_group.interval}s; running at max possible speed")
 
-                    # Immediate catch-up if a tick arrived during our run
+                    # Immediate catch-up if a tick arrived during our run.
+                    # Only perform catch-up when the last poll succeeded. On failure, drop the pending rerun.
                     if getattr(interval_group, "pending_rerun", False):
-                        interval_group.pending_rerun = False
-                        # Loop again immediately (no sleep) to catch up once
-                        continue
+                        if agg_res:
+                            interval_group.pending_rerun = False
+                            # Loop again immediately (no sleep) to catch up once
+                            continue
+                        else:
+                            # Previous poll failed; do not schedule a back-to-back retry.
+                            interval_group.pending_rerun = False
+                            _LOGGER.debug(
+                                f"{self._name}: dropping pending catch-up due to failed poll (slowdown={self.slowdown})"
+                            )
+                            # Exit the loop; next attempt will occur per slowdown policy
+                            break
                     break
 
             _LOGGER.debug(f"{self._name}: starting timer loop for interval group: {interval}")
