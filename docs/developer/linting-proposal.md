@@ -5,7 +5,28 @@
 
 ## Overview
 
-Establish automated code linting and formatting to maintain consistent code quality across multiple developers.
+Establish **fully automated** code linting and formatting to maintain consistent code quality across multiple developers.
+
+**Key Principle:** Zero manual overhead - all checks run automatically via git hooks and CI/CD. Developers should never need to think about formatting.
+
+## Automation-First Approach
+
+**Goal:** Make linting invisible and automatic
+
+### What Happens Automatically:
+- ✅ GitHub Actions run on every push/PR (informational, won't block)
+- ✅ Pre-commit hooks available (optional for developers who want local checks)
+- ✅ Manual scripts available for on-demand checks (optional)
+- ✅ No required manual steps for contributors
+
+### Developer Experience:
+1. **Write code** - Focus on logic, not formatting
+2. **Commit** - (Optional) Pre-commit hooks auto-check if installed
+3. **Push** - GitHub Actions provide feedback (informational only)
+4. **Iterate** - Fix any issues flagged, or ignore if minor
+5. **Merge** - Maintainers review, linting helps but doesn't block
+
+**Critical:** Linting should help scale development, not create barriers for small contributions.
 
 ## Proposed Tools
 
@@ -96,7 +117,7 @@ indent_style = tab
 
 ```toml
 [tool.black]
-line-length = 120
+line-length = 180
 target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
@@ -118,7 +139,7 @@ exclude = '''
 
 ```ini
 [flake8]
-max-line-length = 120
+max-line-length = 180
 exclude = 
     .git,
     __pycache__,
@@ -138,7 +159,7 @@ extends: default
 
 rules:
   line-length:
-    max: 120
+    max: 180
     level: warning
   indentation:
     spaces: 2
@@ -320,17 +341,19 @@ echo "💡 Run ./scripts/lint.sh to verify"
 
 ## Implementation Plan
 
-### Phase 1: Setup and Configuration
+### Phase 1: Setup and Configuration (Fully Automated)
 1. Add `.editorconfig`
-2. Add `pyproject.toml` (Black config, line-length=120)
-3. Add `.flake8` (lenient configuration)
-4. Add `.yamllint`
+2. Add `pyproject.toml` (Black config, line-length=180)
+3. Add `.flake8` (lenient configuration, line-length=180)
+4. Add `.yamllint` (line-length=180)
 5. Add `.markdownlint.json`
 6. Add `.codespellrc`
-7. Create `scripts/lint.sh` (manual check script)
-8. Create `scripts/format.sh` (auto-fix script)
+7. Create `scripts/lint.sh` (manual check script - for developers who want to check before commit)
+8. Create `scripts/format.sh` (auto-fix script - for developers who want to format before commit)
 
-**Status:** Linting is **optional** at this phase
+**Automation:** All checks run automatically via GitHub Actions (informational only)  
+**Developer overhead:** Zero - tools auto-format/check without manual steps  
+**Status:** Linting is **optional** at this phase (won't block commits/PRs)
 
 ### Phase 2: Test on Subset
 1. Apply Black to `__init__.py` only
@@ -461,11 +484,14 @@ echo "💡 Run ./scripts/lint.sh to verify"
 
 ## Decisions Made
 
-1. **Line length:** ✅ 120 characters
+Based on feedback from @infradom and @wills106:
+
+1. **Line length:** ✅ **180 characters** (preserves current code readability)
 2. **Black:** ✅ Apply to subset first (__init__.py, plugin_solax.py)
 3. **Flake8:** ✅ Start lenient, tighten gradually
 4. **Pylint:** ✅ Deferred for future
 5. **Enforcement:** ✅ Optional initially, evaluate after Phase 6
+6. **Overhead:** ✅ Must be zero/minimal - fully automated, no manual steps
 
 ## Progress Tracking
 
