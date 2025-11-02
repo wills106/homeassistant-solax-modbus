@@ -1,0 +1,62 @@
+# Pre-commit hooks configuration
+# Optional for developers who want local automated checks
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Usage:
+#   Hooks run automatically on 'git commit'
+#   To skip: git commit --no-verify
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: [--line-length=180]
+        # Phase 2 scope: Only check core files
+        files: ^custom_components/solax_modbus/((__init__|plugin_solax)\.py)$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.2.0
+    hooks:
+      - id: flake8
+        # Phase 2 scope: Only check core files
+        files: ^custom_components/solax_modbus/((__init__|plugin_solax)\.py)$
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: [--ignore-words-list=hass,homeassistant,ser,ba,nd,te,nam]
+        # Phase 2 scope: Only check core files
+        files: ^custom_components/solax_modbus/((__init__|plugin_solax)\.py)$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        # Phase 2 scope: Only check core files
+        files: ^custom_components/solax_modbus/((__init__|plugin_solax)\.py)$
+      - id: end-of-file-fixer
+        # Phase 2 scope: Only check core files
+        files: ^custom_components/solax_modbus/((__init__|plugin_solax)\.py)$
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+# Note: yamllint and markdownlint hooks disabled for Phase 2
+# Will be enabled in Phase 6 (Documentation Files)
+#
+# - repo: https://github.com/adrienverge/yamllint
+#   rev: v1.35.1
+#   hooks:
+#     - id: yamllint
+#
+# - repo: https://github.com/igorshubovych/markdownlint-cli
+#   rev: v0.42.0
+#   hooks:
+#     - id: markdownlint
+
