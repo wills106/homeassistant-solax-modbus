@@ -36,8 +36,9 @@ cd /config
 **This installs:**
 - Python linting tools (black, flake8)
 - YAML/Markdown/Spelling tools (yamllint, markdownlint, codespell)
-- Development tools (gh CLI, todo.ai)
+- Development tools (gh CLI)
 - Documentation tools (mdbook, yq)
+- Optional tools (todo.ai - personal preference, not required)
 
 ### Option 2: Manual Setup
 
@@ -136,7 +137,7 @@ git push origin feature/my-feature
 **Utilities:**
 - `gh` - GitHub CLI (version 2.40.1+)
 - `yq` - YAML processor
-- `todo.ai` - Task management
+- `todo.ai` - Task management (optional, personal preference of @fxstein)
 
 **Image Processing:**
 - `imagemagick` - Image manipulation
