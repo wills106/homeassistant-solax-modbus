@@ -7,11 +7,16 @@
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "interface" : "Interface",
+          "inverter_name_suffix": "Inverter naam toevoeging",
+          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
           "read_eps": "Noodstroom optie (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+          "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
+          "scan_interval_medium": "Gemiddelde polling-frequenctie",
+          "scan_interval_fast": "Snelle polling-frequenctie",
+          "time_out" : "Modbus time-out in seconden"
         }
       },
       "serial": {
@@ -27,6 +32,12 @@
           "host": "Het IP-address van uw inverter of modbus-tcp adapter",
           "port": "De TCP port voor Inverter of Modbus adapter",
           "tcp_type": "De Modbus TCP variant"
+        }
+      },
+      "battery": {
+        "title": "Uitlezen van batterij module(s)",
+        "data": {
+          "read_battery": "Batterij uitlezen"
         }
       }
     },
@@ -47,11 +58,16 @@
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
           "read_modbus_addr": "Het modbus address van de Power-omvormer",
           "interface" : "Interface",
+          "inverter_name_suffix": "Inverter naam toevoeging",
+          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
           "read_eps": "Noodstroom Optie (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+          "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
+          "scan_interval_medium": "Gemiddelde polling-frequenctie",
+          "scan_interval_fast": "Snelle polling-frequenctie",
+          "time_out" : "Modbus time-out in seconden"
         }
       },
       "serial": {
@@ -66,6 +82,12 @@
         "data": {
           "host": "Het IP-address van uw inverter of modbus-tcp adapter",
           "port": "De TCP port voor Inverter of Modbus adapter"
+        }
+      },
+     "battery": {
+        "title": "Uitlezen van batterij module(s)",
+        "data": {
+          "read_battery": "Batterij uitlezen"
         }
       }
     },

@@ -188,13 +188,22 @@ Known Serial Numbers
 - XB3
 - XMA
 - XM3
+- XBE
+- XBU
+- XAU
+
+X1-Mini-G4
+Found to work using Modbus but does not work with any other polling period than default 15s
+
+Known Serial Numbers
+- XM4
 
 #### Three Phase
 
 X3 MIC
 
 On Gen1 Modbus Power Meter support is provided with Firmware Arm 1.38 and above.
-Gen2 does not provide reading from a Modbus Power Meter at present.
+Gen2 does not provide reading from a Modbus Power Meter at present & requires Firmware 1.17 and above.
 
 > Must be connected by serial Modbus.
 > Don't poll below 5s, don't perform initial connection while Inverter asleep!

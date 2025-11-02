@@ -13,13 +13,11 @@ This page does not use affiliate links, please only use these links as a guide. 
 
 ### Waveshare USB to RS485 FT232RL
 
-Especially with tricky inverters like Sofar Solar the Waveshare USB to RS485 with FT232RL chipset provided the most reliable connection among other tested USB adapters:
+This USB adaptor is one of the best and most reliable USB adaptors.
 
 ![Image of Waveshare USB to RS485](images/adaptor-rs485-usb-waveshare-ft232rl.png)
 
-Note that there are two versions with two different chipsets available. Make sure that you get the one with the FT232 RL chipset.
-
-Also note that even this one does not work 100% reliably with the Sofar Solar HYD xxKTL. Recommended option for this inverter is to use the LSE-3 stick logger as described below.
+Note that there are two versions with two different chipsets available. Make sure that you get the one with the FT232 RL chipset. Do not buy the adaptor with the CH343G chipset, which looks exactly the same.
 
 ## RS485 - Ethernet
 
@@ -47,24 +45,43 @@ Only Ethernet mode tested so far.
 
 [AliExpress](https://www.aliexpress.com/item/32888961582.html)
 
-### For Sofar Solar: LAN Stick Logger LSE-3
+### For Sofar Solar
 
-Sofar Solar inverters are a big tricky with standard RS485 adapters. You may need to try several variants until you find one that is working flawlessly with the Sofar Solar inverter.
+#### WiFi Stick Logger LSW-3
 
-However there is one solution that works flawlessly and provides ModBus TCP out of the box: Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger.
+The standard LSW-3 Wifi logger that comes with the inverter.
 
-![Image of LSE-3 Logger](images/adaptor-rs485-sofar-lse3-logger.png)
+![Image of LSW-3 Logger](images/adaptor-sofar-lsw3-wifi-logger.png)
 
-Configure the connection to its IP address on port 8899.
+Please see the [Sofar Installation](sofar-installation.md) for more information.
 
-Tested with LSE-3 firmware version ME_0D_270A_1.09.
+#### LAN Stick Logger LSE-3
 
-Note that port 8899 is also open on the LSW-3 logger, but any ModBus TCP connection attempts time out here.
+Replace the LSW-3 Wifi logger that comes with the inverter by the LSE-3 ethernet logger.
+
+![Image of LSE-3 Logger](images/adaptor-sofar-lse3-lan-logger.png)
+
+Please see the [Sofar Installation](sofar-installation.md) for more information.
 
 ### [SolaX PocketWiFi 3.0](https://www.solaxpower.com/monitoring-dongles/)
 
 - Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
 - SolaX only mentions Gen4 Hybrid, other inverters may work?
+
+## Wifi - RS485
+
+### [Tasmota modbus bridge on ESP8266](https://tasmota.github.io/docs/Modbus-Bridge)
+
+An ESP8266 dongle with Tasmota installed and setup as a modbus bridge works great. 
+Use a RS485 module to convert the modbus serial interface to RS485.
+This works flawless for my Solis hybrid inverter.
+
+### [ESPHome Modbus Bridge on ESP8266/ESP32 (Wi-Fi/Ethernet)](https://github.com/rosenrot00/esphome_modbus_bridge)
+
+Running ESPHome as a Modbus TCP to RTU bridge, the setup provides stable and reliable communication through an ESP8266 or ESP32.
+An RS485 transceiver manages the UART-to-RS485 conversion, enabling data exchange.
+This setup has been successfully tested with a SolaX hybrid inverter and runs reliably when powered from the inverter’s 12V output, using a 12V-to-5V step-down converter.
+For Ethernet connectivity, an ESP32 module such as the WT32-ETH01 can be used.
 
 ## Untested but should work according to the specs...
 

@@ -5,8 +5,8 @@
 ## Connection methods
 
   - SolaX G2 & SolaX G3 Hybrids have built in Ethernet (The Qcells Q.VOLT HYB-G3-3P is a SolaX G4 despite the G3 naming).
-  - SolaX G4 and other don't have built-in Ethernet, communication is possible via serial RS485 COM port.
-    - SolaX only - Not all SolaX dongles provide modbus communication, the minimum supported PocketWiFi is [PocketWiFi 3.0](#solax-pocketwifi-30) PocketLAN does not provide a Modbus connection.
+  - SolaX G4 and other don't have built-in Ethernet, communication is possible via serial RS485 COM port or dongle.
+    - SolaX only - Not all SolaX dongles provide modbus communication, the minimum supported is [PocketWiFi 3.0](#solax-pocketwifi-30). PocketLAN does not provide a Modbus connection.
     - [RS485 to Ethernet adapter](#waveshare-rs485-to-eth-b) - the best way to connect to your inverter.
     - [RS485 to USB adapter](#usb-to-rs485-adaptor) - not recommended, can cause errors in HA.
     - Solis dongle - see below

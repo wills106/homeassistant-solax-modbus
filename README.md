@@ -108,7 +108,7 @@ For further Documentation please refer to the [Read the Docs](https://homeassist
 Modbus is designed to mostly have a single Master.
 If you try to connect multiple instances to the Inverter ie this Integration and Node-RED the Inverter will either block the second connection or likely to result in data collisions.
 
-If this happens it's recomended to use a multiplexer such as https://github.com/IngmarStein/tcp-multiplexer this has been tested by reading and writing from two instances of HA at once.
+If this happens it's recommended to use a multiplexer such as https://github.com/IngmarStein/tcp-multiplexer this has been tested by reading and writing from two instances of HA at once.
 
 This can be started with Docker or Docker Compose.
 Example Compose:

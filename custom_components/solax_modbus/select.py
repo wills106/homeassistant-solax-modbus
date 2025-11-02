@@ -31,6 +31,18 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             if select_info.write_method==WRITE_DATA_LOCAL:
                 if (select_info.initvalue is not None): hub.data[select_info.key] = select_info.initvalue
                 hub.writeLocals[select_info.key] = select_info
+            hub.selectEntities[select_info.key] = select
+
+            # register dependency chain
+            deplist = select_info.depends_on
+            if isinstance(deplist, str): deplist = (deplist, )
+            if isinstance(deplist, (list, tuple,)):
+                _LOGGER.debug(f"{hub.name}: {select_info.key} depends on entities {deplist}")
+                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != select_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(select_info.key) # can be more than one
+            # Use the explicit sensor_key if provided, otherwise fall back to the select's own key.
+            dependency_key = getattr(select_info, 'sensor_key', select_info.key)
+            if dependency_key != select_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(select_info.key) # can be more than one
             entities.append(select)
 
     async_add_entities(entities)
@@ -52,7 +64,7 @@ class SolaXModbusSelect(SelectEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        self.entity_id = "select." + platform_name + "_" + select_info.key
+        #self.entity_id = "select." + platform_name + "_" + select_info.key
         self._name = select_info.name
         self._key = select_info.key
         self._register = select_info.register
@@ -61,12 +73,15 @@ class SolaXModbusSelect(SelectEntity):
         self._attr_options = list(select_info.option_dict.values())
         self._write_method = select_info.write_method
 
+    
     async def async_added_to_hass(self):
         """Register callbacks."""
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
+
+
     @callback
     def modbus_data_updated(self):
         self.async_write_ha_state()
@@ -96,10 +111,10 @@ class SolaXModbusSelect(SelectEntity):
         """Change the select option."""
         payload = self.entity_description.reverse_option_dict.get(option, None)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
+            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
             await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload}")
+            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
             await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")

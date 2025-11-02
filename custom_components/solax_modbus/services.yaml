@@ -1,0 +1,13 @@
+stop_all:
+  name: Stop all SolaX hubs
+  description: Force-stop all SolaX hubs (kills timers, tasks, sockets).
+
+stop_hub:
+  name: Stop a specific SolaX hub
+  description: Force-stop a single SolaX hub by name.
+  fields:
+    name:
+      name: Hub name
+      description: Name of the hub to stop (e.g., "SolaX")
+      required: true
+      example: SolaX

@@ -14,61 +14,42 @@ from .const import INVERTER_IDENT, REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTE
 from .const import BaseModbusSensorEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers import entity_registry as er 
 
 _LOGGER = logging.getLogger(__name__)
 
-INVALID_START = 99999
+
+empty_input_interval_group_lambda = lambda: SimpleNamespace(
+            interval=0,
+            device_groups={}
+        )
+
+empty_input_device_group_lambda = lambda: SimpleNamespace(
+        holdingRegs  = {},
+        inputRegs    = {},
+        readPreparation = None,
+        readFollowUp = None,
+        )
 
 
-# =================================== sorting and grouping of entities ================================================
+def is_entity_enabled(hass, hub, descriptor, use_default = False): 
+    # simple test, more complex counterpart is should_register_be_loaded
+    unique_id     = f"{hub._name}_{descriptor.key}" 
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id('sensor', DOMAIN, unique_id) 
+    if entity_id:
+        entity_entry = registry.async_get(entity_id) 
+        if entity_entry and not entity_entry.disabled: 
+            _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} is enabled, returning True.")
+            return True # Found an enabled entity, no need to check further 
+    else:
+        _LOGGER.info(f"{hub.name}: entity {unique_id} not found in registry")
+    if use_default: 
+        _LOGGER.debug(f"{hub.name}: is_entity_enabled: {entity_id} not found in registry, returning default {descriptor.entity_registry_enabled_default}.")
+        return descriptor.entity_registry_enabled_default
+    return False
 
-@dataclass
-class block():
-    start: int = None # start address of the block
-    end: int = None # end address of the block
-    #order16: int = None # byte endian for 16bit registers
-    #order32: int = None # word endian for 32bit registers
-    descriptions: Any = None
-    regs: Any = None # sorted list of registers used in this block
 
-
-def splitInBlocks( descriptions, block_size, auto_block_ignore_readerror ):
-    start = INVALID_START
-    end = 0
-    blocks = []
-    curblockregs = []
-    for reg in descriptions:
-        descr = descriptions[reg]
-        if (not type(descr) is dict) and (descr.newblock or ((reg - start) > block_size)):
-            if ((end - start) > 0):
-                _LOGGER.debug(f"Starting new block at 0x{reg:x} ")
-                if  ( (auto_block_ignore_readerror == True) or (auto_block_ignore_readerror == False) ) and not descr.newblock: # automatically created block
-                    descr.ignore_readerror = auto_block_ignore_readerror
-                #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-                newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
-                blocks.append(newblock)
-                start = INVALID_START
-                end = 0
-                curblockregs = []
-            else: _LOGGER.info(f"newblock declaration found for empty block")
-
-        if start == INVALID_START: start = reg
-        if type(descr) is dict: end = reg+1 # couple of byte values
-        else:
-            _LOGGER.debug(f"adding register 0x{reg:x} {descr.key} to block with start 0x{start:x}")
-            if descr.unit in (REGISTER_STR, REGISTER_WORDS,):
-                if (descr.wordcount): end = reg+descr.wordcount
-                else: _LOGGER.warning(f"invalid or missing missing wordcount for {descr.key}")
-            elif descr.unit in (REGISTER_S32, REGISTER_U32, REGISTER_ULSB16MSB16,):  end = reg + 2
-            else: end = reg + 1
-        curblockregs.append(reg)
-    if ((end-start)>0): # close last block
-        #newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-        newblock = block(start = start, end = end, descriptions = descriptions, regs = curblockregs)
-        blocks.append(newblock)
-    return blocks
-
-# ========================================================================================================================
 
 async def async_setup_entry(hass, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
@@ -76,13 +57,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     entities = []
-    groups = {}
-    newgrp = lambda: SimpleNamespace(
-        holdingRegs  = {},
-        inputRegs    = {},
-        readPreparation = None,
-        readFollowUp = None,
-        )
+    initial_groups = {}
+
     computedRegs = {}
 
     plugin = hub.plugin #getPlugin(hub_name)
@@ -105,7 +81,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
         inverter_name_suffix = hub.inverterNameSuffix + " "
 
-    entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, hub.device_info,
+    entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
@@ -163,39 +139,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         model=batt_pack_model)
                 return await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
 
-            entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info_battery,
+            entityToList(hub, hub_name, entities, initial_groups, computedRegs, device_info_battery,
                          battery_config.battery_sensor_type, name_prefix, key_prefix, readPreparation, readFollowUp)
 
     async_add_entities(entities)
-    _LOGGER.info(f"{hub_name} sensor groups: {len(groups)}")
     #now the groups are available
-    for interval, interval_group in groups.items():
-        _LOGGER.debug(f"{hub_name} group: {interval}")
-        for device_name, device_group in interval_group.items():
-            # sort the registers for this type of inverter
-            holdingRegs = dict(sorted(device_group.holdingRegs.items()))
-            inputRegs   = dict(sorted(device_group.inputRegs.items()))
-            # check for consistency
-            #if (len(inputOrder32)>1) or (len(holdingOrder32)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 32bit registers")
-            #if (len(inputOrder16)>1) or (len(holdingOrder16)>1): _LOGGER.warning(f"inconsistent Big or Little Endian declaration for 16bit registers")
-            # split in blocks and store results
-            hub_interval_group = hub.groups.setdefault(interval, hub.empty_interval_group())
-            hub_device_group = hub_interval_group.device_groups.setdefault(device_name, hub.empty_device_group())
-            hub_device_group.readPreparation = device_group.readPreparation
-            hub_device_group.readFollowUp = device_group.readFollowUp
-            hub_device_group.holdingBlocks = splitInBlocks(holdingRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub_device_group.inputBlocks = splitInBlocks(inputRegs, hub.plugin.block_size, hub.plugin.auto_block_ignore_readerror)
-            hub.computedSensors = computedRegs
-
-            for i in hub_device_group.holdingBlocks: _LOGGER.info(f"{hub_name} returning holding block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-            for i in hub_device_group.inputBlocks: _LOGGER.info(f"{hub_name} returning input block: 0x{i.start:x} 0x{i.end:x} {i.regs}")
-            _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
-            _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
-
-    _LOGGER.info(f"computedRegs: {hub.computedSensors}")
+    hub.computedSensors = computedRegs
+    hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
+    _LOGGER.info(f"{hub.name}: computedRegs: {hub.computedSensors}")
     return True
 
-def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo,
+
+
+
+def entityToList(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo,
                  sensor_types, name_prefix, key_prefix, readPreparation, readFollowUp):  # noqa: D103
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(hub._invertertype,sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
@@ -206,7 +163,7 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                     newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value+1))
                     newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value+1))
                     newdescr.register = sensor_description.register + serie_value
-                    entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                    entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
             else:
                 newdescr = copy(sensor_description)
                 try:
@@ -215,9 +172,9 @@ def entityToList(hub, hub_name, entities, groups, newgrp, computedRegs, device_i
                    newdescr.name = newdescr.name
                    
                 newdescr.key = key_prefix + newdescr.key
-                entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
+                entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
-def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
+def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo, newdescr, readPreparation, readFollowUp):  # noqa: D103
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
@@ -229,20 +186,30 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
     )
 
     hub.sensorEntities[newdescr.key] = sensor
+    # register dependency chain
+    deplist = newdescr.depends_on
+    if isinstance(deplist, str): deplist = (deplist, )
+    if isinstance(deplist, (list, tuple,)):
+        _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
+        for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
+            if dep_on != newdescr.key: hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key) # can be more than one
     #internal sensors are only used for polling values for selects, etc
     if not getattr(newdescr,"internal",None):
         entities.append(sensor)
     if newdescr.sleepmode == SLEEPMODE_NONE: hub.sleepnone.append(newdescr.key)
     if newdescr.sleepmode == SLEEPMODE_ZERO: hub.sleepzero.append(newdescr.key)
     if (newdescr.register < 0): # entity without modbus address
-        if newdescr.value_function:
+        enabled = is_entity_enabled(hub._hass, hub, newdescr, use_default = True) # dont compute disabled entities anymore
+        #if not enabled: _LOGGER.info(f"is_entity_enabled called for disabled entity {newdescr.key}")
+        if newdescr.value_function and (enabled or newdescr.internal): #*** dont compute disabled entities anymore unless internal
             computedRegs[newdescr.key] = newdescr
-        else: _LOGGER.warning(f"entity without modbus register address and without value_function found: {newdescr.key}")
+        else: 
+            if enabled: _LOGGER.warning(f"{hub_name}: entity without modbus register address and without value_function found: {newdescr.key}")
     else:
         #target group
-        interval_group = groups.setdefault(hub.entity_group(sensor), {})
+        interval_group = groups.setdefault(hub.scan_group(sensor), empty_input_interval_group_lambda())
         device_group_key = hub.device_group_key(device_info)
-        device_group = interval_group.setdefault(device_group_key, newgrp())
+        device_group = interval_group.device_groups.setdefault(device_group_key, empty_input_device_group_lambda())
         holdingRegs  = device_group.holdingRegs
         inputRegs    = device_group.inputRegs
         device_group.readPreparation = readPreparation
@@ -253,17 +220,18 @@ def entityToListSingle(hub, hub_name, entities, groups, newgrp, computedRegs, de
                 if newdescr.unit in (REGISTER_U8H, REGISTER_U8L,) and holdingRegs[newdescr.register].unit in (REGISTER_U8H, REGISTER_U8L,) :
                     first = holdingRegs[newdescr.register]
                     holdingRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                else: _LOGGER.warning(f"holding register already used: 0x{newdescr.register:x} {newdescr.key}")
+                else: _LOGGER.warning(f"{hub_name}: holding register already used: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 holdingRegs[newdescr.register] = newdescr
         elif newdescr.register_type == REG_INPUT:
             if newdescr.register in inputRegs: # duplicate or 2 bytes in one register ?
                 first = inputRegs[newdescr.register]
                 inputRegs[newdescr.register] = { first.unit: first, newdescr.unit: newdescr }
-                _LOGGER.warning(f"input register already declared: 0x{newdescr.register:x} {newdescr.key}")
+                _LOGGER.warning(f"{hub_name}: input register already declared: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 inputRegs[newdescr.register] = newdescr
-        else: _LOGGER.warning(f"entity declaration without register_type found: {newdescr.key}")
+        else: _LOGGER.warning(f"{hub_name}: entity declaration without register_type found: {newdescr.key}")
+
 
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""
@@ -279,7 +247,7 @@ class SolaXModbusSensor(SensorEntity):
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
-        self.entity_id = "sensor." + platform_name + "_" + description.key
+        #self.entity_id = "sensor." + platform_name + "_" + description.key
         self.entity_description: BaseModbusSensorEntityDescription = description
 
     async def async_added_to_hass(self):
@@ -312,6 +280,7 @@ class SolaXModbusSensor(SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key in self._hub.data:
-            try:    val = self._hub.data[self.entity_description.key]*self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
-            except: val = self._hub.data[self.entity_description.key] # not a number
-            return val
+            return self._hub.data[self.entity_description.key]
+            #try:    val = self._hub.data[self.entity_description.key] *self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
+            #except: val = self._hub.data[self.entity_description.key] # not a number
+            #return val

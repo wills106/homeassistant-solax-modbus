@@ -13,7 +13,8 @@
           "plugin": "Select Inverter Type",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Timeout in seconds"
         }
       },
       "serial": {
@@ -29,6 +30,12 @@
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
+        }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+            "read_core_hub": "The core modbus hub used to connect to the inverter"
         }
       }
     },
@@ -56,7 +63,8 @@
           "plugin": "Select Inverter Type",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Timeout in seconds"
         }
       },
       "serial": {
@@ -71,6 +79,12 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter"
+        }
+      },
+      "core": {
+        "title": "Core modbus hub selection",
+        "data": {
+            "read_core_hub": "The core modbus hub used to connect to the inverter"
         }
       }
     },

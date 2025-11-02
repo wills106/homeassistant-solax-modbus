@@ -7,13 +7,15 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
+          "inverter_power_kw": "Puissance max onduleur KW (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {
@@ -49,13 +51,15 @@
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
+          "inverter_power_kw": "Puissance max onduleur (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box (Gen4)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {
