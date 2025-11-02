@@ -1,0 +1,20 @@
+[flake8]
+max-line-length = 180
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist
+
+# Lenient configuration - start permissive, tighten gradually
+ignore = 
+    E203,  # Whitespace before ':' (conflicts with Black)
+    E501,  # Line too long (Black handles this)
+    W503,  # Line break before binary operator (Black handles this)
+    E402,  # Module level import not at top of file (sometimes needed)
+    F401,  # Imported but unused (may be used in other files)
+
+# Initial rollout: Only check __init__.py and plugin_solax.py
+# filename = custom_components/solax_modbus/__init__.py,custom_components/solax_modbus/plugin_solax.py
+
