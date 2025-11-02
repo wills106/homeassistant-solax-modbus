@@ -94,10 +94,13 @@ vi custom_components/solax_modbus/plugin_solax.py
 
 ### 4. Test Changes
 
-**Reload integration without restart:**
+**Reload integration:**
 ```bash
-# Using Home Assistant API
-ha-api --service reload_config_entry --domain homeassistant --data '{"entry_id": "ENTRY_ID"}' --json
+# Restart Home Assistant to load changes
+ha core restart
+
+# Or use Developer Tools in HA UI:
+# Settings → System → Restart
 ```
 
 **Check logs:**
@@ -206,24 +209,25 @@ apk add py3-black py3-flake8 py3-yamllint py3-codespell
 
 **No pip install:** Can't install arbitrary Python packages (musl-based system)
 
-## Hot Reload Development
+## Testing Changes
 
-**Best practice:** Test changes without restarting Home Assistant
+**Standard approach:** Restart Home Assistant to load changes
 
 ```bash
-# Reload integration via API
-ha-api --service reload_config_entry --domain homeassistant \
-  --data '{"entry_id": "YOUR_ENTRY_ID"}' --json
+# Restart Home Assistant
+ha core restart
 
-# Find entry_id:
-ha-api --domain homeassistant --list-config-entries | grep solax
+# Or use HA UI:
+# Developer Tools → YAML → Restart Home Assistant
 ```
 
-**Benefits:**
-- ✅ No system disruption
-- ✅ Fast iteration
-- ✅ Logs stay continuous
-- ✅ Other integrations unaffected
+**For faster iteration:**
+- Edit code
+- Restart HA
+- Check logs
+- Repeat
+
+**Alternative:** Use Home Assistant Developer Tools to reload specific integrations (if supported)
 
 ## Testing Your Changes
 
@@ -234,11 +238,11 @@ ha-api --domain homeassistant --list-config-entries | grep solax
 # Check logs for errors
 ha core logs | grep -i error | grep solax
 
-# Verify integration loaded
-ha-api --domain homeassistant --list-config-entries | grep solax
+# View recent logs
+ha core logs -n 100 | grep solax
 
-# Check sensor updates
-ha-api --entity sensor.solax_1_pv_power_1
+# Follow logs in real-time
+ha core logs -f | grep solax_modbus
 ```
 
 ### Automated Checks
@@ -347,27 +351,17 @@ git checkout feature/my-feature
 git merge main
 ```
 
-### View Sensor Data
+### View Integration Status
 
 ```bash
-# List all solax entities
-ha-api --domain sensor --entities | grep solax
+# Check Home Assistant info
+ha info
 
-# Get sensor value
-ha-api --entity sensor.solax_1_pv_power
+# View core logs
+ha core logs -n 50
 
-# Watch sensor updates
-watch -n 5 'ha-api --entity sensor.solax_1_pv_power'
-```
-
-### Check Integration Status
-
-```bash
-# List config entries
-ha-api --domain homeassistant --list-config-entries
-
-# View integration info
-ha info | grep solax
+# Check integration loaded via HA UI:
+# Settings → Devices & Services → SolaX Modbus
 ```
 
 ## Best Practices
