@@ -282,67 +282,11 @@ def value_function_growatt_gen4time(initval, descr, datadict):
     minutes = initval % 256  # Modulo to get the minutes (lower 8 bits)
     return f"{hours:02}:{minutes:02}"
 
-def value_function_time_1_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3038', 0) # need to use a read entity to avoid overwriting the select
+def value_function_time_reverse_begin(initval, descr, datadict):
+    initval = datadict.get('register_' + str(initval), 0) # need to use a read entity to avoid overwriting the select
     initval = initval & 0x1FFF # Remove bits 13-15 using a bitwise AND with 0x1FFF
     hours = initval // 256  # Integer division to get the hours
     minutes = initval % 256  # Modulo to get the minutes
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_2_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3040', 0) # need to use a read entity to avoid overwriting the select
-    initval = initval & 0x1FFF # Remove bits 13-15 using a bitwise AND with 0x1FFF
-    hours = initval // 256  # Integer division to get the hours
-    minutes = initval % 256  # Modulo to get the minutes
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_3_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3042', 0) # need to use a read entity to avoid overwriting the select
-    initval = initval & 0x1FFF # Remove bits 13-15 using a bitwise AND with 0x1FFF
-    hours = initval // 256  # Integer division to get the hours
-    minutes = initval % 256  # Modulo to get the minutes
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_4_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3044', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_5_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3050', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_6_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3052', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_7_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3054', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_8_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3056', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
-    return f"{hours:02}:{minutes:02}"
-
-def value_function_time_9_reverse_begin(initval, descr, datadict):
-    initval = datadict.get('register_3058', 0)
-    initval = initval & 0x1FFF
-    hours = initval // 256
-    minutes = initval % 256
     return f"{hours:02}:{minutes:02}"
 
 def value_function_time_1_reverse_enabled(initval, descr, datadict):
@@ -6306,7 +6250,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 1 Begin (read)",
         key = "time_1_begin_read",
-        value_function = value_function_time_1_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3038, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_category = EntityCategory.DIAGNOSTIC,
     ),  
@@ -6335,7 +6279,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 2 Begin (read)",
         key = "time_2_begin_read",
-        value_function = value_function_time_2_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3040, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6368,7 +6312,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 3 Begin (read)",
         key = "time_3_begin_read",
-        value_function = value_function_time_3_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3042, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6401,7 +6345,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 4 Begin (read)",
         key = "time_4_begin_read",
-        value_function = value_function_time_4_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3044, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6434,7 +6378,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 5 Begin (read)",
         key = "time_5_begin_read",
-        value_function = value_function_time_5_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3050, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6467,7 +6411,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 6 Begin (read)",
         key = "time_6_begin_read",
-        value_function = value_function_time_6_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3052, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6500,7 +6444,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 7 Begin (read)",
         key = "time_7_begin_read",
-        value_function = value_function_time_7_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3054, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6533,7 +6477,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 8 Begin (read)",
         key = "time_8_begin_read",
-        value_function = value_function_time_8_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3056, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
@@ -6566,7 +6510,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name = "Time 9 Begin (read)",
         key = "time_9_begin_read",
-        value_function = value_function_time_9_reverse_begin,
+        value_function = lambda initval, descr, datadict: value_function_time_reverse_begin(3058, descr, datadict),
         allowedtypes = GEN4 | HYBRID,
         entity_registry_enabled_default = False,
         entity_category = EntityCategory.DIAGNOSTIC,
