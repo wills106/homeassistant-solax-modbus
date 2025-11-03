@@ -247,6 +247,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
     sensor_key: str = None # specify only when corresponding sensor has a different key name
     depends_on: list = None # list of modbus register keys that must be read
+    value_function: callable = None  # value function for autorepeat (same pattern as buttons)
+    autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 @dataclass
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
