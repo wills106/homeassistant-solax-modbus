@@ -271,58 +271,10 @@ def value_function_time_9_update(initval, descr, datadict):
     ]
     
 
-def value_function_time_1_clear(initval, descr, datadict):
+def value_function_time_clear(initval, descr, datadict):
     return [
-        (REGISTER_U16, 0),  # time_1_begin
-        (REGISTER_U16, 0),  # time_1_end
-    ]
-
-def value_function_time_2_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_2_begin
-        (REGISTER_U16, 0),  # time_2_end
-    ]
-
-def value_function_time_3_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_3_begin
-        (REGISTER_U16, 0),  # time_3_end
-    ]
-
-def value_function_time_4_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_4_begin
-        (REGISTER_U16, 0),  # time_4_end
-    ]
-
-def value_function_time_5_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_5_begin
-        (REGISTER_U16, 0),  # time_5_end
-    ]
-
-def value_function_time_6_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_6_begin
-        (REGISTER_U16, 0),  # time_6_end
-    ]
-
-def value_function_time_7_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_7_begin
-        (REGISTER_U16, 0),  # time_7_end
-    ]
-
-def value_function_time_8_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_8_begin
-        (REGISTER_U16, 0),  # time_8_end
-    ]
-
-def value_function_time_9_clear(initval, descr, datadict):
-    return [
-        (REGISTER_U16, 0),  # time_9_begin
-        (REGISTER_U16, 0),  # time_9_end
+        (REGISTER_U16, 0),  # time_begin
+        (REGISTER_U16, 0),  # time_end
     ]
 
 def value_function_growatt_gen4time(initval, descr, datadict):
@@ -869,7 +821,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_time_1_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 2 Clear",
@@ -878,7 +830,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_time_2_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 3 Clear",
@@ -887,7 +839,7 @@ BUTTON_TYPES = [
         allowedtypes=HYBRID | GEN4,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
-        value_function=value_function_time_3_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 4 Clear",
@@ -897,7 +849,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_4_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 5 Clear",
@@ -907,7 +859,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_5_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 6 Clear",
@@ -917,7 +869,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_6_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 7 Clear",
@@ -927,7 +879,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_7_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 8 Clear",
@@ -937,7 +889,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_8_clear,
+        value_function=value_function_time_clear,
     ),
     GrowattModbusButtonEntityDescription(
         name="Time 9 Clear",
@@ -947,7 +899,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-clock",
         entity_registry_enabled_default = False,
-        value_function=value_function_time_9_clear,
+        value_function=value_function_time_clear,
     ),
 
 ]
