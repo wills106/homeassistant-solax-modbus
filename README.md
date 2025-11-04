@@ -36,7 +36,7 @@ Growatt:
  - Hybrid:
    - SPF - **WIP**
    - SPH
-   - TL-XH (MIN & MOD)
+   - TL-XH (MIN,MOD & MID)
   
  - PV Only:
    - MAC
