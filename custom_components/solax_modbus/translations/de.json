@@ -5,7 +5,6 @@
         "title": "Definiert die Wechselrichter Modbus-Verbindung",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
-          "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
@@ -21,7 +20,9 @@
         "title": "Serielle Schnittstelle",
         "data": {
           "read_serial_port": "Name des seriellen Ports",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)",
+          "dedicated_client": "Eigene Modbus-Verbindung erstellen (nicht mit anderen Hubs teilen)"
         }
       },
       "tcp": {
@@ -29,13 +30,16 @@
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
-          "tcp_type": "Die Modbus TCP Variante"
+          "tcp_type": "Die Modbus TCP Variante",
+          "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)",
+          "dedicated_client": "Eigene Modbus-Verbindung erstellen (nicht mit anderen Hubs teilen)"
         }
       },
       "core": {
         "title": "Core Modbus Hub Auswahl",
         "data": {
-            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
+            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird.",
+            "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)"
         }
       },
       "battery": {
@@ -60,7 +64,6 @@
         "title": "Definiert die Wechselrichter Modbus-Verbindung",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
-          "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
           "interface" : "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
@@ -76,20 +79,26 @@
         "title": "Serielle Schnittstelle",
         "data": {
           "read_serial_port": "Name des seriellen Ports",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)",
+          "dedicated_client": "Eigene Modbus-Verbindung erstellen (nicht mit anderen Hubs teilen)"
         }
       },
       "tcp": {
         "title": "TCP/IP Schnittstelle",
         "data": {
           "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
-          "port": "Der TCP Port für die Verbindung zum Wechselrichter"
+          "port": "Der TCP Port für die Verbindung zum Wechselrichter",
+          "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)",
+          "dedicated_client": "Eigene Modbus-Verbindung erstellen (nicht mit anderen Hubs teilen)",
+          "tcp_type": "Die Modbus TCP Variante"
         }
       },
-      "Core": {
+      "core": {
         "title": "Core Modbus Hub Auswahl",
         "data": {
-            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
+            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird.",
+            "read_modbus_addr": "Modbus-Geräte-ID (Unit/Slave-Adresse des Wechselrichters)"
         }
       },
       "battery": {
