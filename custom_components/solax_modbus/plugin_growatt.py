@@ -966,6 +966,34 @@ NUMBER_TYPES = [
     #  Normal number types
     #
     ###
+	GrowattModbusNumberEntityDescription(
+        name = "VPP Time",
+        key = "vpp_time",
+        register = 30408,
+        fmt = "i",
+        native_min_value = 0,
+        native_max_value = 1440,
+        native_step = 5,
+        native_unit_of_measurement = UnitOfTime.MINUTES,
+        allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-clock",
+    ),
+    GrowattModbusNumberEntityDescription(
+        name = "VPP Power",
+        key = "vpp_power",
+        register = 30409,
+        fmt = "i",
+        native_min_value = -100,
+        native_max_value = 100,
+        native_step = 5,
+        native_unit_of_measurement = PERCENTAGE,
+        allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = True,
+        icon = "mdi:battery-sync",
+    ),
     GrowattModbusNumberEntityDescription(
         name = "Active Power Limit",
         key = "active_power_limit",
@@ -1248,6 +1276,30 @@ SELECT_TYPES = [
     #  Normal select types
     #
     ###
+	GrowattModbusSelectEntityDescription(
+        name = "VPP Status",
+        key = "vpp_status",
+        register = 30100,
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled", },
+        allowedtypes = GEN3 | GEN4,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = True,
+        icon = "mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name = "VPP Remote Control",
+        key = "vpp_remote_control",
+        register = 30407,
+        option_dict = {
+                0: "Disabled",
+                1: "Enabled", },
+        allowedtypes = GEN3,
+        entity_category = EntityCategory.CONFIG,
+        entity_registry_enabled_default = True,
+        icon = "mdi:dip-switch",
+    ),
     GrowattModbusSelectEntityDescription(
         name = "Inverter Switch",
         key = "inverter_switch",
@@ -2399,6 +2451,49 @@ SELECT_TYPES = [
 # ================================= Sensor Declarations ============================================================
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
+	GrowattModbusSensorEntityDescription(
+        key = "vpp_status",
+        register = 30100,
+        scale = { 0: "Disabled",
+                  1: "Enabled", },
+        allowedtypes = GEN3,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "vpp_remote_control",
+        register = 30407,
+        scale = { 0: "Disabled",
+                  1: "Enabled", },
+        allowedtypes = GEN3,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "vpp_time",
+        register = 30408,
+        allowedtypes = GEN3,
+        scale = 1,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key = "vpp_power",
+        register = 30409,
+        unit = REGISTER_S16,
+        allowedtypes = GEN3,
+        scale = 1,
+        internal = True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name = "Battery SOH",
+        key = "battery_soh",
+        native_unit_of_measurement = PERCENTAGE,
+        device_class = SensorDeviceClass.BATTERY,
+        register = 31218,
+        register_type = REG_INPUT,
+        allowedtypes = GEN3,
+        entity_category = EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default = True,
+        icon = "mdi:information",
+    ),
     GrowattModbusSensorEntityDescription(
         key = "inverter_switch",
         register = 0,
