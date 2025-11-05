@@ -41,6 +41,7 @@ from .const import (
     DEFAULT_INTERFACE,
     DEFAULT_SERIAL_PORT,
     DEFAULT_MODBUS_ADDR,
+    CONF_DEDICATED_CLIENT,
     DEFAULT_BAUDRATE,
     DOMAIN,
     DEFAULT_TCP_TYPE,
@@ -122,7 +123,6 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(
             selector.SelectSelectorConfig(options=INTERFACES),
         ),
-        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(
             selector.SelectSelectorConfig(options=PLUGINS),
         ),
@@ -143,7 +143,6 @@ OPTION_SCHEMA = vol.Schema(
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(
             selector.SelectSelectorConfig(options=INTERFACES),
         ),
-        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(
             selector.SelectSelectorConfig(options=PLUGINS),
         ),
@@ -165,6 +164,8 @@ SERIAL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): selector.SelectSelector(
             selector.SelectSelectorConfig(options=BAUDRATES),
         ),
+        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
+        vol.Optional(CONF_DEDICATED_CLIENT, default=False): bool,
     }
 )
 
@@ -175,12 +176,15 @@ TCP_SCHEMA = vol.Schema(
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(
             selector.SelectSelectorConfig(options=TCP_TYPES),
         ),
+        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
+        vol.Optional(CONF_DEDICATED_CLIENT, default=False): bool,
     }
 )
 
 CORE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_CORE_HUB): str,
+        vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         # vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         # vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(selector.SelectSelectorConfig(options=TCP_TYPES), ),
     }
@@ -197,7 +201,6 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
     _LOGGER.info(f"validating base: {user_input}")
     """Validate config."""
     interface = user_input[CONF_INTERFACE]
-    modbus_addr = user_input[CONF_MODBUS_ADDR]
     name = user_input[CONF_NAME]
     pluginconf_name = user_input[CONF_PLUGIN]
 
