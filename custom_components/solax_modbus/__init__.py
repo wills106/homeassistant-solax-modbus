@@ -41,6 +41,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr
 from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info, ADDR_KW
 from pymodbus.framer import FramerType
 
@@ -119,8 +120,104 @@ from .const import (
     REG_INPUT,
 )
 
+
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+# ------------------------ Shared Pymodbus client pool helpers ------------------------
+
+def _conn_params_from_config(config: dict) -> dict:
+    interface = config.get(CONF_INTERFACE) or ("serial" if config.get("read_serial", False) else "tcp")
+    host      = config.get(CONF_HOST)
+    port      = config.get(CONF_PORT, DEFAULT_PORT)
+    tcp_type  = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
+    serial    = config.get(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
+    baudrate  = int(config.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
+    timeout   = int(config.get(CONF_TIME_OUT, DEFAULT_TIME_OUT))
+    return {
+        "interface": interface,
+        "host": host,
+        "port": port,
+        "tcp_type": tcp_type,
+        "serial": serial,
+        "baudrate": baudrate,
+        "timeout": timeout,
+    }
+
+
+def _client_key(params: dict) -> tuple:
+    if params.get("interface") == "serial":
+        return (
+            "serial",
+            params.get("serial"),
+            params.get("baudrate"),
+            params.get("timeout"),
+        )
+    # tcp / tcp-rtu / tcp-ascii
+    return (
+        "tcp",
+        params.get("tcp_type"),
+        params.get("host"),
+        params.get("port"),
+        params.get("timeout"),
+    )
+
+
+def _build_client(params: dict):
+    interface = params.get("interface")
+    timeout   = params.get("timeout")
+    if interface == "serial":
+        return AsyncModbusSerialClient(
+            port=params.get("serial"),
+            baudrate=int(params.get("baudrate")),
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+            timeout=timeout,
+            retries=RETRIES,
+        )
+    if interface == "tcp":
+        tcp_type = params.get("tcp_type")
+        host = params.get("host")
+        port = params.get("port")
+        if tcp_type == "rtu":
+            return AsyncModbusTcpClient(host=host, port=port, timeout=timeout, framer=FramerType.RTU, retries=RETRIES)
+        if tcp_type == "ascii":
+            return AsyncModbusTcpClient(host=host, port=port, timeout=timeout, framer=FramerType.ASCII, retries=RETRIES)
+        return AsyncModbusTcpClient(host=host, port=port, timeout=timeout, retries=RETRIES)
+    # Unknown/core -> harmless dummy client
+    return SimpleNamespace(connected=False, comm_params=SimpleNamespace(host="", port=""))
+
+
+def _get_or_create_shared_client(hass: HomeAssistant, params: dict):
+    """Return a dict {client, lock, refcount} from pool; create if missing."""
+    pool = hass.data.setdefault(DOMAIN, {}).setdefault("clients", {})
+    key = _client_key(params)
+    rec = pool.get(key)
+    if rec:
+        rec["refcount"] += 1
+        return rec
+    client = _build_client(params)
+    rec = {"client": client, "lock": asyncio.Lock(), "refcount": 1, "params": params, "key": key}
+    pool[key] = rec
+    _LOGGER.debug(f"Created shared Pymodbus client in pool: key={key}")
+    return rec
+
+
+def _release_shared_client(hass: HomeAssistant, key: tuple):
+    pool = hass.data.get(DOMAIN, {}).get("clients", {})
+    rec = pool.get(key)
+    if not rec:
+        return
+    rec["refcount"] -= 1
+    if rec["refcount"] <= 0:
+        try:
+            if getattr(rec["client"], "connected", False):
+                rec["client"].close()
+        except Exception:
+            pass
+        pool.pop(key, None)
+        _LOGGER.debug(f"Closed & removed shared Pymodbus client: key={key}")
 
 empty_hub_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
@@ -193,6 +290,8 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
+    # Shared Pymodbus client pool (keyed by connection params)
+    hass.data[DOMAIN]["clients"] = {}
     # Register helper services to force-stop hubs
     async def _svc_stop_all(call):
         """Force-stop all SolaX hubs (kills timers/tasks/sockets)."""
@@ -382,6 +481,61 @@ async def async_unload_entry(hass, entry):
 
     return unload_ok
 
+
+# Clean up entities, devices, in-memory state and any persisted local data when the config entry is deleted
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle removal of a SolaX Modbus config entry.
+    Ensures entities and the inverter device are removed from the registries,
+    clears integration state, and deletes local persistence files.
+    """
+    name = entry.options.get(CONF_NAME)
+    _LOGGER.debug(f"async_remove_entry called for {name} – entry_id={entry.entry_id}")
+
+    # 1) Proactively remove entities belonging to this entry (defensive; HA usually does this)
+    try:
+        ent_reg = er.async_get(hass)
+        for ent in list(er.async_entries_for_config_entry(ent_reg, entry.entry_id)):
+            try:
+                ent_reg.async_remove(ent.entity_id)
+            except Exception as ex:
+                _LOGGER.debug(f"{name}: could not remove entity {ent.entity_id}: {ex}")
+    except Exception as ex:
+        _LOGGER.debug(f"{name}: entity-registry cleanup skipped/failed: {ex}")
+
+    # 2) Remove devices linked to this config entry (ensures inverter disappears from UI)
+    try:
+        dev_reg = dr.async_get(hass)
+        for device in list(dr.async_entries_for_config_entry(dev_reg, entry.entry_id)):
+            try:
+                dev_reg.async_remove_device(device.id)
+                _LOGGER.debug(f"{name}: removed device_id={device.id}")
+            except Exception as ex:
+                _LOGGER.debug(f"{name}: could not remove device_id={device.id}: {ex}")
+    except Exception as ex:
+        _LOGGER.debug(f"{name}: device-registry cleanup skipped/failed: {ex}")
+
+    # 3) Stop and drop any in-memory hub state
+    try:
+        hub = hass.data.get(DOMAIN, {}).get(name, {}).get("hub")
+        if hub:
+            try:
+                await hub.async_stop()
+            except Exception as ex:
+                _LOGGER.debug(f"{name}: error during hub stop in remove_entry: {ex}")
+        hass.data.get(DOMAIN, {}).pop(name, None)
+    except Exception as ex:
+        _LOGGER.debug(f"{name}: error clearing hass.data in remove_entry: {ex}")
+
+    # 4) Delete local persistence file created by this integration (if any)
+    try:
+        import os
+        path = hass.config.path(f"{name}_data.json")
+        if os.path.exists(path):
+            os.remove(path)
+            _LOGGER.debug(f"{name}: removed local data file {path}")
+    except Exception as ex:
+        _LOGGER.debug(f"{name}: unable to remove local data file: {ex}")
+
 def defaultIsAwake(datadict):
     return True
 
@@ -440,34 +594,25 @@ class SolaXModbusHub:
         self._hass = hass
         # explicit init for stop flag
         self._stopping = False
-        if interface == "serial":
-            self._client = AsyncModbusSerialClient(
-                port=serial_port,
-                baudrate=baudrate,
-                parity="N",
-                stopbits=1,
-                bytesize=8,
-                timeout=time_out,
-                retries=RETRIES,
-            )
-        elif interface == "tcp":
-            if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=RETRIES
-                )
-            elif tcp_type == "ascii":
-                self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES
-                )
-            else:
-                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
-        elif interface == "core":
-            # Core-hub variant uses Home Assistant's Modbus hub; use harmless dummy client
-            self._client = SimpleNamespace(connected=False, comm_params=SimpleNamespace(host="", port=""))
+
+        # Build connection params & decide on dedicated vs shared client
+        conn_params = _conn_params_from_config(config)
+        self._conn_params = conn_params
+        self._dedicated_client = bool(config.get("dedicated_client", False) or config.get("new_client", False))
+
+        if self._dedicated_client:
+            # Create a dedicated client and lock for this hub
+            self._client = _build_client(conn_params)
+            self._lock = asyncio.Lock()
+            self._pool_key = None
+            _LOGGER.debug(f"{name}: using dedicated Pymodbus client ({conn_params})")
         else:
-            # Fallback dummy client for unrecognized interface types
-            self._client = SimpleNamespace(connected=False, comm_params=SimpleNamespace(host="", port=""))
-        self._lock = asyncio.Lock()
+            # Reuse or create a shared client from the pool
+            rec = _get_or_create_shared_client(self._hass, conn_params)
+            self._client = rec["client"]
+            self._lock = rec["lock"]
+            self._pool_key = rec["key"]
+            _LOGGER.debug(f"{name}: using shared Pymodbus client key={self._pool_key}")
         self._name = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug(f"{name}: using pymodbus version {pymodbus_version_info()}")
@@ -896,9 +1041,12 @@ class SolaXModbusHub:
         return self._name
 
     async def async_close(self):
-        """Disconnect client."""
-        if self._client.connected:
-            self._client.close()
+        """Disconnect client if dedicated; shared clients stay managed by the pool."""
+        try:
+            if self._dedicated_client and getattr(self._client, "connected", False):
+                self._client.close()
+        except Exception:
+            pass
 
     async def async_stop(self):
         """Stop polling/timers and close transport deterministically."""
@@ -947,10 +1095,15 @@ class SolaXModbusHub:
             self._probe_ready.set()
         except Exception:
             pass
-        # 4) close transport
+        # 4) close/release transport
         try:
-            if self._client and self._client.connected:
-                self._client.close()
+            if self._dedicated_client:
+                if getattr(self, "_client", None) and getattr(self._client, "connected", False):
+                    self._client.close()
+            else:
+                # Shared client: decrease refcount; close when last user disappears
+                if getattr(self, "_pool_key", None) is not None:
+                    _release_shared_client(self._hass, self._pool_key)
         except Exception:
             pass
     def _track_task(self, coro):
