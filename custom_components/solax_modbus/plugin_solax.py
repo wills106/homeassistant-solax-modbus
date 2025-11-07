@@ -292,12 +292,13 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     
     # Apply bounds checking based on ap_target sign
     old_ap_target = ap_target
-    if ap_target > 0:  # Importing (positive = import)
+    if ap_target > 0:
+        # Importing (positive = import)
         # Inverter input cannot be more than the import limit less any used by the house load
         import_bound = import_limit - house_load
         ap_target = min(ap_target, import_bound)
         _LOGGER.debug(f"[REMOTE_CONTROL] Import bounds: ap_target={ap_target}W import_bound={import_bound}W import_limit={import_limit}W house_load={house_load}W")
-    elif ap_target < 0:  
+    elif ap_target < 0:
         # Exporting (negative = export).
         # Inverter output cannot be more than the export limit plus any used by the house load
         export_bound = -(export_limit + house_load)
