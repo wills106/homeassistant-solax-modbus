@@ -328,7 +328,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     ]
     
     if power_control == "Disabled":
-        autorepeat_stop(datadict, "powercontrolmode8_trigger")
+        autorepeat_stop(datadict, "remotecontrol_trigger")
     
     _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
     return { 'action': WRITE_MULTI_MODBUS, 'data': res }
