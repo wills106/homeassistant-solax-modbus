@@ -5421,7 +5421,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4 | X3,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Forward Power",
+        name = "Total Import Power",
         key = "total_forward_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
@@ -5433,7 +5433,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes = GEN4,
     ),
     GrowattModbusSensorEntityDescription(
-        name = "Total Reverse Power",
+        name = "Total Export Power",
         key = "total_reverse_power",
         native_unit_of_measurement = UnitOfPower.WATT,
         device_class = SensorDeviceClass.POWER,
