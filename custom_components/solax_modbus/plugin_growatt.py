@@ -1283,7 +1283,7 @@ SELECT_TYPES = [
         option_dict = {
                 0: "Disabled",
                 1: "Enabled", },
-        allowedtypes = GEN3 | GEN4,
+        allowedtypes = GEN3,
         entity_category = EntityCategory.CONFIG,
         entity_registry_enabled_default = True,
         icon = "mdi:dip-switch",
