@@ -521,6 +521,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 export_hysteresis_w = int(datadict.get("export_first_export_hysteresis_w", 100) or 100)
                 pv_clamp_target = max(0, hl + export_within_cap + desired_charge - export_hysteresis_w)
                 pvlimit = min(pvlimit, pv_clamp_target)
+            else:
+                # Don't clamp, use full PV limit (set variable for logging).
+                pv_clamp_target = pvlimit
             
             _LOGGER.debug(
                 f"[Mode8 Export-First] export-first: surplus={surplus}W export_target={export_within_cap}W rest={rest_for_batt}W "
