@@ -281,6 +281,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
                                   # update only when read value changes
     sensor_key: str = None # only specify this if corresponding sensor has a different key name
     depends_on: list = None # list of modbus register keys that must be read
+    display_as_box: bool = False # if true, displays the entity as a box rather than a slider.
     suggested_display_precision: Optional[int] = None
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================

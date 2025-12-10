@@ -1365,6 +1365,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         initvalue=0,
         entity_registry_enabled_default=False,
+        display_as_box=True,
         write_method=WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
@@ -1377,6 +1378,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=PERCENTAGE,
         initvalue=100,
         entity_registry_enabled_default=False,
+        display_as_box=True,
         write_method=WRITE_DATA_LOCAL,
     ),
     ###
@@ -1907,6 +1909,7 @@ NUMBER_TYPES = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
+        display_as_box=True,
         icon="mdi:ev-station",
     ),
     SolaxModbusNumberEntityDescription(
@@ -1920,6 +1923,7 @@ NUMBER_TYPES = [
         native_step=1,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB,
         entity_category=EntityCategory.CONFIG,
+        display_as_box=True,
         icon="mdi:connection",
     ),
     SolaxModbusNumberEntityDescription(
