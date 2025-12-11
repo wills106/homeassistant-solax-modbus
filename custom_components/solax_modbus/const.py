@@ -317,6 +317,13 @@ def value_function_pv_power_total(initval, descr, datadict):
         i += 1
     return total
 
+
+def value_function_battery_power(initval, descr, datadict):
+    # HA energy dashboard power sensor requires opposite polarity
+    # to default measured power sensor.
+    return -datadict.get("battery_power_charge", 0)
+
+
 def value_function_battery_output(initval, descr, datadict):
     val = datadict.get("battery_power_charge", 0)
     if val < 0:
@@ -331,6 +338,12 @@ def value_function_battery_input(initval, descr, datadict):
         return val
     else:
         return 0
+
+
+def value_function_battery_power_solis(initval, descr, datadict):
+    # HA energy dashboard power sensor requires opposite polarity
+    # to default measured power sensor.
+    return -datadict.get("battery_power", 0)
 
 
 def value_function_battery_output_solis(initval, descr, datadict):
@@ -356,6 +369,13 @@ def value_function_disabled_enabled(initval, descr, datadict):
         1: "Enabled",
     }
     return scale.get(initval, str(initval) + " Unknown Status")
+
+
+def value_function_grid_power(initval, descr, datadict):
+    # HA energy dashboard power sensor requires opposite polarity
+    # to default measured power sensor.
+    return -datadict.get("measured_power", 0)
+
 
 def value_function_grid_import(initval, descr, datadict):
     val = datadict.get("measured_power", 0)

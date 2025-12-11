@@ -1313,6 +1313,30 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:home",
     ),
+    SolintegModbusSensorEntityDescription(
+        name="Dashboard Grid Power",
+        key="dash_grid_power",
+        value_function=value_function_grid_power,
+        depends_on= ("measured_power", ),
+        scan_group=SCAN_GROUP_FAST,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:transmission-tower",
+    ),
+    SolintegModbusSensorEntityDescription(
+        name="Dashboard Battery Power",
+        key="dash_battery_power",
+        value_function=value_function_battery_power,
+        depends_on= ("battery_power", ),
+        scan_group=SCAN_GROUP_FAST,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-charging-medium",
+    ),
+
 
     # internal sensors are only used for polling values for selects, etc
     # no need for name, etc
