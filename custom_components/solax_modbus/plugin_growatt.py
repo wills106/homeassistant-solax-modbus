@@ -550,19 +550,19 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
         val = datadict.get(key)
         # If the PV Array *exists* but reports bad data - fail the whole result
         if val in (None, "unknown", "unavailable"): # unavailable if unknown
-            return "unavailable"
+            return initval
         try:
             val_f = float(val)
         except (ValueError, TypeError): # unavailable if conversion fails
-            return "unavailable"
+            return initval
         if val_f != val_f:              # unavailable if detect a NaN
-            return "unavailable"
+            return initval
 
         found_any_sensor = True
         total += val_f  # Actually get the total
 
     if not found_any_sensor:    # If literally no PV array sensors exist (e.g. integration booting), return unavailable
-        return "unavailable"
+        return initval
 
     return total
 
