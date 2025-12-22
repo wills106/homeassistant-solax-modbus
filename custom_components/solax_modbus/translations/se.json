@@ -5,7 +5,6 @@
         "title": "Inställningar för modbusanslutning till växelriktare",
         "data": {
           "name": "Prefix för namnsättning av sensorer på växelriktaren",
-          "read_modbus_addr": "Modbus-adress för växelriktaren",
           "interface": "Gränssnitt",
           "inverter_power_kw": "Max växelriktareffekt i kW (värden över detta ignoreras)",
           "read_eps": "Nödkraftsval (EPS)",
@@ -20,14 +19,19 @@
         "title": "Parametrar för seriell port",
         "data": {
           "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
+          "baudrate": "Överföringshastighet (baudrate)",
+          "read_modbus_addr": "Modbus-enhets-ID (Unit/Slave-adress för växelriktaren)",
+          "dedicated_client": "Skapa en ny Modbus-anslutning (dela inte med andra hubbar)"
         }
       },
       "tcp": {
         "title": "Parametrar för TCP/IP",
         "data": {
           "host": "IP-adress för modbusenheten i växelriktaren",
-          "port": "TCP-port för anslutning till växelriktaren"
+          "port": "TCP-port för anslutning till växelriktaren",
+          "tcp_type": "Typ av Modbus TCP-anslutning",
+          "read_modbus_addr": "Modbus-enhets-ID (Unit/Slave-adress för växelriktaren)",
+          "dedicated_client": "Skapa en ny Modbus-anslutning (dela inte med andra hubbar)"
         }
       }
     },
@@ -46,7 +50,6 @@
         "title": "Inställningar för modbusanslutning till växelriktare",
         "data": {
           "name": "Prefix för namnsättning av sensorer på växelriktaren",
-          "read_modbus_addr": "Modbus-adress till växelriktaren",
           "interface": "Gränssnitt",
           "inverter_power_kw": "Max växelriktareffekt (värden över detta ignoreras)",
           "read_eps": "Nödkraftsval (EPS)",
@@ -61,7 +64,9 @@
         "title": "Parametrar för seriell port",
         "data": {
           "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
+          "baudrate": "Överföringshastighet (baudrate)",
+          "read_modbus_addr": "Modbus-enhets-ID (Unit/Slave-adress för växelriktaren)",
+          "dedicated_client": "Skapa en ny Modbus-anslutning (dela inte med andra hubbar)"
         }
       },
       "tcp": {
@@ -69,7 +74,9 @@
         "data": {
           "host": "IP-adress för modbusenheten i växelriktaren",
           "port": "TCP-port för anslutning till växelriktaren",
-          "tcp_type": "Typ av Modbus TCP-anslutning"
+          "tcp_type": "Typ av Modbus TCP-anslutning",
+          "read_modbus_addr": "Modbus-enhets-ID (Unit/Slave-adress för växelriktaren)",
+          "dedicated_client": "Skapa en ny Modbus-anslutning (dela inte med andra hubbar)"
         }
       }
     },

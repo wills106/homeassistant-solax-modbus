@@ -64,6 +64,11 @@ CONF_READ_EPS = "read_eps"
 CONF_READ_DCB = "read_dcb"
 CONF_READ_PM = "read_pm"
 CONF_MODBUS_ADDR = "read_modbus_addr"
+# Modbus device ID (unit/slave address) is provided via CONF_MODBUS_ADDR
+# Per‑hub option to force an isolated Pymodbus instance instead of using the shared pool
+CONF_DEDICATED_CLIENT = "dedicated_client"  # bool; if True, create a new client for this hub
+# Backwards‑compatible alias if you ever referenced this earlier under a different key
+CONF_NEW_CLIENT = "new_client"  # optional legacy alias used as fallback in __init__.py
 CONF_INTERFACE = "interface"
 CONF_SERIAL_PORT = "read_serial_port"
 CONF_SolaX_HUB = "solax_hub"
