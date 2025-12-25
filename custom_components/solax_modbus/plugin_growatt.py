@@ -306,7 +306,33 @@ def value_function_time_reverse_mode(initval, descr, datadict):
         return "Load First"
 
 def value_function_today_s_solar_energy(initval, descr, datadict):
-    return  datadict.get('today_s_pv1_solar_energy', 0) + datadict.get('today_s_pv2_solar_energy',0) + datadict.get('today_s_pv3_solar_energy',0) + datadict.get('today_s_pv4_solar_energy',0)
+    #Dipping this sensor to zero for any reason doubles the energy meter production reporting in Home Assistant, so need to be overly careful detecting issues before adding up
+    keys = [ 'today_s_pv1_solar_energy', 'today_s_pv2_solar_energy', 'today_s_pv3_solar_energy', 'today_s_pv4_solar_energy']
+    total = 0.0
+    found_any_sensor = False
+
+    for key in keys:
+        if key not in datadict:  # PV Array does not exist on this system - ignore it
+            continue
+
+        val = datadict.get(key)
+        # If the PV Array *exists* but reports bad data - fail the whole result
+        if val in (None, "unknown", "unavailable"): # unavailable if unknown
+            return initval
+        try:
+            val_f = float(val)
+        except (ValueError, TypeError): # unavailable if conversion fails
+            return initval
+        if val_f != val_f:              # unavailable if detect a NaN
+            return initval
+
+        found_any_sensor = True
+        total += val_f  # Actually get the total
+
+    if not found_any_sensor:    # If literally no PV array sensors exist (e.g. integration booting), return unavailable
+        return initval
+
+    return total
 
 def value_function_combined_battery_power(initval, descr, datadict):
     return  datadict.get('battery_charge_power', 0) - datadict.get('battery_discharge_power',0)
