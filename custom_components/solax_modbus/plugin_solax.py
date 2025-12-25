@@ -1365,6 +1365,34 @@ NUMBER_TYPES = [
         entity_registry_enabled_default=False,
         write_method=WRITE_DATA_LOCAL,
     ),
+    SolaxModbusNumberEntityDescription(
+        name="Config Measured Power Offset",
+        key="measured_power_offset",
+        allowedtypes=AC | HYBRID,
+        native_min_value=-200,
+        native_max_value=200,
+        native_step=0.5,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        entity_category=EntityCategory.CONFIG,
+        initvalue=0,
+        entity_registry_enabled_default=False,
+        display_as_box=True,
+        write_method=WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Config Measured Power Gain",
+        key="measured_power_gain",
+        allowedtypes=AC | HYBRID,
+        native_min_value=90, # Allow correction up to +/-10%.
+        native_max_value=110,
+        native_step=0.1,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.CONFIG,
+        initvalue=100,
+        entity_registry_enabled_default=False,
+        display_as_box=True,
+        write_method=WRITE_DATA_LOCAL,
+    ),
     ###
     #
     #  Normal number types
@@ -1893,6 +1921,7 @@ NUMBER_TYPES = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
+        display_as_box=True,
         icon="mdi:ev-station",
     ),
     SolaxModbusNumberEntityDescription(
@@ -1906,6 +1935,7 @@ NUMBER_TYPES = [
         native_step=1,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB,
         entity_category=EntityCategory.CONFIG,
+        display_as_box=True,
         icon="mdi:connection",
     ),
     SolaxModbusNumberEntityDescription(
@@ -5799,6 +5829,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x46,
         register_type=REG_INPUT,
+        scale=value_function_gain_offset,
         unit=REGISTER_S32,
         allowedtypes=AC | HYBRID,
     ),
