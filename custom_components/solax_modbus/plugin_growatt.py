@@ -9393,10 +9393,10 @@ class growatt_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber = await async_read_serialnr(hub, 9)
+        seriesnumber = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
-            seriesnumber = await async_read_serialnr(hub, 3001)
+            seriesnumber = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
             seriesnumber = "unknown"
@@ -9409,36 +9409,143 @@ class growatt_plugin(plugin_base):
         # TL3-XH (MOD) = GEN4
         # TL3-XH (MID) = GEN4
         # SPF = SPF 
-        
-        # derive invertertype from seriesnumber
-        if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
-        elif seriesnumber.startswith('KLN'):  invertertype = PV | GEN | X3 # PV TL3-XH 15kW 3Phase (MOD)
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
-        #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
-        elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
-        elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
-        elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
-        #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
-        #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
-        #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
-        elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
-        elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
-        elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
-        elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
-        elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)  
-        elif seriesnumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
-        elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
-        #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
-        
-        else:
-            invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
 
+        #new seriesnumber detection
+
+        # PV and Battery
+
+        # MIN type:GEN4
+        if seriesnumber.startswith('ABJ'):    invertertype = HYBRID | GEN4 | X1         # MIN 2500 TL-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('SKL'):  invertertype = HYBRID | GEN4 | X1         # MIN 3600 TL-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('XVM'):  invertertype = HYBRID | GEN4 | X1         # MIN 5000 TL-XH Hybrid, 2 MPPT
+
+        # MOD type:GEN4
+        #elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('XHL'):  invertertype = HYBRID | GEN4 | X1         # MOD 4000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('PYL'):  invertertype = HYBRID | GEN4 | X3         # MOD 5000 TL3-XH Hybrid, 2 MPPT
+        #elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 6000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('MEK'):  invertertype = HYBRID | GEN4 | X3         # MOD 7000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('MFK'):  invertertype = HYBRID | GEN4 | X1         # MOD 8000 TL3-XH Hybrid, 2 MPPT
+        #elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 9000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('DFK'):  invertertype = HYBRID | GEN4 | X3         # MOD 100000 TL3-XH Hybrid, 2 MPPT
+
+        # MID type:GEN4
+        elif seriesnumber.startswith('KLN'):  invertertype = HYBRID | GEN4 | X3         # MID 15000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('KMN'):  invertertype = HYBRID | GEN4 | X3         # MID 17000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith('KNN'):  invertertype = HYBRID | GEN4 | X3 | MPPT3 # MID 25000 TL3-XH Hybrid, 3 MPPT
+        elif seriesnumber.startswith('RKM'):  invertertype = HYBRID | GEN4 | X3 | MPPT3 # MID 30000 TL3-XH Hybrid, 3 MPPT
+
+        # MOD BP type:GEN4
+        elif seriesnumber.startswith('FMP'):  invertertype = HYBRID | GEN4 | X3         # MOD 5000 TL3-XH (BP) Hybrid, 2 MPPT
+        elif seriesnumber.startswith('FPP'):  invertertype = HYBRID | GEN4 | X3         # MOD 7000 TL3-XH (BP) Hybrid, 2 MPPT
+        elif seriesnumber.startswith('FQP'):  invertertype = HYBRID | GEN4 | X3         # MOD 8000 TL3-XH (BP) Hybrid, 2 MPPT        
+        elif seriesnumber.startswith('CZM'):  invertertype = HYBRID | GEN4 | X3         # MOD 10000 TL3-XH (BP) Hybrid, 2 MPPT
+
+        # SPH type:GEN3
+        elif seriesnumber.startswith('YRP'):  invertertype = HYBRID | GEN3 | X1         # SPH 5000 TL-HUB Hybrid, 2 MPPT
+
+        # SPE type:?
+        elif seriesnumber.startswith('NFR'):  invertertype =  HYBRID | SPF | X1         # SPE 8000 ES, 2 MPPT
+
+        # SPF type:SPF
+        elif seriesnumber.startswith('YRE'):  invertertype =  HYBRID | SPF | X1         # SPF 5000 ES, 1 MPPT
+        elif seriesnumber.startswith('TTJ'):  invertertype =  HYBRID | SPF | X1         # SPF 5000 ES, 1 MPPT
+        elif seriesnumber.startswith('BNJ'):  invertertype =  HYBRID | SPF | X1         # SPF 3000 TL LVM 24P, 1 MPPT
+        elif seriesnumber.startswith('NUK'):  invertertype =  HYBRID | SPF | X1         # SPF 12000T DVM-US MPV, 2 MPPT
+
+        # WIT type:GEN4
+        elif seriesnumber.startswith('0PE'):  invertertype = HYBRID | GEN4 | X3         # WIT 8000-HU, 2 MPPT
+        elif seriesnumber.startswith('0PC'):  invertertype = HYBRID | GEN4 | X3         # WIT 12000-HU, 2 MPPT
+        elif seriesnumber.startswith('0PH'):  invertertype = HYBRID | GEN4 | X3 | MPPT10# WIT 100000-HU, 10 MPPT
+
+        # PV only
+
+        # MIC type:GEN4
+        elif seriesnumber.startswith('FPH'):  invertertype = PV | GEN4 | X1             # MIC 2000 TL-X, 1 MPPT
+        elif seriesnumber.startswith('FWJ'):  invertertype = PV | GEN4 | X1             # MIC 3300 TL-X, 1 MPPT
+
+        # MIN type:GEN4
+        elif seriesnumber.startswith('QYL'):  invertertype = PV | GEN4 | X1             # MIN 2500 TL-X, 2 MPPT
+        elif seriesnumber.startswith('XTD'):  invertertype = PV | GEN4 | X1             # MIN 5000 TL-X, 2 MPPT
+        elif seriesnumber.startswith('BDK'):  invertertype = PV | GEN4 | X1             # MIN 4200 TL-XE, 2 MPPT
+        elif seriesnumber.startswith('WVN'):  invertertype = PV | GEN4 | X1 | MPPT3     # MIN 8000 TL-X2, 3 MPPT
+        #elif seriesnumber.startswith('???'):  invertertype = PV | GEN4 | X1 | MPPT3     # MIN 10000 TL-X2, 3 MPPT
+
+        # MOD type:GEN2
+        elif seriesnumber.startswith('RDH'):  invertertype = PV | GEN2 | X3             # MOD 4000 TL3-X, 2 MPPT
+        elif seriesnumber.startswith('QEH'):  invertertype = PV | GEN2 | X3             # MOD 8000 TL3-X, 2 MPPT
+        elif seriesnumber.startswith('RPH'):  invertertype = PV | GEN2 | X3             # MOD 15000 TL3-X, 2 MPPT
+
+        # MID type:GEN4
+        elif seriesnumber.startswith('GXF'):  invertertype = PV | GEN4 | X3             # MID 12000 TL3-XL, 2 MPPT
+
+        # MAX type:GEN4
+        elif seriesnumber.startswith('NAH'):  invertertype = PV | GEN4 | X3 | MPPT6		# MAX 60000 TL3 LV, 6 MPPT
+
+        # SPH type:GEN3
+        elif seriesnumber.startswith('DIE'):  invertertype =  PV | GEN3 | X1            # SPH 1000-S, 1 MPPT
+        elif seriesnumber.startswith('PYH'):  invertertype =  PV | GEN3 | X1            # SPH 1500 TL-X, 1 MPPT
+        elif seriesnumber.startswith('NLC'):  invertertype =  PV | GEN3 | X1            # SPH 3000 BP, 1 MPPT
+        elif seriesnumber.startswith('NRC'):  invertertype =  PV | GEN3 | X1            # SPH 5000, 1 MPPT
+
+        # NEO type:GEN
+        elif seriesnumber.startswith('BZP'):  invertertype =  PV | GEN | X1             # Neo 800M-X, 2 MPPT
+
+        # ? type:GEN
+        elif seriesnumber.startswith('QNB'):  invertertype =  PV | GEN | X1             # 1000-S, 1 MPPT
+        elif seriesnumber.startswith('QMB'):  invertertype =  PV | GEN | X1             # 1500-S, 1 MPPT
+        elif seriesnumber.startswith('JLE'):  invertertype =  PV | GEN | X1             # 5000 TL3-S, x MPPT
+        elif seriesnumber.startswith('MVC'):  invertertype =  PV | GEN | X3             # 12000 TL3-S, ? MPPT
+
+        # ? type:GEN
+        elif seriesnumber.startswith('4FZ'):  invertertype = PV | GEN | X1              # 5000 MTL-S, 2 MPPT
+        elif seriesnumber.startswith('BY3'):  invertertype = PV | GEN | X1              # 5000, ? MPPT
+
+        else:
+            _LOGGER.error(f"{hub.name}: trying alternative location")
+            seriesnumber = await async_read_serialnr(hub, 9)
+            if not seriesnumber:
+                _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
+                seriesnumber = "unknown"
+        ### Current mapping assumptions for Growatt
+        # TL3-SL = GEN
+        # TL3-X (MAX, MID, MAC & MOD) = GEN2
+        # Storage (MIX, SPA, SPH) = GEN3
+        # TL-X, TL-XH, TL-XHUS (MIN) = GEN4
+        # TL3-XH (MOD) = GEN4
+        # TL3-XH (MID) = GEN4
+        # SPF = SPF 
+        
+            # derive invertertype from seriesnumber
+            if seriesnumber.startswith('dha'):  invertertype = PV | GEN | X3 # PV TL3-SL 10-22kW #1067
+            #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X1 # Possible Single Phase version of above
+            #elif seriesnumber.startswith('xyz'):  invertertype = PV | GEN | X3 | MPPT3 # Possible 3xMMPT version of above
+            elif seriesnumber.startswith('DL1'):  invertertype = PV | GEN2 | X3 # PV TL3-X 15kW 3Phase (MOD)
+            elif seriesnumber.startswith('DM1'):  invertertype = PV | GEN2 | X3 | MPPT4 # PV TL3-X 35kW 3Phase (MID)
+            elif seriesnumber.startswith('AH1'):  invertertype = PV | GEN3 | X1 # Hybrid SPH 4kW - 10kW
+            elif seriesnumber.startswith('AJ1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+            elif seriesnumber.startswith('GH1'):  invertertype = PV | GEN4 | X1 # PV TL-X 2.5kW - 6kW (MIN)
+            elif seriesnumber.startswith('AM1'):  invertertype = PV | GEN4 | X1 | MPPT3 # PV TL-X2 7kW - 120kW (MIN)
+            #elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
+            #elif seriesnumber.startswith('MAC'):  invertertype = PV | GEN4 | X3 # PV X3 3MPPT 50-70kW
+            #elif seriesnumber.startswith('MAX'):  invertertype = PV | GEN4 | X3 # PV X3 6/7MPPT 50-80kW, 8 MPPT 100-150kW & 10 MPPT 100-150kW
+            elif seriesnumber.startswith('RAA'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+            elif seriesnumber.startswith('RA1'):  invertertype = HYBRID | GEN3 | X1 # Hybrid SPH 3kW - 6kW
+            elif seriesnumber.startswith('SPH'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW
+            elif seriesnumber.startswith('YA1'):  invertertype = HYBRID | GEN3 | X3 # Hybrid SPH 4kW - 10kW 3P TL UP
+            elif seriesnumber.startswith('AL1'):  invertertype = HYBRID | GEN4 | X1 # Hybrid TL-XH 2.5kW - 6kW (MIN)
+            elif seriesnumber.startswith('DN1'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)  
+            elif seriesnumber.startswith('V'):  invertertype = HYBRID | GEN4 | X3 # Hybrid TL3-XH 3kW - 10kW (MOD)
+            elif seriesnumber.startswith('067'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+            elif seriesnumber.startswith('500'):  invertertype = HYBRID | SPF | X1 # Hybrid SPF 5kW
+            #elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
+            
+        
+        
+            else:
+                invertertype = 0
+                _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
+    
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
             read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
