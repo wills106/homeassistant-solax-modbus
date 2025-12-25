@@ -2848,6 +2848,17 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:home",
     ),
     SolisModbusSensorEntityDescription(
+        name="Dashboard Battery Power",
+        key="dash_battery_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_battery_power_solis,
+        depends_on=("battery_power",),
+        allowedtypes=HYBRID,
+        icon="mdi:battery-charging-medium",
+    ),
+    SolisModbusSensorEntityDescription(
         name="Battery Input Energy",
         key="battery_input_energy",
         native_unit_of_measurement=UnitOfPower.WATT,
