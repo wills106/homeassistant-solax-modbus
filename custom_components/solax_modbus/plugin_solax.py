@@ -517,12 +517,18 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             rest_for_batt = max(0, surplus - export_target)
 
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, rest_for_batt)
-            pushmode_power = -desired_charge
+            pushmode_power = -desired_charge   # desired_charge is >= 0, negate as -ve pushmode power means charge.
 
-            # PV clamp block
-            export_hysteresis_w = int(datadict.get("export_first_export_hysteresis_w", 100) or 100)
-            pv_clamp_target = max(0, hl + export_within_cap + max(0, desired_charge) - export_hysteresis_w)
-            pvlimit = min(pvlimit, pv_clamp_target)
+            # PV clamp blocks disabled by default unless explicitly enabled while under development.
+            if datadict.get("export_first_clamp_enabled", False):
+                # PV clamp block
+                export_hysteresis_w = int(datadict.get("export_first_export_hysteresis_w", 100) or 100)
+                pv_clamp_target = max(0, hl + export_within_cap + desired_charge - export_hysteresis_w)
+                pvlimit = min(pvlimit, pv_clamp_target)
+            else:
+                # Don't clamp, use full PV limit (set variable for logging).
+                pv_clamp_target = pvlimit
+            
             _LOGGER.debug(
                 f"[Mode8 Export-First] export-first: surplus={surplus}W export_target={export_within_cap}W rest={rest_for_batt}W "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W (margin={export_margin_w}W) pv_clamp_target={pv_clamp_target}W hl={hl}W"
