@@ -946,6 +946,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         unit=REGISTER_S32,
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Lock state",
