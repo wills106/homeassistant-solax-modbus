@@ -1027,30 +1027,36 @@ class solax_ev_charger_plugin(plugin_base):
         # derive invertertupe from seriesnumber
         _LOGGER.debug(f"{hub.name}: Determining inverter type from serial number prefix")
         if seriesnumber.startswith("C107"):
-            invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase
-            self.inverter_model = "X1-HAC-7kW"
-            _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase), type=0x{invertertype:x}, model={self.inverter_model}")
+            invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase Gen1 (X1-EVC-7kW*)
+            self.inverter_model = "X1-EVC-7kW"
+            self.hardware_version = "Gen1"
+            _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase
-            self.inverter_model = "X3-HAC-11kW"
-            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | GEN1 (11kW EV Three Phase), type=0x{invertertype:x}, model={self.inverter_model}")
+            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
+            self.inverter_model = "X3-EVC-11kW"
+            self.hardware_version = "Gen1"
+            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | GEN1 (11kW EV Three Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase
-            self.inverter_model = "X3-HAC-22kW"
-            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | GEN1 (22kW EV Three Phase), type=0x{invertertype:x}, model={self.inverter_model}")
+            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
+            self.inverter_model = "X3-EVC-22kW"
+            self.hardware_version = "Gen1"
+            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | GEN1 (22kW EV Three Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
-            self.inverter_model = "X1-HAC-7kW-Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5020 - X1 | POW7 | GEN2 (7kW EV Single Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
+            self.inverter_model = "X1-HAC-7kW"
+            self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5020 - X1 | POW7 | GEN2 (7kW EV Single Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5030"):
             invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
-            self.inverter_model = "X3-HAC-11kW-Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
+            self.inverter_model = "X3-HAC-11kW"
+            self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5070"):
             invertertype = X3 | POW22 | GEN2 # 22kW EV Three Phase Gen2 (X3-HAC-22*)
-            self.inverter_model = "X3-HAC-22kW-Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW22 | GEN2 (22kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")        
-            # add cases here
+            self.inverter_model = "X3-HAC-22kW"
+            self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW22 | GEN2 (22kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+        # add cases here
         else:
             invertertype = 0
             self.inverter_model = None
@@ -1076,6 +1082,16 @@ class solax_ev_charger_plugin(plugin_base):
         result = (xmatch and powmatch and genmatch) and not blacklisted
         _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
         return result
+
+    def getModel(self, new_data):
+        return getattr(self, "inverter_model", None)
+
+    def getSoftwareVersion(self, new_data):
+        fw = new_data.get("firmware_version")
+        return f"ARM v{fw}" if fw is not None else None
+
+    def getHardwareVersion(self, new_data):
+        return getattr(self, "hardware_version", None)
 
 
 plugin_instance = solax_ev_charger_plugin(
