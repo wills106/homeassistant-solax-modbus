@@ -935,7 +935,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:numeric",
         allowedtypes=GEN2,
         unit=REGISTER_S16,
-        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+        native_unit_of_measurement=PERCENTAGE,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charging duration",
