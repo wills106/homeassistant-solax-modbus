@@ -1045,10 +1045,10 @@ class solax_ev_charger_plugin(plugin_base):
             self.inverter_model = "X3-HAC-11kW-Gen2"
             _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("5070"):
-            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)    
-            self.inverter_model = "X3-HAC-11kW-Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
-        # add cases here
+            invertertype = X3 | POW22 | GEN2 # 22kW EV Three Phase Gen2 (X3-HAC-22*)
+            self.inverter_model = "X3-HAC-22kW-Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW22 | GEN2 (22kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")        
+            # add cases here
         else:
             invertertype = 0
             self.inverter_model = None
