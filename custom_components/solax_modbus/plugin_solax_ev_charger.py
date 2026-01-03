@@ -897,7 +897,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         icon="mdi:numeric",
         allowedtypes=GEN2,
-        unit=REGISTER_S16,
+        unit=REGISTER_U16,
+        scale=value_function_firmware_decimal_hundredths,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Network connected",
