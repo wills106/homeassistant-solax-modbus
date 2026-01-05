@@ -1016,6 +1016,8 @@ class solax_ev_charger_plugin(plugin_base):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
         elif seriesnumber.startswith("5030"):
             invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
+        elif seriesnumber.startswith("5070"):
+            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)    
         # add cases here
         else:
             invertertype = 0

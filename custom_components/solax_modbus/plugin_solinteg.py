@@ -1030,7 +1030,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         unit=REGISTER_U32,
         allowedtypes=HYBRID,
         icon="mdi:battery",
-        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolintegModbusSensorEntityDescription(
         name="Bat. Min Cell Voltage",
@@ -1261,6 +1261,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         key="measured_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
         register=11000,
         unit=REGISTER_S32,
         scan_group=SCAN_GROUP_FAST,
