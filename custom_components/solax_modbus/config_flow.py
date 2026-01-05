@@ -202,11 +202,7 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
     pluginconf_name = user_input[CONF_PLUGIN]
 
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
-    if (
-        pluginconf_name.startswith("custom_components")
-        or pluginconf_name.startswith("/config")
-        or pluginconf_name.startswith("plugin_")
-    ):
+    if pluginconf_name.startswith("custom_components") or pluginconf_name.startswith("/config") or pluginconf_name.startswith("plugin_"):
         newpluginname = pluginconf_name.split("plugin_", 1)[1][:-3]  # getPluginName(pluginconf_name)
         _LOGGER.warning(f"converting old style plugin name {pluginconf_name} to new style: {newpluginname} ")
         user_input[CONF_PLUGIN] = newpluginname
@@ -282,18 +278,14 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION == 12)
         "user": SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
-        "core": SchemaFlowFormStep(
-            CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery
-        ),
+        "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "init": SchemaFlowFormStep(OPTION_SCHEMA, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
-        "core": SchemaFlowFormStep(
-            CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery
-        ),
+        "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
 

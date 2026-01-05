@@ -44,3 +44,6 @@ echo "✅ All linting checks complete!"
 echo ""
 echo "💡 To auto-fix formatting: ./scripts/format.sh"
 
+
+
+

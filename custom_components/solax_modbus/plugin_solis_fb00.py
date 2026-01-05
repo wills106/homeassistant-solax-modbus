@@ -72,9 +72,7 @@ async def async_read_serialnr(hub, address, swapbytes):
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
@@ -812,7 +810,7 @@ NUMBER_TYPES = [
         icon="mdi:battery-clock",
         prevent_update=True,
     ),
-    ###TimeSlot3
+    # TimeSlot3
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 3",
         key="timed_charge_start_hours_3",
@@ -2738,7 +2736,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key="battery_charge_direction",
         register=33135,
         register_type=REG_INPUT,
-        entity_registry_enabled_default=False, # needed in value function
+        entity_registry_enabled_default=False,  # needed in value function
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2855,7 +2853,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_input_solis,
         allowedtypes=HYBRID,
-        depends_on=("battery_power","battery_charge_direction",),
+        depends_on=(
+            "battery_power",
+            "battery_charge_direction",
+        ),
         icon="mdi:battery-arrow-up",
     ),
     SolisModbusSensorEntityDescription(
@@ -2865,7 +2866,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_output_solis,
-        depends_on=("battery_power","battery_charge_direction",),
+        depends_on=(
+            "battery_power",
+            "battery_charge_direction",
+        ),
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-down",
     ),
@@ -4454,7 +4458,7 @@ plugin_instance = solis_fb00_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     block_size=40,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )

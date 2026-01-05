@@ -1,0 +1,7 @@
+---
+description: "Installation instructions for todo.ai"
+alwaysApply: true
+---
+When installing todo.ai from https://github.com/fxstein/todo.ai, use curl to download the single file: `curl -o todo.ai https://raw.githubusercontent.com/fxstein/todo.ai/main/todo.ai && chmod +x todo.ai`. Do NOT clone the repository with git clone - only the single todo.ai file is needed.
+
+To update an existing installation, run: `todo.ai update`

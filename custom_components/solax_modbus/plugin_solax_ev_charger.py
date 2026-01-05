@@ -56,9 +56,7 @@ async def async_read_serialnr(hub, address):
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
@@ -873,7 +871,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             8: "Suspended EVSE",
             9: "Update",
             10: "RFID Activation",
-            #11-13 perhaps only seen in Gen2 EVC or in newer firmwares
+            # 11-13 perhaps only seen in Gen2 EVC or in newer firmwares
             11: "Start delay",
             12: "Charge paused",
             13: "Stopping",
@@ -1007,17 +1005,17 @@ class solax_ev_charger_plugin(plugin_base):
 
         # derive invertertupe from seriesnumber
         if seriesnumber.startswith("C107"):
-            invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase
+            invertertype = X1 | POW7 | GEN1  # 7kW EV Single Phase
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase
+            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase
+            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase
         elif seriesnumber.startswith("5020"):
-            invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
+            invertertype = X1 | POW7 | GEN2  # 7kW EV Single Phase Gen2 (X1-HAC-7*)
         elif seriesnumber.startswith("5030"):
-            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
+            invertertype = X3 | POW11 | GEN2  # 11kW EV Three Phase Gen2 (X3-HAC-11*)
         elif seriesnumber.startswith("5070"):
-            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)    
+            invertertype = X3 | POW11 | GEN2  # 11kW EV Three Phase Gen2 (X3-HAC-11*)
         # add cases here
         else:
             invertertype = 0
@@ -1046,6 +1044,6 @@ plugin_instance = solax_ev_charger_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="little",
 )

@@ -34,3 +34,6 @@ echo ""
 echo "✅ Auto-formatting complete!"
 echo "💡 Run ./scripts/lint.sh to verify"
 
+
+
+
