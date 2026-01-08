@@ -9,6 +9,13 @@ from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
+# Debug helper for EV charger operations
+def _debug_charger_setting(hub_name, setting_name, value, register=None, mode=None):
+    """Log debug information about charger setting changes"""
+    mode_info = f" (current mode: {mode})" if mode else ""
+    reg_info = f" at register 0x{register:x}" if register else ""
+    _LOGGER.debug(f"{hub_name}: EV Charger {setting_name} set to {value}{reg_info}{mode_info}")
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
@@ -46,15 +53,23 @@ SENSOR_TYPES = []
 
 
 async def async_read_serialnr(hub, address):
+    _LOGGER.debug(f"{hub.name}: Reading serial number from address 0x{address:x}")
     res = None
     try:
+        _LOGGER.debug(f"{hub.name}: Attempting to read holding registers at 0x{address:x}, count=7, unit={hub._modbus_addr}")
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
+            _LOGGER.debug(f"{hub.name}: Successfully read registers: {inverter_data.registers[0:7]}")
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
+            _LOGGER.debug(f"{hub.name}: Decoded serial number: {res}")
+        else:
+            _LOGGER.debug(f"{hub.name}: Register read returned error: {inverter_data}")
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.debug(f"{hub.name}: Exception type: {type(ex).__name__}, message: {ex}")
     if not res:
         _LOGGER.warning(
             f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
@@ -1000,41 +1015,65 @@ class solax_ev_charger_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.debug(f"{hub.name}: Reading serial number to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x600)
+        _LOGGER.debug(f"{hub.name}: Received serial number: {seriesnumber}")
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number for EV Charger")
             seriesnumber = "unknown"
 
         # derive invertertupe from seriesnumber
+        _LOGGER.debug(f"{hub.name}: Determining inverter type from serial number prefix")
         if seriesnumber.startswith("C107"):
             invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase
+            self.inverter_model = "X1-HAC-7kW"
+            _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("C311"):
             invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase
+            self.inverter_model = "X3-HAC-11kW"
+            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | GEN1 (11kW EV Three Phase), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("C322"):
             invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase
+            self.inverter_model = "X3-HAC-22kW"
+            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | GEN1 (22kW EV Three Phase), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
+            self.inverter_model = "X1-HAC-7kW-Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5020 - X1 | POW7 | GEN2 (7kW EV Single Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("5030"):
             invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
+            self.inverter_model = "X3-HAC-11kW-Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
         elif seriesnumber.startswith("5070"):
             invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)    
+            self.inverter_model = "X3-HAC-11kW-Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}")
         # add cases here
         else:
             invertertype = 0
+            self.inverter_model = None
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+            _LOGGER.debug(f"{hub.name}: No match found for serial number prefix, returning type=0")
+        _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
         return invertertype
 
     def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
         # returns true if the entity needs to be created for an inverter
+        _LOGGER.debug(f"matchInverterWithMask: inverterspec=0x{inverterspec:x}, entitymask=0x{entitymask:x}, serialnumber={serialnumber}")
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
+        _LOGGER.debug(f"matchInverterWithMask: powmatch={powmatch}, xmatch={xmatch}, genmatch={genmatch}")
         blacklisted = False
         if blacklist:
+            _LOGGER.debug(f"matchInverterWithMask: Checking blacklist: {blacklist}")
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (xmatch and powmatch and genmatch) and not blacklisted
+                    _LOGGER.debug(f"matchInverterWithMask: Serial number {serialnumber} matches blacklist prefix {start}")
+        result = (xmatch and powmatch and genmatch) and not blacklisted
+        _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
+        return result
 
 
 plugin_instance = solax_ev_charger_plugin(
