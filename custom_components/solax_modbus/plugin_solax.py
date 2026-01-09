@@ -9836,6 +9836,28 @@ class solax_plugin(plugin_base):
                         read_scale=new_read_scale,
                     )
 
+        # For parallel mode Master inverters, use inverter_power_kw for remote control limits
+        # This allows proper ±limits for multi-inverter systems (e.g., 3× 15kW = ±45kW)
+        parallel_setting = hub.data.get("parallel_setting", "Free")
+        if parallel_setting == "Master":
+            # Use inverter_power_kw (total system capacity) for remote control limits
+            system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
+            for key in ["remotecontrol_active_power"]:
+                number_entity = hub.numberEntities.get(key)
+                if number_entity:
+                    number_entity._attr_native_min_value = -system_limit_w
+                    number_entity._attr_native_max_value = system_limit_w
+                    number_entity.entity_description = replace(
+                        number_entity.entity_description,
+                        native_min_value=-system_limit_w,
+                        native_max_value=system_limit_w,
+                    )
+                    _LOGGER.info(
+                        f"Parallel Master: Set {key} limits to ±{system_limit_w}W "
+                        f"(inverter_power_kw={hub.inverterPowerKw}kW)"
+                    )
+        
+        # For single inverters or if config_max_export is enabled, use config_max_export
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
@@ -9847,7 +9869,7 @@ class solax_plugin(plugin_base):
                     "generator_max_charge",
                 ]:
                     number_entity = hub.numberEntities.get(key)
-                    if number_entity:
+                    if number_entity and parallel_setting != "Master":  # Don't override parallel Master
                         number_entity._attr_native_max_value = new_max_export
                         # update description also, not sure whether needed or not
                         number_entity.entity_description = replace(
