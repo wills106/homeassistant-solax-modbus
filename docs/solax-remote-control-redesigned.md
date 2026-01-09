@@ -1,8 +1,12 @@
 # SolaX Remote Control - Redesigned Calculations
 
 **Author:** fxstein  
-**Date:** October 28, 2025  
+**Date:** October 28, 2025 (Updated: January 9, 2026)  
 **GitHub:** https://github.com/fxstein/homeassistant-solax-modbus
+
+**Recent Updates:**
+- Added Phase Envelope Protection for X3 inverters (January 9, 2026)
+- See [SolaX Phase Protection](solax-phase-protection.md) for details
 
 ## Overview
 
