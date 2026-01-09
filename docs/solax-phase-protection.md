@@ -145,43 +145,44 @@ No additional configuration needed!
 
 ## Behavior
 
-### When Phase-Limited
+### When Phase-Limited (Phase Constraint is More Restrictive)
 
 ```
-Example: Rivian 16A on L1, 6kW house load
+Example: Rivian 16A on L1, 6.4kW house load (4A base + 16A Rivian on L1)
   
-Measured: L1=54.5A, L2=49.5A, L3=49A
-House: L1=17A, L2=5A, L3=4A (calculated from imbalance)
+House: L1=20A, L2=4A, L3=4A (high imbalance from single-phase EV)
 
-Phase protection:
-  L1 remaining: 59.85A - 17A = 42.85A
-  Safe ap_target: 42.85A × 3 × 228V = 29.3kW
+Import limit check:
+  Safe ap_target: 35kW - 6.4kW = 28.6kW ✓
   
-Import limit:
-  Safe ap_target: 32kW - 6kW = 26kW
+Phase limit check (MORE RESTRICTIVE):
+  L1 remaining: 59.85A - 20A = 39.85A
+  Safe ap_target: 39.85A × 3 × 228V = 27.2kW ✗
   
-Result: ap_target = 26kW (import limit is more restrictive)
-  Total import: 32kW
-  L1 actual: 17A + 38A = 55A ✓ (within limit)
+Result: ap_target = min(30kW, 28.6kW, 27.2kW) = 27.2kW
+  Total import: 27.2kW + 6.4kW = 33.6kW ✓
+  L1 actual: 20A + 39.8A = 59.8A ✓ (0.05A below safe limit)
+  Constraint: PHASE LIMIT (27.2kW) - protecting L1 from fuse blow
 ```
 
-### When Import-Limited
+### When Import-Limited (Import Constraint is More Restrictive)
 
 ```
-Example: No EV charging, 4kW house load
+Example: No EV charging, 4kW balanced house load
 
-House: L1=9A, L2=5A, L3=4A (low imbalance)
+House: L1=6A, L2=6A, L3=6A (no imbalance)
 
-Phase protection:
-  L1 remaining: 59.85A - 9A = 50.85A
-  Safe ap_target: 50.85A × 3 × 228V = 34.8kW
+Import limit check (MORE RESTRICTIVE):
+  Safe ap_target: 35kW - 4kW = 31kW ✗
   
-Import limit:
-  Safe ap_target: 32kW - 4kW = 28kW
+Phase limit check:
+  L1 remaining: 59.85A - 6A = 53.85A
+  Safe ap_target: 53.85A × 3 × 228V = 36.8kW ✓
   
-Result: ap_target = 28kW (import limit is more restrictive)
-  Total import: 32kW
-  L1 actual: 9A + 41A = 50A ✓ (well below limit)
+Result: ap_target = min(30kW, 31kW, 36.8kW) = 30kW
+  Total import: 30kW + 4kW = 34kW ✓
+  L1 actual: 6A + 43.9A = 49.9A ✓ (10A below safe limit)
+  Constraint: Desired target (30kW) achieved, neither limit constraining
 ```
 
 ## Logging
