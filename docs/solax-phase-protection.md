@@ -1,0 +1,241 @@
+# SolaX Phase Envelope Protection
+
+**Feature Status:** ✅ Implemented and Tested  
+**Integration Version:** 2024.11.0+  
+**Applies To:** X3 (Three-phase) inverters with remote control
+
+## Overview
+
+Phase envelope protection prevents individual phases from exceeding the fuse limit (e.g., 63A) when phase imbalance exists due to single-phase loads like EV chargers. This feature automatically limits import power to protect against fuse overload while maximizing system capacity.
+
+## The Problem
+
+### Phase Imbalance from Single-Phase Loads
+
+When you have single-phase loads (e.g., a 16A EV charger on L1), the phases become imbalanced:
+
+```
+Phase Current Visualization
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                        63A Fuse Limit →|
+                                     59.85A Target (95%)→|
+                                                         ↓
+Without Imports (Battery Hold):
+L1: [==House 16A==]                                     |············| 16A
+L2: [=H 2A=]                                            |············| 2A
+L3: [=H 2A=]                                            |············| 2A
+    └─ Imbalance: 14A (from house load)
+
+With 30kW Import Request (43.9A per phase):
+L1: [==House 16A==][=======Import 43.9A========]       |··|          60A ✗
+L2: [=H 2A=][=======Import 43.9A========]              |····|        46A ✓
+L3: [=H 2A=][=======Import 43.9A========]              |····|        46A ✓
+    └─ L1 exceeds 59.85A limit! Risk of fuse blow
+
+With Phase-Protected Import (38A per phase):
+L1: [==House 16A==][====Import 38A====]                |·······|     54A ✓
+L2: [=H 2A=][====Import 38A====]                       |·········|   40A ✓
+L3: [=H 2A=][====Import 38A====]                       |·········|   40A ✓
+    └─ All phases within safe limits
+```
+
+### The Challenge
+
+Without phase protection:
+- Requesting 30kW import with 6kW house load (16A on L1)
+- Inverters distribute 30kW evenly: 43.9A per phase
+- L1 total: 16A + 43.9A = 59.9A (exceeds 59.85A safe limit)
+- Risk of fuse blow on L1
+
+## The Solution
+
+### How It Works
+
+1. **Measure Phase Imbalance**
+   - Uses `measured_power_l1/l2/l3` to detect imbalance
+   - Imbalance in measured power = imbalance in house load (inverters balance imports)
+
+2. **Calculate House Load Per Phase**
+   ```
+   house_load_l1 = (house_load / 3) + (avg_measured_power - measured_power_l1)
+   ```
+   - Extracts actual house load distribution from measurements
+   - Works regardless of current import level
+
+3. **Calculate Safe Import**
+   ```
+   safe_ap_target = (59.85A - worst_phase_house_current) × 3 × avg_voltage
+   ```
+   - Ensures worst phase stays below 59.85A (95% of fuse limit)
+   - Allows maximum import while protecting phases
+
+4. **Apply Both Limits**
+   ```
+   ap_target = min(desired, import_limit - house_load, safe_ap_target)
+   ```
+   - Respects both total import limit AND phase limit
+   - Uses the more restrictive of the two
+
+### Key Insight
+
+**All imbalance comes from house load** - inverters distribute imports perfectly:
+- Each phase gets exactly `ap_target / 3` of the import current
+- The imbalance (difference between phases) is FIXED by house load
+- This allows accurate calculation without feedback loops
+
+## Configuration
+
+### Required Sensors
+
+Phase protection requires these sensors (available on X3 inverters):
+- `measured_power_l1/l2/l3` - Phase-specific grid power
+- `grid_voltage_l1/l2/l3` - Phase-specific voltages
+- `main_breaker_current_limit` - Fuse size setting
+
+### Automatic Activation
+
+Phase protection activates automatically when:
+- All required sensors are available
+- Main breaker current limit is configured in inverter
+- Remote control is active
+
+No additional configuration needed!
+
+## Behavior
+
+### When Phase-Limited
+
+```
+Example: Rivian 16A on L1, 6kW house load
+  
+Measured: L1=54.5A, L2=49.5A, L3=49A
+House: L1=17A, L2=5A, L3=4A (calculated from imbalance)
+
+Phase protection:
+  L1 remaining: 59.85A - 17A = 42.85A
+  Safe ap_target: 42.85A × 3 × 228V = 29.3kW
+  
+Import limit:
+  Safe ap_target: 32kW - 6kW = 26kW
+  
+Result: ap_target = 26kW (import limit is more restrictive)
+  Total import: 32kW
+  L1 actual: 17A + 38A = 55A ✓ (within limit)
+```
+
+### When Import-Limited
+
+```
+Example: No EV charging, 4kW house load
+
+House: L1=9A, L2=5A, L3=4A (low imbalance)
+
+Phase protection:
+  L1 remaining: 59.85A - 9A = 50.85A
+  Safe ap_target: 50.85A × 3 × 228V = 34.8kW
+  
+Import limit:
+  Safe ap_target: 32kW - 4kW = 28kW
+  
+Result: ap_target = 28kW (import limit is more restrictive)
+  Total import: 32kW
+  L1 actual: 9A + 41A = 50A ✓ (well below limit)
+```
+
+## Logging
+
+### Debug Logging
+
+Enable debug logging to see phase protection calculations:
+
+```yaml
+logger:
+  default: warn
+  logs:
+    custom_components.solax_modbus.plugin_solax: debug
+```
+
+### Log Output
+
+```
+[REMOTE_CONTROL] Phase currents - Measured: L1=54.47A L2=49.50A L3=49.14A | 
+                                   House: L1=9.50A L2=5.32A L3=4.39A | worst=L1
+[REMOTE_CONTROL] Phase protection: L1 house=9.50A limit=59.85A remaining=50.35A 
+                                   safe_ap_target=33908.5W
+[REMOTE_CONTROL] Import bounds: ap_target=29999.0W import_bound=30693.0W 
+                                import_limit=35000.0W house_load=4307.0W 
+                                total_import=34306.0W
+```
+
+## Benefits
+
+1. **Automatic Protection**: No manual intervention needed
+2. **Maximizes Capacity**: Allows maximum import while staying safe
+3. **Prevents Fuse Blow**: Keeps worst phase below 95% of fuse limit
+4. **Stable Operation**: No oscillation or feedback loops
+5. **Works with EV Charging**: Handles single-phase and three-phase EV chargers
+6. **Respects Both Limits**: Honors both import limit and phase limits
+
+## Technical Details
+
+### The Math
+
+**Given:**
+- Total `house_load` (W)
+- `measured_power_l1/l2/l3` (includes house + imports)
+- Fuse limit (e.g., 63A)
+- Import limit (e.g., 32kW)
+
+**Calculate:**
+```python
+# Extract house load per phase using imbalance
+avg_measured = (measured_l1 + measured_l2 + measured_l3) / 3
+house_l1 = (house_load / 3) + (avg_measured - measured_l1)
+
+# Convert to current
+house_current_l1 = house_l1 / voltage_l1
+
+# Calculate safe ap_target
+remaining_A = (fuse_limit × 0.95) - house_current_l1
+safe_ap_target = remaining_A × 3 × avg_voltage
+
+# Apply both limits
+ap_target = min(desired, import_limit - house_load, safe_ap_target)
+```
+
+### Why It Works
+
+The imbalance in `measured_power` equals the imbalance in house load because inverters balance imports:
+
+```
+measured_l1 - measured_l2 = (house_l1 - import_l1) - (house_l2 - import_l2)
+                          = house_l1 - house_l2  (imports cancel)
+```
+
+This allows extracting house load distribution without feedback loops.
+
+## Limitations
+
+- **X3 inverters only**: Requires three-phase sensors
+- **Requires fuse setting**: Must configure `main_breaker_current_limit` in inverter
+- **5% margin**: Targets 95% of fuse limit (brief excursions above acceptable)
+- **Balanced import assumption**: Assumes inverters distribute imports evenly (verified accurate)
+
+## Testing
+
+Tested and verified with:
+- ✅ Single-phase EV charger (Rivian 16A)
+- ✅ Dual EV chargers (Rivian 16A + Tesla 16A 3-phase)
+- ✅ Parallel mode (3 inverters)
+- ✅ Various house loads (4kW - 18kW)
+- ✅ Import limits (32kW - 35kW)
+- ✅ Phase limits (55A - 63A)
+
+Results: Stable operation, no oscillation, correct limiting behavior.
+
+## See Also
+
+- [SolaX Remote Control Redesigned](solax-remote-control-redesigned.md) - Main remote control documentation
+- [SolaX Parallel Mode](solax-parallel-mode.md) - Parallel mode operation
+- [SolaX Mode 1 Power Control](solax-mode1-modbus-power-control.md) - Mode 1 details
+
