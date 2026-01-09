@@ -318,6 +318,11 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         house_current_l2 = house_load_l2_W / grid_voltage_l2
         house_current_l3 = house_load_l3_W / grid_voltage_l3
         
+        # Calculate measured phase currents for comparison
+        measured_current_l1 = abs(measured_power_l1) / grid_voltage_l1
+        measured_current_l2 = abs(measured_power_l2) / grid_voltage_l2
+        measured_current_l3 = abs(measured_power_l3) / grid_voltage_l3
+        
         # Find worst phase
         house_currents = [house_current_l1, house_current_l2, house_current_l3]
         worst_phase_house_current = max(house_currents)
@@ -325,8 +330,9 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         worst_phase_voltage = [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3][worst_phase_idx]
         
         _LOGGER.debug(
-            f"[REMOTE_CONTROL] House load per phase: L1={house_current_l1:.2f}A L2={house_current_l2:.2f}A L3={house_current_l3:.2f}A "
-            f"(house_load={house_load:.1f}W) worst=L{worst_phase_idx+1}"
+            f"[REMOTE_CONTROL] Phase currents - Measured: L1={measured_current_l1:.2f}A L2={measured_current_l2:.2f}A L3={measured_current_l3:.2f}A | "
+            f"House: L1={house_current_l1:.2f}A L2={house_current_l2:.2f}A L3={house_current_l3:.2f}A | "
+            f"worst=L{worst_phase_idx+1}"
         )
         
         # Calculate safe ap_target to keep worst phase below 59.85A
