@@ -15,28 +15,40 @@ Phase envelope protection prevents individual phases from exceeding the fuse lim
 When you have single-phase loads (e.g., a 16A EV charger on L1), the phases become imbalanced:
 
 ```
-Phase Current Visualization
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                        63A Fuse Limit →|
-                                     59.85A Target (95%)→|
-                                                         ↓
-Without Imports (Battery Hold):
-L1: [==House 16A==]                                     |············| 16A
-L2: [=H 2A=]                                            |············| 2A
-L3: [=H 2A=]                                            |············| 2A
-    └─ Imbalance: 14A (from house load)
+Phase Current Visualization (0A ──────────────────────────> 63A)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                             59.85A|  63A
+                                          (95% Safe)|  (Fuse)
+                                                    ↓  ↓
 
-With 30kW Import Request (43.9A per phase):
-L1: [==House 16A==][=======Import 43.9A========]       |··|          60A ✗
-L2: [=H 2A=][=======Import 43.9A========]              |····|        46A ✓
-L3: [=H 2A=][=======Import 43.9A========]              |····|        46A ✓
-    └─ L1 exceeds 59.85A limit! Risk of fuse blow
+SCENARIO 1: Without Imports (Battery Hold)
+─────────────────────────────────────────────────────────────────
+L1: [===16A===]··································| 16A (44A to limit)
+L2: [2A]·········································| 2A  (58A to limit)
+L3: [2A]·········································| 2A  (58A to limit)
+    └─ Imbalance: 14A (entirely from house load)
 
-With Phase-Protected Import (38A per phase):
-L1: [==House 16A==][====Import 38A====]                |·······|     54A ✓
-L2: [=H 2A=][====Import 38A====]                       |·········|   40A ✓
-L3: [=H 2A=][====Import 38A====]                       |·········|   40A ✓
-    └─ All phases within safe limits
+SCENARIO 2: With 30kW Import Request (43.9A per phase) - UNSAFE
+─────────────────────────────────────────────────────────────────
+L1: [===16A===][===========43.9A============]····|X| 60A ✗ EXCEEDS
+L2: [2A][===========43.9A============]···········|  | 46A ✓
+L3: [2A][===========43.9A============]···········|  | 46A ✓
+    └─ L1 at 60A > 59.85A limit (would risk fuse blow)
+    └─ Total import: 30kW + 6kW = 36kW (also exceeds 32kW limit)
+
+SCENARIO 3: With Phase-Protected Import (26kW, 38A per phase) - SAFE
+─────────────────────────────────────────────────────────────────
+L1: [===16A===][==========38A===========]········|  | 54A ✓ (6A to limit)
+L2: [2A][==========38A===========]···············|  | 40A ✓ (20A to limit)
+L3: [2A][==========38A===========]···············|  | 40A ✓ (20A to limit)
+    └─ All phases safe (L1 has 6A headroom to 59.85A)
+    └─ Total import: 26kW + 6kW = 32kW ✓ (respects import limit)
+
+Key Points:
+• House load imbalance (14A) is FIXED regardless of import level
+• Inverters balance imports: each phase gets exactly ap_target / 3
+• Must respect BOTH constraints: 59.85A phase limit AND 32kW import limit
+• System uses the MORE RESTRICTIVE of the two limits
 ```
 
 ### The Challenge
