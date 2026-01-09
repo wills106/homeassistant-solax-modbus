@@ -23,51 +23,60 @@ Phase Current Visualization (0A ────────────────
 
 SCENARIO 1: Without Imports (Battery Hold) - House Load Only
 ─────────────────────────────────────────────────────────────────
-L1: [2A][==Rivian 16A==]·····················|   18A (42A to limit)
-L2: [====2A====]·····························|   2A  (58A to limit)
-L3: [====2A====]·····························|   2A  (58A to limit)
-    House load: 2A base + Rivian 16A on L1 = 6kW total
+L1: [====4A====][======Rivian 16A======]··········|   20A (40A to limit)
+L2: [====4A====]··································|   4A  (56A to limit)
+L3: [====4A====]··································|   4A  (56A to limit)
+    House load: 4A base per phase + Rivian 16A on L1 = 6.4kW total
     └─ Imbalance: 16A (entirely from single-phase EV charger)
 
 SCENARIO 2: Requesting 30kW Import (43.9A per phase) - UNSAFE!
 ─────────────────────────────────────────────────────────────────
-Target: 30kW ap_target + 6kW house = 36kW total import
+Target: 30kW ap_target + 6.4kW house = 36.4kW total import
 Import per phase: 30,000W / (3 × 228V) = 43.9A per phase
 
-L1: [2A][==16A==][==========43.9A==========]·····X|| 62A ✗ EXCEEDS 59.85A!
-L2: [2A][==========43.9A==========]··············|   46A ✓
-L3: [2A][==========43.9A==========]··············|   46A ✓
+L1: [====4A====][======16A======][==========43.9A=========]XXXX 64A ✗ EXCEEDS!
+L2: [====4A====][==========43.9A==========]········|    48A ✓
+L3: [====4A====][==========43.9A==========]········|    48A ✓
     
-    Analysis:
-    • L1: 18A house + 43.9A import = 61.9A (EXCEEDS 59.85A safe limit)
-    • L2/L3: 2A house + 43.9A import = 45.9A (safe)
-    • Total: 36kW (EXCEEDS 32kW import limit)
-    └─ BLOCKED: Violates BOTH phase limit (L1>59.85A) AND import limit (36kW>32kW)
+    Limit Check 1 - Import Limit:
+    • Total import: 36.4kW
+    • Import limit: 35kW
+    • Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (30kW request allowed by import limit)
+    
+    Limit Check 2 - Phase Limit (MORE RESTRICTIVE):
+    • L1: 20A house + 43.9A import = 63.9A (EXCEEDS 63A fuse, 59.85A safe limit)
+    • Safe ap_target: (59.85A - 20A) × 3 × 228V = 27.2kW ✗ (MORE RESTRICTIVE)
+    
+    └─ BLOCKED: Phase limit (27.2kW) more restrictive than import limit (28.6kW)
 
-SCENARIO 3: Phase-Protected 26kW Import (38A per phase) - SAFE ✓
+SCENARIO 3: Phase-Protected 27.2kW Import (39.8A per phase) - SAFE ✓
 ─────────────────────────────────────────────────────────────────
-Calculated: L1 can accept (59.85A - 18A) = 41.85A more
-Safe ap_target: 41.85A × 3 × 228V = 28.6kW (phase limit)
-Import limit: 32kW - 6kW = 26kW (import limit - more restrictive)
-Result: ap_target = 26kW
+Limit Check 1 - Import Limit:
+  Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (not constraining)
 
-L1: [2A][==16A==][========38A========]···········|   56A ✓ (4A to limit)
-L2: [2A][========38A========]··················· |   40A ✓ (20A to limit) 
-L3: [2A][========38A========]···················||   40A ✓ (20A to limit)
+Limit Check 2 - Phase Limit (CONSTRAINING):
+  L1 can accept: (59.85A - 20A) = 39.85A more
+  Safe ap_target: 39.85A × 3 × 228V = 27.2kW ✗ (MORE RESTRICTIVE)
+
+Result: ap_target = min(30kW, 28.6kW, 27.2kW) = 27.2kW
+
+L1: [====4A====][======16A======][==========39.8A=========]||  59.8A ✓ (0.05A to limit!)
+L2: [====4A====][==========39.8A==========]············|    43.8A ✓ (16A to limit)
+L3: [====4A====][==========39.8A==========]············|    43.8A ✓ (16A to limit)
     
     Analysis:
-    • L1: 18A house + 38A import = 56A (4A below 59.85A safe limit) ✓
-    • L2/L3: 2A house + 38A import = 40A (19.85A below limit) ✓
-    • Total: 26kW + 6kW = 32kW (AT import limit) ✓
-    • Constrained by: Import limit (32kW), not phase limit
-    └─ SUCCESS: Respects both limits, maximizes import capacity
+    • L1: 20A house + 39.8A import = 59.8A (just below 59.85A safe limit) ✓
+    • L2/L3: 4A house + 39.8A import = 43.8A (16A below limit) ✓
+    • Total: 27.2kW + 6.4kW = 33.6kW (within 35kW import limit) ✓
+    • Constrained by: PHASE LIMIT (27.2kW), not import limit (28.6kW)
+    └─ SUCCESS: Phase protection prevents L1 from exceeding fuse limit
 
 Key Points:
 • House load imbalance (16A) is FIXED regardless of import level
 • Inverters balance imports: each phase gets exactly ap_target / 3
-• Must respect BOTH constraints: 59.85A phase limit AND 32kW import limit
+• Must respect BOTH constraints: 95% fuse limit (59.85A) AND import limit (35kW)
 • System uses the MORE RESTRICTIVE of the two limits
-• In this case: Import limit (32kW) is more restrictive than phase limit (28.6kW)
+• In this scenario: PHASE LIMIT (27.2kW) is more restrictive than import limit (28.6kW)
 ```
 
 ### The Challenge
