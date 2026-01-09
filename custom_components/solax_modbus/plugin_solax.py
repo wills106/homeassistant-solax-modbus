@@ -335,7 +335,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
             f"worst=L{worst_phase_idx+1}"
         )
         
-        # Calculate safe ap_target to keep worst phase below 59.85A
+        # Calculate safe ap_target for IMPORTS to keep worst phase below 59.85A
         # worst_phase: house_current + (ap_target_current / 3) ≤ 59.85A
         # Solve: ap_target ≤ (59.85A - house_current) × 3 × avg_voltage
         max_phase_current_limit = main_breaker_current_limit * 0.95  # 59.85A
@@ -346,16 +346,35 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
             safe_ap_target_from_phase = remaining_current_A * 3 * avg_voltage
             
             _LOGGER.debug(
-                f"[REMOTE_CONTROL] Phase protection: L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
+                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
                 f"limit={max_phase_current_limit:.2f}A remaining={remaining_current_A:.2f}A "
                 f"safe_ap_target={safe_ap_target_from_phase:.1f}W"
             )
         else:
             safe_ap_target_from_phase = 0
             _LOGGER.warning(
-                f"[REMOTE_CONTROL] Phase protection: L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
+                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
                 f"at or above limit {max_phase_current_limit:.2f}A - blocking imports"
             )
+        
+        # Calculate safe ap_target for EXPORTS to keep best phase below 59.85A
+        # For exports, phase with LOWEST house load exports MOST
+        # best_phase (min house): (export_current / 3) - house_current ≤ 59.85A
+        # Solve: export_current ≤ (59.85A + house_current) × 3
+        # ap_target = -export_current, so: ap_target ≥ -(59.85A + min_house_current) × 3 × avg_voltage
+        min_phase_house_current = min(house_currents)
+        best_phase_idx = house_currents.index(min_phase_house_current)
+        
+        # Maximum export current that keeps best phase below limit
+        max_export_current_per_phase = max_phase_current_limit + min_phase_house_current
+        safe_export_total_current = max_export_current_per_phase * 3
+        safe_ap_target_export_from_phase = -(safe_export_total_current * avg_voltage)
+        
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Phase protection (export): L{best_phase_idx+1} house={min_phase_house_current:.2f}A "
+            f"(lowest) limit={max_phase_current_limit:.2f}A "
+            f"safe_ap_target={safe_ap_target_export_from_phase:.1f}W (negative)"
+        )
     
     # Apply bounds checking based on ap_target sign
     old_ap_target = ap_target
@@ -377,8 +396,16 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         # Exporting (negative = export).
         # Inverter output cannot be more than the export limit plus any used by the house load
         export_bound = -(export_limit + house_load)
+        
+        # Apply phase protection limit if available
+        if safe_ap_target_export_from_phase is not None:
+            export_bound = max(export_bound, safe_ap_target_export_from_phase)
+        
         ap_target = max(ap_target, export_bound)
-        _LOGGER.debug(f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W export_limit={export_limit}W house_load={house_load}W")
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W "
+            f"export_limit={export_limit}W house_load={house_load}W"
+        )
     # If ap_target = 0, no bounds checking needed
     
     # Debug logging: Bounds checking
