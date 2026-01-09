@@ -1,5 +1,9 @@
 # SolaX Phase Envelope Protection
 
+**Author:** fxstein  
+**Date:** January 9, 2026  
+**GitHub:** https://github.com/fxstein/homeassistant-solax-modbus
+
 **Feature Status:** ✅ Implemented and Tested  
 **Integration Version:** 2024.11.0+  
 **Applies To:** X3 (Three-phase) inverters with remote control
