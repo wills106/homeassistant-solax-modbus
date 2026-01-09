@@ -15,10 +15,10 @@ Phase envelope protection prevents individual phases from exceeding the fuse lim
 When you have single-phase loads (e.g., a 16A EV charger on L1), the phases become imbalanced:
 
 ```
-Phase Current Visualization (0A ──────────────────────────> 63A)
+Phase Current Visualization (0A ─────────────────────>| 63A)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                            59.85A|   63A
-                                        (95% Safe)|   (Fuse)
+                                           59.85A |   | 63A
+                                       (95% Safe) |   | (Fuse)
                                                   ↓   ↓
 
 SCENARIO 1: Without Imports (Battery Hold) - House Load Only
@@ -34,25 +34,27 @@ SCENARIO 2: Requesting 30kW Import (43.9A per phase) - UNSAFE!
 Target: 30kW ap_target + 6.4kW house = 36.4kW total import
 Import per phase: 30,000W / (3 × 228V) = 43.9A per phase
 
-L1: [====4A====][======16A======][==========43.9A=========]XXXX 64A ✗ EXCEEDS!
-L2: [====4A====][==========43.9A==========]········|    48A ✓
-L3: [====4A====][==========43.9A==========]········|    48A ✓
+L1: [====4A====][======16A======][========43.9A====XXXXX] 64A ✗ EXCEEDS!
+L2: [====4A====][==========43.9A==========]········|   48A ✓
+L3: [====4A====][==========43.9A==========]········|   48A ✓
     
     Limit Check 1 - Import Limit:
     • Total import: 36.4kW
     • Import limit: 35kW
-    • Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (30kW request allowed by import limit)
+    • Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (30kW request reduced by import limit)
     
     Limit Check 2 - Phase Limit (MORE RESTRICTIVE):
     • L1: 20A house + 43.9A import = 63.9A (EXCEEDS 63A fuse, 59.85A safe limit)
     • Safe ap_target: (59.85A - 20A) × 3 × 228V = 27.2kW ✗ (MORE RESTRICTIVE)
     
-    └─ BLOCKED: Phase limit (27.2kW) more restrictive than import limit (28.6kW)
+    └─ REDUCED: Phase limit (27.2kW) would be more restrictive than import limit (28.6kW)
 
-SCENARIO 3: Phase-Protected 27.2kW Import (39.8A per phase) - SAFE ✓
+SCENARIO 3: Requesting 30kW with Phase-Protected 27.2kW Import (39.8A per phase) - SAFE ✓
 ─────────────────────────────────────────────────────────────────
+Same as SCENARIO 2 but now with phase protection active:
+
 Limit Check 1 - Import Limit:
-  Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (not constraining)
+  Safe ap_target: 35kW - 6.4kW = 28.6kW ✓ (RESTRICTIVE)
 
 Limit Check 2 - Phase Limit (CONSTRAINING):
   L1 can accept: (59.85A - 20A) = 39.85A more
@@ -60,9 +62,9 @@ Limit Check 2 - Phase Limit (CONSTRAINING):
 
 Result: ap_target = min(30kW, 28.6kW, 27.2kW) = 27.2kW
 
-L1: [====4A====][======16A======][==========39.8A=========]||  59.8A ✓ (0.05A to limit!)
-L2: [====4A====][==========39.8A==========]············|    43.8A ✓ (16A to limit)
-L3: [====4A====][==========39.8A==========]············|    43.8A ✓ (16A to limit)
+L1: [====4A====][======16A======][========39.8A=======]|  59.8A ✓ (0.05A to limit!)
+L2: [====4A====][========39.8A========]················|  43.8A ✓ (16A to limit)
+L3: [====4A====][========39.8A========]················|  43.8A ✓ (16A to limit)
     
     Analysis:
     • L1: 20A house + 39.8A import = 59.8A (just below 59.85A safe limit) ✓
@@ -128,9 +130,9 @@ Without phase protection:
 ### Required Sensors
 
 Phase protection requires these sensors (available on X3 inverters):
-- `measured_power_l1/l2/l3` - Phase-specific grid power
-- `grid_voltage_l1/l2/l3` - Phase-specific voltages
-- `main_breaker_current_limit` - Fuse size setting
+- `measured_power_l1/l2/l3` - Phase-specific grid power (W)
+- `grid_voltage_l1/l2/l3` - Phase-specific voltages (V)
+- `main_breaker_current_limit` - Fuse size setting (A, e.g., 63A)
 
 ### Automatic Activation
 
