@@ -792,7 +792,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        # allowedtypes=GEN1,  # Removed: register works on all charger types (tested on GEN2-detected C311/C322)
+        allowedtypes=(GEN1 | GEN2),  # Available on all charger types (tested on both GEN1 and GEN2)
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current",
@@ -1071,15 +1071,49 @@ class solax_ev_charger_plugin(plugin_base):
             self.hardware_version = "Gen1"
             _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11 | GEN2  # 11kW EV Three Phase - GEN1 hardware with GEN2 firmware
+            # Default to GEN1 for backward compatibility
+            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
             self.inverter_model = "X3-EVC-11kW"
-            self.hardware_version = "Gen1 (GEN2 FW)"
-            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | GEN2 (11kW EV GEN1 hardware with GEN2 firmware), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+            self.hardware_version = "Gen1"
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            try:
+                fw_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x25, count=1)
+                if fw_data and len(fw_data) > 0:
+                    fw_raw = fw_data[0]
+                    fw_version = fw_raw / 100.0  # Decimal hundredths (e.g., 707 → 7.07)
+                    if fw_version >= 7.0:
+                        # Upgrade to GEN2 - has GEN2 firmware
+                        invertertype = X3 | POW11 | GEN2
+                        self.hardware_version = "Gen1 (GEN2 FW)"
+                        _LOGGER.info(f"{hub.name}: C311 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            except Exception as e:
+                # Keep as GEN1 on detection failure (backward compatible)
+                _LOGGER.debug(f"{hub.name}: C311 firmware detection failed, keeping as GEN1: {e}")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22 | GEN2  # 22kW EV Three Phase - GEN1 hardware with GEN2 firmware
+            # Default to GEN1 for backward compatibility
+            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
             self.inverter_model = "X3-EVC-22kW"
-            self.hardware_version = "Gen1 (GEN2 FW)"
-            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | GEN2 (22kW EV GEN1 hardware with GEN2 firmware), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+            self.hardware_version = "Gen1"
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            try:
+                fw_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x25, count=1)
+                if fw_data and len(fw_data) > 0:
+                    fw_raw = fw_data[0]
+                    fw_version = fw_raw / 100.0  # Decimal hundredths (e.g., 707 → 7.07)
+                    if fw_version >= 7.0:
+                        # Upgrade to GEN2 - has GEN2 firmware
+                        invertertype = X3 | POW22 | GEN2
+                        self.hardware_version = "Gen1 (GEN2 FW)"
+                        _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            except Exception as e:
+                # Keep as GEN1 on detection failure (backward compatible)
+                _LOGGER.debug(f"{hub.name}: C322 firmware detection failed, keeping as GEN1: {e}")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
             self.inverter_model = "X1-HAC-7kW"
