@@ -16,6 +16,45 @@ def _debug_charger_setting(hub_name, setting_name, value, register=None, mode=No
     reg_info = f" at register 0x{register:x}" if register else ""
     _LOGGER.debug(f"{hub_name}: EV Charger {setting_name} set to {value}{reg_info}{mode_info}")
 
+# ============================================================================
+# Plugin-Level Register Write Debug Logging
+# ============================================================================
+
+def log_register_write(hub, address, unit, payload, entity_key=None, result=None, error=None):
+    """
+    Debug logging for register write operations.
+    
+    Plugin-level function called from __init__.py to log register writes
+    without polluting generic framework files.
+    
+    The plugin decides which registers to log based on its own logic.
+    
+    Args:
+        hub: Hub instance
+        address: Register address
+        unit: Modbus unit
+        payload: Value to write
+        entity_key: Optional entity key from number.py
+        result: Optional result from successful write
+        error: Optional error tuple (error_type, error_msg) from failed write
+    """
+    # Plugin decides which registers to log (in this case: charge current registers)
+    if address not in (0x624, 0x628, 0x668):
+        return
+    
+    entity_info = f" (entity: {entity_key})" if entity_key else ""
+    
+    if error:
+        _LOGGER.error(
+            f"[CHARGE CURRENT] {hub.name}: Write failed to 0x{address:x}{entity_info} - "
+            f"unit={unit}, payload={payload}, error={error[0]}: {error[1]}"
+        )
+    else:
+        _LOGGER.debug(
+            f"[CHARGE CURRENT] {hub.name}: Write to 0x{address:x}{entity_info} - "
+            f"unit={unit}, payload={payload} (0x{payload:x}), result={result}"
+        )
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
