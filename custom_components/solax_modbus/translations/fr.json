@@ -2,21 +2,20 @@
   "config": {
     "step": {
       "user": {
-        "title": "Définir la connexion Modbus",
+        "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
-          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (les valeurs supérieures sont ignorées)",
+          "inverter_power_kw": "Puissance max onduleur KW (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
-          "scan_interval": "Intervalle d'interrogation par défaut (s)",
-          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
-          "scan_interval_fast": "Intervalle d'interrogation rapide (s)",
-          "time_out": "Délai d'attente des requêtes (s)",
-          "inverter_name_suffix": "Suffixe du nom de l'onduleur"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {
@@ -29,28 +28,16 @@
       "tcp": {
         "title": "Paramètres TCP/IP",
         "data": {
-          "host": "Adresse de l'onduleur ou de l'interface Modbus",
+          "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
-        }
-      },
-      "core": {
-        "title": "Sélection du hub Modbus principal",
-        "data": {
-          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
-        }
-      },
-      "battery": {
-        "title": "Lecture des modules de batterie",
-        "data": {
-          "read_battery": "Activer la lecture"
         }
       }
     },
     "error": {
       "already_configured": "Le périphérique est déjà configuré",
       "name_already_used": "Le nom est déjà utilisé ou est invalide",
-      "invalid_host": "Adresse d'hôte invalide"
+      "invalid_host": "L'adresse IP de l'hôte est invalide"
     },
     "abort": {
       "already_configured": "Le périphérique est déjà configuré"
@@ -59,21 +46,20 @@
   "options": {
     "step": {
       "init": {
-        "title": "Définir la connexion Modbus",
+        "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
           "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
-          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (les valeurs supérieures sont ignorées)",
+          "inverter_power_kw": "Puissance max onduleur (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "plugin": "Selectionnez le type d'onduleur",
-          "scan_interval": "Intervalle d'interrogation par défaut (s)",
-          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
-          "scan_interval_fast": "Intervalle d'interrogation rapide (s)",
-          "time_out": "Délai d'attente des requêtes (s)",
-          "inverter_name_suffix": "Suffixe du nom de l'onduleur"
+          "scan_interval": "The polling interval of the modbus registers in seconds",
+          "scan_interval_medium": "Medium polling interval",
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Modbus délai d'attente en secondes"
         }
       },
       "serial": {
@@ -86,28 +72,15 @@
       "tcp": {
         "title": "Paramètres TCP/IP",
         "data": {
-          "host": "Adresse de l'onduleur ou de l'interface Modbus",
-          "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "La variante Modbus TCP"
-        }
-      },
-      "core": {
-        "title": "Sélection du hub Modbus principal",
-        "data": {
-          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
-        }
-      },
-      "battery": {
-        "title": "Lecture des modules de batterie",
-        "data": {
-          "read_battery": "Activer la lecture"
+          "host": "The IP-address of your Inverter or Modbus Interface",
+          "port": "The TCP port on which to connect to the inverter"
         }
       }
     },
     "error": {
       "already_configured": "Le périphérique est déjà configuré",
       "name_already_used": "Le nom est déjà utilisé ou est invalide",
-      "invalid_host": "Adresse d'hôte invalide"
+      "invalid_host": "L'adresse IP de l'hôte est invalide"
     },
     "abort": {
       "already_configured": "Le périphérique est déjà configuré"
