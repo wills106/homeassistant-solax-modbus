@@ -5,7 +5,6 @@
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
           "inverter_power_kw": "Puissance max onduleur KW (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
@@ -22,7 +21,9 @@
         "title": "Paramètres de l'interface Série",
         "data": {
           "read_serial_port": "Nom du port série",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Adresse Modbus de l’appareil (adresse Unit/Slave de l’onduleur)",
+          "dedicated_client": "Créer une nouvelle connexion Modbus (ne pas partager avec d'autres hubs)"
         }
       },
       "tcp": {
@@ -30,7 +31,9 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant"
+          "tcp_type": "The Modbus TCP variant",
+          "read_modbus_addr": "Adresse Modbus de l’appareil (adresse Unit/Slave de l’onduleur)",
+          "dedicated_client": "Créer une nouvelle connexion Modbus (ne pas partager avec d'autres hubs)"
         }
       }
     },
@@ -49,7 +52,6 @@
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
           "interface": "Interface",
           "inverter_power_kw": "Puissance max onduleur (ignore les valeurs plus grande que ça)",
           "read_eps": "Emergency Power Option (EPS)",
@@ -66,14 +68,19 @@
         "title": "Paramètres de l'interface Série",
         "data": {
           "read_serial_port": "Nom du port série",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Adresse Modbus de l’appareil (adresse Unit/Slave de l’onduleur)",
+          "dedicated_client": "Créer une nouvelle connexion Modbus (ne pas partager avec d'autres hubs)"
         }
       },
       "tcp": {
         "title": "Paramètres TCP/IP",
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
-          "port": "The TCP port on which to connect to the inverter"
+          "port": "The TCP port on which to connect to the inverter",
+          "tcp_type": "The Modbus TCP variant",
+          "read_modbus_addr": "Adresse Modbus de l’appareil (adresse Unit/Slave de l’onduleur)",
+          "dedicated_client": "Créer une nouvelle connexion Modbus (ne pas partager avec d'autres hubs)"
         }
       }
     },

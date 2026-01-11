@@ -5,7 +5,6 @@
         "title": "Určete vaše připojení přes modbus k měniči",
         "data": {
           "name": "Předpona pro použití senzory měniče",
-          "read_modbus_addr": "Adresa modbus měniče",
           "interface" : "Rozhraní",
           "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
           "read_eps": "Možnost záložního zdroje (EPS)",
@@ -20,7 +19,9 @@
         "title": "Parametry sériového rozhraní",
         "data": {
           "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus adresa zařízení (Unit/Slave adresa měniče)",
+          "dedicated_client": "Vytvořit nové připojení Modbus (nesdílet s ostatními huby)"
         }
       },
       "tcp": {
@@ -28,7 +29,9 @@
         "data": {
           "host": "IP adresa měniče nebo modbus adaptéru",
           "port": "TCP port připojení k měniči",
-          "tcp_type": "Varianta TCP protokolu modbus"
+          "tcp_type": "Varianta TCP protokolu modbus",
+          "read_modbus_addr": "Modbus adresa zařízení (Unit/Slave adresa měniče)",
+          "dedicated_client": "Vytvořit nové připojení Modbus (nesdílet s ostatními huby)"
         }
       }
     },
@@ -48,7 +51,6 @@
         "title": "Určete vaše připojení přes modbus k měniči",
         "data": {
           "name": "Předpona pro použití senzory měniče",
-          "read_modbus_addr": "Adresa modbus měniče",
           "interface" : "Rozhraní",
           "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
           "read_eps": "Možnost záložního zdroje (EPS)",
@@ -63,14 +65,19 @@
         "title": "Parametry sériového rozhraní",
         "data": {
           "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus adresa zařízení (Unit/Slave adresa měniče)",
+          "dedicated_client": "Vytvořit nové připojení Modbus (nesdílet s ostatními huby)"
         }
       },
       "tcp": {
         "title": "Parametry TCP/IP",
         "data": {
           "host": "IP adresa měniče nebo modbus adaptéru",
-          "port": "TCP port připojení k měniči"
+          "port": "TCP port připojení k měniči",
+          "tcp_type": "Varianta TCP protokolu modbus",
+          "read_modbus_addr": "Modbus adresa zařízení (Unit/Slave adresa měniče)",
+          "dedicated_client": "Vytvořit nové připojení Modbus (nesdílet s ostatními huby)"
         }
       }
     },

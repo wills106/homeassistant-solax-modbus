@@ -5,15 +5,12 @@
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
-          "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
           "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The default polling interval of the modbus registers in seconds",
+          "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
           "scan_interval_fast": "Fast polling interval",
           "time_out" : "Timeout in seconds"
@@ -23,7 +20,9 @@
         "title": "Serial Interface Parameters",
         "data": {
           "read_serial_port": "Serial port name",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)",
+          "dedicated_client": "Create new Modbus connection (don’t share with other hubs)"
         }
       },
       "tcp": {
@@ -31,13 +30,16 @@
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
           "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant"
+          "tcp_type": "The Modbus TCP variant",
+          "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)",
+          "dedicated_client": "Create new Modbus connection (don’t share with other hubs)"
         }
       },
-      "battery": {
-        "title": "Read out battery modules",
+      "core": {
+        "title": "Core Modbus hub selection",
         "data": {
-          "read_battery": "Enable readout"
+            "read_core_hub": "The core modbus hub used to connect to the inverter",
+            "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)"
         }
       }
     },
@@ -57,38 +59,41 @@
         "title": "Define your inverter modbus-connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
           "interface" : "Interface",
-          "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
           "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_dcb": "Dry Contact Box (Gen4)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
           "scan_interval": "The polling interval of the modbus registers in seconds",
           "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
-          
+          "scan_interval_fast": "Fast polling interval",
+          "time_out" : "Timeout in seconds"
         }
       },
       "serial": {
         "title": "Serial Interface Parameters",
         "data": {
           "read_serial_port": "Serial port name",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)",
+          "dedicated_client": "Create new Modbus connection (don’t share with other hubs)"
         }
       },
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
           "host": "The IP-address of your Inverter or Modbus Interface",
-          "port": "The TCP port on which to connect to the inverter"
+          "port": "The TCP port on which to connect to the inverter",
+          "tcp_type": "The Modbus TCP variant",
+          "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)",
+          "dedicated_client": "Create new Modbus connection (don’t share with other hubs)"
         }
       },
-      "battery": {
-        "title": "Read out battery modules",
+      "core": {
+        "title": "Core Modbus hub selection",
         "data": {
-          "read_battery": "Enable readout"
+            "read_core_hub": "The core modbus hub used to connect to the inverter",
+            "read_modbus_addr": "Modbus device ID (unit/slave address of the inverter)"
         }
       }
     },
@@ -102,4 +107,3 @@
     }
   }
 }
-

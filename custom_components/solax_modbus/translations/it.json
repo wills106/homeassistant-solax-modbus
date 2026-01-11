@@ -5,7 +5,6 @@
         "title": "Definisci la connessione Modbus del tuo inverter",
         "data": {
           "name": "Prefisso da utilizzare per i sensori dell’inverter",
-          "read_modbus_addr": "Indirizzo Modbus dell’inverter",
           "interface": "Interfaccia",
           "inverter_name_suffix": "Suffisso del nome dell’inverter",
           "read_eps": "Opzione alimentazione d’emergenza (EPS)",
@@ -22,7 +21,9 @@
         "title": "Parametri interfaccia seriale",
         "data": {
           "read_serial_port": "Nome della porta seriale",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Indirizzo Modbus del dispositivo (Unit/Slave dell’inverter)",
+          "dedicated_client": "Crea una nuova connessione Modbus (non condividere con altri hub)"
         }
       },
       "tcp": {
@@ -30,7 +31,9 @@
         "data": {
           "host": "Indirizzo IP dell’inverter o dell’interfaccia Modbus",
           "port": "Porta TCP su cui collegarsi all’inverter",
-          "tcp_type": "Variante Modbus TCP"
+          "tcp_type": "Variante Modbus TCP",
+          "read_modbus_addr": "Indirizzo Modbus del dispositivo (Unit/Slave dell’inverter)",
+          "dedicated_client": "Crea una nuova connessione Modbus (non condividere con altri hub)"
         }
       },
       "battery": {
@@ -56,7 +59,6 @@
         "title": "Definisci la connessione Modbus del tuo inverter",
         "data": {
           "name": "Prefisso da utilizzare per i sensori dell’inverter",
-          "read_modbus_addr": "Indirizzo Modbus dell’inverter",
           "interface": "Interfaccia",
           "inverter_name_suffix": "Suffisso del nome dell’inverter",
           "read_eps": "Opzione alimentazione d’emergenza (EPS)",
@@ -72,14 +74,19 @@
         "title": "Parametri interfaccia seriale",
         "data": {
           "read_serial_port": "Nome della porta seriale",
-          "baudrate": "Baudrate"
+          "baudrate": "Baudrate",
+          "read_modbus_addr": "Indirizzo Modbus del dispositivo (Unit/Slave dell’inverter)",
+          "dedicated_client": "Crea una nuova connessione Modbus (non condividere con altri hub)"
         }
       },
       "tcp": {
         "title": "Parametri TCP/IP",
         "data": {
           "host": "Indirizzo IP dell’inverter o dell’interfaccia Modbus",
-          "port": "Porta TCP su cui collegarsi all’inverter"
+          "port": "Porta TCP su cui collegarsi all’inverter",
+          "tcp_type": "Variante Modbus TCP",
+          "read_modbus_addr": "Indirizzo Modbus del dispositivo (Unit/Slave dell’inverter)",
+          "dedicated_client": "Crea una nuova connessione Modbus (non condividere con altri hub)"
         }
       },
       "battery": {
