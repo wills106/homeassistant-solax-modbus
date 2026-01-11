@@ -370,10 +370,12 @@ Set Charger Use Mode = "Stop"
 
 ## Related Documentation
 
-- [EV Charger Hybrid GEN Detection](../../../docs/solax/EV_CHARGER_HYBRID_GEN_DETECTION.md) - Detailed design document
-- [EV Charger Datahub OCPP Mode](../../../docs/solax/EV_CHARGER_DATAHUB_OCPP_MODE.md) - Complete OCPP mode reference
-- [EV Charger Control Reference](../../../docs/solax/EV_CHARGER_CONTROL_REFERENCE.md) - Register reference guide
-- [Start Charge Mode Behavior](../../../docs/solax/EV_CHARGER_START_CHARGE_MODE.md) - Charge mode documentation
+**Note:** The following documentation files are located in the main homeassistant repository and are not part of this integration's documentation:
+
+- EV Charger Hybrid GEN Detection - Detailed design document (see main repo docs/solax/EV_CHARGER_HYBRID_GEN_DETECTION.md)
+- EV Charger Datahub OCPP Mode - Complete OCPP mode reference (see main repo docs/solax/EV_CHARGER_DATAHUB_OCPP_MODE.md)
+- EV Charger Control Reference - Register reference guide (see main repo docs/solax/EV_CHARGER_CONTROL_REFERENCE.md)
+- Start Charge Mode Behavior - Charge mode documentation (see main repo docs/solax/EV_CHARGER_START_CHARGE_MODE.md)
 
 ## Summary
 
