@@ -117,8 +117,8 @@ class SolaXModbusNumber(NumberEntity):
         self._state = number_info.state  # not used AFAIK
         self.entity_description = number_info
         self._write_method = number_info.write_method
-        # Force box mode for address entities
-        if self._key in ["ev_charger_address", "adapt_box_g2_address"]:
+        if number_info.display_as_box: 
+            # Force box mode for specified entities
             self._attr_mode = NumberMode.BOX
 
     async def async_added_to_hass(self) -> None:

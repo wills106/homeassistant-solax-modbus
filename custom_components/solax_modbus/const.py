@@ -279,9 +279,10 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
     unit: int = None  # optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
     prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
-    # update only when read value changes
-    sensor_key: str = None  # only specify this if corresponding sensor has a different key name
-    depends_on: list = None  # list of modbus register keys that must be read
+                                  # update only when read value changes
+    sensor_key: str = None # only specify this if corresponding sensor has a different key name
+    depends_on: list = None # list of modbus register keys that must be read
+    display_as_box: bool = False # if true, displays the entity as a box rather than a slider.
     suggested_display_precision: Optional[int] = None
 
 
@@ -365,6 +366,13 @@ def value_function_disabled_enabled(initval, descr, datadict):
         1: "Enabled",
     }
     return scale.get(initval, str(initval) + " Unknown Status")
+
+
+def value_function_gain_offset(initval, descr, datadict):
+    # Simple offset (unit) and gain (%) calibration of the measured power
+    offset = datadict.get(descr.key + "_offset", 0)
+    gain = datadict.get(descr.key + "_gain", 100)
+    return (initval + offset) * (gain / 100.0)
 
 
 def value_function_grid_import(initval, descr, datadict):
@@ -504,6 +512,13 @@ def value_function_firmware(initval, descr, datadict):
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
+
+def value_function_firmware_decimal_hundredths(initval, descr, datadict):
+    # Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11).
+    try:
+        return f"{initval / 100:.2f}"
+    except Exception:
+        return initval
 
 
 def value_function_2byte_timestamp(initval, descr, datadict):
