@@ -78,6 +78,35 @@ async def async_read_serialnr(hub, address):
     return res
 
 
+async def async_read_firmware(hub, address=0x25):
+    """Read firmware version from input register.
+    
+    Args:
+        hub: The modbus hub instance
+        address: Register address (default 0x25)
+    
+    Returns:
+        float: Firmware version (e.g., 7.07) or None on failure
+    """
+    _LOGGER.debug(f"{hub.name}: Reading firmware version from address 0x{address:x}")
+    res = None
+    try:
+        _LOGGER.debug(f"{hub.name}: Attempting to read input registers at 0x{address:x}, count=1, unit={hub._modbus_addr}")
+        fw_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not fw_data.isError():
+            fw_raw = fw_data.registers[0]
+            res = fw_raw / 100.0  # Decimal hundredths (e.g., 707 → 7.07)
+            _LOGGER.debug(f"{hub.name}: Successfully read firmware: raw={fw_raw}, version={res:.2f}")
+        else:
+            _LOGGER.debug(f"{hub.name}: Register read returned error: {fw_data}")
+    except Exception as ex:
+        _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
+        _LOGGER.debug(f"{hub.name}: Exception type: {type(ex).__name__}, message: {ex}")
+    if not res:
+        _LOGGER.debug(f"{hub.name}: reading firmware from address 0x{address:x} failed")
+    return res
+
+
 # =================================================================================================
 
 
@@ -753,7 +782,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=GEN1,
+        allowedtypes=(GEN1 | GEN2),  # Works on all charger types (GEN1 and GEN2)
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current",
@@ -1032,15 +1061,39 @@ class solax_ev_charger_plugin(plugin_base):
             self.hardware_version = "Gen1"
             _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
+            # Default to GEN1 for backward compatibility
+            _LOGGER.debug(f"{hub.name}: C311 series number detected: {seriesnumber}")
+            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
             self.inverter_model = "X3-EVC-11kW"
+            _LOGGER.debug(f"{hub.name}: C311 model set to: {self.inverter_model}")
             self.hardware_version = "Gen1"
-            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | GEN1 (11kW EV Three Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            fw_version = await async_read_firmware(hub, 0x25)
+            if fw_version is not None and fw_version >= 7.0:
+                # Upgrade to GEN2 - has GEN2 firmware
+                invertertype = X3 | POW11 | GEN2
+                self.hardware_version = "Gen1 (GEN2 FW)"
+                _LOGGER.info(f"{hub.name}: C311 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
+            # Default to GEN1 for backward compatibility
+            _LOGGER.debug(f"{hub.name}: C322 series number detected: {seriesnumber}")
+            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
             self.inverter_model = "X3-EVC-22kW"
+            _LOGGER.debug(f"{hub.name}: C322 model set to: {self.inverter_model}")
             self.hardware_version = "Gen1"
-            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | GEN1 (22kW EV Three Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            fw_version = await async_read_firmware(hub, 0x25)
+            if fw_version is not None and fw_version >= 7.0:
+                # Upgrade to GEN2 - has GEN2 firmware
+                invertertype = X3 | POW22 | GEN2
+                self.hardware_version = "Gen1 (GEN2 FW)"
+                _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
             self.inverter_model = "X1-HAC-7kW"
