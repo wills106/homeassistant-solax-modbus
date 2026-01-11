@@ -1048,8 +1048,14 @@ class SolaXModbusHub:
             await self._check_connection()
             try:
                 resp = await self._track_task(self._client.write_register(address=address, value=regs[0], **kwargs))
+                # Plugin-level logging hook
+                if hasattr(self.plugin, 'log_register_write'):
+                    self.plugin.log_register_write(self, address, unit, payload, result=resp)
             except (ConnectionException, ModbusIOException) as e:
                 original_message = str(e)
+                # Plugin-level logging hook
+                if hasattr(self.plugin, 'log_register_write'):
+                    self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
                 raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
         return resp
 
@@ -1961,8 +1967,14 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
             async with hub._lock:
                 try:
                     resp = await self._track_task(hub._client.write_register(address=address, value=regs[0], **kwargs))
+                    # Plugin-level logging hook
+                    if hasattr(self.plugin, 'log_register_write'):
+                        self.plugin.log_register_write(self, address, unit, payload, result=resp)
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
+                    # Plugin-level logging hook
+                    if hasattr(self.plugin, 'log_register_write'):
+                        self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
                     raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
             return resp
         except (TypeError, AttributeError) as e:

@@ -9,6 +9,13 @@ from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
+# Debug helper for EV charger operations
+def _debug_charger_setting(hub_name, setting_name, value, register=None, mode=None):
+    """Log debug information about charger setting changes"""
+    mode_info = f" (current mode: {mode})" if mode else ""
+    reg_info = f" at register 0x{register:x}" if register else ""
+    _LOGGER.debug(f"{hub_name}: EV Charger {setting_name} set to {value}{reg_info}{mode_info}")
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
@@ -46,20 +53,57 @@ SENSOR_TYPES = []
 
 
 async def async_read_serialnr(hub, address):
+    _LOGGER.debug(f"{hub.name}: Reading serial number from address 0x{address:x}")
     res = None
     try:
+        _LOGGER.debug(f"{hub.name}: Attempting to read holding registers at 0x{address:x}, count=7, unit={hub._modbus_addr}")
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
+            _LOGGER.debug(f"{hub.name}: Successfully read registers: {inverter_data.registers[0:7]}")
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
+            _LOGGER.debug(f"{hub.name}: Decoded serial number: {res}")
+        else:
+            _LOGGER.debug(f"{hub.name}: Register read returned error: {inverter_data}")
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.debug(f"{hub.name}: Exception type: {type(ex).__name__}, message: {ex}")
     if not res:
         _LOGGER.warning(
             f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
         )
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
+    return res
+
+
+async def async_read_firmware(hub, address=0x25):
+    """Read firmware version from input register.
+    
+    Args:
+        hub: The modbus hub instance
+        address: Register address (default 0x25)
+    
+    Returns:
+        float: Firmware version (e.g., 7.07) or None on failure
+    """
+    _LOGGER.debug(f"{hub.name}: Reading firmware version from address 0x{address:x}")
+    res = None
+    try:
+        _LOGGER.debug(f"{hub.name}: Attempting to read input registers at 0x{address:x}, count=1, unit={hub._modbus_addr}")
+        fw_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=1)
+        if not fw_data.isError():
+            fw_raw = fw_data.registers[0]
+            res = fw_raw / 100.0  # Decimal hundredths (e.g., 707 → 7.07)
+            _LOGGER.debug(f"{hub.name}: Successfully read firmware: raw={fw_raw}, version={res:.2f}")
+        else:
+            _LOGGER.debug(f"{hub.name}: Register read returned error: {fw_data}")
+    except Exception as ex:
+        _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
+        _LOGGER.debug(f"{hub.name}: Exception type: {type(ex).__name__}, message: {ex}")
+    if not res:
+        _LOGGER.debug(f"{hub.name}: reading firmware from address 0x{address:x} failed")
     return res
 
 
@@ -122,6 +166,7 @@ NUMBER_TYPES = [
         name="Datahub Charge Current",
         key="datahub_charge_current",
         register=0x624,
+        allowedtypes=GEN1,  # GEN1 only - not available on GEN2
         fmt="f",
         native_min_value=6,
         native_max_value=32,
@@ -446,6 +491,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Datahub Charge Current",
         key="datahub_charge_current",
         register=0x624,
+        allowedtypes=GEN1,  # GEN1 only - not available on GEN2
         scale=0.01,
         rounding=1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -738,7 +784,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
-        allowedtypes=GEN1,
+        allowedtypes=(GEN1 | GEN2),  # Works on all charger types (GEN1 and GEN2)
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current",
@@ -1002,53 +1048,95 @@ class solax_ev_charger_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.debug(f"{hub.name}: Reading serial number to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x600)
+        _LOGGER.debug(f"{hub.name}: Received serial number: {seriesnumber}")
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number for EV Charger")
             seriesnumber = "unknown"
 
         # derive invertertupe from seriesnumber
+        _LOGGER.debug(f"{hub.name}: Determining inverter type from serial number prefix")
         if seriesnumber.startswith("C107"):
             invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase Gen1 (X1-EVC-7kW*)
             self.inverter_model = "X1-EVC-7kW"
             self.hardware_version = "Gen1"
+            _LOGGER.debug(f"{hub.name}: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase Gen1), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C311"):
-            invertertype = X3 | POW11 | GEN1# 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
+            # Default to GEN1 for backward compatibility
+            _LOGGER.debug(f"{hub.name}: C311 series number detected: {seriesnumber}")
+            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
             self.inverter_model = "X3-EVC-11kW"
+            _LOGGER.debug(f"{hub.name}: C311 model set to: {self.inverter_model}")
             self.hardware_version = "Gen1"
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            fw_version = await async_read_firmware(hub, 0x25)
+            if fw_version is not None and fw_version >= 7.0:
+                # Upgrade to GEN2 - has GEN2 firmware
+                invertertype = X3 | POW11 | GEN2
+                self.hardware_version = "Gen1 (GEN2 FW)"
+                _LOGGER.info(f"{hub.name}: C311 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C311 - X3 | POW11 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("C322"):
-            invertertype = X3 | POW22 | GEN1 # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
+            # Default to GEN1 for backward compatibility
+            _LOGGER.debug(f"{hub.name}: C322 series number detected: {seriesnumber}")
+            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
             self.inverter_model = "X3-EVC-22kW"
+            _LOGGER.debug(f"{hub.name}: C322 model set to: {self.inverter_model}")
             self.hardware_version = "Gen1"
+            
+            # Try to detect GEN2 firmware for hybrid hardware
+            fw_version = await async_read_firmware(hub, 0x25)
+            if fw_version is not None and fw_version >= 7.0:
+                # Upgrade to GEN2 - has GEN2 firmware
+                invertertype = X3 | POW22 | GEN2
+                self.hardware_version = "Gen1 (GEN2 FW)"
+                _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
+            
+            _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5020"):
             invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
             self.inverter_model = "X1-HAC-7kW"
             self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5020 - X1 | POW7 | GEN2 (7kW EV Single Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5030"):
             invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
             self.inverter_model = "X3-HAC-11kW"
             self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         elif seriesnumber.startswith("5070"):
             invertertype = X3 | POW22 | GEN2 # 22kW EV Three Phase Gen2 (X3-HAC-22*)
             self.inverter_model = "X3-HAC-22kW"
             self.hardware_version = "Gen2"
+            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW22 | GEN2 (22kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
         # add cases here
         else:
             invertertype = 0
+            self.inverter_model = None
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+            _LOGGER.debug(f"{hub.name}: No match found for serial number prefix, returning type=0")
+        _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
         return invertertype
 
     def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
         # returns true if the entity needs to be created for an inverter
+        _LOGGER.debug(f"matchInverterWithMask: inverterspec=0x{inverterspec:x}, entitymask=0x{entitymask:x}, serialnumber={serialnumber}")
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
+        _LOGGER.debug(f"matchInverterWithMask: powmatch={powmatch}, xmatch={xmatch}, genmatch={genmatch}")
         blacklisted = False
         if blacklist:
+            _LOGGER.debug(f"matchInverterWithMask: Checking blacklist: {blacklist}")
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (xmatch and powmatch and genmatch) and not blacklisted
+                    _LOGGER.debug(f"matchInverterWithMask: Serial number {serialnumber} matches blacklist prefix {start}")
+        result = (xmatch and powmatch and genmatch) and not blacklisted
+        _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
+        return result
 
     def getModel(self, new_data):
         return getattr(self, "inverter_model", None)
