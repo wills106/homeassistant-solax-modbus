@@ -290,20 +290,122 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         f"mode={power_control} ap_target={ap_target}W"
     )
     
+    # Phase envelope protection: Calculate safe ap_target based on phase limits
+    # Get phase-specific data
+    measured_power_l1 = datadict.get("measured_power_l1", None)
+    measured_power_l2 = datadict.get("measured_power_l2", None)
+    measured_power_l3 = datadict.get("measured_power_l3", None)
+    grid_voltage_l1 = datadict.get("grid_voltage_l1", None)
+    grid_voltage_l2 = datadict.get("grid_voltage_l2", None)
+    grid_voltage_l3 = datadict.get("grid_voltage_l3", None)
+    main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
+    
+    safe_ap_target_from_phase = None  # Initialize
+    
+    if (all(p is not None for p in [measured_power_l1, measured_power_l2, measured_power_l3]) and
+        all(v is not None and v > 0 for v in [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3]) and
+        main_breaker_current_limit is not None and main_breaker_current_limit > 0):
+        
+        # Calculate house load per phase using imbalance
+        # Imbalance in measured_power = imbalance in house load (inverters balance)
+        avg_measured_power = (measured_power_l1 + measured_power_l2 + measured_power_l3) / 3
+        house_load_l1_W = (house_load / 3) + (avg_measured_power - measured_power_l1)
+        house_load_l2_W = (house_load / 3) + (avg_measured_power - measured_power_l2)
+        house_load_l3_W = (house_load / 3) + (avg_measured_power - measured_power_l3)
+        
+        # Convert to current
+        house_current_l1 = house_load_l1_W / grid_voltage_l1
+        house_current_l2 = house_load_l2_W / grid_voltage_l2
+        house_current_l3 = house_load_l3_W / grid_voltage_l3
+        
+        # Calculate measured phase currents for comparison
+        measured_current_l1 = abs(measured_power_l1) / grid_voltage_l1
+        measured_current_l2 = abs(measured_power_l2) / grid_voltage_l2
+        measured_current_l3 = abs(measured_power_l3) / grid_voltage_l3
+        
+        # Find worst phase
+        house_currents = [house_current_l1, house_current_l2, house_current_l3]
+        worst_phase_house_current = max(house_currents)
+        worst_phase_idx = house_currents.index(worst_phase_house_current)
+        worst_phase_voltage = [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3][worst_phase_idx]
+        
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Phase currents - Measured: L1={measured_current_l1:.2f}A L2={measured_current_l2:.2f}A L3={measured_current_l3:.2f}A | "
+            f"House: L1={house_current_l1:.2f}A L2={house_current_l2:.2f}A L3={house_current_l3:.2f}A | "
+            f"worst=L{worst_phase_idx+1}"
+        )
+        
+        # Calculate safe ap_target for IMPORTS to keep worst phase below 59.85A
+        # worst_phase: house_current + (ap_target_current / 3) ≤ 59.85A
+        # Solve: ap_target ≤ (59.85A - house_current) × 3 × avg_voltage
+        max_phase_current_limit = main_breaker_current_limit * 0.95  # 59.85A
+        remaining_current_A = max_phase_current_limit - worst_phase_house_current
+        
+        if remaining_current_A > 0:
+            avg_voltage = (grid_voltage_l1 + grid_voltage_l2 + grid_voltage_l3) / 3
+            safe_ap_target_from_phase = remaining_current_A * 3 * avg_voltage
+            
+            _LOGGER.debug(
+                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
+                f"limit={max_phase_current_limit:.2f}A remaining={remaining_current_A:.2f}A "
+                f"safe_ap_target={safe_ap_target_from_phase:.1f}W"
+            )
+        else:
+            safe_ap_target_from_phase = 0
+            _LOGGER.warning(
+                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
+                f"at or above limit {max_phase_current_limit:.2f}A - blocking imports"
+            )
+        
+        # Calculate safe ap_target for EXPORTS to keep best phase below 59.85A
+        # For exports, phase with LOWEST house load exports MOST
+        # best_phase (min house): (export_current / 3) - house_current ≤ 59.85A
+        # Solve: export_current ≤ (59.85A + house_current) × 3
+        # ap_target = -export_current, so: ap_target ≥ -(59.85A + min_house_current) × 3 × avg_voltage
+        min_phase_house_current = min(house_currents)
+        best_phase_idx = house_currents.index(min_phase_house_current)
+        
+        # Maximum export current that keeps best phase below limit
+        max_export_current_per_phase = max_phase_current_limit + min_phase_house_current
+        safe_export_total_current = max_export_current_per_phase * 3
+        safe_ap_target_export_from_phase = -(safe_export_total_current * avg_voltage)
+        
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Phase protection (export): L{best_phase_idx+1} house={min_phase_house_current:.2f}A "
+            f"(lowest) limit={max_phase_current_limit:.2f}A "
+            f"safe_ap_target={safe_ap_target_export_from_phase:.1f}W (negative)"
+        )
+    
     # Apply bounds checking based on ap_target sign
     old_ap_target = ap_target
     if ap_target > 0:
         # Importing (positive = import)
         # Inverter input cannot be more than the import limit less any used by the house load
         import_bound = import_limit - house_load
+        
+        # Apply phase protection limit if available
+        if safe_ap_target_from_phase is not None:
+            import_bound = min(import_bound, safe_ap_target_from_phase)
+        
         ap_target = min(ap_target, import_bound)
-        _LOGGER.debug(f"[REMOTE_CONTROL] Import bounds: ap_target={ap_target}W import_bound={import_bound}W import_limit={import_limit}W house_load={house_load}W")
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Import bounds: ap_target={ap_target}W import_bound={import_bound}W "
+            f"import_limit={import_limit}W house_load={house_load}W total_import={ap_target+house_load}W"
+        )
     elif ap_target < 0:
         # Exporting (negative = export).
         # Inverter output cannot be more than the export limit plus any used by the house load
         export_bound = -(export_limit + house_load)
+        
+        # Apply phase protection limit if available
+        if safe_ap_target_export_from_phase is not None:
+            export_bound = max(export_bound, safe_ap_target_export_from_phase)
+        
         ap_target = max(ap_target, export_bound)
-        _LOGGER.debug(f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W export_limit={export_limit}W house_load={house_load}W")
+        _LOGGER.debug(
+            f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W "
+            f"export_limit={export_limit}W house_load={house_load}W"
+        )
     # If ap_target = 0, no bounds checking needed
     
     # Debug logging: Bounds checking
@@ -9792,6 +9894,28 @@ class solax_plugin(plugin_base):
                         read_scale=new_read_scale,
                     )
 
+        # For parallel mode Master inverters, use inverter_power_kw for remote control limits
+        # This allows proper ±limits for multi-inverter systems (e.g., 3× 15kW = ±45kW)
+        parallel_setting = hub.data.get("parallel_setting", "Free")
+        if parallel_setting == "Master":
+            # Use inverter_power_kw (total system capacity) for remote control limits
+            system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
+            for key in ["remotecontrol_active_power"]:
+                number_entity = hub.numberEntities.get(key)
+                if number_entity:
+                    number_entity._attr_native_min_value = -system_limit_w
+                    number_entity._attr_native_max_value = system_limit_w
+                    number_entity.entity_description = replace(
+                        number_entity.entity_description,
+                        native_min_value=-system_limit_w,
+                        native_max_value=system_limit_w,
+                    )
+                    _LOGGER.info(
+                        f"Parallel Master: Set {key} limits to ±{system_limit_w}W "
+                        f"(inverter_power_kw={hub.inverterPowerKw}kW)"
+                    )
+        
+        # For single inverters or if config_max_export is enabled, use config_max_export
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
@@ -9803,7 +9927,7 @@ class solax_plugin(plugin_base):
                     "generator_max_charge",
                 ]:
                     number_entity = hub.numberEntities.get(key)
-                    if number_entity:
+                    if number_entity and parallel_setting != "Master":  # Don't override parallel Master
                         number_entity._attr_native_max_value = new_max_export
                         # update description also, not sure whether needed or not
                         number_entity.entity_description = replace(
