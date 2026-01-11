@@ -1623,18 +1623,6 @@ SELECT_TYPES = [
         icon = "mdi:dip-switch",
     ),
     GrowattModbusSelectEntityDescription(
-        name = "Priority",
-        key = "priority",
-        register = 1044,
-        option_dict = {
-                0: "Load First",
-                1: "Battery First",
-                2: "Grid First", },
-        allowedtypes = GEN3,
-        entity_category = EntityCategory.CONFIG,
-        icon = "mdi:run",
-    ),
-    GrowattModbusSelectEntityDescription(
         name = "Peak Shaving Active",
         key = "peak_shaving_enable",
         register = 3306,
