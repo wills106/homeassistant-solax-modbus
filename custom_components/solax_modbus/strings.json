@@ -16,7 +16,7 @@
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power in kW (values above are ignored)"
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)"
         }
       },
       "serial": {
@@ -73,7 +73,7 @@
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power in kW (values above are ignored)"
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)"
         }
       },
       "serial": {

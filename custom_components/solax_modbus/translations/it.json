@@ -16,7 +16,7 @@
           "scan_interval_medium": "Intervallo di polling medio (s)",
           "scan_interval_fast": "Intervallo di polling rapido (s)",
           "time_out": "Timeout richiesta (s)",
-          "inverter_power_kw": "Potenza massima dell'inverter in kW (i valori superiori vengono ignorati)"
+          "inverter_power_kw": "Potenza massima dell'inverter in kW (in parallelo: capacità totale del sistema)"
         }
       },
       "serial": {
@@ -73,7 +73,7 @@
           "scan_interval_medium": "Intervallo di polling medio (s)",
           "scan_interval_fast": "Intervallo di polling rapido (s)",
           "time_out": "Timeout richiesta (s)",
-          "inverter_power_kw": "Potenza massima dell'inverter in kW (i valori superiori vengono ignorati)"
+          "inverter_power_kw": "Potenza massima dell'inverter in kW (in parallelo: capacità totale del sistema)"
         }
       },
       "serial": {
