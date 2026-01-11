@@ -1,0 +1,7 @@
+[codespell]
+skip = .git,*.pyc,*.pyo,__pycache__,.venv,build,dist
+ignore-words-list = hass,homeassistant,ser,ba,nd,te,nam
+
+
+
+

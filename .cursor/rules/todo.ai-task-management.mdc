@@ -1,0 +1,7 @@
+---
+description: "Task management rules for todo.ai"
+alwaysApply: true
+---
+It is required to track tasks and subtasks using todo.ai and not via built in TODO tools
+TODO.md and .todo.ai/ must always be committed together
+Always ask for user confirmation before archiving completed tasks using todo.ai

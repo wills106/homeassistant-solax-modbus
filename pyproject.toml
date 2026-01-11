@@ -1,2 +1,25 @@
 [tool.black]
-line-length = 119
+line-length = 180
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+# Initial rollout scope - limit to core files only
+# Expand to other files in future phases
+force-exclude = '''
+/(
+  | custom_components/solax_modbus/(?!(__init__|plugin_solax)).*\.py$
+)/
+'''

@@ -1,0 +1,31 @@
+---
+description: "Bug reporting rules for todo.ai"
+alwaysApply: true
+---
+When todo.ai encounters errors or unexpected behavior, or when the user asks to report a bug:
+
+**CRITICAL REQUIREMENTS:**
+1. **MUST use `todo.ai report-bug` command** - This is the ONLY way to report bugs about todo.ai
+2. **NEVER use `gh issue create` directly** - This bypasses all safeguards and duplicate detection
+3. **NEVER use GitHub API directly** for bug reports - Always go through the bug reporting feature
+4. Always require explicit user confirmation before any GitHub API calls
+5. Show preview of bug report before asking for confirmation
+6. Respect privacy: For private repositories, remove all repo identifiers
+
+**Usage:**
+```bash
+todo.ai report-bug "Error description" "Error context" "command"
+```
+
+**Examples:**
+- ✅ User says "report a bug about X": Use `todo.ai report-bug "X" "context" "command"`
+- ✅ "An error occurred. Would you like me to report this bug?" → If yes, use `todo.ai report-bug`
+- ❌ "Error occurred. Automatically reporting to GitHub..." (NEVER DO THIS)
+- ❌ Using `gh issue create` directly for bug reports (NEVER DO THIS)
+- ❌ Creating GitHub issues manually with `gh CLI` for todo.ai bugs (NEVER DO THIS)
+
+**Why this is required:**
+- The bug reporting feature includes duplicate detection
+- It ensures proper formatting and context collection
+- It maintains user control and privacy protection
+- It follows the designed workflow for bug tracking

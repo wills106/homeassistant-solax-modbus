@@ -1,0 +1,39 @@
+---
+description: "Uninstall rules for todo.ai"
+alwaysApply: true
+---
+When uninstalling todo.ai, or when the user asks to remove or delete todo.ai:
+
+**CRITICAL REQUIREMENTS:**
+1. **MUST use `todo.ai uninstall` command** - This is the ONLY way to uninstall todo.ai
+2. **NEVER delete files directly** - Do NOT use `rm`, `rmdir`, or file deletion commands on:
+   - The todo.ai script file
+   - The .todo.ai/ data directory
+   - The .cursor/rules/todo.ai-*.mdc rule files
+3. **NEVER use file system operations directly** - Always go through the uninstall feature
+4. Always require explicit user confirmation before any uninstall operations
+5. Show preview of what will be removed before asking for confirmation
+6. Control uninstall scope: The uninstall command provides options to control what gets removed
+
+**Usage:**
+```bash
+todo.ai uninstall                  # Remove script only (preserves data and rules)
+todo.ai uninstall --remove-data   # Remove script and data directory
+todo.ai uninstall --remove-rules  # Remove script and Cursor rules
+todo.ai uninstall --all           # Remove everything (script + data + rules)
+```
+
+**Examples:**
+- ✅ User says "uninstall todo.ai": Use `todo.ai uninstall`
+- ✅ User says "remove todo.ai and data": Use `todo.ai uninstall --remove-data`
+- ✅ User says "delete todo.ai completely": Use `todo.ai uninstall --all`
+- ❌ "Removing todo.ai files..." and using `rm todo.ai` (NEVER DO THIS)
+- ❌ Using `rm -rf .todo.ai` directly (NEVER DO THIS)
+- ❌ Deleting .cursor/rules/todo.ai-*.mdc files manually (NEVER DO THIS)
+
+**Why this is required:**
+- The uninstall feature ensures safe removal with proper scope control
+- It prevents accidental deletion of user data
+- It provides clear preview and confirmation before removal
+- It maintains proper cleanup of all todo.ai components
+- It preserves TODO.md files (never removed by uninstall)

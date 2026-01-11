@@ -65,9 +65,7 @@ async def async_read_serialnr(hub, address):
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
@@ -150,9 +148,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     ap_target = min(ap_target, import_limit - houseload_brut)
     # _LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
-        _LOGGER.debug(
-            f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}"
-        )
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}")
     res = [
         (
             "remotecontrol_power_control",
@@ -1124,9 +1120,7 @@ class solax_a1j1_plugin(plugin_base):
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
             if new_read_scale != None:
-                _LOGGER.info(
-                    f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}"
-                )
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -1170,7 +1164,7 @@ plugin_instance = solax_a1j1_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="little",
     auto_block_ignore_readerror=True,
 )

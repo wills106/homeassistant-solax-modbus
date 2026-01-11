@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report a bug or issue with the integration
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below.
+
+  - type: input
+    id: version
+    attributes:
+      label: Integration Version
+      description: What version of the integration are you using?
+      placeholder: "e.g., 2025.10.7"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: inverter-type
+    attributes:
+      label: Inverter Type
+      description: Which inverter brand/model?
+      options:
+        - SolaX
+        - Growatt
+        - Sofar
+        - AlphaESS
+        - Solis
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: inverter-model
+    attributes:
+      label: Inverter Model
+      description: Specific model (e.g., X3 Hybrid G4)
+      placeholder: "X3 Hybrid G4"
+    validations:
+      required: false
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: Clear description of the bug
+      placeholder: What happened? What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to...
+        2. Click on...
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please include relevant log entries
+      placeholder: Paste logs here
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Configuration
+      description: Your integration configuration (remove sensitive data!)
+      placeholder: Paste configuration here
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that might be helpful
+    validations:
+      required: false
+
