@@ -281,6 +281,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
                                   # update only when read value changes
     sensor_key: str = None # only specify this if corresponding sensor has a different key name
     depends_on: list = None # list of modbus register keys that must be read
+    display_as_box: bool = False # if true, displays the entity as a box rather than a slider.
     suggested_display_precision: Optional[int] = None
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
@@ -350,12 +351,21 @@ def value_function_battery_input_solis(initval, descr, datadict):
     else:
         return 0
 
+
 def value_function_disabled_enabled(initval, descr, datadict):
     scale = {
         0: "Disabled",
         1: "Enabled",
     }
     return scale.get(initval, str(initval) + " Unknown Status")
+
+
+def value_function_gain_offset(initval, descr, datadict):
+    # Simple offset (unit) and gain (%) calibration of the measured power
+    offset = datadict.get(descr.key + "_offset", 0)
+    gain = datadict.get(descr.key + "_gain", 100)
+    return (initval + offset) * (gain / 100.0)
+
 
 def value_function_grid_import(initval, descr, datadict):
     val = datadict.get("measured_power", 0)
@@ -494,6 +504,13 @@ def value_function_firmware(initval, descr, datadict):
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
+
+def value_function_firmware_decimal_hundredths(initval, descr, datadict):
+    # Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11).
+    try:
+        return f"{initval / 100:.2f}"
+    except Exception:
+        return initval
 
 
 def value_function_2byte_timestamp(initval, descr, datadict):
