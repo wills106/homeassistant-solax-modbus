@@ -505,6 +505,13 @@ def value_function_firmware(initval, descr, datadict):
     h = initval >> 8
     return f"{h}.{m:02d}"
 
+def value_function_firmware_decimal_hundredths(initval, descr, datadict):
+    # Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11).
+    try:
+        return f"{initval / 100:.2f}"
+    except Exception:
+        return initval
+
 
 def value_function_2byte_timestamp(initval, descr, datadict):
     # Real-time data timestamp
