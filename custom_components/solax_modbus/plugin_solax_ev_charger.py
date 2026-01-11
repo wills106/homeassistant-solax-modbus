@@ -1146,16 +1146,6 @@ class solax_ev_charger_plugin(plugin_base):
     def getHardwareVersion(self, new_data):
         return getattr(self, "hardware_version", None)
 
-    def getModel(self, new_data):
-        return getattr(self, "inverter_model", None)
-
-    def getSoftwareVersion(self, new_data):
-        fw = new_data.get("firmware_version")
-        return f"ARM v{fw}" if fw is not None else None
-
-    def getHardwareVersion(self, new_data):
-        return getattr(self, "hardware_version", None)
-
 
 plugin_instance = solax_ev_charger_plugin(
     plugin_name="SolaX EV Charger",
