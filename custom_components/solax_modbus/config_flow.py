@@ -57,6 +57,7 @@ from .const import (
     CONF_PLUGIN,
     CONF_READ_BATTERY,
     CONF_CORE_HUB,
+    CONF_ENERGY_DASHBOARD_DEVICE,
     DEFAULT_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_READ_PM,
@@ -67,6 +68,10 @@ from .const import (
     CONF_SCAN_INTERVAL_FAST,
     CONF_TIME_OUT,
     DEFAULT_TIME_OUT,
+    ENERGY_DASHBOARD_DEVICE_ENABLED,
+    ENERGY_DASHBOARD_DEVICE_DISABLED,
+    ENERGY_DASHBOARD_DEVICE_MANUAL,
+    DEFAULT_ENERGY_DASHBOARD_DEVICE,
     # PLUGIN_PATH_OLDSTYLE,
 )
 
@@ -116,6 +121,14 @@ INTERFACES = [
     selector.SelectOptionDict(value="core", label="Hass core Hub"),
 ]
 
+ENERGY_DASHBOARD_DEVICE_OPTIONS = [
+    selector.SelectOptionDict(
+        value=ENERGY_DASHBOARD_DEVICE_ENABLED, label="Enabled (Auto-detect)"
+    ),
+    selector.SelectOptionDict(value=ENERGY_DASHBOARD_DEVICE_DISABLED, label="Disabled"),
+    selector.SelectOptionDict(value=ENERGY_DASHBOARD_DEVICE_MANUAL, label="Manual (Force creation)"),
+]
+
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
@@ -156,6 +169,11 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
+        vol.Optional(
+            CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE
+        ): selector.SelectSelector(
+            selector.SelectSelectorConfig(options=ENERGY_DASHBOARD_DEVICE_OPTIONS),
+        ),
     }
 )
 
