@@ -84,6 +84,31 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
+    # Energy Dashboard Virtual Device integration
+    from .energy_dashboard import (
+        create_energy_dashboard_sensors,
+        should_create_energy_dashboard_device,
+        validate_mapping,
+    )
+    
+    if hasattr(plugin.plugin_instance, 'ENERGY_DASHBOARD_MAPPING'):
+        mapping = plugin.plugin_instance.ENERGY_DASHBOARD_MAPPING
+        
+        # Validate mapping structure
+        if not validate_mapping(mapping):
+            _LOGGER.error(f"{hub.name}: Invalid Energy Dashboard mapping, skipping")
+        else:
+            # Check if virtual device should be created
+            config = entry.options
+            if should_create_energy_dashboard_device(hub, config):
+                energy_dashboard_sensors = create_energy_dashboard_sensors(hub, mapping)
+                if energy_dashboard_sensors:
+                    _LOGGER.info(f"{hub.name}: Adding {len(energy_dashboard_sensors)} Energy Dashboard sensors")
+                    entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
+                                 energy_dashboard_sensors, inverter_name_suffix, "", None, readFollowUp)
+            else:
+                _LOGGER.debug(f"{hub.name}: Energy Dashboard device creation skipped (config or parallel mode)")
+
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
     if readBattery and plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
@@ -178,6 +203,11 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if newdescr.read_scale_exceptions:
         for (prefix, value,) in newdescr.read_scale_exceptions:
             if hub.seriesnumber.startswith(prefix):  newdescr = replace(newdescr, read_scale = value)
+    
+    # Check if this sensor has custom Energy Dashboard device info
+    if hasattr(newdescr, '_energy_dashboard_device_info'):
+        device_info = newdescr._energy_dashboard_device_info
+    
     sensor = SolaXModbusSensor(
         hub_name,
         hub,
