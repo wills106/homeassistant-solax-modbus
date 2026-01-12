@@ -9943,6 +9943,31 @@ class solax_plugin(plugin_base):
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
 
+# Energy Dashboard Virtual Device mapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="solax",
+    mappings=[
+        EnergyDashboardSensorMapping(
+            source_key="measured_power",  # Single inverter mode (also system-wide in parallel mode)
+            source_key_pm=None,  # measured_power is already system-wide, no PM version needed
+            target_key="grid_power_energy_dashboard",
+            name="Grid Power (Energy Dashboard)",
+            invert=True,  # Invert: HA expects +ve = import, device has +ve = export
+            icon="mdi:transmission-tower",
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="battery_power_charge",  # Single inverter mode
+            source_key_pm="pm_battery_power_charge",  # Parallel mode Master (total across all inverters)
+            target_key="battery_power_energy_dashboard",
+            name="Battery Power (Energy Dashboard)",
+            invert=True,  # Invert: HA expects +ve = discharge, device has +ve = charge
+            icon="mdi:battery-charging-medium",
+        ),
+    ],
+)
+
 plugin_instance = solax_plugin(
     plugin_name="SolaX",
     plugin_manufacturer="SolaX Power",
@@ -9960,3 +9985,6 @@ plugin_instance = solax_plugin(
     auto_default_scangroup=SCAN_GROUP_FAST,
     auto_slow_scangroup=SCAN_GROUP_MEDIUM,
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING

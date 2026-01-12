@@ -1560,6 +1560,32 @@ class solinteg_plugin(plugin_base):
         return new_data.get("hardware_version", None)
 
 
+# Energy Dashboard Virtual Device mapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="solinteg",
+    mappings=[
+        EnergyDashboardSensorMapping(
+            source_key="measured_power",
+            source_key_pm=None,  # measured_power is system-wide
+            target_key="grid_power_energy_dashboard",
+            name="Grid Power (Energy Dashboard)",
+            invert=True,
+            icon="mdi:transmission-tower",
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="battery_power",  # Note: plugin_solinteg uses battery_power (not battery_power_charge)
+            source_key_pm=None,  # No parallel mode support in this plugin
+            target_key="battery_power_energy_dashboard",
+            name="Battery Power (Energy Dashboard)",
+            invert=True,
+            icon="mdi:battery-charging-medium",
+        ),
+    ],
+    parallel_mode_supported=False,  # Plugin doesn't support parallel mode
+)
+
 plugin_instance = solinteg_plugin(
     plugin_name="solinteg",
     plugin_manufacturer="Gabriel C.",
@@ -1573,4 +1599,7 @@ plugin_instance = solinteg_plugin(
     order32="big",
     # auto_block_ignore_readerror = True
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING
 
