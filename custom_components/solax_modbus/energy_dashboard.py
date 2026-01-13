@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Optional, Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import UnitOfPower
+from homeassistant.const import UnitOfPower, UnitOfEnergy
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -26,6 +26,10 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Central Riemann sum configuration (applies to all Riemann sensors)
+RIEMANN_METHOD = "trapezoidal"  # Integration method: "trapezoidal", "left", "right"
+RIEMANN_ROUND_DIGITS = 3  # Precision for integration result
 
 
 @dataclass
@@ -40,6 +44,8 @@ class EnergyDashboardSensorMapping:
     icon: Optional[str] = None  # Optional icon override
     unit: Optional[str] = None  # Optional unit override
     invert_function: Optional[Callable] = None  # Custom invert function if needed
+    filter_function: Optional[Callable] = None  # Universal filter function (applies to all sensor types)
+    use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
@@ -58,7 +64,7 @@ class EnergyDashboardSensorMapping:
         return self.source_key  # Use regular sensor (single mode or Slave)
 
     def get_value(self, datadict: dict) -> float:
-        """Get value from source sensor, applying invert if needed."""
+        """Get value from source sensor, applying filter, invert, and custom functions."""
         source_key = self.get_source_key(datadict)  # Handles parallel mode
         value = datadict.get(source_key, 0)
 
@@ -66,9 +72,15 @@ class EnergyDashboardSensorMapping:
             _LOGGER.warning(f"Source sensor {source_key} not found, using 0")
             return 0
 
+        # Apply filter function first (universal - applies to all sensor types)
+        if self.filter_function:
+            value = self.filter_function(value)
+
+        # Apply custom invert function if specified
         if self.invert_function:
             return self.invert_function(value, datadict)
 
+        # Apply simple invert if needed
         return -value if self.invert else value
 
 
@@ -114,16 +126,39 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
 
             return value_function
 
+        # Detect sensor type: power vs energy
+        # Energy sensors: use Riemann sum OR target_key contains "energy" but not "power"
+        # Power sensors: target_key contains "power" (even if it also contains "energy")
+        target_key_lower = sensor_mapping.target_key.lower()
+        is_energy_sensor = (
+            sensor_mapping.use_riemann_sum or
+            ("energy" in target_key_lower and "power" not in target_key_lower)
+        )
+
+        # Set attributes based on sensor type
+        if is_energy_sensor:
+            # Energy sensor attributes
+            device_class = SensorDeviceClass.ENERGY
+            state_class = SensorStateClass.TOTAL_INCREASING
+            unit = UnitOfEnergy.KILO_WATT_HOUR
+            default_icon = "mdi:lightning-bolt"
+        else:
+            # Power sensor attributes
+            device_class = SensorDeviceClass.POWER
+            state_class = SensorStateClass.MEASUREMENT
+            unit = UnitOfPower.WATT
+            default_icon = "mdi:flash"
+
         # Create sensor entity description
         sensor_desc = BaseModbusSensorEntityDescription(
             name=sensor_mapping.name,
             key=sensor_mapping.target_key,
-            native_unit_of_measurement=UnitOfPower.WATT,
-            device_class=SensorDeviceClass.POWER,
-            state_class=SensorStateClass.MEASUREMENT,
+            native_unit_of_measurement=unit,
+            device_class=device_class,
+            state_class=state_class,
             value_function=make_value_function(sensor_mapping),
             allowedtypes=hub._invertertype,  # Use same types as source sensor
-            icon=sensor_mapping.icon or "mdi:flash",
+            icon=sensor_mapping.icon or default_icon,
             register=-1,  # No modbus register (computed sensor)
             # Custom device_info will be set during sensor creation
         )
@@ -193,15 +228,58 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
             logger.debug(f"{hub_name}: parallel_setting from hub.data: {parallel_setting}")
     
     # If not in hub.data, try to trigger a read from hub.groups (after rebuild_blocks)
-    # Retry with timeout to wait for inverter to be ready (like we do for serial number polling)
+    # Wait for initial probe to complete before polling to avoid interference
     if parallel_setting is None:
         hub_groups = getattr(hub, 'groups', None)
         if hub_groups:
+            import asyncio
+            
+            # Wait for initial probe to complete (with timeout to avoid blocking forever)
+            probe_ready = getattr(hub, '_probe_ready', None)
+            initial_bisect_task = getattr(hub, '_initial_bisect_task', None)
+            
+            # Check if probe is still running
+            if probe_ready and not probe_ready.is_set():
+                if logger:
+                    logger.debug(f"{hub_name}: Waiting for initial probe to complete before polling parallel_setting")
+                
+                # Wait for the initial bisect task to complete (if it exists)
+                if initial_bisect_task and not initial_bisect_task.done():
+                    if logger:
+                        logger.debug(f"{hub_name}: Initial bisect task still running, waiting for completion")
+                    try:
+                        # Wait up to 15 seconds for bisect task to complete
+                        await asyncio.wait_for(initial_bisect_task, timeout=15.0)
+                        if logger:
+                            logger.debug(f"{hub_name}: Initial bisect task completed")
+                    except asyncio.TimeoutError:
+                        if logger:
+                            logger.warning(f"{hub_name}: Initial bisect task timeout after 15s, may be stuck")
+                    except Exception as e:
+                        if logger:
+                            logger.debug(f"{hub_name}: Error waiting for bisect task: {e}")
+                
+                # Also wait for probe_ready event (in case task completed but event not set yet)
+                if probe_ready and not probe_ready.is_set():
+                    try:
+                        # Wait up to 5 seconds for probe event (shorter since task should be done)
+                        await asyncio.wait_for(probe_ready.wait(), timeout=5.0)
+                        if logger:
+                            logger.debug(f"{hub_name}: Initial probe completed, proceeding with parallel_setting read")
+                    except asyncio.TimeoutError:
+                        if logger:
+                            logger.warning(f"{hub_name}: Initial probe event timeout after 5s, proceeding anyway (probe may be stuck)")
+                    except Exception as e:
+                        if logger:
+                            logger.debug(f"{hub_name}: Error waiting for probe event: {e}, proceeding anyway")
+            
+            # Small delay to let probe settle if it just completed
+            await asyncio.sleep(0.5)
+            
             if logger:
                 logger.debug(f"{hub_name}: parallel_setting not in hub.data, polling inverter registers")
-            import asyncio
-            max_retries = 5
-            retry_delay = 1  # 1000ms between retries
+            max_retries = 3
+            retry_delay = 0.5
             for retry in range(max_retries):
                 try:
                     # Find the first interval group that has device groups and read all device groups in it

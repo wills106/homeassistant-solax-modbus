@@ -9949,21 +9949,30 @@ from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMappi
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
     mappings=[
+        # Grid Power
+        # Note: measured_power is system-wide (from grid meter at connection point)
+        # No PM version needed - meter already measures entire system
         EnergyDashboardSensorMapping(
-            source_key="measured_power",  # Single inverter mode (also system-wide in parallel mode)
-            source_key_pm=None,  # measured_power is already system-wide, no PM version needed
+            source_key="measured_power",
+            source_key_pm=None,  # No PM version - already system-wide
             target_key="grid_power_energy_dashboard",
             name="Grid Power (Energy Dashboard)",
-            invert=True,  # Invert: HA expects +ve = import, device has +ve = export
-            icon="mdi:transmission-tower",
+            invert=True,
         ),
+        # Battery Power
         EnergyDashboardSensorMapping(
-            source_key="battery_power_charge",  # Single inverter mode
-            source_key_pm="pm_battery_power_charge",  # Parallel mode Master (total across all inverters)
+            source_key="battery_power_charge",
+            source_key_pm="pm_battery_power_charge",
             target_key="battery_power_energy_dashboard",
             name="Battery Power (Energy Dashboard)",
-            invert=True,  # Invert: HA expects +ve = discharge, device has +ve = charge
-            icon="mdi:battery-charging-medium",
+            invert=True,
+        ),
+        # Solar Power
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_total",
+            source_key_pm="pm_total_pv_power",
+            target_key="solar_power_energy_dashboard",
+            name="Solar Power (Energy Dashboard)",
         ),
     ],
 )
