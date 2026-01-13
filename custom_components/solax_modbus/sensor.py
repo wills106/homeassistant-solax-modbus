@@ -235,6 +235,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 else:
                     result = await should_create_energy_dashboard_device(hub, config, hass, _LOGGER, initial_groups)
                     if result:
+                        start_time = time.time()
                         energy_dashboard_sensors = create_energy_dashboard_sensors(hub, mapping)
                         if energy_dashboard_sensors:
                             _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
@@ -248,6 +249,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                 _LOGGER.info(f"{hub_name}: Registering {len(energy_dashboard_entities)} Energy Dashboard entities")
                                 entities.extend(energy_dashboard_entities)
                                 async_add_entities(energy_dashboard_entities)
+                            
+                            elapsed_time = time.time() - start_time
+                            _LOGGER.debug(f"{hub_name}: Energy Dashboard device creation completed in {elapsed_time:.3f}s ({len(energy_dashboard_entities)} entities)")
                             
                             # Ensure Energy Dashboard entities are enabled (they might have been disabled previously)
                             entity_registry = er.async_get(hass)
