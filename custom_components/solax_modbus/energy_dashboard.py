@@ -539,6 +539,8 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
     Returns:
         bool: True if virtual device should be created
     """
+    if logger:
+        logger.info("HELLO WORLD should_create_energy_dashboard_device called")
     
     from .const import (
         CONF_ENERGY_DASHBOARD_DEVICE,
