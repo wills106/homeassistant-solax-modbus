@@ -1,8 +1,9 @@
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import callback
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, RestoreEntity
 from homeassistant.helpers import device_registry as dr
 import logging
+import time
 from typing import Optional, Dict, Any, List
 from types  import SimpleNamespace
 from dataclasses import dataclass, replace
@@ -294,12 +295,21 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if hasattr(newdescr, '_energy_dashboard_device_info'):
         device_info = newdescr._energy_dashboard_device_info
     
-    sensor = SolaXModbusSensor(
-        hub_name,
-        hub,
-        device_info,
-        newdescr,
-    )
+    # Check if this is a Riemann sum sensor
+    if getattr(newdescr, '_is_riemann_sum_sensor', False):
+        sensor = RiemannSumEnergySensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
+    else:
+        sensor = SolaXModbusSensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
 
     hub.sensorEntities[newdescr.key] = sensor
     # register dependency chain
@@ -403,6 +413,97 @@ class SolaXModbusSensor(SensorEntity):
         return None
 
 
+class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
+    """Energy sensor that calculates cumulative energy using Riemann sum integration."""
+    
+    def __init__(
+        self,
+        platform_name,
+        hub,
+        device_info,
+        description: BaseModbusSensorEntityDescription,
+    ):
+        """Initialize the Riemann sum energy sensor."""
+        super().__init__(platform_name, hub, device_info, description)
+        
+        # Get Riemann sum mapping from description
+        riemann_mapping = getattr(description, '_riemann_mapping', None)
+        if riemann_mapping is None:
+            _LOGGER.error(f"{platform_name}: Riemann sum sensor {description.key} missing mapping")
+        
+        self._riemann_mapping = riemann_mapping
+        self._filter_function = (riemann_mapping.filter_function if riemann_mapping else None) or (lambda v: v)
+        self._last_power_value = None
+        self._last_update_time = None
+        self._total_energy = 0.0  # kWh
+    
+    async def async_added_to_hass(self):
+        """Register callbacks and restore state."""
+        # Restore previous state if available
+        if (last_state := await self.async_get_last_state()):
+            if last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+                try:
+                    self._total_energy = float(last_state.state)
+                    if last_state.last_updated:
+                        self._last_update_time = last_state.last_updated.timestamp()
+                    _LOGGER.debug(f"{self._platform_name}: Restored Riemann sum state for {self.entity_description.key}: {self._total_energy} kWh")
+                except (ValueError, AttributeError, TypeError) as e:
+                    _LOGGER.debug(f"{self._platform_name}: Could not restore Riemann sum state for {self.entity_description.key}: {e}")
+        
+        # Register with hub
+        await self._hub.async_add_solax_modbus_sensor(self)
+    
+    @callback
+    def modbus_data_updated(self):
+        """Calculate energy when data is updated."""
+        if self._riemann_mapping is None:
+            return
+        
+        # Get current power value from source sensor
+        source_key = self._riemann_mapping.source_key
+        current_power = self._hub.data.get(source_key)
+        
+        if current_power is None:
+            # Source sensor not available, keep current total
+            return
+        
+        # Apply filter function (e.g., only > 0 for import, only < 0 for export)
+        filtered_power = self._filter_function(current_power)
+        
+        # Get current time
+        current_time = time.time()
+        
+        # Calculate energy increment if we have previous value
+        if self._last_power_value is not None and self._last_update_time is not None:
+            # Trapezoidal integration: ΔE = (P_prev + P_curr) / 2 * Δt / 3600
+            # P in W, Δt in seconds, result in kWh
+            delta_time = current_time - self._last_update_time
+            if delta_time > 0:
+                avg_power = (self._last_power_value + filtered_power) / 2.0
+                energy_increment = (avg_power * delta_time) / 3600.0  # Convert to kWh
+                self._total_energy += energy_increment
+        
+        # Update stored values
+        self._last_power_value = filtered_power
+        self._last_update_time = current_time
+        
+        # Round result and store in hub.data (so native_value property works)
+        from .energy_dashboard import RIEMANN_ROUND_DIGITS
+        self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+        self._hub.data[self.entity_description.key] = self._total_energy
+        
+        # Update state
+        self.async_write_ha_state()
+    
+    @property
+    def native_value(self):
+        """Return the calculated energy value."""
+        # Value is stored in hub.data by modbus_data_updated
+        if self.entity_description.key in self._hub.data:
+            return self._hub.data[self.entity_description.key]
+        return self._total_energy
+
+
 
 
 def entityToList(hub, hub_name, entities, groups, computedRegs, device_info: DeviceInfo,
@@ -436,12 +537,21 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
     if hasattr(newdescr, '_energy_dashboard_device_info'):
         device_info = newdescr._energy_dashboard_device_info
     
-    sensor = SolaXModbusSensor(
-        hub_name,
-        hub,
-        device_info,
-        newdescr,
-    )
+    # Check if this is a Riemann sum sensor
+    if getattr(newdescr, '_is_riemann_sum_sensor', False):
+        sensor = RiemannSumEnergySensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
+    else:
+        sensor = SolaXModbusSensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
 
     hub.sensorEntities[newdescr.key] = sensor
     # register dependency chain

@@ -9949,7 +9949,9 @@ from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMappi
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
     mappings=[
-        # Grid Power
+        # ===== POWER SENSORS =====
+        
+        # Grid Power (all generations)
         # Note: measured_power is system-wide (from grid meter at connection point)
         # No PM version needed - meter already measures entire system
         EnergyDashboardSensorMapping(
@@ -9958,21 +9960,98 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_power_energy_dashboard",
             name="Grid Power (Energy Dashboard)",
             invert=True,
+            allowedtypes=ALL_GEN_GROUP,  # All generations
         ),
-        # Battery Power
+        
+        # Solar Power (all generations)
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_total",
+            source_key_pm="pm_total_pv_power",
+            target_key="solar_power_energy_dashboard",
+            name="Solar Power (Energy Dashboard)",
+            allowedtypes=ALL_GEN_GROUP,  # All generations
+        ),
+        
+        # Battery Power (GEN2-5 only, exclude GEN1 and GEN6)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
             source_key_pm="pm_battery_power_charge",
             target_key="battery_power_energy_dashboard",
             name="Battery Power (Energy Dashboard)",
             invert=True,
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,  # Exclude GEN1 and GEN6
         ),
-        # Solar Power
+        
+        # ===== ENERGY SENSORS =====
+        
+        # GEN1: Grid Import Energy (Riemann sum from grid power when > 0)
         EnergyDashboardSensorMapping(
-            source_key="pv_power_total",
-            source_key_pm="pm_total_pv_power",
-            target_key="solar_power_energy_dashboard",
-            name="Solar Power (Energy Dashboard)",
+            source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
+            target_key="grid_energy_import_energy_dashboard",
+            name="Grid Import Energy (Energy Dashboard)",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),  # Only integrate when > 0
+            allowedtypes=GEN,  # GEN1 only
+        ),
+        
+        # GEN2-6: Grid Import Energy (direct register)
+        EnergyDashboardSensorMapping(
+            source_key="grid_import_total",
+            target_key="grid_energy_import_energy_dashboard",
+            name="Grid Import Energy (Energy Dashboard)",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+        ),
+        
+        # GEN1: Grid Export Energy (Riemann sum from grid power when < 0, absolute value)
+        EnergyDashboardSensorMapping(
+            source_key="grid_power_energy_dashboard",
+            target_key="grid_energy_export_energy_dashboard",
+            name="Grid Export Energy (Energy Dashboard)",
+            use_riemann_sum=True,
+            filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
+            allowedtypes=GEN,  # GEN1 only
+        ),
+        
+        # GEN2-6: Grid Export Energy (direct register)
+        EnergyDashboardSensorMapping(
+            source_key="grid_export_total",
+            target_key="grid_energy_export_energy_dashboard",
+            name="Grid Export Energy (Energy Dashboard)",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+        ),
+        
+        # GEN1: Solar Production Energy (Riemann sum from solar power, always positive)
+        EnergyDashboardSensorMapping(
+            source_key="solar_power_energy_dashboard",
+            target_key="solar_energy_production_energy_dashboard",
+            name="Solar Production Energy (Energy Dashboard)",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),  # Always positive
+            allowedtypes=GEN,  # GEN1 only
+        ),
+        
+        # GEN2-6: Solar Production Energy (direct register)
+        EnergyDashboardSensorMapping(
+            source_key="total_solar_energy",
+            target_key="solar_energy_production_energy_dashboard",
+            name="Solar Production Energy (Energy Dashboard)",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+        ),
+        
+        # GEN2-6: Battery Charge Energy (direct register, GEN1 doesn't have battery)
+        EnergyDashboardSensorMapping(
+            source_key="battery_input_energy_total",
+            target_key="battery_energy_charge_energy_dashboard",
+            name="Battery Charge Energy (Energy Dashboard)",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+        ),
+        
+        # GEN2-6: Battery Discharge Energy (direct register, GEN1 doesn't have battery)
+        EnergyDashboardSensorMapping(
+            source_key="battery_output_energy_total",
+            target_key="battery_energy_discharge_energy_dashboard",
+            name="Battery Discharge Energy (Energy Dashboard)",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
         ),
     ],
 )

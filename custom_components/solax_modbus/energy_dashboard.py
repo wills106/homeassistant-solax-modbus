@@ -9,14 +9,16 @@ handle:
 - Sensor generation with correct value inversion
 - Parallel mode support (dynamic source selection)
 - Config flow option handling
+- Riemann sum integration for energy sensors (GEN1 support)
 """
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import Optional, Callable
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import UnitOfPower, UnitOfEnergy
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass, RestoreEntity
+from homeassistant.const import UnitOfPower, UnitOfEnergy, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -94,6 +96,10 @@ class EnergyDashboardMapping:
     parallel_mode_supported: bool = True  # Whether plugin supports parallel mode
 
 
+# RiemannSumEnergySensor class is defined in sensor.py
+# Import it here for reference (but actual class is in sensor.py to avoid circular imports)
+
+
 def create_energy_dashboard_device_info(hub) -> DeviceInfo:
     """Create DeviceInfo for Energy Dashboard virtual device."""
     plugin_name = hub.plugin.plugin_name
@@ -118,6 +124,16 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
 
     for sensor_mapping in mapping.mappings:
+        # Filter by allowedtypes (same pattern as regular sensors)
+        # If allowedtypes is 0, apply to all types (backward compatibility)
+        if sensor_mapping.allowedtypes != 0:
+            if not hub.plugin.matchInverterWithMask(
+                hub._invertertype,
+                sensor_mapping.allowedtypes,
+                hub.seriesnumber,
+                None  # blacklist
+            ):
+                continue  # Skip this mapping for this inverter type
         # Create value function that uses mapping's get_value method
         # This handles parallel mode detection automatically
         def make_value_function(sensor_mapping: EnergyDashboardSensorMapping):
@@ -165,6 +181,14 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
 
         # Store mapping info for sensor creation
         sensor_desc._energy_dashboard_device_info = energy_dashboard_device_info
+        
+        # Mark Riemann sum sensors for special handling
+        if sensor_mapping.use_riemann_sum:
+            sensor_desc._is_riemann_sum_sensor = True
+            sensor_desc._riemann_mapping = sensor_mapping
+        else:
+            sensor_desc._is_riemann_sum_sensor = False
+        
         sensors.append(sensor_desc)
 
     return sensors
