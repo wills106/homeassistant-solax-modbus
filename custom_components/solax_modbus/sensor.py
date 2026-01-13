@@ -225,10 +225,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     device_registry.async_remove_device(energy_dashboard_device.id)
                     # Small delay to ensure device removal is processed
                     await asyncio.sleep(0.1)
-            
-            _LOGGER.info("HELLO WORLD before ENERGY_DASHBOARD_MAPPING check")
-            if hasattr(plugin_obj, 'ENERGY_DASHBOARD_MAPPING'):
-                _LOGGER.info("HELLO WORLD checking ENERGY_DASHBOARD_MAPPING")
+            elif hasattr(plugin_obj, 'ENERGY_DASHBOARD_MAPPING'):
                 mapping = plugin_obj.ENERGY_DASHBOARD_MAPPING
                 _LOGGER.info(f"{hub_name}: Energy Dashboard mapping found for plugin: {mapping.plugin_name}")
                 
