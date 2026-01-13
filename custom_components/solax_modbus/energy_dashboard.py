@@ -706,7 +706,10 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
     # Master, single, or unknown: Create device
     if logger:
         logger.info(f"{hub_name}: Creating Energy Dashboard device (parallel_mode: {parallel_setting or 'unknown'})")
-    return True
+    result = True
+    if logger:
+        logger.info(f"{hub_name}: should_create_energy_dashboard_device() returning {result}")
+    return result
 
 
 def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
