@@ -9954,104 +9954,164 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # Grid Power (all generations)
         # Note: measured_power is system-wide (from grid meter at connection point)
         # No PM version needed - meter already measures entire system
+        # For Master: Creates "All Grid Power" and "{Inverter Name} Grid Power"
+        # For Standalone: Creates only "{Inverter Name} Grid Power"
+        # Note: Grid power is system-wide, so all inverters would have same value (single grid meter)
         EnergyDashboardSensorMapping(
             source_key="measured_power",
-            source_key_pm=None,  # No PM version - already system-wide
-            target_key="grid_power_energy_dashboard",
-            name="Grid Power (Energy Dashboard)",
+            # source_key_pm=None - skip in implementation (default)
+            target_key="grid_power_energy_dashboard",  # Base target key
+            name="Grid Power (Energy Dashboard)",  # Base name
             invert=True,
-            allowedtypes=ALL_GEN_GROUP,  # All generations
+            # Note: Inverter name prefix added dynamically during sensor creation
+            # Note: "All" prefix added automatically for Master during sensor creation
+            allowedtypes=ALL_GEN_GROUP,
         ),
         
         # Solar Power (all generations)
+        # For Master: Creates "All Solar Power" (from pm_total_pv_power) and "Solax 1 Solar Power" (from pv_power_total)
+        # For Standalone: Creates only "{Inverter Name} Solar Power" (from pv_power_total)
+        # For Slaves: Creates "Solax {n} Solar Power" (from pv_power_total in Slave hub)
         EnergyDashboardSensorMapping(
             source_key="pv_power_total",
-            source_key_pm="pm_total_pv_power",
-            target_key="solar_power_energy_dashboard",
-            name="Solar Power (Energy Dashboard)",
-            allowedtypes=ALL_GEN_GROUP,  # All generations
+            source_key_pm="pm_total_pv_power",  # Used for "All" sensor on Master
+            target_key="solar_power_energy_dashboard",  # Base target key
+            name="Solar Power (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+        
+        # Solar Power - Individual PV Variants (PV Power 1-4) - Pattern-based
+        # Note: This mapping will be processed for each inverter (Master + Slaves)
+        # The inverter name comes from the hub context, PV variant from {n} placeholder
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",  # {n} = 1, 2, 3, 4 (PV variant number)
+            target_key="pv_power_{n}_energy_dashboard",  # Will be prefixed with inverter name during creation
+            name="PV Power {n} (Energy Dashboard)",  # Will be prefixed with inverter name during creation
+            # max_variants=4 - skip in implementation if default
+            allowedtypes=ALL_GEN_GROUP,
         ),
         
         # Battery Power (GEN2-5 only, exclude GEN1 and GEN6)
+        # For Master: Creates "All Battery Power" (from pm_battery_power_charge) and "Solax 1 Battery Power" (from battery_power_charge)
+        # For Standalone: Creates only "{Inverter Name} Battery Power" (from battery_power_charge)
+        # For Slaves: Creates "Solax {n} Battery Power" (from battery_power_charge in Slave hub)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
-            source_key_pm="pm_battery_power_charge",
-            target_key="battery_power_energy_dashboard",
-            name="Battery Power (Energy Dashboard)",
+            source_key_pm="pm_battery_power_charge",  # Used for "All" sensor on Master
+            target_key="battery_power_energy_dashboard",  # Base target key
+            name="Battery Power (Energy Dashboard)",  # Base name
             invert=True,
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,  # Exclude GEN1 and GEN6
+            # Note: "All" prefix added automatically for Master during sensor creation
+            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
         ),
         
         # ===== ENERGY SENSORS =====
         
+        # Grid Import Energy (GEN2-6: direct register, GEN1: Riemann sum)
+        # For Master: Creates "All Grid Import Energy" (Master aggregates all) and "Solax 1 Grid Import Energy"
+        # For Standalone: Creates only "{Inverter Name} Grid Import Energy"
+        # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
+        # GEN2-6: Direct register
+        EnergyDashboardSensorMapping(
+            source_key="grid_import_total",
+            target_key="grid_energy_import_energy_dashboard",  # Base target key
+            name="Grid Import Energy (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        
         # GEN1: Grid Import Energy (Riemann sum from grid power when > 0)
         EnergyDashboardSensorMapping(
             source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="grid_energy_import_energy_dashboard",
-            name="Grid Import Energy (Energy Dashboard)",
+            target_key="grid_energy_import_energy_dashboard",  # Base target key
+            name="Grid Import Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),  # Only integrate when > 0
+            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=GEN,  # GEN1 only
         ),
         
-        # GEN2-6: Grid Import Energy (direct register)
+        # Grid Export Energy (GEN2-6: direct register, GEN1: Riemann sum)
+        # For Master: Creates "All Grid Export Energy" (Master aggregates all) and "Solax 1 Grid Export Energy"
+        # For Standalone: Creates only "{Inverter Name} Grid Export Energy"
+        # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
+        # GEN2-6: Direct register
         EnergyDashboardSensorMapping(
-            source_key="grid_import_total",
-            target_key="grid_energy_import_energy_dashboard",
-            name="Grid Import Energy (Energy Dashboard)",
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+            source_key="grid_export_total",
+            target_key="grid_energy_export_energy_dashboard",  # Base target key
+            name="Grid Export Energy (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         
         # GEN1: Grid Export Energy (Riemann sum from grid power when < 0, absolute value)
         EnergyDashboardSensorMapping(
-            source_key="grid_power_energy_dashboard",
-            target_key="grid_energy_export_energy_dashboard",
-            name="Grid Export Energy (Energy Dashboard)",
+            source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
+            target_key="grid_energy_export_energy_dashboard",  # Base target key
+            name="Grid Export Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
+            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=GEN,  # GEN1 only
         ),
         
-        # GEN2-6: Grid Export Energy (direct register)
+        # Battery Charge Energy (GEN2-6 only)
+        # For Master: Creates "All Battery Charge Energy" (sum of all inverters) and "Solax 1 Battery Charge Energy"
+        # For Standalone: Creates only "{Inverter Name} Battery Charge Energy"
+        # For Slaves: Creates "Solax {n} Battery Charge Energy" (from Slave hub)
+        # Note: "All" version needs aggregation logic to sum Master + Slaves
         EnergyDashboardSensorMapping(
-            source_key="grid_export_total",
-            target_key="grid_energy_export_energy_dashboard",
-            name="Grid Export Energy (Energy Dashboard)",
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
+            source_key="battery_input_energy_total",
+            target_key="battery_energy_charge_energy_dashboard",  # Base target key
+            name="Battery Charge Energy (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            # Note: "All" version requires aggregation (sum Master + Slaves)
+            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        
+        # Battery Discharge Energy (GEN2-6 only)
+        # For Master: Creates "All Battery Discharge Energy" (sum of all inverters) and "Solax 1 Battery Discharge Energy"
+        # For Standalone: Creates only "{Inverter Name} Battery Discharge Energy"
+        # For Slaves: Creates "Solax {n} Battery Discharge Energy" (from Slave hub)
+        # Note: "All" version needs aggregation logic to sum Master + Slaves
+        EnergyDashboardSensorMapping(
+            source_key="battery_output_energy_total",
+            target_key="battery_energy_discharge_energy_dashboard",  # Base target key
+            name="Battery Discharge Energy (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            # Note: "All" version requires aggregation (sum Master + Slaves)
+            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        
+        # Solar Production Energy (GEN2-6: direct register, GEN1: Riemann sum)
+        # For Master: Creates "All Solar Production Energy" (sum of all inverters) and "Solax 1 Solar Production Energy"
+        # For Standalone: Creates only "{Inverter Name} Solar Production Energy"
+        # For Slaves: Creates "Solax {n} Solar Production Energy" (from Slave hub)
+        # GEN2-6: Direct register
+        EnergyDashboardSensorMapping(
+            source_key="total_solar_energy",
+            target_key="solar_energy_production_energy_dashboard",  # Base target key
+            name="Solar Production Energy (Energy Dashboard)",  # Base name
+            # Note: "All" prefix added automatically for Master during sensor creation
+            # Note: "All" version requires aggregation (sum Master + Slaves)
+            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         
         # GEN1: Solar Production Energy (Riemann sum from solar power, always positive)
         EnergyDashboardSensorMapping(
-            source_key="solar_power_energy_dashboard",
-            target_key="solar_energy_production_energy_dashboard",
-            name="Solar Production Energy (Energy Dashboard)",
+            source_key="solar_power_energy_dashboard",  # Power sensor to integrate from
+            target_key="solar_energy_production_energy_dashboard",  # Base target key
+            name="Solar Production Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),  # Always positive
+            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=GEN,  # GEN1 only
-        ),
-        
-        # GEN2-6: Solar Production Energy (direct register)
-        EnergyDashboardSensorMapping(
-            source_key="total_solar_energy",
-            target_key="solar_energy_production_energy_dashboard",
-            name="Solar Production Energy (Energy Dashboard)",
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
-        ),
-        
-        # GEN2-6: Battery Charge Energy (direct register, GEN1 doesn't have battery)
-        EnergyDashboardSensorMapping(
-            source_key="battery_input_energy_total",
-            target_key="battery_energy_charge_energy_dashboard",
-            name="Battery Charge Energy (Energy Dashboard)",
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
-        ),
-        
-        # GEN2-6: Battery Discharge Energy (direct register, GEN1 doesn't have battery)
-        EnergyDashboardSensorMapping(
-            source_key="battery_output_energy_total",
-            target_key="battery_energy_discharge_energy_dashboard",
-            name="Battery Discharge Energy (Energy Dashboard)",
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,  # GEN2-6
         ),
     ],
 )

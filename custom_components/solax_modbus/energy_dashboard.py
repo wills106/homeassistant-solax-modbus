@@ -38,9 +38,9 @@ RIEMANN_ROUND_DIGITS = 3  # Precision for integration result
 class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
-    source_key: str  # Original sensor key (e.g., "measured_power")
-    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard")
-    name: str  # Display name (e.g., "Grid Power (Energy Dashboard)")
+    source_key: str  # Original sensor key (e.g., "measured_power") or pattern with {n} placeholder
+    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard") or pattern with {n}
+    name: str  # Display name (e.g., "Grid Power (Energy Dashboard)") or pattern with {n}
     source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
     icon: Optional[str] = None  # Optional icon override
@@ -49,6 +49,7 @@ class EnergyDashboardSensorMapping:
     filter_function: Optional[Callable] = None  # Universal filter function (applies to all sensor types)
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
     allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
+    max_variants: int = 4  # Maximum number of variants for pattern-based mapping (when {n} placeholder is used)
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
@@ -116,6 +117,69 @@ def create_energy_dashboard_device_info(hub) -> DeviceInfo:
     )
 
 
+def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hub, energy_dashboard_device_info) -> list:
+    """Create a single sensor entity from a mapping (helper function)."""
+    sensors = []
+    
+    # Create value function that uses mapping's get_value method
+    # This handles parallel mode detection automatically
+    def make_value_function(sensor_mapping: EnergyDashboardSensorMapping):
+        def value_function(initval, descr, datadict):
+            return sensor_mapping.get_value(datadict)
+
+        return value_function
+
+    # Detect sensor type: power vs energy
+    # Energy sensors: use Riemann sum OR target_key contains "energy" but not "power"
+    # Power sensors: target_key contains "power" (even if it also contains "energy")
+    target_key_lower = sensor_mapping.target_key.lower()
+    is_energy_sensor = (
+        sensor_mapping.use_riemann_sum or
+        ("energy" in target_key_lower and "power" not in target_key_lower)
+    )
+
+    # Set attributes based on sensor type
+    if is_energy_sensor:
+        # Energy sensor attributes
+        device_class = SensorDeviceClass.ENERGY
+        state_class = SensorStateClass.TOTAL_INCREASING
+        unit = UnitOfEnergy.KILO_WATT_HOUR
+        default_icon = "mdi:lightning-bolt"
+    else:
+        # Power sensor attributes
+        device_class = SensorDeviceClass.POWER
+        state_class = SensorStateClass.MEASUREMENT
+        unit = UnitOfPower.WATT
+        default_icon = "mdi:flash"
+
+    # Create sensor entity description
+    sensor_desc = BaseModbusSensorEntityDescription(
+        name=sensor_mapping.name,
+        key=sensor_mapping.target_key,
+        native_unit_of_measurement=unit,
+        device_class=device_class,
+        state_class=state_class,
+        value_function=make_value_function(sensor_mapping),
+        allowedtypes=hub._invertertype,  # Use same types as source sensor
+        icon=sensor_mapping.icon or default_icon,
+        register=-1,  # No modbus register (computed sensor)
+        # Custom device_info will be set during sensor creation
+    )
+
+    # Store mapping info for sensor creation
+    sensor_desc._energy_dashboard_device_info = energy_dashboard_device_info
+    
+    # Mark Riemann sum sensors for special handling
+    if sensor_mapping.use_riemann_sum:
+        sensor_desc._is_riemann_sum_sensor = True
+        sensor_desc._riemann_mapping = sensor_mapping
+    else:
+        sensor_desc._is_riemann_sum_sensor = False
+    
+    sensors.append(sensor_desc)
+    return sensors
+
+
 def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> list:
     """Generate Energy Dashboard sensor entities from mapping."""
     if not mapping.enabled:
@@ -135,62 +199,53 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
                 None  # blacklist
             ):
                 continue  # Skip this mapping for this inverter type
-        # Create value function that uses mapping's get_value method
-        # This handles parallel mode detection automatically
-        def make_value_function(sensor_mapping: EnergyDashboardSensorMapping):
-            def value_function(initval, descr, datadict):
-                return sensor_mapping.get_value(datadict)
-
-            return value_function
-
-        # Detect sensor type: power vs energy
-        # Energy sensors: use Riemann sum OR target_key contains "energy" but not "power"
-        # Power sensors: target_key contains "power" (even if it also contains "energy")
-        target_key_lower = sensor_mapping.target_key.lower()
-        is_energy_sensor = (
-            sensor_mapping.use_riemann_sum or
-            ("energy" in target_key_lower and "power" not in target_key_lower)
-        )
-
-        # Set attributes based on sensor type
-        if is_energy_sensor:
-            # Energy sensor attributes
-            device_class = SensorDeviceClass.ENERGY
-            state_class = SensorStateClass.TOTAL_INCREASING
-            unit = UnitOfEnergy.KILO_WATT_HOUR
-            default_icon = "mdi:lightning-bolt"
-        else:
-            # Power sensor attributes
-            device_class = SensorDeviceClass.POWER
-            state_class = SensorStateClass.MEASUREMENT
-            unit = UnitOfPower.WATT
-            default_icon = "mdi:flash"
-
-        # Create sensor entity description
-        sensor_desc = BaseModbusSensorEntityDescription(
-            name=sensor_mapping.name,
-            key=sensor_mapping.target_key,
-            native_unit_of_measurement=unit,
-            device_class=device_class,
-            state_class=state_class,
-            value_function=make_value_function(sensor_mapping),
-            allowedtypes=hub._invertertype,  # Use same types as source sensor
-            icon=sensor_mapping.icon or default_icon,
-            register=-1,  # No modbus register (computed sensor)
-            # Custom device_info will be set during sensor creation
-        )
-
-        # Store mapping info for sensor creation
-        sensor_desc._energy_dashboard_device_info = energy_dashboard_device_info
         
-        # Mark Riemann sum sensors for special handling
-        if sensor_mapping.use_riemann_sum:
-            sensor_desc._is_riemann_sum_sensor = True
-            sensor_desc._riemann_mapping = sensor_mapping
-        else:
-            sensor_desc._is_riemann_sum_sensor = False
+        # Check if this is a pattern-based mapping (contains {n} placeholder)
+        has_pattern = "{n}" in sensor_mapping.source_key or "{n}" in sensor_mapping.target_key or "{n}" in sensor_mapping.name
         
-        sensors.append(sensor_desc)
+        if has_pattern:
+            # Pattern-based mapping: create sensors for each detected variant
+            # Auto-detect variants from hub data (check for pv_power_1, pv_power_2, etc.)
+            variants = []
+            # Try multiple data sources (hub.data, hub.datadict, or empty dict if not available)
+            hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
+            
+            # Detect variants by checking hub data for source_key pattern
+            # Example: source_key="pv_power_{n}" -> check for pv_power_1, pv_power_2, etc.
+            base_source_key = sensor_mapping.source_key.replace("{n}", "")
+            for n in range(1, sensor_mapping.max_variants + 1):
+                variant_key = f"{base_source_key}{n}"
+                if variant_key in hub_data:
+                    variants.append(n)
+            
+            # Create sensor for each detected variant
+            for variant_num in variants:
+                # Create variant-specific mapping by replacing {n} with variant number
+                variant_source_key = sensor_mapping.source_key.replace("{n}", str(variant_num))
+                variant_target_key = sensor_mapping.target_key.replace("{n}", str(variant_num))
+                variant_name = sensor_mapping.name.replace("{n}", str(variant_num))
+                
+                # Create a copy of the mapping with variant-specific keys
+                variant_mapping = EnergyDashboardSensorMapping(
+                    source_key=variant_source_key,
+                    target_key=variant_target_key,
+                    name=variant_name,
+                    source_key_pm=sensor_mapping.source_key_pm,  # PM variants not supported for pattern-based
+                    invert=sensor_mapping.invert,
+                    icon=sensor_mapping.icon,
+                    unit=sensor_mapping.unit,
+                    invert_function=sensor_mapping.invert_function,
+                    filter_function=sensor_mapping.filter_function,
+                    use_riemann_sum=sensor_mapping.use_riemann_sum,
+                    allowedtypes=sensor_mapping.allowedtypes,
+                    max_variants=sensor_mapping.max_variants,
+                )
+                
+                # Create sensor for this variant
+                sensors.extend(_create_sensor_from_mapping(variant_mapping, hub, energy_dashboard_device_info))
+        else:
+            # Regular mapping: create single sensor
+            sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info))
 
     return sensors
 
