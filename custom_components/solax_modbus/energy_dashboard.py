@@ -540,10 +540,6 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
     Returns:
         bool: True if virtual device should be created
     """
-    hub_name = getattr(hub, 'name', getattr(hub, '_name', 'unknown'))
-    if logger:
-        logger.debug(f"{hub_name}: should_create_energy_dashboard_device() called")
-    
     from .const import (
         CONF_ENERGY_DASHBOARD_DEVICE,
         DEFAULT_ENERGY_DASHBOARD_DEVICE,
