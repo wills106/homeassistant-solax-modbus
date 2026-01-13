@@ -261,6 +261,8 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
     - Slave hub offline: Treats missing values as 0, logs debug message
     - Missing keys: Treats as 0, continues with other Slaves
     """
+    master_name = getattr(master_hub, '_name', 'Unknown')
+    
     def value_function(initval, descr, datadict):
         # Get Master value (individual inverter value)
         master_data = getattr(master_hub, 'data', None) or getattr(master_hub, 'datadict', datadict)
@@ -268,7 +270,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
             master_value = sensor_mapping.get_value(master_data)
             total = master_value if master_value is not None else 0
         except Exception as e:
-            _LOGGER.debug(f"{master_hub._name}: Error getting Master value for aggregation: {e}")
+            _LOGGER.debug(f"{master_name}: Error getting Master value for aggregation: {e}")
             total = 0
         
         # Sum all Slave values
@@ -276,7 +278,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
             try:
                 slave_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
                 if not slave_data:
-                    _LOGGER.debug(f"{master_hub._name}: Slave hub '{slave_name}' has no data, using 0 for aggregation")
+                    _LOGGER.debug(f"{master_name}: Slave hub '{slave_name}' has no data, using 0 for aggregation")
                     continue
                 
                 slave_value = sensor_mapping.get_value(slave_data)
@@ -284,7 +286,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
                     total += slave_value
                 # If slave_value is None, treat as 0 (already handled by not adding)
             except Exception as e:
-                _LOGGER.debug(f"{master_hub._name}: Error getting Slave '{slave_name}' value for aggregation: {e}, using 0")
+                _LOGGER.debug(f"{master_name}: Error getting Slave '{slave_name}' value for aggregation: {e}, using 0")
                 # Continue with other Slaves (treat this Slave as 0)
         
         return total
@@ -306,25 +308,28 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     sensors = []
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
     
+    # Get hub name safely for logging
+    hub_name = getattr(hub, '_name', 'Unknown')
+    
     # Determine if this is a Master hub
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
-    _LOGGER.info(f"{hub._name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}, hass={'provided' if hass else 'None'}")
+    _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}, hass={'provided' if hass else 'None'}")
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if is_master and hass:
         slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
-            _LOGGER.info(f"{hub._name}: Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard: {[name for name, _ in slave_hubs]}")
+            _LOGGER.info(f"{hub_name}: Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard: {[name for name, _ in slave_hubs]}")
         else:
-            _LOGGER.debug(f"{hub._name}: No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
+            _LOGGER.debug(f"{hub_name}: No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif is_master and not hass:
-        _LOGGER.warning(f"{hub._name}: Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
+        _LOGGER.warning(f"{hub_name}: Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
     
     # Get inverter name for prefix (e.g., "Solax 1")
-    inverter_name = getattr(hub, '_name', 'Unknown')
+    inverter_name = hub_name
 
     for sensor_mapping in mapping.mappings:
         # Filter by allowedtypes (same pattern as regular sensors)
@@ -419,11 +424,11 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
             # Regular mapping: create sensors based on Master/Standalone
             if is_master:
                 # For Master: Create "All" sensor and individual inverter sensors
-                _LOGGER.info(f"{hub._name}: Processing Master sensor mapping: {sensor_mapping.target_key} (slave_hubs={len(slave_hubs)})")
+                _LOGGER.info(f"{hub_name}: Processing Master sensor mapping: {sensor_mapping.target_key} (slave_hubs={len(slave_hubs)})")
                 
                 # Check if this sensor needs aggregation for "All" version
                 needs_agg = _needs_aggregation(sensor_mapping.target_key)
-                _LOGGER.info(f"{hub._name}: Sensor {sensor_mapping.target_key} needs_agg={needs_agg}, has source_key_pm={bool(sensor_mapping.source_key_pm)}")
+                _LOGGER.info(f"{hub_name}: Sensor {sensor_mapping.target_key} needs_agg={needs_agg}, has source_key_pm={bool(sensor_mapping.source_key_pm)}")
                 
                 # Create "All" sensor
                 if sensor_mapping.source_key_pm:
@@ -447,7 +452,7 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
                 elif needs_agg:
                     # Skip aggregation for Riemann sum sensors (they integrate from power, already aggregated)
                     if sensor_mapping.use_riemann_sum:
-                        _LOGGER.debug(f"{hub._name}: Skipping aggregation for Riemann sum sensor '{sensor_mapping.target_key}' (integrates from power)")
+                        _LOGGER.debug(f"{hub_name}: Skipping aggregation for Riemann sum sensor '{sensor_mapping.target_key}' (integrates from power)")
                         # Use Master value only for Riemann sum "All" sensor
                         all_mapping = EnergyDashboardSensorMapping(
                             source_key=sensor_mapping.source_key,
