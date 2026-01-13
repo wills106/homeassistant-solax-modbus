@@ -1624,29 +1624,51 @@ class SolaXModbusHub:
         """Run a one-time bisect over all current blocks to discover unreadable entity bases.
         The result updates self.bad_recheck and schedules a delayed revalidation.
         """
-        # If not online, postpone once to avoid mislabeling during startup flaps
-        if not await self.is_online():
-            _LOGGER.debug(f"{self._name}: initial bisect postponed (offline)")
-            await asyncio.sleep(5)
+        import asyncio
+        import time as _t
+        bisect_start_time = _t.monotonic()
+        bisect_timeout = 30.0  # Maximum 30 seconds for bisect to complete
+        
+        try:
+            # If not online, postpone once to avoid mislabeling during startup flaps
             if not await self.is_online():
-                _LOGGER.debug(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
-                self._probe_ready.set()
-                return
+                _LOGGER.debug(f"{self._name}: initial bisect postponed (offline)")
+                await asyncio.sleep(5)
+                if not await self.is_online():
+                    _LOGGER.debug(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
+                    self._probe_ready.set()
+                    return
 
-        # Walk through all currently built groups/blocks
-        for interval_group in self.groups.values():
-            for dev_group in interval_group.device_groups.values():
-                for blk in getattr(dev_group, "holdingBlocks", []):
-                    await self._initial_bisect_block(blk, "holding")
-                for blk in getattr(dev_group, "inputBlocks", []):
-                    await self._initial_bisect_block(blk, "input")
+            # Walk through all currently built groups/blocks
+            for interval_group in self.groups.values():
+                # Check timeout periodically
+                if (_t.monotonic() - bisect_start_time) > bisect_timeout:
+                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
+                    self._probe_ready.set()
+                    return
+                    
+                for dev_group in interval_group.device_groups.values():
+                    # Check timeout before each block
+                    if (_t.monotonic() - bisect_start_time) > bisect_timeout:
+                        _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
+                        self._probe_ready.set()
+                        return
+                        
+                    for blk in getattr(dev_group, "holdingBlocks", []):
+                        await self._initial_bisect_block(blk, "holding")
+                    for blk in getattr(dev_group, "inputBlocks", []):
+                        await self._initial_bisect_block(blk, "input")
 
-        # If no suspects were identified by the initial bisect, log that explicitly
-        if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
-            _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
+            # If no suspects were identified by the initial bisect, log that explicitly
+            if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
+                _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
 
-        # Probing completed – enable polling
-        self._probe_ready.set()
+            # Probing completed – enable polling
+            self._probe_ready.set()
+        except Exception as e:
+            _LOGGER.error(f"{self._name}: Exception in initial bisect: {e}", exc_info=True)
+            # Always set probe_ready on exception to avoid permanent blocking
+            self._probe_ready.set()
 
         # Re-validate candidates after a short grace period
         self._recheck_task = self._hass.loop.create_task(self._recheck_bad_after(30))

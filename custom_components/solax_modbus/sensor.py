@@ -151,6 +151,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub.rebuild_blocks(initial_groups) #, computedRegs) # first time call
     _LOGGER.info(f"{hub.name}: computedRegs: {hub.computedSensors}")
     
+    # Give initial bisect task time to start before Energy Dashboard setup
+    # The bisect runs in background and may need a moment to begin
+    import asyncio
+    await asyncio.sleep(1.0)  # 1 second delay to let bisect task start
+    
     # Energy Dashboard Virtual Device integration (after rebuild_blocks so initial_groups are ready for reading)
     try:
         from .energy_dashboard import (
