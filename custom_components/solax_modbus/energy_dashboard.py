@@ -318,18 +318,19 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
-    _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}, hass={'provided' if hass else 'None'}")
+    _LOGGER.info("HELLO WORLD Energy Dashboard sensor creation starting")
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if is_master and hass:
+        _LOGGER.info("HELLO WORLD is_master is True and hass provided, finding Slave hubs")
         slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
-            _LOGGER.info(f"{hub_name}: Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard: {[name for name, _ in slave_hubs]}")
+            _LOGGER.info("HELLO WORLD Slave hubs found")
         else:
-            _LOGGER.debug(f"{hub_name}: No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
+            _LOGGER.info("HELLO WORLD No Slave hubs found")
     elif is_master and not hass:
-        _LOGGER.warning(f"{hub_name}: Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
+        _LOGGER.info("HELLO WORLD Master hub detected but hass not provided")
     
     # Get inverter name for prefix (e.g., "Solax 1")
     inverter_name = hub_name
@@ -427,11 +428,11 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
             # Regular mapping: create sensors based on Master/Standalone
             if is_master:
                 # For Master: Create "All" sensor and individual inverter sensors
-                _LOGGER.info(f"{hub_name}: Processing Master sensor mapping: {sensor_mapping.target_key} (slave_hubs={len(slave_hubs)})")
+                _LOGGER.info("HELLO WORLD Processing Master sensor mapping")
                 
                 # Check if this sensor needs aggregation for "All" version
                 needs_agg = _needs_aggregation(sensor_mapping.target_key)
-                _LOGGER.info(f"{hub_name}: Sensor {sensor_mapping.target_key} needs_agg={needs_agg}, has source_key_pm={bool(sensor_mapping.source_key_pm)}")
+                _LOGGER.info("HELLO WORLD needs_agg checked")
                 
                 # Create "All" sensor
                 if sensor_mapping.source_key_pm:
