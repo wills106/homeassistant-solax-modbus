@@ -302,14 +302,16 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
         mapping: EnergyDashboardMapping configuration
         hass: Home Assistant instance (optional, needed for Slave hub access)
     """
+    # Get hub name safely for logging (do this first)
+    hub_name = getattr(hub, '_name', 'Unknown')
+    _LOGGER.info(f"{hub_name}: create_energy_dashboard_sensors() called")
+    
     if not mapping.enabled:
+        _LOGGER.info(f"{hub_name}: Energy Dashboard mapping is disabled, returning empty list")
         return []
 
     sensors = []
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
-    
-    # Get hub name safely for logging
-    hub_name = getattr(hub, '_name', 'Unknown')
     
     # Determine if this is a Master hub
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
