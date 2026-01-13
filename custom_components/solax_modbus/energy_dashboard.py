@@ -305,7 +305,7 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     _LOGGER.info("HELLO WORLD create_energy_dashboard_sensors called")
     
     if not mapping.enabled:
-        _LOGGER.info(f"{hub_name}: Energy Dashboard mapping is disabled, returning empty list")
+        _LOGGER.info("HELLO WORLD Energy Dashboard mapping is disabled")
         return []
 
     sensors = []
