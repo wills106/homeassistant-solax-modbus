@@ -254,17 +254,38 @@ def _needs_aggregation(target_key):
 
 
 def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMapping, master_hub, slave_hubs):
-    """Create a value function that sums Master + all Slaves for aggregation."""
+    """Create a value function that sums Master + all Slaves for aggregation.
+    
+    Handles edge cases:
+    - No Slaves: Returns Master value only
+    - Slave hub offline: Treats missing values as 0, logs debug message
+    - Missing keys: Treats as 0, continues with other Slaves
+    """
     def value_function(initval, descr, datadict):
-        # Get Master value
+        # Get Master value (individual inverter value)
         master_data = getattr(master_hub, 'data', None) or getattr(master_hub, 'datadict', datadict)
-        total = sensor_mapping.get_value(master_data) or 0
+        try:
+            master_value = sensor_mapping.get_value(master_data)
+            total = master_value if master_value is not None else 0
+        except Exception as e:
+            _LOGGER.debug(f"{master_hub._name}: Error getting Master value for aggregation: {e}")
+            total = 0
         
         # Sum all Slave values
         for slave_name, slave_hub in slave_hubs:
-            slave_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
-            slave_value = sensor_mapping.get_value(slave_data) or 0
-            total += slave_value
+            try:
+                slave_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
+                if not slave_data:
+                    _LOGGER.debug(f"{master_hub._name}: Slave hub '{slave_name}' has no data, using 0 for aggregation")
+                    continue
+                
+                slave_value = sensor_mapping.get_value(slave_data)
+                if slave_value is not None:
+                    total += slave_value
+                # If slave_value is None, treat as 0 (already handled by not adding)
+            except Exception as e:
+                _LOGGER.debug(f"{master_hub._name}: Error getting Slave '{slave_name}' value for aggregation: {e}, using 0")
+                # Continue with other Slaves (treat this Slave as 0)
         
         return total
     
@@ -417,28 +438,49 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix="All "))
                 elif needs_agg:
-                    # Create aggregated "All" sensor (sum Master + Slaves)
-                    all_mapping = EnergyDashboardSensorMapping(
-                        source_key=sensor_mapping.source_key,
-                        target_key=sensor_mapping.target_key,
-                        name=sensor_mapping.name,
-                        source_key_pm=sensor_mapping.source_key_pm,
-                        invert=sensor_mapping.invert,
-                        icon=sensor_mapping.icon,
-                        unit=sensor_mapping.unit,
-                        invert_function=sensor_mapping.invert_function,
-                        filter_function=sensor_mapping.filter_function,
-                        use_riemann_sum=sensor_mapping.use_riemann_sum,
-                        allowedtypes=sensor_mapping.allowedtypes,
-                        max_variants=sensor_mapping.max_variants,
-                    )
-                    # Create sensor with aggregated value function
-                    aggregated_sensor = _create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
-                                                                   source_hub=hub, name_prefix="All ")
-                    if aggregated_sensor:
-                        # Replace value function with aggregated version
-                        aggregated_sensor[0].value_function = _create_aggregated_value_function(all_mapping, hub, slave_hubs)
-                        sensors.extend(aggregated_sensor)
+                    # Skip aggregation for Riemann sum sensors (they integrate from power, already aggregated)
+                    if sensor_mapping.use_riemann_sum:
+                        _LOGGER.debug(f"{hub._name}: Skipping aggregation for Riemann sum sensor '{sensor_mapping.target_key}' (integrates from power)")
+                        # Use Master value only for Riemann sum "All" sensor
+                        all_mapping = EnergyDashboardSensorMapping(
+                            source_key=sensor_mapping.source_key,
+                            target_key=sensor_mapping.target_key,
+                            name=sensor_mapping.name,
+                            source_key_pm=sensor_mapping.source_key_pm,
+                            invert=sensor_mapping.invert,
+                            icon=sensor_mapping.icon,
+                            unit=sensor_mapping.unit,
+                            invert_function=sensor_mapping.invert_function,
+                            filter_function=sensor_mapping.filter_function,
+                            use_riemann_sum=sensor_mapping.use_riemann_sum,
+                            allowedtypes=sensor_mapping.allowedtypes,
+                            max_variants=sensor_mapping.max_variants,
+                        )
+                        sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
+                                                                  source_hub=hub, name_prefix="All "))
+                    else:
+                        # Create aggregated "All" sensor (sum Master + Slaves)
+                        all_mapping = EnergyDashboardSensorMapping(
+                            source_key=sensor_mapping.source_key,
+                            target_key=sensor_mapping.target_key,
+                            name=sensor_mapping.name,
+                            source_key_pm=sensor_mapping.source_key_pm,
+                            invert=sensor_mapping.invert,
+                            icon=sensor_mapping.icon,
+                            unit=sensor_mapping.unit,
+                            invert_function=sensor_mapping.invert_function,
+                            filter_function=sensor_mapping.filter_function,
+                            use_riemann_sum=sensor_mapping.use_riemann_sum,
+                            allowedtypes=sensor_mapping.allowedtypes,
+                            max_variants=sensor_mapping.max_variants,
+                        )
+                        # Create sensor with aggregated value function
+                        aggregated_sensor = _create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
+                                                                       source_hub=hub, name_prefix="All ")
+                        if aggregated_sensor:
+                            # Replace value function with aggregated version
+                            aggregated_sensor[0].value_function = _create_aggregated_value_function(all_mapping, hub, slave_hubs)
+                            sensors.extend(aggregated_sensor)
                 else:
                     # Grid energy: Master already aggregates all, use Master value for "All"
                     all_mapping = EnergyDashboardSensorMapping(
