@@ -48,6 +48,7 @@ class EnergyDashboardSensorMapping:
     invert_function: Optional[Callable] = None  # Custom invert function if needed
     filter_function: Optional[Callable] = None  # Universal filter function (applies to all sensor types)
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
+    allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
