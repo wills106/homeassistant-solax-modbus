@@ -208,16 +208,23 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             energy_dashboard_entities.append(entity_entry.entity_id)
                             _LOGGER.debug(f"{hub_name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id}")
                 
+                # Remove Energy Dashboard entities first
                 if energy_dashboard_entities:
                     _LOGGER.info(f"{hub_name}: Removing {len(energy_dashboard_entities)} Energy Dashboard entities")
                     for entity_id in energy_dashboard_entities:
                         entity_registry.async_remove(entity_id)
+                    # Give entities time to be removed before removing device
+                    # This ensures proper cleanup order and prevents UI issues
+                    import asyncio
+                    await asyncio.sleep(0.1)
                 
-                # Remove Energy Dashboard device from device registry
+                # Remove Energy Dashboard device from device registry (after entities are removed)
                 energy_dashboard_device = device_registry.async_get_device(identifiers=energy_dashboard_device_identifiers)
                 if energy_dashboard_device:
                     _LOGGER.info(f"{hub_name}: Removing Energy Dashboard device: {energy_dashboard_device.name}")
                     device_registry.async_remove_device(energy_dashboard_device.id)
+                    # Small delay to ensure device removal is processed
+                    await asyncio.sleep(0.1)
             elif hasattr(plugin_obj, 'ENERGY_DASHBOARD_MAPPING'):
                 mapping = plugin_obj.ENERGY_DASHBOARD_MAPPING
                 _LOGGER.info(f"{hub_name}: Energy Dashboard mapping found for plugin: {mapping.plugin_name}")
