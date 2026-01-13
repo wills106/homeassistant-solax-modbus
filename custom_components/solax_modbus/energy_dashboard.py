@@ -311,6 +311,9 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     sensors = []
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
     
+    # Get hub name safely for logging
+    hub_name = getattr(hub, '_name', 'Unknown')
+    
     # Determine if this is a Master hub
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
