@@ -135,7 +135,7 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
     return sensors
 
 
-def should_create_energy_dashboard_device(hub, config, hass=None, logger=None) -> bool:
+async def should_create_energy_dashboard_device(hub, config, hass=None, logger=None, initial_groups=None) -> bool:
     """Determine if Energy Dashboard virtual device should be created.
 
     Args:
@@ -186,17 +186,72 @@ def should_create_energy_dashboard_device(hub, config, hass=None, logger=None) -
     # Enabled: Check parallel mode - skip Slaves (Master has system totals)
     parallel_setting = None
     
-    # Try datadict first (safely check if attribute exists)
-    datadict = getattr(hub, 'datadict', None)
-    if datadict:
-        parallel_setting = datadict.get("parallel_setting")
+    # Try hub.data first (most direct access to register values)
+    hub_data = getattr(hub, 'data', None)
+    if hub_data:
+        parallel_setting = hub_data.get("parallel_setting")
         if logger:
-            logger.info(f"{hub_name}: FUNC STEP 2 - parallel_setting from datadict: {parallel_setting}")
-    else:
-        if logger:
-            logger.info(f"{hub_name}: FUNC STEP 2 - hub.datadict is None or doesn't exist")
+            logger.info(f"{hub_name}: FUNC STEP 2 - parallel_setting from hub.data: {parallel_setting}")
     
-    # If not in datadict and hass available, try entity lookup
+    # If not in hub.data, try to trigger a read from hub.groups (after rebuild_blocks)
+    # Retry with timeout to wait for inverter to be ready (like we do for serial number polling)
+    if parallel_setting is None:
+        hub_groups = getattr(hub, 'groups', None)
+        if hub_groups:
+            if logger:
+                logger.info(f"{hub_name}: FUNC STEP 2.5 - parallel_setting not in hub.data, triggering register read from hub.groups")
+            import asyncio
+            max_retries = 5
+            retry_delay = 0.5  # 500ms between retries
+            for retry in range(max_retries):
+                try:
+                    # Find the first interval group that has device groups and read all device groups in it
+                    for interval_group in hub_groups.values():
+                        if hasattr(interval_group, 'device_groups') and interval_group.device_groups:
+                            if logger and retry == 0:
+                                logger.info(f"{hub_name}: FUNC STEP 2.6 - Reading modbus data from hub.groups (attempt {retry + 1}/{max_retries})")
+                            # Read each device group in this interval group
+                            for device_group in interval_group.device_groups.values():
+                                read_result = await hub.async_read_modbus_data(device_group)
+                                if logger:
+                                    logger.info(f"{hub_name}: FUNC STEP 2.6a - Read result: {read_result}, hub_data exists: {hub_data is not None}")
+                                if read_result:
+                                    # Data is written to hub.data during the read (data is alias to self.data), check immediately after
+                                    if hub_data:
+                                        parallel_setting = hub_data.get("parallel_setting")
+                                        if logger:
+                                            logger.info(f"{hub_name}: FUNC STEP 2.6b - After read, parallel_setting in hub.data: {parallel_setting}, all keys: {list(hub_data.keys())[:10] if len(hub_data) > 10 else list(hub_data.keys())}")
+                                        if parallel_setting and parallel_setting != "unknown":
+                                            if logger:
+                                                logger.info(f"{hub_name}: FUNC STEP 2.7 - parallel_setting from hub.data after read: {parallel_setting}")
+                                            break
+                                elif not read_result and logger and retry < max_retries - 1:
+                                    logger.info(f"{hub_name}: FUNC STEP 2.6 - Read failed, retrying in {retry_delay}s (attempt {retry + 1}/{max_retries})")
+                            if parallel_setting and parallel_setting != "unknown":
+                                break
+                    if parallel_setting and parallel_setting != "unknown":
+                        break
+                    # Wait before retry (except on last attempt)
+                    if retry < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+                except Exception as e:
+                    if logger:
+                        logger.info(f"{hub_name}: FUNC STEP 2.8 - Error during register read (attempt {retry + 1}): {e}")
+                    if retry < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+    
+    # Try datadict as fallback (safely check if attribute exists)
+    if parallel_setting is None:
+        datadict = getattr(hub, 'datadict', None)
+        if datadict:
+            parallel_setting = datadict.get("parallel_setting")
+            if logger:
+                logger.info(f"{hub_name}: FUNC STEP 2.9 - parallel_setting from datadict: {parallel_setting}")
+        else:
+            if logger:
+                logger.info(f"{hub_name}: FUNC STEP 2.9 - hub.datadict is None or doesn't exist")
+    
+    # If still not found and hass available, try entity lookup
     if parallel_setting is None and hass is not None:
         hub_name_for_entity = getattr(hub, '_name', hub_name)
         # Convert "SolaX 1" to "solax_1" format for entity ID
