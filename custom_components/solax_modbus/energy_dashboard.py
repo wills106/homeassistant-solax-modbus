@@ -145,42 +145,57 @@ def should_create_energy_dashboard_device(hub, config) -> bool:
     Returns:
         bool: True if virtual device should be created
     """
+    import logging
+    _LOGGER = logging.getLogger(__name__)
+    
     from .const import (
         CONF_ENERGY_DASHBOARD_DEVICE,
         DEFAULT_ENERGY_DASHBOARD_DEVICE,
     )
 
-    # Simple boolean check - if enabled, create device
-    # For parallel mode: Master creates device, Slave skips (user can enable manually if needed)
+    # Simple boolean check - if enabled, always create device (like old "manual" mode)
+    # User's explicit choice should be respected regardless of parallel mode
     energy_dashboard_enabled = config.get(
         CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE
     )
     
+    _LOGGER.debug(f"{hub.name}: Energy Dashboard config value: {energy_dashboard_enabled} (type: {type(energy_dashboard_enabled).__name__})")
+    
     # Handle legacy string values for backward compatibility
     if isinstance(energy_dashboard_enabled, str):
+        _LOGGER.debug(f"{hub.name}: Legacy string value detected: {energy_dashboard_enabled}")
         if energy_dashboard_enabled == "disabled":
+            _LOGGER.debug(f"{hub.name}: Energy Dashboard disabled (legacy string)")
             return False
         elif energy_dashboard_enabled == "manual":
+            _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (legacy manual mode - always create)")
             return True
-        else:  # "enabled" or any other value
+        elif energy_dashboard_enabled == "enabled":
+            # Legacy "enabled" mode: Auto-detect (skip Slaves)
+            # Note: datadict might not be populated during initial setup
+            parallel_setting = None
+            if hub.datadict:
+                parallel_setting = hub.datadict.get("parallel_setting")
+            _LOGGER.debug(f"{hub.name}: Legacy enabled mode - parallel_setting: {parallel_setting}")
+            # Skip Slaves automatically (Master has system totals)
+            if parallel_setting == "Slave":
+                _LOGGER.debug(f"{hub.name}: Energy Dashboard skipped (Slave in parallel mode)")
+                return False
+            # Master, single inverter, or datadict not populated: Create device
+            _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (legacy enabled mode - creating)")
+            return True
+        else:  # Any other value, default to enabled
+            _LOGGER.debug(f"{hub.name}: Unknown legacy string value, defaulting to enabled")
             energy_dashboard_enabled = True
     
-    if not energy_dashboard_enabled:
-        return False
+    # Boolean value: If explicitly enabled (True), always create (respect user's choice)
+    if energy_dashboard_enabled:
+        _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (boolean True - always create)")
+        return True
     
-    # If enabled, check parallel mode to skip Slaves automatically
-    # Note: datadict might not be populated during initial setup
-    parallel_setting = None
-    if hub.datadict:
-        parallel_setting = hub.datadict.get("parallel_setting")
-    
-    # Skip Slaves automatically (Master has system totals)
-    # User can manually enable if they want device on Slave too
-    if parallel_setting == "Slave":
-        return False
-    
-    # Master, single inverter, or datadict not populated: Create device
-    return True
+    # Disabled: Don't create
+    _LOGGER.debug(f"{hub.name}: Energy Dashboard disabled (boolean False)")
+    return False
 
 
 def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
