@@ -247,7 +247,16 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             if energy_dashboard_entities:
                                 _LOGGER.info(f"{hub_name}: Registering {len(energy_dashboard_entities)} Energy Dashboard entities")
                                 entities.extend(energy_dashboard_entities)
-                                async_add_entities(energy_dashboard_entities)
+                                # Register entities in batches to prevent UI freeze
+                                # Split into smaller batches and yield control between batches
+                                batch_size = 10
+                                for i in range(0, len(energy_dashboard_entities), batch_size):
+                                    batch = energy_dashboard_entities[i:i + batch_size]
+                                    async_add_entities(batch)
+                                    # Small delay between batches to allow UI to update
+                                    if i + batch_size < len(energy_dashboard_entities):
+                                        import asyncio
+                                        await asyncio.sleep(0.05)  # 50ms delay between batches
                             
                             # Ensure Energy Dashboard entities are enabled (they might have been disabled previously)
                             entity_registry = er.async_get(hass)
