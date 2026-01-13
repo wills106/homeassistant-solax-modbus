@@ -135,18 +135,17 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping) -> lis
     return sensors
 
 
-def should_create_energy_dashboard_device(hub, config) -> bool:
+def should_create_energy_dashboard_device(hub, config, hass=None, logger=None) -> bool:
     """Determine if Energy Dashboard virtual device should be created.
 
     Args:
         hub: SolaXModbusHub instance
         config: Integration configuration dict
+        hass: Home Assistant instance (optional, for entity state lookup)
 
     Returns:
         bool: True if virtual device should be created
     """
-    import logging
-    _LOGGER = logging.getLogger(__name__)
     
     from .const import (
         CONF_ENERGY_DASHBOARD_DEVICE,
@@ -159,43 +158,78 @@ def should_create_energy_dashboard_device(hub, config) -> bool:
         CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE
     )
     
-    _LOGGER.debug(f"{hub.name}: Energy Dashboard config value: {energy_dashboard_enabled} (type: {type(energy_dashboard_enabled).__name__})")
-    
     # Handle legacy string values for backward compatibility
     if isinstance(energy_dashboard_enabled, str):
-        _LOGGER.debug(f"{hub.name}: Legacy string value detected: {energy_dashboard_enabled}")
         if energy_dashboard_enabled == "disabled":
-            _LOGGER.debug(f"{hub.name}: Energy Dashboard disabled (legacy string)")
             return False
         elif energy_dashboard_enabled == "manual":
-            _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (legacy manual mode - always create)")
             return True
         elif energy_dashboard_enabled == "enabled":
             # Legacy "enabled" mode: Auto-detect (skip Slaves)
-            # Note: datadict might not be populated during initial setup
             parallel_setting = None
-            if hub.datadict:
-                parallel_setting = hub.datadict.get("parallel_setting")
-            _LOGGER.debug(f"{hub.name}: Legacy enabled mode - parallel_setting: {parallel_setting}")
-            # Skip Slaves automatically (Master has system totals)
+            datadict = getattr(hub, 'datadict', None)
+            if datadict:
+                parallel_setting = datadict.get("parallel_setting")
             if parallel_setting == "Slave":
-                _LOGGER.debug(f"{hub.name}: Energy Dashboard skipped (Slave in parallel mode)")
                 return False
-            # Master, single inverter, or datadict not populated: Create device
-            _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (legacy enabled mode - creating)")
             return True
         else:  # Any other value, default to enabled
-            _LOGGER.debug(f"{hub.name}: Unknown legacy string value, defaulting to enabled")
             energy_dashboard_enabled = True
     
-    # Boolean value: If explicitly enabled (True), always create (respect user's choice)
-    if energy_dashboard_enabled:
-        _LOGGER.debug(f"{hub.name}: Energy Dashboard enabled (boolean True - always create)")
-        return True
+    # Boolean value: If disabled, don't create
+    if not energy_dashboard_enabled:
+        return False
     
-    # Disabled: Don't create
-    _LOGGER.debug(f"{hub.name}: Energy Dashboard disabled (boolean False)")
-    return False
+    hub_name = getattr(hub, 'name', getattr(hub, '_name', 'unknown'))
+    if logger:
+        logger.info(f"{hub_name}: FUNC STEP 1 - Enabled, checking parallel mode")
+    # Enabled: Check parallel mode - skip Slaves (Master has system totals)
+    parallel_setting = None
+    
+    # Try datadict first (safely check if attribute exists)
+    datadict = getattr(hub, 'datadict', None)
+    if datadict:
+        parallel_setting = datadict.get("parallel_setting")
+        if logger:
+            logger.info(f"{hub_name}: FUNC STEP 2 - parallel_setting from datadict: {parallel_setting}")
+    else:
+        if logger:
+            logger.info(f"{hub_name}: FUNC STEP 2 - hub.datadict is None or doesn't exist")
+    
+    # If not in datadict and hass available, try entity lookup
+    if parallel_setting is None and hass is not None:
+        hub_name_for_entity = getattr(hub, '_name', hub_name)
+        # Convert "SolaX 1" to "solax_1" format for entity ID
+        entity_name = hub_name_for_entity.lower().replace(" ", "_")
+        entity_id = f"select.{entity_name}_parallel_setting"
+        if logger:
+            logger.info(f"{hub_name}: FUNC STEP 3 - trying entity: {entity_id}, hub._name: {hub_name_for_entity}")
+        try:
+            state = hass.states.get(entity_id)
+            if state and state.state:
+                parallel_setting = state.state
+                if logger:
+                    logger.info(f"{hub_name}: FUNC STEP 4 - parallel_setting from entity: {parallel_setting}")
+            else:
+                if logger:
+                    logger.info(f"{hub_name}: FUNC STEP 4 - entity {entity_id} not found or no state")
+        except Exception as e:
+            if logger:
+                logger.info(f"{hub_name}: FUNC STEP 4 - entity lookup exception: {e}")
+    elif parallel_setting is None:
+        if logger:
+            logger.info(f"{hub_name}: FUNC STEP 3 - parallel_setting is None and hass is None")
+    
+    # Skip only if definitively a Slave
+    if parallel_setting == "Slave":
+        if logger:
+            logger.info(f"{hub_name}: FUNC STEP 5 - SKIPPING (Slave)")
+        return False
+    
+    # Master, single, or unknown: Create device
+    if logger:
+        logger.info(f"{hub_name}: FUNC STEP 5 - CREATING (parallel_setting: {parallel_setting})")
+    return True
 
 
 def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
