@@ -302,6 +302,8 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
         mapping: EnergyDashboardMapping configuration
         hass: Home Assistant instance (optional, needed for Slave hub access)
     """
+    _LOGGER.error("TEST ERROR LOG - create_energy_dashboard_sensors called")
+    
     if not mapping.enabled:
         _LOGGER.debug("Energy Dashboard mapping is disabled")
         return []
