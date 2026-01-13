@@ -302,11 +302,8 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
         mapping: EnergyDashboardMapping configuration
         hass: Home Assistant instance (optional, needed for Slave hub access)
     """
-    # Get hub name safely for logging
-    hub_name = getattr(hub, '_name', 'Unknown')
-    
     if not mapping.enabled:
-        _LOGGER.debug(f"{hub_name}: Energy Dashboard mapping is disabled")
+        _LOGGER.debug("Energy Dashboard mapping is disabled")
         return []
 
     sensors = []
@@ -316,20 +313,20 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
-    _LOGGER.debug(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if is_master and hass:
         slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
-            _LOGGER.info(f"{hub_name}: Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard")
+            _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard")
         else:
-            _LOGGER.debug(f"{hub_name}: No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
+            _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif is_master and not hass:
-        _LOGGER.warning(f"{hub_name}: Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
+        _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
     
     # Get inverter name for prefix (e.g., "Solax 1")
+    hub_name = getattr(hub, '_name', 'Unknown')
     inverter_name = hub_name
 
     for sensor_mapping in mapping.mappings:
@@ -425,11 +422,8 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
             # Regular mapping: create sensors based on Master/Standalone
             if is_master:
                 # For Master: Create "All" sensor and individual inverter sensors
-                _LOGGER.debug(f"{hub_name}: Processing Master sensor mapping: {sensor_mapping.target_key} (slave_hubs={len(slave_hubs)})")
-                
                 # Check if this sensor needs aggregation for "All" version
                 needs_agg = _needs_aggregation(sensor_mapping.target_key)
-                _LOGGER.debug(f"{hub_name}: Sensor {sensor_mapping.target_key} needs_agg={needs_agg}, has source_key_pm={bool(sensor_mapping.source_key_pm)}")
                 
                 # Create "All" sensor
                 if sensor_mapping.source_key_pm:
@@ -453,7 +447,6 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
                 elif needs_agg:
                     # Skip aggregation for Riemann sum sensors (they integrate from power, already aggregated)
                     if sensor_mapping.use_riemann_sum:
-                        _LOGGER.debug(f"{hub_name}: Skipping aggregation for Riemann sum sensor '{sensor_mapping.target_key}' (integrates from power)")
                         # Use Master value only for Riemann sum "All" sensor
                         all_mapping = EnergyDashboardSensorMapping(
                             source_key=sensor_mapping.source_key,
@@ -582,8 +575,7 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
     hub_data = getattr(hub, 'data', None)
     if hub_data:
         parallel_setting = hub_data.get("parallel_setting")
-        if logger:
-            logger.debug(f"{hub_name}: parallel_setting from hub.data: {parallel_setting}")
+        _LOGGER.debug("parallel_setting found in hub.data")
     
     # If not in hub.data, try to trigger a read from hub.groups (after rebuild_blocks)
     # Wait for initial probe to complete before polling to avoid interference
@@ -598,44 +590,35 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
             
             # Check if probe is still running
             if probe_ready and not probe_ready.is_set():
-                if logger:
-                    logger.debug(f"{hub_name}: Waiting for initial probe to complete before polling parallel_setting")
+                _LOGGER.debug("Waiting for initial probe to complete before polling parallel_setting")
                 
                 # Wait for the initial bisect task to complete (if it exists)
                 if initial_bisect_task and not initial_bisect_task.done():
-                    if logger:
-                        logger.debug(f"{hub_name}: Initial bisect task still running, waiting for completion")
+                    _LOGGER.debug("Initial bisect task still running, waiting for completion")
                     try:
                         # Wait up to 15 seconds for bisect task to complete
                         await asyncio.wait_for(initial_bisect_task, timeout=15.0)
-                        if logger:
-                            logger.debug(f"{hub_name}: Initial bisect task completed")
+                        _LOGGER.debug("Initial bisect task completed")
                     except asyncio.TimeoutError:
-                        if logger:
-                            logger.warning(f"{hub_name}: Initial bisect task timeout after 15s, may be stuck")
+                        _LOGGER.warning("Initial bisect task timeout after 15s, may be stuck")
                     except Exception as e:
-                        if logger:
-                            logger.debug(f"{hub_name}: Error waiting for bisect task: {e}")
+                        _LOGGER.debug("Error waiting for bisect task")
                 
                 # Also wait for probe_ready event (in case task completed but event not set yet)
                 if probe_ready and not probe_ready.is_set():
                     try:
                         # Wait up to 5 seconds for probe event (shorter since task should be done)
                         await asyncio.wait_for(probe_ready.wait(), timeout=5.0)
-                        if logger:
-                            logger.debug(f"{hub_name}: Initial probe completed, proceeding with parallel_setting read")
+                        _LOGGER.debug("Initial probe completed, proceeding with parallel_setting read")
                     except asyncio.TimeoutError:
-                        if logger:
-                            logger.warning(f"{hub_name}: Initial probe event timeout after 5s, proceeding anyway (probe may be stuck)")
+                        _LOGGER.warning("Initial probe event timeout after 5s, proceeding anyway")
                     except Exception as e:
-                        if logger:
-                            logger.debug(f"{hub_name}: Error waiting for probe event: {e}, proceeding anyway")
+                        _LOGGER.debug("Error waiting for probe event, proceeding anyway")
             
             # Small delay to let probe settle if it just completed
             await asyncio.sleep(0.5)
             
-            if logger:
-                logger.debug(f"{hub_name}: parallel_setting not in hub.data, polling inverter registers")
+            _LOGGER.debug("parallel_setting not in hub.data, polling inverter registers")
             max_retries = 3
             retry_delay = 0.5
             for retry in range(max_retries):
@@ -643,8 +626,8 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
                     # Find the first interval group that has device groups and read all device groups in it
                     for interval_group in hub_groups.values():
                         if hasattr(interval_group, 'device_groups') and interval_group.device_groups:
-                            if logger and retry > 0:
-                                logger.debug(f"{hub_name}: Retrying parallel_setting read (attempt {retry + 1}/{max_retries})")
+                            if retry > 0:
+                                _LOGGER.debug("Retrying parallel_setting read")
                             # Read each device group in this interval group
                             for device_group in interval_group.device_groups.values():
                                 read_result = await hub.async_read_modbus_data(device_group)
@@ -653,11 +636,10 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
                                     if hub_data:
                                         parallel_setting = hub_data.get("parallel_setting")
                                         if parallel_setting and parallel_setting != "unknown":
-                                            if logger:
-                                                logger.debug(f"{hub_name}: parallel_setting read from inverter: {parallel_setting}")
+                                            _LOGGER.debug("parallel_setting read from inverter")
                                             break
-                                elif not read_result and logger and retry < max_retries - 1:
-                                    logger.debug(f"{hub_name}: Modbus read failed, retrying in {retry_delay}s")
+                                elif not read_result and retry < max_retries - 1:
+                                    _LOGGER.debug("Modbus read failed, retrying")
                             if parallel_setting and parallel_setting != "unknown":
                                 break
                     if parallel_setting and parallel_setting != "unknown":
@@ -666,8 +648,7 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
                     if retry < max_retries - 1:
                         await asyncio.sleep(retry_delay)
                 except Exception as e:
-                    if logger:
-                        logger.debug(f"{hub_name}: Error during parallel_setting read (attempt {retry + 1}): {e}")
+                    _LOGGER.debug("Error during parallel_setting read")
                     if retry < max_retries - 1:
                         await asyncio.sleep(retry_delay)
     
@@ -676,8 +657,7 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
         datadict = getattr(hub, 'datadict', None)
         if datadict:
             parallel_setting = datadict.get("parallel_setting")
-            if logger:
-                logger.debug(f"{hub_name}: parallel_setting from datadict: {parallel_setting}")
+            _LOGGER.debug("parallel_setting found in datadict")
     
     # If still not found and hass available, try entity lookup
     if parallel_setting is None and hass is not None:
@@ -689,25 +669,18 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
             state = hass.states.get(entity_id)
             if state and state.state:
                 parallel_setting = state.state
-                if logger:
-                    logger.debug(f"{hub_name}: parallel_setting from entity {entity_id}: {parallel_setting}")
+                _LOGGER.debug("parallel_setting found from entity state")
         except Exception as e:
-            if logger:
-                logger.debug(f"{hub_name}: Error looking up entity {entity_id}: {e}")
+            _LOGGER.debug("Error looking up entity state")
     
     # Skip only if definitively a Slave
     if parallel_setting == "Slave":
-        if logger:
-            logger.warning(f"{hub_name}: Energy Dashboard enabled but device will not be created (Slave inverter - only Master has system totals)")
+        _LOGGER.warning("Energy Dashboard device will not be created (Slave inverter)")
         return False
     
     # Master, single, or unknown: Create device
-    if logger:
-        logger.info(f"{hub_name}: Creating Energy Dashboard device (parallel_mode: {parallel_setting or 'unknown'})")
-    result = True
-    if logger:
-        logger.debug(f"{hub_name}: should_create_energy_dashboard_device() returning {result}")
-    return result
+    _LOGGER.info("Creating Energy Dashboard device")
+    return True
 
 
 def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
