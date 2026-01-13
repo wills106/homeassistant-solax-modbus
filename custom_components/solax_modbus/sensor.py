@@ -85,29 +85,111 @@ async def async_setup_entry(hass, entry, async_add_entities):
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
 
     # Energy Dashboard Virtual Device integration
-    from .energy_dashboard import (
-        create_energy_dashboard_sensors,
-        should_create_energy_dashboard_device,
-        validate_mapping,
-    )
-    
-    if hasattr(plugin.plugin_instance, 'ENERGY_DASHBOARD_MAPPING'):
-        mapping = plugin.plugin_instance.ENERGY_DASHBOARD_MAPPING
-        
-        # Validate mapping structure
-        if not validate_mapping(mapping):
-            _LOGGER.error(f"{hub.name}: Invalid Energy Dashboard mapping, skipping")
-        else:
-            # Check if virtual device should be created
+    _LOGGER.info(f"{hub.name}: Starting Energy Dashboard integration check")
+    try:
+        from .energy_dashboard import (
+            create_energy_dashboard_sensors,
+            should_create_energy_dashboard_device,
+            validate_mapping,
+        )
+        _LOGGER.info(f"{hub.name}: Energy Dashboard module imported successfully")
+    except Exception as e:
+        _LOGGER.error(f"{hub.name}: Failed to import Energy Dashboard module: {e}", exc_info=True)
+        # Continue without Energy Dashboard support
+    else:
+        try:
+            # Check both plugin and plugin_instance (different plugins have different structures)
+            plugin_obj = getattr(plugin, 'plugin_instance', plugin)
+            _LOGGER.info(f"{hub.name}: Checking for ENERGY_DASHBOARD_MAPPING in plugin (type: {type(plugin_obj).__name__})")
+            
             config = entry.options
-            if should_create_energy_dashboard_device(hub, config):
-                energy_dashboard_sensors = create_energy_dashboard_sensors(hub, mapping)
-                if energy_dashboard_sensors:
-                    _LOGGER.info(f"{hub.name}: Adding {len(energy_dashboard_sensors)} Energy Dashboard sensors")
-                    entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
-                                 energy_dashboard_sensors, inverter_name_suffix, "", None, readFollowUp)
+            from .const import (
+                CONF_ENERGY_DASHBOARD_DEVICE,
+                DEFAULT_ENERGY_DASHBOARD_DEVICE,
+            )
+            
+            # Check if Energy Dashboard is disabled - if so, remove existing entities and device
+            energy_dashboard_enabled = config.get(CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE)
+            
+            # Handle legacy string values for backward compatibility
+            if isinstance(energy_dashboard_enabled, str):
+                energy_dashboard_enabled = energy_dashboard_enabled != "disabled"
+            
+            if not energy_dashboard_enabled:
+                _LOGGER.info(f"{hub.name}: Energy Dashboard disabled - removing existing Energy Dashboard entities and device")
+                # Remove Energy Dashboard entities if they exist
+                # unique_id format is: {hub._name}_{key}
+                entity_registry = er.async_get(hass)
+                device_registry = dr.async_get(hass)
+                energy_dashboard_entities = []
+                hub_unique_prefix = f"{hub._name}_"
+                
+                # Find Energy Dashboard device identifier
+                energy_dashboard_device_identifiers = {(DOMAIN, f"{hub._name}_energy_dashboard", "ENERGY_DASHBOARD")}
+                
+                for entity_entry in entity_registry.entities.values():
+                    if (entity_entry.platform == DOMAIN and 
+                        entity_entry.unique_id and 
+                        entity_entry.unique_id.startswith(hub_unique_prefix)):
+                        # Check if this is an Energy Dashboard sensor by key
+                        unique_id_suffix = entity_entry.unique_id[len(hub_unique_prefix):]
+                        if (unique_id_suffix in ["grid_power_energy_dashboard", "battery_power_energy_dashboard"] or
+                            unique_id_suffix.endswith("_energy_dashboard")):
+                            energy_dashboard_entities.append(entity_entry.entity_id)
+                            _LOGGER.debug(f"{hub.name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id} (unique_id: {entity_entry.unique_id})")
+                
+                if energy_dashboard_entities:
+                    _LOGGER.info(f"{hub.name}: Removing {len(energy_dashboard_entities)} Energy Dashboard entities")
+                    for entity_id in energy_dashboard_entities:
+                        entity_registry.async_remove(entity_id)
+                        _LOGGER.info(f"{hub.name}: Removed Energy Dashboard entity: {entity_id}")
+                
+                # Remove Energy Dashboard device from device registry
+                energy_dashboard_device = device_registry.async_get_device(identifiers=energy_dashboard_device_identifiers)
+                if energy_dashboard_device:
+                    _LOGGER.info(f"{hub.name}: Removing Energy Dashboard device: {energy_dashboard_device.name} (id: {energy_dashboard_device.id})")
+                    device_registry.async_remove_device(energy_dashboard_device.id)
+                    _LOGGER.info(f"{hub.name}: Removed Energy Dashboard device")
+                else:
+                    _LOGGER.debug(f"{hub.name}: No Energy Dashboard device found to remove")
+                    
+                if not energy_dashboard_entities and not energy_dashboard_device:
+                    _LOGGER.debug(f"{hub.name}: No Energy Dashboard entities or device found to remove (checked prefix: {hub_unique_prefix})")
+            elif hasattr(plugin_obj, 'ENERGY_DASHBOARD_MAPPING'):
+                mapping = plugin_obj.ENERGY_DASHBOARD_MAPPING
+                _LOGGER.info(f"{hub.name}: Found ENERGY_DASHBOARD_MAPPING: {mapping.plugin_name if mapping else 'None'}")
+                
+                # Validate mapping structure
+                if not validate_mapping(mapping):
+                    _LOGGER.error(f"{hub.name}: Invalid Energy Dashboard mapping, skipping")
+                else:
+                    # Check if virtual device should be created
+                    if should_create_energy_dashboard_device(hub, config):
+                        energy_dashboard_sensors = create_energy_dashboard_sensors(hub, mapping)
+                        if energy_dashboard_sensors:
+                            _LOGGER.info(f"{hub.name}: Adding {len(energy_dashboard_sensors)} Energy Dashboard sensors")
+                            entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
+                                         energy_dashboard_sensors, inverter_name_suffix, "", None, readFollowUp)
+                            
+                            # Ensure Energy Dashboard entities are enabled (they might have been disabled previously)
+                            entity_registry = er.async_get(hass)
+                            hub_unique_prefix = f"{hub._name}_"
+                            for sensor_mapping in mapping.mappings:
+                                unique_id = f"{hub_unique_prefix}{sensor_mapping.target_key}"
+                                entity_id = entity_registry.async_get_entity_id('sensor', DOMAIN, unique_id)
+                                if entity_id:
+                                    entity_entry = entity_registry.async_get(entity_id)
+                                    if entity_entry and entity_entry.disabled_by:
+                                        _LOGGER.info(f"{hub.name}: Enabling previously disabled Energy Dashboard entity: {entity_id}")
+                                        entity_registry.async_update_entity(entity_id, disabled_by=None)
+                                        _LOGGER.info(f"{hub.name}: Enabled Energy Dashboard entity: {entity_id}")
+                    else:
+                        _LOGGER.debug(f"{hub.name}: Energy Dashboard device creation skipped (config or parallel mode)")
             else:
-                _LOGGER.debug(f"{hub.name}: Energy Dashboard device creation skipped (config or parallel mode)")
+                _LOGGER.debug(f"{hub.name}: ENERGY_DASHBOARD_MAPPING not found in plugin_instance (plugin may not support Energy Dashboard)")
+        except Exception as e:
+            _LOGGER.error(f"{hub.name}: Error during Energy Dashboard setup: {e}", exc_info=True)
+            # Continue without Energy Dashboard support - don't break the integration
 
     readBattery = entry.options.get(CONF_READ_BATTERY, False)
     if readBattery and plugin.BATTERY_CONFIG is not None:

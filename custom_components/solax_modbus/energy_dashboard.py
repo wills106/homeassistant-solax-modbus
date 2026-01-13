@@ -33,9 +33,9 @@ class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
     source_key: str  # Original sensor key (e.g., "measured_power")
-    source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard")
     name: str  # Display name (e.g., "Grid Power (Energy Dashboard)")
+    source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
     icon: Optional[str] = None  # Optional icon override
     unit: Optional[str] = None  # Optional unit override
@@ -147,36 +147,40 @@ def should_create_energy_dashboard_device(hub, config) -> bool:
     """
     from .const import (
         CONF_ENERGY_DASHBOARD_DEVICE,
-        ENERGY_DASHBOARD_DEVICE_ENABLED,
-        ENERGY_DASHBOARD_DEVICE_DISABLED,
-        ENERGY_DASHBOARD_DEVICE_MANUAL,
+        DEFAULT_ENERGY_DASHBOARD_DEVICE,
     )
 
-    energy_dashboard_setting = config.get(
-        CONF_ENERGY_DASHBOARD_DEVICE, ENERGY_DASHBOARD_DEVICE_ENABLED
+    # Simple boolean check - if enabled, create device
+    # For parallel mode: Master creates device, Slave skips (user can enable manually if needed)
+    energy_dashboard_enabled = config.get(
+        CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE
     )
-
-    # User explicitly disabled
-    if energy_dashboard_setting == ENERGY_DASHBOARD_DEVICE_DISABLED:
+    
+    # Handle legacy string values for backward compatibility
+    if isinstance(energy_dashboard_enabled, str):
+        if energy_dashboard_enabled == "disabled":
+            return False
+        elif energy_dashboard_enabled == "manual":
+            return True
+        else:  # "enabled" or any other value
+            energy_dashboard_enabled = True
+    
+    if not energy_dashboard_enabled:
         return False
-
-    # User manually enabled (force creation)
-    if energy_dashboard_setting == ENERGY_DASHBOARD_DEVICE_MANUAL:
-        return True
-
-    # Auto mode: Check parallel mode status
-    parallel_setting = hub.datadict.get("parallel_setting", "Free")
-
-    if parallel_setting == "Master":
-        # Master: Create virtual device with PM sensors (system totals)
-        return True
-    elif parallel_setting == "Slave":
-        # Slave: Don't create (Master has system totals)
-        # User can override with "manual" if needed
+    
+    # If enabled, check parallel mode to skip Slaves automatically
+    # Note: datadict might not be populated during initial setup
+    parallel_setting = None
+    if hub.datadict:
+        parallel_setting = hub.datadict.get("parallel_setting")
+    
+    # Skip Slaves automatically (Master has system totals)
+    # User can manually enable if they want device on Slave too
+    if parallel_setting == "Slave":
         return False
-    else:
-        # Single inverter or Free mode: Create virtual device
-        return True
+    
+    # Master, single inverter, or datadict not populated: Create device
+    return True
 
 
 def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
