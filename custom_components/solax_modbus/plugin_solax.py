@@ -9963,6 +9963,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_power_energy_dashboard",  # Base target key
             name="Grid Power (Energy Dashboard)",  # Base name
             invert=True,
+            icon="mdi:transmission-tower",  # Match HA Energy Dashboard grid icon
             skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
             # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=ALL_GEN_GROUP,
@@ -10019,7 +10020,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_import_energy_dashboard",  # Base target key
             name="Grid Import Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
-            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
             filter_function=lambda v: max(0, v),  # Only integrate when > 0
             allowedtypes=GEN,  # GEN1 only
         ),

@@ -1580,7 +1580,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="battery_power_energy_dashboard",
             name="Battery Power (Energy Dashboard)",
             invert=True,
-            icon="mdi:battery-charging-medium",
         ),
     ],
     parallel_mode_supported=False,  # Plugin doesn't support parallel mode

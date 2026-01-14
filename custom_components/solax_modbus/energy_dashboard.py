@@ -152,6 +152,16 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
 
         return value_function
 
+    # Try to inherit attributes from source sensor if not specified in mapping
+    source_sensor_desc = None
+    source_key = sensor_mapping.get_source_key(getattr(data_hub, 'data', None) or getattr(data_hub, 'datadict', {}))
+    
+    # Look for source sensor in hub's sensor entities
+    if hasattr(data_hub, 'sensorEntities') and source_key in data_hub.sensorEntities:
+        source_sensor = data_hub.sensorEntities[source_key]
+        if hasattr(source_sensor, 'entity_description'):
+            source_sensor_desc = source_sensor.entity_description
+    
     # Detect sensor type: power vs energy
     # Energy sensors: use Riemann sum OR target_key contains "energy" but not "power"
     # Power sensors: target_key contains "power" (even if it also contains "energy")
@@ -161,19 +171,19 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
         ("energy" in target_key_lower and "power" not in target_key_lower)
     )
 
-    # Set attributes based on sensor type
+    # Set attributes - inherit from source if available, otherwise use defaults
     if is_energy_sensor:
-        # Energy sensor attributes
+        # Energy sensor attributes - use hardcoded classes but inherit icon
         device_class = SensorDeviceClass.ENERGY
         state_class = SensorStateClass.TOTAL_INCREASING
-        unit = UnitOfEnergy.KILO_WATT_HOUR
-        default_icon = "mdi:lightning-bolt"
+        unit = sensor_mapping.unit or UnitOfEnergy.KILO_WATT_HOUR
+        default_icon = (source_sensor_desc.icon if source_sensor_desc and source_sensor_desc.icon else "mdi:lightning-bolt")
     else:
-        # Power sensor attributes
-        device_class = SensorDeviceClass.POWER
-        state_class = SensorStateClass.MEASUREMENT
-        unit = UnitOfPower.WATT
-        default_icon = "mdi:flash"
+        # Power sensor attributes - inherit from source sensor
+        device_class = source_sensor_desc.device_class if source_sensor_desc else SensorDeviceClass.POWER
+        state_class = source_sensor_desc.state_class if source_sensor_desc else SensorStateClass.MEASUREMENT
+        unit = sensor_mapping.unit or (source_sensor_desc.native_unit_of_measurement if source_sensor_desc else UnitOfPower.WATT)
+        default_icon = (source_sensor_desc.icon if source_sensor_desc and source_sensor_desc.icon else "mdi:flash")
 
     # Add name prefix if provided
     sensor_name = f"{name_prefix}{sensor_mapping.name}" if name_prefix else sensor_mapping.name
@@ -374,9 +384,11 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
     
     # Determine if this is a Master hub
+    hub_name = getattr(hub, '_name', 'Unknown')
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
+    _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
@@ -413,7 +425,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
     
     # Get inverter name for prefix (e.g., "Solax 1")
-    hub_name = getattr(hub, '_name', 'Unknown')
     inverter_name = hub_name
 
     for sensor_mapping in mapping.mappings:
@@ -513,6 +524,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             
             # Create "Solax 1" sensor (Master individual)
             # Check if individual sensors should be skipped
+            _LOGGER.debug(f"Master individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
             if not sensor_mapping.skip_pm_individuals:
                 # For Master individual, force use of non-PM sensor by setting source_key_pm=None
                 master_individual_mapping = EnergyDashboardSensorMapping(
@@ -533,14 +545,16 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             
             # Create "Solax 2/3" sensors from Slave hubs
             # Check if individual sensors should be skipped
+            _LOGGER.debug(f"Slave individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
             if not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
                     sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=slave_hub, name_prefix=f"{slave_name} "))
-            else:
-                # For Standalone: Create only individual inverter sensor (no "All" prefix)
-                sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
-                                                          source_hub=hub, name_prefix=f"{inverter_name} "))
+        else:
+            # For Standalone: Create only individual inverter sensor (no "All" prefix)
+            # Note: skip_pm_individuals flag only applies to parallel mode (ignored here)
+            sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
+                                                      source_hub=hub, name_prefix=f"{inverter_name} "))
 
     return sensors
 
