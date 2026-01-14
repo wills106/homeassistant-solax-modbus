@@ -9982,16 +9982,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=ALL_GEN_GROUP,
         ),
         
-        # Solar Power - Individual PV Variants (PV Power 1-4) - Pattern-based
-        # Note: This mapping will be processed for each inverter (Master + Slaves)
-        # The inverter name comes from the hub context, PV variant from {n} placeholder
-        EnergyDashboardSensorMapping(
-            source_key="pv_power_{n}",  # {n} = 1, 2, 3, 4 (PV variant number)
-            target_key="pv_power_{n}_energy_dashboard",  # Will be prefixed with inverter name during creation
-            name="PV Power {n} (Energy Dashboard)",  # Will be prefixed with inverter name during creation
-            # max_variants=4 - skip in implementation if default
-            allowedtypes=ALL_GEN_GROUP,
-        ),
         
         # Battery Power (GEN2-5 only, exclude GEN1 and GEN6)
         # For Master: Creates "All Battery Power" (from pm_battery_power_charge) and "Solax 1 Battery Power" (from battery_power_charge)

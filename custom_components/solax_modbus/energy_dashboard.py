@@ -38,9 +38,9 @@ RIEMANN_ROUND_DIGITS = 3  # Precision for integration result
 class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
-    source_key: str  # Original sensor key (e.g., "measured_power") or pattern with {n} placeholder
-    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard") or pattern with {n}
-    name: str  # Display name (e.g., "Grid Power (Energy Dashboard)") or pattern with {n}
+    source_key: str  # Original sensor key (e.g., "measured_power")
+    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard")
+    name: str  # Display name (e.g., "Grid Power (Energy Dashboard)")
     source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
     icon: Optional[str] = None  # Optional icon override
@@ -50,7 +50,6 @@ class EnergyDashboardSensorMapping:
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
     skip_pm_individuals: bool = False  # Skip creating individual sensors (Master "SolaX 1" and Slave "SolaX 2/3")
     allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
-    max_variants: int = 4  # Maximum number of variants for pattern-based mapping (when {n} placeholder is used)
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
@@ -429,87 +428,8 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             ):
                 continue  # Skip this mapping for this inverter type
         
-        # Check if this is a pattern-based mapping (contains {n} placeholder)
-        has_pattern = "{n}" in sensor_mapping.source_key or "{n}" in sensor_mapping.target_key or "{n}" in sensor_mapping.name
-        
-        if has_pattern:
-            # Pattern-based mapping: create sensors for each detected variant
-            # For Master: Create for Master + all Slaves
-            # For Standalone: Create only for this inverter
-            
-            # Detect variants from Master hub first
-            master_hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
-            base_source_key = sensor_mapping.source_key.replace("{n}", "")
-            master_variants = []
-            for n in range(1, sensor_mapping.max_variants + 1):
-                variant_key = f"{base_source_key}{n}"
-                if variant_key in master_hub_data:
-                    master_variants.append(n)
-            
-            # For Master: Create "Solax 1" variants
-            for variant_num in master_variants:
-                variant_source_key = sensor_mapping.source_key.replace("{n}", str(variant_num))
-                variant_target_key = sensor_mapping.target_key.replace("{n}", str(variant_num))
-                variant_name = sensor_mapping.name.replace("{n}", str(variant_num))
-                
-                variant_mapping = EnergyDashboardSensorMapping(
-                    source_key=variant_source_key,
-                    target_key=variant_target_key,
-                    name=variant_name,
-                    source_key_pm=sensor_mapping.source_key_pm,
-                    invert=sensor_mapping.invert,
-                    icon=sensor_mapping.icon,
-                    unit=sensor_mapping.unit,
-                    invert_function=sensor_mapping.invert_function,
-                    filter_function=sensor_mapping.filter_function,
-                    use_riemann_sum=sensor_mapping.use_riemann_sum,
-                    allowedtypes=sensor_mapping.allowedtypes,
-                    max_variants=sensor_mapping.max_variants,
-                )
-                
-                # Create "Solax 1" variant sensor
-                sensors.extend(_create_sensor_from_mapping(variant_mapping, hub, energy_dashboard_device_info, 
-                                                          source_hub=hub, name_prefix=f"{inverter_name} "))
-            
-            # For Master: Create variants for each Slave
-            # Check if individual sensors should be skipped
-            if is_master and not sensor_mapping.skip_pm_individuals:
-                for slave_name, slave_hub in slave_hubs:
-                    # Detect variants from Slave hub
-                    slave_hub_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
-                    slave_variants = []
-                    for n in range(1, sensor_mapping.max_variants + 1):
-                        variant_key = f"{base_source_key}{n}"
-                        if variant_key in slave_hub_data:
-                            slave_variants.append(n)
-                    
-                    # Create sensors for each Slave variant
-                    for variant_num in slave_variants:
-                        variant_source_key = sensor_mapping.source_key.replace("{n}", str(variant_num))
-                        variant_target_key = sensor_mapping.target_key.replace("{n}", str(variant_num))
-                        variant_name = sensor_mapping.name.replace("{n}", str(variant_num))
-                        
-                        variant_mapping = EnergyDashboardSensorMapping(
-                            source_key=variant_source_key,
-                            target_key=variant_target_key,
-                            name=variant_name,
-                            source_key_pm=sensor_mapping.source_key_pm,
-                            invert=sensor_mapping.invert,
-                            icon=sensor_mapping.icon,
-                            unit=sensor_mapping.unit,
-                            invert_function=sensor_mapping.invert_function,
-                            filter_function=sensor_mapping.filter_function,
-                            use_riemann_sum=sensor_mapping.use_riemann_sum,
-                            allowedtypes=sensor_mapping.allowedtypes,
-                            max_variants=sensor_mapping.max_variants,
-                        )
-                        
-                        # Create "Solax 2/3" variant sensor from Slave hub
-                        sensors.extend(_create_sensor_from_mapping(variant_mapping, hub, energy_dashboard_device_info,
-                                                                  source_hub=slave_hub, name_prefix=f"{slave_name} "))
-        else:
-            # Regular mapping: create sensors based on Master/Standalone
-            if is_master:
+        # Create sensors based on Master/Standalone
+        if is_master:
                 # For Master: Create "All" sensor and individual inverter sensors
                 # Check if this sensor needs aggregation for "All" version
                 needs_agg = _needs_aggregation(sensor_mapping.target_key)
