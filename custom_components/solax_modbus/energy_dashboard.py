@@ -108,8 +108,11 @@ def create_energy_dashboard_device_info(hub) -> DeviceInfo:
     if hub.inverterNameSuffix:
         plugin_name = f"{plugin_name} {hub.inverterNameSuffix}"
 
+    # Normalize hub name to lowercase with underscores for consistent identifier
+    normalized_hub_name = hub._name.lower().replace(" ", "_")
+    
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{hub._name}_energy_dashboard", "ENERGY_DASHBOARD")},
+        identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},
         manufacturer=hub.plugin.plugin_manufacturer,
         model=f"{hub.plugin.inverter_model} - Energy Dashboard",
         name=f"{plugin_name} - Energy Dashboard",
