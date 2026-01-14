@@ -53,7 +53,7 @@ def load_debug_settings(config, hass=None):
             yaml_debug_settings = domain_data.get("_debug_settings", {})
             if yaml_debug_settings and isinstance(yaml_debug_settings, dict):
                 debug_settings.update(yaml_debug_settings)
-                _LOGGER.debug(f"Loaded debug settings from YAML: {yaml_debug_settings}")
+                _LOGGER.info(f"Loaded debug settings from YAML: {yaml_debug_settings}")
         except Exception as e:
             _LOGGER.debug(f"Error reading debug settings from YAML configuration: {e}")
     
@@ -116,5 +116,5 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
                 break
     
     result = inverter_settings.get(setting_name, default) if inverter_settings else default
-    _LOGGER.debug(f"get_debug_setting({inverter_name}, {setting_name}): {result} (available inverters: {list(debug_settings.keys())})")
+    _LOGGER.info(f"get_debug_setting({inverter_name}, {setting_name}): {result} (available inverters: {list(debug_settings.keys())}, matched: {inverter_settings is not None})")
     return result
