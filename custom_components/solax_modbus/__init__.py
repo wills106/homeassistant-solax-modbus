@@ -38,6 +38,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
+import voluptuous as vol
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
@@ -78,6 +79,7 @@ from .const import (
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
     CONF_CORE_HUB,
+    CONF_DEBUG_SETTINGS,
     DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_BAUDRATE,
@@ -120,7 +122,22 @@ from .const import (
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+# CONFIG_SCHEMA allows YAML configuration ONLY for debug_settings (DEVELOPMENT/TESTING/DEBUGGING ONLY)
+# All other configuration must be done via config flow (UI)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Optional(DOMAIN): vol.Schema(
+            {
+                vol.Optional(CONF_DEBUG_SETTINGS): vol.Schema(
+                    {str: vol.Schema({str: cv.boolean})}  # Inverter name -> {setting_name: bool}
+                )
+            },
+            extra=vol.ALLOW_EXTRA,  # Allow extra keys but they won't be processed
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 empty_hub_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
@@ -183,8 +200,6 @@ def should_register_be_loaded(hass, hub, descriptor):
         return False 
 
 
-
-
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener, called when the config entry options are changed."""
     await hass.config_entries.async_reload(entry.entry_id)
@@ -193,6 +208,16 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
+    
+    # Extract debug_settings from YAML configuration (DEVELOPMENT/TESTING/DEBUGGING ONLY)
+    # Store in hass.data so debug.py can access it
+    yaml_config = config.get(DOMAIN, {})
+    debug_settings = yaml_config.get(CONF_DEBUG_SETTINGS)
+    if debug_settings:
+        hass.data[DOMAIN]["_debug_settings"] = debug_settings
+    else:
+        hass.data[DOMAIN]["_debug_settings"] = {}
+    
     # Register helper services to force-stop hubs
     async def _svc_stop_all(call):
         """Force-stop all SolaX hubs (kills timers/tasks/sockets)."""
