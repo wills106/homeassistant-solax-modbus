@@ -10064,7 +10064,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # Battery Charge Energy
         # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
-            source_key="e_charge_today",
+            source_key="battery_input_energy_today",
             target_key="battery_energy_charge_energy_dashboard",
             name="Battery Charge Energy (Energy Dashboard)",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
@@ -10082,7 +10082,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # Battery Discharge Energy
         # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
-            source_key="e_discharge_today",
+            source_key="battery_output_energy_today",
             target_key="battery_energy_discharge_energy_dashboard",
             name="Battery Discharge Energy (Energy Dashboard)",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
