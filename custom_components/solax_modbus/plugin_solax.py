@@ -10043,56 +10043,44 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN,  # GEN1 only
         ),
         
-        # Battery Charge Energy (GEN2-6 only)
-        # For Master: Creates "All Battery Charge Energy" (sum of all inverters) and "Solax 1 Battery Charge Energy"
-        # For Standalone: Creates only "{Inverter Name} Battery Charge Energy"
-        # For Slaves: Creates "Solax {n} Battery Charge Energy" (from Slave hub)
-        # Note: "All" version needs aggregation logic to sum Master + Slaves
+        # Battery Charge Energy
+        # GEN3-6: Use today sensor to avoid lifetime total spikes
         EnergyDashboardSensorMapping(
-            source_key="battery_input_energy_total",
-            target_key="battery_energy_charge_energy_dashboard",  # Base target key
-            name="Battery Charge Energy (Energy Dashboard)",  # Base name
-            # Note: "All" version requires aggregation (sum Master + Slaves)
-            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            source_key="e_charge_today",
+            target_key="battery_energy_charge_energy_dashboard",
+            name="Battery Charge Energy (Energy Dashboard)",
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # GEN1-2: No today sensor available, skip for now (would need Riemann sum)
+        # Note: "All" version requires aggregation (sum Master + Slaves)
+        
+        # Battery Discharge Energy
+        # GEN3-6: Use today sensor to avoid lifetime total spikes
+        EnergyDashboardSensorMapping(
+            source_key="e_discharge_today",
+            target_key="battery_energy_discharge_energy_dashboard",
+            name="Battery Discharge Energy (Energy Dashboard)",
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # GEN1-2: No today sensor available, skip for now (would need Riemann sum)
+        # Note: "All" version requires aggregation (sum Master + Slaves)
+        
+        # Solar Production Energy
+        # GEN2-6: Use today sensor to avoid lifetime total spikes
+        EnergyDashboardSensorMapping(
+            source_key="today_s_solar_energy",
+            target_key="solar_energy_production_energy_dashboard",
+            name="Solar Production Energy (Energy Dashboard)",
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        
-        # Battery Discharge Energy (GEN2-6 only)
-        # For Master: Creates "All Battery Discharge Energy" (sum of all inverters) and "Solax 1 Battery Discharge Energy"
-        # For Standalone: Creates only "{Inverter Name} Battery Discharge Energy"
-        # For Slaves: Creates "Solax {n} Battery Discharge Energy" (from Slave hub)
-        # Note: "All" version needs aggregation logic to sum Master + Slaves
+        # GEN1: Use Riemann sum integration from solar power
         EnergyDashboardSensorMapping(
-            source_key="battery_output_energy_total",
-            target_key="battery_energy_discharge_energy_dashboard",  # Base target key
-            name="Battery Discharge Energy (Energy Dashboard)",  # Base name
-            # Note: "All" version requires aggregation (sum Master + Slaves)
-            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
-        ),
-        
-        # Solar Production Energy (GEN2-6: direct register, GEN1: Riemann sum)
-        # For Master: Creates "All Solar Production Energy" (sum of all inverters) and "Solax 1 Solar Production Energy"
-        # For Standalone: Creates only "{Inverter Name} Solar Production Energy"
-        # For Slaves: Creates "Solax {n} Solar Production Energy" (from Slave hub)
-        # GEN2-6: Direct register
-        EnergyDashboardSensorMapping(
-            source_key="total_solar_energy",
-            target_key="solar_energy_production_energy_dashboard",  # Base target key
-            name="Solar Production Energy (Energy Dashboard)",  # Base name
-            # Note: "All" version requires aggregation (sum Master + Slaves)
-            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
-        ),
-        
-        # GEN1: Solar Production Energy (Riemann sum from solar power, always positive)
-        EnergyDashboardSensorMapping(
-            source_key="solar_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="solar_energy_production_energy_dashboard",  # Base target key
-            name="Solar Production Energy (Energy Dashboard)",  # Base name
+            source_key="solar_power_energy_dashboard",
+            target_key="solar_energy_production_energy_dashboard",
+            name="Solar Production Energy (Energy Dashboard)",
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),  # Always positive
-            allowedtypes=GEN,  # GEN1 only
+            allowedtypes=GEN,
         ),
     ],
 )
