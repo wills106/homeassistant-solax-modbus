@@ -128,6 +128,7 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
         source_hub: Optional hub to read data from (if different from hub, e.g., for Slave sensors)
         name_prefix: Optional prefix to add to sensor name (e.g., "All ", "Solax 1 ")
     """
+    _LOGGER.debug(f"_create_sensor_from_mapping: name_prefix='{name_prefix}', target_key={sensor_mapping.target_key}")
     sensors = []
     
     # Use source_hub if provided, otherwise use hub
@@ -172,10 +173,18 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
     # Add name prefix if provided
     sensor_name = f"{name_prefix}{sensor_mapping.name}" if name_prefix else sensor_mapping.name
     
+    # Create unique key by adding prefix to target_key to avoid collisions
+    # Convert name_prefix ("All ", "SolaX 1 ", etc.) to key_prefix ("all_", "solax_1_", etc.)
+    if name_prefix:
+        key_prefix = name_prefix.lower().replace(" ", "_")
+        sensor_key = f"{key_prefix}{sensor_mapping.target_key}"
+    else:
+        sensor_key = sensor_mapping.target_key
+    
     # Create sensor entity description
     sensor_desc = BaseModbusSensorEntityDescription(
         name=sensor_name,
-        key=sensor_mapping.target_key,
+        key=sensor_key,
         native_unit_of_measurement=unit,
         device_class=device_class,
         state_class=state_class,
@@ -302,7 +311,19 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
         mapping: EnergyDashboardMapping configuration
         hass: Home Assistant instance (optional, needed for Slave hub access)
     """
-    _LOGGER.error("TEST ERROR LOG - create_energy_dashboard_sensors called")
+    # NOTE: If logging from this module stops working, clear Python cache to force recompile:
+    # rm -f /homeassistant/custom_components/solax_modbus/__pycache__/energy_dashboard*.pyc
+    # Then restart Home Assistant.
+    
+    # try:
+    #     import sys
+    #     sys.stderr.write("STDERR: create_energy_dashboard_sensors called\n")
+    #     sys.stderr.flush()
+    #     _LOGGER.error("TEST ERROR LOG - create_energy_dashboard_sensors called")
+    # except Exception as e:
+    #     sys.stderr.write(f"STDERR: Exception during logging: {e}\n")
+    #     sys.stderr.flush()
+    #return []
     
     if not mapping.enabled:
         _LOGGER.debug("Energy Dashboard mapping is disabled")
