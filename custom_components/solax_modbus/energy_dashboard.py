@@ -48,6 +48,7 @@ class EnergyDashboardSensorMapping:
     invert_function: Optional[Callable] = None  # Custom invert function if needed
     filter_function: Optional[Callable] = None  # Universal filter function (applies to all sensor types)
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
+    skip_pm_individuals: bool = False  # Skip creating individual sensors (Master "SolaX 1" and Slave "SolaX 2/3")
     allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
     max_variants: int = 4  # Maximum number of variants for pattern-based mapping (when {n} placeholder is used)
 
@@ -471,9 +472,8 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                                                           source_hub=hub, name_prefix=f"{inverter_name} "))
             
             # For Master: Create variants for each Slave
-            # Skip grid sensors for Slaves (they don't measure grid)
-            is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
-            if is_master and not is_grid_sensor:
+            # Check if individual sensors should be skipped
+            if is_master and not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
                     # Detect variants from Slave hub
                     slave_hub_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
@@ -596,9 +596,8 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                                                               source_hub=hub, name_prefix="All "))
                 
                 # Create "Solax 1" sensor (Master individual)
-                # Skip grid sensors for Master individual (identical to "All" since Slaves don't measure grid)
-                is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
-                if not is_grid_sensor:
+                # Check if individual sensors should be skipped
+                if not sensor_mapping.skip_pm_individuals:
                     # For Master individual, force use of non-PM sensor by setting source_key_pm=None
                     master_individual_mapping = EnergyDashboardSensorMapping(
                         source_key=sensor_mapping.source_key,
@@ -618,9 +617,8 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                                                               source_hub=hub, name_prefix=f"{inverter_name} "))
                 
                 # Create "Solax 2/3" sensors from Slave hubs
-                # Skip grid sensors for Slaves (they don't measure grid - only Master does)
-                is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
-                if not is_grid_sensor:
+                # Check if individual sensors should be skipped
+                if not sensor_mapping.skip_pm_individuals:
                     for slave_name, slave_hub in slave_hubs:
                         sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
                                                                   source_hub=slave_hub, name_prefix=f"{slave_name} "))
