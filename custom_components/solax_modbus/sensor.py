@@ -241,9 +241,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
                             # Create a new list to track Energy Dashboard entities
                             energy_dashboard_entities = []
-                            # Pass empty name_prefix since Energy Dashboard sensors already have device-based prefix
                             entityToList(hub, hub_name, energy_dashboard_entities, initial_groups, computedRegs, hub.device_info,
-                                         energy_dashboard_sensors, "", "", None, readFollowUp)
+                                         energy_dashboard_sensors, inverter_name_suffix, "", None, readFollowUp)
                             
                             # Add Energy Dashboard entities to main entities list and register them
                             if energy_dashboard_entities:
