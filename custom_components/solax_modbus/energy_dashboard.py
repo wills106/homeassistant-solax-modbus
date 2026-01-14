@@ -385,6 +385,11 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     
     # Determine if this is a Master hub
     hub_name = getattr(hub, '_name', 'Unknown')
+    normalized_hub_name = hub._name.lower().replace(" ", "_")
+    # All sensors in this device get the device identifier as name prefix
+    # HA will automatically strip this prefix from display names
+    device_name_prefix = f"{normalized_hub_name}_energy_dashboard "
+    
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
@@ -462,7 +467,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                     allowedtypes=sensor_mapping.allowedtypes,
                 )
                 sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
-                                                          source_hub=hub, name_prefix="All "))
+                                                          source_hub=hub, name_prefix=device_name_prefix))
             elif needs_agg:
                 # Skip aggregation for Riemann sum sensors (they integrate from power, already aggregated)
                 if sensor_mapping.use_riemann_sum:
@@ -481,7 +486,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         allowedtypes=sensor_mapping.allowedtypes,
                     )
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
-                                                              source_hub=hub, name_prefix="All "))
+                                                              source_hub=hub, name_prefix=device_name_prefix))
                 else:
                     # Create aggregated "All" sensor (sum Master + Slaves)
                     all_mapping = EnergyDashboardSensorMapping(
@@ -499,7 +504,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                     )
                     # Create sensor with aggregated value function
                     aggregated_sensor = _create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
-                                                                   source_hub=hub, name_prefix="All ")
+                                                                   source_hub=hub, name_prefix=device_name_prefix)
                     if aggregated_sensor:
                         # Replace value function with aggregated version
                         aggregated_sensor[0].value_function = _create_aggregated_value_function(all_mapping, hub, slave_hubs)
@@ -520,8 +525,8 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         allowedtypes=sensor_mapping.allowedtypes,
                     )
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
-                                                              source_hub=hub, name_prefix="All "))
-            
+                                                              source_hub=hub, name_prefix=device_name_prefix))
+
             # Create "Solax 1" sensor (Master individual)
             # Check if individual sensors should be skipped
             _LOGGER.debug(f"Master individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
@@ -541,7 +546,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                     allowedtypes=sensor_mapping.allowedtypes,
                 )
                 sensors.extend(_create_sensor_from_mapping(master_individual_mapping, hub, energy_dashboard_device_info,
-                                                          source_hub=hub, name_prefix=f"{inverter_name} "))
+                                                          source_hub=hub, name_prefix=device_name_prefix))
             
             # Create "Solax 2/3" sensors from Slave hubs
             # Check if individual sensors should be skipped
@@ -549,12 +554,12 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             if not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
                     sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
-                                                              source_hub=slave_hub, name_prefix=f"{slave_name} "))
+                                                              source_hub=slave_hub, name_prefix=device_name_prefix))
         else:
             # For Standalone: Create only individual inverter sensor (no "All" prefix)
             # Note: skip_pm_individuals flag only applies to parallel mode (ignored here)
             sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
-                                                      source_hub=hub, name_prefix=f"{inverter_name} "))
+                                                      source_hub=hub, name_prefix=device_name_prefix))
 
     return sensors
 
