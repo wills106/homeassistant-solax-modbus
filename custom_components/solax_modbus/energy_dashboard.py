@@ -102,17 +102,21 @@ class EnergyDashboardMapping:
 # Import it here for reference (but actual class is in sensor.py to avoid circular imports)
 
 
-def create_energy_dashboard_device_info(hub) -> DeviceInfo:
+def create_energy_dashboard_device_info(hub, hass=None) -> DeviceInfo:
     """Create DeviceInfo for Energy Dashboard virtual device."""
     # Normalize hub name to lowercase with underscores for consistent identifier
     normalized_hub_name = hub._name.lower().replace(" ", "_")
     
+    # Use documentation URL for configuration_url
+    config_url = "https://homeassistant-solax-modbus.readthedocs.io/en/latest/"
+    
     return DeviceInfo(
         identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},
-        manufacturer=hub.plugin.plugin_manufacturer,
-        model=f"{hub.plugin.inverter_model} - Energy Dashboard",
+        manufacturer="providing curated Grid, Solar, Battery power & energy sensors with parallel mode aggregation support for Home Assistant Energy Dashboard integration",
+        model="Energy Dashboard Metrics",
         name=f"{hub._name} Energy Dashboard",
         via_device=(DOMAIN, hub._name, INVERTER_IDENT),
+        configuration_url=config_url,
     )
 
 
@@ -381,7 +385,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         return []
 
     sensors = []
-    energy_dashboard_device_info = create_energy_dashboard_device_info(hub)
+    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
     
     # Determine if this is a Master hub
     hub_name = getattr(hub, '_name', 'Unknown')
