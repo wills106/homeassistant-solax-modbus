@@ -9959,13 +9959,11 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # Note: Grid power is system-wide, so all inverters would have same value (single grid meter)
         EnergyDashboardSensorMapping(
             source_key="measured_power",
-            # source_key_pm=None - skip in implementation (default)
             target_key="grid_power_energy_dashboard",  # Base target key
             name="Grid Power (Energy Dashboard)",  # Base name
             invert=True,
             icon="mdi:transmission-tower",  # Match HA Energy Dashboard grid icon
             skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
-            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=ALL_GEN_GROUP,
         ),
         
@@ -9978,7 +9976,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key_pm="pm_total_pv_power",  # Used for "All" sensor on Master
             target_key="solar_power_energy_dashboard",  # Base target key
             name="Solar Power (Energy Dashboard)",  # Base name
-            # Note: "All" prefix added automatically for Master during sensor creation
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=ALL_GEN_GROUP,
         ),
@@ -9994,7 +9991,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="battery_power_energy_dashboard",  # Base target key
             name="Battery Power (Energy Dashboard)",  # Base name
             invert=True,
-            # Note: "All" prefix added automatically for Master during sensor creation
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
         ),
@@ -10043,7 +10039,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_export_energy_dashboard",  # Base target key
             name="Grid Export Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
-            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
             filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
             allowedtypes=GEN,  # GEN1 only
         ),
@@ -10057,7 +10052,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_input_energy_total",
             target_key="battery_energy_charge_energy_dashboard",  # Base target key
             name="Battery Charge Energy (Energy Dashboard)",  # Base name
-            # Note: "All" prefix added automatically for Master during sensor creation
             # Note: "All" version requires aggregation (sum Master + Slaves)
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
@@ -10072,7 +10066,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_output_energy_total",
             target_key="battery_energy_discharge_energy_dashboard",  # Base target key
             name="Battery Discharge Energy (Energy Dashboard)",  # Base name
-            # Note: "All" prefix added automatically for Master during sensor creation
             # Note: "All" version requires aggregation (sum Master + Slaves)
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
@@ -10087,7 +10080,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="total_solar_energy",
             target_key="solar_energy_production_energy_dashboard",  # Base target key
             name="Solar Production Energy (Energy Dashboard)",  # Base name
-            # Note: "All" prefix added automatically for Master during sensor creation
             # Note: "All" version requires aggregation (sum Master + Slaves)
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
@@ -10100,7 +10092,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Solar Production Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),  # Always positive
-            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=GEN,  # GEN1 only
         ),
     ],
