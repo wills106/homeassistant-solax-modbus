@@ -236,7 +236,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     result = await should_create_energy_dashboard_device(hub, config, hass, _LOGGER, initial_groups)
                     if result:
                         start_time = time.time()
-                        energy_dashboard_sensors = create_energy_dashboard_sensors(hub, mapping, hass, config)
+                        energy_dashboard_sensors = await create_energy_dashboard_sensors(hub, mapping, hass, config)
                         if energy_dashboard_sensors:
                             _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
                             # Create a new list to track Energy Dashboard entities
