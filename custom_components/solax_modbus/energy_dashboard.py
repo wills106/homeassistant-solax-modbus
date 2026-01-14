@@ -104,10 +104,6 @@ class EnergyDashboardMapping:
 
 def create_energy_dashboard_device_info(hub) -> DeviceInfo:
     """Create DeviceInfo for Energy Dashboard virtual device."""
-    plugin_name = hub.plugin.plugin_name
-    if hub.inverterNameSuffix:
-        plugin_name = f"{plugin_name} {hub.inverterNameSuffix}"
-
     # Normalize hub name to lowercase with underscores for consistent identifier
     normalized_hub_name = hub._name.lower().replace(" ", "_")
     
@@ -115,7 +111,7 @@ def create_energy_dashboard_device_info(hub) -> DeviceInfo:
         identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},
         manufacturer=hub.plugin.plugin_manufacturer,
         model=f"{hub.plugin.inverter_model} - Energy Dashboard",
-        name=f"{plugin_name} - Energy Dashboard",
+        name=f"{hub._name} - Energy Dashboard",
         via_device=(DOMAIN, hub._name, INVERTER_IDENT),
     )
 
