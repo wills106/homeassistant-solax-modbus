@@ -449,7 +449,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         filter_function=sensor_mapping.filter_function,
                         use_riemann_sum=sensor_mapping.use_riemann_sum,
                         allowedtypes=sensor_mapping.allowedtypes,
-                        max_variants=sensor_mapping.max_variants,
                     )
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix="All "))
@@ -469,7 +468,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                             filter_function=sensor_mapping.filter_function,
                             use_riemann_sum=sensor_mapping.use_riemann_sum,
                             allowedtypes=sensor_mapping.allowedtypes,
-                            max_variants=sensor_mapping.max_variants,
                         )
                         sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                                   source_hub=hub, name_prefix="All "))
@@ -487,7 +485,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                             filter_function=sensor_mapping.filter_function,
                             use_riemann_sum=sensor_mapping.use_riemann_sum,
                             allowedtypes=sensor_mapping.allowedtypes,
-                            max_variants=sensor_mapping.max_variants,
                         )
                         # Create sensor with aggregated value function
                         aggregated_sensor = _create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
@@ -510,7 +507,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         filter_function=sensor_mapping.filter_function,
                         use_riemann_sum=sensor_mapping.use_riemann_sum,
                         allowedtypes=sensor_mapping.allowedtypes,
-                        max_variants=sensor_mapping.max_variants,
                     )
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix="All "))
@@ -531,7 +527,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         filter_function=sensor_mapping.filter_function,
                         use_riemann_sum=sensor_mapping.use_riemann_sum,
                         allowedtypes=sensor_mapping.allowedtypes,
-                        max_variants=sensor_mapping.max_variants,
                     )
                     sensors.extend(_create_sensor_from_mapping(master_individual_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix=f"{inverter_name} "))
