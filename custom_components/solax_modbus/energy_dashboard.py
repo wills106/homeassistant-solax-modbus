@@ -111,7 +111,7 @@ def create_energy_dashboard_device_info(hub) -> DeviceInfo:
         identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},
         manufacturer=hub.plugin.plugin_manufacturer,
         model=f"{hub.plugin.inverter_model} - Energy Dashboard",
-        name=f"{hub._name} - Energy Dashboard",
+        name=f"{hub._name} Energy Dashboard",
         via_device=(DOMAIN, hub._name, INVERTER_IDENT),
     )
 

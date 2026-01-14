@@ -80,8 +80,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
         return True
 
     inverter_name_suffix = ""
-    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-        inverter_name_suffix = hub.inverterNameSuffix + " "
+    # Test: Comment out to prevent adding inverter suffix to Energy Dashboard sensors
+    # if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
+    #     inverter_name_suffix = hub.inverterNameSuffix + " "
 
     entityToList(hub, hub_name, entities, initial_groups, computedRegs, hub.device_info,
                  plugin.SENSOR_TYPES, inverter_name_suffix, "", None, readFollowUp)
@@ -241,7 +242,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
                             # Create a new list to track Energy Dashboard entities
                             energy_dashboard_entities = []
-                            entityToList(hub, hub_name, energy_dashboard_entities, initial_groups, computedRegs, hub.device_info,
+                            # Use Energy Dashboard device name as platform name for entity_id prefix
+                            energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
+                            entityToList(hub, energy_dashboard_platform_name, energy_dashboard_entities, initial_groups, computedRegs, hub.device_info,
                                          energy_dashboard_sensors, inverter_name_suffix, "", None, readFollowUp)
                             
                             # Add Energy Dashboard entities to main entities list and register them
