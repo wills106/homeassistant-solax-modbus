@@ -143,7 +143,12 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
             # Use captured_hub's data dictionary instead of the passed datadict
             # This allows reading from Slave hubs
             hub_data = getattr(captured_hub, 'data', None) or getattr(captured_hub, 'datadict', datadict)
-            return sensor_mapping.get_value(hub_data)
+            try:
+                return sensor_mapping.get_value(hub_data)
+            except Exception as e:
+                hub_name = getattr(captured_hub, '_name', 'Unknown')
+                _LOGGER.error(f"Error getting value for {sensor_mapping.target_key} from hub {hub_name}: {e}")
+                return None
 
         return value_function
 
@@ -226,20 +231,56 @@ def _find_slave_hubs(hass, master_hub):
     domain_data = hass.data.get(DOMAIN, {})
     master_name = getattr(master_hub, '_name', None)
     
+    _LOGGER.debug(f"Scanning for Slave hubs. Master: {master_name}, Available hubs: {list(domain_data.keys())}")
+    
     for hub_name, hub_data in domain_data.items():
         # Skip self (Master)
         if hub_name == master_name:
             continue
         
+        _LOGGER.debug(f"Checking hub: {hub_name}")
+        
         hub_instance = hub_data.get("hub")
         if not hub_instance:
+            _LOGGER.debug(f"Hub {hub_name} has no hub instance, skipping")
             continue
         
-        # Check if Slave
+        # Check if Slave - try hub.data first, then entity state as fallback
         hub_data_dict = getattr(hub_instance, 'data', None) or getattr(hub_instance, 'datadict', {})
         parallel_setting = hub_data_dict.get("parallel_setting")
+        _LOGGER.debug(f"Hub {hub_name} parallel_setting from data check: {parallel_setting}")
+        
+        # If not in hub data, try entity state (may not have been read from inverter yet)
+        if parallel_setting is None or parallel_setting == "unknown":
+            _LOGGER.debug(f"Hub {hub_name} trying fallback methods (parallel_setting was {parallel_setting})")
+            entity_name = hub_name.lower().replace(" ", "_")
+            entity_id = f"select.{entity_name}_parallel_setting"
+            try:
+                state = hass.states.get(entity_id)
+                _LOGGER.debug(f"Hub {hub_name} entity {entity_id} state: {state.state if state else 'not found'}")
+                if state and state.state and state.state != "unknown":
+                    parallel_setting = state.state
+                    _LOGGER.debug(f"Hub {hub_name} parallel_setting from entity state: {parallel_setting}")
+                else:
+                    # Entity state is unknown, try config entry options as last resort
+                    _LOGGER.debug(f"Hub {hub_name} entity state unusable, trying config entries")
+                    # This reads the user-configured value before inverter polling
+                    for entry in hass.config_entries.async_entries(DOMAIN):
+                        _LOGGER.debug(f"Hub {hub_name} checking config entry: {entry.title}")
+                        if entry.title == hub_name or entry.data.get("name") == hub_name:
+                            parallel_setting = entry.options.get("parallel_setting")
+                            _LOGGER.debug(f"Hub {hub_name} found matching entry, parallel_setting: {parallel_setting}")
+                            if parallel_setting:
+                                _LOGGER.debug(f"Hub {hub_name} parallel_setting from config entry: {parallel_setting}")
+                            break
+            except Exception as e:
+                _LOGGER.debug(f"Hub {hub_name} could not read parallel_setting: {e}")
+        else:
+            _LOGGER.debug(f"Hub {hub_name} parallel_setting from hub.data: {parallel_setting}")
+        
         if parallel_setting == "Slave":
             slave_hubs.append((hub_name, hub_instance))
+            _LOGGER.debug(f"Added {hub_name} as Slave hub")
     
     return slave_hubs
 
@@ -303,7 +344,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
     return value_function
 
 
-def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=None) -> list:
+async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=None) -> list:
     """Generate Energy Dashboard sensor entities from mapping.
     
     Args:
@@ -340,10 +381,33 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if is_master and hass:
-        slave_hubs = _find_slave_hubs(hass, hub)
-        if slave_hubs:
-            _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard")
-        else:
+        # Retry slave detection with progressive delays to handle startup timing issues
+        # Some Slave hubs may not have loaded their parallel_setting yet
+        import asyncio
+        max_attempts = 4
+        delay = 1.0  # Start with 1 second
+        
+        for attempt in range(max_attempts):
+            # Wait before checking (progressive delays: 1s, 2s, 4s, 8s)
+            await asyncio.sleep(delay)
+            delay *= 2  # Double the delay for next attempt
+            if attempt > 0:
+                _LOGGER.debug(f"Retrying Slave detection (attempt {attempt + 1}/{max_attempts})")
+            
+            current_slaves = _find_slave_hubs(hass, hub)
+            
+            # Update if we found more Slaves than before
+            if len(current_slaves) > len(slave_hubs):
+                slave_hubs = current_slaves
+                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
+            elif current_slaves and not slave_hubs:
+                # First Slaves found
+                slave_hubs = current_slaves
+                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
+            
+            # Continue through all attempts to give slow-loading Slaves time
+        
+        if not slave_hubs:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif is_master and not hass:
         _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
@@ -407,7 +471,9 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
                                                           source_hub=hub, name_prefix=f"{inverter_name} "))
             
             # For Master: Create variants for each Slave
-            if is_master:
+            # Skip grid sensors for Slaves (they don't measure grid)
+            is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
+            if is_master and not is_grid_sensor:
                 for slave_name, slave_hub in slave_hubs:
                     # Detect variants from Slave hub
                     slave_hub_data = getattr(slave_hub, 'data', None) or getattr(slave_hub, 'datadict', {})
@@ -530,13 +596,34 @@ def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=N
                                                               source_hub=hub, name_prefix="All "))
                 
                 # Create "Solax 1" sensor (Master individual)
-                sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
-                                                          source_hub=hub, name_prefix=f"{inverter_name} "))
+                # Skip grid sensors for Master individual (identical to "All" since Slaves don't measure grid)
+                is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
+                if not is_grid_sensor:
+                    # For Master individual, force use of non-PM sensor by setting source_key_pm=None
+                    master_individual_mapping = EnergyDashboardSensorMapping(
+                        source_key=sensor_mapping.source_key,
+                        target_key=sensor_mapping.target_key,
+                        name=sensor_mapping.name,
+                        source_key_pm=None,  # Force non-PM sensor for Master individual
+                        invert=sensor_mapping.invert,
+                        icon=sensor_mapping.icon,
+                        unit=sensor_mapping.unit,
+                        invert_function=sensor_mapping.invert_function,
+                        filter_function=sensor_mapping.filter_function,
+                        use_riemann_sum=sensor_mapping.use_riemann_sum,
+                        allowedtypes=sensor_mapping.allowedtypes,
+                        max_variants=sensor_mapping.max_variants,
+                    )
+                    sensors.extend(_create_sensor_from_mapping(master_individual_mapping, hub, energy_dashboard_device_info,
+                                                              source_hub=hub, name_prefix=f"{inverter_name} "))
                 
                 # Create "Solax 2/3" sensors from Slave hubs
-                for slave_name, slave_hub in slave_hubs:
-                    sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
-                                                              source_hub=slave_hub, name_prefix=f"{slave_name} "))
+                # Skip grid sensors for Slaves (they don't measure grid - only Master does)
+                is_grid_sensor = "grid" in sensor_mapping.target_key.lower()
+                if not is_grid_sensor:
+                    for slave_name, slave_hub in slave_hubs:
+                        sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
+                                                                  source_hub=slave_hub, name_prefix=f"{slave_name} "))
             else:
                 # For Standalone: Create only individual inverter sensor (no "All" prefix)
                 sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
