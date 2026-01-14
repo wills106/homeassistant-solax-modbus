@@ -10002,12 +10002,21 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # For Standalone: Creates only "{Inverter Name} Grid Import Energy"
         # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
         # GEN2-6: Direct register
+        # GEN3-6: Use today sensor (best - no spikes)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_import_energy",
+            target_key="grid_energy_import_energy_dashboard",
+            name="Grid Import Energy (Energy Dashboard)",
+            skip_pm_individuals=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # GEN2: Use lifetime total (fallback - will spike)
         EnergyDashboardSensorMapping(
             source_key="grid_import_total",
-            target_key="grid_energy_import_energy_dashboard",  # Base target key
-            name="Grid Import Energy (Energy Dashboard)",  # Base name
-            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+            target_key="grid_energy_import_energy_dashboard",
+            name="Grid Import Energy (Energy Dashboard)",
+            skip_pm_individuals=True,
+            allowedtypes=GEN2,
         ),
         
         # GEN1: Grid Import Energy (Riemann sum from grid power when > 0)
@@ -10025,12 +10034,21 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # For Standalone: Creates only "{Inverter Name} Grid Export Energy"
         # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
         # GEN2-6: Direct register
+        # GEN3-6: Use today sensor (best - no spikes)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_export_energy",
+            target_key="grid_energy_export_energy_dashboard",
+            name="Grid Export Energy (Energy Dashboard)",
+            skip_pm_individuals=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # GEN2: Use lifetime total (fallback - will spike)
         EnergyDashboardSensorMapping(
             source_key="grid_export_total",
-            target_key="grid_energy_export_energy_dashboard",  # Base target key
-            name="Grid Export Energy (Energy Dashboard)",  # Base name
-            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+            target_key="grid_energy_export_energy_dashboard",
+            name="Grid Export Energy (Energy Dashboard)",
+            skip_pm_individuals=True,
+            allowedtypes=GEN2,
         ),
         
         # GEN1: Grid Export Energy (Riemann sum from grid power when < 0, absolute value)
@@ -10044,42 +10062,56 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
         
         # Battery Charge Energy
-        # GEN3-6: Use today sensor to avoid lifetime total spikes
+        # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="e_charge_today",
             target_key="battery_energy_charge_energy_dashboard",
             name="Battery Charge Energy (Energy Dashboard)",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN1-2: No today sensor available, skip for now (would need Riemann sum)
+        # GEN2: Use lifetime total (fallback - will spike on device recreate)
+        EnergyDashboardSensorMapping(
+            source_key="battery_input_energy_total",
+            target_key="battery_energy_charge_energy_dashboard",
+            name="Battery Charge Energy (Energy Dashboard)",
+            allowedtypes=GEN2,
+        ),
+        # GEN1: No energy register, would need Riemann sum (not implemented)
         # Note: "All" version requires aggregation (sum Master + Slaves)
         
         # Battery Discharge Energy
-        # GEN3-6: Use today sensor to avoid lifetime total spikes
+        # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="e_discharge_today",
             target_key="battery_energy_discharge_energy_dashboard",
             name="Battery Discharge Energy (Energy Dashboard)",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN1-2: No today sensor available, skip for now (would need Riemann sum)
+        # GEN2: Use lifetime total (fallback - will spike on device recreate)
+        EnergyDashboardSensorMapping(
+            source_key="battery_output_energy_total",
+            target_key="battery_energy_discharge_energy_dashboard",
+            name="Battery Discharge Energy (Energy Dashboard)",
+            allowedtypes=GEN2,
+        ),
+        # GEN1: No energy register, would need Riemann sum (not implemented)
         # Note: "All" version requires aggregation (sum Master + Slaves)
         
         # Solar Production Energy
-        # GEN2-6: Use today sensor to avoid lifetime total spikes
+        # GEN2-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production_energy_dashboard",
             name="Solar Production Energy (Energy Dashboard)",
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN1: Use Riemann sum integration from solar power
+        # GEN1: Use Riemann sum (no energy register available)
         EnergyDashboardSensorMapping(
             source_key="solar_power_energy_dashboard",
             target_key="solar_energy_production_energy_dashboard",
             name="Solar Production Energy (Energy Dashboard)",
             use_riemann_sum=True,
-            filter_function=lambda v: max(0, v),  # Always positive
+            filter_function=lambda v: max(0, v),
             allowedtypes=GEN,
         ),
     ],
