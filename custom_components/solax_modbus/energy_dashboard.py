@@ -39,8 +39,8 @@ class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
     source_key: str  # Original sensor key (e.g., "measured_power")
-    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power_energy_dashboard")
-    name: str  # Display name (e.g., "Grid Power (Energy Dashboard)")
+    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power")
+    name: str  # Display name (e.g., "Grid Power")
     source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
     icon: Optional[str] = None  # Optional icon override

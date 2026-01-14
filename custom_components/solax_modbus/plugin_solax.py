@@ -9959,7 +9959,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # Note: Grid power is system-wide, so all inverters would have same value (single grid meter)
         EnergyDashboardSensorMapping(
             source_key="measured_power",
-            target_key="grid_power_energy_dashboard",  # Base target key
+            target_key="grid_power",  # Base target key
             name="Grid Power",  # Base name
             invert=True,
             icon="mdi:transmission-tower",  # Match HA Energy Dashboard grid icon
@@ -9974,7 +9974,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         EnergyDashboardSensorMapping(
             source_key="pv_power_total",
             source_key_pm="pm_total_pv_power",  # Used for "All" sensor on Master
-            target_key="solar_power_energy_dashboard",  # Base target key
+            target_key="solar_power",  # Base target key
             name="Solar Power",  # Base name
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=ALL_GEN_GROUP,
@@ -9988,7 +9988,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
             source_key_pm="pm_battery_power_charge",  # Used for "All" sensor on Master
-            target_key="battery_power_energy_dashboard",  # Base target key
+            target_key="battery_power",  # Base target key
             name="Battery Power",  # Base name
             invert=True,
             # Note: Inverter-specific sensors created by reading from Master + Slave hubs
@@ -10005,7 +10005,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN3-6: Use today sensor (best - no spikes)
         EnergyDashboardSensorMapping(
             source_key="today_s_import_energy",
-            target_key="grid_energy_import_energy_dashboard",
+            target_key="grid_energy_import",
             name="Grid Import Energy",
             skip_pm_individuals=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
@@ -10013,7 +10013,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN2: Use lifetime total (fallback - will spike)
         EnergyDashboardSensorMapping(
             source_key="grid_import_total",
-            target_key="grid_energy_import_energy_dashboard",
+            target_key="grid_energy_import",
             name="Grid Import Energy",
             skip_pm_individuals=True,
             allowedtypes=GEN2,
@@ -10022,7 +10022,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN1: Grid Import Energy (Riemann sum from grid power when > 0)
         EnergyDashboardSensorMapping(
             source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="grid_energy_import_energy_dashboard",  # Base target key
+            target_key="grid_energy_import",  # Base target key
             name="Grid Import Energy",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),  # Only integrate when > 0
@@ -10037,7 +10037,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN3-6: Use today sensor (best - no spikes)
         EnergyDashboardSensorMapping(
             source_key="today_s_export_energy",
-            target_key="grid_energy_export_energy_dashboard",
+            target_key="grid_energy_export",
             name="Grid Export Energy",
             skip_pm_individuals=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
@@ -10045,7 +10045,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN2: Use lifetime total (fallback - will spike)
         EnergyDashboardSensorMapping(
             source_key="grid_export_total",
-            target_key="grid_energy_export_energy_dashboard",
+            target_key="grid_energy_export",
             name="Grid Export Energy",
             skip_pm_individuals=True,
             allowedtypes=GEN2,
@@ -10054,7 +10054,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN1: Grid Export Energy (Riemann sum from grid power when < 0, absolute value)
         EnergyDashboardSensorMapping(
             source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="grid_energy_export_energy_dashboard",  # Base target key
+            target_key="grid_energy_export",  # Base target key
             name="Grid Export Energy",  # Base name
             use_riemann_sum=True,
             filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
@@ -10065,14 +10065,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_today",
-            target_key="battery_energy_charge_energy_dashboard",
+            target_key="battery_energy_charge",
             name="Battery Charge Energy",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # GEN2: Use lifetime total (fallback - will spike on device recreate)
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_total",
-            target_key="battery_energy_charge_energy_dashboard",
+            target_key="battery_energy_charge",
             name="Battery Charge Energy",
             allowedtypes=GEN2,
         ),
@@ -10083,14 +10083,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN3-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_today",
-            target_key="battery_energy_discharge_energy_dashboard",
+            target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # GEN2: Use lifetime total (fallback - will spike on device recreate)
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_total",
-            target_key="battery_energy_discharge_energy_dashboard",
+            target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
             allowedtypes=GEN2,
         ),
@@ -10101,14 +10101,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         # GEN2-6: Use today sensor (best - no spikes on device recreate)
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
-            target_key="solar_energy_production_energy_dashboard",
+            target_key="solar_energy_production",
             name="Solar Production Energy",
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # GEN1: Use Riemann sum (no energy register available)
         EnergyDashboardSensorMapping(
             source_key="solar_power_energy_dashboard",
-            target_key="solar_energy_production_energy_dashboard",
+            target_key="solar_energy_production",
             name="Solar Production Energy",
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),

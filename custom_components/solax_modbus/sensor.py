@@ -204,8 +204,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
                         entity_entry.unique_id.startswith(hub_unique_prefix)):
                         # Check if this is an Energy Dashboard sensor by key
                         unique_id_suffix = entity_entry.unique_id[len(hub_unique_prefix):]
-                        if (unique_id_suffix in ["grid_power_energy_dashboard", "battery_power_energy_dashboard"] or
-                            unique_id_suffix.endswith("_energy_dashboard")):
+                        if (unique_id_suffix in ["grid_power", "battery_power"] or
+                            unique_id_suffix.startswith("all_") or unique_id_suffix.startswith("solax_")):
                             energy_dashboard_entities.append(entity_entry.entity_id)
                             _LOGGER.debug(f"{hub_name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id}")
                 
