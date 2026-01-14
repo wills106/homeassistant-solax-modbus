@@ -10053,8 +10053,8 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_export_energy_dashboard",  # Base target key
             name="Grid Export Energy (Energy Dashboard)",  # Base name
             use_riemann_sum=True,
+            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
             filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
-            # Note: "All" prefix added automatically for Master during sensor creation
             allowedtypes=GEN,  # GEN1 only
         ),
         
