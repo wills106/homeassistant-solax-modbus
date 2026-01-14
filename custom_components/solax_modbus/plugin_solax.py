@@ -301,6 +301,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
     
     safe_ap_target_from_phase = None  # Initialize
+    safe_ap_target_export_from_phase = None
     
     if (all(p is not None for p in [measured_power_l1, measured_power_l2, measured_power_l3]) and
         all(v is not None and v > 0 for v in [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3]) and
