@@ -26,6 +26,7 @@ from .const import (
     INVERTER_IDENT,
     BaseModbusSensorEntityDescription,
 )
+from .debug import get_debug_setting
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -392,11 +393,19 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     hub_data = getattr(hub, 'data', None) or getattr(hub, 'datadict', {})
     parallel_setting = hub_data.get("parallel_setting", "Free")
     is_master = parallel_setting == "Master"
+    debug_standalone = get_debug_setting(
+        hub_name,
+        "treat_as_standalone_energy_dashboard",
+        config,
+        hass,
+        default=False,
+    )
+    ed_is_master = is_master and not debug_standalone
     _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
-    if is_master and hass:
+    if ed_is_master and hass:
         # Retry slave detection with progressive delays to handle startup timing issues
         # Some Slave hubs may not have loaded their parallel_setting yet
         import asyncio
@@ -425,7 +434,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         
         if not slave_hubs:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
-    elif is_master and not hass:
+    elif ed_is_master and not hass:
         _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
     
     # Get inverter name for prefix (e.g., "Solax 1")
@@ -444,7 +453,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                 continue  # Skip this mapping for this inverter type
         
         # Create sensors based on Master/Standalone
-        if is_master:
+        if ed_is_master:
             # For Master: Create "All" sensor and individual inverter sensors
             # Check if this sensor needs aggregation for "All" version
             needs_agg = _needs_aggregation(sensor_mapping.target_key)
@@ -593,6 +602,16 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
             return True
         elif energy_dashboard_enabled == "enabled":
             # Legacy "enabled" mode: Auto-detect (skip Slaves)
+            hub_name = getattr(hub, 'name', getattr(hub, '_name', 'unknown'))
+            debug_standalone = get_debug_setting(
+                hub_name,
+                "treat_as_standalone_energy_dashboard",
+                config,
+                hass,
+                default=False,
+            )
+            if debug_standalone:
+                return True
             parallel_setting = None
             datadict = getattr(hub, 'datadict', None)
             if datadict:
@@ -608,6 +627,15 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
         return False
     
     hub_name = getattr(hub, 'name', getattr(hub, '_name', 'unknown'))
+    debug_standalone = get_debug_setting(
+        hub_name,
+        "treat_as_standalone_energy_dashboard",
+        config,
+        hass,
+        default=False,
+    )
+    if debug_standalone:
+        return True
     
     # Enabled: Check parallel mode - skip Slaves (Master has system totals)
     parallel_setting = None

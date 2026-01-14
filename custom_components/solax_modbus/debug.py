@@ -34,7 +34,7 @@ def load_debug_settings(config, hass=None):
         hass: Home Assistant instance (optional, for configuration.yaml access)
     
     Returns:
-        Dict mapping inverter names to their settings (e.g., {"Solax 3": {"skip_dashboard_standalone_test": True}})
+        Dict mapping inverter names to their settings (e.g., {"Solax 3": {"treat_as_standalone_energy_dashboard": True}})
         or empty dict if no debug settings configured
     """
     debug_settings = {}
@@ -73,7 +73,7 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
     
     Args:
         inverter_name: Name of the inverter to check
-        setting_name: Name of the setting to check (e.g., "skip_dashboard_standalone_test")
+        setting_name: Name of the setting to check (e.g., "treat_as_standalone_energy_dashboard")
         config: Integration configuration dict (from entry.options)
         hass: Home Assistant instance (optional, for configuration.yaml access)
         default: Default value to return if setting is not found (default: False)
@@ -87,7 +87,7 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
         solax_modbus:
           debug_settings:
             "Solax 3":
-              skip_dashboard_standalone_test: true
+              treat_as_standalone_energy_dashboard: true
               custom_behavior: true
               another_setting: false
         
@@ -97,7 +97,7 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
         
         should_skip = get_debug_setting(
             "Solax 3", 
-            "skip_dashboard_standalone_test", 
+            "treat_as_standalone_energy_dashboard", 
             config, 
             hass
         )
