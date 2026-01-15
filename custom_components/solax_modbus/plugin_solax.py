@@ -9944,65 +9944,47 @@ class solax_plugin(plugin_base):
 
 
 # Energy Dashboard Virtual Device mapping
+# Details: docs/solax/ENERGY_DASHBOARD_MAPPING_GEN1_GEN6.md
 from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
     mappings=[
         # ===== POWER SENSORS =====
-        
-        # Grid Power (all generations)
-        # Note: measured_power is system-wide (from grid meter at connection point)
-        # No PM version needed - meter already measures entire system
-        # For Master: Creates "All Grid Power" and "{Inverter Name} Grid Power"
-        # For Standalone: Creates only "{Inverter Name} Grid Power"
-        # Note: Grid power is system-wide, so all inverters would have same value (single grid meter)
+
+        # Grid Power
         EnergyDashboardSensorMapping(
             source_key="measured_power",
-            target_key="grid_power",  # Base target key
-            name="Grid Power",  # Base name
+            target_key="grid_power",
+            name="Grid Power",
             invert=True,
-            icon="mdi:transmission-tower",  # Match HA Energy Dashboard grid icon
-            skip_pm_individuals=True,  # Only "All" sensor (Master measures grid for entire system)
+            icon="mdi:transmission-tower",
+            skip_pm_individuals=True,
             allowedtypes=ALL_GEN_GROUP,
         ),
-        
-        # Solar Power (all generations)
-        # For Master: Creates "All Solar Power" (from pm_total_pv_power) and "Solax 1 Solar Power" (from pv_power_total)
-        # For Standalone: Creates only "{Inverter Name} Solar Power" (from pv_power_total)
-        # For Slaves: Creates "Solax {n} Solar Power" (from pv_power_total in Slave hub)
+
+        # Solar Power
         EnergyDashboardSensorMapping(
             source_key="pv_power_total",
-            source_key_pm="pm_total_pv_power",  # Used for "All" sensor on Master
-            target_key="solar_power",  # Base target key
-            name="Solar Power",  # Base name
-            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
+            source_key_pm="pm_total_pv_power",
+            target_key="solar_power",
+            name="Solar Power",
             allowedtypes=ALL_GEN_GROUP,
         ),
-        
-        
-        # Battery Power (GEN2-5 only, exclude GEN1 and GEN6)
-        # For Master: Creates "All Battery Power" (from pm_battery_power_charge) and "Solax 1 Battery Power" (from battery_power_charge)
-        # For Standalone: Creates only "{Inverter Name} Battery Power" (from battery_power_charge)
-        # For Slaves: Creates "Solax {n} Battery Power" (from battery_power_charge in Slave hub)
+
+        # Battery Power (GEN2-5 only)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
-            source_key_pm="pm_battery_power_charge",  # Used for "All" sensor on Master
-            target_key="battery_power",  # Base target key
-            name="Battery Power",  # Base name
+            source_key_pm="pm_battery_power_charge",
+            target_key="battery_power",
+            name="Battery Power",
             invert=True,
-            # Note: Inverter-specific sensors created by reading from Master + Slave hubs
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
         ),
-        
+
         # ===== ENERGY SENSORS =====
-        
-        # Grid Import Energy (GEN2-6: direct register, GEN1: Riemann sum)
-        # For Master: Creates "All Grid Import Energy" (Master aggregates all) and "Solax 1 Grid Import Energy"
-        # For Standalone: Creates only "{Inverter Name} Grid Import Energy"
-        # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
-        # GEN2-6: Direct register
-        # GEN3-6: Use today sensor (best - no spikes)
+
+        # Grid Import Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="today_s_import_energy",
             target_key="grid_energy_import",
@@ -10010,7 +9992,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN2: Use lifetime total (fallback - will spike)
+        # Grid Import Energy (GEN2 total)
         EnergyDashboardSensorMapping(
             source_key="grid_import_total",
             target_key="grid_energy_import",
@@ -10018,23 +10000,17 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=GEN2,
         ),
-        
-        # GEN1: Grid Import Energy (Riemann sum from grid power when > 0)
+        # Grid Import Energy (GEN1 Riemann sum)
         EnergyDashboardSensorMapping(
-            source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="grid_energy_import",  # Base target key
-            name="Grid Import Energy",  # Base name
+            source_key="grid_power_energy_dashboard",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: max(0, v),  # Only integrate when > 0
-            allowedtypes=GEN,  # GEN1 only
+            filter_function=lambda v: max(0, v),
+            allowedtypes=GEN,
         ),
-        
-        # Grid Export Energy (GEN2-6: direct register, GEN1: Riemann sum)
-        # For Master: Creates "All Grid Export Energy" (Master aggregates all) and "Solax 1 Grid Export Energy"
-        # For Standalone: Creates only "{Inverter Name} Grid Export Energy"
-        # Note: Grid energy is system-wide (Master aggregates all), so Slaves don't track separately
-        # GEN2-6: Direct register
-        # GEN3-6: Use today sensor (best - no spikes)
+
+        # Grid Export Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="today_s_export_energy",
             target_key="grid_energy_export",
@@ -10042,7 +10018,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN2: Use lifetime total (fallback - will spike)
+        # Grid Export Energy (GEN2 total)
         EnergyDashboardSensorMapping(
             source_key="grid_export_total",
             target_key="grid_energy_export",
@@ -10050,62 +10026,54 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=GEN2,
         ),
-        
-        # GEN1: Grid Export Energy (Riemann sum from grid power when < 0, absolute value)
+        # Grid Export Energy (GEN1 Riemann sum)
         EnergyDashboardSensorMapping(
-            source_key="grid_power_energy_dashboard",  # Power sensor to integrate from
-            target_key="grid_energy_export",  # Base target key
-            name="Grid Export Energy",  # Base name
+            source_key="grid_power_energy_dashboard",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: abs(min(0, v)),  # Only integrate when < 0, abs
-            allowedtypes=GEN,  # GEN1 only
+            filter_function=lambda v: abs(min(0, v)),
+            allowedtypes=GEN,
         ),
-        
-        # Battery Charge Energy
-        # GEN3-6: Use today sensor (best - no spikes on device recreate)
+
+        # Battery Charge Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_today",
             target_key="battery_energy_charge",
             name="Battery Charge Energy",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN2: Use lifetime total (fallback - will spike on device recreate)
+        # Battery Charge Energy (GEN2 total)
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_total",
             target_key="battery_energy_charge",
             name="Battery Charge Energy",
             allowedtypes=GEN2,
         ),
-        # GEN1: No energy register, would need Riemann sum (not implemented)
-        # Note: "All" version requires aggregation (sum Master + Slaves)
-        
-        # Battery Discharge Energy
-        # GEN3-6: Use today sensor (best - no spikes on device recreate)
+
+        # Battery Discharge Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_today",
             target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN2: Use lifetime total (fallback - will spike on device recreate)
+        # Battery Discharge Energy (GEN2 total)
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_total",
             target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
             allowedtypes=GEN2,
         ),
-        # GEN1: No energy register, would need Riemann sum (not implemented)
-        # Note: "All" version requires aggregation (sum Master + Slaves)
-        
-        # Solar Production Energy
-        # GEN2-6: Use today sensor (best - no spikes on device recreate)
+
+        # Solar Production Energy (GEN2-6 today)
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production",
             name="Solar Production Energy",
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # GEN1: Use Riemann sum (no energy register available)
+        # Solar Production Energy (GEN1 Riemann sum)
         EnergyDashboardSensorMapping(
             source_key="solar_power_energy_dashboard",
             target_key="solar_energy_production",

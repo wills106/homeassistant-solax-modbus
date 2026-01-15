@@ -14,7 +14,7 @@ handle:
 
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Optional, Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass, RestoreEntity
@@ -380,6 +380,11 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
 
     sensors = []
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
+
+    def _clone_mapping(
+        base_mapping: EnergyDashboardSensorMapping, **overrides
+    ) -> EnergyDashboardSensorMapping:
+        return replace(base_mapping, **overrides)
     
     # Determine if this is a Master hub
     hub_name = getattr(hub, '_name', 'Unknown')
@@ -467,18 +472,10 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             # Create "All" sensor
             if sensor_mapping.source_key_pm:
                 # Use PM total for "All" (already aggregated)
-                all_mapping = EnergyDashboardSensorMapping(
+                all_mapping = _clone_mapping(
+                    sensor_mapping,
                     source_key=sensor_mapping.source_key_pm,  # Use PM version
-                    target_key=sensor_mapping.target_key,
-                    name=sensor_mapping.name,
                     source_key_pm=None,  # No PM version for PM sensor itself
-                    invert=sensor_mapping.invert,
-                    icon=sensor_mapping.icon,
-                    unit=sensor_mapping.unit,
-                    invert_function=sensor_mapping.invert_function,
-                    filter_function=sensor_mapping.filter_function,
-                    use_riemann_sum=sensor_mapping.use_riemann_sum,
-                    allowedtypes=sensor_mapping.allowedtypes,
                 )
                 sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                           source_hub=hub, name_prefix="All "))
@@ -486,36 +483,12 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                 # Skip aggregation for Riemann sum sensors (they integrate from power, already aggregated)
                 if sensor_mapping.use_riemann_sum:
                     # Use Master value only for Riemann sum "All" sensor
-                    all_mapping = EnergyDashboardSensorMapping(
-                        source_key=sensor_mapping.source_key,
-                        target_key=sensor_mapping.target_key,
-                        name=sensor_mapping.name,
-                        source_key_pm=sensor_mapping.source_key_pm,
-                        invert=sensor_mapping.invert,
-                        icon=sensor_mapping.icon,
-                        unit=sensor_mapping.unit,
-                        invert_function=sensor_mapping.invert_function,
-                        filter_function=sensor_mapping.filter_function,
-                        use_riemann_sum=sensor_mapping.use_riemann_sum,
-                        allowedtypes=sensor_mapping.allowedtypes,
-                    )
+                    all_mapping = _clone_mapping(sensor_mapping)
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix="All "))
                 else:
                     # Create aggregated "All" sensor (sum Master + Slaves)
-                    all_mapping = EnergyDashboardSensorMapping(
-                        source_key=sensor_mapping.source_key,
-                        target_key=sensor_mapping.target_key,
-                        name=sensor_mapping.name,
-                        source_key_pm=sensor_mapping.source_key_pm,
-                        invert=sensor_mapping.invert,
-                        icon=sensor_mapping.icon,
-                        unit=sensor_mapping.unit,
-                        invert_function=sensor_mapping.invert_function,
-                        filter_function=sensor_mapping.filter_function,
-                        use_riemann_sum=sensor_mapping.use_riemann_sum,
-                        allowedtypes=sensor_mapping.allowedtypes,
-                    )
+                    all_mapping = _clone_mapping(sensor_mapping)
                     # Create sensor with aggregated value function
                     aggregated_sensor = _create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                                    source_hub=hub, name_prefix="All ")
@@ -525,19 +498,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                         sensors.extend(aggregated_sensor)
             else:
                     # Grid energy: Master already aggregates all, use Master value for "All"
-                    all_mapping = EnergyDashboardSensorMapping(
-                        source_key=sensor_mapping.source_key,
-                        target_key=sensor_mapping.target_key,
-                        name=sensor_mapping.name,
-                        source_key_pm=sensor_mapping.source_key_pm,
-                        invert=sensor_mapping.invert,
-                        icon=sensor_mapping.icon,
-                        unit=sensor_mapping.unit,
-                        invert_function=sensor_mapping.invert_function,
-                        filter_function=sensor_mapping.filter_function,
-                        use_riemann_sum=sensor_mapping.use_riemann_sum,
-                        allowedtypes=sensor_mapping.allowedtypes,
-                    )
+                    all_mapping = _clone_mapping(sensor_mapping)
                     sensors.extend(_create_sensor_from_mapping(all_mapping, hub, energy_dashboard_device_info,
                                                               source_hub=hub, name_prefix="All "))
             
@@ -545,18 +506,9 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             # Check if individual sensors should be skipped
             if not sensor_mapping.skip_pm_individuals:
                 # For Master individual, force use of non-PM sensor by setting source_key_pm=None
-                master_individual_mapping = EnergyDashboardSensorMapping(
-                    source_key=sensor_mapping.source_key,
-                    target_key=sensor_mapping.target_key,
-                    name=sensor_mapping.name,
+                master_individual_mapping = _clone_mapping(
+                    sensor_mapping,
                     source_key_pm=None,  # Force non-PM sensor for Master individual
-                    invert=sensor_mapping.invert,
-                    icon=sensor_mapping.icon,
-                    unit=sensor_mapping.unit,
-                    invert_function=sensor_mapping.invert_function,
-                    filter_function=sensor_mapping.filter_function,
-                    use_riemann_sum=sensor_mapping.use_riemann_sum,
-                    allowedtypes=sensor_mapping.allowedtypes,
                 )
                 sensors.extend(_create_sensor_from_mapping(master_individual_mapping, hub, energy_dashboard_device_info,
                                                           source_hub=hub, name_prefix=f"{inverter_name} "))
