@@ -1672,7 +1672,7 @@ class SolaXModbusHub:
                     self._probe_ready.set()
                     return
                     
-                for dev_group in interval_group.device_groups.values():
+            for dev_group in list(interval_group.device_groups.values()):
                     # Check timeout before each block
                     if (_t.monotonic() - bisect_start_time) > bisect_timeout:
                         _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
@@ -1749,8 +1749,12 @@ class SolaXModbusHub:
                 try:
                     desc_map = None
                     for interval_group in self.groups.values():
-                        for dev_group in interval_group.device_groups.values():
-                            blocks = getattr(dev_group, "holdingBlocks", []) if typ == "holding" else getattr(dev_group, "inputBlocks", [])
+                        for dev_group in list(interval_group.device_groups.values()):
+                            blocks = (
+                                getattr(dev_group, "holdingBlocks", [])
+                                if typ == "holding"
+                                else getattr(dev_group, "inputBlocks", [])
+                            )
                             for blk in blocks:
                                 if addr in (blk.regs or []):
                                     desc_map = blk.descriptions

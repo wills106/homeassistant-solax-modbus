@@ -10041,6 +10041,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_input_energy_today",
             target_key="battery_energy_charge",
             name="Battery Charge Energy",
+            needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Battery Charge Energy (GEN2 total)
@@ -10048,6 +10049,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_input_energy_total",
             target_key="battery_energy_charge",
             name="Battery Charge Energy",
+            needs_aggregation=True,
             allowedtypes=GEN2,
         ),
 
@@ -10056,6 +10058,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_output_energy_today",
             target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
+            needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Battery Discharge Energy (GEN2 total)
@@ -10063,6 +10066,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_output_energy_total",
             target_key="battery_energy_discharge",
             name="Battery Discharge Energy",
+            needs_aggregation=True,
             allowedtypes=GEN2,
         ),
 
@@ -10071,6 +10075,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production",
             name="Solar Production Energy",
+            needs_aggregation=True,
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Solar Production Energy (GEN1 Riemann sum)
@@ -10080,6 +10085,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Solar Production Energy",
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),
+            needs_aggregation=True,
             allowedtypes=GEN,
         ),
     ],
