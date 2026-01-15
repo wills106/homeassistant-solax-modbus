@@ -1,16 +1,16 @@
 # Enforce CRLF line endings for all text files
 # This prevents accidental conversion to LF
-* text eol=crlf
+* text eol=lf
 
 # Explicitly handle common file types
-*.py text eol=crlf
-*.yaml text eol=crlf
-*.yml text eol=crlf
-*.json text eol=crlf
-*.md text eol=crlf
-*.txt text eol=crlf
-*.sh text eol=crlf
-*.zsh text eol=crlf
+*.py text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+*.zsh text eol=lf
 
 # Binary files should not be modified
 *.png binary

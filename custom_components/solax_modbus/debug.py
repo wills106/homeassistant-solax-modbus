@@ -27,10 +27,10 @@ def load_debug_settings(config, hass=None):
     It is intentionally configured via configuration.yaml (not exposed in the UI) to keep
     dev/test/debug specific settings separate from production user-facing configuration.
     
-    Checks both config entry options and configuration.yaml.
+    Debug settings are sourced from configuration.yaml only.
     
     Args:
-        config: Integration configuration dict (from entry.options)
+        config: Integration configuration dict (unused for debug settings)
         hass: Home Assistant instance (optional, for configuration.yaml access)
     
     Returns:
@@ -39,13 +39,7 @@ def load_debug_settings(config, hass=None):
     """
     debug_settings = {}
     
-    # First, check config entry options
-    if config:
-        debug_config = config.get(CONF_DEBUG_SETTINGS)
-        if debug_config and isinstance(debug_config, dict):
-            debug_settings.update(debug_config)
-    
-    # Also check YAML configuration if hass is available
+    # Check YAML configuration if hass is available
     # Debug settings from YAML are stored in hass.data[DOMAIN]["_debug_settings"] by async_setup()
     if hass:
         try:
@@ -53,7 +47,10 @@ def load_debug_settings(config, hass=None):
             yaml_debug_settings = domain_data.get("_debug_settings", {})
             if yaml_debug_settings and isinstance(yaml_debug_settings, dict):
                 debug_settings.update(yaml_debug_settings)
-                _LOGGER.info(f"Loaded debug settings from YAML: {yaml_debug_settings}")
+                _LOGGER.debug(
+                    "Loaded debug settings from YAML for inverters: %s",
+                    list(yaml_debug_settings.keys()),
+                )
         except Exception as e:
             _LOGGER.debug(f"Error reading debug settings from YAML configuration: {e}")
     
@@ -115,6 +112,14 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
                 _LOGGER.debug(f"get_debug_setting: Matched '{inverter_name}' to '{key}' (case-insensitive)")
                 break
     
-    result = inverter_settings.get(setting_name, default) if inverter_settings else default
-    _LOGGER.info(f"get_debug_setting({inverter_name}, {setting_name}): {result} (available inverters: {list(debug_settings.keys())}, matched: {inverter_settings is not None})")
-    return result
+    if inverter_settings and setting_name in inverter_settings:
+        result = inverter_settings.get(setting_name, default)
+        _LOGGER.debug(
+            "get_debug_setting(%s, %s): %s",
+            inverter_name,
+            setting_name,
+            result,
+        )
+        return result
+
+    return default

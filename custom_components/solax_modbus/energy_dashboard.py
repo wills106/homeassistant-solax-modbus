@@ -40,7 +40,7 @@ class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
     source_key: str  # Original sensor key (e.g., "measured_power")
-    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power")
+    target_key: Optional[str]  # Energy Dashboard sensor key (e.g., "grid_power")
     name: str  # Display name (e.g., "Grid Power")
     source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
@@ -51,6 +51,13 @@ class EnergyDashboardSensorMapping:
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
     skip_pm_individuals: bool = False  # Skip creating individual sensors (Master "SolaX 1" and Slave "SolaX 2/3")
     allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
+
+    def __post_init__(self) -> None:
+        """Normalize mapping defaults for empty keys."""
+        if not self.target_key:
+            self.target_key = self.source_key
+        if not self.source_key_pm:
+            self.source_key_pm = None
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
@@ -367,20 +374,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         hass: Home Assistant instance (optional, needed for Slave hub access)
         config: Integration configuration dict (optional, for whitelist check)
     """
-    # NOTE: If logging from this module stops working, clear Python cache to force recompile:
-    # rm -f /homeassistant/custom_components/solax_modbus/__pycache__/energy_dashboard*.pyc
-    # Then restart Home Assistant.
-    
-    # try:
-    #     import sys
-    #     sys.stderr.write("STDERR: create_energy_dashboard_sensors called\n")
-    #     sys.stderr.flush()
-    #     _LOGGER.error("TEST ERROR LOG - create_energy_dashboard_sensors called")
-    # except Exception as e:
-    #     sys.stderr.write(f"STDERR: Exception during logging: {e}\n")
-    #     sys.stderr.flush()
-    #return []
-    
     if not mapping.enabled:
         _LOGGER.debug("Energy Dashboard mapping is disabled")
         return []
@@ -401,7 +394,12 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         default=False,
     )
     ed_is_master = is_master and not debug_standalone
-    _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
+    _LOGGER.debug(
+        "%s: Energy Dashboard sensor creation - parallel_setting=%s, is_master=%s",
+        hub_name,
+        parallel_setting,
+        is_master,
+    )
     
     # Find Slave hubs if this is a Master
     slave_hubs = []
@@ -424,11 +422,19 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             # Update if we found more Slaves than before
             if len(current_slaves) > len(slave_hubs):
                 slave_hubs = current_slaves
-                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
+                _LOGGER.debug(
+                    "Found %s Slave hub(s) for Energy Dashboard on attempt %s",
+                    len(slave_hubs),
+                    attempt + 1,
+                )
             elif current_slaves and not slave_hubs:
                 # First Slaves found
                 slave_hubs = current_slaves
-                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
+                _LOGGER.debug(
+                    "Found %s Slave hub(s) for Energy Dashboard on attempt %s",
+                    len(slave_hubs),
+                    attempt + 1,
+                )
             
             # Continue through all attempts to give slow-loading Slaves time
         
@@ -537,7 +543,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             
             # Create "Solax 1" sensor (Master individual)
             # Check if individual sensors should be skipped
-            _LOGGER.debug(f"Master individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
             if not sensor_mapping.skip_pm_individuals:
                 # For Master individual, force use of non-PM sensor by setting source_key_pm=None
                 master_individual_mapping = EnergyDashboardSensorMapping(
@@ -558,7 +563,6 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             
             # Create "Solax 2/3" sensors from Slave hubs
             # Check if individual sensors should be skipped
-            _LOGGER.debug(f"Slave individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
             if not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
                     sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
