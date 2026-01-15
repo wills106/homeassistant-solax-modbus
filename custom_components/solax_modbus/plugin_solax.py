@@ -10001,6 +10001,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN2,
         ),
         # Grid Import Energy (GEN1 Riemann sum)
+        # GEN1 lacks native energy counters; integrate power to derive energy.
         EnergyDashboardSensorMapping(
             source_key="grid_power_energy_dashboard",
             target_key="grid_energy_import",
@@ -10027,6 +10028,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN2,
         ),
         # Grid Export Energy (GEN1 Riemann sum)
+        # GEN1 export is derived from power; filter to export-only portion.
         EnergyDashboardSensorMapping(
             source_key="grid_power_energy_dashboard",
             target_key="grid_energy_export",
@@ -10037,6 +10039,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
 
         # Battery Charge Energy (GEN3-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_today",
             target_key="battery_energy_charge",
@@ -10045,6 +10048,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Battery Charge Energy (GEN2 total)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="battery_input_energy_total",
             target_key="battery_energy_charge",
@@ -10054,6 +10058,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
 
         # Battery Discharge Energy (GEN3-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_today",
             target_key="battery_energy_discharge",
@@ -10062,6 +10067,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Battery Discharge Energy (GEN2 total)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="battery_output_energy_total",
             target_key="battery_energy_discharge",
@@ -10071,6 +10077,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
 
         # Solar Production Energy (GEN2-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production",
@@ -10079,6 +10086,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Solar Production Energy (GEN1 Riemann sum)
+        # GEN1 lacks native energy counters; integrate power and aggregate in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="solar_power_energy_dashboard",
             target_key="solar_energy_production",

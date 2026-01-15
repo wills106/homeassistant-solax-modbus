@@ -50,6 +50,7 @@ def _format_mode(parallel_setting: str | None, debug_standalone: bool) -> str:
 
 
 def _get_energy_dashboard_mapping_info(hub) -> dict[str, Any]:
+    """Return mapping metadata for diagnostics, if available."""
     plugin = getattr(hub, "plugin", None)
     if not plugin:
         return {"available": False}
@@ -92,6 +93,7 @@ def _get_energy_dashboard_diagnostics(hass: HomeAssistant, entry: ConfigEntry, h
     secondary_names = [name for name, _hub in slave_hubs]
 
     pm_inverter_count = hub_data.get("pm_inverter_count")
+    # Only report detected count when we can see Secondary hubs.
     detected_inverter_count = len(secondary_names) + 1 if secondary_names else None
 
     energy_dashboard_enabled = entry.options.get(

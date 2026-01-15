@@ -64,6 +64,7 @@ class EnergyDashboardSensorMapping:
         parallel_setting = datadict.get("parallel_setting", "Free")
 
         if parallel_setting == "Master" and self.source_key_pm:
+            # Prefer PM totals on Primary when available.
             # Validate PM sensor exists before using it
             if self.source_key_pm not in datadict:
                 _LOGGER.warning(
@@ -747,6 +748,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
             sensors.extend(_create_sensor_from_mapping(sensor_mapping, hub, energy_dashboard_device_info,
                                                       source_hub=hub, name_prefix=f"{inverter_name} "))
 
+    # Append diagnostics once per virtual device to avoid duplicates.
     sensors.extend(
         _create_energy_dashboard_diagnostic_sensors(
             hub,
