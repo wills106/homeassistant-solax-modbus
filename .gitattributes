@@ -1,5 +1,5 @@
-# Enforce CRLF line endings for all text files
-# This prevents accidental conversion to LF
+# Enforce LF line endings for all text files
+# This prevents accidental conversion to CRLF
 * text eol=lf
 
 # Explicitly handle common file types
