@@ -4,6 +4,7 @@
   "after_dependencies": ["modbus"],
   "codeowners": ["@wills106"],
   "config_flow": true,
+  "import_executor": true,
   "dependencies": [],
   "documentation": "https://homeassistant-solax-modbus.readthedocs.io/",
   "integration_type": "hub",
