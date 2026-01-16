@@ -243,6 +243,7 @@ def _energy_dashboard_switch_provider(hub, hass, entry):
                 initvalue=0,
                 sensor_key=ED_SWITCH_PV_VARIANTS,
                 value_function=_local_switch_value_function,
+                icon="mdi:solar-power-variant",
                 entity_category=config_category,
             ),
             BaseModbusSwitchEntityDescription(
@@ -253,6 +254,7 @@ def _energy_dashboard_switch_provider(hub, hass, entry):
                 initvalue=0,
                 sensor_key=ED_SWITCH_HOME_CONSUMPTION,
                 value_function=_local_switch_value_function,
+                icon="mdi:home-lightning-bolt",
                 entity_category=config_category,
             ),
         ],
