@@ -897,7 +897,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         if ed_is_master:
             # For Master: Create "All" sensor and individual inverter sensors
             # Check if this sensor needs aggregation for "All" version
-            needs_agg = _needs_aggregation(sensor_mapping.target_key)
+            needs_agg = sensor_mapping.needs_aggregation or _needs_aggregation(sensor_mapping.target_key)
             
             # Create "All" sensor
             if sensor_mapping.source_key_pm:

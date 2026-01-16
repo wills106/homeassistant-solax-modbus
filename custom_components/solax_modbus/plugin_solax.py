@@ -10116,6 +10116,27 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=GEN2,
         ),
 
+        # Grid to Battery Energy (per inverter, aggregate in parallel)
+        EnergyDashboardSensorMapping(
+            source_key="e_charge_total",
+            target_key="grid_to_battery_energy",
+            name="Grid to Battery Energy",
+            icon="mdi:transmission-tower-export",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+
+        # Grid to Battery Power (derived from inverter power)
+        EnergyDashboardSensorMapping(
+            source_key="inverter_power",
+            target_key="grid_to_battery_power",
+            name="Grid to Battery Power",
+            filter_function=lambda v: max(0 - v, 0),
+            icon="mdi:transmission-tower-export",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+
         # Solar Production Energy (GEN2-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
