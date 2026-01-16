@@ -26,6 +26,7 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.core import callback
 
 from .const import (
     DOMAIN,
@@ -134,6 +135,23 @@ def create_energy_dashboard_device_info(hub, hass=None) -> DeviceInfo:
     )
 
 
+ED_SWITCH_PV_VARIANTS = "energy_dashboard_pv_variants_enabled"
+ED_SWITCH_HOME_CONSUMPTION = "energy_dashboard_home_consumption_enabled"
+
+
+def get_energy_dashboard_switch_state(hub, key: str) -> Optional[bool]:
+    """Return True/False when available, otherwise None."""
+    if hub is None:
+        return None
+    raw_value = getattr(hub, "data", {}).get(key)
+    if raw_value is None:
+        return None
+    try:
+        return bool(int(raw_value))
+    except (TypeError, ValueError):
+        return None
+
+
 def register_energy_dashboard_switch_provider(hass) -> None:
     """Register ED switch provider in hass data."""
     domain_data = hass.data.setdefault(DOMAIN, {})
@@ -142,6 +160,54 @@ def register_energy_dashboard_switch_provider(hass) -> None:
         if getattr(provider, "__name__", "") == "_energy_dashboard_switch_provider":
             return
     providers.append(_energy_dashboard_switch_provider)
+    _register_energy_dashboard_switch_listener(hass)
+    _register_energy_dashboard_local_data_listener(hass)
+
+
+def _register_energy_dashboard_switch_listener(hass) -> None:
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    if domain_data.get("_ed_switch_listener_registered"):
+        return
+
+    @callback
+    def _handle_local_switch_event(event):
+        data = event.data or {}
+        hub_name = data.get("hub_name")
+        key = data.get("key")
+        if key not in (ED_SWITCH_PV_VARIANTS, ED_SWITCH_HOME_CONSUMPTION):
+            return
+        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
+        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
+        if refresh_callback:
+            hass.async_create_task(refresh_callback())
+
+    hass.bus.async_listen("solax_modbus_local_switch_changed", _handle_local_switch_event)
+    domain_data["_ed_switch_listener_registered"] = True
+
+
+def _register_energy_dashboard_local_data_listener(hass) -> None:
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    if domain_data.get("_ed_local_data_listener_registered"):
+        return
+
+    @callback
+    def _handle_local_data_loaded(event):
+        data = event.data or {}
+        hub_name = data.get("hub_name")
+        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
+        hub = hub_entry.get("hub")
+        if hub is None:
+            return
+        if get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS) is not True and (
+            get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION) is not True
+        ):
+            return
+        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
+        if refresh_callback:
+            hass.async_create_task(refresh_callback())
+
+    hass.bus.async_listen("solax_modbus_local_data_loaded", _handle_local_data_loaded)
+    domain_data["_ed_local_data_listener_registered"] = True
 
 
 def _energy_dashboard_switch_provider(hub, hass, entry):
@@ -170,22 +236,22 @@ def _energy_dashboard_switch_provider(hub, hass, entry):
         energy_dashboard_platform_name,
         [
             BaseModbusSwitchEntityDescription(
-                key="energy_dashboard_pv_variants_enabled",
+                key=ED_SWITCH_PV_VARIANTS,
                 name="Enable PV Variant Detail Sensors",
                 register=0,
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
-                sensor_key="energy_dashboard_pv_variants_enabled",
+                sensor_key=ED_SWITCH_PV_VARIANTS,
                 value_function=_local_switch_value_function,
                 entity_category=config_category,
             ),
             BaseModbusSwitchEntityDescription(
-                key="energy_dashboard_home_consumption_enabled",
+                key=ED_SWITCH_HOME_CONSUMPTION,
                 name="Enable Home Consumption Sensor",
                 register=0,
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
-                sensor_key="energy_dashboard_home_consumption_enabled",
+                sensor_key=ED_SWITCH_HOME_CONSUMPTION,
                 value_function=_local_switch_value_function,
                 entity_category=config_category,
             ),
@@ -718,7 +784,21 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     # Get inverter name for prefix (e.g., "Solax 1")
     inverter_name = hub_name
 
+    pv_variants_enabled = get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS) is True
+    home_consumption_enabled = (
+        get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION) is True
+    )
+
     for sensor_mapping in mapping.mappings:
+        if (
+            "pv_power_" in sensor_mapping.target_key
+            or "pv_energy_" in sensor_mapping.target_key
+        ):
+            if not pv_variants_enabled:
+                continue
+        if "home_consumption_" in sensor_mapping.target_key:
+            if not home_consumption_enabled:
+                continue
         # Filter by allowedtypes (same pattern as regular sensors)
         # If allowedtypes is 0, apply to all types (backward compatibility)
         if sensor_mapping.allowedtypes != 0:

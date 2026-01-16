@@ -724,6 +724,14 @@ class SolaXModbusHub:
             fp.close()
             self.localsLoaded = True
             self.plugin.localDataCallback(self)
+            try:
+                self._hass.loop.call_soon_threadsafe(
+                    self._hass.bus.async_fire,
+                    "solax_modbus_local_data_loaded",
+                    {"hub_name": self._name},
+                )
+            except Exception as ex:
+                _LOGGER.debug(f"{self._name}: failed to fire local data event: {ex}")
 
     # end of save and load section
 

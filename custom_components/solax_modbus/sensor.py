@@ -337,6 +337,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                 hub_entry["energy_dashboard_refresh_pending"] = False
 
                             energy_dashboard_entities = []
+                            desired_keys = {descr.key for descr in energy_dashboard_sensors}
                             energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
                             for newdescr in energy_dashboard_sensors:
                                 existing_sensor = hub.sensorEntities.get(newdescr.key)
@@ -373,6 +374,32 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                 )
                                 entities.extend(energy_dashboard_entities)
                                 async_add_entities(energy_dashboard_entities)
+
+                            from .energy_dashboard import (
+                                ED_SWITCH_PV_VARIANTS,
+                                ED_SWITCH_HOME_CONSUMPTION,
+                                get_energy_dashboard_switch_state,
+                            )
+
+                            pv_state = get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS)
+                            home_state = get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION)
+                            allow_remove_pv = pv_state is False
+                            allow_remove_home = home_state is False
+
+                            if allow_remove_pv or allow_remove_home:
+                                entity_registry = er.async_get(hass)
+                                for key in list(hub.sensorEntities.keys()):
+                                    if key in desired_keys:
+                                        continue
+                                    is_pv_variant = "_pv_power_" in key or "_pv_energy_" in key
+                                    is_home = "_home_consumption_" in key
+                                    if (is_pv_variant and allow_remove_pv) or (is_home and allow_remove_home):
+                                        unique_id = f"{energy_dashboard_platform_name}_{key}"
+                                        entity_id = entity_registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+                                        if entity_id:
+                                            entity_registry.async_remove(entity_id)
+                                        hub.sensorEntities.pop(key, None)
+                                        hub.computedSensors.pop(key, None)
 
                             # Recompute ED values immediately to relink unavailable entities.
                             for newdescr in energy_dashboard_sensors:

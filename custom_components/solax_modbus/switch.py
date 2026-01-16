@@ -124,6 +124,17 @@ class SolaXModbusSwitch(SwitchEntity):
                 return
             self._hub.data[self._sensor_key] = 1 if self._attr_is_on else 0
             self._hub.localsUpdated = True
+            try:
+                self._hub._hass.bus.async_fire(
+                    "solax_modbus_local_switch_changed",
+                    {
+                        "hub_name": self._hub._name,
+                        "key": self._sensor_key,
+                        "state": self._attr_is_on,
+                    },
+                )
+            except Exception as ex:
+                _LOGGER.debug(f"{self._hub.name}: local switch event failed: {ex}")
             return
         if self._value_function is None:
             _LOGGER.debug(f"No value function for switch {self._key}")
