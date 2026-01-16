@@ -137,6 +137,7 @@ def create_energy_dashboard_device_info(hub, hass=None) -> DeviceInfo:
 
 ED_SWITCH_PV_VARIANTS = "energy_dashboard_pv_variants_enabled"
 ED_SWITCH_HOME_CONSUMPTION = "energy_dashboard_home_consumption_enabled"
+ED_SWITCH_GRID_TO_BATTERY = "energy_dashboard_grid_to_battery_enabled"
 
 
 def get_energy_dashboard_switch_state(hub, key: str) -> Optional[bool]:
@@ -174,7 +175,11 @@ def _register_energy_dashboard_switch_listener(hass) -> None:
         data = event.data or {}
         hub_name = data.get("hub_name")
         key = data.get("key")
-        if key not in (ED_SWITCH_PV_VARIANTS, ED_SWITCH_HOME_CONSUMPTION):
+        if key not in (
+            ED_SWITCH_PV_VARIANTS,
+            ED_SWITCH_HOME_CONSUMPTION,
+            ED_SWITCH_GRID_TO_BATTERY,
+        ):
             return
         hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
@@ -198,8 +203,10 @@ def _register_energy_dashboard_local_data_listener(hass) -> None:
         hub = hub_entry.get("hub")
         if hub is None:
             return
-        if get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS) is not True and (
-            get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION) is not True
+        if (
+            get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS) is not True
+            and get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION) is not True
+            and get_energy_dashboard_switch_state(hub, ED_SWITCH_GRID_TO_BATTERY) is not True
         ):
             return
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
@@ -255,6 +262,17 @@ def _energy_dashboard_switch_provider(hub, hass, entry):
                 sensor_key=ED_SWITCH_HOME_CONSUMPTION,
                 value_function=_local_switch_value_function,
                 icon="mdi:home-lightning-bolt",
+                entity_category=config_category,
+            ),
+            BaseModbusSwitchEntityDescription(
+                key=ED_SWITCH_GRID_TO_BATTERY,
+                name="Enable Grid to Battery Sensors",
+                register=0,
+                write_method=WRITE_DATA_LOCAL,
+                initvalue=0,
+                sensor_key=ED_SWITCH_GRID_TO_BATTERY,
+                value_function=_local_switch_value_function,
+                icon="mdi:transmission-tower-export",
                 entity_category=config_category,
             ),
         ],
@@ -790,6 +808,9 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     home_consumption_enabled = (
         get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION) is True
     )
+    grid_to_battery_enabled = (
+        get_energy_dashboard_switch_state(hub, ED_SWITCH_GRID_TO_BATTERY) is True
+    )
 
     for sensor_mapping in mapping.mappings:
         if (
@@ -800,6 +821,9 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                 continue
         if "home_consumption_" in sensor_mapping.target_key:
             if not home_consumption_enabled:
+                continue
+        if "grid_to_battery_" in sensor_mapping.target_key:
+            if not grid_to_battery_enabled:
                 continue
         # Filter by allowedtypes (same pattern as regular sensors)
         # If allowedtypes is 0, apply to all types (backward compatibility)

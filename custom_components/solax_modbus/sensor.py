@@ -380,22 +380,30 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             from .energy_dashboard import (
                                 ED_SWITCH_PV_VARIANTS,
                                 ED_SWITCH_HOME_CONSUMPTION,
+                                ED_SWITCH_GRID_TO_BATTERY,
                                 get_energy_dashboard_switch_state,
                             )
 
                             pv_state = get_energy_dashboard_switch_state(hub, ED_SWITCH_PV_VARIANTS)
                             home_state = get_energy_dashboard_switch_state(hub, ED_SWITCH_HOME_CONSUMPTION)
+                            grid_state = get_energy_dashboard_switch_state(hub, ED_SWITCH_GRID_TO_BATTERY)
                             allow_remove_pv = pv_state is False
                             allow_remove_home = home_state is False
+                            allow_remove_grid = grid_state is False
 
-                            if allow_remove_pv or allow_remove_home:
+                            if allow_remove_pv or allow_remove_home or allow_remove_grid:
                                 entity_registry = er.async_get(hass)
                                 for key in list(hub.sensorEntities.keys()):
                                     if key in desired_keys:
                                         continue
                                     is_pv_variant = "_pv_power_" in key or "_pv_energy_" in key
                                     is_home = "_home_consumption_" in key
-                                    if (is_pv_variant and allow_remove_pv) or (is_home and allow_remove_home):
+                                    is_grid = "_grid_to_battery_" in key
+                                    if (
+                                        (is_pv_variant and allow_remove_pv)
+                                        or (is_home and allow_remove_home)
+                                        or (is_grid and allow_remove_grid)
+                                    ):
                                         unique_id = f"{energy_dashboard_platform_name}_{key}"
                                         entity_id = entity_registry.async_get_entity_id("sensor", DOMAIN, unique_id)
                                         if entity_id:
