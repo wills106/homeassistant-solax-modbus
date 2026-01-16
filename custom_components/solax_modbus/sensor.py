@@ -207,16 +207,18 @@ async def async_setup_entry(hass, entry, async_add_entities):
                     )
 
                 if not energy_dashboard_device:
-                    # Fallback: match by name or legacy identifiers
+                    # Fallback: match by name or legacy identifiers (scoped to this hub)
+                    normalized_hub_name = hub_name.lower().replace(" ", "_")
+                    expected_identifier = f"{normalized_hub_name}_energy_dashboard"
                     for device_entry in device_registry.devices.values():
-                        if device_entry.name == f"{hub._name} Energy Dashboard":
+                        if device_entry.name == f"{hub_name} Energy Dashboard":
                             energy_dashboard_device = device_entry
                             break
                         for identifier in device_entry.identifiers:
                             if (
                                 identifier[0] == DOMAIN
                                 and identifier[2] == "ENERGY_DASHBOARD"
-                                and identifier[1].endswith("_energy_dashboard")
+                                and identifier[1] == expected_identifier
                             ):
                                 energy_dashboard_device = device_entry
                                 break
