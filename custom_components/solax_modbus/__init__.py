@@ -352,6 +352,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             plugin,
             entry,
         )
+    try:
+        from .energy_dashboard import register_energy_dashboard_switch_provider
+
+        register_energy_dashboard_switch_provider(hass)
+    except Exception as ex:
+        _LOGGER.debug(f"{hub.name}: Energy Dashboard switch provider registration failed: {ex}")
     """Register the hub."""
     hass.data[DOMAIN][hub._name] = {
         "hub": hub,

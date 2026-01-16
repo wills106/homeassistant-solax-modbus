@@ -50,6 +50,35 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             hub.switchEntities[switch_info.key] = switch # Store the switch entity
             entities.append(switch)
 
+    providers = hass.data.get(DOMAIN, {}).get("_switch_entity_providers", [])
+    for provider in providers:
+        try:
+            device_info, platform_name, switch_descriptions = provider(hub, hass, entry)
+        except Exception as ex:
+            _LOGGER.error(f"{hub_name}: switch provider failed: {ex}")
+            continue
+        if not switch_descriptions:
+            continue
+        for switch_info in switch_descriptions:
+            switch = SolaXModbusSwitch(
+                platform_name,
+                hub,
+                modbus_addr,
+                device_info,
+                switch_info,
+            )
+            if switch_info.value_function:
+                hub.computedSwitches[switch_info.key] = switch_info
+            if switch_info.sensor_key is not None:
+                hub.writeLocals[switch_info.sensor_key] = switch_info
+            dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
+            if dependency_key != switch_info.key:
+                hub.entity_dependencies.setdefault(dependency_key, []).append(
+                    switch_info.key
+                )
+            hub.switchEntities[switch_info.key] = switch
+            entities.append(switch)
+
     async_add_entities(entities)
     return True
 
@@ -71,7 +100,7 @@ class SolaXModbusSwitch(SwitchEntity):
         self._write_method = switch_info.write_method
         self._sensor_key = switch_info.sensor_key
         self._attr_is_on = False
-        self._bit = switch_info.register_bit
+        self._bit = switch_info.register_bit if switch_info.register_bit is not None else 0
         self._value_function = switch_info.value_function
         self._last_command_time = None  # Tracks last user action
 
@@ -90,6 +119,12 @@ class SolaXModbusSwitch(SwitchEntity):
         await self._write_switch_to_modbus()
 
     async def _write_switch_to_modbus(self):
+        if self.entity_description.write_method == WRITE_DATA_LOCAL:
+            if self._sensor_key is None:
+                return
+            self._hub.data[self._sensor_key] = 1 if self._attr_is_on else 0
+            self._hub.localsUpdated = True
+            return
         if self._value_function is None:
             _LOGGER.debug(f"No value function for switch {self._key}")
             return

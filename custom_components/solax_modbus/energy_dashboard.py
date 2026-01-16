@@ -31,6 +31,10 @@ from .const import (
     DOMAIN,
     INVERTER_IDENT,
     BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
+    CONF_ENERGY_DASHBOARD_DEVICE,
+    DEFAULT_ENERGY_DASHBOARD_DEVICE,
+    WRITE_DATA_LOCAL,
 )
 from .debug import get_debug_setting
 
@@ -127,6 +131,65 @@ def create_energy_dashboard_device_info(hub, hass=None) -> DeviceInfo:
         name=f"{hub._name} Energy Dashboard",
         via_device=(DOMAIN, hub._name, INVERTER_IDENT),
         configuration_url=config_url,
+    )
+
+
+def register_energy_dashboard_switch_provider(hass) -> None:
+    """Register ED switch provider in hass data."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    providers = domain_data.setdefault("_switch_entity_providers", [])
+    for provider in providers:
+        if getattr(provider, "__name__", "") == "_energy_dashboard_switch_provider":
+            return
+    providers.append(_energy_dashboard_switch_provider)
+
+
+def _energy_dashboard_switch_provider(hub, hass, entry):
+    """Return device info, platform name, and switch descriptions for ED switches."""
+    config = entry.options if entry else {}
+    energy_dashboard_enabled = config.get(
+        CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE
+    )
+    if isinstance(energy_dashboard_enabled, str):
+        energy_dashboard_enabled = energy_dashboard_enabled != "disabled"
+    if not energy_dashboard_enabled:
+        return None, None, []
+
+    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
+    energy_dashboard_platform_name = f"{hub._name} Energy Dashboard"
+
+    def _local_switch_value_function(_bit, is_on, _sensor_key, _datadict):
+        return 1 if is_on else 0
+
+    config_category = getattr(EntityCategory, "CONFIGURATION", None)
+    if config_category is None:
+        config_category = getattr(EntityCategory, "CONFIG", None)
+
+    return (
+        energy_dashboard_device_info,
+        energy_dashboard_platform_name,
+        [
+            BaseModbusSwitchEntityDescription(
+                key="energy_dashboard_pv_variants_enabled",
+                name="Enable PV Variant Detail Sensors",
+                register=0,
+                write_method=WRITE_DATA_LOCAL,
+                initvalue=0,
+                sensor_key="energy_dashboard_pv_variants_enabled",
+                value_function=_local_switch_value_function,
+                entity_category=config_category,
+            ),
+            BaseModbusSwitchEntityDescription(
+                key="energy_dashboard_home_consumption_enabled",
+                name="Enable Home Consumption Sensor",
+                register=0,
+                write_method=WRITE_DATA_LOCAL,
+                initvalue=0,
+                sensor_key="energy_dashboard_home_consumption_enabled",
+                value_function=_local_switch_value_function,
+                entity_category=config_category,
+            ),
+        ],
     )
 
 
@@ -447,6 +510,10 @@ def _find_slave_hubs(hass, master_hub):
     _LOGGER.debug(f"Scanning for Slave hubs. Master: {master_name}, Available hubs: {list(domain_data.keys())}")
     
     for hub_name, hub_data in domain_data.items():
+        if hub_name.startswith("_"):
+            continue
+        if not isinstance(hub_data, dict):
+            continue
         # Skip self (Master)
         if hub_name == master_name:
             continue
