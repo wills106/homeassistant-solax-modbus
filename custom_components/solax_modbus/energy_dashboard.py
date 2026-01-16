@@ -45,9 +45,9 @@ RIEMANN_ROUND_DIGITS = 3  # Precision for integration result
 class EnergyDashboardSensorMapping:
     """Mapping definition for a single Energy Dashboard sensor."""
 
-    source_key: str  # Original sensor key (e.g., "measured_power")
-    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power")
-    name: str  # Display name (e.g., "Grid Power")
+    source_key: str  # Original sensor key (e.g., "measured_power") or pattern with {n}
+    target_key: str  # Energy Dashboard sensor key (e.g., "grid_power") or pattern with {n}
+    name: str  # Display name (e.g., "Grid Power") or pattern with {n}
     source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
     icon: Optional[str] = None  # Optional icon override
@@ -58,6 +58,7 @@ class EnergyDashboardSensorMapping:
     skip_pm_individuals: bool = False  # Skip creating individual sensors (Master "SolaX 1" and Slave "SolaX 2/3")
     needs_aggregation: bool = False  # Only applies to Master "All" sensors in parallel mode
     allowedtypes: int = 0  # Bitmask for inverter types (same pattern as sensor definitions, 0 = all types)
+    max_variants: int = 6  # Maximum variants when using {n} pattern mappings
 
     def get_source_key(self, datadict: dict) -> str:
         """Determine which source key to use based on parallel mode."""
@@ -661,6 +662,87 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                 None  # blacklist
             ):
                 continue  # Skip this mapping for this inverter type
+
+        # Check if this is a pattern-based mapping (contains {n} placeholder)
+        has_pattern = (
+            "{n}" in sensor_mapping.source_key
+            or "{n}" in sensor_mapping.target_key
+            or "{n}" in sensor_mapping.name
+        )
+
+        if has_pattern:
+            base_source_key = sensor_mapping.source_key.replace("{n}", "")
+
+            def _detect_variants(hub_obj) -> list[int]:
+                sensor_keys = getattr(hub_obj, "sensorEntities", {}) or {}
+                hub_data = getattr(hub_obj, "data", None) or getattr(hub_obj, "datadict", {})
+                variants = []
+                for n in range(1, sensor_mapping.max_variants + 1):
+                    variant_key = f"{base_source_key}{n}"
+                    if variant_key in sensor_keys or variant_key in hub_data:
+                        variants.append(n)
+                return variants
+
+            master_variants = _detect_variants(hub)
+
+            for variant_num in master_variants:
+                variant_mapping = EnergyDashboardSensorMapping(
+                    source_key=sensor_mapping.source_key.replace("{n}", str(variant_num)),
+                    target_key=sensor_mapping.target_key.replace("{n}", str(variant_num)),
+                    name=sensor_mapping.name.replace("{n}", str(variant_num)),
+                    source_key_pm=sensor_mapping.source_key_pm,
+                    invert=sensor_mapping.invert,
+                    icon=sensor_mapping.icon,
+                    unit=sensor_mapping.unit,
+                    invert_function=sensor_mapping.invert_function,
+                    filter_function=sensor_mapping.filter_function,
+                    use_riemann_sum=sensor_mapping.use_riemann_sum,
+                    skip_pm_individuals=sensor_mapping.skip_pm_individuals,
+                    needs_aggregation=sensor_mapping.needs_aggregation,
+                    allowedtypes=sensor_mapping.allowedtypes,
+                    max_variants=sensor_mapping.max_variants,
+                )
+                sensors.extend(
+                    _create_sensor_from_mapping(
+                        variant_mapping,
+                        hub,
+                        energy_dashboard_device_info,
+                        source_hub=hub,
+                        name_prefix=f"{inverter_name} ",
+                    )
+                )
+
+            if ed_is_master and not sensor_mapping.skip_pm_individuals:
+                for slave_name, slave_hub in slave_hubs:
+                    slave_variants = _detect_variants(slave_hub)
+
+                    for variant_num in slave_variants:
+                        variant_mapping = EnergyDashboardSensorMapping(
+                            source_key=sensor_mapping.source_key.replace("{n}", str(variant_num)),
+                            target_key=sensor_mapping.target_key.replace("{n}", str(variant_num)),
+                            name=sensor_mapping.name.replace("{n}", str(variant_num)),
+                            source_key_pm=sensor_mapping.source_key_pm,
+                            invert=sensor_mapping.invert,
+                            icon=sensor_mapping.icon,
+                            unit=sensor_mapping.unit,
+                            invert_function=sensor_mapping.invert_function,
+                            filter_function=sensor_mapping.filter_function,
+                            use_riemann_sum=sensor_mapping.use_riemann_sum,
+                            skip_pm_individuals=sensor_mapping.skip_pm_individuals,
+                            needs_aggregation=sensor_mapping.needs_aggregation,
+                            allowedtypes=sensor_mapping.allowedtypes,
+                            max_variants=sensor_mapping.max_variants,
+                        )
+                        sensors.extend(
+                            _create_sensor_from_mapping(
+                                variant_mapping,
+                                hub,
+                                energy_dashboard_device_info,
+                                source_hub=slave_hub,
+                                name_prefix=f"{slave_name} ",
+                            )
+                        )
+            continue
         
         # Create sensors based on Master/Standalone
         if ed_is_master:

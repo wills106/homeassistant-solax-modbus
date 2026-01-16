@@ -615,12 +615,12 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         
         # Calculate energy increment if we have previous value
         if self._last_power_value is not None and self._last_update_time is not None:
-            # Trapezoidal integration: ΔE = (P_prev + P_curr) / 2 * Δt / 3600
+            # Trapezoidal integration: ΔE = (P_prev + P_curr) / 2 * Δt / 3600 / 1000
             # P in W, Δt in seconds, result in kWh
             delta_time = current_time - self._last_update_time
             if delta_time > 0:
                 avg_power = (self._last_power_value + filtered_power) / 2.0
-                energy_increment = (avg_power * delta_time) / 3600.0  # Convert to kWh
+                energy_increment = (avg_power * delta_time) / 3600.0 / 1000.0  # Convert to kWh
                 self._total_energy += energy_increment
         
         # Update stored values

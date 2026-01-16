@@ -9972,6 +9972,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             allowedtypes=ALL_GEN_GROUP,
         ),
 
+        # PV Variant Power (per string)
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_power_{n}",
+            name="PV Power {n}",
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
         # Battery Power (GEN2-5 only)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
@@ -9983,6 +9991,16 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
 
         # ===== ENERGY SENSORS =====
+
+        # PV Variant Energy (per string, Riemann sum)
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_energy_{n}",
+            name="PV Energy {n}",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            allowedtypes=ALL_GEN_GROUP,
+        ),
 
         # Grid Import Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
@@ -10036,6 +10054,28 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             use_riemann_sum=True,
             filter_function=lambda v: abs(min(0, v)),
             allowedtypes=GEN,
+        ),
+
+        # Home Consumption Energy (Riemann sum)
+        EnergyDashboardSensorMapping(
+            source_key="house_load",
+            source_key_pm="pm_total_house_load",
+            target_key="home_consumption_energy",
+            name="Home Consumption Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="house_load",
+            source_key_pm="pm_total_house_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
         ),
 
         # Battery Charge Energy (GEN3-6 today)
