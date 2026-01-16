@@ -896,8 +896,52 @@ class SolaXModbusHub:
                     # self.data = {} # invalidate data - do we want this ??
 
                 _LOGGER.debug(f"{self._name}: device group read done")
+        await self._maybe_refresh_energy_dashboard_on_primary_update()
         # Return aggregate result and updated sensor count to caller for logging
         return agg_res, updated_sensors
+
+    async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
+        if not self._hass:
+            return
+        if self.data.get("parallel_setting") != "Master":
+            return
+
+        pm_inverter_count = self.data.get("pm_inverter_count")
+        if pm_inverter_count is None:
+            return
+
+        domain_data = self._hass.data.setdefault(DOMAIN, {})
+        hub_entry = domain_data.setdefault(self._name, {})
+        last_count = hub_entry.get("energy_dashboard_last_total_inverter_count")
+        if last_count is None:
+            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+            return
+        refresh_pending = hub_entry.get("energy_dashboard_refresh_pending")
+        if pm_inverter_count <= last_count and not refresh_pending:
+            return
+        if refresh_pending:
+            last_refresh_ts = hub_entry.get("energy_dashboard_last_refresh_ts", 0)
+            if time() - last_refresh_ts < 5:
+                return
+
+        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
+        if not refresh_callback:
+            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+            return
+        if hub_entry.get("energy_dashboard_refresh_in_progress"):
+            return
+
+        hub_entry["energy_dashboard_refresh_in_progress"] = True
+        hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+        hub_entry["energy_dashboard_last_refresh_ts"] = time()
+
+        async def _run_refresh():
+            try:
+                await refresh_callback()
+            finally:
+                hub_entry["energy_dashboard_refresh_in_progress"] = False
+
+        self._hass.async_create_task(_run_refresh())
 
     @property
     def invertertype(self):

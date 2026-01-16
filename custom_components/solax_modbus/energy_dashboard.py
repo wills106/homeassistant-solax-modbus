@@ -208,6 +208,13 @@ def _create_energy_dashboard_diagnostic_sensors(
             summary += " (disabled)"
         return summary
 
+    def _last_total_inverter_count_value(_initval, _descr, _datadict):
+        if not hass:
+            return None
+        domain_data = hass.data.get(DOMAIN, {})
+        hub_entry = domain_data.get(hub_name, {})
+        return hub_entry.get("energy_dashboard_last_total_inverter_count")
+
     diagnostics = [
         BaseModbusSensorEntityDescription(
             key="energy_dashboard_mode",
@@ -228,6 +235,18 @@ def _create_energy_dashboard_diagnostic_sensors(
             entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ]
+
+    diagnostics.append(
+        BaseModbusSensorEntityDescription(
+            key="energy_dashboard_last_total_inverter_count",
+            name="Last Total Inverter Count",
+            register=-1,
+            value_function=_last_total_inverter_count_value,
+            allowedtypes=hub._invertertype,
+            icon="mdi:counter",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        )
+    )
 
     if debug_standalone:
         diagnostics.append(
@@ -582,39 +601,51 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     ed_is_master = is_master and not debug_standalone
     _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
     
+    def _store_energy_dashboard_last_total_inverter_count(count: int | None) -> None:
+        if not hass or count is None:
+            return
+        domain_data = hass.data.setdefault(DOMAIN, {})
+        hub_entry = domain_data.setdefault(hub_name, {})
+        hub_entry["energy_dashboard_last_total_inverter_count"] = count
+
+    skip_store_total = False
+    if hass and ed_is_master:
+        domain_data = hass.data.setdefault(DOMAIN, {})
+        hub_entry = domain_data.setdefault(hub_name, {})
+        if "energy_dashboard_refresh_callback" not in hub_entry:
+            hub_entry["energy_dashboard_last_total_inverter_count"] = 0
+            skip_store_total = True
+
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if ed_is_master and hass:
-        # Retry slave detection with progressive delays to handle startup timing issues
-        # Some Slave hubs may not have loaded their parallel_setting yet
+        # Allow a short delay so Slave hubs can register before detection.
         import asyncio
-        max_attempts = 4
-        delay = 1.0  # Start with 1 second
-        
-        for attempt in range(max_attempts):
-            # Wait before checking (progressive delays: 1s, 2s, 4s, 8s)
-            await asyncio.sleep(delay)
-            delay *= 2  # Double the delay for next attempt
-            if attempt > 0:
-                _LOGGER.debug(f"Retrying Slave detection (attempt {attempt + 1}/{max_attempts})")
-            
-            current_slaves = _find_slave_hubs(hass, hub)
-            
-            # Update if we found more Slaves than before
-            if len(current_slaves) > len(slave_hubs):
-                slave_hubs = current_slaves
-                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
-            elif current_slaves and not slave_hubs:
-                # First Slaves found
-                slave_hubs = current_slaves
-                _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard on attempt {attempt + 1}")
-            
-            # Continue through all attempts to give slow-loading Slaves time
-        
-        if not slave_hubs:
+        await asyncio.sleep(1.0)
+        slave_hubs = _find_slave_hubs(hass, hub)
+        if slave_hubs:
+            _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard after startup delay")
+        else:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif ed_is_master and not hass:
         _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
+
+    if hass and ed_is_master:
+        domain_data = hass.data.setdefault(DOMAIN, {})
+        hub_entry = domain_data.setdefault(hub_name, {})
+        hub_entry["energy_dashboard_last_slave_hub_count"] = len(slave_hubs)
+
+    total_inverter_count = None
+    pm_inverter_count = hub_data.get("pm_inverter_count")
+    if pm_inverter_count is not None:
+        total_inverter_count = pm_inverter_count
+    elif slave_hubs:
+        total_inverter_count = len(slave_hubs) + 1
+    elif parallel_setting in ("Master", "Slave", "Free"):
+        total_inverter_count = 1
+
+    if not skip_store_total:
+        _store_energy_dashboard_last_total_inverter_count(total_inverter_count)
     
     # Get inverter name for prefix (e.g., "Solax 1")
     inverter_name = hub_name

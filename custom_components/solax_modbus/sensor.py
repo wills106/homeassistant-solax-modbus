@@ -267,6 +267,95 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                     if entity_entry and entity_entry.disabled_by:
                                         _LOGGER.debug(f"{hub_name}: Enabling previously disabled Energy Dashboard entity: {entity_id}")
                                         entity_registry.async_update_entity(entity_id, disabled_by=None)
+
+                        async def async_refresh_energy_dashboard_entities() -> None:
+                            energy_dashboard_enabled = config.get(
+                                CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE
+                            )
+                            if isinstance(energy_dashboard_enabled, str):
+                                energy_dashboard_enabled = energy_dashboard_enabled != "disabled"
+                            if not energy_dashboard_enabled:
+                                return
+
+                            energy_dashboard_sensors = await create_energy_dashboard_sensors(
+                                hub, mapping, hass, config
+                            )
+                            if not energy_dashboard_sensors:
+                                return
+
+                            domain_data = hass.data.setdefault(DOMAIN, {})
+                            hub_entry = domain_data.setdefault(hub_name, {})
+                            pm_inverter_count = hub.data.get("pm_inverter_count")
+                            expected_slaves = (
+                                max(pm_inverter_count - 1, 0)
+                                if pm_inverter_count is not None
+                                else None
+                            )
+                            last_slave_count = hub_entry.get("energy_dashboard_last_slave_hub_count")
+                            if expected_slaves and expected_slaves > 0:
+                                hub_entry["energy_dashboard_refresh_pending"] = (
+                                    last_slave_count is None or last_slave_count < expected_slaves
+                                )
+                            else:
+                                hub_entry["energy_dashboard_refresh_pending"] = False
+
+                            energy_dashboard_entities = []
+                            energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
+                            for newdescr in energy_dashboard_sensors:
+                                existing_sensor = hub.sensorEntities.get(newdescr.key)
+                                if existing_sensor:
+                                    existing_sensor.entity_description = newdescr
+                                    if hasattr(existing_sensor, "_riemann_mapping") and getattr(
+                                        newdescr, "_riemann_mapping", None
+                                    ):
+                                        existing_sensor._riemann_mapping = newdescr._riemann_mapping
+                                        existing_sensor._filter_function = (
+                                            newdescr._riemann_mapping.filter_function
+                                            if newdescr._riemann_mapping
+                                            else None
+                                        ) or (lambda v: v)
+                                    if newdescr.register < 0 and newdescr.value_function:
+                                        hub.computedSensors[newdescr.key] = newdescr
+                                    continue
+
+                                entityToListSingle(
+                                    hub,
+                                    energy_dashboard_platform_name,
+                                    energy_dashboard_entities,
+                                    initial_groups,
+                                    hub.computedSensors,
+                                    hub.device_info,
+                                    newdescr,
+                                    None,
+                                    readFollowUp,
+                                )
+
+                            if energy_dashboard_entities:
+                                _LOGGER.info(
+                                    f"{hub_name}: Registering {len(energy_dashboard_entities)} refreshed Energy Dashboard entities"
+                                )
+                                entities.extend(energy_dashboard_entities)
+                                async_add_entities(energy_dashboard_entities)
+
+                            # Recompute ED values immediately to relink unavailable entities.
+                            for newdescr in energy_dashboard_sensors:
+                                if newdescr.register < 0 and newdescr.value_function:
+                                    try:
+                                        hub.data[newdescr.key] = newdescr.value_function(
+                                            0, newdescr, hub.data
+                                        )
+                                    except Exception as e:
+                                        _LOGGER.debug(
+                                            f"{hub_name}: ED refresh value_function failed for {newdescr.key}: {e}"
+                                        )
+                                        continue
+                                    sens = hub.sensorEntities.get(newdescr.key)
+                                    if sens and not getattr(newdescr, "internal", False):
+                                        sens.modbus_data_updated()
+
+                        domain_data = hass.data.setdefault(DOMAIN, {})
+                        hub_entry = domain_data.setdefault(hub_name, {})
+                        hub_entry["energy_dashboard_refresh_callback"] = async_refresh_energy_dashboard_entities
             else:
                 _LOGGER.debug(f"{hub_name}: ENERGY_DASHBOARD_MAPPING not found (plugin may not support Energy Dashboard)")
         except Exception as e:
