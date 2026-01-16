@@ -188,43 +188,78 @@ async def async_setup_entry(hass, entry, async_add_entities):
             
             if not energy_dashboard_enabled:
                 _LOGGER.info(f"{hub_name}: Energy Dashboard disabled - removing existing entities and device")
-                # Remove Energy Dashboard entities if they exist
-                # unique_id format is: {hub._name}_{key}
                 entity_registry = er.async_get(hass)
                 device_registry = dr.async_get(hass)
                 energy_dashboard_entities = []
-                hub_unique_prefix = f"{hub._name}_"
-                
-                # Find Energy Dashboard device identifier
-                energy_dashboard_device_identifiers = {(DOMAIN, f"{hub._name}_energy_dashboard", "ENERGY_DASHBOARD")}
-                
-                for entity_entry in entity_registry.entities.values():
-                    if (entity_entry.platform == DOMAIN and 
-                        entity_entry.unique_id and 
-                        entity_entry.unique_id.startswith(hub_unique_prefix)):
-                        # Check if this is an Energy Dashboard sensor by key
-                        unique_id_suffix = entity_entry.unique_id[len(hub_unique_prefix):]
-                        if (unique_id_suffix in ["grid_power", "battery_power"] or
-                            unique_id_suffix.startswith("all_") or unique_id_suffix.startswith("solax_")):
+
+                # Find Energy Dashboard device identifier (use normalized hub name)
+                energy_dashboard_device = None
+                try:
+                    from .energy_dashboard import create_energy_dashboard_device_info
+
+                    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
+                    energy_dashboard_device = device_registry.async_get_device(
+                        identifiers=energy_dashboard_device_info.identifiers
+                    )
+                except Exception as e:
+                    _LOGGER.debug(
+                        f"{hub_name}: Could not build Energy Dashboard device info for removal: {e}"
+                    )
+
+                if not energy_dashboard_device:
+                    # Fallback: match by name or legacy identifiers
+                    for device_entry in device_registry.devices.values():
+                        if device_entry.name == f"{hub._name} Energy Dashboard":
+                            energy_dashboard_device = device_entry
+                            break
+                        for identifier in device_entry.identifiers:
+                            if (
+                                identifier[0] == DOMAIN
+                                and identifier[2] == "ENERGY_DASHBOARD"
+                                and identifier[1].endswith("_energy_dashboard")
+                            ):
+                                energy_dashboard_device = device_entry
+                                break
+                        if energy_dashboard_device:
+                            break
+
+                # Remove entities tied to the ED device if we found it
+                if energy_dashboard_device:
+                    for entity_entry in entity_registry.entities.values():
+                        if entity_entry.device_id == energy_dashboard_device.id:
                             energy_dashboard_entities.append(entity_entry.entity_id)
-                            _LOGGER.debug(f"{hub_name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id}")
-                
-                # Remove Energy Dashboard entities first
+                            _LOGGER.debug(
+                                f"{hub_name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id}"
+                            )
+
+                # Fallback: remove any ED entities by unique_id prefix
+                hub_unique_prefix = f"{hub_name} Energy Dashboard_"
+                for entity_entry in entity_registry.entities.values():
+                    if (
+                        entity_entry.platform == DOMAIN
+                        and entity_entry.unique_id
+                        and entity_entry.unique_id.startswith(hub_unique_prefix)
+                        and entity_entry.entity_id not in energy_dashboard_entities
+                    ):
+                        energy_dashboard_entities.append(entity_entry.entity_id)
+                        _LOGGER.debug(
+                            f"{hub_name}: Found Energy Dashboard entity to remove: {entity_entry.entity_id}"
+                        )
+
                 if energy_dashboard_entities:
-                    _LOGGER.info(f"{hub_name}: Removing {len(energy_dashboard_entities)} Energy Dashboard entities")
+                    _LOGGER.info(
+                        f"{hub_name}: Removing {len(energy_dashboard_entities)} Energy Dashboard entities"
+                    )
                     for entity_id in energy_dashboard_entities:
                         entity_registry.async_remove(entity_id)
-                    # Give entities time to be removed before removing device
-                    # This ensures proper cleanup order and prevents UI issues
                     import asyncio
                     await asyncio.sleep(0.1)
-                
-                # Remove Energy Dashboard device from device registry (after entities are removed)
-                energy_dashboard_device = device_registry.async_get_device(identifiers=energy_dashboard_device_identifiers)
+
                 if energy_dashboard_device:
-                    _LOGGER.info(f"{hub_name}: Removing Energy Dashboard device: {energy_dashboard_device.name}")
+                    _LOGGER.info(
+                        f"{hub_name}: Removing Energy Dashboard device: {energy_dashboard_device.name}"
+                    )
                     device_registry.async_remove_device(energy_dashboard_device.id)
-                    # Small delay to ensure device removal is processed
                     await asyncio.sleep(0.1)
             elif hasattr(plugin_obj, 'ENERGY_DASHBOARD_MAPPING'):
                 mapping = plugin_obj.ENERGY_DASHBOARD_MAPPING
