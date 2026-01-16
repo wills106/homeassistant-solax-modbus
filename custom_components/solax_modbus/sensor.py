@@ -4,6 +4,7 @@ from homeassistant.components.sensor import SensorEntity, RestoreEntity
 from homeassistant.helpers import device_registry as dr
 import logging
 import time
+from datetime import date
 from typing import Optional, Dict, Any, List
 from types  import SimpleNamespace
 from dataclasses import dataclass, replace
@@ -13,6 +14,7 @@ import homeassistant.util.dt as dt_util
 from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
 from .const import INVERTER_IDENT, REG_INPUT, REG_HOLDING, REGISTER_U32, REGISTER_S32, REGISTER_ULSB16MSB16, REGISTER_STR, REGISTER_WORDS, REGISTER_U8H, REGISTER_U8L, CONF_READ_BATTERY
 from .const import BaseModbusSensorEntityDescription
+from .debug import get_debug_setting
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er 
@@ -603,6 +605,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         self._last_power_value = None
         self._last_update_time = None
         self._total_energy = 0.0  # kWh
+        self._last_reset_date = dt_util.now().date()
     
     async def async_added_to_hass(self):
         """Register callbacks and restore state."""
@@ -616,6 +619,32 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
                     _LOGGER.debug(f"{self._platform_name}: Restored Riemann sum state for {self.entity_description.key}: {self._total_energy} kWh")
                 except (ValueError, AttributeError, TypeError) as e:
                     _LOGGER.debug(f"{self._platform_name}: Could not restore Riemann sum state for {self.entity_description.key}: {e}")
+            reset_date = last_state.attributes.get("last_reset_date") if last_state.attributes else None
+            if reset_date:
+                try:
+                    self._last_reset_date = date.fromisoformat(reset_date)
+                except (TypeError, ValueError):
+                    self._last_reset_date = dt_util.now().date()
+
+        hub_name = getattr(self._hub, "_name", None)
+        if hub_name and get_debug_setting(
+            hub_name,
+            "reset_riemann_sums_on_restart",
+            self._hub.config,
+            self._hub._hass,
+            default=False,
+        ):
+            _LOGGER.warning(
+                f"{hub_name}: reset_riemann_sums_on_restart enabled for {self.entity_description.key} - resetting daily total"
+            )
+            self._total_energy = 0.0
+            self._last_reset_date = dt_util.now().date()
+            self._last_power_value = None
+            self._last_update_time = None
+            from .energy_dashboard import RIEMANN_ROUND_DIGITS
+            self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+            self._hub.data[self.entity_description.key] = self._total_energy
+            self.async_write_ha_state()
         
         # Register with hub
         await self._hub.async_add_solax_modbus_sensor(self)
@@ -639,6 +668,19 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         
         # Get current time
         current_time = time.time()
+        current_date = dt_util.now().date()
+
+        # Reset daily totals at midnight (local time)
+        if self._last_reset_date is None or current_date != self._last_reset_date:
+            self._total_energy = 0.0
+            self._last_reset_date = current_date
+            self._last_power_value = filtered_power
+            self._last_update_time = current_time
+            from .energy_dashboard import RIEMANN_ROUND_DIGITS
+            self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+            self._hub.data[self.entity_description.key] = self._total_energy
+            self.async_write_ha_state()
+            return
         
         # Calculate energy increment if we have previous value
         if self._last_power_value is not None and self._last_update_time is not None:
@@ -669,6 +711,13 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         if self.entity_description.key in self._hub.data:
             return self._hub.data[self.entity_description.key]
         return self._total_energy
+
+    @property
+    def extra_state_attributes(self):
+        attrs = {}
+        if self._last_reset_date:
+            attrs["last_reset_date"] = self._last_reset_date.isoformat()
+        return attrs
 
 
 
