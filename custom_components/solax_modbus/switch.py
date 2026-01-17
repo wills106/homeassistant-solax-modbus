@@ -1,6 +1,7 @@
 from .const import DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR, DEBOUNCE_TIME
 from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.const import CONF_NAME
 from typing import Any, Dict, Optional
 from datetime import datetime
@@ -83,7 +84,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     return True
 
 
-class SolaXModbusSwitch(SwitchEntity):
+class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     """Representation of an SolaX Modbus switch."""
 
     def __init__(self, platform_name, hub, modbus_addr, device_info, switch_info) -> None:
@@ -117,6 +118,19 @@ class SolaXModbusSwitch(SwitchEntity):
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
         await self._write_switch_to_modbus()
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+        if self.entity_description.write_method != WRITE_DATA_LOCAL:
+            return
+        last_state = await self.async_get_last_state()
+        if not last_state or last_state.state in ("unknown", "unavailable"):
+            return
+        is_on = last_state.state == "on"
+        self._attr_is_on = is_on
+        if self._sensor_key is not None:
+            self._hub.data[self._sensor_key] = 1 if is_on else 0
+        self.async_write_ha_state()
 
     async def _write_switch_to_modbus(self):
         if self.entity_description.write_method == WRITE_DATA_LOCAL:
