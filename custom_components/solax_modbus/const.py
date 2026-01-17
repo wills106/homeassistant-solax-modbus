@@ -200,6 +200,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     register: int = -1  # initialize with invalid register
     rounding: int = 1
     register_type: int = None  # REG_HOLDING or REG_INPUT or REG_DATA
+    order32: str | None = None  # optional per-sensor 32-bit word order override
     unit: int = None  # e.g. REGISTER_U16
     scan_group: int = None  # <=0 -> default group
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
