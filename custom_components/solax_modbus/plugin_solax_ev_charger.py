@@ -975,7 +975,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         icon="mdi:numeric",
         allowedtypes=GEN2,
+        # Per SolaX docs 32-bit values are little-endian, but this register
+        # is verifyably flipped on GEN2 devices, so override word order here.
         unit=REGISTER_S32,
+        order32="big",
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfTime.SECONDS,
