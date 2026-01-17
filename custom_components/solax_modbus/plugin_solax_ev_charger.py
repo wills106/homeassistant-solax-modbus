@@ -1159,5 +1159,5 @@ plugin_instance = solax_ev_charger_plugin(
     SWITCH_TYPES=[],
     block_size=100,
     #order16=Endian.BIG,
-    order32="little",
+    order32="big",
 )
