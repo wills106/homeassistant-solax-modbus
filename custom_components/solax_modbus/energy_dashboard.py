@@ -563,6 +563,8 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
 
     # Store mapping info for sensor creation
     sensor_desc._energy_dashboard_device_info = energy_dashboard_device_info
+    sensor_desc._energy_dashboard_mapping = sensor_mapping
+    sensor_desc._energy_dashboard_source_hub = data_hub
     
     # Mark Riemann sum sensors for special handling
     if sensor_mapping.use_riemann_sum:

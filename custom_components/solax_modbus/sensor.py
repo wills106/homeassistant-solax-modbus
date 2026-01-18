@@ -21,6 +21,28 @@ from homeassistant.helpers import entity_registry as er
 
 _LOGGER = logging.getLogger(__name__)
 
+def _energy_dashboard_mapping_attrs(description, hub) -> dict:
+    mapping = getattr(description, "_energy_dashboard_mapping", None)
+    if not mapping:
+        return {"ed_mapping_present": False}
+    source_hub = getattr(description, "_energy_dashboard_source_hub", None) or hub
+    hub_data = getattr(source_hub, "data", None) or getattr(source_hub, "datadict", {})
+    try:
+        resolved_source_key = mapping.get_source_key(hub_data)
+    except Exception:
+        resolved_source_key = None
+    return {
+        "ed_mapping_present": True,
+        "ed_target_key": mapping.target_key,
+        "ed_source_key": mapping.source_key,
+        "ed_source_key_pm": mapping.source_key_pm,
+        "ed_resolved_source_key": resolved_source_key,
+        "ed_use_riemann_sum": mapping.use_riemann_sum,
+        "ed_needs_aggregation": mapping.needs_aggregation,
+        "ed_skip_pm_individuals": mapping.skip_pm_individuals,
+        "ed_source_hub": getattr(source_hub, "_name", None),
+    }
+
 
 empty_input_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
@@ -453,6 +475,9 @@ class SolaXModbusSensor(SensorEntity):
         self._hub = hub
         #self.entity_id = "sensor." + platform_name + "_" + description.key
         self.entity_description: BaseModbusSensorEntityDescription = description
+        self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(
+            self.entity_description, self._hub
+        )
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -463,6 +488,9 @@ class SolaXModbusSensor(SensorEntity):
 
     @callback
     def modbus_data_updated(self):
+        self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(
+            self.entity_description, self._hub
+        )
         self.async_write_ha_state()
 
     @callback
@@ -488,7 +516,10 @@ class SolaXModbusSensor(SensorEntity):
             #try:    val = self._hub.data[self.entity_description.key] *self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
             #except: val = self._hub.data[self.entity_description.key] # not a number
             #return val
-        return None
+
+    @property
+    def extra_state_attributes(self):
+        return self._attr_extra_state_attributes
 
 
 class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
@@ -515,6 +546,13 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         self._last_update_time = None
         self._total_energy = 0.0  # kWh
         self._last_reset_date = dt_util.now().date()
+        self._attr_extra_state_attributes = self._riemann_extra_attrs()
+
+    def _riemann_extra_attrs(self) -> dict:
+        attrs = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
+        if self._last_reset_date:
+            attrs["last_reset_date"] = self._last_reset_date.isoformat()
+        return attrs
     
     async def async_added_to_hass(self):
         """Register callbacks and restore state."""
@@ -552,6 +590,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             self._last_update_time = None
             from .energy_dashboard import RIEMANN_ROUND_DIGITS
             self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+            self._attr_extra_state_attributes = self._riemann_extra_attrs()
             self.async_write_ha_state()
         
         # Register with hub
@@ -600,6 +639,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             self._last_power_value = filtered_power
             self._last_update_time = current_time
             self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+            self._attr_extra_state_attributes = self._riemann_extra_attrs()
             self.async_write_ha_state()
             return
         
@@ -619,6 +659,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         
         # Round result and store in hub.data (so native_value property works)
         self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
+        self._attr_extra_state_attributes = self._riemann_extra_attrs()
         
         # Update state
         self.async_write_ha_state()
@@ -633,10 +674,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
 
     @property
     def extra_state_attributes(self):
-        attrs = {}
-        if self._last_reset_date:
-            attrs["last_reset_date"] = self._last_reset_date.isoformat()
-        return attrs
+        return self._attr_extra_state_attributes
 
 
 
@@ -734,56 +772,3 @@ def entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_inf
             else:
                 inputRegs[newdescr.register] = newdescr
         else: _LOGGER.warning(f"{hub_name}: entity declaration without register_type found: {newdescr.key}")
-
-
-class SolaXModbusSensor(SensorEntity):
-    """Representation of an SolaX Modbus sensor."""
-
-    def __init__(
-        self,
-        platform_name,
-        hub,
-        device_info,
-        description: BaseModbusSensorEntityDescription,
-    ):
-        """Initialize the sensor."""
-        self._platform_name = platform_name
-        self._attr_device_info = device_info
-        self._hub = hub
-        #self.entity_id = "sensor." + platform_name + "_" + description.key
-        self.entity_description: BaseModbusSensorEntityDescription = description
-
-    async def async_added_to_hass(self):
-        """Register callbacks."""
-        await self._hub.async_add_solax_modbus_sensor(self)
-
-    async def async_will_remove_from_hass(self) -> None:
-        await self._hub.async_remove_solax_modbus_sensor(self)
-
-    @callback
-    def modbus_data_updated(self):
-        self.async_write_ha_state()
-
-    @callback
-    def _update_state(self): # never called ?????
-        _LOGGER.info(f"update_state {self.entity_description.key} : {self._hub.data.get(self.entity_description.key,'None')}")
-        if self.entity_description.key in self._hub.data:
-            self._state = self._hub.data[self.entity_description.key]
-
-    @property
-    def name(self):
-        """Return the name."""
-        return f"{self._platform_name} {self.entity_description.name}"
-
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{self._platform_name}_{self.entity_description.key}"
-
-    @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        if self.entity_description.key in self._hub.data:
-            return self._hub.data[self.entity_description.key]
-            #try:    val = self._hub.data[self.entity_description.key] *self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
-            #except: val = self._hub.data[self.entity_description.key] # not a number
-            #return val
