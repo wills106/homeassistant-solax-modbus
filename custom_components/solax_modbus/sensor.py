@@ -650,8 +650,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             self._last_power_value = None
             self._last_update_time = None
             from .energy_dashboard import RIEMANN_ROUND_DIGITS
-            self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
-            self._hub.data[self.entity_description.key] = self._total_energy
+            self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
             self.async_write_ha_state()
         
         # Register with hub
@@ -662,13 +661,26 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         """Calculate energy when data is updated."""
         if self._riemann_mapping is None:
             return
+        from .energy_dashboard import RIEMANN_ROUND_DIGITS
         
         # Get current power value from source sensor
         data_hub = getattr(self.entity_description, "_riemann_data_hub", None) or self._hub
         hub_data = getattr(data_hub, "data", None) or getattr(data_hub, "datadict", {})
         source_key = self._riemann_mapping.get_source_key(hub_data)
-        current_power = hub_data.get(source_key)
-        
+
+        # PV variant energy should track the matching Energy Dashboard PV power entity
+        # to stay aligned in parallel mode. The Master inverter uses its own raw
+        # pv_power_{n}, so only use ED power for Slave-derived variants.
+        current_power = None
+        if "_pv_energy_" in self.entity_description.key:
+            if data_hub is not self._hub:
+                ed_power_key = self.entity_description.key.replace("_pv_energy_", "_pv_power_")
+                ed_hub_data = getattr(self._hub, "data", None) or getattr(self._hub, "datadict", {})
+                current_power = ed_hub_data.get(ed_power_key)
+
+        if current_power is None:
+            current_power = hub_data.get(source_key)
+
         if current_power is None:
             # Source sensor not available, keep current total
             return
@@ -686,9 +698,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             self._last_reset_date = current_date
             self._last_power_value = filtered_power
             self._last_update_time = current_time
-            from .energy_dashboard import RIEMANN_ROUND_DIGITS
-            self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
-            self._hub.data[self.entity_description.key] = self._total_energy
+            self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
             self.async_write_ha_state()
             return
         
@@ -707,9 +717,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         self._last_update_time = current_time
         
         # Round result and store in hub.data (so native_value property works)
-        from .energy_dashboard import RIEMANN_ROUND_DIGITS
-        self._total_energy = round(self._total_energy, RIEMANN_ROUND_DIGITS)
-        self._hub.data[self.entity_description.key] = self._total_energy
+        self._hub.data[self.entity_description.key] = round(self._total_energy, RIEMANN_ROUND_DIGITS)
         
         # Update state
         self.async_write_ha_state()
