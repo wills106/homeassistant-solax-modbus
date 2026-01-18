@@ -568,6 +568,7 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
     if sensor_mapping.use_riemann_sum:
         sensor_desc._is_riemann_sum_sensor = True
         sensor_desc._riemann_mapping = sensor_mapping
+        sensor_desc._riemann_data_hub = data_hub
     else:
         sensor_desc._is_riemann_sum_sensor = False
     

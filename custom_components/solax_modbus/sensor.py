@@ -664,8 +664,10 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             return
         
         # Get current power value from source sensor
-        source_key = self._riemann_mapping.source_key
-        current_power = self._hub.data.get(source_key)
+        data_hub = getattr(self.entity_description, "_riemann_data_hub", None) or self._hub
+        hub_data = getattr(data_hub, "data", None) or getattr(data_hub, "datadict", {})
+        source_key = self._riemann_mapping.get_source_key(hub_data)
+        current_power = hub_data.get(source_key)
         
         if current_power is None:
             # Source sensor not available, keep current total
