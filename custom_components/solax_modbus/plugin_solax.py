@@ -10118,7 +10118,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
 
         # Grid to Battery Energy (per inverter, aggregate in parallel)
         EnergyDashboardSensorMapping(
-            source_key="e_charge_total",
+            source_key="e_charge_today",
             target_key="grid_to_battery_energy",
             name="Grid to Battery Energy",
             icon="mdi:transmission-tower-export",
