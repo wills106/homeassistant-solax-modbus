@@ -516,6 +516,7 @@ class SolaXModbusSensor(SensorEntity):
             #try:    val = self._hub.data[self.entity_description.key] *self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
             #except: val = self._hub.data[self.entity_description.key] # not a number
             #return val
+        return None
 
     @property
     def extra_state_attributes(self):
