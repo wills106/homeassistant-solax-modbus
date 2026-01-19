@@ -17,7 +17,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | GEN5 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -285,11 +285,8 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         ap_target = target
 
     # Debug logging: Target calculation
-    _LOGGER.debug(
-        "[REMOTE_CONTROL] Target calculation: "
-        f"mode={power_control} ap_target={ap_target}W"
-    )
-    
+    _LOGGER.debug("[REMOTE_CONTROL] Target calculation: " f"mode={power_control} ap_target={ap_target}W")
+
     # Phase envelope protection: Calculate safe ap_target based on phase limits
     # Get phase-specific data
     measured_power_l1 = datadict.get("measured_power_l1", None)
@@ -299,53 +296,56 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     grid_voltage_l2 = datadict.get("grid_voltage_l2", None)
     grid_voltage_l3 = datadict.get("grid_voltage_l3", None)
     main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
-    
+
     safe_ap_target_from_phase = None  # Initialize
     safe_ap_target_export_from_phase = None
-    
-    if (all(p is not None for p in [measured_power_l1, measured_power_l2, measured_power_l3]) and
-        all(v is not None and v > 0 for v in [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3]) and
-        main_breaker_current_limit is not None and main_breaker_current_limit > 0):
-        
+
+    if (
+        all(p is not None for p in [measured_power_l1, measured_power_l2, measured_power_l3])
+        and all(v is not None and v > 0 for v in [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3])
+        and main_breaker_current_limit is not None
+        and main_breaker_current_limit > 0
+    ):
+
         # Calculate house load per phase using imbalance
         # Imbalance in measured_power = imbalance in house load (inverters balance)
         avg_measured_power = (measured_power_l1 + measured_power_l2 + measured_power_l3) / 3
         house_load_l1_W = (house_load / 3) + (avg_measured_power - measured_power_l1)
         house_load_l2_W = (house_load / 3) + (avg_measured_power - measured_power_l2)
         house_load_l3_W = (house_load / 3) + (avg_measured_power - measured_power_l3)
-        
+
         # Convert to current
         house_current_l1 = house_load_l1_W / grid_voltage_l1
         house_current_l2 = house_load_l2_W / grid_voltage_l2
         house_current_l3 = house_load_l3_W / grid_voltage_l3
-        
+
         # Calculate measured phase currents for comparison
         measured_current_l1 = abs(measured_power_l1) / grid_voltage_l1
         measured_current_l2 = abs(measured_power_l2) / grid_voltage_l2
         measured_current_l3 = abs(measured_power_l3) / grid_voltage_l3
-        
+
         # Find worst phase
         house_currents = [house_current_l1, house_current_l2, house_current_l3]
         worst_phase_house_current = max(house_currents)
         worst_phase_idx = house_currents.index(worst_phase_house_current)
         worst_phase_voltage = [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3][worst_phase_idx]
-        
+
         _LOGGER.debug(
             f"[REMOTE_CONTROL] Phase currents - Measured: L1={measured_current_l1:.2f}A L2={measured_current_l2:.2f}A L3={measured_current_l3:.2f}A | "
             f"House: L1={house_current_l1:.2f}A L2={house_current_l2:.2f}A L3={house_current_l3:.2f}A | "
             f"worst=L{worst_phase_idx+1}"
         )
-        
+
         # Calculate safe ap_target for IMPORTS to keep worst phase below 59.85A
         # worst_phase: house_current + (ap_target_current / 3) ≤ 59.85A
         # Solve: ap_target ≤ (59.85A - house_current) × 3 × avg_voltage
         max_phase_current_limit = main_breaker_current_limit * 0.95  # 59.85A
         remaining_current_A = max_phase_current_limit - worst_phase_house_current
-        
+
         if remaining_current_A > 0:
             avg_voltage = (grid_voltage_l1 + grid_voltage_l2 + grid_voltage_l3) / 3
             safe_ap_target_from_phase = remaining_current_A * 3 * avg_voltage
-            
+
             _LOGGER.debug(
                 f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
                 f"limit={max_phase_current_limit:.2f}A remaining={remaining_current_A:.2f}A "
@@ -357,7 +357,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
                 f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx+1} house={worst_phase_house_current:.2f}A "
                 f"at or above limit {max_phase_current_limit:.2f}A - blocking imports"
             )
-        
+
         # Calculate safe ap_target for EXPORTS to keep best phase below 59.85A
         # For exports, phase with LOWEST house load exports MOST
         # best_phase (min house): (export_current / 3) - house_current ≤ 59.85A
@@ -365,29 +365,29 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         # ap_target = -export_current, so: ap_target ≥ -(59.85A + min_house_current) × 3 × avg_voltage
         min_phase_house_current = min(house_currents)
         best_phase_idx = house_currents.index(min_phase_house_current)
-        
+
         # Maximum export current that keeps best phase below limit
         max_export_current_per_phase = max_phase_current_limit + min_phase_house_current
         safe_export_total_current = max_export_current_per_phase * 3
         safe_ap_target_export_from_phase = -(safe_export_total_current * avg_voltage)
-        
+
         _LOGGER.debug(
             f"[REMOTE_CONTROL] Phase protection (export): L{best_phase_idx+1} house={min_phase_house_current:.2f}A "
             f"(lowest) limit={max_phase_current_limit:.2f}A "
             f"safe_ap_target={safe_ap_target_export_from_phase:.1f}W (negative)"
         )
-    
+
     # Apply bounds checking based on ap_target sign
     old_ap_target = ap_target
     if ap_target > 0:
         # Importing (positive = import)
         # Inverter input cannot be more than the import limit less any used by the house load
         import_bound = import_limit - house_load
-        
+
         # Apply phase protection limit if available
         if safe_ap_target_from_phase is not None:
             import_bound = min(import_bound, safe_ap_target_from_phase)
-        
+
         ap_target = min(ap_target, import_bound)
         _LOGGER.debug(
             f"[REMOTE_CONTROL] Import bounds: ap_target={ap_target}W import_bound={import_bound}W "
@@ -397,16 +397,13 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         # Exporting (negative = export).
         # Inverter output cannot be more than the export limit plus any used by the house load
         export_bound = -(export_limit + house_load)
-        
+
         # Apply phase protection limit if available
         if safe_ap_target_export_from_phase is not None:
             export_bound = max(export_bound, safe_ap_target_export_from_phase)
-        
+
         ap_target = max(ap_target, export_bound)
-        _LOGGER.debug(
-            f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W "
-            f"export_limit={export_limit}W house_load={house_load}W"
-        )
+        _LOGGER.debug(f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W " f"export_limit={export_limit}W house_load={house_load}W")
     # If ap_target = 0, no bounds checking needed
 
     # Debug logging: Bounds checking
@@ -545,7 +542,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             surplus_export = max(0, surplus - desired_charge)
             export_within_cap = min(export_limit, surplus_export)
             if surplus_export > export_limit:
-                # Unless we've exceded the export limit, in which case limit the PV too
+                # Unless we've exceeded the export limit, in which case limit the PV too
                 pvlimit = pv - (surplus_export - export_limit)
                 surplus_export = export_limit
 
@@ -904,7 +901,7 @@ def value_function_pm_total_house_load(initval, descr, datadict):
 
     How?
     We use two methods and apply correction during remote control. The two
-    calculations allow us to normailze the inflaction by taking the midpoint
+    calculations allow us to normalize the inflaction by taking the midpoint
     of the delta:
 
     1. Inverter method: pm_power - grid_power
@@ -1486,7 +1483,7 @@ NUMBER_TYPES = [
         name="Config Measured Power Gain",
         key="measured_power_gain",
         allowedtypes=AC | HYBRID,
-        native_min_value=90, # Allow correction up to +/-10%.
+        native_min_value=90,  # Allow correction up to +/-10%.
         native_max_value=110,
         native_step=0.1,
         native_unit_of_measurement=PERCENTAGE,
@@ -2379,8 +2376,8 @@ SELECT_TYPES = [
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Disabled",
-            1: "Enabled Power Control",  # battery charge level in absense of PV
-            11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
+            1: "Enabled Power Control",  # battery charge level in absence of PV
+            11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absence of PV
             12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
             110: "Enabled Self Use",  # variation of Grid Control with fixed target 0
             120: "Enabled Feedin Priority",  # variation of Battery Control with fixed target 0
@@ -4258,7 +4255,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             2: "Francais",
             3: "Polskie",
             4: "Espanol",
-            5: "Portugues",
+            5: "Portuguese",
             6: "Italiano",
             7: "Ukrainian",
         },
@@ -9925,11 +9922,8 @@ class solax_plugin(plugin_base):
                         native_min_value=-system_limit_w,
                         native_max_value=system_limit_w,
                     )
-                    _LOGGER.info(
-                        f"Parallel Master: Set {key} limits to ±{system_limit_w}W "
-                        f"(inverter_power_kw={hub.inverterPowerKw}kW)"
-                    )
-        
+                    _LOGGER.info(f"Parallel Master: Set {key} limits to ±{system_limit_w}W " f"(inverter_power_kw={hub.inverterPowerKw}kW)")
+
         # For single inverters or if config_max_export is enabled, use config_max_export
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
@@ -9960,7 +9954,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
     mappings=[
         # ===== POWER SENSORS =====
-
         # Grid Power
         EnergyDashboardSensorMapping(
             source_key="measured_power",
@@ -9971,7 +9964,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # Solar Power
         EnergyDashboardSensorMapping(
             source_key="pv_power_total",
@@ -9980,7 +9972,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Solar Power",
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # PV Variant Power (per string)
         EnergyDashboardSensorMapping(
             source_key="pv_power_{n}",
@@ -9988,7 +9979,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="PV Power {n}",
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # Battery Power (GEN2-5 only)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
@@ -9998,9 +9988,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             invert=True,
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
         ),
-
         # ===== ENERGY SENSORS =====
-
         # PV Variant Energy (per string, Riemann sum)
         EnergyDashboardSensorMapping(
             source_key="pv_power_{n}",
@@ -10010,7 +9998,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             filter_function=lambda v: max(0, v),
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # Grid Import Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="today_s_import_energy",
@@ -10037,7 +10024,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             filter_function=lambda v: max(0, v),
             allowedtypes=GEN,
         ),
-
         # Grid Export Energy (GEN3-6 today)
         EnergyDashboardSensorMapping(
             source_key="today_s_export_energy",
@@ -10064,7 +10050,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             filter_function=lambda v: abs(min(0, v)),
             allowedtypes=GEN,
         ),
-
         # Home Consumption Energy (Riemann sum)
         EnergyDashboardSensorMapping(
             source_key="house_load",
@@ -10076,7 +10061,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # Home Consumption Power
         EnergyDashboardSensorMapping(
             source_key="house_load",
@@ -10086,7 +10070,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=ALL_GEN_GROUP,
         ),
-
         # Battery Charge Energy (GEN3-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
@@ -10105,7 +10088,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN2,
         ),
-
         # Battery Discharge Energy (GEN3-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
@@ -10124,7 +10106,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN2,
         ),
-
         # Grid to Battery Energy (per inverter, aggregate in parallel)
         EnergyDashboardSensorMapping(
             source_key="e_charge_today",
@@ -10134,7 +10115,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-
         # Grid to Battery Power (derived from inverter power)
         EnergyDashboardSensorMapping(
             source_key="inverter_power",
@@ -10145,7 +10125,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-
         # Solar Production Energy (GEN2-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
