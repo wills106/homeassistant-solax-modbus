@@ -71,6 +71,8 @@ CONF_BAUDRATE = "baudrate"
 CONF_PLUGIN = "plugin"
 CONF_READ_BATTERY = "read_battery"
 CONF_CORE_HUB = "read_core_hub"
+CONF_ENERGY_DASHBOARD_DEVICE = "energy_dashboard_device"
+CONF_DEBUG_SETTINGS = "debug_settings"
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
@@ -80,6 +82,9 @@ DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
 DEFAULT_PLUGIN = "solax"
 DEFAULT_READ_BATTERY = False
+ENERGY_DASHBOARD_DEVICE_ENABLED = True
+ENERGY_DASHBOARD_DEVICE_DISABLED = False
+DEFAULT_ENERGY_DASHBOARD_DEVICE = ENERGY_DASHBOARD_DEVICE_ENABLED
 PLUGIN_PATH = f"{pathlib.Path(__file__).parent.absolute()}/plugin_*.py"
 SLEEPMODE_NONE = None
 SLEEPMODE_ZERO = 0  # when no communication at all
@@ -200,7 +205,6 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     register: int = -1  # initialize with invalid register
     rounding: int = 1
     register_type: int = None  # REG_HOLDING or REG_INPUT or REG_DATA
-    order32: str | None = None  # optional per-sensor 32-bit word order override
     unit: int = None  # e.g. REGISTER_U16
     scan_group: int = None  # <=0 -> default group
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc

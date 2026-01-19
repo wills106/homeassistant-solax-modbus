@@ -4445,6 +4445,22 @@ class solis_fb00_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
+# Energy Dashboard Virtual Device mapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="solis_fb00",
+    mappings=[
+        EnergyDashboardSensorMapping(
+            source_key="battery_power",  # Note: plugin_solis_fb00 uses battery_power (not battery_power_charge)
+            source_key_pm=None,  # No parallel mode support in this plugin
+            name="Battery Power",
+            invert=True,
+        ),
+    ],
+    parallel_mode_supported=False,  # Plugin doesn't support parallel mode
+)
+
 plugin_instance = solis_fb00_plugin(
     plugin_name="Solis FB00",
     plugin_manufacturer="Ginlog Solis",
@@ -4458,3 +4474,6 @@ plugin_instance = solis_fb00_plugin(
     order32="big",
     auto_block_ignore_readerror=True,
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING

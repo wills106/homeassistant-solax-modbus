@@ -301,6 +301,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
     
     safe_ap_target_from_phase = None  # Initialize
+    safe_ap_target_export_from_phase = None
     
     if (all(p is not None for p in [measured_power_l1, measured_power_l2, measured_power_l3]) and
         all(v is not None and v > 0 for v in [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3]) and
@@ -7627,6 +7628,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x213,
         register_type=REG_INPUT,
+        unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:battery-charging",
     ),
@@ -7648,6 +7650,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x215,
         scale=0.1,
         register_type=REG_INPUT,
+        unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
     ),
@@ -7837,6 +7840,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x22D,
         register_type=REG_INPUT,
+        unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:battery-charging",
     ),
@@ -7858,6 +7862,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x22F,
         scale=0.1,
         register_type=REG_INPUT,
+        unit=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
     ),
@@ -9943,6 +9948,223 @@ class solax_plugin(plugin_base):
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
 
+# Energy Dashboard Virtual Device mapping
+# Details: docs/solax/ENERGY_DASHBOARD_MAPPING_GEN1_GEN6.md
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="solax",
+    mappings=[
+        # ===== POWER SENSORS =====
+
+        # Grid Power
+        EnergyDashboardSensorMapping(
+            source_key="measured_power",
+            target_key="grid_power",
+            name="Grid Power",
+            invert=True,
+            icon="mdi:transmission-tower",
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Solar Power
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_total",
+            source_key_pm="pm_total_pv_power",
+            target_key="solar_power",
+            name="Solar Power",
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # PV Variant Power (per string)
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_power_{n}",
+            name="PV Power {n}",
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Battery Power (GEN2-5 only)
+        EnergyDashboardSensorMapping(
+            source_key="battery_power_charge",
+            source_key_pm="pm_battery_power_charge",
+            target_key="battery_power",
+            name="Battery Power",
+            invert=True,
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
+        ),
+
+        # ===== ENERGY SENSORS =====
+
+        # PV Variant Energy (per string, Riemann sum)
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_energy_{n}",
+            name="PV Energy {n}",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Grid Import Energy (GEN3-6 today)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_import_energy",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+            skip_pm_individuals=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Grid Import Energy (GEN2 total)
+        EnergyDashboardSensorMapping(
+            source_key="grid_import_total",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+            skip_pm_individuals=True,
+            allowedtypes=GEN2,
+        ),
+        # Grid Import Energy (GEN1 Riemann sum)
+        # GEN1 lacks native energy counters; integrate power to derive energy.
+        EnergyDashboardSensorMapping(
+            source_key="grid_power_energy_dashboard",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            allowedtypes=GEN,
+        ),
+
+        # Grid Export Energy (GEN3-6 today)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_export_energy",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
+            skip_pm_individuals=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Grid Export Energy (GEN2 total)
+        EnergyDashboardSensorMapping(
+            source_key="grid_export_total",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
+            skip_pm_individuals=True,
+            allowedtypes=GEN2,
+        ),
+        # Grid Export Energy (GEN1 Riemann sum)
+        # GEN1 export is derived from power; filter to export-only portion.
+        EnergyDashboardSensorMapping(
+            source_key="grid_power_energy_dashboard",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: abs(min(0, v)),
+            allowedtypes=GEN,
+        ),
+
+        # Home Consumption Energy (Riemann sum)
+        EnergyDashboardSensorMapping(
+            source_key="house_load",
+            source_key_pm="pm_total_house_load",
+            target_key="home_consumption_energy",
+            name="Home Consumption Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="house_load",
+            source_key_pm="pm_total_house_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+
+        # Battery Charge Energy (GEN3-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="battery_input_energy_today",
+            target_key="battery_energy_charge",
+            name="Battery Charge Energy",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Battery Charge Energy (GEN2 total)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="battery_input_energy_total",
+            target_key="battery_energy_charge",
+            name="Battery Charge Energy",
+            needs_aggregation=True,
+            allowedtypes=GEN2,
+        ),
+
+        # Battery Discharge Energy (GEN3-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="battery_output_energy_today",
+            target_key="battery_energy_discharge",
+            name="Battery Discharge Energy",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Battery Discharge Energy (GEN2 total)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="battery_output_energy_total",
+            target_key="battery_energy_discharge",
+            name="Battery Discharge Energy",
+            needs_aggregation=True,
+            allowedtypes=GEN2,
+        ),
+
+        # Grid to Battery Energy (per inverter, aggregate in parallel)
+        EnergyDashboardSensorMapping(
+            source_key="e_charge_today",
+            target_key="grid_to_battery_energy",
+            name="Grid to Battery Energy",
+            icon="mdi:transmission-tower-export",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+
+        # Grid to Battery Power (derived from inverter power)
+        EnergyDashboardSensorMapping(
+            source_key="inverter_power",
+            target_key="grid_to_battery_power",
+            name="Grid to Battery Power",
+            filter_function=lambda v: max(0 - v, 0),
+            icon="mdi:transmission-tower-export",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+
+        # Solar Production Energy (GEN2-6 today)
+        # Aggregate energy totals across Primary + Secondary in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="today_s_solar_energy",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+            needs_aggregation=True,
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Solar Production Energy (GEN1 Riemann sum)
+        # GEN1 lacks native energy counters; integrate power and aggregate in parallel mode.
+        EnergyDashboardSensorMapping(
+            source_key="solar_power_energy_dashboard",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            needs_aggregation=True,
+            allowedtypes=GEN,
+        ),
+    ],
+)
+
 plugin_instance = solax_plugin(
     plugin_name="SolaX",
     plugin_manufacturer="SolaX Power",
@@ -9960,3 +10182,6 @@ plugin_instance = solax_plugin(
     auto_default_scangroup=SCAN_GROUP_FAST,
     auto_slow_scangroup=SCAN_GROUP_MEDIUM,
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING

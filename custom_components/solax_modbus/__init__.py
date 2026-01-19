@@ -38,6 +38,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
+import voluptuous as vol
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
@@ -78,6 +79,7 @@ from .const import (
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
     CONF_CORE_HUB,
+    CONF_DEBUG_SETTINGS,
     DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_BAUDRATE,
@@ -120,7 +122,22 @@ from .const import (
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+# CONFIG_SCHEMA allows YAML configuration ONLY for debug_settings (DEVELOPMENT/TESTING/DEBUGGING ONLY)
+# All other configuration must be done via config flow (UI)
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Optional(DOMAIN): vol.Schema(
+            {
+                vol.Optional(CONF_DEBUG_SETTINGS): vol.Schema(
+                    {str: vol.Schema({str: cv.boolean})}  # Inverter name -> {setting_name: bool}
+                )
+            },
+            extra=vol.ALLOW_EXTRA,  # Allow extra keys but they won't be processed
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 empty_hub_interval_group_lambda = lambda: SimpleNamespace(
             interval=0,
@@ -183,8 +200,6 @@ def should_register_be_loaded(hass, hub, descriptor):
         return False 
 
 
-
-
 async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener, called when the config entry options are changed."""
     await hass.config_entries.async_reload(entry.entry_id)
@@ -193,6 +208,16 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
 async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
+    
+    # Extract debug_settings from YAML configuration (DEVELOPMENT/TESTING/DEBUGGING ONLY)
+    # Store in hass.data so debug.py can access it
+    yaml_config = config.get(DOMAIN, {})
+    debug_settings = yaml_config.get(CONF_DEBUG_SETTINGS)
+    if debug_settings:
+        hass.data[DOMAIN]["_debug_settings"] = debug_settings
+    else:
+        hass.data[DOMAIN]["_debug_settings"] = {}
+    
     # Register helper services to force-stop hubs
     async def _svc_stop_all(call):
         """Force-stop all SolaX hubs (kills timers/tasks/sockets)."""
@@ -327,6 +352,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             plugin,
             entry,
         )
+    try:
+        from .energy_dashboard import register_energy_dashboard_switch_provider
+
+        register_energy_dashboard_switch_provider(hass)
+    except Exception as ex:
+        _LOGGER.debug(f"{hub.name}: Energy Dashboard switch provider registration failed: {ex}")
     """Register the hub."""
     hass.data[DOMAIN][hub._name] = {
         "hub": hub,
@@ -693,6 +724,14 @@ class SolaXModbusHub:
             fp.close()
             self.localsLoaded = True
             self.plugin.localDataCallback(self)
+            try:
+                self._hass.loop.call_soon_threadsafe(
+                    self._hass.bus.async_fire,
+                    "solax_modbus_local_data_loaded",
+                    {"hub_name": self._name},
+                )
+            except Exception as ex:
+                _LOGGER.debug(f"{self._name}: failed to fire local data event: {ex}")
 
     # end of save and load section
 
@@ -871,8 +910,52 @@ class SolaXModbusHub:
                     # self.data = {} # invalidate data - do we want this ??
 
                 _LOGGER.debug(f"{self._name}: device group read done")
+        await self._maybe_refresh_energy_dashboard_on_primary_update()
         # Return aggregate result and updated sensor count to caller for logging
         return agg_res, updated_sensors
+
+    async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
+        if not self._hass:
+            return
+        if self.data.get("parallel_setting") != "Master":
+            return
+
+        pm_inverter_count = self.data.get("pm_inverter_count")
+        if pm_inverter_count is None:
+            return
+
+        domain_data = self._hass.data.setdefault(DOMAIN, {})
+        hub_entry = domain_data.setdefault(self._name, {})
+        last_count = hub_entry.get("energy_dashboard_last_total_inverter_count")
+        if last_count is None:
+            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+            return
+        refresh_pending = hub_entry.get("energy_dashboard_refresh_pending")
+        if pm_inverter_count <= last_count and not refresh_pending:
+            return
+        if refresh_pending:
+            last_refresh_ts = hub_entry.get("energy_dashboard_last_refresh_ts", 0)
+            if time() - last_refresh_ts < 5:
+                return
+
+        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
+        if not refresh_callback:
+            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+            return
+        if hub_entry.get("energy_dashboard_refresh_in_progress"):
+            return
+
+        hub_entry["energy_dashboard_refresh_in_progress"] = True
+        hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
+        hub_entry["energy_dashboard_last_refresh_ts"] = time()
+
+        async def _run_refresh():
+            try:
+                await refresh_callback()
+            finally:
+                hub_entry["energy_dashboard_refresh_in_progress"] = False
+
+        self._hass.async_create_task(_run_refresh())
 
     @property
     def invertertype(self):
@@ -1188,7 +1271,6 @@ class SolaXModbusHub:
     def treat_address(self, data, regs, idx, descr, initval=0, advance=True):
         return_value = None
         read_scale = descr.read_scale # read scale might still be wrong the first polling cycle
-        order32 = descr.order32 or self.plugin.order32
         val = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
@@ -1199,11 +1281,11 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_S16:
                 val = convert_from_registers(regs[idx:idx+1], DataType.INT16,   self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_U32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.UINT32,  order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.UINT32,  self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_F32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.FLOAT32, order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.FLOAT32, self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_S32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.INT32,   order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.INT32,   self.plugin.order32); words_used = 2
             elif descr.unit == REGISTER_STR:
                 wc = descr.wordcount or 0
                 raw = convert_from_registers(regs[idx:idx+wc], DataType.STRING, self.plugin.order32); words_used = wc
@@ -1212,9 +1294,9 @@ class SolaXModbusHub:
                 wc = descr.wordcount or 0
                 val = [convert_from_registers(regs[idx+i:idx+i+1], DataType.UINT16,  self.plugin.order32) for i in range(wc)]; words_used = wc
             elif descr.unit == REGISTER_ULSB16MSB16:
-                lo = convert_from_registers(regs[idx:idx+1],   DataType.UINT16, order32)
-                hi = convert_from_registers(regs[idx+1:idx+2], DataType.UINT16, order32)
-                val = (hi + lo * 65536) if order32 == "big" else (lo + hi * 65536); words_used = 2
+                lo = convert_from_registers(regs[idx:idx+1],   DataType.UINT16, self.plugin.order32)
+                hi = convert_from_registers(regs[idx+1:idx+2], DataType.UINT16, self.plugin.order32)
+                val = (hi + lo * 65536) if self.plugin.order32 == "big" else (lo + hi * 65536); words_used = 2
             elif descr.unit == REGISTER_U8L:
                 if advance:
                     base = convert_from_registers(regs[idx:idx+1], DataType.UINT16, self.plugin.order32); words_used = 1
@@ -1625,29 +1707,51 @@ class SolaXModbusHub:
         """Run a one-time bisect over all current blocks to discover unreadable entity bases.
         The result updates self.bad_recheck and schedules a delayed revalidation.
         """
-        # If not online, postpone once to avoid mislabeling during startup flaps
-        if not await self.is_online():
-            _LOGGER.debug(f"{self._name}: initial bisect postponed (offline)")
-            await asyncio.sleep(5)
+        import asyncio
+        import time as _t
+        bisect_start_time = _t.monotonic()
+        bisect_timeout = 30.0  # Maximum 30 seconds for bisect to complete
+        
+        try:
+            # If not online, postpone once to avoid mislabeling during startup flaps
             if not await self.is_online():
-                _LOGGER.debug(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
-                self._probe_ready.set()
-                return
+                _LOGGER.debug(f"{self._name}: initial bisect postponed (offline)")
+                await asyncio.sleep(5)
+                if not await self.is_online():
+                    _LOGGER.debug(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
+                    self._probe_ready.set()
+                    return
 
-        # Walk through all currently built groups/blocks
-        for interval_group in self.groups.values():
-            for dev_group in interval_group.device_groups.values():
-                for blk in getattr(dev_group, "holdingBlocks", []):
-                    await self._initial_bisect_block(blk, "holding")
-                for blk in getattr(dev_group, "inputBlocks", []):
-                    await self._initial_bisect_block(blk, "input")
+            # Walk through all currently built groups/blocks
+            for interval_group in self.groups.values():
+                # Check timeout periodically
+                if (_t.monotonic() - bisect_start_time) > bisect_timeout:
+                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
+                    self._probe_ready.set()
+                    return
+                    
+            for dev_group in list(interval_group.device_groups.values()):
+                    # Check timeout before each block
+                    if (_t.monotonic() - bisect_start_time) > bisect_timeout:
+                        _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
+                        self._probe_ready.set()
+                        return
+                        
+                    for blk in getattr(dev_group, "holdingBlocks", []):
+                        await self._initial_bisect_block(blk, "holding")
+                    for blk in getattr(dev_group, "inputBlocks", []):
+                        await self._initial_bisect_block(blk, "input")
 
-        # If no suspects were identified by the initial bisect, log that explicitly
-        if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
-            _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
+            # If no suspects were identified by the initial bisect, log that explicitly
+            if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
+                _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
 
-        # Probing completed – enable polling
-        self._probe_ready.set()
+            # Probing completed – enable polling
+            self._probe_ready.set()
+        except Exception as e:
+            _LOGGER.error(f"{self._name}: Exception in initial bisect: {e}", exc_info=True)
+            # Always set probe_ready on exception to avoid permanent blocking
+            self._probe_ready.set()
 
         # Re-validate candidates after a short grace period
         self._recheck_task = self._hass.loop.create_task(self._recheck_bad_after(30))
@@ -1703,8 +1807,12 @@ class SolaXModbusHub:
                 try:
                     desc_map = None
                     for interval_group in self.groups.values():
-                        for dev_group in interval_group.device_groups.values():
-                            blocks = getattr(dev_group, "holdingBlocks", []) if typ == "holding" else getattr(dev_group, "inputBlocks", [])
+                        for dev_group in list(interval_group.device_groups.values()):
+                            blocks = (
+                                getattr(dev_group, "holdingBlocks", [])
+                                if typ == "holding"
+                                else getattr(dev_group, "inputBlocks", [])
+                            )
                             for blk in blocks:
                                 if addr in (blk.regs or []):
                                     desc_map = blk.descriptions
