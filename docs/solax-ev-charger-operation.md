@@ -10,34 +10,49 @@ This document explains how the SolaX Modbus integration detects and operates wit
 
 ## Device Type Detection
 
-The integration automatically detects EV charger models based on serial number prefixes during the `async_determineInverterType()` process.
+The integration automatically detects EV charger models from the serial number during the `async_determineInverterType()` process. It supports both legacy prefix-based serials and the newer category/model/power code format.
 
-### Supported Models
+### Supported Models (Legacy Prefixes)
 
 | Serial Prefix | Model | Power | Generation | Hardware Version |
 |---------------|-------|-------|------------|-------------------|
 | C107 | X1-EVC-7kW | 7kW | GEN1 | Gen1 |
 | C311 | X3-EVC-11kW | 11kW | GEN1/GEN2* | Gen1 or Gen1 (GEN2 FW) |
 | C322 | X3-EVC-22kW | 22kW | GEN1/GEN2* | Gen1 or Gen1 (GEN2 FW) |
-| 5020 | X1-HAC-7kW | 7kW | GEN2 | Gen2 |
-| 5030 | X3-HAC-11kW | 11kW | GEN2 | Gen2 |
-| 5070 | X3-HAC-22kW | 22kW | GEN2 | Gen2 |
 
 *C311 and C322 are hybrid models that can run either GEN1 or GEN2 firmware (see Hybrid Detection section below).
+*Older code used `50**` prefixes for Gen2 HAC models, but SolaX support confirmed the correct parsing is based on the new category/model/power format below.
+
+### Supported Models (New Serial Format)
+
+Newer EV chargers use a serial format like `5 03 0B 002060C0P`. The Modbus register returns it without spaces; the first 5 characters encode the model and power.
+
+- Product category: `5` = EV Charger (EVC)
+- Model codes:
+  - `03` = X3-HAC
+  - `07` = X3-HAC-S
+  - `02` = X1-GAC
+- Power codes:
+  - `04` = 4.6kW
+  - `07` = 7.2kW
+  - `0B` = 11kW
+  - `0M` = 22kW
 
 ### Detection Process
 
 1. **Serial Number Read**: Integration reads serial number from register 0x600
-2. **Prefix Matching**: Compares serial number prefix against known models
-3. **Type Classification**: Sets `invertertype` bitmask (X1/X3, power rating, GEN1/GEN2)
-4. **Model Assignment**: Sets `inverter_model` and `hardware_version` fields
+2. **Legacy Prefix Matching**: Matches C107/C311/C322 first
+3. **New Code Parsing**: Parses category/model/power codes for new-format serials
+4. **Type Classification**: Sets `invertertype` bitmask (X1/X3, power rating, GEN1/GEN2)
+5. **Model Assignment**: Sets `inverter_model` and `hardware_version` fields
 
 ### Example Detection
 
 ```python
-# Serial number: C31109K2113001
-# Prefix: C311
-# Result: X3-EVC-11kW, GEN1 (or GEN2 if firmware >= 7.0)
+# Serial number (as read from Modbus): 5030B002060C0P
+# Support example: 5 03 0B 002060C0P
+# Category: 5 (EVC), model code: 03 (X3-HAC), power code: 0B (11kW)
+# Result: X3-HAC-11kW, GEN2
 ```
 
 ## Hybrid GEN1/GEN2 Detection
@@ -379,4 +394,4 @@ Set Charger Use Mode = "Stop"
 
 ## Summary
 
-The SolaX Modbus integration provides automatic detection of EV charger models with special handling for hybrid GEN1/GEN2 chargers (C311/C322). When a Datahub 1000 is present, the integration defaults to OCPP-style operation, providing intelligent load management while maintaining control through Max Charge Current settings.
+The SolaX Modbus integration provides automatic detection of EV charger models from both legacy prefixes and the newer category/model/power serial format, with special handling for hybrid GEN1/GEN2 chargers (C311/C322). When a Datahub 1000 is present, the integration defaults to OCPP-style operation, providing intelligent load management while maintaining control through Max Charge Current settings.
