@@ -21,7 +21,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS
+example: GEN3 | GEN4 | X1 | X3 | EPS 
 means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -79,7 +79,9 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
     except Exception as ex:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
+        _LOGGER.warning(
+            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
+        )
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
@@ -151,23 +153,20 @@ def _flag_list(v, flags, empty=""):
     ret = []
     n = len(flags)
     for i in range(0, n):
-        if v == 0:
-            break
-        if v & 1:
-            ret.append(flags[i])
+        if v == 0: break
+        if v & 1 : ret.append(flags[i])
         v = v >> 1
-    if v > 0:  # unknown flags?
-        ret.append("unk:0x" + format(v << n, "x"))
+    if v > 0: #unknown flags?
+        ret.append("unk:0x"+format(v<<n, "x"))
     return empty if not ret else ",".join(ret)
+
 
 
 def _fn_flags(flags, empty=""):
     return lambda v, *a: _flag_list(v, flags, empty)
 
-
 def _fn_simple_hex(v, descr, dd):
     return "0x{:x}".format(v)
-
 
 def _fw_str(wa, *a):
     ba = [b for w in wa for b in w.to_bytes(2)]
@@ -178,14 +177,11 @@ _mppt_dd = {0: "off", 0x7FFF: "on"}  # dict uses 16 bit signed!?, 0xffff not pos
 _mppt_mask = 0xFF  # max 8 mppts
 _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
 
-
 def _fn_mppt_mask_ex(v, _mask):
     return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, v)
 
-
 def _fn_mppt_mask(v, descr, dd):
     return _fn_mppt_mask_ex(v, _mppt_mask)
-
 
 _nan = float("NaN")
 
@@ -194,11 +190,9 @@ def value_function_house_total_load(initval, descr, datadict):
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan)
     return None if v != v else v  # test nan
 
-
 def value_function_house_normal_load(initval, descr, datadict):
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
     return None if v != v else v  # test nan
-
 
 # =================================================================================================
 
@@ -403,7 +397,7 @@ NUMBER_TYPES = [
         unit=REGISTER_U16,
         mode="box",
         scale=0.1,
-        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        native_unit_of_measurement= UnitOfPower.KILO_WATT,
         entity_category=EntityCategory.CONFIG,
         allowedtypes=HYBRID,
         icon="mdi:import",
@@ -418,13 +412,13 @@ SELECT_TYPES = [
         key="working_mode",
         register=50000,
         option_dict={
-            0x101: "General",
-            0x102: "Economic",
-            0x103: "UPS",
+            0x101: "General", 
+            0x102: "Economic", 
+            0x103: "UPS", 
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            #0x301, 0x302, 0x303 : EMS Modes
             0x400: "ToU",
         },
         entity_category=EntityCategory.CONFIG,
@@ -540,35 +534,33 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10110,
         unit=REGISTER_U32,
-        scale=_fn_flags(
-            [
-                "WorkMode Abn.",
-                "Emergency Stop",
-                "DC Abn.",
-                "Mains Abn.",
-                "OffGrid Dis.",
-                "Batt. Abn.",
-                "Cmd Stop",
-                "SocLow&NoPV",
-                "B8",  # unused
-                "B9",
-                "B10",
-                "B11",
-                "B12",
-                "B13",
-                "OffGrid",
-                "B15",
-                "Cmd PLim",
-                "OFreq PLim",
-                "OTemp PLim",
-                "OCurr PLim",
-                "Reactive PLim",
-                "Exp PLim",
-                "Slow Loading",
-                "OVolt PLim",
-                "System PLim",
-            ]
-        ),
+        scale=_fn_flags([
+            "WorkMode Abn.",
+            "Emergency Stop",
+            "DC Abn.",
+            "Mains Abn.",
+            "OffGrid Dis.",
+            "Batt. Abn.",
+            "Cmd Stop",
+            "SocLow&NoPV",
+            "B8",# unused
+            "B9",
+            "B10",
+            "B11",
+            "B12",
+            "B13",
+            "OffGrid",
+            "B15",
+            "Cmd PLim",
+            "OFreq PLim",
+            "OTemp PLim",
+            "OCurr PLim",
+            "Reactive PLim",
+            "Exp PLim",
+            "Slow Loading",
+            "OVolt PLim",
+            "System PLim",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Fault Flags1",
@@ -577,20 +569,18 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10112,
         unit=REGISTER_U32,
-        # scale=_fn_simple_hex,
-        scale=_fn_flags(
-            [
-                "Mains Lost",
-                "Grid Voltage Fault",
-                "Grid Frequency Fault",
-                "DCI Fault",
-                "ISO Over Limitation",
-                "GFCI Fault",
-                "PV Over Voltage",
-                "Bus Voltage Fault",
-                "Inverter OverTemperature",
-            ]
-        ),
+        #scale=_fn_simple_hex,
+        scale=_fn_flags([
+            "Mains Lost",
+            "Grid Voltage Fault",
+            "Grid Frequency Fault",
+            "DCI Fault",
+            "ISO Over Limitation",
+            "GFCI Fault",
+            "PV Over Voltage",
+            "Bus Voltage Fault",
+            "Inverter OverTemperature",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Fault Flags2",
@@ -599,18 +589,16 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10114,
         unit=REGISTER_U32,
-        scale=_fn_flags(
-            [
-                "",
-                "SPI Fault",
-                "E2 Fault",
-                "GFCI Device Fault",
-                "AC Transducer Fault",
-                "Relay Check Fail",
-                "Internal Fan Fault",
-                "External Fan Fault",
-            ]
-        ),
+        scale=_fn_flags([
+            "",
+            "SPI Fault",
+            "E2 Fault",
+            "GFCI Device Fault",
+            "AC Transducer Fault",
+            "Relay Check Fail",
+            "Internal Fan Fault",
+            "External Fan Fault",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Fault Flags3",
@@ -619,21 +607,19 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=10120,
         unit=REGISTER_U32,
-        scale=_fn_flags(
-            [
-                "Bus Hardware Fault",  # ?
-                "PV Power Low",
-                "Batt.Voltage Fault",
-                "BAK Voltage Fault",
-                "Bus Voltage Low",
-                "Sys Hardware Fault",
-                "BAK Over Power",
-                "Inverter Over Voltage",
-                "Inverter Over Freq",
-                "Inverter Over Current",
-                "Phase Order Err",
-            ]
-        ),
+        scale=_fn_flags([
+            "Bus Hardware Fault", #?
+            "PV Power Low",
+            "Batt.Voltage Fault",
+            "BAK Voltage Fault",
+            "Bus Voltage Low",
+            "Sys Hardware Fault",
+            "BAK Over Power",
+            "Inverter Over Voltage",
+            "Inverter Over Freq",
+            "Inverter Over Current",
+            "Phase Order Err",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Fault ARM Flags1",
@@ -642,14 +628,12 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=18000,
         unit=REGISTER_U32,
-        scale=_fn_flags(
-            [
-                "SCI Fault",
-                "FLASH Fault",
-                "Meter Comm Fault",
-                "BMS Comm Fault",
-            ]
-        ),
+        scale=_fn_flags([
+            "SCI Fault",
+            "FLASH Fault",
+            "Meter Comm Fault",
+            "BMS Comm Fault",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Fault ARM Flags2",
@@ -658,11 +642,9 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         register=18004,
         unit=REGISTER_U32,
-        scale=_fn_flags(
-            [
-                "BMS Comm Fault",
-            ]
-        ),
+        scale=_fn_flags([
+            "BMS Comm Fault",
+        ]),
     ),
     SolintegModbusSensorEntityDescription(
         name="Energy Generation Total",
@@ -982,7 +964,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         # register = 30256, not needed, take sign from power
         # scale = {0: "discharging", 1: "charging"},
         value_function=lambda v, d, dd: ["discharge", "charge"][dd.get("battery_power", 0) <= 0],
-        depends_on=("battery_power",),
+        depends_on= ("battery_power", ),
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         scan_group=SCAN_GROUP_MEDIUM,
@@ -1048,7 +1030,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         unit=REGISTER_U32,
         allowedtypes=HYBRID,
         icon="mdi:battery",
-        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolintegModbusSensorEntityDescription(
         name="Bat. Min Cell Voltage",
@@ -1311,13 +1293,10 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolintegModbusSensorEntityDescription(
-        name="House Total Load",  # incl. backup
+        name="House Total Load",        #incl. backup
         key="house_total_load",
         value_function=value_function_house_total_load,
-        depends_on=(
-            "inverter_load",
-            "measured_power",
-        ),
+        depends_on= ("inverter_load", "measured_power", ),
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1325,33 +1304,30 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon="mdi:home",
     ),
     SolintegModbusSensorEntityDescription(
-        name="House Normal Load",  # w/o backup
+        name="House Normal Load",       #w/o backup
         key="house_normal_load",
         value_function=value_function_house_normal_load,
-        depends_on=(
-            "inverter_load",
-            "measured_power",
-            "backup_power",
-        ),
+        depends_on= ("inverter_load", "measured_power", "backup_power", ),
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:home",
     ),
+
     # internal sensors are only used for polling values for selects, etc
     # no need for name, etc
     SolintegModbusSensorEntityDescription(
         key="working_mode",
         register=50000,
         scale={
-            0x101: "General",
-            0x102: "Economic",
-            0x103: "UPS",
+            0x101: "General", 
+            0x102: "Economic", 
+            0x103: "UPS", 
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            #0x301, 0x302, 0x303 : EMS Modes
             0x400: "ToU",
         },
         internal=True,
@@ -1463,7 +1439,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=0.1,
         allowedtypes=X3,
         icon="mdi:current-ac",
-    ),
+    ), 
     SolintegModbusSensorEntityDescription(
         name="Inverter Voltage L2",
         key="grid_voltage_l2",
@@ -1474,7 +1450,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=0.1,
         allowedtypes=X3,
         icon="mdi:current-ac",
-    ),
+    ), 
     SolintegModbusSensorEntityDescription(
         name="Inverter Voltage L3",
         key="grid_voltage_l3",
@@ -1535,7 +1511,7 @@ class solinteg_plugin(plugin_base):
             data = hub.data
             _self_mppt_mask = 2**mppt - 1  # mask
             # prepare mppt list
-            # data["mppt_mask"] = _self_mppt_mask
+            #data["mppt_mask"] = _self_mppt_mask
             sel_dd = _mppt_dd.copy()  # copy
             for i in range(mppt):
                 sel_dd[2**i] = f"mppt{i+1}"
@@ -1545,7 +1521,7 @@ class solinteg_plugin(plugin_base):
                     sel.option_dict = sel_dd
                     break
 
-            # use own mask
+            #use own mask
             for sel in self.SENSOR_TYPES:
                 if sel.key == "shadow_scan":
                     sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)
@@ -1584,6 +1560,30 @@ class solinteg_plugin(plugin_base):
         return new_data.get("hardware_version", None)
 
 
+# Energy Dashboard Virtual Device mapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="solinteg",
+    mappings=[
+        EnergyDashboardSensorMapping(
+            source_key="measured_power",
+            source_key_pm=None,  # measured_power is system-wide
+            target_key="grid_power",
+            name="Grid Power",
+            invert=True,
+            icon="mdi:transmission-tower",
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="battery_power",  # Note: plugin_solinteg uses battery_power (not battery_power_charge)
+            source_key_pm=None,  # No parallel mode support in this plugin
+            name="Battery Power",
+            invert=True,
+        ),
+    ],
+    parallel_mode_supported=False,  # Plugin doesn't support parallel mode
+)
+
 plugin_instance = solinteg_plugin(
     plugin_name="solinteg",
     plugin_manufacturer="Gabriel C.",
@@ -1593,7 +1593,10 @@ plugin_instance = solinteg_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=120,
-    # order16=Endian.BIG,
+    #order16=Endian.BIG,
     order32="big",
     # auto_block_ignore_readerror = True
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING
