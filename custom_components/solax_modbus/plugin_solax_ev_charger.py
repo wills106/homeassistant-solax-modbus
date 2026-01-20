@@ -129,7 +129,7 @@ class SolaXEVChargerModbusSelectEntityDescription(BaseModbusSelectEntityDescript
 class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG
-    # order32: int = Endian.LITTLE
+    order32: str | None = None  # optional per-sensor 32-bit word order override
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
