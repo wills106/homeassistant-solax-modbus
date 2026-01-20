@@ -1271,6 +1271,7 @@ class SolaXModbusHub:
     def treat_address(self, data, regs, idx, descr, initval=0, advance=True):
         return_value = None
         read_scale = descr.read_scale # read scale might still be wrong the first polling cycle
+        order32 = getattr(descr, "order32", None) or self.plugin.order32
         val = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
@@ -1281,11 +1282,11 @@ class SolaXModbusHub:
             elif descr.unit == REGISTER_S16:
                 val = convert_from_registers(regs[idx:idx+1], DataType.INT16,   self.plugin.order32); words_used = 1
             elif descr.unit == REGISTER_U32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.UINT32,  self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.UINT32,  order32); words_used = 2
             elif descr.unit == REGISTER_F32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.FLOAT32, self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.FLOAT32, order32); words_used = 2
             elif descr.unit == REGISTER_S32:
-                val = convert_from_registers(regs[idx:idx+2], DataType.INT32,   self.plugin.order32); words_used = 2
+                val = convert_from_registers(regs[idx:idx+2], DataType.INT32,   order32); words_used = 2
             elif descr.unit == REGISTER_STR:
                 wc = descr.wordcount or 0
                 raw = convert_from_registers(regs[idx:idx+wc], DataType.STRING, self.plugin.order32); words_used = wc
@@ -1294,9 +1295,9 @@ class SolaXModbusHub:
                 wc = descr.wordcount or 0
                 val = [convert_from_registers(regs[idx+i:idx+i+1], DataType.UINT16,  self.plugin.order32) for i in range(wc)]; words_used = wc
             elif descr.unit == REGISTER_ULSB16MSB16:
-                lo = convert_from_registers(regs[idx:idx+1],   DataType.UINT16, self.plugin.order32)
-                hi = convert_from_registers(regs[idx+1:idx+2], DataType.UINT16, self.plugin.order32)
-                val = (hi + lo * 65536) if self.plugin.order32 == "big" else (lo + hi * 65536); words_used = 2
+                lo = convert_from_registers(regs[idx:idx+1],   DataType.UINT16, order32)
+                hi = convert_from_registers(regs[idx+1:idx+2], DataType.UINT16, order32)
+                val = (hi + lo * 65536) if order32 == "big" else (lo + hi * 65536); words_used = 2
             elif descr.unit == REGISTER_U8L:
                 if advance:
                     base = convert_from_registers(regs[idx:idx+1], DataType.UINT16, self.plugin.order32); words_used = 1
