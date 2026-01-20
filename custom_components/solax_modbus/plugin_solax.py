@@ -55,15 +55,35 @@ ALL_PM_GROUP = PM
 
 # Global storage for last known good values
 _pm_last_known_values = {}
+_soc_last_known_values = {}
 
 def validate_register_data(descr, value, datadict):
     """
-    Validate PM U32 sensors for overflow corruption.
-    
-    Detects 0xFFFFFF00 pattern from uninitialized slave registers and
-    returns the last known good value.
+    Validate register values for corruption.
+
+    - PM U32 sensors: detect 0xFFFFFF00 overflow pattern and use last known value.
+    - battery_capacity: treat zero SoC as invalid and use last known value.
     """
-    global _pm_last_known_values
+    global _pm_last_known_values, _soc_last_known_values
+
+    if descr.key == "battery_capacity":
+        try:
+            soc_value = float(value) if value is not None else None
+        except (TypeError, ValueError):
+            soc_value = None
+
+        if soc_value is not None and soc_value == 0:
+            last_value = _soc_last_known_values.get(descr.key)
+            if last_value is not None and last_value > 5:
+                # Only treat zero as invalid when a real SoC was seen before.
+                _LOGGER.warning(
+                    f"SoC zero reading for {descr.key} -> using last: {last_value}%"
+                )
+                return last_value
+            return value
+
+        if soc_value is not None and soc_value > 0:
+            _soc_last_known_values[descr.key] = value
     
     # PM U32 sensors only (filter by key prefix)
     if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
