@@ -1,0 +1,23 @@
+---
+description: "Commit message format rules for todo.ai task references"
+alwaysApply: true
+---
+When referencing todo.ai task numbers in commit messages:
+
+**CRITICAL REQUIREMENTS:**
+1. **MUST use `task#nn` format** (e.g., `task#15`, `task#50`) when referencing todo.ai task numbers
+2. **NEVER use `#nn` format** for task numbers - this causes GitHub to auto-link to issues/PRs
+3. Always use the `task#` prefix before task numbers to prevent GitHub auto-linking
+
+**Format Examples:**
+- ✅ Correct: `feat: Implement git hooks with pre-commit validation (task#15)`
+- ✅ Correct: `Archive completed task#15 (git hooks), delete task#21`
+- ✅ Correct: `feat: Add automated linter setup script (task#15.8, task#15.9)`
+- ❌ Incorrect: `feat: Implement git hooks (#15)` - will auto-link to issue #15
+- ❌ Incorrect: `feat: Implement git hooks (task #15)` - space breaks pattern
+
+**Why this is required:**
+- GitHub automatically links `#number` patterns to issues and pull requests
+- Task numbers like `#15` conflict with GitHub issue numbers
+- Using `task#15` prevents auto-linking and eliminates confusion
+- Keeps commit history clear and accurate

@@ -1,0 +1,63 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  black:
+    name: Black (Code Formatting)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Black
+        run: pip install black
+      - name: Run Black (Phase 2 scope only)
+        run: black --check --diff custom_components/solax_modbus/__init__.py custom_components/solax_modbus/plugin_solax.py
+
+  flake8:
+    name: Flake8 (Style Check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install flake8
+        run: pip install flake8
+      - name: Run flake8
+        run: flake8 custom_components/solax_modbus/__init__.py custom_components/solax_modbus/plugin_solax.py
+
+  # yamllint, markdownlint, and codespell disabled for Phase 2
+  # These will be enabled in Phase 6 (Documentation Files)
+  # Currently only checking Python files in Phase 2 scope
+  
+  # yamllint:
+  #   name: YAML Lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.11"
+  #     - name: Install yamllint
+  #       run: pip install yamllint
+  #     - name: Run yamllint
+  #       run: yamllint .
+
+  # markdownlint:
+  #   name: Markdown Lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: DavidAnson/markdownlint-cli2-action@v18
+  #       with:
+  #         globs: "**/*.md"
+
+  # codespell:
+  #   name: Codespell (Spell Check)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: codespell-project/actions-codespell@v2
+

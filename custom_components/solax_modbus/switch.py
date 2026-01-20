@@ -27,9 +27,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
-        if plugin.matchInverterWithMask(
-            hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist
-        ):
+        if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
             if not (switch_info.name.startswith(inverter_name_suffix)):
                 switch_info.name = inverter_name_suffix + switch_info.name
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
@@ -37,18 +35,27 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 hub.computedSwitches[switch_info.key] = switch_info
             if switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
-            dependency_key = getattr(switch_info, 'sensor_key', switch_info.key)
-            if dependency_key != switch_info.key: hub.entity_dependencies.setdefault(dependency_key, []).append(switch_info.key) # can be more than one
+            dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
+            if dependency_key != switch_info.key:
+                hub.entity_dependencies.setdefault(dependency_key, []).append(switch_info.key)  # can be more than one
 
             # register dependency chain
             deplist = switch_info.depends_on
-            if isinstance(deplist, str): deplist = (deplist, )
-            if isinstance(deplist, (list, tuple,)):
+            if isinstance(deplist, str):
+                deplist = (deplist,)
+            if isinstance(
+                deplist,
+                (
+                    list,
+                    tuple,
+                ),
+            ):
                 _LOGGER.debug(f"{hub.name}: {switch_info.key} depends on entities {deplist}")
-                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
-                    if dep_on != switch_info.key: hub.entity_dependencies.setdefault(dep_on, []).append(switch_info.key) # can be more than one
+                for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != switch_info.key:
+                        hub.entity_dependencies.setdefault(dep_on, []).append(switch_info.key)  # can be more than one
 
-            hub.switchEntities[switch_info.key] = switch # Store the switch entity
+            hub.switchEntities[switch_info.key] = switch  # Store the switch entity
             entities.append(switch)
 
     providers = hass.data.get(DOMAIN, {}).get("_switch_entity_providers", [])
@@ -93,7 +100,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        #self.entity_id = f"switch.{platform_name}_{switch_info.key}"
+        # self.entity_id = f"switch.{platform_name}_{switch_info.key}"
         self._name = switch_info.name
         self._key = switch_info.key
         self._register = switch_info.register
@@ -168,10 +175,11 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         # Otherwise, return the sensor state
         if self._sensor_key and (self._sensor_key in self._hub.data):
             sensvalue = self._hub.data.get(self._sensor_key, None)
-            if sensvalue is not None: sensor_value = int(sensvalue)
-            else: 
+            if sensvalue is not None:
+                sensor_value = int(sensvalue)
+            else:
                 _LOGGER.error(f"{self._hub.name}: Sensor {self._sensor_key} corresponding to switch {self._key} bit {self._bit} has no integer value {sensvalue}")
-                sensor_value = 0 # probably completely wrong, but at least we can continue with other entities
+                sensor_value = 0  # probably completely wrong, but at least we can continue with other entities
             return bool(sensor_value & (1 << self._bit))
 
         return self._attr_is_on

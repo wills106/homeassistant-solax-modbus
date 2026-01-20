@@ -1,0 +1,32 @@
+[flake8]
+max-line-length = 180
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist
+
+# Lenient configuration - start permissive, tighten gradually
+# Lenient mode - ignore common patterns in existing codebase
+# E203: Whitespace before ':' (conflicts with Black)
+# E501: Line too long (Black handles this)
+# W503: Line break before binary operator (Black handles this)
+# E402: Module level import not at top of file (sometimes needed)
+# E731: Lambda expressions (used for factory functions)
+# E722: Bare except (existing error handling pattern)
+# E741: Ambiguous variable names (l used in loops)
+# F401: Imported but unused (may be used in other files)
+# F403: Star imports (common pattern in this codebase)
+# F405: Star imports undefined names (common pattern)
+# F541: f-string without placeholders (used for consistency)
+# F824: Global unused (false positives)
+# F841: Local variable assigned but unused (exception handling)
+# E711: None comparison style (existing code pattern)
+# E225,E226: Whitespace around operators (minor style)
+# E266: Block comment style (existing pattern)
+ignore = E203,E501,W503,E401,E402,E731,E722,E741,F401,F403,F405,F541,F824,F841,E711,E225,E226,E266
+
+# Initial rollout: Only check __init__.py and plugin_solax.py
+# filename = custom_components/solax_modbus/__init__.py,custom_components/solax_modbus/plugin_solax.py
+

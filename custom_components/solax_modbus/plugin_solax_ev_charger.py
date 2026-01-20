@@ -71,9 +71,7 @@ async def async_read_serialnr(hub, address):
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
         _LOGGER.debug(f"{hub.name}: Exception type: {type(ex).__name__}, message: {ex}")
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
@@ -919,7 +917,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             8: "Suspended EVSE",
             9: "Update",
             10: "RFID Activation",
-            #11-13 perhaps only seen in Gen2 EVC or in newer firmwares
+            # 11-13 perhaps only seen in Gen2 EVC or in newer firmwares
             11: "Start delay",
             12: "Charge paused",
             13: "Stopping",
@@ -1161,6 +1159,6 @@ plugin_instance = solax_ev_charger_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="little",
 )
