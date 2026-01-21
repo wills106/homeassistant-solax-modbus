@@ -1104,9 +1104,14 @@ class solax_ev_charger_plugin(plugin_base):
             power_code = seriesnumber[3:5]
 
             model_map = {
-                "02": ("X1-GAC", X1),
+                "02": ("X1-HAC", X1),
                 "03": ("X3-HAC", X3),
+                "04": ("A1-HAC", X1),
+                "05": ("J1-HAC", X1),
+                "06": ("X1-HAC-S", X1),
                 "07": ("X3-HAC-S", X3),
+                "08": ("C1-HAC", X1),
+                "09": ("C3-HAC", X3),
             }
 
             power_map = {
@@ -1122,7 +1127,7 @@ class solax_ev_charger_plugin(plugin_base):
                 model_prefix, phase_mask = model_info
                 power_label, power_mask = power_info
                 invertertype = phase_mask | power_mask | GEN2
-                self.inverter_model = f"{model_prefix}-{power_label}"
+                self.inverter_model = f"{model_prefix} {power_label}"
                 self.hardware_version = "Gen2"
                 _LOGGER.debug(
                     f"{hub.name}: Parsed serial codes model={model_code} power={power_code} -> "

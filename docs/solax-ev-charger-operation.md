@@ -29,9 +29,15 @@ Newer EV chargers use a serial format like `5 03 0B 002060C0P`. The Modbus regis
 
 - Product category: `5` = EV Charger (EVC)
 - Model codes:
+  - `02` = X1-HAC
   - `03` = X3-HAC
+  - `04` = A1-HAC
+  - `05` = J1-HAC
+  - `06` = X1-HAC-S
   - `07` = X3-HAC-S
-  - `02` = X1-GAC
+  - `08` = C1-HAC
+  - `09` = C3-HAC
+
 - Power codes:
   - `04` = 4.6kW
   - `07` = 7.2kW
