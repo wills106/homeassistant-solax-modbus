@@ -117,7 +117,7 @@ class EnergyDashboardMapping:
 # Import it here for reference (but actual class is in sensor.py to avoid circular imports)
 
 
-def create_energy_dashboard_device_info(hub, hash=None) -> DeviceInfo:
+def create_energy_dashboard_device_info(hub, hass=None) -> DeviceInfo:
     """Create DeviceInfo for Energy Dashboard virtual device."""
     # Normalize hub name to lowercase with underscores for consistent identifier
     normalized_hub_name = hub._name.lower().replace(" ", "_")
@@ -153,20 +153,20 @@ def get_energy_dashboard_switch_state(hub, key: str) -> Optional[bool]:
         return None
 
 
-def register_energy_dashboard_switch_provider(hash) -> None:
-    """Register ED switch provider in hash data."""
-    domain_data = hash.data.setdefault(DOMAIN, {})
+def register_energy_dashboard_switch_provider(hass) -> None:
+    """Register ED switch provider in hass data."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
     providers = domain_data.setdefault("_switch_entity_providers", [])
     for provider in providers:
         if getattr(provider, "__name__", "") == "_energy_dashboard_switch_provider":
             return
     providers.append(_energy_dashboard_switch_provider)
-    _register_energy_dashboard_switch_listener(hash)
-    _register_energy_dashboard_local_data_listener(hash)
+    _register_energy_dashboard_switch_listener(hass)
+    _register_energy_dashboard_local_data_listener(hass)
 
 
-def _register_energy_dashboard_switch_listener(hash) -> None:
-    domain_data = hash.data.setdefault(DOMAIN, {})
+def _register_energy_dashboard_switch_listener(hass) -> None:
+    domain_data = hass.data.setdefault(DOMAIN, {})
     if domain_data.get("_ed_switch_listener_registered"):
         return
 
@@ -181,17 +181,17 @@ def _register_energy_dashboard_switch_listener(hash) -> None:
             ED_SWITCH_GRID_TO_BATTERY,
         ):
             return
-        hub_entry = hash.data.get(DOMAIN, {}).get(hub_name, {})
+        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
         if refresh_callback:
-            hash.async_create_task(refresh_callback())
+            hass.async_create_task(refresh_callback())
 
-    hash.bus.async_listen("solax_modbus_local_switch_changed", _handle_local_switch_event)
+    hass.bus.async_listen("solax_modbus_local_switch_changed", _handle_local_switch_event)
     domain_data["_ed_switch_listener_registered"] = True
 
 
-def _register_energy_dashboard_local_data_listener(hash) -> None:
-    domain_data = hash.data.setdefault(DOMAIN, {})
+def _register_energy_dashboard_local_data_listener(hass) -> None:
+    domain_data = hass.data.setdefault(DOMAIN, {})
     if domain_data.get("_ed_local_data_listener_registered"):
         return
 
@@ -199,7 +199,7 @@ def _register_energy_dashboard_local_data_listener(hash) -> None:
     def _handle_local_data_loaded(event):
         data = event.data or {}
         hub_name = data.get("hub_name")
-        hub_entry = hash.data.get(DOMAIN, {}).get(hub_name, {})
+        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
         hub = hub_entry.get("hub")
         if hub is None:
             return
@@ -211,13 +211,13 @@ def _register_energy_dashboard_local_data_listener(hash) -> None:
             return
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
         if refresh_callback:
-            hash.async_create_task(refresh_callback())
+            hass.async_create_task(refresh_callback())
 
-    hash.bus.async_listen("solax_modbus_local_data_loaded", _handle_local_data_loaded)
+    hass.bus.async_listen("solax_modbus_local_data_loaded", _handle_local_data_loaded)
     domain_data["_ed_local_data_listener_registered"] = True
 
 
-def _energy_dashboard_switch_provider(hub, hash, entry):
+def _energy_dashboard_switch_provider(hub, hass, entry):
     """Return device info, platform name, and switch descriptions for ED switches."""
     config = entry.options if entry else {}
     energy_dashboard_enabled = config.get(
@@ -228,7 +228,7 @@ def _energy_dashboard_switch_provider(hub, hash, entry):
     if not energy_dashboard_enabled:
         return None, None, []
 
-    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hash)
+    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
     energy_dashboard_platform_name = f"{hub._name} Energy Dashboard"
 
     def _local_switch_value_function(_bit, is_on, _sensor_key, _datadict):
@@ -281,7 +281,7 @@ def _energy_dashboard_switch_provider(hub, hash, entry):
 
 def _create_energy_dashboard_diagnostic_sensors(
     hub,
-    hash,
+    hass,
     config,
     energy_dashboard_device_info,
     mapping: EnergyDashboardMapping | None = None,
@@ -295,13 +295,13 @@ def _create_energy_dashboard_diagnostic_sensors(
         hub_name,
         "treat_as_standalone_energy_dashboard",
         config,
-        hash,
+        hass,
         default=False,
     )
     pm_inverter_count = hub_data.get("pm_inverter_count")
     secondary_names = []
-    if hash and not debug_standalone:
-        secondary_names = [name for name, _hub in _find_slave_hubs(hash, hub)]
+    if hass and not debug_standalone:
+        secondary_names = [name for name, _hub in _find_slave_hubs(hass, hub)]
     has_parallel_context = (
         not debug_standalone
         and (
@@ -359,9 +359,9 @@ def _create_energy_dashboard_diagnostic_sensors(
         return summary
 
     def _last_total_inverter_count_value(_initval, _descr, _datadict):
-        if not hash:
+        if not hass:
             return None
-        domain_data = hash.data.get(DOMAIN, {})
+        domain_data = hass.data.get(DOMAIN, {})
         hub_entry = domain_data.get(hub_name, {})
         return hub_entry.get("energy_dashboard_last_total_inverter_count")
 
@@ -579,21 +579,21 @@ def _create_sensor_from_mapping(sensor_mapping: EnergyDashboardSensorMapping, hu
     return sensors
 
 
-def _find_slave_hubs(hash, master_hub):
+def _find_slave_hubs(hass, master_hub):
     """Find all Slave hubs in parallel mode.
     
     Args:
-        hash: Home Assistant instance
+        hass: Home Assistant instance
         master_hub: The Master hub instance
     
     Returns:
         List of Slave hub instances
     """
     slave_hubs = []
-    if not hash:
+    if not hass:
         return slave_hubs
     
-    domain_data = hash.data.get(DOMAIN, {})
+    domain_data = hass.data.get(DOMAIN, {})
     master_name = getattr(master_hub, '_name', None)
     
     _LOGGER.debug(f"Scanning for Slave hubs. Master: {master_name}, Available hubs: {list(domain_data.keys())}")
@@ -625,7 +625,7 @@ def _find_slave_hubs(hash, master_hub):
             entity_name = hub_name.lower().replace(" ", "_")
             entity_id = f"select.{entity_name}_parallel_setting"
             try:
-                state = hash.states.get(entity_id)
+                state = hass.states.get(entity_id)
                 _LOGGER.debug(f"Hub {hub_name} entity {entity_id} state: {state.state if state else 'not found'}")
                 if state and state.state and state.state != "unknown":
                     parallel_setting = state.state
@@ -634,7 +634,7 @@ def _find_slave_hubs(hash, master_hub):
                     # Entity state is unknown, try config entry options as last resort
                     _LOGGER.debug(f"Hub {hub_name} entity state unusable, trying config entries")
                     # This reads the user-configured value before inverter polling
-                    for entry in hash.config_entries.async_entries(DOMAIN):
+                    for entry in hass.config_entries.async_entries(DOMAIN):
                         _LOGGER.debug(f"Hub {hub_name} checking config entry: {entry.title}")
                         if entry.title == hub_name or entry.data.get("name") == hub_name:
                             parallel_setting = entry.options.get("parallel_setting")
@@ -713,13 +713,13 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
     return value_function
 
 
-async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hash=None, config=None) -> list:
+async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, hass=None, config=None) -> list:
     """Generate Energy Dashboard sensor entities from mapping.
 
     Args:
         hub: SolaXModbusHub instance
         mapping: EnergyDashboardMapping configuration
-        hash: Home Assistant instance (optional, needed for Slave hub access)
+        hass: Home Assistant instance (optional, needed for Slave hub access)
         config: Integration configuration dict (optional, for whitelist check)
     """
     # NOTE: If logging from this module stops working, clear Python cache to force recompile:
@@ -741,7 +741,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         return []
 
     sensors = []
-    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hash)
+    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
     
     # Determine if this is a Master hub
     hub_name = getattr(hub, '_name', 'Unknown')
@@ -752,22 +752,22 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         hub_name,
         "treat_as_standalone_energy_dashboard",
         config,
-        hash,
+        hass,
         default=False,
     )
     ed_is_master = is_master and not debug_standalone
     _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
     
     def _store_energy_dashboard_last_total_inverter_count(count: int | None) -> None:
-        if not hash or count is None:
+        if not hass or count is None:
             return
-        domain_data = hash.data.setdefault(DOMAIN, {})
+        domain_data = hass.data.setdefault(DOMAIN, {})
         hub_entry = domain_data.setdefault(hub_name, {})
         hub_entry["energy_dashboard_last_total_inverter_count"] = count
 
     skip_store_total = False
-    if hash and ed_is_master:
-        domain_data = hash.data.setdefault(DOMAIN, {})
+    if hass and ed_is_master:
+        domain_data = hass.data.setdefault(DOMAIN, {})
         hub_entry = domain_data.setdefault(hub_name, {})
         if "energy_dashboard_refresh_callback" not in hub_entry:
             hub_entry["energy_dashboard_last_total_inverter_count"] = 0
@@ -775,20 +775,20 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
 
     # Find Slave hubs if this is a Master
     slave_hubs = []
-    if ed_is_master and hash:
+    if ed_is_master and hass:
         # Allow a short delay so Slave hubs can register before detection.
         import asyncio
         await asyncio.sleep(1.0)
-        slave_hubs = _find_slave_hubs(hash, hub)
+        slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
             _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard after startup delay")
         else:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
-    elif ed_is_master and not hash:
-        _LOGGER.warning("Master hub detected but hash not provided - cannot find Slave hubs for aggregation")
+    elif ed_is_master and not hass:
+        _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
 
-    if hash and ed_is_master:
-        domain_data = hash.data.setdefault(DOMAIN, {})
+    if hass and ed_is_master:
+        domain_data = hass.data.setdefault(DOMAIN, {})
         hub_entry = domain_data.setdefault(hub_name, {})
         hub_entry["energy_dashboard_last_slave_hub_count"] = len(slave_hubs)
 
@@ -1041,7 +1041,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     sensors.extend(
         _create_energy_dashboard_diagnostic_sensors(
             hub,
-            hash,
+            hass,
             config,
             energy_dashboard_device_info,
             mapping=mapping,
@@ -1051,13 +1051,13 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
     return sensors
 
 
-async def should_create_energy_dashboard_device(hub, config, hash=None, logger=None, initial_groups=None) -> bool:
+async def should_create_energy_dashboard_device(hub, config, hass=None, logger=None, initial_groups=None) -> bool:
     """Determine if Energy Dashboard virtual device should be created.
 
     Args:
         hub: SolaXModbusHub instance
         config: Integration configuration dict
-        hash: Home Assistant instance (optional, for entity state lookup)
+        hass: Home Assistant instance (optional, for entity state lookup)
 
     Returns:
         bool: True if virtual device should be created
@@ -1086,7 +1086,7 @@ async def should_create_energy_dashboard_device(hub, config, hash=None, logger=N
                 hub_name,
                 "treat_as_standalone_energy_dashboard",
                 config,
-                hash,
+                hass,
                 default=False,
             )
             if debug_standalone:
@@ -1110,7 +1110,7 @@ async def should_create_energy_dashboard_device(hub, config, hash=None, logger=N
         hub_name,
         "treat_as_standalone_energy_dashboard",
         config,
-        hash,
+        hass,
         default=False,
     )
     if debug_standalone:
@@ -1207,14 +1207,14 @@ async def should_create_energy_dashboard_device(hub, config, hash=None, logger=N
             parallel_setting = datadict.get("parallel_setting")
             _LOGGER.debug("parallel_setting found in datadict")
     
-    # If still not found and hash available, try entity lookup
-    if parallel_setting is None and hash is not None:
+    # If still not found and hass available, try entity lookup
+    if parallel_setting is None and hass is not None:
         hub_name_for_entity = getattr(hub, '_name', hub_name)
         # Convert "SolaX 1" to "solax_1" format for entity ID
         entity_name = hub_name_for_entity.lower().replace(" ", "_")
         entity_id = f"select.{entity_name}_parallel_setting"
         try:
-            state = hash.states.get(entity_id)
+            state = hass.states.get(entity_id)
             if state and state.state:
                 parallel_setting = state.state
                 _LOGGER.debug("parallel_setting found from entity state")

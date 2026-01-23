@@ -55,7 +55,7 @@ try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
 except ImportError:
 
-    def get_core_hub(hash, name):
+    def get_core_hub(hass, name):
         return None
 
     class CoreModbusHub:  # placeholder dummy
@@ -155,7 +155,7 @@ empty_hub_device_group_lambda = lambda: SimpleNamespace(
         )
 
 
-def should_register_be_loaded(hash, hub, descriptor): 
+def should_register_be_loaded(hass, hub, descriptor): 
     """ 
     Check if an entity is enabled in the entity registry, checking across multiple platforms. 
     """ 
@@ -165,7 +165,7 @@ def should_register_be_loaded(hash, hub, descriptor):
     unique_id     = f"{hub._name}_{descriptor.key}" 
     unique_id_alt = f"{hub._name}.{descriptor.key}" # dont knnow why 
     platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON) 
-    registry = er.async_get(hash)
+    registry = er.async_get(hass)
     entity_found = False 
     # First, check if there is an existing enabled entity in the registry for this unique_id. 
     for platform in platforms: 
@@ -200,28 +200,28 @@ def should_register_be_loaded(hash, hub, descriptor):
         return False 
 
 
-async def config_entry_update_listener(hash: HomeAssistant, entry: ConfigEntry) -> None:
+async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Update listener, called when the config entry options are changed."""
-    await hash.config_entries.async_reload(entry.entry_id)
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_setup(hash, config):
+async def async_setup(hass, config):
     """Set up the SolaX modbus component."""
-    hash.data[DOMAIN] = {}
+    hass.data[DOMAIN] = {}
     
     # Extract debug_settings from YAML configuration (DEVELOPMENT/TESTING/DEBUGGING ONLY)
-    # Store in hash.data so debug.py can access it
+    # Store in hass.data so debug.py can access it
     yaml_config = config.get(DOMAIN, {})
     debug_settings = yaml_config.get(CONF_DEBUG_SETTINGS)
     if debug_settings:
-        hash.data[DOMAIN]["_debug_settings"] = debug_settings
+        hass.data[DOMAIN]["_debug_settings"] = debug_settings
     else:
-        hash.data[DOMAIN]["_debug_settings"] = {}
+        hass.data[DOMAIN]["_debug_settings"] = {}
     
     # Register helper services to force-stop hubs
     async def _svc_stop_all(call):
         """Force-stop all SolaX hubs (kills timers/tasks/sockets)."""
-        domain_data = hash.data.get(DOMAIN, {})
+        domain_data = hass.data.get(DOMAIN, {})
         for name, rec in list(domain_data.items()):
             hub = rec.get("hub")
             if hub:
@@ -237,7 +237,7 @@ async def async_setup(hash, config):
         if not name:
             _LOGGER.warning("stop_hub service – missing 'name'")
             return
-        domain_data = hash.data.get(DOMAIN, {})
+        domain_data = hass.data.get(DOMAIN, {})
         rec = domain_data.get(name)
         hub = rec.get("hub") if rec else None
         if hub:
@@ -246,25 +246,25 @@ async def async_setup(hash, config):
                 await hub.async_stop()
             except Exception as ex:
                 _LOGGER.warning(f"{name}: stop_hub service – error during hub stop: {ex}")
-        # also remove from hash.data to avoid zombie references
+        # also remove from hass.data to avoid zombie references
         if rec:
             domain_data.pop(name, None)
 
-    hash.services.async_register(DOMAIN, "stop_all", _svc_stop_all)
-    hash.services.async_register(DOMAIN, "stop_hub", _svc_stop_hub)
-    #_LOGGER.debug("solax data %d", hash.data)
+    hass.services.async_register(DOMAIN, "stop_all", _svc_stop_all)
+    hass.services.async_register(DOMAIN, "stop_hub", _svc_stop_hub)
+    #_LOGGER.debug("solax data %d", hass.data)
     return True
 
 
 # Example migration function
-async def async_migrate_entry(hash, config_entry: ConfigEntry):
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
     _LOGGER.debug("Migrating from version %s", config_entry.version)
     if config_entry.version == 1:
         new = {**config_entry.options}
         # TODO: modify Config Entry data
         config_entry.version = 2
-        hash.config_entries.async_update_entry(config_entry, data=new)
+        hass.config_entries.async_update_entry(config_entry, data=new)
     _LOGGER.info("Migration to version %s successful", config_entry.version)
     return True
 
@@ -277,7 +277,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
     return plugin
 
 
-async def async_setup_entry(hash: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up a SolaX modbus."""
     _LOGGER.debug(f"setup config entries - data: {entry.data}, options: {entry.options}")
     
@@ -285,14 +285,14 @@ async def async_setup_entry(hash: HomeAssistant, entry: ConfigEntry):
     # async_setup() only runs once at HA startup, but async_setup_entry()
     # runs for each config entry AND during reloads, so we must ensure
     # the domain dictionary exists before using it
-    if DOMAIN not in hash.data:
-        hash.data[DOMAIN] = {}
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {}
     
     config = entry.options
     # Stop a previously running hub with the same name before creating a new one
     old_name = config.get(CONF_NAME)
     try:
-        existing = hash.data.get(DOMAIN, {}).get(old_name)
+        existing = hass.data.get(DOMAIN, {}).get(old_name)
     except Exception:
         existing = None
     if existing and (old_hub := existing.get("hub")):
@@ -307,7 +307,7 @@ async def async_setup_entry(hash: HomeAssistant, entry: ConfigEntry):
         if old_hub._platforms_forwarded:
             try:
                 _LOGGER.debug(f"{old_name}: unloading platforms for reload")
-                unload_ok = await hash.config_entries.async_unload_platforms(entry, PLATFORMS)
+                unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
                 if unload_ok:
                     _LOGGER.debug(f"{old_name}: platforms unloaded successfully")
                 else:
@@ -315,7 +315,7 @@ async def async_setup_entry(hash: HomeAssistant, entry: ConfigEntry):
             except Exception as ex:
                 _LOGGER.warning(f"{old_name}: error unloading platforms during reload: {ex}")
         
-        hash.data.get(DOMAIN, {}).pop(old_name, None)
+        hass.data.get(DOMAIN, {}).pop(old_name, None)
 
     plugin_name = config[CONF_PLUGIN]
 
@@ -331,60 +331,60 @@ async def async_setup_entry(hash: HomeAssistant, entry: ConfigEntry):
             f"converting old style plugin name {config[CONF_PLUGIN]} to new style short name {plugin_name}"
         )
         new[CONF_PLUGIN] = plugin_name
-        hash.config_entries.async_update_entry(entry, options=new)
+        hass.config_entries.async_update_entry(entry, options=new)
     # end of conversion
 
     # ================== dynamically load desired plugin =======================================================
 
-    plugin = await hash.async_add_executor_job(_load_plugin, plugin_name)
+    plugin = await hass.async_add_executor_job(_load_plugin, plugin_name)
 
     # ====================== end of dynamic load ==============================================================
 
     if config.get(CONF_INTERFACE, None) == "core":
         hub = SolaXCoreModbusHub(
-            hash,
+            hass,
             plugin,
             entry,
         )
     else:
         hub = SolaXModbusHub(
-            hash,
+            hass,
             plugin,
             entry,
         )
     try:
         from .energy_dashboard import register_energy_dashboard_switch_provider
 
-        register_energy_dashboard_switch_provider(hash)
+        register_energy_dashboard_switch_provider(hass)
     except Exception as ex:
         _LOGGER.debug(f"{hub.name}: Energy Dashboard switch provider registration failed: {ex}")
     """Register the hub."""
-    hash.data[DOMAIN][hub._name] = {
+    hass.data[DOMAIN][hub._name] = {
         "hub": hub,
     }
 
     # Tests on some systems have shown that establishing the Modbus connection
     # can occasionally lead to errors if Home Assistant is not fully loaded.
-    if hash.is_running:
+    if hass.is_running:
         # Start init in background so it can be cancelled on unload
-        hub._init_task = hash.loop.create_task(hub.async_init())
+        hub._init_task = hass.loop.create_task(hub.async_init())
     else:
         # Defer until HA is started, but still capture the task handle for cancellation
         async def _deferred_init(event):
             if getattr(hub, "_stopping", False):
                 return
-            hub._init_task = hash.loop.create_task(hub.async_init())
-        hash.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _deferred_init)
+            hub._init_task = hass.loop.create_task(hub.async_init())
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _deferred_init)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
 
-async def async_unload_entry(hash, entry):
+async def async_unload_entry(hass, entry):
     """Unload SolaX modbus entry and tear down transports cleanly."""
     name = entry.options.get("name")
     _LOGGER.debug(f"async_unload_entry called for {name} – state={entry.state}")
-    hub = hash.data.get(DOMAIN, {}).get(name, {}).get("hub")
+    hub = hass.data.get(DOMAIN, {}).get(name, {}).get("hub")
     if hub:
         try:
             await hub.async_stop()
@@ -396,7 +396,7 @@ async def async_unload_entry(hash, entry):
     unload_ok = True
     try:
         _LOGGER.debug(f"{name}: attempting to unload platforms (state={entry.state})")
-        unload_ok = await hash.config_entries.async_unload_platforms(entry, PLATFORMS)
+        unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
         if unload_ok:
             _LOGGER.debug(f"{name}: platforms unloaded successfully")
         else:
@@ -405,11 +405,11 @@ async def async_unload_entry(hash, entry):
         _LOGGER.error(f"{name}: error during platform unload: {ex}")
         unload_ok = False
 
-    # Ensure removal from hash.data
+    # Ensure removal from hass.data
     try:
-        hash.data.get(DOMAIN, {}).pop(name, None)
+        hass.data.get(DOMAIN, {}).pop(name, None)
     except Exception as ex:
-        _LOGGER.warning(f"{name}: error removing from hash.data: {ex}")
+        _LOGGER.warning(f"{name}: error removing from hass.data: {ex}")
 
     return unload_ok
 
@@ -438,7 +438,7 @@ class SolaXModbusHub:
 
     def __init__(
         self,
-        hash,
+        hass,
         plugin,
         entry,
     ):
@@ -468,7 +468,7 @@ class SolaXModbusHub:
 
         """Initialize the Modbus hub."""
         _LOGGER.debug(f"solax modbushub creation with interface {interface} baudrate (only for serial): {baudrate}")
-        self._hass = hash
+        self._hass = hass
         # explicit init for stop flag
         self._stopping = False
         if interface == "serial":
@@ -1910,11 +1910,11 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     def __init__(
         self,
-        hash,
+        hass,
         plugin,
         entry,
     ):
-        SolaXModbusHub.__init__(self, hash, plugin, entry)
+        SolaXModbusHub.__init__(self, hass, plugin, entry)
         config = entry.options
         core_hub_name = config.get(CONF_CORE_HUB, "")
         self._core_hub = core_hub_name

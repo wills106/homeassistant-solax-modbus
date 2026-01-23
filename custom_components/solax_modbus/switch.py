@@ -10,14 +10,14 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hash, entry, async_add_entities) -> None:
+async def async_setup_entry(hass, entry, async_add_entities) -> None:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     else:
         hub_name = entry.options[CONF_NAME]  # new style
         modbus_addr = entry.options.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)  # new style
-    hub = hash.data[DOMAIN][hub_name]["hub"]
+    hub = hass.data[DOMAIN][hub_name]["hub"]
 
     plugin = hub.plugin  # getPlugin(hub_name)
     inverter_name_suffix = ""
@@ -51,10 +51,10 @@ async def async_setup_entry(hash, entry, async_add_entities) -> None:
             hub.switchEntities[switch_info.key] = switch # Store the switch entity
             entities.append(switch)
 
-    providers = hash.data.get(DOMAIN, {}).get("_switch_entity_providers", [])
+    providers = hass.data.get(DOMAIN, {}).get("_switch_entity_providers", [])
     for provider in providers:
         try:
-            device_info, platform_name, switch_descriptions = provider(hub, hash, entry)
+            device_info, platform_name, switch_descriptions = provider(hub, hass, entry)
         except Exception as ex:
             _LOGGER.error(f"{hub_name}: switch provider failed: {ex}")
             continue
