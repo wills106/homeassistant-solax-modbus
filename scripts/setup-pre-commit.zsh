@@ -13,19 +13,10 @@ uv sync
 # Check if we are in CI or Docker (simple heuristic, can be improved)
 if [[ -n "$CI" ]]; then
     echo "Running in CI environment. Skipping git hook installation."
-elif [[ -f /.dockerenv ]]; then
-    echo "Running in Docker environment. Installing git hooks..."
-    uv run pre-commit install
 else
-    # Local development
-    echo "Local development environment detected."
-    if [[ "$1" == "--install-hooks" ]]; then
-        echo "Installing git hooks as requested..."
-        uv run pre-commit install
-    else
-        echo "Skipping git hook installation. Run with --install-hooks to install them."
-        echo "You can always run 'uv run pre-commit run --all-files' manually."
-    fi
+    # Local development or Docker
+    echo "Installing git hooks..."
+    uv run pre-commit install
 fi
 
 echo "Verifying pre-commit installation..."
