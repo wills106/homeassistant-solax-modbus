@@ -61,7 +61,7 @@ Now it's only needed to add your inverter to Home Assistant.
 
 ![](images/integration-setup-usb.png)
 
-- If you use Hash core HUB: This assumes you have declared and configured a modbus hub in your configuration.yaml file as described in [this page](https://www.home-assistant.io/integrations/modbus/). The `configuration.yaml` file then describes the connection method (serial, tcp, ..). You may need to declare one dummy entity for this hub.
+- If you use Hass core HUB: This assumes you have declared and configured a modbus hub in your configuration.yaml file as described in [this page](https://www.home-assistant.io/integrations/modbus/). The `configuration.yaml` file then describes the connection method (serial, tcp, ..). You may need to declare one dummy entity for this hub.
     - Enter the hub name.
 
 ![](images/integration-setup-corehub.png)

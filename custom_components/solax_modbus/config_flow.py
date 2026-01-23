@@ -115,7 +115,7 @@ PLUGINS = [selector.SelectOptionDict(value=getPluginName(i), label=getPluginName
 INTERFACES = [
     selector.SelectOptionDict(value="tcp", label="TCP / Ethernet"),
     selector.SelectOptionDict(value="serial", label="Serial"),
-    selector.SelectOptionDict(value="core", label="Hash core Hub"),
+    selector.SelectOptionDict(value="core", label="Hass core Hub"),
 ]
 
 # Removed - using boolean checkbox instead
