@@ -23,7 +23,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -129,7 +129,7 @@ class SolaXEVChargerModbusSelectEntityDescription(BaseModbusSelectEntityDescript
 class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG
-    # order32: int = Endian.LITTLE
+    order32: str | None = None  # optional per-sensor 32-bit word order override
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 

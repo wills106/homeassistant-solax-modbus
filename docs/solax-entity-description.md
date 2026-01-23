@@ -1,4 +1,4 @@
-# Desciption of entities
+# Description of entities
 
 Note available entities differ based on your inverter model.
 
@@ -96,7 +96,7 @@ Only for Gen 4 inverters, 1.xx is your DSP firmware version.
 
 ## inverter_temperature
 
-Shows internal inverter temperature, you can use this information to know if your inverter overheats. Shows no value when the inventer is in idle mode.
+Shows internal inverter temperature, you can use this information to know if your inverter overheats. Shows no value when the inverter is in idle mode.
 
 ## lease_mode
 
@@ -111,7 +111,7 @@ This entity is used in remote control (VPP) modes to monitor grid power such as 
 
 If your setup uses a CT (current transformer), the measured power may not be accurate - they are typically 3-10% tolerances which can include a zero-offset. As of writing there SolaX does not provide on all inverters a method to calibrate this measurement value (some older generations had such an option). Inaccuracies in this measurement affect the calculated house load, and can cause problems with remote control modes at low power levels.
 
-To achieve more accurate resuls from remote control modes, two additional optional configuration entities, `measured_power_offset` and `measured_power_gain` are provided to allow the sensor values to be calibrated. The values shown in home assistant will be scaled by the chosen values.
+To achieve more accurate results from remote control modes, two additional optional configuration entities, `measured_power_offset` and `measured_power_gain` are provided to allow the sensor values to be calibrated. The values shown in home assistant will be scaled by the chosen values.
 
 The raw value from the inverter is corrected by first adding `measured_power_offset` (W), and then multiplying by `measured_power_gain` (%).
 
@@ -141,7 +141,7 @@ Activates and deactivates manual mode.
 
 ## pgrid_bias
 
-Changes behavior of your inverter. When `inverter`, your inverter will supply aroud 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy. 
+Changes behavior of your inverter. When `inverter`, your inverter will supply around 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy. 
 
 ## phase_power_balance_x3
 
