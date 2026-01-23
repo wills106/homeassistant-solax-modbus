@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  pre-commit:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,5 +13,5 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Sync dependencies
         run: uv sync
-      - name: Run pre-commit
+      - name: Run linting checks
         run: uv run pre-commit run --all-files --show-diff-on-failure
