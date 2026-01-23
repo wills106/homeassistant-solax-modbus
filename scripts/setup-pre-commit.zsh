@@ -10,8 +10,8 @@ fi
 echo "Syncing dependencies via uv..."
 uv sync
 
-# Check if we are in CI or Docker (simple heuristic, can be improved)
-if [[ -n "$CI" ]]; then
+# Check if we are in GitHub Actions CI
+if [[ -n "$GITHUB_ACTIONS" ]]; then
     echo "Running in CI environment. Skipping git hook installation."
 else
     # Local development or Docker
