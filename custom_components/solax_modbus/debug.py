@@ -18,7 +18,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def load_debug_settings(config, hash=None):
+def load_debug_settings(config, hass=None):
     """Load debug settings configuration for inverters.
     
     **DEVELOPMENT/TESTING/DEBUGGING ONLY**
@@ -31,7 +31,7 @@ def load_debug_settings(config, hash=None):
     
     Args:
         config: Integration configuration dict (unused for debug settings)
-        hash: Home Assistant instance (optional, for configuration.yaml access)
+        hass: Home Assistant instance (optional, for configuration.yaml access)
     
     Returns:
         Dict mapping inverter names to their settings (e.g., {"Solax 3": {"treat_as_standalone_energy_dashboard": True}})
@@ -39,11 +39,11 @@ def load_debug_settings(config, hash=None):
     """
     debug_settings = {}
     
-    # Check YAML configuration if hash is available
-    # Debug settings from YAML are stored in hash.data[DOMAIN]["_debug_settings"] by async_setup()
-    if hash:
+    # Check YAML configuration if hass is available
+    # Debug settings from YAML are stored in hass.data[DOMAIN]["_debug_settings"] by async_setup()
+    if hass:
         try:
-            domain_data = hash.data.get(DOMAIN, {})
+            domain_data = hass.data.get(DOMAIN, {})
             yaml_debug_settings = domain_data.get("_debug_settings", {})
             if yaml_debug_settings and isinstance(yaml_debug_settings, dict):
                 debug_settings.update(yaml_debug_settings)
@@ -57,7 +57,7 @@ def load_debug_settings(config, hash=None):
     return debug_settings
 
 
-def get_debug_setting(inverter_name, setting_name, config, hash=None, default=False):
+def get_debug_setting(inverter_name, setting_name, config, hass=None, default=False):
     """Get a boolean debug setting value for an inverter.
     
     **DEVELOPMENT/TESTING/DEBUGGING ONLY**
@@ -72,7 +72,7 @@ def get_debug_setting(inverter_name, setting_name, config, hash=None, default=Fa
         inverter_name: Name of the inverter to check
         setting_name: Name of the setting to check (e.g., "treat_as_standalone_energy_dashboard")
         config: Integration configuration dict (from entry.options)
-        hash: Home Assistant instance (optional, for configuration.yaml access)
+        hass: Home Assistant instance (optional, for configuration.yaml access)
         default: Default value to return if setting is not found (default: False)
     
     Returns:
@@ -96,10 +96,10 @@ def get_debug_setting(inverter_name, setting_name, config, hash=None, default=Fa
             "Solax 3", 
             "treat_as_standalone_energy_dashboard", 
             config, 
-            hash
+            hass
         )
     """
-    debug_settings = load_debug_settings(config, hash)
+    debug_settings = load_debug_settings(config, hass)
     
     # Try exact match first
     inverter_settings = debug_settings.get(inverter_name, {})
