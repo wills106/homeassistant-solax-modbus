@@ -9,8 +9,11 @@ repos:
         language: system
         types: [text]
         exclude_types: [csv, json]
-        # Skip specific files or directories if needed (regex)
-        # exclude: ^tests/fixtures/
+        # Exclude translation files except English (en.json)
+        # We use a negative lookahead regex or simply exclude the directory and explicitly include en.json if possible,
+        # but codespell's exclude is simple regex.
+        # Better approach: Exclude the specific non-English files or patterns.
+        exclude: ^custom_components/solax_modbus/translations/(?!en\.json).+
         args:
           # Write changes in place (default for pre-commit locally)
           # In CI, pre-commit runs in check mode by default if not specified otherwise,
