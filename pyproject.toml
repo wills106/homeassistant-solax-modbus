@@ -14,3 +14,7 @@ dev = [
 
 [tool.black]
 line-length = 119
+
+[tool.codespell]
+ignore-words-list = "hass,alot,datas,dof,fom,inout,ist,nam,nd,od,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing"
+skip = "*.csv,*.json"

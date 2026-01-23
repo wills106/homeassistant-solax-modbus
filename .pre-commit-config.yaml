@@ -10,12 +10,4 @@ repos:
         types: [text]
         exclude_types: [csv, json]
         # Exclude translation files except English (en.json)
-        # We use a negative lookahead regex or simply exclude the directory and explicitly include en.json if possible,
-        # but codespell's exclude is simple regex.
-        # Better approach: Exclude the specific non-English files or patterns.
         exclude: ^custom_components/solax_modbus/translations/(?!en\.json).+
-        args:
-          # Write changes in place (default for pre-commit locally)
-          # In CI, pre-commit runs in check mode by default if not specified otherwise,
-          # but we want it to fail if it finds issues.
-          - --ignore-words-list=hass,alot,datas,dof,fom,inout,ist,nam,nd,od,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing
