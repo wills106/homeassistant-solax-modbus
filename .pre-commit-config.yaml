@@ -1,0 +1,18 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: local
+    hooks:
+      - id: codespell
+        name: codespell
+        entry: uv run codespell
+        language: system
+        types: [text]
+        exclude_types: [csv, json]
+        # Skip specific files or directories if needed (regex)
+        # exclude: ^tests/fixtures/
+        args:
+          # Write changes in place (default for pre-commit locally)
+          # In CI, pre-commit runs in check mode by default if not specified otherwise,
+          # but we want it to fail if it finds issues.
+          - --ignore-words-list=hass,alot,datas,dof,fom,inout,ist,nam,nd,od,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing

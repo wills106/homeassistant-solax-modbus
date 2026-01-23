@@ -1,2 +1,16 @@
+[project]
+name = "homeassistant-solax-modbus"
+version = "0.0.0"
+description = "SolaX Modbus integration for Home Assistant"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "codespell>=2.2.6",
+]
+
 [tool.black]
 line-length = 119
