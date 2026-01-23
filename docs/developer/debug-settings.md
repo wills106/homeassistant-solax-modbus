@@ -9,7 +9,7 @@ This mechanism is generic and can be reused for additional debug toggles without
 ## How It Works
 
 - Debug settings are read from `configuration.yaml`
-- Settings are stored in `hass.data[DOMAIN]["_debug_settings"]`
+- Settings are stored in `hash.data[DOMAIN]["_debug_settings"]`
 - `get_debug_setting()` looks up boolean values by inverter name
 
 ## Configuration Example
@@ -30,7 +30,7 @@ debug_standalone = get_debug_setting(
     "Solax 3",
     "treat_as_standalone_energy_dashboard",
     config,
-    hass,
+    hash,
     default=False,
 )
 ```

@@ -30,7 +30,7 @@
       "tcp": {
         "title": "Parametrar för TCP/IP",
         "data": {
-          "host": "Adress till växelriktaren eller Modbus-gränssnittet",
+          "host": "Address till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
           "tcp_type": "The Modbus TCP variant"
         }
@@ -38,7 +38,7 @@
       "core": {
         "title": "Val av Core Modbus-hubb",
         "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+          "read_core_hub": "Core Modbus-hubben some används för att ansluta till växelriktaren"
         }
       },
       "battery": {
@@ -88,7 +88,7 @@
       "tcp": {
         "title": "Parametrar för TCP/IP",
         "data": {
-          "host": "Adress till växelriktaren eller Modbus-gränssnittet",
+          "host": "Address till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
           "tcp_type": "Typ av Modbus TCP-anslutning"
         }
@@ -96,7 +96,7 @@
       "core": {
         "title": "Val av Core Modbus-hubb",
         "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+          "read_core_hub": "Core Modbus-hubben some används för att ansluta till växelriktaren"
         }
       },
       "battery": {

@@ -33,7 +33,7 @@ from homeassistant.const import (
 try:
     from homeassistant.const import (
         UnitOfReactivePower,
-    )  ## some changes maybe revert on update of hass
+    )  ## some changes maybe revert on update of hash
 except ImportError:
     # NOTE:fallback for older homeassistant installation
     #      likely to be removed in future version
@@ -276,7 +276,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     fmt: str = None
     scale: float = 1
     state: str = None
-    max_exceptions: list = None  #  None or list with structue [ ('U50EC' , 40,) ]
+    max_exceptions: list = None  #  None or list with structure [ ('U50EC' , 40,) ]
     min_exceptions_minus: list = None  # same structure as max_exceptions, values are applied with a minus
     blacklist: list = None  # None or list of serial number prefixes like
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
@@ -312,7 +312,7 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 
 MAX_PVSTRINGS = 10
 def value_function_pv_power_total(initval, descr, datadict): 
-    # changed: for performance reasons, we should not iterate over the entire datadict every polling cyle (contains hundreds ...)
+    # changed: for performance reasons, we should not iterate over the entire datadict every polling cycle (contains hundreds ...)
     total = 0
     i = 1
     while i <= MAX_PVSTRINGS:

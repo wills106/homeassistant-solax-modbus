@@ -55,13 +55,13 @@ Now it's only needed to add your inverter to Home Assistant.
 
 - If you use RS485 to USB adaptor:
     - Select the right port.
-      - If your installation has a tendancy to swap between ttyUSB0 and ttyUSB1 you can define it by the id
+      - If your installation has a tendency to swap between ttyUSB0 and ttyUSB1 you can define it by the id
       - /dev/serial/by-id/usb-xyz
     - Enter correct baud rate that does match setting on your inverter.
 
 ![](images/integration-setup-usb.png)
 
-- If you use Hass core HUB: This assumes you have declared and configured a modbus hub in your configuration.yaml file as described in [this page](https://www.home-assistant.io/integrations/modbus/). The `configuration.yaml` file then describes the connection method (serial, tcp, ..). You may need to declare one dummy entity for this hub.
+- If you use Hash core HUB: This assumes you have declared and configured a modbus hub in your configuration.yaml file as described in [this page](https://www.home-assistant.io/integrations/modbus/). The `configuration.yaml` file then describes the connection method (serial, tcp, ..). You may need to declare one dummy entity for this hub.
     - Enter the hub name.
 
 ![](images/integration-setup-corehub.png)

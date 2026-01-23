@@ -5,7 +5,7 @@
         "title": "Modbus-Verbindung definieren",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
-          "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
+          "read_modbus_addr": "Die Modbus Address des Wechselrichter Modbus Geräts",
           "interface": "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "inverter_power_kw": "Maximale Wechselrichterleistung in kW (bei Parallelbetrieb: Gesamtsystemleistung)",
@@ -30,7 +30,7 @@
       "tcp": {
         "title": "TCP/IP Schnittstelle",
         "data": {
-          "host": "Adresse des Wechselrichters oder Modbus-Adapters",
+          "host": "Address des Wechselrichters oder Modbus-Adapters",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
           "tcp_type": "Die Modbus TCP Variante"
         }
@@ -63,7 +63,7 @@
         "title": "Modbus-Verbindung definieren",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
-          "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
+          "read_modbus_addr": "Die Modbus Address des Wechselrichter Modbus Geräts",
           "interface": "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
           "inverter_power_kw": "Maximale Wechselrichterleistung in kW (bei Parallelbetrieb: Gesamtsystemleistung)",
@@ -88,7 +88,7 @@
       "tcp": {
         "title": "TCP/IP Schnittstelle",
         "data": {
-          "host": "Adresse des Wechselrichters oder Modbus-Adapters",
+          "host": "Address des Wechselrichters oder Modbus-Adapters",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
           "tcp_type": "Die Modbus TCP-Variante"
         }

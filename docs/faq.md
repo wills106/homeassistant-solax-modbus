@@ -11,7 +11,7 @@ Always also check vendor specific FAQ pages:
 ## Produce a debug log file with startup info
 When reporting an issue, we recommend or may ask you to attach a debug log that includes a HA restart.
 Not only the error messages are of interest, but also the information on how blocks are composed and read may be needed to resolve an issue.
-The easiest way to temporarily enable debug loggging is:
+The easiest way to temporarily enable debug logging is:
 - go to Settings -> Devices and services
 - Select the Solax Modbus integration
 - In the right corner aboven you will find a dropdown that allows you to enable debug logging: <img width="2358" height="742" alt="image" src="https://github.com/user-attachments/assets/d6089849-5671-46ec-b875-552b8ca1591c" />
@@ -57,7 +57,7 @@ This issue is resolved in the 2024.02.6 version of the integration. Please updat
 
 Please don't use / expect Donations as a form of paid technical support.
 
-I was asked to add the option to recieve donations as people wanted to buy me a Beer/Cola or multiples as a form of thanks.
+I was asked to add the option to receive donations as people wanted to buy me a Beer/Cola or multiples as a form of thanks.
 
 ## Entity I need is not present
 
