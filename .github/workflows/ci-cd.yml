@@ -1,0 +1,124 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+      - fix/*
+      - chore/*
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run pre-commit checks
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  lint:
+    name: Lint (Black)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
+        with:
+          options: "--line-length=119"
+
+  test-quick:
+    name: Test Quick
+    needs: [quality, lint]
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run Quick Tests
+        run: uv run pytest -m "not slow"
+
+  test-comprehensive:
+    name: Test Comprehensive
+    needs: [quality, lint]
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run Full Tests
+        run: uv run pytest
+
+  all-tests-pass:
+    name: ✅ All Tests Passed
+    if: always()
+    needs: [test-quick, test-comprehensive]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          # Check if either test job succeeded (depending on which one ran)
+          # We check the 'conclusion' of the needed jobs
+          
+          QUICK="${{ needs.test-quick.result }}"
+          COMPREHENSIVE="${{ needs.test-comprehensive.result }}"
+          
+          echo "Quick Tests: $QUICK"
+          echo "Comprehensive Tests: $COMPREHENSIVE"
+          
+          # Logic:
+          # If Comprehensive ran, it MUST pass.
+          # If Quick ran (and Comprehensive didn't), it MUST pass.
+          # If skipped, it's neutral.
+          
+          if [[ "$COMPREHENSIVE" == "success" ]]; then
+            echo "✅ Comprehensive tests passed"
+            exit 0
+          elif [[ "$QUICK" == "success" && "$COMPREHENSIVE" == "skipped" ]]; then
+             echo "✅ Quick tests passed"
+             exit 0
+          elif [[ "$QUICK" == "skipped" && "$COMPREHENSIVE" == "skipped" ]]; then
+             # This shouldn't happen with current logic, but safe fallback
+             echo "⚠️ No tests ran?"
+             exit 1
+          else
+             echo "❌ Tests failed or cancelled"
+             exit 1
+          fi
