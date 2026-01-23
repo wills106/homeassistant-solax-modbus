@@ -30,7 +30,7 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "Address van de omvormer of Modbus-interface",
+          "host": "Adres van de omvormer of Modbus-interface",
           "port": "De TCP port voor Inverter of Modbus adapter",
           "tcp_type": "De Modbus TCP variant"
         }
@@ -88,7 +88,7 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "Address van de omvormer of Modbus-interface",
+          "host": "Adres van de omvormer of Modbus-interface",
           "port": "De TCP port voor Inverter of Modbus adapter",
           "tcp_type": "De Modbus TCP-variant"
         }
