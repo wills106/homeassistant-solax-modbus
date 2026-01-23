@@ -33,7 +33,7 @@ from homeassistant.const import (
 try:
     from homeassistant.const import (
         UnitOfReactivePower,
-    )  ## some changes maybe revert on update of hash
+    )  ## some changes maybe revert on update of hass
 except ImportError:
     # NOTE:fallback for older homeassistant installation
     #      likely to be removed in future version
