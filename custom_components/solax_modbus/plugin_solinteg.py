@@ -554,7 +554,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
             "Cmd PLim",
             "OFreq PLim",
             "OTemp PLim",
-            "occur PLim",
+            "OCurr PLim",
             "Reactive PLim",
             "Exp PLim",
             "Slow Loading",
