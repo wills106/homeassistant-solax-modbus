@@ -1577,6 +1577,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         EnergyDashboardSensorMapping(
             source_key="battery_power",  # Note: plugin_solinteg uses battery_power (not battery_power_charge)
             source_key_pm=None,  # No parallel mode support in this plugin
+            target_key="battery_power",
             name="Battery Power",
             invert=True,
         ),
