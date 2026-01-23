@@ -2364,7 +2364,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   4: "Francais",
                   5: "Hanyu",
                   6: "Polski",
-                  7: "Portugues",
+                  7: "Portuguese",
                   8: "Magyar", },
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,
@@ -9440,10 +9440,10 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith('BNJ'):  invertertype =  HYBRID | SPF | X1         # SPF 3000 TL LVM 24P, 1 MPPT
         elif seriesnumber.startswith('NUK'):  invertertype =  HYBRID | SPF | X1         # SPF 12000T DVM-US MPV, 2 MPPT
 
-        # WIT type:GEN4
-        elif seriesnumber.startswith('0PE'):  invertertype = HYBRID | GEN4 | X3         # WIT 8000-HU, 2 MPPT
-        elif seriesnumber.startswith('0PC'):  invertertype = HYBRID | GEN4 | X3         # WIT 12000-HU, 2 MPPT
-        elif seriesnumber.startswith('0PH'):  invertertype = HYBRID | GEN4 | X3 | MPPT10# WIT 100000-HU, 10 MPPT
+        # WITH type:GEN4
+        elif seriesnumber.startswith('0PE'):  invertertype = HYBRID | GEN4 | X3         # WITH 8000-HU, 2 MPPT
+        elif seriesnumber.startswith('0PC'):  invertertype = HYBRID | GEN4 | X3         # WITH 12000-HU, 2 MPPT
+        elif seriesnumber.startswith('0PH'):  invertertype = HYBRID | GEN4 | X3 | MPPT10# WITH 100000-HU, 10 MPPT
 
         # PV only
 

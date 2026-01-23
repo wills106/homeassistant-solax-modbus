@@ -32,7 +32,7 @@ On the Gen4, these actions are not stored in EEPROM, so they can be executed fre
 The integration hides this complexity and implements one button to trigger a single or repeated update(s). The action behind this button is configurable through 6 parameter entities.
 
 
-_Please note that the controls described in this section cannot throttle/limit the PV power. If needed, the `export_control_user_limit` entity can be modified in cases where the export needs to be limited by also limiting PV power. Unlike other entities described in this section, `export_control_user_limit` is written to EEPROM, so the amount of changes to this entity needs to be limited.  We are addding a mode 8 alternative that can limit the PV power without modifying export_control_user_limit. See the separate wiki page for Mode 8._
+_Please note that the controls described in this section cannot throttle/limit the PV power. If needed, the `export_control_user_limit` entity can be modified in cases where the export needs to be limited by also limiting PV power. Unlike other entities described in this section, `export_control_user_limit` is written to EEPROM, so the amount of changes to this entity needs to be limited.  We are adding a mode 8 alternative that can limit the PV power without modifying export_control_user_limit. See the separate wiki page for Mode 8._
 
 With these parameters a power control dashboard card can be created:
 
@@ -84,7 +84,7 @@ With these parameters a power control dashboard card can be created:
 
 ### Autorepeat function
 * `remotecontrol_aurorepeat_duration`:
- If zero, there will be no autorepeat. A non-zero value determines the time period over which the last remotecontrol_trigger command will be autorepeated. During each polling cycle, the values will be recomputed (e.g. taking house load into account in `Enabled Grid Control` mode). By using autorepeat, an energy managment automation can interact with the system at a slow rate, e.g. only once an hour, while the autorepeat can recompute the target every 5 seconds (if polling rate is 5 seconds) without interaction from the automation.
+ If zero, there will be no autorepeat. A non-zero value determines the time period over which the last remotecontrol_trigger command will be autorepeated. During each polling cycle, the values will be recomputed (e.g. taking house load into account in `Enabled Grid Control` mode). By using autorepeat, an energy management automation can interact with the system at a slow rate, e.g. only once an hour, while the autorepeat can recompute the target every 5 seconds (if polling rate is 5 seconds) without interaction from the automation.
 
 Before issuing a `remotecontrol_trigger` button activation, an automation should make sure that the other remotecontrol_* parameters have the correct values. This also applies to manual interactions with the `remotecontrol_trigger` button.
 

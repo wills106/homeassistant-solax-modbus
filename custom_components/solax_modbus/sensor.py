@@ -57,10 +57,10 @@ empty_input_device_group_lambda = lambda: SimpleNamespace(
         )
 
 
-def is_entity_enabled(hass, hub, descriptor, use_default = False): 
+def is_entity_enabled(hash, hub, descriptor, use_default = False): 
     # simple test, more complex counterpart is should_register_be_loaded
     unique_id     = f"{hub._name}_{descriptor.key}" 
-    registry = er.async_get(hass)
+    registry = er.async_get(hash)
     entity_id = registry.async_get_entity_id('sensor', DOMAIN, unique_id) 
     if entity_id:
         entity_entry = registry.async_get(entity_id) 
@@ -76,11 +76,11 @@ def is_entity_enabled(hass, hub, descriptor, use_default = False):
 
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hash, entry, async_add_entities):
     if entry.data: hub_name = entry.data[CONF_NAME] # old style - remove soon
     else: hub_name = entry.options[CONF_NAME] # new format
     _LOGGER.info(f"===== {hub_name}: async_setup_entry called =====")
-    hub = hass.data[DOMAIN][hub_name]["hub"]
+    hub = hash.data[DOMAIN][hub_name]["hub"]
 
     entities = []
     initial_groups = {}
@@ -90,7 +90,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     plugin = hub.plugin #getPlugin(hub_name)
 
     async def readFollowUp(old_data, new_data):
-        dev_registry = dr.async_get(hass)
+        dev_registry = dr.async_get(hash)
         device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, INVERTER_IDENT)})
         if device is not None:
             sw_version = plugin.getSoftwareVersion(new_data)
@@ -127,7 +127,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 continue
 
             batt_pack_id = f"battery_1_{batt_pack_nr+1}"
-            dev_registry = dr.async_get(hass)
+            dev_registry = dr.async_get(hash)
             device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
             if device is not None:
                 _LOGGER.debug(f"batt pack serial: {device.serial_number}")
@@ -157,7 +157,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
 
             async def readFollowUp(old_data, new_data, key_prefix=key_prefix, hub_name=hub_name, batt_pack_id=batt_pack_id, batt_nr=batt_nr, batt_pack_nr=batt_pack_nr):
-                dev_registry = dr.async_get(hass)
+                dev_registry = dr.async_get(hash)
                 device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
                 if device is not None:
                     batt_pack_model = await battery_config.get_batt_pack_model(hub)
@@ -212,8 +212,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             
             if not energy_dashboard_enabled:
                 _LOGGER.info(f"{hub_name}: Energy Dashboard disabled - removing existing entities and device")
-                entity_registry = er.async_get(hass)
-                device_registry = dr.async_get(hass)
+                entity_registry = er.async_get(hash)
+                device_registry = dr.async_get(hash)
                 energy_dashboard_entities = []
 
                 # Find Energy Dashboard device identifier (use normalized hub name)
@@ -221,7 +221,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 try:
                     from .energy_dashboard import create_energy_dashboard_device_info
 
-                    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
+                    energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hash)
                     energy_dashboard_device = device_registry.async_get_device(
                         identifiers=energy_dashboard_device_info.identifiers
                     )
@@ -295,10 +295,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 if not validation_result:
                     _LOGGER.error(f"{hub_name}: Invalid Energy Dashboard mapping, skipping device creation")
                 else:
-                    result = await should_create_energy_dashboard_device(hub, config, hass, _LOGGER, initial_groups)
+                    result = await should_create_energy_dashboard_device(hub, config, hash, _LOGGER, initial_groups)
                     if result:
                         start_time = time.time()
-                        energy_dashboard_sensors = await create_energy_dashboard_sensors(hub, mapping, hass, config)
+                        energy_dashboard_sensors = await create_energy_dashboard_sensors(hub, mapping, hash, config)
                         if energy_dashboard_sensors:
                             _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
                             # Create a new list to track Energy Dashboard entities
@@ -318,7 +318,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             _LOGGER.debug(f"{hub_name}: Energy Dashboard device creation completed in {elapsed_time:.3f}s ({len(energy_dashboard_entities)} entities)")
                             
                             # Ensure Energy Dashboard entities are enabled (they might have been disabled previously)
-                            entity_registry = er.async_get(hass)
+                            entity_registry = er.async_get(hash)
                             hub_unique_prefix = f"{hub._name}_"
                             for sensor_mapping in mapping.mappings:
                                 unique_id = f"{hub_unique_prefix}{sensor_mapping.target_key}"
@@ -339,12 +339,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                 return
 
                             energy_dashboard_sensors = await create_energy_dashboard_sensors(
-                                hub, mapping, hass, config
+                                hub, mapping, hash, config
                             )
                             if not energy_dashboard_sensors:
                                 return
 
-                            domain_data = hass.data.setdefault(DOMAIN, {})
+                            domain_data = hash.data.setdefault(DOMAIN, {})
                             hub_entry = domain_data.setdefault(hub_name, {})
                             pm_inverter_count = hub.data.get("pm_inverter_count")
                             expected_slaves = (
@@ -414,7 +414,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                             allow_remove_grid = grid_state is False
 
                             if allow_remove_pv or allow_remove_home or allow_remove_grid:
-                                entity_registry = er.async_get(hass)
+                                entity_registry = er.async_get(hash)
                                 for key in list(hub.sensorEntities.keys()):
                                     if key in desired_keys:
                                         continue
@@ -449,7 +449,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                     if sens and not getattr(newdescr, "internal", False):
                                         sens.modbus_data_updated()
 
-                        domain_data = hass.data.setdefault(DOMAIN, {})
+                        domain_data = hash.data.setdefault(DOMAIN, {})
                         hub_entry = domain_data.setdefault(hub_name, {})
                         hub_entry["energy_dashboard_refresh_callback"] = async_refresh_energy_dashboard_entities
             else:
