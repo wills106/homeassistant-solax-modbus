@@ -17,7 +17,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -2602,7 +2602,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
             4136: "DC Reverse",
             4137: "PV Midpoint Grounding",
             4144: "Grid Interference Protection",
-            4145: "DSP Inital Protection",
+            4145: "DSP Initial Protection",
             4146: "Over Temperature Protection",
             4147: "PV Insulation Fault",
             4148: "Leakage Current Protection",
@@ -4453,6 +4453,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     mappings=[
         EnergyDashboardSensorMapping(
             source_key="battery_power",  # Note: plugin_solis_fb00 uses battery_power (not battery_power_charge)
+            target_key="battery_power",
             source_key_pm=None,  # No parallel mode support in this plugin
             name="Battery Power",
             invert=True,

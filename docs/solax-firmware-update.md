@@ -2,7 +2,7 @@
 
 Note: while this should be a safe procedure, you are doing this at your own risk and responsibility. We won't/can't help you any in case of any issues. This manual is for SolaX G4, other generations might be different.
 
-It is recommended to have the latest firmware installed on your inverter, it may fix isssues, increase stability, update reginal regulations and add new features. Unfortunately SolaX has no way of automatic updates and the update can be done in two ways:
+It is recommended to have the latest firmware installed on your inverter, it may fix issues, increase stability, update reginal regulations and add new features. Unfortunately SolaX has no way of automatic updates and the update can be done in two ways:
 
 - Contact SolaX support - they are able to update your inverter remotely, you have to wait, but you are less likely to break anything.
 - Manual update from USB stick - you can update your inverter manually with firmware version of your choice.
