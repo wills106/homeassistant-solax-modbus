@@ -16,7 +16,7 @@ within a group, the bits in an entity declaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -4016,8 +4016,8 @@ class battery_config(base_battery_config):
                 unit=hub._modbus_addr, address=self.bms_check_address, count=1
             )
             if inverter_data is not None and not inverter_data.isError():
-                readed = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
-                ok = readed == payload
+                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                ok = read == payload
                 if not ok:
                     await asyncio.sleep(0.3)
                 else:

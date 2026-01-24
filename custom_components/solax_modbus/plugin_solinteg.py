@@ -22,7 +22,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS 
-means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -1577,6 +1577,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         EnergyDashboardSensorMapping(
             source_key="battery_power",  # Note: plugin_solinteg uses battery_power (not battery_power_charge)
             source_key_pm=None,  # No parallel mode support in this plugin
+            target_key="battery_power",
             name="Battery Power",
             invert=True,
         ),
