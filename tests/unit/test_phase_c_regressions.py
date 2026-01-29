@@ -162,3 +162,51 @@ class TestE402ImportLocation:
             # These files should have late imports with noqa comments
             if "# noqa: E402" not in content:
                 pytest.fail(f"{file_path} has late imports but no noqa: E402 comment")
+
+
+class TestB023ClosurePattern:
+    """Test that B023 closure fixes are complete (all call sites updated)."""
+
+    def test_detect_variants_all_call_sites_have_parameters(self):
+        """
+        Verify that _detect_variants closure calls have all required parameters.
+
+        This test catches the bug where we added explicit parameters to fix B023
+        but forgot to update all call sites. Specifically checks that both call sites
+        in energy_dashboard.py pass (hub_obj, mapping, base_key).
+
+        Bug history: Line 865 originally called _detect_variants(slave_hub) without
+        the mapping and base_key parameters, causing TypeError at runtime.
+        """
+        energy_dashboard_file = Path("custom_components/solax_modbus/energy_dashboard.py")
+        content = energy_dashboard_file.read_text()
+
+        # Find the function definition to confirm it has parameters
+        func_def_pattern = r"def _detect_variants\(([^)]+)\)"
+        func_def_match = re.search(func_def_pattern, content)
+
+        assert func_def_match, "_detect_variants function not found in energy_dashboard.py"
+
+        params = func_def_match.group(1)
+        # Should have 3 parameters: hub_obj, mapping, base_key
+        param_list = [p.strip().split(":")[0].strip() for p in params.split(",")]
+        assert len(param_list) >= 3, f"_detect_variants should have at least 3 parameters (hub_obj, mapping, base_key), found: {param_list}"
+
+        # Find all call sites for _detect_variants
+        call_pattern = r"_detect_variants\(([^)]+)\)"
+        calls = list(re.finditer(call_pattern, content))
+
+        assert len(calls) >= 2, f"Expected at least 2 calls to _detect_variants (master and slave paths), found {len(calls)}"
+
+        # Check that each call has the right number of arguments
+        for match in calls:
+            args = match.group(1)
+            # Count arguments (simple split by comma, good enough for this check)
+            arg_count = len([a.strip() for a in args.split(",") if a.strip()])
+
+            assert arg_count >= 3, (
+                f"B023 closure fix incomplete: _detect_variants() call at position {match.start()} "
+                f"has only {arg_count} arguments, expected 3 (hub_obj, mapping, base_key).\n"
+                f"Call: {match.group(0)}\n"
+                f"This indicates a call site was missed when adding explicit parameters."
+            )
