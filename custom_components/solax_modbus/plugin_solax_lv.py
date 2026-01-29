@@ -50,6 +50,8 @@ from custom_components.solax_modbus.const import (
 
 from .pymodbus_compat import DataType, convert_from_registers
 
+_LOGGER = logging.getLogger(__name__)
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group
 these bitmasks are used in entitydeclarations to determine to which inverters the entity applies
