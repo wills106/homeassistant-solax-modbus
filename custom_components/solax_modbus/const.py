@@ -30,14 +30,16 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import EntityCategory
 
+# TODO: Review if this fallback is still needed.
+# UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
+# HA versions older than 2023.1. Consider adding a minimum HA version to manifest.json
+# and removing this fallback if older versions are no longer supported.
+# See: https://developers.home-assistant.io/blog/2022/12/05/more-unit-enumerators
 try:
     from homeassistant.const import (
         UnitOfReactivePower,
-    )  ## some changes maybe revert on update of hass
+    )
 except ImportError:
-    # NOTE:fallback for older homeassistant installation
-    #      likely to be removed in future version
-
     from enum import StrEnum
 
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
