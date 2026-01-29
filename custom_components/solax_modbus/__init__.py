@@ -1345,7 +1345,7 @@ class SolaXModbusHub:
         if descr.prevent_update:
             if  (self.tmpdata_expiry.get(descr.key, 0) > time()):
                 val = self.tmpdata.get(descr.key, None)
-                if val == None:
+                if val is None:
                     LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
             else: # expired
