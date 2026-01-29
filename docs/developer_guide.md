@@ -11,7 +11,7 @@ The entity types are also briefly documented in the `const.py` file.
 
 ### Common attributes for all entities
 
-Most of the attributes are optional or have a meaningfull default value
+Most of the attributes are optional or have a meaningful default value
 
  * _allowedtypes_: int = 0  # overload with ALLDEFAULT from plugin
  * _register_
@@ -48,7 +48,7 @@ To be documented:
 * _fmt_: str = None
 * _scale_: float = 1
 * _state_: str = None
-* _max_exception_s: list = None  #  None or list with structue [ ('U50EC' , 40,) ]
+* _max_exception_s: list = None  #  None or list with structure [ ('U50EC' , 40,) ]
 * _min_exceptions_minus_: list = None  # same structure as max_exceptions, values are applied with a minus
 * _write_method_: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
 * _initvalue_: int = None  # initial default value for WRITE_DATA_LOCAL entities
@@ -73,7 +73,7 @@ To be documented:
 * _write_method_
 * _autorepeat_ : see separate documentation on autorepeat buttons
 
-### Attributs for switch entities:
+### Attributes for switch entities:
 
 To be documented:
 
@@ -116,7 +116,7 @@ plugin_instance = solax_plugin(
     auto_slow_scangroup=SCAN_GROUP_MEDIUM,
 )
 ``` 
-The actual polling speed for each group is determined during initial or subsequent configuration of the intergration (config_flow).
+The actual polling speed for each group is determined during initial or subsequent configuration of the integration (config_flow).
 If the 3 polling group times are set to the same value, the system will act as if there is only one scangroup (they are merged together by interval time)
 
 If SCAN_GROUP_AUTO is chosen for `default_input_scangroup` or `default_holding_scangroup`, entities without a `scan_group` declararation will get the value specified in `plugin.auto_slow_scangroup` if their native unit is slowly changing like temperatures or kWh .., otherwise the value specified in `plugin.auto_default_scangroup`
@@ -125,7 +125,7 @@ If SCAN_GROUP_AUTO is chosen for `default_input_scangroup` or `default_holding_s
 ## Autorepeat mechanism for buttons
 
 A button can have the attribute autorepeat, an attribute that specifies the entity_key of the entity that holds the duration over which the button press will be repeated automatically.
-If a button has the attribute **autorepeat**, the button declaration must also have a `value_function` attribute. The specified value function will be called for each autorepeat loop interation.
+If a button has the attribute **autorepeat**, the button declaration must also have a `value_function` attribute. The specified value function will be called for each autorepeat loop iteration.
 The meaning of the parameters of a button autorepeat value_function is:
 
 - initval: either `BUTTONREPEAT_FIRST`, `BUTTONREPEAT_LOOP`, `BUTTONREPEAT_POST`
@@ -139,9 +139,9 @@ In its current form, the function should return a dictionary with following stru
 `{'action': ... , 'register': ..., 'data': ...}` where
 
 
-- `action`: the modbus type of write to be executed: currently only MODBUS_WRITE_MULTI is suppored, but the other writes can be easily added later.
+- `action`: the modbus type of write to be executed: currently only MODBUS_WRITE_MULTI is supported, but the other writes can be easily added later.
 - `register` (optional): if not specified, the register address for the autorepeat button will be used
-- `data`: a list of tuples `[ (entity_key, value,), ....]` that represents the payload of a write_multiple command that starts at the modbus register addres. Instead of the entity_key_name, a register type can also be specified like `REGISTER_U16`. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario. In the future, the `data` structure may be modified to allow other types of writes.
+- `data`: a list of tuples `[ (entity_key, value,), ....]` that represents the payload of a write_multiple command that starts at the modbus register address. Instead of the entity_key_name, a register type can also be specified like `REGISTER_U16`. The payload should not contain the button's entity itself, just the data that needs to be added in the write_multiple scenario. In the future, the `data` structure may be modified to allow other types of writes.
   
 The system will automatically convert the data to the modbus low level format, and compute the length of the write_multiple payload to be written to modbus.
 

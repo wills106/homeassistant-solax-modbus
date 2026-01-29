@@ -80,7 +80,7 @@ When configuring the SolaX Modbus Integration, tick the 'RS485 serial port' flag
 
 It should be possible to connect multiple inverters to the same RS485 adapter (eg Waveshare). The inverters must have different Modbus addresses, so you need to change the Modbus addresses of the inverters first. Then configure one instance for each inverter. The configuration dialogue allows you to set the Modbus address.
 
-The use of Terminating resistors is required when connecting multiple Inverters. Place a 120Ohm resistor accross A&B at the RS485 adaptor and place a 120Ohm resistor accross A&B on the last connected Inverter.
+The use of Terminating resistors is required when connecting multiple Inverters. Place a 120Ohm resistor across A&B at the RS485 adaptor and place a 120Ohm resistor across A&B on the last connected Inverter.
 
 ## SolaX PocketWiFi 3.0
 

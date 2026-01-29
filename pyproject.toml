@@ -1,2 +1,20 @@
+[project]
+name = "homeassistant-solax-modbus"
+version = "0.0.0"
+description = "SolaX Modbus integration for Home Assistant"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "codespell>=2.2.6",
+]
+
 [tool.black]
 line-length = 119
+
+[tool.codespell]
+ignore-words-list = "hass,alot,datas,dof,fom,inout,ist,nam,nd,od,portugues,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing,wit,ocurr"
+skip = "*.csv,*.json"

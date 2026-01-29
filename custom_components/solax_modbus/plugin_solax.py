@@ -17,7 +17,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | GEN5 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -564,7 +564,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             surplus_export = max(0, surplus - desired_charge)
             export_within_cap = min(export_limit, surplus_export)
             if surplus_export > export_limit:
-                # Unless we've exceded the export limit, in which case limit the PV too
+                # Unless we've exceeded the export limit, in which case limit the PV too
                 pvlimit = pv - (surplus_export - export_limit)
                 surplus_export = export_limit
 
@@ -913,7 +913,7 @@ def value_function_pm_total_house_load(initval, descr, datadict):
 
     How?
     We use two methods and apply correction during remote control. The two 
-    calculations allow us to normailze the inflaction by taking the midpoint 
+    calculations allow us to normalize the inflaction by taking the midpoint 
     of the delta:
 
     1. Inverter method: pm_power - grid_power 
@@ -2400,8 +2400,8 @@ SELECT_TYPES = [
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Disabled",
-            1: "Enabled Power Control",  # battery charge level in absense of PV
-            11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absense of PV
+            1: "Enabled Power Control",  # battery charge level in absence of PV
+            11: "Enabled Grid Control",  # computed variation of Power Control, grid import level in absence of PV
             12: "Enabled Battery Control",  # computed variation of Power Control, battery import without of PV
             110: "Enabled Self Use",  # variation of Grid Control with fixed target 0
             120: "Enabled Feedin Priority",  # variation of Battery Control with fixed target 0

@@ -1236,7 +1236,7 @@ class SolaXModbusHub:
                     else:
                         _LOGGER.error(f"unsupported unit type: {typ} for {key}")
                 except Exception as ex:
-                    _LOGGER.error(f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exeption {ex}")
+                    _LOGGER.error(f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exception {ex}")
             online = await self.is_online()
             _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out} online: {online} ")
             if online:
@@ -1435,7 +1435,7 @@ class SolaXModbusHub:
                 _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
-                    if   type(descr) is dict: l = descr.items() # special case: mutliple U8x entities
+                    if   type(descr) is dict: l = descr.items() # special case: multiple U8x entities
                     else: l = { descr.key: descr, }.items() # normal case, one entity
                     for k, d in l:
                         d_ignore = d.ignore_readerror
