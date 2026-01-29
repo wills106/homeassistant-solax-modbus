@@ -1,15 +1,14 @@
 import logging
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from time import time
-from typing import Any, Dict, Optional
+from typing import Optional
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity, NumberMode
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
 from .const import (
-    ATTR_MANUFACTURER,
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
@@ -47,9 +46,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             ) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix):
                     newdescr = replace(number_info, read_scale=value)
-        if plugin.matchInverterWithMask(
-            hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist
-        ):
+        if plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist):
             if not (newdescr.name.startswith(inverter_name_suffix)):
                 newdescr.name = inverter_name_suffix + newdescr.name
 
@@ -142,7 +139,7 @@ class SolaXModbusNumber(NumberEntity):
 
     """ remove duplicate declaration
     async def async_set_value(self, native_value: float) -> None:
-    	return self._hub.data[self._state]
+        return self._hub.data[self._state]
     """
 
     @callback
@@ -164,7 +161,7 @@ class SolaXModbusNumber(NumberEntity):
         if descr.prevent_update:
             if self._hub.tmpdata_expiry.get(descr.key, 0) > time():
                 val = self._hub.tmpdata.get(descr.key, None)
-                if val == None:
+                if val is None:
                     _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
                 if descr.read_scale and self._hub.tmpdata[self._key]:
@@ -208,9 +205,7 @@ class SolaXModbusNumber(NumberEntity):
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
             )
-            await self._hub.async_write_registers_single(
-                unit=self._modbus_addr, address=self._register, payload=payload
-            )
+            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
@@ -230,9 +225,7 @@ class SolaXModbusNumber(NumberEntity):
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             # corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
-            if (
-                self.entity_description.prevent_update
-            ):  # if corresponding_sensor: # only if corresponding sensor has prevent_update=True
+            if self.entity_description.prevent_update:  # if corresponding_sensor: # only if corresponding sensor has prevent_update=True
                 self._hub.tmpdata[self.entity_description.key] = payload
                 self._hub.tmpdata_expiry[self.entity_description.key] = time() + TMPDATA_EXPIRY
                 # corresponding_sensor.async_write_ha_state()

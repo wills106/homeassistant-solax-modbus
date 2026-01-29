@@ -1,9 +1,6 @@
 import logging
 from dataclasses import dataclass, replace
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -18,7 +15,6 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
-    _LOGGER,
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -95,12 +91,10 @@ async def async_read_serialnr(hub, address):
             raw = convert_from_registers(inverter_data.registers[0:4], DataType.STRING, "big")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
@@ -1229,8 +1223,6 @@ class Enertech_plugin(plugin_base):
         # derive invertertupe from seriiesnumber
         if seriesnumber.startswith("GEN"):
             invertertype = HYBRID | GEN  # GEN Hybrid - Unknown Serial
-        elif seriesnumber.startswith("32"):
-            invertertype = HYBRID | A1  # A1 Hybrid - Unknown Serial
         # add cases here
         else:
             invertertype = GEN
@@ -1246,10 +1238,6 @@ class Enertech_plugin(plugin_base):
                 invertertype = invertertype | DCB
             if read_pm:
                 invertertype = invertertype | PM
-
-            if invertertype & MIC:
-                self.SENSOR_TYPES = SENSOR_TYPES_MIC
-            # else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
 
         return invertertype
 
@@ -1271,15 +1259,13 @@ class Enertech_plugin(plugin_base):
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
-        _LOGGER.info(f"local data update callback")
+        _LOGGER.info("local data update callback")
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
-            if new_read_scale != None:
-                _LOGGER.info(
-                    f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}"
-                )
+            if new_read_scale is not None:
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -1296,7 +1282,7 @@ class Enertech_plugin(plugin_base):
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
-            if new_max_export != None:
+            if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
                     "remotecontrol_import_limit",

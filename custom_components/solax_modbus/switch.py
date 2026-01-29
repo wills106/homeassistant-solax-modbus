@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import CONF_NAME
@@ -12,8 +12,6 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
-    WRITE_MULTISINGLE_MODBUS,
-    WRITE_SINGLE_MODBUS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,9 +34,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
-        if plugin.matchInverterWithMask(
-            hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist
-        ):
+        if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
             if not (switch_info.name.startswith(inverter_name_suffix)):
                 switch_info.name = inverter_name_suffix + switch_info.name
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)

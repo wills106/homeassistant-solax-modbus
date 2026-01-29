@@ -1,34 +1,21 @@
 import logging
 import pathlib
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import (
-    NumberDeviceClass,
     NumberEntityDescription,
 )
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
     SensorEntityDescription,
-    SensorStateClass,
 )
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.const import (
     CONF_SCAN_INTERVAL,
-    PERCENTAGE,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfTemperature,
-    UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
 
 # TODO: Review if this fallback is still needed.
 # UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
@@ -154,9 +141,7 @@ class plugin_base:
     SWITCH_TYPES: list[SwitchEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     block_size: int = 100
-    auto_block_ignore_readerror: bool | None = (
-        None  # if True or False, inserts a ignore_readerror statement for each block
-    )
+    auto_block_ignore_readerror: bool | None = None  # if True or False, inserts a ignore_readerror statement for each block
     # order16: str | None = None # ignored since 2025.09 - assuming "big" for all plugins
     order32: str | None = None  # "big" or "little" - used to be Endian.BIG or Endian.LITTLE
     inverter_model: str = None
@@ -478,7 +463,7 @@ def value_function_rtc(initval, descr, datadict):
         ) = initval
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
-    except:
+    except Exception:
         pass
 
 
@@ -494,7 +479,7 @@ def value_function_rtc_ymd(initval, descr, datadict):
         ) = initval
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
-    except:
+    except Exception:
         pass
 
 

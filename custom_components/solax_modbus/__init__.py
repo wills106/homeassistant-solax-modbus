@@ -7,7 +7,7 @@ import importlib
 import json
 import logging
 import time as _mtime
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import timedelta
 from time import time
 from types import ModuleType, SimpleNamespace
@@ -16,16 +16,14 @@ from weakref import ref as WeakRef
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry, ConfigEntryState
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
-    CONF_SCAN_INTERVAL,
     EVENT_HOMEASSISTANT_STARTED,
     PERCENTAGE,
     Platform,
-    UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -42,7 +40,6 @@ from homeassistant.helpers.event import async_track_time_interval
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
-from pymodbus.pdu import register_message
 
 from .pymodbus_compat import ADDR_KW, DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 
@@ -63,12 +60,12 @@ except ImportError:
         pass
 
 
-from .sensor import SolaXModbusSensor
+from .sensor import SolaXModbusSensor  # noqa: E402
 
 _LOGGER = logging.getLogger(__name__)
 
-from .const import (
-    BUTTONREPEAT_FIRST,
+from .const import (  # noqa: E402, I001
+    BUTTONREPEAT_FIRST as BUTTONREPEAT_FIRST,
     BUTTONREPEAT_LOOP,
     BUTTONREPEAT_POST,
     CONF_BAUDRATE,
@@ -79,46 +76,46 @@ from .const import (
     CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
     CONF_PLUGIN,
-    CONF_READ_DCB,
-    CONF_READ_EPS,
+    CONF_READ_DCB as CONF_READ_DCB,
+    CONF_READ_EPS as CONF_READ_EPS,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
     DEFAULT_BAUDRATE,
-    DEFAULT_INTERFACE,
-    DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_INTERFACE as DEFAULT_INTERFACE,
+    DEFAULT_INVERTER_NAME_SUFFIX as DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
-    DEFAULT_NAME,
-    DEFAULT_PLUGIN,
+    DEFAULT_NAME as DEFAULT_NAME,
+    DEFAULT_PLUGIN as DEFAULT_PLUGIN,
     DEFAULT_PORT,
-    DEFAULT_READ_DCB,
-    DEFAULT_READ_EPS,
-    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_READ_DCB as DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS as DEFAULT_READ_EPS,
+    DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
     DEFAULT_TIME_OUT,
     DOMAIN,
     INVERTER_IDENT,
+    # PLUGIN_PATH,
     REG_HOLDING,
     REG_INPUT,
     REGISTER_F32,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
-    REGISTER_U8H,
-    REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
+    REGISTER_U8H,
+    REGISTER_U8L,
     REGISTER_ULSB16MSB16,
     REGISTER_WORDS,
     SCAN_GROUP_AUTO,
     SCAN_GROUP_DEFAULT,
-    SCAN_GROUP_MEDIUM,
-    # PLUGIN_PATH,
+    SCAN_GROUP_MEDIUM as SCAN_GROUP_MEDIUM,
     SLEEPMODE_LASTAWAKE,
     WRITE_MULTI_MODBUS,
-    WRITE_MULTISINGLE_MODBUS,
+    WRITE_MULTISINGLE_MODBUS as WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
 )
 
@@ -140,20 +137,25 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-empty_hub_interval_group_lambda = lambda: SimpleNamespace(
-    interval=0,
-    unsub_interval_method=None,
-    device_groups={},
-    poll_lock=asyncio.Lock(),
-    pending_rerun=False,
-)
-empty_hub_device_group_lambda = lambda: SimpleNamespace(
-    sensors=[],
-    inputBlocks={},
-    holdingBlocks={},
-    readPreparation=None,  # function to call before read group
-    readFollowUp=None,  # function to call after read group
-)
+
+def empty_hub_interval_group_lambda():
+    return SimpleNamespace(
+        interval=0,
+        unsub_interval_method=None,
+        device_groups={},
+        poll_lock=asyncio.Lock(),
+        pending_rerun=False,
+    )
+
+
+def empty_hub_device_group_lambda():
+    return SimpleNamespace(
+        sensors=[],
+        inputBlocks={},
+        holdingBlocks={},
+        readPreparation=None,  # function to call before read group
+        readFollowUp=None,  # function to call after read group
+    )
 
 
 def should_register_be_loaded(hass, hub, descriptor):
@@ -172,14 +174,10 @@ def should_register_be_loaded(hass, hub, descriptor):
     for platform in platforms:
         entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id)
         if entity_id:
-            _LOGGER.debug(
-                f"{hub.name}: should be loaded: entity_id for {unique_id} on platform {platform} is now {entity_id}"
-            )
+            _LOGGER.debug(f"{hub.name}: should be loaded: entity_id for {unique_id} on platform {platform} is now {entity_id}")
         else:
             entity_id = registry.async_get_entity_id(platform, DOMAIN, unique_id_alt)
-            _LOGGER.debug(
-                f"{hub.name}: should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}"
-            )
+            _LOGGER.debug(f"{hub.name}: should be loaded: entity_id for alt {unique_id_alt} on platform {platform} is now {entity_id}")
         if entity_id:
             entity_found = True
             entity_entry = registry.async_get(entity_id)
@@ -189,15 +187,11 @@ def should_register_be_loaded(hass, hub, descriptor):
     # If we get here, no enabled entity was found across all platforms.
     if entity_found:
         # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice.
-        _LOGGER.debug(
-            f"{hub.name}: should be loaded: entity with unique_id {unique_id} was found but is disabled across all relevant platforms."
-        )
+        _LOGGER.debug(f"{hub.name}: should be loaded: entity with unique_id {unique_id} was found but is disabled across all relevant platforms.")
         return False
     else:
         # No entity exists for this unique_id on any platform. Treat it as a new entity.
-        _LOGGER.debug(
-            f"{hub.name}: should be loaded: entity with unique_id {unique_id} not found in entity registry, checking defaults "
-        )
+        _LOGGER.debug(f"{hub.name}: should be loaded: entity with unique_id {unique_id} not found in entity registry, checking defaults ")
         if descriptor.entity_registry_enabled_default:
             return True
         # check the other platforms descriptors
@@ -336,16 +330,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     plugin_name = config[CONF_PLUGIN]
 
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
-    if (
-        plugin_name.startswith("custom_components")
-        or plugin_name.startswith("/config")
-        or plugin_name.startswith("plugin_")
-    ):
+    if plugin_name.startswith("custom_components") or plugin_name.startswith("/config") or plugin_name.startswith("plugin_"):
         new = {**config}
         plugin_name = plugin_name.split("plugin_", 1)[1][:-3]
-        _LOGGER.warning(
-            f"converting old style plugin name {config[CONF_PLUGIN]} to new style short name {plugin_name}"
-        )
+        _LOGGER.warning(f"converting old style plugin name {config[CONF_PLUGIN]} to new style short name {plugin_name}")
         new[CONF_PLUGIN] = plugin_name
         hass.config_entries.async_update_entry(entry, options=new)
     # end of conversion
@@ -466,11 +454,9 @@ class SolaXModbusHub:
         port = config.get(CONF_PORT, DEFAULT_PORT)
         tcp_type = config.get(CONF_TCP_TYPE, DEFAULT_TCP_TYPE)
         modbus_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
-        if modbus_addr == None:
+        if modbus_addr is None:
             modbus_addr = DEFAULT_MODBUS_ADDR
-            _LOGGER.warning(
-                f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}"
-            )
+            _LOGGER.warning(f"{name} integration may need to be reconfigured for this version; using default Solax modbus_address {modbus_addr}")
         interface = config.get(CONF_INTERFACE, None)
         if not interface:  # core modbus parameter name was read_serial, this block can be removed later
             if config.get("read_serial", False):
@@ -500,13 +486,9 @@ class SolaXModbusHub:
             )
         elif interface == "tcp":
             if tcp_type == "rtu":
-                self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=RETRIES
-                )
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, framer=FramerType.RTU, retries=RETRIES)
             elif tcp_type == "ascii":
-                self._client = AsyncModbusTcpClient(
-                    host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES
-                )
+                self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES)
             else:
                 self._client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
         elif interface == "core":
@@ -533,9 +515,7 @@ class SolaXModbusHub:
         self.tmpdata = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
         self.tmpdata_expiry = {}  # expiry timestamps for tempdata
         self.cyclecount = 0  # temporary - remove later
-        self.slowdown = (
-            1  # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
-        )
+        self.slowdown = 1  # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
         self.computedSensors = {}
         self.computedEntities = {}  # buttons and selects with value_function for autorepeat
         self.computedSwitches = {}
@@ -624,9 +604,7 @@ class SolaXModbusHub:
 
         # If we reach here with no inverter detected, start deferred detection and return without forwarding platforms
         if self._invertertype in (None, 0):
-            _LOGGER.debug(
-                f"{self._name}: no inverter detected during initial window – deferring setup until device is online"
-            )
+            _LOGGER.debug(f"{self._name}: no inverter detected during initial window – deferring setup until device is online")
             if not getattr(self, "_stopping", False):
                 self._deferred_setup_task = self._hass.loop.create_task(self._deferred_setup_loop())
             return
@@ -677,9 +655,7 @@ class SolaXModbusHub:
                 inv = await self.plugin.async_determineInverterType(self, self.config)
                 if inv not in (None, 0):
                     self._invertertype = inv
-                    _LOGGER.debug(
-                        f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms"
-                    )
+                    _LOGGER.debug(f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms")
                     # Prepare/refresh device_info in case it wasn't set
                     plugin_name = self.plugin.plugin_name
                     if self.inverterNameSuffix:
@@ -720,16 +696,14 @@ class SolaXModbusHub:
     def loadLocalData(self):
         try:
             fp = open(self._hass.config.path(f"{self.name}_data.json"))
-        except:
+        except Exception:
             if self.cyclecount > 5:
-                _LOGGER.debug(
-                    f"no local data file found after 5 tries - is this a first time run? or didn't you modify any DATA_LOCAL entity?"
-                )
+                _LOGGER.debug("no local data file found after 5 tries - is this a first time run? or didn't you modify any DATA_LOCAL entity?")
                 self.localsLoaded = True  # retry a couple of polling cycles - then assume non-existent"
             return
         try:
             loaded = json.load(fp)
-        except:
+        except Exception:
             _LOGGER.debug("Local data file not readable. Resetting to empty")
             fp.close()
             self.saveLocalData()
@@ -738,7 +712,7 @@ class SolaXModbusHub:
             if loaded.get("_version") == self.DATAFORMAT_VERSION:
                 for desc in self.writeLocals:
                     val = loaded.get(desc)
-                    if val != None:
+                    if val is not None:
                         self.data[desc] = val
                     else:
                         self.data[desc] = self.writeLocals[desc].initvalue  # first time initialisation
@@ -768,9 +742,7 @@ class SolaXModbusHub:
             elif regtype == REG_INPUT:
                 g = self.plugin.default_input_scangroup
             else:
-                _LOGGER.debug(
-                    f"{self._name}: default scan_group for {sensor.entity_description.key} returned {g} - {SCAN_GROUP_DEFAULT}"
-                )
+                _LOGGER.debug(f"{self._name}: default scan_group for {sensor.entity_description.key} returned {g} - {SCAN_GROUP_DEFAULT}")
                 g = SCAN_GROUP_DEFAULT  # should not occur
 
         if g == SCAN_GROUP_AUTO:
@@ -827,18 +799,14 @@ class SolaXModbusHub:
                 # If a previous cycle is still running, mark a catch-up and return quickly.
                 if interval_group.poll_lock.locked():
                     interval_group.pending_rerun = True
-                    _LOGGER.debug(
-                        f"{self._name}: [{secs}s] overrun – previous poll still running; scheduling immediate catch-up after it finishes"
-                    )
+                    _LOGGER.debug(f"{self._name}: [{secs}s] overrun – previous poll still running; scheduling immediate catch-up after it finishes")
                     return
 
                 # Run cycles back-to-back if a tick was missed while running (catch-up mode)
                 while True:
                     start = _mtime.monotonic()
                     async with interval_group.poll_lock:
-                        agg_res, updated_sensors = await self.async_refresh_modbus_data(
-                            interval_group, _now, cycle_id=cycle_id
-                        )
+                        agg_res, updated_sensors = await self.async_refresh_modbus_data(interval_group, _now, cycle_id=cycle_id)
                     elapsed = _mtime.monotonic() - start
                     _LOGGER.debug(
                         f"{self._name}: [{secs}s] poll finished – cycle #{cycle_id}, "
@@ -862,22 +830,16 @@ class SolaXModbusHub:
                         else:
                             # Previous poll failed; do not schedule a back-to-back retry.
                             interval_group.pending_rerun = False
-                            _LOGGER.debug(
-                                f"{self._name}: dropping pending catch-up due to failed poll (slowdown={self.slowdown})"
-                            )
+                            _LOGGER.debug(f"{self._name}: dropping pending catch-up due to failed poll (slowdown={self.slowdown})")
                             # Exit the loop; next attempt will occur per slowdown policy
                             break
                     break
 
             _LOGGER.debug(f"{self._name}: starting timer loop for interval group: {interval}")
-            interval_group.unsub_interval_method = async_track_time_interval(
-                self._hass, _refresh, timedelta(seconds=interval)
-            )
+            interval_group.unsub_interval_method = async_track_time_interval(self._hass, _refresh, timedelta(seconds=interval))
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
-        _LOGGER.debug(
-            f"{self._name}: adding sensor {sensor.entity_description.key} available: {sensor._attr_available} "
-        )
+        _LOGGER.debug(f"{self._name}: adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
         grp.sensors.append(sensor)
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
@@ -914,9 +876,7 @@ class SolaXModbusHub:
 
     async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None, cycle_id=None):
         """Time to update."""
-        _LOGGER.debug(
-            f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}"
-        )
+        _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
         # Do not start normal polling until initial probe is done
         if not self._probe_ready.is_set():
@@ -930,9 +890,7 @@ class SolaXModbusHub:
         updated_sensors = 0  # how many entities were pushed this cycle
         # Use cyclecount from caller, not increment here
         if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in list(
-                interval_group.device_groups.values()
-            ):  # not sure if this does not break things or affects performance
+            for group in list(interval_group.device_groups.values()):  # not sure if this does not break things or affects performance
                 group_result = await self.async_read_modbus_data(group)
                 agg_res = agg_res and group_result
                 if group_result:
@@ -944,9 +902,7 @@ class SolaXModbusHub:
                     updated_sensors += len(group.sensors)
                 else:
                     if self.slowdown <= 1:
-                        _LOGGER.debug(
-                            f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10"
-                        )
+                        _LOGGER.debug(f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10")
                     self.slowdown = 10
                     for i in self.sleepnone:
                         self.data.pop(i, None)
@@ -1128,9 +1084,7 @@ class SolaXModbusHub:
                 # Use high-level API; unit key is provided via ADDR_KW for compatibility
                 kwargs = {ADDR_KW: unit} if unit is not None else {}
                 _LOGGER.debug(f"{self._name}: READ HOLDING {ADDR_KW}={unit} addr=0x{address:x} cnt={count}")
-                resp = await self._track_task(
-                    self._client.read_holding_registers(address=address, count=count, **kwargs)
-                )
+                resp = await self._track_task(self._client.read_holding_registers(address=address, count=count, **kwargs))
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -1156,9 +1110,7 @@ class SolaXModbusHub:
                 # Use high-level API; unit key is provided via ADDR_KW for compatibility
                 kwargs = {ADDR_KW: unit} if unit is not None else {}
                 _LOGGER.debug(f"{self._name}: READ INPUT  {ADDR_KW}={unit} addr=0x{address:x} cnt={count}")
-                resp = await self._track_task(
-                    self._client.read_input_registers(address=address, count=count, **kwargs)
-                )
+                resp = await self._track_task(self._client.read_input_registers(address=address, count=count, **kwargs))
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -1186,9 +1138,7 @@ class SolaXModbusHub:
                 original_message = str(e)
                 # Plugin-level logging hook
                 if hasattr(self.plugin, "log_register_write"):
-                    self.plugin.log_register_write(
-                        self, address, unit, payload, error=(type(e).__name__, original_message)
-                    )
+                    self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
                 raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
         return resp
 
@@ -1277,9 +1227,7 @@ class SolaXModbusHub:
                     try:
                         value = int(value)
                     except Exception:
-                        _LOGGER.warning(
-                            f"{self._name}: could not cast '{value}' to int for {getattr(descr, 'key', '?')}; leaving value unchanged"
-                        )
+                        _LOGGER.warning(f"{self._name}: could not cast '{value}' to int for {getattr(descr, 'key', '?')}; leaving value unchanged")
                     typ = descr.unit
                 try:
                     if typ == REGISTER_U16:
@@ -1295,17 +1243,13 @@ class SolaXModbusHub:
                     else:
                         _LOGGER.error(f"unsupported unit type: {typ} for {key}")
                 except Exception as ex:
-                    _LOGGER.error(
-                        f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exception {ex}"
-                    )
+                    _LOGGER.error(f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exception {ex}")
             online = await self.is_online()
             _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out} online: {online} ")
             if online:
                 async with self._lock:
                     try:
-                        resp = await self._track_task(
-                            self._client.write_registers(address=address, values=regs_out, **kwargs)
-                        )
+                        resp = await self._track_task(self._client.write_registers(address=address, values=regs_out, **kwargs))
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
@@ -1362,10 +1306,7 @@ class SolaXModbusHub:
                 val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             elif descr.unit == REGISTER_WORDS:
                 wc = descr.wordcount or 0
-                val = [
-                    convert_from_registers(regs[idx + i : idx + i + 1], DataType.UINT16, self.plugin.order32)
-                    for i in range(wc)
-                ]
+                val = [convert_from_registers(regs[idx + i : idx + i + 1], DataType.UINT16, self.plugin.order32) for i in range(wc)]
                 words_used = wc
             elif descr.unit == REGISTER_ULSB16MSB16:
                 lo = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, order32)
@@ -1392,7 +1333,7 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"{self._name}: undefinded unit for entity {descr.key} - setting value to zero")
                 val = 0
                 words_used = 0
-        except Exception as ex:
+        except Exception:
             if self.cyclecount < VERBOSE_CYCLES:
                 _LOGGER.warning(
                     f"{self._name}: read failed at 0x{descr.register:02x}: {descr.key}",
@@ -1416,7 +1357,7 @@ class SolaXModbusHub:
         if self._validate_register_func is not None:
             val = self._validate_register_func(descr, val, data)
 
-        if val == None:  # E.g. if errors have occurred during readout
+        if val is None:  # E.g. if errors have occurred during readout
             # _LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
@@ -1426,7 +1367,7 @@ class SolaXModbusHub:
         else:  # apply simple numeric scaling and rounding if not a list of words
             try:
                 return_value = round(val * descr.scale * read_scale, descr.rounding)
-            except:
+            except Exception:
                 return_value = val  # probably a REGISTER_WORDS instance
             if descr.native_unit_of_measurement == UnitOfFrequency.HERTZ:
                 min_val = getattr(descr, "min_value", 20)
@@ -1458,9 +1399,7 @@ class SolaXModbusHub:
         if (
             (self.tmpdata_expiry.get(descr.key, 0) == 0)
             and ((descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data))
-            and (
-                self.localsLoaded or not descr.read_scale_exceptions
-            )  # ignore as long as read scale is not adapted; may delay real startup a bit
+            and (self.localsLoaded or not descr.read_scale_exceptions)  # ignore as long as read scale is not adapted; may delay real startup a bit
         ):
             data[descr.key] = return_value  # case prevent_update number
         return idx + (words_used if advance else 0)
@@ -1489,8 +1428,8 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: exception reading {typ} {block.start} {errmsg}")
         else:
             if realtime_data is None or realtime_data.isError():
-                errmsg = f"read_error "
-        if errmsg == None:
+                errmsg = "read_error "
+        if errmsg is None:
             regs = realtime_data.registers
             idx = 0
             for reg in block.regs:
@@ -1516,18 +1455,16 @@ class SolaXModbusHub:
                 f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}"
             )
             if firstdescr.ignore_readerror is False:  # dont ignore block read errors and return static data
-                _LOGGER.debug(
-                    f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}"
-                )
+                _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
                 for reg in block.regs:
                     descr = block.descriptions[reg]
                     if type(descr) is dict:
-                        l = descr.items()  # special case: multiple U8x entities
+                        items = descr.items()  # special case: multiple U8x entities
                     else:
-                        l = {
+                        items = {
                             descr.key: descr,
                         }.items()  # normal case, one entity
-                    for k, d in l:
+                    for k, d in items:
                         d_ignore = d.ignore_readerror
                         if (d_ignore is not True) and (d_ignore is not False):
                             _LOGGER.debug(f"{self._name}: returning static {k} = {d_ignore}")
@@ -1585,7 +1522,7 @@ class SolaXModbusHub:
 
         if group.readFollowUp is not None:
             if not await group.readFollowUp(self.data, data):
-                _LOGGER.warning(f"device group check not success")
+                _LOGGER.warning("device group check not success")
                 return True
 
         # for key, value in data.items(): # remove for issue #1440, but then does not recognize communication errors anymore
@@ -1622,18 +1559,12 @@ class SolaXModbusHub:
                         )
                     elif action == WRITE_SINGLE_MODBUS:
                         _LOGGER.debug(f"Repeating {k} register {reg} value {payload.get('payload')}")
-                        await self.async_write_register(
-                            unit=self._modbus_addr, address=reg, payload=payload.get("payload")
-                        )
+                        await self.async_write_register(unit=self._modbus_addr, address=reg, payload=payload.get("payload"))
             elif descr:  # expired autorepeats
                 if self.data["_repeatUntil"][k] > 0:  # expired recently
-                    self.data["_repeatUntil"][k] = (
-                        0  # mark as finally expired, no further buttonrepeat post after this one
-                    )
+                    self.data["_repeatUntil"][k] = 0  # mark as finally expired, no further buttonrepeat post after this one
                     _LOGGER.info(f"calling final value function POST for {k} with initval {BUTTONREPEAT_POST}")
-                    payload = descr.value_function(
-                        BUTTONREPEAT_POST, descr, self.data
-                    )  # None means no final call after expiration
+                    payload = descr.value_function(BUTTONREPEAT_POST, descr, self.data)  # None means no final call after expiration
                     if payload:
                         reg = payload.get("register", descr.register)
                         action = payload.get("action")
@@ -1665,9 +1596,7 @@ class SolaXModbusHub:
             if (not control_descr) and self.sensorEntities.get(control_key):
                 control_descr = self.sensorEntities.get(control_key).entity_description
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):
-                _LOGGER.debug(
-                    f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'."
-                )
+                _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'.")
                 return True
         return False
 
@@ -1687,9 +1616,7 @@ class SolaXModbusHub:
                 d_enabled = False
                 for sub, d in descr.items():
                     # d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
-                    if should_register_be_loaded(
-                        self._hass, self, d
-                    ):  # *** CHANGED LINE: logic delegated to new function
+                    if should_register_be_loaded(self._hass, self, d):  # *** CHANGED LINE: logic delegated to new function
                         d_enabled = True
                         break
                     d_unit = d.unit
@@ -1704,9 +1631,7 @@ class SolaXModbusHub:
                 if not d_enabled:
                     if self._is_dependency_for_enabled_control(descr.key):
                         d_enabled = True
-                        _LOGGER.debug(
-                            f"{self._name}: Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency."
-                        )
+                        _LOGGER.debug(f"{self._name}: Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
 
                 d_newblock = descr.newblock
                 d_unit = descr.unit
@@ -1775,14 +1700,10 @@ class SolaXModbusHub:
                     end = reg + 2
                 else:
                     end = reg + 1
-                _LOGGER.debug(
-                    f"{self._name}: adding type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}"
-                )
+                _LOGGER.debug(f"{self._name}: adding type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
                 curblockregs.append(reg)
             else:
-                _LOGGER.debug(
-                    f"{self._name}: ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}"
-                )
+                _LOGGER.debug(f"{self._name}: ignoring type {d_regtype} register 0x{reg:x} {d_key} to block with start 0x{start:x}")
 
         if (end - start) > 0:  # close last block
             # newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
@@ -1800,22 +1721,16 @@ class SolaXModbusHub:
                 inputRegs = dict(sorted(device_group.inputRegs.items()))
                 # update the hub groups
                 hub_interval_group = self.groups.setdefault(interval, empty_hub_interval_group_lambda())
-                hub_device_group = hub_interval_group.device_groups.setdefault(
-                    device_name, empty_hub_device_group_lambda()
-                )
+                hub_device_group = hub_interval_group.device_groups.setdefault(device_name, empty_hub_device_group_lambda())
                 hub_device_group.readPreparation = device_group.readPreparation
                 hub_device_group.readFollowUp = device_group.readFollowUp
                 hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
                 hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
                 # self.computedSensors = computedRegs # moved outside the loops
                 for i in hub_device_group.holdingBlocks:
-                    _LOGGER.debug(
-                        f"{self._name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}"
-                    )
+                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 for i in hub_device_group.inputBlocks:
-                    _LOGGER.debug(
-                        f"{self._name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}"
-                    )
+                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
                 # _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 # _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
@@ -1853,18 +1768,14 @@ class SolaXModbusHub:
             for interval_group in self.groups.values():
                 # Check timeout periodically
                 if (_t.monotonic() - bisect_start_time) > bisect_timeout:
-                    _LOGGER.warning(
-                        f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway"
-                    )
+                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
                     self._probe_ready.set()
                     return
 
             for dev_group in list(interval_group.device_groups.values()):
                 # Check timeout before each block
                 if (_t.monotonic() - bisect_start_time) > bisect_timeout:
-                    _LOGGER.warning(
-                        f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway"
-                    )
+                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
                     self._probe_ready.set()
                     return
 
@@ -1893,9 +1804,7 @@ class SolaXModbusHub:
         try:
             await self._read_block_with_bisect_once(block_obj, typ)
         except Exception as ex:
-            _LOGGER.debug(
-                f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}"
-            )
+            _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
 
     async def _read_block_with_bisect_once(self, block_obj, typ, depth=0):
         """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
@@ -1909,9 +1818,7 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: assuming offline during bisect")
             return False
 
-        _LOGGER.debug(
-            f"{self._name}: probe not fully ok: depth {depth}/{self.bisect_max_depth} len: {len(block_obj.regs) or []}"
-        )
+        _LOGGER.debug(f"{self._name}: probe not fully ok: depth {depth}/{self.bisect_max_depth} len: {len(block_obj.regs) or []}")
         regs = block_obj.regs or []
         if depth >= self.bisect_max_depth or len(regs) <= 1:
             if len(regs) == 1:
@@ -1943,11 +1850,7 @@ class SolaXModbusHub:
                     desc_map = None
                     for interval_group in self.groups.values():
                         for dev_group in list(interval_group.device_groups.values()):
-                            blocks = (
-                                getattr(dev_group, "holdingBlocks", [])
-                                if typ == "holding"
-                                else getattr(dev_group, "inputBlocks", [])
-                            )
+                            blocks = getattr(dev_group, "holdingBlocks", []) if typ == "holding" else getattr(dev_group, "inputBlocks", [])
                             for blk in blocks:
                                 if addr in (blk.regs or []):
                                     desc_map = blk.descriptions
@@ -2025,13 +1928,9 @@ class SolaXModbusHub:
         try:
             _LOGGER.debug(f"{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}")
             if typ == "input":
-                resp = await self.async_read_input_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                resp = await self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             else:
-                resp = await self.async_read_holding_registers(
-                    unit=self._modbus_addr, address=block_obj.start, count=count
-                )
+                resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
@@ -2172,9 +2071,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._track_task(
-                        hub._client.read_holding_registers(address=address, count=count, **kwargs)
-                    )
+                    resp = await self._track_task(hub._client.read_holding_registers(address=address, count=count, **kwargs))
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus holding registers: {original_message}") from e
@@ -2194,9 +2091,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._track_task(
-                        hub._client.read_input_registers(address=address, count=count, **kwargs)
-                    )
+                    resp = await self._track_task(hub._client.read_input_registers(address=address, count=count, **kwargs))
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus input registers: {original_message}") from e
@@ -2227,9 +2122,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     original_message = str(e)
                     # Plugin-level logging hook
                     if hasattr(self.plugin, "log_register_write"):
-                        self.plugin.log_register_write(
-                            self, address, unit, payload, error=(type(e).__name__, original_message)
-                        )
+                        self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
                     raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
             return resp
         except (TypeError, AttributeError) as e:
@@ -2253,7 +2146,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
             return resp
         except (TypeError, AttributeError) as e:
-            raise HomeAssistantError(f"Error writing single Modbus registers: core modbus access failed") from e
+            raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
 
     async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi.
@@ -2286,7 +2179,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     else:  # apply simple numeric scaling and rounding if not a list of words
                         try:
                             value = value * descr.scale
-                        except:
+                        except Exception:
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
                     value = int(value)
                     typ = descr.unit
@@ -2318,7 +2211,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
                 return resp
             except (TypeError, AttributeError) as e:
-                raise HomeAssistantError(f"Error writing single Modbus registers: core modbus access failed") from e
+                raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
         else:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
         return None

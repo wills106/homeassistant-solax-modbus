@@ -1,9 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -19,7 +17,6 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
-    _LOGGER,
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -114,12 +111,10 @@ async def async_read_serialnr(hub, address, swapbytes):
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii")  # convert back to string
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
@@ -4498,7 +4493,7 @@ class solis_fb00_plugin(plugin_base):
 
 
 # Energy Dashboard Virtual Device mapping
-from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping  # noqa: E402
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solis_fb00",

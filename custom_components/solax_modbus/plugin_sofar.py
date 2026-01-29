@@ -1,10 +1,9 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -119,12 +118,10 @@ async def async_read_serialnr(hub, address, swapbytes):
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.LITTLE ?
                 res = str(ba, "ascii")  # convert back to string
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     # return 'SP1ES2'
     return res
@@ -3332,7 +3329,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
             9: "EMS",
             10: "Nilar",
             11: "BTS 5K",
-            11: "Move for",
+            12: "Move for",
         },
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
@@ -4014,12 +4011,12 @@ class battery_config(base_battery_config):
         self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
 
     async def get_batt_pack_quantity(self, hub):
-        if self.number_cels_in_parallel == None:
+        if self.number_cels_in_parallel is None:
             await self._determine_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
     async def get_batt_quantity(self, hub):
-        if self.number_strings == None:
+        if self.number_strings is None:
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
@@ -4027,9 +4024,7 @@ class battery_config(base_battery_config):
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
-        await hub.async_write_registers_single(
-            unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload
-        )
+        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
         await asyncio.sleep(0.3)
         self.selected_batt_nr = batt_nr
         self.selected_batt_pack_nr = batt_pack_nr
@@ -4048,13 +4043,11 @@ class battery_config(base_battery_config):
                 unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len
             )
             if inverter_data is not None and not inverter_data.isError():
-                raw = convert_from_registers(
-                    inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big"
-                )
+                raw = convert_from_registers(inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big")
                 serial = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
                 return serial
-        except:
-            _LOGGER.warning(f"Cannot read batt pack serial")
+        except Exception:
+            _LOGGER.warning("Cannot read batt pack serial")
             return None
 
     async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
@@ -4073,9 +4066,7 @@ class battery_config(base_battery_config):
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         for retry in range(0, 10):
-            inverter_data = await hub.async_read_holding_registers(
-                unit=hub._modbus_addr, address=self.bms_check_address, count=1
-            )
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
                 read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
                 ok = read == payload
@@ -4085,7 +4076,7 @@ class battery_config(base_battery_config):
                     return True
 
             else:
-                _LOGGER.error(f"can't read batt check register")
+                _LOGGER.error("can't read batt check register")
                 return False
 
     async def check_battery_on_end(self, hub, old_data, new_data, key_prefix, batt_nr: int, batt_pack_nr: int):
@@ -4097,9 +4088,7 @@ class battery_config(base_battery_config):
 
         faulty_nr = 0
         compare_value = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        inverter_data = await hub.async_read_holding_registers(
-            unit=hub._modbus_addr, address=self.bms_check_address, count=1
-        )
+        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
         if not inverter_data.isError():
             if inverter_data is not None and not inverter_data.isError():
                 new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
@@ -4118,17 +4107,14 @@ class battery_config(base_battery_config):
         return False
 
     async def _determine_bat_quantitys(self, hub):
-        res = None
         try:
-            inverter_data = await hub.async_read_holding_registers(
-                unit=hub._modbus_addr, address=self.bapack_number_address, count=1
-            )
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
                 val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
                 self.number_cels_in_parallel = (val >> 8) & 0xFF  # high byte
                 self.number_strings = val & 0xFF  # low byte
-        except Exception as ex:
-            _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{address:x}", exc_info=True)
+        except Exception:
+            _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{self.bapack_number_address:x}", exc_info=True)
 
     async def init_batt_pack_serials(self, hub):
         retry = 0
@@ -4265,9 +4251,7 @@ class sofar_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (
-            genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch
-        ) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
     def getSoftwareVersion(self, new_data):
         return new_data.get("software_version", None)

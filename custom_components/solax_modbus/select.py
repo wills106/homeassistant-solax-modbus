@@ -1,13 +1,12 @@
 import logging
 from time import time
-from typing import Any, Dict, Optional
+from typing import Optional
 
-from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
+from homeassistant.components.select import SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
 from .const import (
-    ATTR_MANUFACTURER,
     BUTTONREPEAT_FIRST,
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
@@ -16,7 +15,6 @@ from .const import (
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     autorepeat_set,
-    autorepeat_stop,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,9 +36,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 
     entities = []
     for select_info in plugin.SELECT_TYPES:
-        if plugin.matchInverterWithMask(
-            hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist
-        ):
+        if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist):
             select_info.reverse_option_dict = {v: k for k, v in select_info.option_dict.items()}
             if not (select_info.name.startswith(inverter_name_suffix)):
                 select_info.name = inverter_name_suffix + select_info.name
@@ -133,16 +129,10 @@ class SolaXModbusSelect(SelectEntity):
         """Change the select option."""
         payload = self.entity_description.reverse_option_dict.get(option, None)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
-            _LOGGER.info(
-                f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}"
-            )
-            await self._hub.async_write_registers_single(
-                unit=self._modbus_addr, address=self._register, payload=payload
-            )
+            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
+            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
-            _LOGGER.info(
-                f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}"
-            )
+            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
             await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")

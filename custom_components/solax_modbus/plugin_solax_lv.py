@@ -2,11 +2,7 @@ import logging
 from dataclasses import dataclass, replace
 from time import time
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfApparentPower,
@@ -117,10 +113,8 @@ async def async_read_serialnr(hub, address):
             # Decode 7 registers (14 bytes) as string using clientless compat helper
             res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
             hub.seriesnumber = res
-    except Exception as ex:
-        _LOGGER.warning(
-            f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True
-        )
+    except Exception:
+        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     _LOGGER.info(f"Read {hub.name} 0x{address:x} number: {res}")
     return res
 
@@ -228,9 +222,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     ap_target = min(ap_target, import_limit - houseload_brut)
     # _LOGGER.warning(f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
-        _LOGGER.debug(
-            f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}"
-        )
+        _LOGGER.debug(f"import shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}")
     res = [
         (
             "remotecontrol_power_control",
@@ -297,12 +289,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     # See mode 8 and 9 of doc https://kb.solaxpower.com/solution/detail/2c9fa4148ecd09eb018edf67a87b01d2
     power_control = datadict.get("remotecontrol_power_control_mode", "Disabled")
     curmode = datadict.get("modbus_power_control", "unknown")
-    set_type = datadict.get(
-        "remotecontrol_set_type", "Set"
-    )  # Set for simplicity; otherwise First time should be Set, subsequent times Update
+    set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
     setpvlimit = datadict.get("remotecontrol_pv_power_limit", 10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
-    target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
+    datadict.get("remotecontrol_target_soc_8_9", 95)
     rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
@@ -313,23 +303,15 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit  # import capping is done later
-    elif (
-        power_control == "Negative Injection Price"
-    ):  # grid export zero; PV restricted to house_load and battery charge
-        measured = datadict.get(
-            "measured_power", 0
-        )  # positive for export, negative for import - for future correction purposes
+    elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
+        datadict.get("measured_power", 0)  # positive for export, negative for import - for future correction purposes
         houseload = max(0, houseload)
         if battery_capacity >= 92:
-            pvlimit = (
-                houseload + abs(setpvlimit) * (100.0 - battery_capacity) / 15.0 + 60
-            )  # slow down charging - nearly full
+            pvlimit = houseload + abs(setpvlimit) * (100.0 - battery_capacity) / 15.0 + 60  # slow down charging - nearly full
         else:
             pvlimit = setpvlimit + houseload + 60  # inverter overhead 40
         pvlimit = max(houseload, pvlimit)
-        pushmode_power = (
-            houseload - min(pv, pvlimit) - 90 + pv / 14
-        )  # some kind of empiric correction for losses - machine learning would be better
+        pushmode_power = houseload - min(pv, pvlimit) - 90 + pv / 14  # some kind of empiric correction for losses - machine learning would be better
         _LOGGER.debug(
             f"***debug*** setpvlimit: {setpvlimit} pvlimit: {pvlimit} pushmode: {pushmode_power} houseload:{houseload} pv: {pv} batcap: {battery_capacity}"
         )
@@ -418,21 +400,15 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 pushmode_power = min(deficit, 30000)
             else:
                 pushmode_power = 0
-            _LOGGER.debug(
-                f"[Mode8 Export-First] deficit: deficit={deficit}W soc={battery_capacity}% chosen_push={pushmode_power}W"
-            )
+            _LOGGER.debug(f"[Mode8 Export-First] deficit: deficit={deficit}W soc={battery_capacity}% chosen_push={pushmode_power}W")
 
         # Deadband (simple): in surplus and not charging (push>=0), hold last_push near zero flow to avoid flicker.
         net_flow = pv - houseload + pushmode_power  # >0 export, <0 import
         if pv >= houseload and pushmode_power >= 0 and abs(net_flow) < DEADBAND_W:
-            _LOGGER.debug(
-                f"[Mode8 Export-First] deadband hold: net={net_flow}W within ±{DEADBAND_W}W -> push stays {last_push}W"
-            )
+            _LOGGER.debug(f"[Mode8 Export-First] deadband hold: net={net_flow}W within ±{DEADBAND_W}W -> push stays {last_push}W")
             pushmode_power = last_push
         else:
-            _LOGGER.debug(
-                f"[Mode8 Export-First] deadband not applied: pv>hl={pv >= houseload}, push>=0={pushmode_power >= 0}, |net|={abs(net_flow)}"
-            )
+            _LOGGER.debug(f"[Mode8 Export-First] deadband not applied: pv>hl={pv >= houseload}, push>=0={pushmode_power >= 0}, |net|={abs(net_flow)}")
 
         # Export feedback (shortfall): if measured export is below the cap beyond a small margin, reduce charging a bit.
         # Small, bounded nudge; no PID or slew logic.
@@ -449,9 +425,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
                 pushmode_power += nudge  # make charge less negative → increases export
                 if pushmode_power > 0:
                     pushmode_power = 0  # do not flip to discharge in surplus
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] export feedback: +{nudge}W (measured={measured_export}W, cap={export_limit}W)"
-                )
+                _LOGGER.debug(f"[Mode8 Export-First] export feedback: +{nudge}W (measured={measured_export}W, cap={export_limit}W)")
 
         # Export feedback (overshoot): if measured export exceeds the cap beyond the margin, increase charging a bit.
         if pv >= houseload and pushmode_power <= 0:
@@ -459,9 +433,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
             if overshoot > fb_deadband:
                 nudge = min(overshoot, fb_max_nudge)
                 pushmode_power -= nudge  # charge a bit more → lowers export
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] export overshoot feedback: -{nudge}W (measured={measured_export}W, cap={export_limit}W)"
-                )
+                _LOGGER.debug(f"[Mode8 Export-First] export overshoot feedback: -{nudge}W (measured={measured_export}W, cap={export_limit}W)")
 
         # Discharge feedback (deficit): if we still see export while discharging, trim discharge a bit.
         # Uses same fb_deadband/fb_max_nudge as surplus feedback to keep behavior bounded.
@@ -481,16 +453,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
         if pv < houseload:
             deficit_now = houseload - pv
             if pushmode_power > deficit_now:
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] clamp discharge to deficit: push={pushmode_power}W -> {deficit_now}W (pv={pv} hl={houseload})"
-                )
+                _LOGGER.debug(f"[Mode8 Export-First] clamp discharge to deficit: push={pushmode_power}W -> {deficit_now}W (pv={pv} hl={houseload})")
                 pushmode_power = deficit_now
 
         # Final debug and state
         net_flow = pv - houseload + pushmode_power
-        _LOGGER.debug(
-            f"[Mode8 Export-First] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)"
-        )
+        _LOGGER.debug(f"[Mode8 Export-First] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
         datadict["_mode8_last_push"] = pushmode_power
     elif power_control == "Enabled Grid Control":
         pushmode_power = pushmode_power + houseload - pv
@@ -539,9 +507,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     datadict["remotecontrol_current_pushmode_power"] = pushmode_power
     datadict["remotecontrol_current_pv_power_limit"] = pvlimit
     if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
-        _LOGGER.warning(
-            f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}"
-        )
+        _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}")
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
         _LOGGER.info("Stopping mode 8 loop by disabling mode 8")
@@ -598,31 +564,27 @@ def value_function_battery_power_charge(initval, descr, datadict):
 
 
 def value_function_hardware_version_g1(initval, descr, datadict):
-    return f"Gen1"
+    return "Gen1"
 
 
 def value_function_hardware_version_g2(initval, descr, datadict):
-    return f"Gen2"
+    return "Gen2"
 
 
 def value_function_hardware_version_g3(initval, descr, datadict):
-    return f"Gen3"
+    return "Gen3"
 
 
 def value_function_hardware_version_g4(initval, descr, datadict):
-    return f"Gen4"
+    return "Gen4"
 
 
 def value_function_hardware_version_g5(initval, descr, datadict):
-    return f"Gen5"
+    return "Gen5"
 
 
 def value_function_house_load(initval, descr, datadict):
-    return (
-        datadict.get("inverter_power", 0)
-        - datadict.get("measured_power", 0)
-        + datadict.get("meter_2_measured_power", 0)
-    )
+    return datadict.get("inverter_power", 0) - datadict.get("measured_power", 0) + datadict.get("meter_2_measured_power", 0)
 
 
 def value_function_house_load_alt(initval, descr, datadict):
@@ -637,11 +599,7 @@ def value_function_house_load_alt(initval, descr, datadict):
 
 
 def value_function_inverter_power_g5(initval, descr, datadict):
-    return (
-        datadict.get("inverter_power_l1", 0)
-        + datadict.get("inverter_power_l2", 0)
-        + datadict.get("inverter_power_l3", 0)
-    )
+    return datadict.get("inverter_power_l1", 0) + datadict.get("inverter_power_l2", 0) + datadict.get("inverter_power_l3", 0)
 
 
 def value_function_battery_capacity_gen5(initval, descr, datadict):
@@ -676,9 +634,7 @@ def value_function_software_version_g4(initval, descr, datadict):
 
 
 def value_function_software_version_g5(initval, descr, datadict):
-    return (
-        f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
-    )
+    return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
 
 
 def value_function_software_version_air_g3(initval, descr, datadict):
@@ -1034,7 +990,7 @@ class solax_plugin(plugin_base):
     async def async_determineInverterType(self, hub, configdict):
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
-        seriesnumber = await async_read_serialnr(hub, 0xC08)
+        await async_read_serialnr(hub, 0xC08)
 
         # derive invertertupe from seriiesnumber
         invertertype = HYBRID | GEN | X1  # Fake Inverter detection
@@ -1068,9 +1024,7 @@ class solax_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (
-            genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch
-        ) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
     def getSoftwareVersion(self, new_data):
         return new_data.get("software_version", None)
@@ -1081,15 +1035,13 @@ class solax_plugin(plugin_base):
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
-        _LOGGER.info(f"local data update callback")
+        _LOGGER.info("local data update callback")
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
-            if new_read_scale != None:
-                _LOGGER.info(
-                    f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}"
-                )
+            if new_read_scale is not None:
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -1106,7 +1058,7 @@ class solax_plugin(plugin_base):
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
-            if new_max_export != None:
+            if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
                     "remotecontrol_import_limit",
