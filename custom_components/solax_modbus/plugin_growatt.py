@@ -2364,7 +2364,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
                   4: "Francais",
                   5: "Hanyu",
                   6: "Polski",
-                  7: "Portuguese",
+                  7: "Portugues",
                   8: "Magyar", },
         allowedtypes = ALL_GEN_GROUP,
         entity_registry_enabled_default = False,

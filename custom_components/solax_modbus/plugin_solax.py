@@ -4279,7 +4279,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             2: "Francais",
             3: "Polskie",
             4: "Espanol",
-            5: "Portuguese",
+            5: "Portugues",
             6: "Italiano",
             7: "Ukrainian",
         },
