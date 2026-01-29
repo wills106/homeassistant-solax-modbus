@@ -539,7 +539,7 @@ def value_function_2byte_timestamp(initval, descr, datadict):
         year = initval & 0b111111
         val = f"{day:02}/{month:02}/{year:02} {hour:02}:{minute:02}:{second:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")
-    except:  # noqa: E722
+    except Exception:
         pass
 
 
