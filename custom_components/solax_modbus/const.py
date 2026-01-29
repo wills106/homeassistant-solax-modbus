@@ -1,23 +1,23 @@
 import logging
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+import pathlib
+from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
+from typing import Optional
+
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import (
     NumberDeviceClass,
     NumberEntityDescription,
 )
 from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.components.switch import SwitchEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.helpers.entity import EntityCategory
-from datetime import datetime, timedelta
-from dataclasses import dataclass, replace
-from typing import Optional
-import pathlib
-
 from homeassistant.const import (
+    CONF_SCAN_INTERVAL,
     PERCENTAGE,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
@@ -27,8 +27,8 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
-    CONF_SCAN_INTERVAL,
 )
+from homeassistant.helpers.entity import EntityCategory
 
 try:
     from homeassistant.const import (
@@ -39,6 +39,7 @@ except ImportError:
     #      likely to be removed in future version
 
     from enum import StrEnum
+
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
 
     class UnitOfReactivePower(StrEnum):

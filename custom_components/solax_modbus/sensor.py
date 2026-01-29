@@ -1,35 +1,38 @@
-from homeassistant.const import CONF_NAME, STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import callback
-from homeassistant.components.sensor import SensorEntity, RestoreEntity
-from homeassistant.helpers import device_registry as dr
 import logging
 import time
-from datetime import date
-from typing import Optional, Dict, Any, List
-from types import SimpleNamespace
-from dataclasses import dataclass, replace
 from copy import copy
-import homeassistant.util.dt as dt_util
+from dataclasses import dataclass, replace
+from datetime import date
+from types import SimpleNamespace
+from typing import Any, Dict, List, Optional
 
-from .const import ATTR_MANUFACTURER, DOMAIN, SLEEPMODE_NONE, SLEEPMODE_ZERO
+import homeassistant.util.dt as dt_util
+from homeassistant.components.sensor import RestoreEntity, SensorEntity, SensorEntityDescription
+from homeassistant.const import CONF_NAME, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import callback
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.device_registry import DeviceInfo
+
 from .const import (
+    ATTR_MANUFACTURER,
+    CONF_READ_BATTERY,
+    DOMAIN,
     INVERTER_IDENT,
-    REG_INPUT,
     REG_HOLDING,
-    REGISTER_U32,
+    REG_INPUT,
     REGISTER_S32,
-    REGISTER_ULSB16MSB16,
     REGISTER_STR,
-    REGISTER_WORDS,
     REGISTER_U8H,
     REGISTER_U8L,
-    CONF_READ_BATTERY,
+    REGISTER_U32,
+    REGISTER_ULSB16MSB16,
+    REGISTER_WORDS,
+    SLEEPMODE_NONE,
+    SLEEPMODE_ZERO,
+    BaseModbusSensorEntityDescription,
 )
-from .const import BaseModbusSensorEntityDescription
 from .debug import get_debug_setting
-from homeassistant.components.sensor import SensorEntityDescription
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers import entity_registry as er
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -452,9 +455,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
                                 async_add_entities(energy_dashboard_entities)
 
                             from .energy_dashboard import (
-                                ED_SWITCH_PV_VARIANTS,
-                                ED_SWITCH_HOME_CONSUMPTION,
                                 ED_SWITCH_GRID_TO_BATTERY,
+                                ED_SWITCH_HOME_CONSUMPTION,
+                                ED_SWITCH_PV_VARIANTS,
                                 get_energy_dashboard_switch_state,
                             )
 

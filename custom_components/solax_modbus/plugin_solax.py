@@ -1,14 +1,80 @@
 import logging
 from dataclasses import dataclass
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.switch import SwitchEntityDescription
-from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
 from time import time
 
+from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
+from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.components.switch import SwitchEntityDescription
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfReactivePower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
+from homeassistant.helpers.entity import EntityCategory
+
+from custom_components.solax_modbus.const import (
+    BUTTONREPEAT_FIRST,
+    BUTTONREPEAT_POST,
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_READ_PM,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_PM,
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_STR,
+    REGISTER_U8H,
+    REGISTER_U8L,
+    REGISTER_U16,
+    REGISTER_U32,
+    REGISTER_WORDS,
+    SCAN_GROUP_AUTO,
+    SCAN_GROUP_DEFAULT,
+    SCAN_GROUP_FAST,
+    SCAN_GROUP_MEDIUM,
+    SLEEPMODE_LASTAWAKE,
+    TIME_OPTIONS,
+    TIME_OPTIONS_GEN4,
+    WRITE_DATA_LOCAL,
+    WRITE_MULTI_MODBUS,
+    WRITE_MULTISINGLE_MODBUS,
+    WRITE_SINGLE_MODBUS,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
+    UnitOfReactivePower,
+    autorepeat_remaining,
+    autorepeat_stop,
+    plugin_base,
+    value_function_disabled_enabled,
+    value_function_gain_offset,
+    value_function_gen4time,
+    value_function_gen23time,
+    value_function_grid_export,
+    value_function_grid_import,
+    value_function_pv_power_total,
+    value_function_rtc,
+    value_function_sync_rtc,
+)
+
+from .pymodbus_compat import DataType, convert_from_registers
+
 _LOGGER = logging.getLogger(__name__)
+
 
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group

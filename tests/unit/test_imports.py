@@ -1,8 +1,10 @@
 """Test that all modules can be imported."""
 
-import pkgutil
 import importlib
+import pkgutil
+
 import pytest
+
 from custom_components import solax_modbus
 
 

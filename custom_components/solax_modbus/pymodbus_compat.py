@@ -1,9 +1,9 @@
 # pymodbus_compat.py
 from __future__ import annotations
+
+import inspect
 import logging
 from enum import Enum
-import inspect
-
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,11 +1,20 @@
-from .const import DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR, DEBOUNCE_TIME
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.const import CONF_NAME
-from typing import Any, Dict, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers.restore_state import RestoreEntity
+
+from .const import (
+    CONF_MODBUS_ADDR,
+    DEBOUNCE_TIME,
+    DEFAULT_MODBUS_ADDR,
+    DOMAIN,
+    WRITE_DATA_LOCAL,
+    WRITE_MULTISINGLE_MODBUS,
+    WRITE_SINGLE_MODBUS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

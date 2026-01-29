@@ -1,14 +1,24 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS, TMPDATA_EXPIRY
+import logging
+from dataclasses import dataclass, replace
+from time import time
+from typing import Any, Dict, Optional
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import PLATFORM_SCHEMA, NumberEntity, NumberMode
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
-from dataclasses import dataclass, replace
-from typing import Any, Dict, Optional
-from time import time
-import logging
+
+from .const import (
+    ATTR_MANUFACTURER,
+    CONF_MODBUS_ADDR,
+    DEFAULT_MODBUS_ADDR,
+    DOMAIN,
+    TMPDATA_EXPIRY,
+    WRITE_DATA_LOCAL,
+    WRITE_MULTI_MODBUS,
+    WRITE_MULTISINGLE_MODBUS,
+    WRITE_SINGLE_MODBUS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

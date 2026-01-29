@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from time import time
 
 from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
+from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -19,18 +19,18 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
-    BaseModbusButtonEntityDescription,
-    BaseModbusNumberEntityDescription,
-    BaseModbusSelectEntityDescription,
-    BaseModbusSensorEntityDescription,
+    REG_HOLDING,
+    REG_INPUT,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
-    REG_HOLDING,
-    REG_INPUT,
     WRITE_MULTI_MODBUS,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
     plugin_base,
     value_function_firmware_decimal_hundredths,
     value_function_rtc,

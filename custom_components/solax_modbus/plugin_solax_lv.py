@@ -1,14 +1,54 @@
 import logging
 from dataclasses import dataclass
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.switch import SwitchEntityDescription
-from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
 from time import time
 
-_LOGGER = logging.getLogger(__name__)
+from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.components.number import NumberEntityDescription
+from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.components.switch import SwitchEntityDescription
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+)
+from homeassistant.helpers.entity import EntityCategory
+
+from custom_components.solax_modbus.const import (
+    BUTTONREPEAT_FIRST,
+    BUTTONREPEAT_POST,
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_READ_PM,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_PM,
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_U16,
+    REGISTER_U32,
+    SCAN_GROUP_AUTO,
+    SCAN_GROUP_DEFAULT,
+    SCAN_GROUP_FAST,
+    SCAN_GROUP_MEDIUM,
+    WRITE_MULTI_MODBUS,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
+    autorepeat_remaining,
+    autorepeat_stop,
+    plugin_base,
+)
+
+from .pymodbus_compat import DataType, convert_from_registers
 
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, ogranized by group

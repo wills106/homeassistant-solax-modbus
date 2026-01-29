@@ -1,8 +1,10 @@
-import pytest
 import importlib
-import pkgutil
-import pathlib
 import os
+import pathlib
+import pkgutil
+
+import pytest
+
 from custom_components.solax_modbus.const import plugin_base
 
 # Find all plugin files

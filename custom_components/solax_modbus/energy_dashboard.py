@@ -15,27 +15,27 @@ handle:
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Callable, Optional
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass, RestoreEntity
+from homeassistant.components.sensor import RestoreEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
-    UnitOfPower,
-    UnitOfEnergy,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
     EntityCategory,
+    UnitOfEnergy,
+    UnitOfPower,
 )
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.core import callback
+from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
-    DOMAIN,
-    INVERTER_IDENT,
-    BaseModbusSensorEntityDescription,
-    BaseModbusSwitchEntityDescription,
     CONF_ENERGY_DASHBOARD_DEVICE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
+    DOMAIN,
+    INVERTER_IDENT,
     WRITE_DATA_LOCAL,
+    BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
 )
 from .debug import get_debug_setting
 

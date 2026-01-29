@@ -16,18 +16,18 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
-    BaseModbusButtonEntityDescription,
-    BaseModbusNumberEntityDescription,
-    BaseModbusSelectEntityDescription,
-    BaseModbusSensorEntityDescription,
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
     DEFAULT_READ_EPS,
-    REGISTER_U16,
-    REGISTER_U32,
     REG_HOLDING,
     REG_INPUT,
+    REGISTER_U16,
+    REGISTER_U32,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
     plugin_base,
 )
 

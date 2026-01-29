@@ -3,8 +3,8 @@
 
 import ast
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
 def get_const_exports():

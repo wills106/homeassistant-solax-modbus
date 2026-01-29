@@ -1,12 +1,23 @@
-from .const import ATTR_MANUFACTURER, DOMAIN, CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR
-from .const import WRITE_DATA_LOCAL, WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS
-from .const import autorepeat_set, autorepeat_stop, BUTTONREPEAT_FIRST
+import logging
+from time import time
+from typing import Any, Dict, Optional
+
 from homeassistant.components.select import PLATFORM_SCHEMA, SelectEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
-from typing import Any, Dict, Optional
-from time import time
-import logging
+
+from .const import (
+    ATTR_MANUFACTURER,
+    BUTTONREPEAT_FIRST,
+    CONF_MODBUS_ADDR,
+    DEFAULT_MODBUS_ADDR,
+    DOMAIN,
+    WRITE_DATA_LOCAL,
+    WRITE_MULTISINGLE_MODBUS,
+    WRITE_SINGLE_MODBUS,
+    autorepeat_set,
+    autorepeat_stop,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
