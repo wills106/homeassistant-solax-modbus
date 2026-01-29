@@ -38,10 +38,11 @@ X1 = 0x0100
 X3 = 0x0200
 ALL_X_GROUP = X1 | X3
 
+POW4 = 0x0080
 POW7 = 0x0010
 POW11 = 0x0020
 POW22 = 0x0040
-ALL_POW_GROUP = POW7 | POW11 | POW22
+ALL_POW_GROUP = POW4 | POW7 | POW11 | POW22
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -1060,6 +1061,8 @@ class solax_ev_charger_plugin(plugin_base):
 
         # derive invertertupe from seriesnumber
         _LOGGER.debug(f"{hub.name}: Determining inverter type from serial number prefix")
+        invertertype = 0
+        self.inverter_model = None
         if seriesnumber.startswith("C107"):
             invertertype = X1 | POW7  | GEN1 # 7kW EV Single Phase Gen1 (X1-EVC-7kW*)
             self.inverter_model = "X1-EVC-7kW"
@@ -1099,25 +1102,43 @@ class solax_ev_charger_plugin(plugin_base):
                 _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
             
             _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
-        elif seriesnumber.startswith("5020"):
-            invertertype = X1 | POW7 | GEN2 # 7kW EV Single Phase Gen2 (X1-HAC-7*)
-            self.inverter_model = "X1-HAC-7kW"
-            self.hardware_version = "Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5020 - X1 | POW7 | GEN2 (7kW EV Single Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
-        elif seriesnumber.startswith("5030"):
-            invertertype = X3 | POW11 | GEN2 # 11kW EV Three Phase Gen2 (X3-HAC-11*)
-            self.inverter_model = "X3-HAC-11kW"
-            self.hardware_version = "Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5030 - X3 | POW11 | GEN2 (11kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
-        elif seriesnumber.startswith("5070"):
-            invertertype = X3 | POW22 | GEN2 # 22kW EV Three Phase Gen2 (X3-HAC-22*)
-            self.inverter_model = "X3-HAC-22kW"
-            self.hardware_version = "Gen2"
-            _LOGGER.debug(f"{hub.name}: Matched 5070 - X3 | POW22 | GEN2 (22kW EV Three Phase Gen2), type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
+        elif len(seriesnumber) >= 5 and seriesnumber.startswith("5"):
+            model_code = seriesnumber[1:3]
+            power_code = seriesnumber[3:5]
+
+            model_map = {
+                "02": ("X1-HAC", X1),
+                "03": ("X3-HAC", X3),
+                "04": ("A1-HAC", X1),
+                "05": ("J1-HAC", X1),
+                "06": ("X1-HAC-S", X1),
+                "07": ("X3-HAC-S", X3),
+                "08": ("C1-HAC", X1),
+                "09": ("C3-HAC", X3),
+            }
+
+            power_map = {
+                "04": ("4.6kW", POW4),
+                "07": ("7.2kW", POW7),
+                "0B": ("11kW", POW11),
+                "0M": ("22kW", POW22),
+            }
+
+            model_info = model_map.get(model_code)
+            power_info = power_map.get(power_code)
+            if model_info and power_info:
+                model_prefix, phase_mask = model_info
+                power_label, power_mask = power_info
+                invertertype = phase_mask | power_mask | GEN2
+                self.inverter_model = f"{model_prefix} {power_label}"
+                self.hardware_version = "Gen2"
+                _LOGGER.debug(
+                    f"{hub.name}: Parsed serial codes model={model_code} power={power_code} -> "
+                    f"type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}"
+                )
         # add cases here
-        else:
-            invertertype = 0
-            self.inverter_model = None
+
+        if invertertype == 0:
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
             _LOGGER.debug(f"{hub.name}: No match found for serial number prefix, returning type=0")
         _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
