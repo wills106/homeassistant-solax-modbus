@@ -41,7 +41,86 @@ from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
 
+from .const import (
+    BUTTONREPEAT_FIRST as BUTTONREPEAT_FIRST,
+)
+from .const import (
+    BUTTONREPEAT_LOOP,
+    BUTTONREPEAT_POST,
+    CONF_BAUDRATE,
+    CONF_CORE_HUB,
+    CONF_DEBUG_SETTINGS,
+    CONF_INTERFACE,
+    CONF_INVERTER_NAME_SUFFIX,
+    CONF_INVERTER_POWER_KW,
+    CONF_MODBUS_ADDR,
+    CONF_PLUGIN,
+    CONF_SERIAL_PORT,
+    CONF_TCP_TYPE,
+    CONF_TIME_OUT,
+    DEFAULT_BAUDRATE,
+    DEFAULT_INVERTER_POWER_KW,
+    DEFAULT_MODBUS_ADDR,
+    DEFAULT_PORT,
+    DEFAULT_SERIAL_PORT,
+    DEFAULT_TCP_TYPE,
+    DEFAULT_TIME_OUT,
+    DOMAIN,
+    INVERTER_IDENT,
+    # PLUGIN_PATH,
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_F32,
+    REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_STR,
+    REGISTER_U8H,
+    REGISTER_U8L,
+    REGISTER_U16,
+    REGISTER_U32,
+    REGISTER_ULSB16MSB16,
+    REGISTER_WORDS,
+    SCAN_GROUP_AUTO,
+    SCAN_GROUP_DEFAULT,
+    SLEEPMODE_LASTAWAKE,
+    WRITE_MULTI_MODBUS,
+    WRITE_SINGLE_MODBUS,
+)
+from .const import (
+    CONF_READ_DCB as CONF_READ_DCB,
+)
+from .const import (
+    CONF_READ_EPS as CONF_READ_EPS,
+)
+from .const import (
+    DEFAULT_INTERFACE as DEFAULT_INTERFACE,
+)
+from .const import (
+    DEFAULT_INVERTER_NAME_SUFFIX as DEFAULT_INVERTER_NAME_SUFFIX,
+)
+from .const import (
+    DEFAULT_NAME as DEFAULT_NAME,
+)
+from .const import (
+    DEFAULT_PLUGIN as DEFAULT_PLUGIN,
+)
+from .const import (
+    DEFAULT_READ_DCB as DEFAULT_READ_DCB,
+)
+from .const import (
+    DEFAULT_READ_EPS as DEFAULT_READ_EPS,
+)
+from .const import (
+    DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
+)
+from .const import (
+    SCAN_GROUP_MEDIUM as SCAN_GROUP_MEDIUM,
+)
+from .const import (
+    WRITE_MULTISINGLE_MODBUS as WRITE_MULTISINGLE_MODBUS,
+)
 from .pymodbus_compat import ADDR_KW, DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
+from .sensor import SolaXModbusSensor
 
 RETRIES = 1  # was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -60,64 +139,7 @@ except ImportError:
         pass
 
 
-from .sensor import SolaXModbusSensor  # noqa: E402
-
 _LOGGER = logging.getLogger(__name__)
-
-from .const import (  # noqa: E402, I001
-    BUTTONREPEAT_FIRST as BUTTONREPEAT_FIRST,
-    BUTTONREPEAT_LOOP,
-    BUTTONREPEAT_POST,
-    CONF_BAUDRATE,
-    CONF_CORE_HUB,
-    CONF_DEBUG_SETTINGS,
-    CONF_INTERFACE,
-    CONF_INVERTER_NAME_SUFFIX,
-    CONF_INVERTER_POWER_KW,
-    CONF_MODBUS_ADDR,
-    CONF_PLUGIN,
-    CONF_READ_DCB as CONF_READ_DCB,
-    CONF_READ_EPS as CONF_READ_EPS,
-    CONF_SERIAL_PORT,
-    CONF_TCP_TYPE,
-    CONF_TIME_OUT,
-    DEFAULT_BAUDRATE,
-    DEFAULT_INTERFACE as DEFAULT_INTERFACE,
-    DEFAULT_INVERTER_NAME_SUFFIX as DEFAULT_INVERTER_NAME_SUFFIX,
-    DEFAULT_INVERTER_POWER_KW,
-    DEFAULT_MODBUS_ADDR,
-    DEFAULT_NAME as DEFAULT_NAME,
-    DEFAULT_PLUGIN as DEFAULT_PLUGIN,
-    DEFAULT_PORT,
-    DEFAULT_READ_DCB as DEFAULT_READ_DCB,
-    DEFAULT_READ_EPS as DEFAULT_READ_EPS,
-    DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
-    DEFAULT_SERIAL_PORT,
-    DEFAULT_TCP_TYPE,
-    DEFAULT_TIME_OUT,
-    DOMAIN,
-    INVERTER_IDENT,
-    # PLUGIN_PATH,
-    REG_HOLDING,
-    REG_INPUT,
-    REGISTER_F32,
-    REGISTER_S16,
-    REGISTER_S32,
-    REGISTER_STR,
-    REGISTER_U16,
-    REGISTER_U32,
-    REGISTER_U8H,
-    REGISTER_U8L,
-    REGISTER_ULSB16MSB16,
-    REGISTER_WORDS,
-    SCAN_GROUP_AUTO,
-    SCAN_GROUP_DEFAULT,
-    SCAN_GROUP_MEDIUM as SCAN_GROUP_MEDIUM,
-    SLEEPMODE_LASTAWAKE,
-    WRITE_MULTI_MODBUS,
-    WRITE_MULTISINGLE_MODBUS as WRITE_MULTISINGLE_MODBUS,
-    WRITE_SINGLE_MODBUS,
-)
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 

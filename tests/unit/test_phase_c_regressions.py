@@ -146,7 +146,6 @@ class TestE402ImportLocation:
     def test_late_imports_documented(self):
         """Files with intentional late imports must have noqa: E402."""
         known_late_import_files = [
-            "custom_components/solax_modbus/__init__.py",
             "custom_components/solax_modbus/plugin_solax.py",
             "custom_components/solax_modbus/plugin_solinteg.py",
             "custom_components/solax_modbus/plugin_solis.py",
