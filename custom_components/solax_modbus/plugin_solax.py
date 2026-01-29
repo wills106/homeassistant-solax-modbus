@@ -6525,7 +6525,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         unit=REGISTER_U32,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN2 | GEN4 | EPS,
+        allowedtypes=HYBRID | GEN2 | GEN4 | GEN5 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="EPS Yield Total",
@@ -6536,7 +6536,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x8E,
         register_type=REG_INPUT,
         unit=REGISTER_U32,
-        allowedtypes=AC | HYBRID | GEN3 | GEN5 | EPS,
+        allowedtypes=AC | HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="EPS Yield Total",
