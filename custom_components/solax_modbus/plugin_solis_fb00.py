@@ -48,8 +48,6 @@ from custom_components.solax_modbus.const import (
     value_function_sync_rtc_ymd,
 )
 
-from .const import *
-
 # from homeassistant.components.number import NumberEntityDescription
 # from homeassistant.components.select import SelectEntityDescription
 # from homeassistant.components.button import ButtonEntityDescription
