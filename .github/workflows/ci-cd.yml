@@ -1,6 +1,7 @@
 name: CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -30,18 +31,9 @@ jobs:
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
-  lint:
-    name: Lint (Black)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: psf/black@stable
-        with:
-          options: "--line-length=119"
-
   test-quick:
     name: Test Quick
-    needs: [quality, lint]
+    needs: [quality]
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
@@ -64,8 +56,8 @@ jobs:
 
   test-comprehensive:
     name: Test Comprehensive
-    needs: [quality, lint]
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: [quality]
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       matrix:

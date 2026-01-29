@@ -12,6 +12,7 @@ dependencies = [
 dev = [
     "pre-commit>=4.0.0",
     "codespell>=2.2.6",
+    "ruff>=0.14.14",
 ]
 test = [
     "pytest>=8.0.0",
@@ -20,8 +21,20 @@ test = [
     "pytest-cov>=4.1.0",
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 119
+target-version = "py312"
+
+[tool.ruff.lint]
+# Phase A: Disabled - star imports incompatible with import sorting
+select = []
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
 
 [tool.codespell]
 ignore-words-list = "hass,alot,datas,dof,fom,inout,ist,nam,nd,od,portugues,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing,wit,ocurr"

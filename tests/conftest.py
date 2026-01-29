@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
+
 class MockModbusResponse:
     def __init__(self, registers=None, error=False):
         self.registers = registers if registers else []
@@ -8,6 +9,7 @@ class MockModbusResponse:
 
     def isError(self):
         return self._error
+
 
 class MockHub:
     def __init__(self, name="MockHub", modbus_addr=1):
@@ -25,7 +27,7 @@ class MockHub:
         key = (unit, address, count)
         if key in self._read_side_effects:
             return self._read_side_effects[key]
-        
+
         # Default empty response if not configured
         return MockModbusResponse(registers=[0] * count)
 
@@ -33,6 +35,7 @@ class MockHub:
         """Simulate reading holding registers."""
         # For now, treat same as input registers for mocking purposes
         return await self.async_read_input_registers(unit, address, count)
+
 
 @pytest.fixture
 def mock_hub():

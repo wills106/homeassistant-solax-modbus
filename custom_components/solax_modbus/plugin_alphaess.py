@@ -1081,7 +1081,6 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
 
 @dataclass
 class alphaess_plugin(plugin_base):
-
     async def async_determineInverterType(self, hub, configdict):
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -1193,7 +1192,7 @@ plugin_instance = alphaess_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )

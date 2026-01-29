@@ -151,7 +151,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     # _LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
         _LOGGER.debug(
-            f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload_brut}"
+            f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}"
         )
     res = [
         (
@@ -1049,7 +1049,6 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
 
 @dataclass
 class solax_a1j1_plugin(plugin_base):
-
     def isAwake(self, datadict):
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
@@ -1170,7 +1169,7 @@ plugin_instance = solax_a1j1_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="little",
     auto_block_ignore_readerror=True,
 )

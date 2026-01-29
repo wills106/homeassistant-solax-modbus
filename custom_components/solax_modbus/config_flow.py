@@ -135,9 +135,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_INVERTER_NAME_SUFFIX, description={"suggested_value": DEFAULT_INVERTER_NAME_SUFFIX}): str,
         vol.Optional(CONF_INVERTER_POWER_KW, default=DEFAULT_INVERTER_POWER_KW): cv.positive_int,
-        vol.Optional(
-            CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE
-        ): bool,
+        vol.Optional(CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE): bool,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
@@ -159,9 +157,7 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL_FAST, default=DEFAULT_SCAN_INTERVAL): int,
         vol.Optional(CONF_INVERTER_NAME_SUFFIX): str,
         vol.Optional(CONF_INVERTER_POWER_KW, default=DEFAULT_INVERTER_POWER_KW): cv.positive_int,
-        vol.Optional(
-            CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE
-        ): bool,
+        vol.Optional(CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE): bool,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,

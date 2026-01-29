@@ -993,7 +993,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 
 @dataclass
 class solax_mega_forth_plugin(plugin_base):
-
     async def async_determineInverterType(self, hub, configdict):
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
@@ -1135,7 +1134,7 @@ plugin_instance = solax_mega_forth_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="big",
     auto_block_ignore_readerror=True,
 )

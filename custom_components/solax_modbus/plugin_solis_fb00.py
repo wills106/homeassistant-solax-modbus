@@ -2738,7 +2738,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         key="battery_charge_direction",
         register=33135,
         register_type=REG_INPUT,
-        entity_registry_enabled_default=False, # needed in value function
+        entity_registry_enabled_default=False,  # needed in value function
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2855,7 +2855,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_input_solis,
         allowedtypes=HYBRID,
-        depends_on=("battery_power","battery_charge_direction",),
+        depends_on=(
+            "battery_power",
+            "battery_charge_direction",
+        ),
         icon="mdi:battery-arrow-up",
     ),
     SolisModbusSensorEntityDescription(
@@ -2865,7 +2868,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_output_solis,
-        depends_on=("battery_power","battery_charge_direction",),
+        depends_on=(
+            "battery_power",
+            "battery_charge_direction",
+        ),
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-down",
     ),
@@ -4360,7 +4366,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 @dataclass
 class solis_fb00_plugin(plugin_base):
-
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 33004, swapbytes=False)
@@ -4471,7 +4476,7 @@ plugin_instance = solis_fb00_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     block_size=40,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )
