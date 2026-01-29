@@ -1,7 +1,6 @@
 import logging
 from dataclasses import replace
 from time import time
-from typing import Optional
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import NumberEntity, NumberMode
@@ -152,7 +151,7 @@ class SolaXModbusNumber(NumberEntity):
         return f"{self._platform_name} {self._name}"
 
     @property
-    def unique_id(self) -> Optional[str]:
+    def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
 
     @property

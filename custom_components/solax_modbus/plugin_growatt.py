@@ -575,8 +575,8 @@ def value_function_run_mode(initval, descr, datadict):
 
 
 def value_function_inverter_module(initval, descr, datadict):
-    hexStr = "{:08x}".format(initval)
-    return ("".join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr))).upper()
+    hexStr = f"{initval:08x}"
+    return ("".join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr, strict=False))).upper()
 
 
 # ================================= Button Declarations ============================================================

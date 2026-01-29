@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from time import time
 from types import ModuleType, SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 from weakref import ref as WeakRef
 
 import homeassistant.helpers.config_validation as cv
@@ -813,7 +813,7 @@ class SolaXModbusHub:
         if not interval_group.device_groups:
             interval_group.interval = interval
 
-            async def _refresh(_now: Optional[int] = None) -> None:
+            async def _refresh(_now: int | None = None) -> None:
                 secs = interval_group.interval
                 self.cyclecount += 1
                 cycle_id = self.cyclecount
@@ -896,7 +896,7 @@ class SolaXModbusHub:
                     await self.async_close()
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    async def async_refresh_modbus_data(self, interval_group, _now: Optional[int] = None, cycle_id=None):
+    async def async_refresh_modbus_data(self, interval_group, _now: int | None = None, cycle_id=None):
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
@@ -1636,7 +1636,7 @@ class SolaXModbusHub:
             if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
                 d_newblock = False
                 d_enabled = False
-                for sub, d in descr.items():
+                for _sub, d in descr.items():
                     # d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
                     if should_register_be_loaded(self._hass, self, d):  # *** CHANGED LINE: logic delegated to new function
                         d_enabled = True
@@ -1669,7 +1669,7 @@ class SolaXModbusHub:
                             (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False)
                         ) and not d_newblock:  # automatically created block
                             if type(descr) is dict:
-                                for sub, d in descr.items():
+                                for _sub, d in descr.items():
                                     if d.ignore_readerror is False:
                                         d.ignore_readerror = auto_block_ignore_readerror
                                         d_ignore_readerror = d_ignore_readerror or d.ignore_readerror
@@ -1750,9 +1750,9 @@ class SolaXModbusHub:
                 hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
                 # self.computedSensors = computedRegs # moved outside the loops
                 for i in hub_device_group.holdingBlocks:
-                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding holding block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding holding block: {', '.join(f'0x{num:x}' for num in i.regs)}")
                 for i in hub_device_group.inputBlocks:
-                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding input block: {', '.join('0x{:x}'.format(num) for num in i.regs)}")
+                    _LOGGER.debug(f"{self._name} - interval {interval}s: adding input block: {', '.join(f'0x{num:x}' for num in i.regs)}")
                 # _LOGGER.debug(f"holdingBlocks: {hub_device_group.holdingBlocks}")
                 # _LOGGER.debug(f"inputBlocks: {hub_device_group.inputBlocks}")
         self.blocks_changed = False
@@ -1794,17 +1794,17 @@ class SolaXModbusHub:
                     self._probe_ready.set()
                     return
 
-            for dev_group in list(interval_group.device_groups.values()):
-                # Check timeout before each block
-                if (_t.monotonic() - bisect_start_time) > bisect_timeout:
-                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
-                    self._probe_ready.set()
-                    return
+                for dev_group in list(interval_group.device_groups.values()):
+                    # Check timeout before each block
+                    if (_t.monotonic() - bisect_start_time) > bisect_timeout:
+                        _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
+                        self._probe_ready.set()
+                        return
 
-                for blk in getattr(dev_group, "holdingBlocks", []):
-                    await self._initial_bisect_block(blk, "holding")
-                for blk in getattr(dev_group, "inputBlocks", []):
-                    await self._initial_bisect_block(blk, "input")
+                    for blk in getattr(dev_group, "holdingBlocks", []):
+                        await self._initial_bisect_block(blk, "holding")
+                    for blk in getattr(dev_group, "inputBlocks", []):
+                        await self._initial_bisect_block(blk, "input")
 
             # If no suspects were identified by the initial bisect, log that explicitly
             if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):

@@ -215,7 +215,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
             power_control = "Enabled Power Control"
         else:
             ap_target = 0
-            power_control == "Disabled"
+            power_control = "Disabled"
     elif power_control == "Disabled":
         ap_target = target
     old_ap_target = ap_target

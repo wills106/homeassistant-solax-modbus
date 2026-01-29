@@ -13,8 +13,8 @@ handle:
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -50,12 +50,12 @@ class EnergyDashboardSensorMapping:
     source_key: str  # Original sensor key (e.g., "measured_power") or pattern with {n}
     target_key: str  # Energy Dashboard sensor key (e.g., "grid_power") or pattern with {n}
     name: str  # Display name (e.g., "Grid Power") or pattern with {n}
-    source_key_pm: Optional[str] = None  # Parallel mode source (e.g., "pm_total_measured_power")
+    source_key_pm: str | None = None  # Parallel mode source (e.g., "pm_total_measured_power")
     invert: bool = False  # Whether to invert the value
-    icon: Optional[str] = None  # Optional icon override
-    unit: Optional[str] = None  # Optional unit override
-    invert_function: Optional[Callable] = None  # Custom invert function if needed
-    filter_function: Optional[Callable] = None  # Universal filter function (applies to all sensor types)
+    icon: str | None = None  # Optional icon override
+    unit: str | None = None  # Optional unit override
+    invert_function: Callable | None = None  # Custom invert function if needed
+    filter_function: Callable | None = None  # Universal filter function (applies to all sensor types)
     use_riemann_sum: bool = False  # Enable Riemann sum calculation for energy sensors
     skip_pm_individuals: bool = False  # Skip creating individual sensors (Master "SolaX 1" and Slave "SolaX 2/3")
     needs_aggregation: bool = False  # Only applies to Master "All" sensors in parallel mode
@@ -134,7 +134,7 @@ ED_SWITCH_HOME_CONSUMPTION = "energy_dashboard_home_consumption_enabled"
 ED_SWITCH_GRID_TO_BATTERY = "energy_dashboard_grid_to_battery_enabled"
 
 
-def get_energy_dashboard_switch_state(hub, key: str) -> Optional[bool]:
+def get_energy_dashboard_switch_state(hub, key: str) -> bool | None:
     """Return True/False when available, otherwise None."""
     if hub is None:
         return None
@@ -821,17 +821,17 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
         if has_pattern:
             base_source_key = sensor_mapping.source_key.replace("{n}", "")
 
-            def _detect_variants(hub_obj) -> list[int]:
+            def _detect_variants(hub_obj, mapping, base_key) -> list[int]:
                 sensor_keys = getattr(hub_obj, "sensorEntities", {}) or {}
                 hub_data = getattr(hub_obj, "data", None) or getattr(hub_obj, "datadict", {})
                 variants = []
-                for n in range(1, sensor_mapping.max_variants + 1):
-                    variant_key = f"{base_source_key}{n}"
+                for n in range(1, mapping.max_variants + 1):
+                    variant_key = f"{base_key}{n}"
                     if variant_key in sensor_keys or variant_key in hub_data:
                         variants.append(n)
                 return variants
 
-            master_variants = _detect_variants(hub)
+            master_variants = _detect_variants(hub, sensor_mapping, base_source_key)
 
             for variant_num in master_variants:
                 variant_mapping = EnergyDashboardSensorMapping(
@@ -1132,7 +1132,7 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
                         # Wait up to 15 seconds for bisect task to complete
                         await asyncio.wait_for(initial_bisect_task, timeout=15.0)
                         _LOGGER.debug("Initial bisect task completed")
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         _LOGGER.warning("Initial bisect task timeout after 15s, may be stuck")
                     except Exception:
                         _LOGGER.debug("Error waiting for bisect task")
@@ -1143,7 +1143,7 @@ async def should_create_energy_dashboard_device(hub, config, hass=None, logger=N
                         # Wait up to 5 seconds for probe event (shorter since task should be done)
                         await asyncio.wait_for(probe_ready.wait(), timeout=5.0)
                         _LOGGER.debug("Initial probe completed, proceeding with parallel_setting read")
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         _LOGGER.warning("Initial probe event timeout after 5s, proceeding anyway")
                     except Exception:
                         _LOGGER.debug("Error waiting for probe event, proceeding anyway")

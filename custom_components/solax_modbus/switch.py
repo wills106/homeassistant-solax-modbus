@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Optional
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import CONF_NAME
@@ -192,5 +191,5 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         return self._attr_is_on
 
     @property
-    def unique_id(self) -> Optional[str]:
+    def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"

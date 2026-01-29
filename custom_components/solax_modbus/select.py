@@ -1,6 +1,5 @@
 import logging
 from time import time
-from typing import Optional
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import CONF_NAME
@@ -122,7 +121,7 @@ class SolaXModbusSelect(SelectEntity):
         return False
 
     @property
-    def unique_id(self) -> Optional[str]:
+    def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
 
     async def async_select_option(self, option: str) -> None:

@@ -4,7 +4,6 @@ from copy import copy
 from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
-from typing import Optional
 
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import RestoreEntity, SensorEntity
@@ -515,7 +514,7 @@ class SolaXModbusSensor(SensorEntity):
         return f"{self._platform_name} {self.entity_description.name}"
 
     @property
-    def unique_id(self) -> Optional[str]:
+    def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self.entity_description.key}"
 
     @property

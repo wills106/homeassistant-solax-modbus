@@ -1,6 +1,5 @@
 import logging
 from time import time
-from typing import Optional
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import CONF_NAME
@@ -92,7 +91,7 @@ class SolaXModbusButton(ButtonEntity):
         return f"{self._platform_name} {self._name}"
 
     @property
-    def unique_id(self) -> Optional[str]:
+    def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
 
     async def async_press(self) -> None:

@@ -4065,7 +4065,7 @@ class battery_config(base_battery_config):
 
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        for retry in range(0, 10):
+        for _retry in range(0, 10):
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
                 read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")

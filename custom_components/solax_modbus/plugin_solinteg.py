@@ -196,7 +196,7 @@ def _fn_flags(flags, empty=""):
 
 
 def _fn_simple_hex(v, descr, dd):
-    return "0x{:x}".format(v)
+    return f"0x{v:x}"
 
 
 def _fw_str(wa, *a):

@@ -27,7 +27,8 @@ target-version = "py312"
 
 [tool.ruff.lint]
 # Phase C: Default linting rules (E, F, W) + import sorting (I)
-select = ["E", "F", "W", "I"]
+# Phase D: OSS best practices (B, UP) to match FastAPI, Pydantic, HA Core
+select = ["E", "F", "W", "I", "B", "UP"]
 ignore = [
     "E501",  # Line too long - handled by formatter at 150 chars
 ]
