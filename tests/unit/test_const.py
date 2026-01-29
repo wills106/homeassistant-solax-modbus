@@ -14,9 +14,11 @@ from custom_components.solax_modbus.const import (
     REGISTER_U16,
 )
 
+
 class MockDescription:
     def __init__(self, key):
         self.key = key
+
 
 def test_value_function_pv_power_total():
     # Test normal summation
@@ -38,41 +40,46 @@ def test_value_function_pv_power_total():
     # Test empty
     assert value_function_pv_power_total(0, None, {}) == 0
 
+
 def test_value_function_battery_output():
     # Negative value means output (discharging)
     datadict = {"battery_power_charge": -500}
     assert value_function_battery_output(0, None, datadict) == 500
-    
+
     # Positive value means input (charging) -> output should be 0
     datadict = {"battery_power_charge": 500}
     assert value_function_battery_output(0, None, datadict) == 0
+
 
 def test_value_function_battery_input():
     # Positive value means input (charging)
     datadict = {"battery_power_charge": 500}
     assert value_function_battery_input(0, None, datadict) == 500
-    
+
     # Negative value means output (discharging) -> input should be 0
     datadict = {"battery_power_charge": -500}
     assert value_function_battery_input(0, None, datadict) == 0
+
 
 def test_value_function_grid_import():
     # Negative value means import
     datadict = {"measured_power": -1000}
     assert value_function_grid_import(0, None, datadict) == 1000
-    
+
     # Positive value means export -> import should be 0
     datadict = {"measured_power": 1000}
     assert value_function_grid_import(0, None, datadict) == 0
+
 
 def test_value_function_grid_export():
     # Positive value means export
     datadict = {"measured_power": 1000}
     assert value_function_grid_export(0, None, datadict) == 1000
-    
+
     # Negative value means import -> export should be 0
     datadict = {"measured_power": -1000}
     assert value_function_grid_export(0, None, datadict) == 0
+
 
 def test_value_function_rtc():
     # Format: (seconds, minutes, hours, days, months, years)
@@ -86,26 +93,29 @@ def test_value_function_rtc():
     initval_invalid = (99, 99, 99, 99, 99, 99)
     assert value_function_rtc(initval_invalid, None, {}) is None
 
+
 def test_value_function_gen4time():
     # Format: high byte = minutes, low byte = hours? No, code says:
     # h = initval % 256
     # m = initval >> 8
     # So low byte is hours, high byte is minutes
-    
+
     # Test 14:30
     # hours = 14 (0x0E), minutes = 30 (0x1E)
     # val = (30 << 8) + 14 = 7680 + 14 = 7694
     val = (30 << 8) + 14
     assert value_function_gen4time(val, None, {}) == "14:30"
 
+
 def test_value_function_firmware():
     # Code: m = initval % 256, h = initval >> 8
     # return f"{h}.{m:02d}"
-    
+
     # Test 2.05
     # h = 2, m = 5
     val = (2 << 8) + 5
     assert value_function_firmware(val, None, {}) == "2.05"
+
 
 def test_entity_description_instantiation():
     # Verify we can instantiate the base class with defaults
@@ -116,4 +126,4 @@ def test_entity_description_instantiation():
     assert desc.name == "Test Sensor"
     assert desc.key == "test_sensor"
     assert desc.register == -1  # Default value
-    assert desc.allowedtypes == 0 # Default value
+    assert desc.allowedtypes == 0  # Default value

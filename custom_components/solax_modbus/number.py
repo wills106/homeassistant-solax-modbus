@@ -44,19 +44,28 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                 newdescr.name = inverter_name_suffix + newdescr.name
 
             number = SolaXModbusNumber(hub_name, hub, modbus_addr, hub.device_info, newdescr)
-            if newdescr.write_method == WRITE_DATA_LOCAL:         
+            if newdescr.write_method == WRITE_DATA_LOCAL:
                 hub.writeLocals[newdescr.key] = newdescr
             # Use the explicit sensor_key if provided, otherwise fall back to the number's own key.
-            dependency_key = getattr(newdescr, 'sensor_key', newdescr.key)
-            if dependency_key != newdescr.key: hub.entity_dependencies.setdefault(dependency_key, []).append(newdescr.key) # can be more than one
+            dependency_key = getattr(newdescr, "sensor_key", newdescr.key)
+            if dependency_key != newdescr.key:
+                hub.entity_dependencies.setdefault(dependency_key, []).append(newdescr.key)  # can be more than one
 
             # register dependency chain
             deplist = newdescr.depends_on
-            if isinstance(deplist, str): deplist = (deplist, )
-            if isinstance(deplist, (list, tuple,)):
+            if isinstance(deplist, str):
+                deplist = (deplist,)
+            if isinstance(
+                deplist,
+                (
+                    list,
+                    tuple,
+                ),
+            ):
                 _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
-                for dep_on in deplist: # register inter-sensor dependencies (e.g. for value functions)
-                    if dep_on != newdescr.key: hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key) # can be more than one
+                for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
+                    if dep_on != newdescr.key:
+                        hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key)  # can be more than one
 
             hub.numberEntities[newdescr.key] = number
             entities.append(number)
@@ -81,7 +90,7 @@ class SolaXModbusNumber(NumberEntity):
         self._hub = hub
         self._modbus_addr = modbus_addr
         self._attr_device_info = device_info
-        #self.entity_id = "number." + platform_name + "_" + number_info.key
+        # self.entity_id = "number." + platform_name + "_" + number_info.key
         self._name = number_info.name
         self._key = number_info.key
         self._register = number_info.register
@@ -110,7 +119,7 @@ class SolaXModbusNumber(NumberEntity):
         self._state = number_info.state  # not used AFAIK
         self.entity_description = number_info
         self._write_method = number_info.write_method
-        if number_info.display_as_box: 
+        if number_info.display_as_box:
             # Force box mode for specified entities
             self._attr_mode = NumberMode.BOX
 
@@ -149,7 +158,7 @@ class SolaXModbusNumber(NumberEntity):
                     _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
                 if descr.read_scale and self._hub.tmpdata[self._key]:
-                    res = val #* descr.read_scale
+                    res = val  # * descr.read_scale
                 else:
                     res = val
                 # _LOGGER.debug(f"prevent_update returning native value {descr.key} : {res}")
@@ -160,12 +169,12 @@ class SolaXModbusNumber(NumberEntity):
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
             return self._hub.data[self._key]
-            #try:
+            # try:
             #    val = self._hub.data[self._key] * descr.read_scale
-            #except:
+            # except:
             #    val = self._hub.data[self._key]
-            #return val
-        #else:  # first time initialize
+            # return val
+        # else:  # first time initialize
         #    if descr.initvalue == None:
         #        return None
         #    else:
@@ -218,6 +227,6 @@ class SolaXModbusNumber(NumberEntity):
                 self._hub.tmpdata_expiry[self.entity_description.key] = time() + TMPDATA_EXPIRY
                 # corresponding_sensor.async_write_ha_state()
             self._hub.localsUpdated = True  # mark to save permanently
-        self._hub.data[self._key] = value #/ self.entity_description.read_scale
+        self._hub.data[self._key] = value  # / self.entity_description.read_scale
         # _LOGGER.info(f"*** data written part 2 {self._key}: {self._hub.data[self._key]}")
         self.async_write_ha_state()  # is this needed ?

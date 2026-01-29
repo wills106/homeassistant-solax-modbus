@@ -427,7 +427,6 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 
 @dataclass
 class solis_old_plugin(plugin_base):
-
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 3061, swapbytes=False)
@@ -490,7 +489,7 @@ plugin_instance = solis_old_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     block_size=48,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )

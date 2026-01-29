@@ -11,3 +11,8 @@ repos:
         exclude_types: [csv, json]
         # Exclude translation files except English (en.json)
         exclude: ^custom_components/solax_modbus/translations/(?!en\.json).+
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff-format
