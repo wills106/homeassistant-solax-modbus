@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription
