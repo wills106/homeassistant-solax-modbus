@@ -862,7 +862,7 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
 
             if ed_is_master and not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
-                    slave_variants = _detect_variants(slave_hub)
+                    slave_variants = _detect_variants(slave_hub, sensor_mapping, base_source_key)
 
                     for variant_num in slave_variants:
                         variant_mapping = EnergyDashboardSensorMapping(
