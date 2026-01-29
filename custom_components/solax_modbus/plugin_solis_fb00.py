@@ -4453,6 +4453,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     mappings=[
         EnergyDashboardSensorMapping(
             source_key="battery_power",  # Note: plugin_solis_fb00 uses battery_power (not battery_power_charge)
+            target_key="battery_power",
             source_key_pm=None,  # No parallel mode support in this plugin
             name="Battery Power",
             invert=True,

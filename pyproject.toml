@@ -4,12 +4,20 @@ version = "0.0.0"
 description = "SolaX Modbus integration for Home Assistant"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pymodbus>=3.8.3",
+]
 
 [dependency-groups]
 dev = [
     "pre-commit>=4.0.0",
     "codespell>=2.2.6",
+]
+test = [
+    "pytest>=8.0.0",
+    "pytest-homeassistant-custom-component>=0.13.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
 ]
 
 [tool.black]
@@ -18,3 +26,11 @@ line-length = 119
 [tool.codespell]
 ignore-words-list = "hass,alot,datas,dof,fom,inout,ist,nam,nd,od,portugues,pullrequests,resset,rime,ser,te,ue,ue,uint,visability,wan,wanna,withing,wit,ocurr"
 skip = "*.csv,*.json"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".git", "testing_config"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
