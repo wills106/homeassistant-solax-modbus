@@ -81,7 +81,7 @@ def test_const_module_not_star_imported():
                             files_with_const_star.append(plugin_file.name)
 
     assert len(files_with_const_star) == 0, (
-        f"These files have 'from const import *' which causes F405 errors:\n"
+        "These files have 'from const import *' which causes F405 errors:\n"
         + "\n".join(f"  - {f}" for f in files_with_const_star)
         + f"\n\nPhase B eliminated all {len(plugin_files)} plugin file star imports. "
         "They must not be reintroduced."
@@ -103,13 +103,11 @@ def test_star_import_documentation():
 
     # Phase B should have eliminated ALL star imports
     assert total_star_imports == 0, (
-        f"Expected 0 star imports after Phase B, found {total_star_imports}. "
-        "Phase B work may have been reverted or new star imports added."
+        f"Expected 0 star imports after Phase B, found {total_star_imports}. Phase B work may have been reverted or new star imports added."
     )
 
     # Document the scope of Phase B work
     plugin_files = [f for f in all_files if f.name.startswith("plugin_")]
     assert len(plugin_files) == 17, (
-        f"Expected 17 plugin files, found {len(plugin_files)}. "
-        "If plugin files were added, ensure they don't use star imports."
+        f"Expected 17 plugin files, found {len(plugin_files)}. If plugin files were added, ensure they don't use star imports."
     )

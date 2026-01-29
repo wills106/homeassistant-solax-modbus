@@ -2,17 +2,10 @@ import pytest
 
 from custom_components.solax_modbus.plugin_solax import (
     AC,
-    ALL_GEN_GROUP,
-    ALL_TYPE_GROUP,
-    ALL_X_GROUP,
-    DCB,
     EPS,
-    GEN2,
     GEN3,
     GEN4,
     HYBRID,
-    PV,
-    X1,
     X3,
 )
 from custom_components.solax_modbus.plugin_solax import (
