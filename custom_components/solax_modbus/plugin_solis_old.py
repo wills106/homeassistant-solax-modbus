@@ -1,10 +1,37 @@
 import logging
 from dataclasses import dataclass
+
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import (
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+)
+from homeassistant.helpers.entity import EntityCategory
+
+from custom_components.solax_modbus.const import (
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    REGISTER_U16,
+    REGISTER_U32,
+    REG_HOLDING,
+    REG_INPUT,
+    plugin_base,
+)
+
 from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
 
