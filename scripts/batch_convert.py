@@ -2,7 +2,6 @@
 """Batch convert remaining plugin files from star imports to explicit imports."""
 
 import ast
-import re
 from pathlib import Path
 
 
@@ -140,17 +139,17 @@ def convert_plugin_file(filepath, const_symbols):
     before = lines[:insert_at]
     # Remove old imports
     before = [
-        l
-        for l in before
+        line
+        for line in before
         if not (
-            l.strip().startswith("import logging")
-            or l.strip().startswith("from dataclasses")
-            or l.strip().startswith("from time import")
-            or l.strip().startswith("from homeassistant.")
-            or l.strip().startswith("from .pymodbus_compat")
-            or "from custom_components.solax_modbus.const import *" in l
+            line.strip().startswith("import logging")
+            or line.strip().startswith("from dataclasses")
+            or line.strip().startswith("from time import")
+            or line.strip().startswith("from homeassistant.")
+            or line.strip().startswith("from .pymodbus_compat")
+            or "from custom_components.solax_modbus.const import *" in line
         )
-        or l.strip() == ""
+        or line.strip() == ""
     ]
 
     after = lines[insert_at:]

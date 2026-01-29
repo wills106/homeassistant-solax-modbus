@@ -2,7 +2,6 @@
 """Smart conversion that excludes locally defined symbols."""
 
 import ast
-from collections import defaultdict
 from pathlib import Path
 
 
