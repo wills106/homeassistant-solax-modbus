@@ -154,3 +154,39 @@ def test_no_parenthesized_imports_without_reason():
             f"{plugin_file.name} uses backslash line continuation in imports. "
             "Use parentheses for multi-line imports instead."
         )
+
+
+@pytest.mark.parametrize("plugin_file", get_plugin_files())
+def test_unit_of_reactive_power_from_const_only(plugin_file):
+    """Test that UnitOfReactivePower is only imported from const.py, not homeassistant.const.
+
+    CRITICAL REGRESSION TEST:
+    The const.py module has a backwards-compatibility fallback for UnitOfReactivePower
+    that supports older Home Assistant versions. If plugins import UnitOfReactivePower
+    directly from homeassistant.const, they will crash on older HA versions where
+    this constant doesn't exist.
+
+    Pattern in const.py:
+        try:
+            from homeassistant.const import UnitOfReactivePower
+        except ImportError:
+            class UnitOfReactivePower(StrEnum):  # fallback
+                VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
+
+    Plugins must import UnitOfReactivePower from custom_components.solax_modbus.const
+    to benefit from this fallback mechanism.
+    """
+    with open(plugin_file) as f:
+        tree = ast.parse(f.read(), plugin_file)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            # Check imports from homeassistant.const
+            if node.module and node.module == "homeassistant.const":
+                for alias in node.names:
+                    assert alias.name != "UnitOfReactivePower", (
+                        f"{plugin_file.name} line {node.lineno}: "
+                        f"UnitOfReactivePower must be imported from "
+                        f"custom_components.solax_modbus.const (has backwards-compat fallback), "
+                        f"not directly from homeassistant.const"
+                    )

@@ -13,7 +13,6 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
-    UnitOfReactivePower,
 )
 from homeassistant.helpers.entity import EntityCategory
 

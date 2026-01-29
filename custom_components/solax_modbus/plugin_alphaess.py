@@ -12,7 +12,6 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
-    UnitOfReactivePower,
     UnitOfTemperature,
     UnitOfTime,
 )
