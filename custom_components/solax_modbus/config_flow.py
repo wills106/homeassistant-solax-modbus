@@ -1,27 +1,27 @@
-import ipaddress
-import re
-import logging
 import glob
 import importlib
+import ipaddress
+import logging
+import re
 from collections.abc import Mapping
+from types import ModuleType
 from typing import Any, cast
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlowResult
-from types import ModuleType
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
     CONF_SCAN_INTERVAL,
-)
-from homeassistant.const import (
     MAJOR_VERSION,
     MINOR_VERSION,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import (
     config_validation as cv,
+)
+from homeassistant.helpers import (
     selector,
 )
 from homeassistant.helpers.schema_config_entry_flow import (
@@ -33,43 +33,43 @@ from homeassistant.helpers.schema_config_entry_flow import (
 )
 
 from .const import (
-    DEFAULT_NAME,
-    DEFAULT_INVERTER_NAME_SUFFIX,
-    DEFAULT_INVERTER_POWER_KW,
-    DEFAULT_PORT,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_INTERFACE,
-    DEFAULT_SERIAL_PORT,
-    DEFAULT_MODBUS_ADDR,
-    DEFAULT_BAUDRATE,
-    DOMAIN,
-    DEFAULT_TCP_TYPE,
-    CONF_TCP_TYPE,
-    CONF_INVERTER_NAME_SUFFIX,
-    CONF_INVERTER_POWER_KW,
-    CONF_READ_EPS,
-    CONF_READ_DCB,
-    CONF_READ_PM,
-    CONF_INTERFACE,
-    CONF_SERIAL_PORT,
-    CONF_MODBUS_ADDR,
     CONF_BAUDRATE,
-    CONF_PLUGIN,
-    CONF_READ_BATTERY,
     CONF_CORE_HUB,
     CONF_ENERGY_DASHBOARD_DEVICE,
-    DEFAULT_READ_EPS,
-    DEFAULT_READ_DCB,
-    DEFAULT_READ_PM,
-    DEFAULT_PLUGIN,
-    DEFAULT_READ_BATTERY,
-    PLUGIN_PATH,
-    CONF_SCAN_INTERVAL_MEDIUM,
+    CONF_INTERFACE,
+    CONF_INVERTER_NAME_SUFFIX,
+    CONF_INVERTER_POWER_KW,
+    CONF_MODBUS_ADDR,
+    CONF_PLUGIN,
+    CONF_READ_BATTERY,
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_READ_PM,
     CONF_SCAN_INTERVAL_FAST,
+    CONF_SCAN_INTERVAL_MEDIUM,
+    CONF_SERIAL_PORT,
+    CONF_TCP_TYPE,
     CONF_TIME_OUT,
-    DEFAULT_TIME_OUT,
+    DEFAULT_BAUDRATE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     # PLUGIN_PATH_OLDSTYLE,
+    DEFAULT_INTERFACE,
+    DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_POWER_KW,
+    DEFAULT_MODBUS_ADDR,
+    DEFAULT_NAME,
+    DEFAULT_PLUGIN,
+    DEFAULT_PORT,
+    DEFAULT_READ_BATTERY,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_PM,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SERIAL_PORT,
+    DEFAULT_TCP_TYPE,
+    DEFAULT_TIME_OUT,
+    DOMAIN,
+    PLUGIN_PATH,
 )
 
 _LOGGER = logging.getLogger(__name__)

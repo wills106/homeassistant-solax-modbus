@@ -1,30 +1,30 @@
 """The SolaX Modbus Integration."""
 
 import asyncio
-from datetime import timedelta
 
 # import importlib.util, sys
 import importlib
 import json
 import logging
-from time import time
 import time as _mtime
+from dataclasses import dataclass, replace
+from datetime import timedelta
+from time import time
 from types import ModuleType, SimpleNamespace
 from typing import Any, Optional
 from weakref import ref as WeakRef
 
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
-from pymodbus.exceptions import ModbusException, ConnectionException, ModbusIOException
-from pymodbus.pdu import register_message
-from dataclasses import dataclass, replace
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
+    CONF_SCAN_INTERVAL,
     EVENT_HOMEASSISTANT_STARTED,
-    Platform,
     PERCENTAGE,
+    Platform,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -33,17 +33,18 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
-    CONF_SCAN_INTERVAL,
 )
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.event import async_track_time_interval
-import voluptuous as vol
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers import entity_registry as er
-from .pymodbus_compat import DataType, convert_to_registers, convert_from_registers, pymodbus_version_info, ADDR_KW
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.event import async_track_time_interval
+from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
+from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
+from pymodbus.pdu import register_message
+
+from .pymodbus_compat import ADDR_KW, DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 
 RETRIES = 1  # was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -51,7 +52,8 @@ VERBOSE_CYCLES = 20
 
 
 try:
-    from homeassistant.components.modbus import ModbusHub as CoreModbusHub, get_hub as get_core_hub
+    from homeassistant.components.modbus import ModbusHub as CoreModbusHub
+    from homeassistant.components.modbus import get_hub as get_core_hub
 except ImportError:
 
     def get_core_hub(hass, name):
@@ -66,23 +68,26 @@ from .sensor import SolaXModbusSensor
 _LOGGER = logging.getLogger(__name__)
 
 from .const import (
-    INVERTER_IDENT,
+    BUTTONREPEAT_FIRST,
+    BUTTONREPEAT_LOOP,
+    BUTTONREPEAT_POST,
     CONF_BAUDRATE,
+    CONF_CORE_HUB,
+    CONF_DEBUG_SETTINGS,
     CONF_INTERFACE,
+    CONF_INVERTER_NAME_SUFFIX,
+    CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
     CONF_PLUGIN,
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
-    CONF_INVERTER_NAME_SUFFIX,
-    CONF_INVERTER_POWER_KW,
-    CONF_CORE_HUB,
-    CONF_DEBUG_SETTINGS,
-    DEFAULT_INVERTER_NAME_SUFFIX,
-    DEFAULT_INVERTER_POWER_KW,
+    CONF_TIME_OUT,
     DEFAULT_BAUDRATE,
     DEFAULT_INTERFACE,
+    DEFAULT_INVERTER_NAME_SUFFIX,
+    DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
     DEFAULT_NAME,
     DEFAULT_PLUGIN,
@@ -92,7 +97,12 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
+    DEFAULT_TIME_OUT,
     DOMAIN,
+    INVERTER_IDENT,
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_F32,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
@@ -100,24 +110,16 @@ from .const import (
     REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
-    REGISTER_F32,
     REGISTER_ULSB16MSB16,
     REGISTER_WORDS,
+    SCAN_GROUP_AUTO,
     SCAN_GROUP_DEFAULT,
     SCAN_GROUP_MEDIUM,
-    SCAN_GROUP_AUTO,
     # PLUGIN_PATH,
     SLEEPMODE_LASTAWAKE,
-    CONF_TIME_OUT,
-    DEFAULT_TIME_OUT,
-    BUTTONREPEAT_FIRST,
-    BUTTONREPEAT_LOOP,
-    BUTTONREPEAT_POST,
     WRITE_MULTI_MODBUS,
-    WRITE_SINGLE_MODBUS,
     WRITE_MULTISINGLE_MODBUS,
-    REG_HOLDING,
-    REG_INPUT,
+    WRITE_SINGLE_MODBUS,
 )
 
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
@@ -582,7 +584,8 @@ class SolaXModbusHub:
         # _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
-        import asyncio, time as _t
+        import asyncio
+        import time as _t
 
         self._init_task = asyncio.current_task()
         # Exit early if teardown requested

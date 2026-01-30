@@ -11,8 +11,8 @@ production user-facing configuration.
 import logging
 
 from .const import (
-    DOMAIN,
     CONF_DEBUG_SETTINGS,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)

@@ -1,23 +1,23 @@
 import logging
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+import pathlib
+from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
+from typing import Optional
+
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import (
     NumberDeviceClass,
     NumberEntityDescription,
 )
 from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.components.switch import SwitchEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.helpers.entity import EntityCategory
-from datetime import datetime, timedelta
-from dataclasses import dataclass, replace
-from typing import Optional
-import pathlib
-
 from homeassistant.const import (
+    CONF_SCAN_INTERVAL,
     PERCENTAGE,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
@@ -27,18 +27,21 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
-    CONF_SCAN_INTERVAL,
 )
+from homeassistant.helpers.entity import EntityCategory
 
+# TODO: Review if this fallback is still needed.
+# UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
+# HA versions older than 2023.1. Consider adding a minimum HA version to manifest.json
+# and removing this fallback if older versions are no longer supported.
+# See: https://developers.home-assistant.io/blog/2022/12/05/more-unit-enumerators
 try:
     from homeassistant.const import (
         UnitOfReactivePower,
-    )  ## some changes maybe revert on update of hass
+    )
 except ImportError:
-    # NOTE:fallback for older homeassistant installation
-    #      likely to be removed in future version
-
     from enum import StrEnum
+
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
 
     class UnitOfReactivePower(StrEnum):

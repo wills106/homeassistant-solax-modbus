@@ -26,8 +26,8 @@ line-length = 119
 target-version = "py312"
 
 [tool.ruff.lint]
-# Phase A: Disabled - star imports incompatible with import sorting
-select = []
+# Phase B: Import sorting enabled after star import resolution
+select = ["I"]
 ignore = []
 
 [tool.ruff.format]
