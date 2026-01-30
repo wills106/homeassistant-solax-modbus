@@ -65,8 +65,8 @@ Parallel systems are supported with a Primary inverter and one or more Secondary
 - Uses Primary totals for "All" sensors where available
 - Exposes per‑inverter sensors to show individual contributions
 
-For full parallel‑mode setup guidance, see: `solax-parallel-mode.md`.
+For full parallel‑mode setup guidance, see: [solax-parallel-mode.md](solax-parallel-mode.md).
 
 ## Next Steps
 
-For setup steps and config flow details, see: `energy-dashboard-setup.md`.
+For setup steps and config flow details, see: [energy-dashboard-setup.md](energy-dashboard-setup.md).
