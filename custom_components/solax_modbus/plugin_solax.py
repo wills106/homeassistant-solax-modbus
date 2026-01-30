@@ -8678,7 +8678,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=MIC | MPPT3,
+        allowedtypes=MIC | GEN2 | MPPT3,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 3",
@@ -8689,7 +8689,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=MIC | MPPT3,
+        allowedtypes=MIC | GEN2 | MPPT3,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8700,7 +8700,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x42B,
         register_type=REG_INPUT,
-        allowedtypes=MIC | MPPT3,
+        allowedtypes=MIC | GEN2 | MPPT3,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
