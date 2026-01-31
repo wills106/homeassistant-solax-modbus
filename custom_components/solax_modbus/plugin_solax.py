@@ -10167,6 +10167,25 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             invert=True,
             allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
         ),
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="house_load",
+            source_key_pm="pm_total_house_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+            skip_pm_individuals=True,
+            allowedtypes=ALL_GEN_GROUP,
+        ),
+        # Grid to Battery Power (derived from inverter power)
+        EnergyDashboardSensorMapping(
+            source_key="inverter_power",
+            target_key="grid_to_battery_power",
+            name="Grid to Battery Power",
+            filter_function=lambda v: max(0 - v, 0),
+            icon="mdi:transmission-tower-export",
+            needs_aggregation=True,
+            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
+        ),
         # ===== ENERGY SENSORS =====
         # PV Variant Energy (per string, Riemann sum)
         EnergyDashboardSensorMapping(
@@ -10240,15 +10259,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             skip_pm_individuals=True,
             allowedtypes=ALL_GEN_GROUP,
         ),
-        # Home Consumption Power
-        EnergyDashboardSensorMapping(
-            source_key="house_load",
-            source_key_pm="pm_total_house_load",
-            target_key="home_consumption_power",
-            name="Home Consumption Power",
-            skip_pm_individuals=True,
-            allowedtypes=ALL_GEN_GROUP,
-        ),
         # Battery Charge Energy (GEN3-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
@@ -10290,16 +10300,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="e_charge_today",
             target_key="grid_to_battery_energy",
             name="Grid to Battery Energy",
-            icon="mdi:transmission-tower-export",
-            needs_aggregation=True,
-            allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
-        ),
-        # Grid to Battery Power (derived from inverter power)
-        EnergyDashboardSensorMapping(
-            source_key="inverter_power",
-            target_key="grid_to_battery_power",
-            name="Grid to Battery Power",
-            filter_function=lambda v: max(0 - v, 0),
             icon="mdi:transmission-tower-export",
             needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
