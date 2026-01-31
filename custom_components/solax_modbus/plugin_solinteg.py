@@ -1653,6 +1653,20 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Battery Power",
             invert=True,
         ),
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="house_total_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+        ),
+        # Grid to Battery Power (TODO)
+        # EnergyDashboardSensorMapping(
+        #     source_key="inverter_power",
+        #     target_key="grid_to_battery_power",
+        #     name="Grid to Battery Power",
+        #     filter_function=lambda v: max(0 - v, 0),
+        #     icon="mdi:transmission-tower-export",
+        # ),
         # ===== ENERGY SENSORS =====
         # PV Variant Energy (per string).
         EnergyDashboardSensorMapping(
@@ -1680,12 +1694,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="home_consumption_energy",
             name="Home Consumption Energy",
         ),
-        # Home Consumption Power
-        EnergyDashboardSensorMapping(
-            source_key="house_total_load",
-            target_key="home_consumption_power",
-            name="Home Consumption Power",
-        ),
         # Battery Charge Energy
         EnergyDashboardSensorMapping(
             source_key="battery_charge_today",
@@ -1699,20 +1707,12 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Battery Discharge Energy",
         ),
         # Grid to Battery Energy (TODO)
-        #EnergyDashboardSensorMapping(
-        #    source_key="e_charge_today",
-        #    target_key="grid_to_battery_energy",
-        #    name="Grid to Battery Energy",
-        #    icon="mdi:transmission-tower-export",
-        #),
-        # Grid to Battery Power (TODO)
-        #EnergyDashboardSensorMapping(
-        #    source_key="inverter_power",
-        #    target_key="grid_to_battery_power",
-        #    name="Grid to Battery Power",
-        #    filter_function=lambda v: max(0 - v, 0),
-        #    icon="mdi:transmission-tower-export",
-        #),
+        # EnergyDashboardSensorMapping(
+        #     source_key="e_charge_today",
+        #     target_key="grid_to_battery_energy",
+        #     name="Grid to Battery Energy",
+        #     icon="mdi:transmission-tower-export",
+        # ),
         # Solar Production Energy
         EnergyDashboardSensorMapping(
             source_key="energy_generation_today",
