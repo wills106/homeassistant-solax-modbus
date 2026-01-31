@@ -9749,6 +9749,142 @@ class growatt_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
+# Energy Dashboard Virtual Device mapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="growatt",
+    mappings=[
+        # ===== POWER SENSORS =====
+        # Grid Power
+        EnergyDashboardSensorMapping(
+            source_key="grid_power",
+            target_key="grid_power",
+            name="Grid Power",
+            invert=True,
+            icon="mdi:transmission-tower",
+            allowedtypes=X1,
+        ),
+        # EnergyDashboardSensorMapping(
+        #     source_key="", # Unknown
+        #     target_key="grid_power",
+        #     name="Grid Power",
+        #     invert=True,
+        #     icon="mdi:transmission-tower",
+        #     allowedtypes=GEN | GEN2 | GEN3 | X3,
+        # ),
+        EnergyDashboardSensorMapping(
+            source_key="total_grid_power",
+            target_key="grid_power",
+            name="Grid Power",
+            invert=True,
+            icon="mdi:transmission-tower",
+            allowedtypes=GEN4 | X3,
+        ),
+        # Solar Power
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_total",
+            target_key="solar_power",
+            name="Solar Power",
+            allowedtypes=GEN | GEN2 | GEN3,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="total_pv_power",
+            target_key="solar_power",
+            name="Solar Power",
+            allowedtypes=GEN4,
+        ),
+        # PV Variant Power
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_power_{n}",
+            name="PV Power {n}",
+        ),
+        # Battery Power
+        EnergyDashboardSensorMapping(
+            source_key="battery_combined_power",
+            target_key="battery_power",
+            name="Battery Power",
+            invert=True,
+            allowedtypes=GEN3 | GEN4 | HYBRID,
+        ),
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="total_house_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+            allowedtypes=GEN3,
+        ),
+        # Grid to Battery Power
+        # EnergyDashboardSensorMapping(
+        #     source_key="inverter_power",#
+        #     target_key="grid_to_battery_power",
+        #     name="Grid to Battery Power",
+        #     filter_function=lambda v: max(0 - v, 0),
+        #     icon="mdi:transmission-tower-export",
+        # ),
+        # ===== ENERGY SENSORS =====
+        # PV Variant Energy (per string). 
+        # Example uses integral of power. Can use energy sensors if already exist.
+        EnergyDashboardSensorMapping(
+            source_key="today_s_pv{n}_solar_energy",
+            target_key="pv_energy_{n}",
+            name="PV Energy {n}",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+        ),
+        # Grid Import Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_grid_import",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+            allowedtypes=GEN3 | GEN4,
+        ),
+        # Grid Export Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_grid_export",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
+            allowedtypes=GEN3 | GEN4,
+        ),
+        # Home Consumption Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_load",
+            target_key="home_consumption_energy",
+            name="Home Consumption Energy",
+            allowedtypes=GEN3,
+        ),
+        # Battery Charge Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_battery_input_energy",
+            target_key="battery_energy_charge",
+            name="Battery Charge Energy",
+            allowedtypes=GEN3 | GEN4 | HYBRID,
+        ),
+        # Battery Discharge Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_battery_output_energy",
+            target_key="battery_energy_discharge",
+            name="Battery Discharge Energy",
+            allowedtypes=GEN3 | GEN4 | HYBRID,
+        ),
+        # Grid to Battery Energy
+        # EnergyDashboardSensorMapping(
+        #     source_key="e_charge_today",
+        #     target_key="grid_to_battery_energy",
+        #     name="Grid to Battery Energy",
+        #     icon="mdi:transmission-tower-export",
+        # ),
+        # Solar Production Energy
+        EnergyDashboardSensorMapping(
+            source_key="today_s_solar_energy",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+        ),
+    ],
+    parallel_mode_supported=False,
+)
+
 plugin_instance = growatt_plugin(
     plugin_name="Growatt",
     plugin_manufacturer="Growatt New Energy",
@@ -9762,3 +9898,6 @@ plugin_instance = growatt_plugin(
     order32="big",
     auto_block_ignore_readerror=True,
 )
+
+# Attach Energy Dashboard mapping to plugin instance
+plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING
