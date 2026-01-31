@@ -11,7 +11,6 @@ production user-facing configuration.
 import logging
 
 from .const import (
-    CONF_DEBUG_SETTINGS,
     DOMAIN,
 )
 

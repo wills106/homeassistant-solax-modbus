@@ -1,10 +1,6 @@
 from datetime import datetime
 
-import pytest
-
 from custom_components.solax_modbus.const import (
-    REG_HOLDING,
-    REGISTER_U16,
     BaseModbusSensorEntityDescription,
     value_function_battery_input,
     value_function_battery_output,

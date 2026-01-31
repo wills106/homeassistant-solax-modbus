@@ -2,9 +2,6 @@ import logging
 from dataclasses import dataclass, replace
 from time import time
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -24,14 +21,14 @@ from custom_components.solax_modbus.const import (
     DEFAULT_READ_EPS,
     DEFAULT_READ_PM,
     REG_HOLDING,
-    REG_INPUT,
     REGISTER_S16,
     REGISTER_U16,
-    REGISTER_U32,
     BaseModbusButtonEntityDescription,
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
+    autorepeat_remaining,
+    autorepeat_stop,
     plugin_base,
 )
 
@@ -92,12 +89,10 @@ async def async_read_serialnr(hub, address):
             raw = convert_from_registers(inverter_data.registers[0:20], DataType.STRING, "big")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
     return res
 
@@ -175,14 +170,11 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
         power_control = "Enabled Power Control"
     elif power_control == "Disabled":
         ap_target = target
-        autorepeat_duration = 10  # or zero - stop autorepeat since it makes no sense when disabled
     old_ap_target = ap_target
     ap_target = min(ap_target, import_limit - houseload_brut)
     # _LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
-        _LOGGER.debug(
-            f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}"
-        )
+        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}")
     res = [
         (
             "remotecontrol_power_control",
@@ -522,8 +514,6 @@ class srne_plugin(plugin_base):
         # derive invertertupe from seriiesnumber
         if seriesnumber.startswith("GEN"):
             invertertype = HYBRID | GEN  # GEN Hybrid - Unknown Serial
-        elif seriesnumber.startswith("A1"):
-            invertertype = HYBRID | A1  # A1 Hybrid - Unknown Serial
         # add cases here
         else:
             invertertype = GEN
@@ -539,10 +529,6 @@ class srne_plugin(plugin_base):
                 invertertype = invertertype | DCB
             if read_pm:
                 invertertype = invertertype | PM
-
-            if invertertype & MIC:
-                self.SENSOR_TYPES = SENSOR_TYPES_MIC
-            # else: self.SENSOR_TYPES = SENSOR_TYPES_MAIN
 
         return invertertype
 
@@ -564,15 +550,13 @@ class srne_plugin(plugin_base):
     def localDataCallback(self, hub):
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
-        _LOGGER.info(f"local data update callback")
+        _LOGGER.info("local data update callback")
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
-            if new_read_scale != None:
-                _LOGGER.info(
-                    f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}"
-                )
+            if new_read_scale is not None:
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -589,7 +573,7 @@ class srne_plugin(plugin_base):
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
-            if new_max_export != None:
+            if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
                     "remotecontrol_import_limit",

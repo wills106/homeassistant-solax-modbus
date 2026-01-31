@@ -1,7 +1,5 @@
 import importlib
-import os
 import pathlib
-import pkgutil
 
 import pytest
 
@@ -32,9 +30,7 @@ def test_plugin_structure(plugin_module_name):
     assert isinstance(plugin.SENSOR_TYPES, list), f"{plugin_module_name} SENSOR_TYPES must be a list"
 
     # 4. Verify Entity Integrity (basic check)
-    all_entities = (
-        plugin.SENSOR_TYPES + plugin.BUTTON_TYPES + plugin.NUMBER_TYPES + plugin.SELECT_TYPES + plugin.SWITCH_TYPES
-    )
+    all_entities = plugin.SENSOR_TYPES + plugin.BUTTON_TYPES + plugin.NUMBER_TYPES + plugin.SELECT_TYPES + plugin.SWITCH_TYPES
 
     for entity in all_entities:
         # Verify key exists and is string
@@ -42,6 +38,4 @@ def test_plugin_structure(plugin_module_name):
         assert isinstance(entity.key, str), f"Entity key in {plugin_module_name} must be string"
 
         # Verify allowedtypes is an integer (bitmask)
-        assert isinstance(entity.allowedtypes, int), (
-            f"Entity '{entity.key}' allowedtypes must be int in {plugin_module_name}"
-        )
+        assert isinstance(entity.allowedtypes, int), f"Entity '{entity.key}' allowedtypes must be int in {plugin_module_name}"

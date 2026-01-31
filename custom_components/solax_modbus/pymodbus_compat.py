@@ -208,12 +208,7 @@ if _convert_to and _convert_from:
 
         def convert_to_registers(value, dt: DataType, wordorder, string_encoding: str = "utf-8"):
             # Fast-path: exact enum + correct word_order string → call directly
-            if (
-                _DT_TARGET is not None
-                and isinstance(dt, _DT_TARGET)
-                and isinstance(wordorder, str)
-                and wordorder in ("big", "little")
-            ):
+            if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
                     return _convert_to(value, dt, word_order=wordorder, string_encoding=string_encoding)
                 except TypeError:
@@ -233,16 +228,9 @@ if _convert_to and _convert_from:
             global _STARTING
             if _STARTING > 0:
                 _STARTING -= 1
-                _LOGGER.debug(
-                    f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption"
-                )
+                _LOGGER.debug(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
             # Fast-path: exact enum + correct word_order string → call directly
-            if (
-                _DT_TARGET is not None
-                and isinstance(dt, _DT_TARGET)
-                and isinstance(wordorder, str)
-                and wordorder in ("big", "little")
-            ):
+            if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
                     return _convert_from(regs, dt, word_order=wordorder, string_encoding=string_encoding)
                 except TypeError:
@@ -261,10 +249,10 @@ if _convert_to and _convert_from:
 else:
     try:
         from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder  # type: ignore
-    except Exception:
+    except Exception as e:
         raise ImportError(
             "The installed pymodbus version is too old and does not provide BinaryPayloadBuilder/Decoder. Please upgrade to pymodbus >= 3.8."
-        )
+        ) from e
 
     try:
         from pymodbus.constants import Endian as _OldEndian  # type: ignore

@@ -1,9 +1,7 @@
 import logging
+import re
 from dataclasses import dataclass
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -18,7 +16,6 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
-    _LOGGER,
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -109,12 +106,10 @@ async def async_read_serialnr(hub, address, swapbytes):
                 res = str(ba, "ascii")  # convert back to string
             res = remove_special_chars(res)
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 

@@ -2,8 +2,6 @@
 """Analyze symbol usage in plugin files to prepare for star import elimination."""
 
 import ast
-import sys
-from collections import defaultdict
 from pathlib import Path
 
 
