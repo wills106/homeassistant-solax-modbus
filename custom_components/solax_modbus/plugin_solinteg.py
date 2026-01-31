@@ -1625,20 +1625,99 @@ from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMappi
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solinteg",
     mappings=[
+        # ===== POWER SENSORS =====
+        # Grid Power
         EnergyDashboardSensorMapping(
             source_key="measured_power",
-            source_key_pm=None,  # measured_power is system-wide
             target_key="grid_power",
             name="Grid Power",
             invert=True,
             icon="mdi:transmission-tower",
         ),
+        # Solar Power
         EnergyDashboardSensorMapping(
-            source_key="battery_power",  # Note: plugin_solinteg uses battery_power (not battery_power_charge)
-            source_key_pm=None,  # No parallel mode support in this plugin
+            source_key="pv_power_total",
+            target_key="solar_power",
+            name="Solar Power",
+        ),
+        # PV Variant Power
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_power_{n}",
+            name="PV Power {n}",
+        ),
+        # Battery Power
+        EnergyDashboardSensorMapping(
+            source_key="battery_power",
             target_key="battery_power",
             name="Battery Power",
             invert=True,
+        ),
+        # ===== ENERGY SENSORS =====
+        # PV Variant Energy (per string).
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_{n}",
+            target_key="pv_energy_{n}",
+            name="PV Energy {n}",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+        ),
+        # Grid Import Energy
+        EnergyDashboardSensorMapping(
+            source_key="grid_import_today",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+        ),
+        # Grid Export Energy
+        EnergyDashboardSensorMapping(
+            source_key="grid_export_today",
+            target_key="grid_energy_export",
+            name="Grid Export Energy",
+        ),
+        # Home Consumption Energy
+        EnergyDashboardSensorMapping(
+            source_key="house_energy_today",
+            target_key="home_consumption_energy",
+            name="Home Consumption Energy",
+        ),
+        # Home Consumption Power
+        EnergyDashboardSensorMapping(
+            source_key="house_total_load",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+        ),
+        # Battery Charge Energy
+        EnergyDashboardSensorMapping(
+            source_key="battery_charge_today",
+            target_key="battery_energy_charge",
+            name="Battery Charge Energy",
+        ),
+        # Battery Discharge Energy
+        EnergyDashboardSensorMapping(
+            source_key="battery_discharge_today",
+            target_key="battery_energy_discharge",
+            name="Battery Discharge Energy",
+        ),
+        # Grid to Battery Energy (TODO)
+        #EnergyDashboardSensorMapping(
+        #    source_key="e_charge_today",
+        #    target_key="grid_to_battery_energy",
+        #    name="Grid to Battery Energy",
+        #    icon="mdi:transmission-tower-export",
+        #),
+        # Grid to Battery Power (TODO)
+        #EnergyDashboardSensorMapping(
+        #    source_key="inverter_power",
+        #    target_key="grid_to_battery_power",
+        #    name="Grid to Battery Power",
+        #    filter_function=lambda v: max(0 - v, 0),
+        #    icon="mdi:transmission-tower-export",
+        #),
+        # Solar Production Energy
+        EnergyDashboardSensorMapping(
+            source_key="energy_generation_today",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
         ),
     ],
     parallel_mode_supported=False,  # Plugin doesn't support parallel mode
