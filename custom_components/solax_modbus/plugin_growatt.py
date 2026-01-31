@@ -9817,15 +9817,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
         # Grid to Battery Power
         # EnergyDashboardSensorMapping(
-        #     source_key="inverter_power",#
+        #     source_key="", # Unknown
         #     target_key="grid_to_battery_power",
         #     name="Grid to Battery Power",
         #     filter_function=lambda v: max(0 - v, 0),
         #     icon="mdi:transmission-tower-export",
         # ),
         # ===== ENERGY SENSORS =====
-        # PV Variant Energy (per string). 
-        # Example uses integral of power. Can use energy sensors if already exist.
+        # PV Variant Energy (per string).
         EnergyDashboardSensorMapping(
             source_key="today_s_pv{n}_solar_energy",
             target_key="pv_energy_{n}",
@@ -9870,7 +9869,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
         ),
         # Grid to Battery Energy
         # EnergyDashboardSensorMapping(
-        #     source_key="e_charge_today",
+        #     source_key="", # Unknown
         #     target_key="grid_to_battery_energy",
         #     name="Grid to Battery Energy",
         #     icon="mdi:transmission-tower-export",
