@@ -1,14 +1,10 @@
 # Verze pluginu: 1.2.5
 import logging
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime
-from time import time
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfElectricCurrent,
@@ -942,9 +938,7 @@ class sunway_plugin(plugin_base):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=10000, count=4)
 
         if inverter_data is None or inverter_data.isError():
-            _LOGGER.error(
-                f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address."
-            )
+            _LOGGER.error(f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address.")
             return 0
 
         raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")

@@ -1,10 +1,6 @@
 import logging
 from dataclasses import dataclass
-from time import time
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -109,12 +105,10 @@ async def async_read_serialnr(hub, address):
             raw = convert_from_registers(inverter_data.registers[0:5], DataType.STRING, "big")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware number before potential swap: {res}")
     return res
 
@@ -322,9 +316,7 @@ def value_function_time_reverse_begin(initval, descr, datadict):
 
 
 def value_function_time_reverse_enabled(initval, descr, datadict):
-    time_enabled = datadict.get(
-        "register_" + str(initval), 0
-    )  # need to use a read entity to avoid overwriting the select
+    time_enabled = datadict.get("register_" + str(initval), 0)  # need to use a read entity to avoid overwriting the select
     if int(time_enabled) & (1 << 15):  # Check if bit 15 is set
         return "Enabled"
     else:
@@ -332,9 +324,7 @@ def value_function_time_reverse_enabled(initval, descr, datadict):
 
 
 def value_function_time_reverse_mode(initval, descr, datadict):
-    time_mode = datadict.get(
-        "register_" + str(initval), 0
-    )  # need to use a read entity to avoid overwriting the select
+    time_mode = datadict.get("register_" + str(initval), 0)  # need to use a read entity to avoid overwriting the select
     if int(time_mode) & (1 << 14):  # Check bit 14 first for "Grid First" (1 << 14)
         return "Grid First"
     elif int(time_mode) & (1 << 13):  # Check bit 13 for "Battery First" (1 << 13)
@@ -585,8 +575,8 @@ def value_function_run_mode(initval, descr, datadict):
 
 
 def value_function_inverter_module(initval, descr, datadict):
-    hexStr = "{:08x}".format(initval)
-    return ("".join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr))).upper()
+    hexStr = f"{initval:08x}"
+    return ("".join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr, strict=False))).upper()
 
 
 # ================================= Button Declarations ============================================================

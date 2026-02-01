@@ -22,13 +22,16 @@ test = [
 ]
 
 [tool.ruff]
-line-length = 119
+line-length = 150
 target-version = "py312"
 
 [tool.ruff.lint]
-# Phase B: Import sorting enabled after star import resolution
-select = ["I"]
-ignore = []
+# Phase C: Default linting rules (E, F, W) + import sorting (I)
+# Phase D: OSS best practices (B, UP) to match FastAPI, Pydantic, HA Core
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # Line too long - handled by formatter at 150 chars
+]
 
 [tool.ruff.format]
 quote-style = "double"

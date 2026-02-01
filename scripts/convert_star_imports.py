@@ -2,7 +2,6 @@
 """Convert star imports to explicit imports in plugin files."""
 
 import ast
-import re
 import sys
 from pathlib import Path
 

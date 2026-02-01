@@ -17,7 +17,6 @@ from homeassistant.const import (
     MAJOR_VERSION,
     MINOR_VERSION,
 )
-from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import (
     config_validation as cv,
 )
@@ -53,7 +52,6 @@ from .const import (
     DEFAULT_BAUDRATE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     # PLUGIN_PATH_OLDSTYLE,
-    DEFAULT_INTERFACE,
     DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
@@ -202,17 +200,13 @@ BATTERY_SCHEMA = vol.Schema(
 async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any]:
     _LOGGER.info(f"validating base: {user_input}")
     """Validate config."""
-    interface = user_input[CONF_INTERFACE]
-    modbus_addr = user_input[CONF_MODBUS_ADDR]
+    user_input[CONF_INTERFACE]
+    user_input[CONF_MODBUS_ADDR]
     name = user_input[CONF_NAME]
     pluginconf_name = user_input[CONF_PLUGIN]
 
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
-    if (
-        pluginconf_name.startswith("custom_components")
-        or pluginconf_name.startswith("/config")
-        or pluginconf_name.startswith("plugin_")
-    ):
+    if pluginconf_name.startswith("custom_components") or pluginconf_name.startswith("/config") or pluginconf_name.startswith("plugin_"):
         newpluginname = pluginconf_name.split("plugin_", 1)[1][:-3]  # getPluginName(pluginconf_name)
         _LOGGER.warning(f"converting old style plugin name {pluginconf_name} to new style: {newpluginname} ")
         user_input[CONF_PLUGIN] = newpluginname
@@ -230,7 +224,7 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
 
 
 async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> Any:
-    port = user_input[CONF_PORT]
+    user_input[CONF_PORT]
     host = user_input[CONF_HOST]
     try:
         if ipaddress.ip_address(host).version == (4 or 6):
@@ -259,7 +253,7 @@ async def _validate_core_modbus_hub(handler: SchemaCommonFlowHandler, user_input
     except Exception as e:
         raise SchemaFlowError(f"invalid core modbus hub name: '{hub_name}'") from e
     if not res:
-        raise SchemaFlowError(f"core modbus hub name empty")
+        raise SchemaFlowError("core modbus hub name empty")
     return user_input
 
 
@@ -288,18 +282,14 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION == 12)
         "user": SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
-        "core": SchemaFlowFormStep(
-            CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery
-        ),
+        "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "init": SchemaFlowFormStep(OPTION_SCHEMA, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
-        "core": SchemaFlowFormStep(
-            CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery
-        ),
+        "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
     }
 
@@ -312,7 +302,6 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
-        errors = {}
 
     _LOGGER.info(f"starting configflow - domain = {DOMAIN}")
     config_flow = CONFIG_FLOW

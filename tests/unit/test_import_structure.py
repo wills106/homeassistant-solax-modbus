@@ -89,9 +89,7 @@ def test_import_order(plugin_file):
         assert max(ha_lines) < min(local_lines), f"{plugin_file.name}: HA imports should come before local imports"
 
     if stdlib_lines and local_lines:
-        assert max(stdlib_lines) < min(local_lines), (
-            f"{plugin_file.name}: stdlib imports should come before local imports"
-        )
+        assert max(stdlib_lines) < min(local_lines), f"{plugin_file.name}: stdlib imports should come before local imports"
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
@@ -108,10 +106,7 @@ def test_const_import_explicit(plugin_file):
         if isinstance(node, ast.ImportFrom):
             if node.module and "const" in node.module:
                 for alias in node.names:
-                    assert alias.name != "*", (
-                        f"{plugin_file.name} line {node.lineno}: "
-                        f"Found 'from {node.module} import *' - must be explicit"
-                    )
+                    assert alias.name != "*", f"{plugin_file.name} line {node.lineno}: Found 'from {node.module} import *' - must be explicit"
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
@@ -151,8 +146,7 @@ def test_no_parenthesized_imports_without_reason():
 
         # Check that we don't have the old backslash continuation style
         assert "\\" not in content.split('"""')[0], (
-            f"{plugin_file.name} uses backslash line continuation in imports. "
-            "Use parentheses for multi-line imports instead."
+            f"{plugin_file.name} uses backslash line continuation in imports. Use parentheses for multi-line imports instead."
         )
 
 

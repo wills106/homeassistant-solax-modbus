@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Print exact imports needed for each problem file."""
 
-import sys
 from pathlib import Path
 
 from smart_convert import analyze_file, get_const_symbols

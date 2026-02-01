@@ -1,9 +1,6 @@
 import logging
 from dataclasses import dataclass
 
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -54,7 +51,7 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS 
+example: GEN3 | GEN4 | X1 | X3 | EPS
 means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
@@ -109,12 +106,10 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii")  # convert back to string
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
@@ -126,7 +121,7 @@ async def _read_model(hub, address=10008):
         if inverter_data is not None and not inverter_data.isError():
             res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
             hub._invertertype = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
     _LOGGER.info(f"Read {hub.name} 0x{address:x} model: {res}")
     return res
@@ -177,7 +172,7 @@ def _model_str(val):
     try:
         bh, bl = val // 256, val % 256
         return d[bh][bl]
-    except:
+    except Exception:
         return "unknown"
 
 
@@ -201,7 +196,7 @@ def _fn_flags(flags, empty=""):
 
 
 def _fn_simple_hex(v, descr, dd):
-    return "0x{:x}".format(v)
+    return f"0x{v:x}"
 
 
 def _fw_str(wa, *a):
@@ -1567,7 +1562,6 @@ class solinteg_plugin(plugin_base):
             invertertype = invertertype | MPPT2
 
         if invertertype > 0:
-            data = hub.data
             _self_mppt_mask = 2**mppt - 1  # mask
             # prepare mppt list
             # data["mppt_mask"] = _self_mppt_mask
@@ -1605,7 +1599,6 @@ class solinteg_plugin(plugin_base):
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP) != 0) or (entitymask & ALL_EPS_GROUP == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT) != 0) or (entitymask & ALL_MPPT == 0)
-        blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
@@ -1620,7 +1613,7 @@ class solinteg_plugin(plugin_base):
 
 
 # Energy Dashboard Virtual Device mapping
-from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping  # noqa: E402
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solinteg",
