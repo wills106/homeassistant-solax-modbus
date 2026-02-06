@@ -105,3 +105,44 @@ async def test_determine_inverter_type_solax(mock_hub):
     # It maps to: HYBRID | X3 | GEN4
 
     assert inverter_type == expected
+
+
+def test_parallel_master_scales_import_limit(mock_hub):
+    """
+    Verify parallel Master inverters scale remotecontrol_import_limit.
+
+    Bug: remotecontrol_import_limit stayed at 30kW for 3×15kW (45kW) systems
+    because it wasn't included in the parallel Master scaling logic.
+    """
+    from dataclasses import dataclass
+
+    from custom_components.solax_modbus.plugin_solax import plugin_instance
+
+    # Setup: Mock parallel Master with 45kW capacity
+    mock_hub.inverterPowerKw = 45
+    mock_hub.data = {"parallel_setting": "Master"}
+
+    # Create mock entity description
+    @dataclass
+    class MockEntityDescription:
+        native_min_value: int
+        native_max_value: int
+
+    # Create mock entity
+    class MockEntity:
+        def __init__(self):
+            self._attr_native_min_value = 0
+            self._attr_native_max_value = 30000  # Bug: stuck at default
+            self.entity_description = MockEntityDescription(native_min_value=0, native_max_value=30000)
+
+    mock_hub.numberEntities = {"remotecontrol_import_limit": MockEntity()}
+    mock_hub.sensorEntities = {}
+
+    # Execute: Trigger the callback
+    plugin_instance.localDataCallback(mock_hub)
+
+    # Assert: Import limit should scale to 45kW
+    entity = mock_hub.numberEntities["remotecontrol_import_limit"]
+    assert entity._attr_native_max_value == 45000, (
+        f"Parallel Master with 45kW capacity should scale import limit to 45000W, got {entity._attr_native_max_value}W"
+    )
