@@ -239,6 +239,12 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignor
     min_value: int | None = None
     max_value: int | None = None
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
+    _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
+    _energy_dashboard_mapping: Any = None  # EnergyDashboardMapping
+    _energy_dashboard_source_hub: Any = None  # Source hub reference
+    _is_riemann_sum_sensor: bool = False  # Whether this is a Riemann sum sensor
+    _riemann_mapping: Any = None  # Riemann mapping configuration
+    _riemann_data_hub: Any = None  # Riemann data hub reference
 
 
 @dataclass(kw_only=True)
