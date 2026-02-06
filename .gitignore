@@ -3,3 +3,4 @@
 __pycache__
 *.html
 .venv
+mypy-txt-report/

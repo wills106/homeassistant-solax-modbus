@@ -237,7 +237,7 @@ async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) 
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_setup(hass, config):
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the SolaX modbus component."""
     hass.data[DOMAIN] = {}
 
@@ -289,7 +289,7 @@ async def async_setup(hass, config):
 
 
 # Example migration function
-async def async_migrate_entry(hass, config_entry: ConfigEntry):
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry."""
     _LOGGER.debug("Migrating from version %s", config_entry.version)
     if config_entry.version == 1:
@@ -309,7 +309,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
     return plugin
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a SolaX modbus."""
     _LOGGER.debug(f"setup config entries - data: {entry.data}, options: {entry.options}")
 
@@ -466,10 +466,10 @@ class SolaXModbusHub:
 
     def __init__(
         self,
-        hass,
-        plugin,
-        entry,
-    ):
+        hass: HomeAssistant,
+        plugin: ModuleType,
+        entry: ConfigEntry,
+    ) -> None:
         config = entry.options
         name = config[CONF_NAME]
         host = config.get(CONF_HOST, None)
