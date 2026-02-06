@@ -102,22 +102,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class EnertechModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class EnertechModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class EnertechModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
     unit: int = REGISTER_U16  # Default unit (16-bit)
@@ -129,7 +129,7 @@ class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
         self.order32 = order32  # Assign order32
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class EnertechModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     """Base class for Enertech Modbus switch entities."""
 
@@ -1195,7 +1195,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Enertech_plugin(plugin_base):
     def isAwake(self, datadict):
         """determine if inverter is awake based on polled datadict"""

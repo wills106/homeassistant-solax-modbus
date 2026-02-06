@@ -122,27 +122,27 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolisModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolisModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolisModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolisModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solis Modbus sensor entities."""
 
@@ -4404,7 +4404,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 
 
 # ============================ plugin declaration =================================================
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class solis_fb00_plugin(plugin_base):
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")

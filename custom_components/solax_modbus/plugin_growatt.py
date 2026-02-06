@@ -117,22 +117,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GrowattModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GrowattModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GrowattModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Growatt Modbus sensor entities."""
 
@@ -9494,7 +9494,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class growatt_plugin(plugin_base):
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")

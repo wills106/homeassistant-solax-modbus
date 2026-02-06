@@ -101,22 +101,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SRNEModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SRNEModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SRNEModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SRNEModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: str = "big"
@@ -487,7 +487,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class srne_plugin(plugin_base):
     def isAwake(self, datadict):
         """determine if inverter is awake based on polled datadict"""

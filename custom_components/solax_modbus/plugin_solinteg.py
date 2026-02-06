@@ -235,7 +235,7 @@ def value_function_house_normal_load(initval: int, descr: Any, datadict: dict[st
 
 
 # gc: set defaults; not all classes have all fields...
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -244,7 +244,7 @@ class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
         super().__init__(**kwargs)
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -254,7 +254,7 @@ class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
         super().__init__(**kwargs)
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -269,7 +269,7 @@ class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
         return True
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolintegModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solinteg Modbus sensor entities."""
 
@@ -1523,7 +1523,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class solinteg_plugin(plugin_base):
     """
     def isAwake(self, datadict):

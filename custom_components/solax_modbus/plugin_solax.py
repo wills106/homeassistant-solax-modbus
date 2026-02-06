@@ -211,29 +211,29 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolaxModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolaxModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     unit: int = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
@@ -9587,7 +9587,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class solax_plugin(plugin_base):
     def isAwake(self, datadict):
         """determine if inverter is awake based on polled datadict"""

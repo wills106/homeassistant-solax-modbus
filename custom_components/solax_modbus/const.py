@@ -125,7 +125,7 @@ DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
 # ==================================== plugin base class ====================================================================
 
 
-@dataclass(frozen=True)
+@dataclass
 class base_battery_config:
     """Configuration for battery sensors."""
 
@@ -134,7 +134,7 @@ class base_battery_config:
     battery_sensor_key_prefix: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass
 class plugin_base:
     """Base class for plugin implementations."""
 
@@ -203,7 +203,7 @@ class plugin_base:
 # =================================== base class for sensor entity descriptions =========================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
 class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """Base class for modbus sensor declarations."""
 
@@ -241,7 +241,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
@@ -255,7 +255,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
     """Base class for modbus select declarations."""
 
@@ -273,7 +273,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     """Base class for modbus switch declarations."""
 
@@ -290,7 +290,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 

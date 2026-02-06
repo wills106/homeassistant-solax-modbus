@@ -130,25 +130,25 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
 
@@ -3984,7 +3984,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class battery_config(base_battery_config):
     def __init__(self):
         self.battery_sensor_type = BATTERY_SENSOR_TYPES
@@ -4147,7 +4147,7 @@ class battery_config(base_battery_config):
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class sofar_plugin(plugin_base):
     """
     def isAwake(self, datadict):

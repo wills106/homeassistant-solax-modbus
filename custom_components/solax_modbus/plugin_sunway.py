@@ -46,27 +46,27 @@ ALLDEFAULT = SUNWAY_STT_10KTL  # Všechny entity se budou vztahovat k našemu st
 # ============================================================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SunwayModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SunwayModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SunwayModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SunwayModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class SunwayModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT
     unit: int = REGISTER_U16
@@ -926,7 +926,7 @@ SENSOR_TYPES = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class sunway_plugin(plugin_base):
     def isAwake(self, datadict):
         """Určuje, zda je střídač v aktivním stavu."""
