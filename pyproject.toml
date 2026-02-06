@@ -60,24 +60,27 @@ python_version = "3.12"
 # Package resolution
 explicit_package_bases = true
 
-# Phase 3: Stricter enforcement
-strict = false  # Still not full strict
-warn_return_any = true  # Changed from false
+# Phase 4: Full strict mode
+strict = true
+warn_return_any = true
 warn_unused_configs = true
 
-# Still ignore missing imports (dependencies may not have stubs)
-ignore_missing_imports = true
+# Only ignore truly missing stubs (use per-import overrides instead)
+ignore_missing_imports = false
 
-# Require type annotations
-disallow_untyped_defs = true  # Changed from false - Phase 3
+# Strictest settings
+disallow_untyped_defs = true
+disallow_untyped_calls = true
 disallow_incomplete_defs = true
+disallow_any_generics = true
 check_untyped_defs = true
 
-# Stricter checks
+# Additional strict checks
 warn_redundant_casts = true
 warn_unused_ignores = true
+warn_unreachable = true
 no_implicit_reexport = true
-disallow_any_generics = false  # Will enable in Phase 4
+no_implicit_optional = true
 
 # Output configuration
 show_error_codes = true
@@ -96,12 +99,11 @@ exclude = [
     "^\\.venv/",
 ]
 
-# Per-file overrides for priority files (fully typed)
+# Per-import overrides for dependencies without type stubs
 [[tool.mypy.overrides]]
 module = [
-    "custom_components.solax_modbus.const",
-    "custom_components.solax_modbus.pymodbus_compat",
-    "custom_components.solax_modbus.config_flow",
+    "pymodbus.*",
+    "homeassistant.*",
+    "pytest_homeassistant_custom_component.*",
 ]
-disallow_untyped_defs = true
-warn_return_any = true
+ignore_missing_imports = true
