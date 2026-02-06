@@ -107,8 +107,8 @@ class SolaXModbusNumber(NumberEntity):
         self._register = number_info.register
         self._fmt = number_info.fmt
         self._unit = number_info.unit
-        self._attr_native_min_value = number_info.native_min_value
-        self._attr_native_max_value = number_info.native_max_value
+        self._attr_native_min_value: float = number_info.native_min_value  # type: ignore[assignment]
+        self._attr_native_max_value: float = number_info.native_max_value  # type: ignore[assignment]
         self._attr_scale = number_info.scale
         self.entity_description = number_info
         if number_info.max_exceptions:
@@ -124,7 +124,7 @@ class SolaXModbusNumber(NumberEntity):
                 native_value,
             ) in number_info.min_exceptions_minus:
                 if hub.seriesnumber.startswith(prefix):
-                    self._attr_native_min_value = -native_value
+                    self._attr_native_min_value: float = -native_value  # type: ignore[assignment]
         self._attr_native_step = number_info.native_step
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state  # not used AFAIK
@@ -160,7 +160,7 @@ class SolaXModbusNumber(NumberEntity):
         return f"{self._platform_name}_{self._key}"
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         descr = self.entity_description
         if descr.prevent_update:
             if self._hub.tmpdata_expiry.get(descr.key, 0) > time():
@@ -168,8 +168,8 @@ class SolaXModbusNumber(NumberEntity):
                 if val is None:
                     _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
-                if descr.read_scale and self._hub.tmpdata[self._key]:
-                    res = val  # * descr.read_scale
+                if descr.read_scale and val:
+                    res: float | None = val  # * descr.read_scale
                 else:
                     res = val
                 # _LOGGER.debug(f"prevent_update returning native value {descr.key} : {res}")
@@ -180,11 +180,12 @@ class SolaXModbusNumber(NumberEntity):
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
             return self._hub.data[self._key]
-            # try:
-            #    val = self._hub.data[self._key] * descr.read_scale
-            # except:
-            #    val = self._hub.data[self._key]
-            # return val
+        return None
+        # try:
+        #    val = self._hub.data[self._key] * descr.read_scale
+        # except:
+        #    val = self._hub.data[self._key]
+        # return val
         # else:  # first time initialize
         #    if descr.initvalue == None:
         #        return None
@@ -200,11 +201,11 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
-        payload = value
+        payload: int | float = value
         if self._fmt == "i":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
+            payload = int(value / (self._attr_scale * self.entity_description.read_scale))  # type: ignore[operator]
         elif self._fmt == "f":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
+            payload = int(value / (self._attr_scale * self.entity_description.read_scale))  # type: ignore[operator]
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"

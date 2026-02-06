@@ -101,10 +101,10 @@ class SolaXModbusSelect(SelectEntity):
         self._register = select_info.register
         self._option_dict = select_info.option_dict
         self.entity_description = select_info
-        self._attr_options = list(select_info.option_dict.values())
+        self._attr_options = list(select_info.option_dict.values()) if select_info.option_dict else []
         self._write_method = select_info.write_method
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         await self._hub.async_add_solax_modbus_sensor(self)
 
@@ -112,18 +112,18 @@ class SolaXModbusSelect(SelectEntity):
         await self._hub.async_remove_solax_modbus_sensor(self)
 
     @callback
-    def modbus_data_updated(self):
+    def modbus_data_updated(self) -> None:
         self.async_write_ha_state()
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         if self._key in self._hub.data:
             return self._hub.data[self._key]
         else:
             return self.entity_description.initvalue
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name."""
         return f"{self._platform_name} {self._name}"
 
@@ -138,7 +138,7 @@ class SolaXModbusSelect(SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the select option."""
-        payload = self.entity_description.reverse_option_dict.get(option, None)
+        payload: Any = self.entity_description.reverse_option_dict.get(option, None)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
             await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
@@ -152,7 +152,7 @@ class SolaXModbusSelect(SelectEntity):
 
         # Handle autorepeat for selects with value_function (same pattern as buttons)
         if self.entity_description.value_function:
-            res = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
+            res: Any = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)  # type: ignore[call-arg]
             if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
                 autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
 
