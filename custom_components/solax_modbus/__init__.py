@@ -1985,7 +1985,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     async def async_close(self) -> None:  # type: ignore[override]
         """Disconnect client."""
-        with self._lock:
+        async with self._lock:
             if self._hub:
                 self._hub = None
 
@@ -2153,7 +2153,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)
-        kwargs = {ADDR_KW: unit} if unit is not None else {}
+        kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             hub = await self._check_connection()
         try:
@@ -2170,7 +2170,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
 
-    async def async_write_registers_multi(self, unit, address, payload):  # Needs adapting for register queue
+    async def async_write_registers_multi(self, unit: int, address: int, payload: list[tuple[Any, Any]]) -> Any:  # type: ignore[override]  # Needs adapting for register queue
         """Write registers multi.
         unit is the modbus address of the device that will be written to
         address us the start register address
@@ -2182,7 +2182,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         All register descriptions referenced in the payload must be consecutive (without leaving holes)
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
-        kwargs = {ADDR_KW: unit} if unit is not None else {}
+        kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
         if isinstance(payload, list):
             regs_out = []
             for (
