@@ -137,7 +137,7 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Growatt Modbus sensor entities."""
 
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: int = REGISTER_U16
+    unit: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 

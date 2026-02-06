@@ -120,7 +120,7 @@ class EnertechModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass(kw_only=True)
 class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
-    unit: int = REGISTER_U16  # Default unit (16-bit)
+    unit: str = REGISTER_U16  # Default unit (16-bit)
     register_type: int = REG_HOLDING  # Holding register type
     order32: str = "big"  # Default 32-bit endianness
 

@@ -69,7 +69,7 @@ class SunwayModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
 @dataclass(kw_only=True)
 class SunwayModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT
-    unit: int = REGISTER_U16
+    unit: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
