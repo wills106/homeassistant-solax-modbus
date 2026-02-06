@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, replace
 from time import time
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -120,9 +121,8 @@ _pm_last_known_values = {}
 _soc_last_known_values = {}
 
 
-def validate_register_data(descr, value, datadict):
-    """
-    Validate register values for corruption.
+def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
+    """Validate register values for corruption.
 
     - PM U32 sensors: detect 0xFFFFFF00 overflow pattern and use last known value.
     - battery_capacity: treat zero SoC as invalid and use last known value.
@@ -241,9 +241,8 @@ class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
-    """
-    Remote control power calculations for SolaX inverters - Redesigned Implementation.
+def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+    """Remote control power calculations for SolaX inverters - Redesigned Implementation.
 
     This function implements the redesigned remote control calculations based on clear
     variable names and logical formulas. For detailed documentation, see:
@@ -516,7 +515,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available):
+def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> dict[str, Any]:
     # Determines max rate for charging battery
 
     # User cap (% of BMS max charge power).
@@ -554,7 +553,7 @@ def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
     return desired_charge, bms_cap_w, pct_cap_w
 
 
-def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
+def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     # initval = BUTTONREPEAT_FIRST means first run;
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
     # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
@@ -864,7 +863,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def value_function_byteswapserial(initval, descr, datadict):
+def value_function_byteswapserial(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
     if initval and not initval.startswith(("M", "X")):
         preswap = initval
         swapped = ""
@@ -874,53 +873,53 @@ def value_function_byteswapserial(initval, descr, datadict):
     return initval
 
 
-def valuefunction_firmware_g3(initval, descr, datadict):
+def valuefunction_firmware_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"3.{initval}"
 
 
-def valuefunction_firmware_g4(initval, descr, datadict):
+def valuefunction_firmware_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"1.{initval}"
 
 
-def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
+def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     mode_1to7 = autorepeat_remaining(datadict, "remotecontrol_trigger", time())
     mode_8to9 = autorepeat_remaining(datadict, "powercontrolmode8_trigger", time())
     return max(mode_1to7, mode_8to9)
 
 
-def value_function_remotecontrol_current_pushmode_power(initval, descr, datadict):
+def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get(descr.key, None)
 
 
-def value_function_remotecontrol_current_pv_power_limit(initval, descr, datadict):
+def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get(descr.key, None)
 
 
-def value_function_battery_power_charge(initval, descr, datadict):
+def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
 
 
-def value_function_hardware_version_g1(initval, descr, datadict):
+def value_function_hardware_version_g1(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen1"
 
 
-def value_function_hardware_version_g2(initval, descr, datadict):
+def value_function_hardware_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen2"
 
 
-def value_function_hardware_version_g3(initval, descr, datadict):
+def value_function_hardware_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen3"
 
 
-def value_function_hardware_version_g4(initval, descr, datadict):
+def value_function_hardware_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen4"
 
 
-def value_function_hardware_version_g5(initval, descr, datadict):
+def value_function_hardware_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen5"
 
 
-def value_function_house_load(initval, descr, datadict):
+def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     inverter_power = datadict.get("inverter_power", 0)
     measured_power = datadict.get("measured_power", 0)
     meter_2_power = datadict.get("meter_2_measured_power", 0)
@@ -938,7 +937,7 @@ def value_function_house_load(initval, descr, datadict):
     return result
 
 
-def value_function_house_load_alt(initval, descr, datadict):
+def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return (
         datadict.get("pv_power_1", 0)
         + datadict.get("pv_power_2", 0)
@@ -949,11 +948,11 @@ def value_function_house_load_alt(initval, descr, datadict):
     )
 
 
-def value_function_inverter_power_g5(initval, descr, datadict):
+def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("inverter_power_l1", 0) + datadict.get("inverter_power_l2", 0) + datadict.get("inverter_power_l3", 0)
 
 
-def value_function_pm_total_inverter_power(initval, descr, datadict):
+def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
     l1_power = datadict.get("pm_activepower_l1", 0)
     l2_power = datadict.get("pm_activepower_l2", 0)
@@ -970,7 +969,7 @@ def value_function_pm_total_inverter_power(initval, descr, datadict):
     return l1_power + l2_power + l3_power
 
 
-def value_function_pm_total_pv_power(initval, descr, datadict):
+def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
     pv_power_1 = datadict.get("pm_pv_power_1", 0)
     pv_power_2 = datadict.get("pm_pv_power_2", 0)
@@ -984,7 +983,7 @@ def value_function_pm_total_pv_power(initval, descr, datadict):
     return pv_power_1 + pv_power_2
 
 
-def value_function_pm_total_house_load(initval, descr, datadict):
+def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """
     Calculate total house load in parallel mode with delta correction.
 
@@ -1035,7 +1034,7 @@ def value_function_pm_total_house_load(initval, descr, datadict):
     return inverter_method
 
 
-def value_function_pm_total_reactive_or_apparentpower(initval, descr, datadict):
+def value_function_pm_total_reactive_or_apparentpower(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total reactive power in parallel mode (sum of all phases)."""
     return (
         datadict.get("pm_reactive_or_apparentpower_l1", 0)
@@ -1044,12 +1043,12 @@ def value_function_pm_total_reactive_or_apparentpower(initval, descr, datadict):
     )
 
 
-def value_function_pm_total_inverter_current(initval, descr, datadict):
+def value_function_pm_total_inverter_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter current in parallel mode (sum of all phases)."""
     return datadict.get("pm__current_l1", 0) + datadict.get("pm__current_l2", 0) + datadict.get("pm__current_l3", 0)
 
 
-def value_function_pm_total_pv_current(initval, descr, datadict):
+def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV current in parallel mode (sum of all PV inputs)."""
     pv_current_1 = datadict.get("pm_pv_current_1", 0)
     pv_current_2 = datadict.get("pm_pv_current_2", 0)
@@ -1063,7 +1062,7 @@ def value_function_pm_total_pv_current(initval, descr, datadict):
     return pv_current_1 + pv_current_2
 
 
-def value_function_battery_capacity_gen5(initval, descr, datadict):
+def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Check if total capacity has a sane value, if so return that
     total_charge = datadict.get("battery_total_capacity_charge", 0)
     if total_charge > 0:
@@ -1082,31 +1081,31 @@ def value_function_battery_capacity_gen5(initval, descr, datadict):
     return 0
 
 
-def value_function_software_version_g2(initval, descr, datadict):
+def value_function_software_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_g3(initval, descr, datadict):
+def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v3.{datadict.get('firmware_dsp')} ARM v3.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_g4(initval, descr, datadict):
+def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v1.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_g5(initval, descr, datadict):
+def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_air_g3(initval, descr, datadict):
+def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_air_g4(initval, descr, datadict):
+def value_function_software_version_air_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
 
 
-def value_function_battery_voltage_cell_difference(initval, descr, datadict):
+def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("cell_voltage_high", 0) - datadict.get("cell_voltage_low", 0)
 
 
