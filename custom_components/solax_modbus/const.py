@@ -217,7 +217,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignor
     register: int = -1  # initialize with invalid register
     rounding: int = 1
     register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
-    unit: int | None = None  # e.g. REGISTER_U16
+    unit: str | None = None  # Register data type: REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     scan_group: int | None = None  # <=0 -> default group
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False  # set to True to start a new modbus read block operation - do not use frequently
@@ -266,7 +266,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignor
     blacklist: list[str] | None = None  # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
-    unit: int | None = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
+    unit: str | None = None  # Register data type: REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     sensor_key: str | None = None  # specify only when corresponding sensor has a different key name
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
@@ -306,7 +306,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignor
     blacklist: list[str] | None = None  # None or list of serial number prefixes like
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
-    unit: int | None = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
+    unit: str | None = None  # Register data type: REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
     # update only when read value changes
     sensor_key: str | None = None  # only specify this if corresponding sensor has a different key name
