@@ -100,14 +100,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     _LOGGER.info(f"===== {hub_name}: async_setup_entry called =====")
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
-    entities = []
-    initial_groups = {}
+    entities: list[SensorEntity] = []
+    initial_groups: dict[Any, Any] = {}
 
-    computedRegs = {}
+    computedRegs: dict[Any, Any] = {}
 
     plugin = hub.plugin  # getPlugin(hub_name)
 
-    async def readFollowUp(old_data, new_data):
+    async def readFollowUp(old_data: Any, new_data: Any) -> bool:
         dev_registry = dr.async_get(hass)
         device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, INVERTER_IDENT)})
         if device is not None:
@@ -178,19 +178,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace("{pack-nr}", str(batt_pack_nr + 1))
             key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace("{pack-nr}", str(batt_pack_nr + 1))
 
-            async def readPreparation(old_data, key_prefix=key_prefix, batt_nr=0, batt_pack_nr=batt_pack_nr):
+            async def readPreparation(old_data: Any, key_prefix: str = key_prefix, batt_nr: int = 0, batt_pack_nr: int = batt_pack_nr) -> Any:
                 await battery_config.select_battery(hub, batt_nr, batt_pack_nr)
                 return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
 
             async def readFollowUp(
-                old_data,
-                new_data,
-                key_prefix=key_prefix,
-                hub_name=hub_name,
-                batt_pack_id=batt_pack_id,
-                batt_nr=batt_nr,
-                batt_pack_nr=batt_pack_nr,
-            ):
+                old_data: Any,
+                new_data: Any,
+                key_prefix: str = key_prefix,
+                hub_name: str = hub_name,
+                batt_pack_id: str = batt_pack_id,
+                batt_nr: int = batt_nr,
+                batt_pack_nr: int = batt_pack_nr,
+            ) -> Any:
                 dev_registry = dr.async_get(hass)
                 device = dev_registry.async_get_device(identifiers={(DOMAIN, hub_name, batt_pack_id)})
                 if device is not None:
@@ -257,7 +257,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 _LOGGER.info(f"{hub_name}: Energy Dashboard disabled - removing existing entities and device")
                 entity_registry = er.async_get(hass)
                 device_registry = dr.async_get(hass)
-                energy_dashboard_entities = []
+                energy_dashboard_entities: list[Any] = []
 
                 # Find Energy Dashboard device identifier (use normalized hub name)
                 energy_dashboard_device = None
@@ -265,7 +265,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     from .energy_dashboard import create_energy_dashboard_device_info
 
                     energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
-                    energy_dashboard_device = device_registry.async_get_device(identifiers=energy_dashboard_device_info.identifiers)
+                    energy_dashboard_device = device_registry.async_get_device(identifiers=energy_dashboard_device_info["identifiers"])
                 except Exception as e:
                     _LOGGER.debug(f"{hub_name}: Could not build Energy Dashboard device info for removal: {e}")
 
@@ -278,7 +278,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                             energy_dashboard_device = device_entry
                             break
                         for identifier in device_entry.identifiers:
-                            if identifier[0] == DOMAIN and identifier[2] == "ENERGY_DASHBOARD" and identifier[1] == expected_identifier:
+                            if (
+                                len(identifier) >= 3
+                                and identifier[0] == DOMAIN
+                                and identifier[2] == "ENERGY_DASHBOARD"
+                                and identifier[1] == expected_identifier
+                            ):
                                 energy_dashboard_device = device_entry
                                 break
                         if energy_dashboard_device:
@@ -391,8 +396,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                             else:
                                 hub_entry["energy_dashboard_refresh_pending"] = False
 
-                            energy_dashboard_entities = []
-                            desired_keys = {descr.key for descr in energy_dashboard_sensors}
+                            energy_dashboard_entities: list[Any] = []
+                            desired_keys: set[str] = {descr.key for descr in energy_dashboard_sensors}
                             energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
                             for newdescr in energy_dashboard_sensors:
                                 existing_sensor = hub.sensorEntities.get(newdescr.key)
@@ -496,7 +501,7 @@ class SolaXModbusSensor(SensorEntity):
         self.entity_description: BaseModbusSensorEntityDescription = description
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         await self._hub.async_add_solax_modbus_sensor(self)
 
@@ -504,18 +509,18 @@ class SolaXModbusSensor(SensorEntity):
         await self._hub.async_remove_solax_modbus_sensor(self)
 
     @callback
-    def modbus_data_updated(self):
+    def modbus_data_updated(self) -> None:
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         self.async_write_ha_state()
 
     @callback
-    def _update_state(self):  # never called ?????
+    def _update_state(self) -> None:  # never called ?????
         _LOGGER.info(f"update_state {self.entity_description.key} : {self._hub.data.get(self.entity_description.key, 'None')}")
         if self.entity_description.key in self._hub.data:
             self._state = self._hub.data[self.entity_description.key]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name."""
         return f"{self._platform_name} {self.entity_description.name}"
 
@@ -524,7 +529,7 @@ class SolaXModbusSensor(SensorEntity):
         return f"{self._platform_name}_{self.entity_description.key}"
 
     @property
-    def native_value(self):
+    def native_value(self) -> Any:
         """Return the state of the sensor."""
         if self.entity_description.key in self._hub.data:
             return self._hub.data[self.entity_description.key]
@@ -534,7 +539,7 @@ class SolaXModbusSensor(SensorEntity):
         return None
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         return self._attr_extra_state_attributes
 
 
@@ -570,7 +575,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
             attrs["last_reset_date"] = self._last_reset_date.isoformat()
         return attrs
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Register callbacks and restore state."""
         # Restore previous state if available
         if last_state := await self.async_get_last_state():
@@ -612,7 +617,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         await self._hub.async_add_solax_modbus_sensor(self)
 
     @callback
-    def modbus_data_updated(self):
+    def modbus_data_updated(self) -> None:
         """Calculate energy when data is updated."""
         if self._riemann_mapping is None:
             return
