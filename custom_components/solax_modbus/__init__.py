@@ -804,7 +804,7 @@ class SolaXModbusHub:
 
     # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
-    async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor):
+    async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor) -> None:
         """Listen for data updates."""
         # attention, this function is not only called for sensors also for number, select
         # This is the first sensor, set up interval.
@@ -866,7 +866,7 @@ class SolaXModbusHub:
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
     @callback
-    async def async_remove_solax_modbus_sensor(self, sensor):
+    async def async_remove_solax_modbus_sensor(self, sensor: Any) -> None:
         """Remove data update."""
         interval = self.scan_group(sensor)
         interval_group = self.groups.get(interval, None)
@@ -896,7 +896,7 @@ class SolaXModbusHub:
                     await self.async_close()
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    async def async_refresh_modbus_data(self, interval_group, _now: int | None = None, cycle_id=None):
+    async def async_refresh_modbus_data(self, interval_group: Any, _now: int | None = None, cycle_id: int | None = None) -> None:
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
@@ -1282,7 +1282,7 @@ class SolaXModbusHub:
             _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
             return None
 
-    async def async_read_modbus_data(self, group):
+    async def async_read_modbus_data(self, group: Any) -> bool:
         res = True
         try:
             res = await self.async_read_modbus_registers_all(group)
@@ -1297,8 +1297,8 @@ class SolaXModbusHub:
             res = False
         return res
 
-    def treat_address(self, data, regs, idx, descr, initval=0, advance=True):
-        return_value = None
+    def treat_address(self, data: dict[str, Any], regs: list[int], idx: int, descr: Any, initval: int = 0, advance: bool = True) -> int:
+        return_value: int | None = None
         read_scale = descr.read_scale  # read scale might still be wrong the first polling cycle
         order32 = getattr(descr, "order32", None) or self.plugin.order32
         val = None
@@ -1426,7 +1426,7 @@ class SolaXModbusHub:
             data[descr.key] = return_value  # case prevent_update number
         return idx + (words_used if advance else 0)
 
-    async def async_read_modbus_block(self, data, block, typ):
+    async def async_read_modbus_block(self, data: dict[str, Any], block: Any, typ: int) -> bool:
         errmsg = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
@@ -1506,7 +1506,7 @@ class SolaXModbusHub:
                     )
                 return False
 
-    async def async_read_modbus_registers_all(self, group):
+    async def async_read_modbus_registers_all(self, group: Any) -> bool:
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
                 _LOGGER.info(f"{self._name}: device group read cancel")
@@ -1624,7 +1624,7 @@ class SolaXModbusHub:
 
     # --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
 
-    def splitInBlocks(self, descriptions):
+    def splitInBlocks(self, descriptions: list[Any]) -> dict[int, list[Any]]:
         start = INVALID_START
         end = 0
         blocks = []
@@ -1733,7 +1733,7 @@ class SolaXModbusHub:
             blocks.append(newblock)
         return blocks
 
-    def rebuild_blocks(self, initial_groups):  # , computedRegs):
+    def rebuild_blocks(self, initial_groups: dict[Any, Any]) -> None:  # , computedRegs):
         _LOGGER.debug(f"{self._name}: rebuilding groups and blocks - pre: {initial_groups.keys()}")
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():
@@ -1766,7 +1766,7 @@ class SolaXModbusHub:
             # run in background to avoid delaying the event loop
             self._initial_bisect_task = self._hass.loop.create_task(self._run_initial_bisect_for_all_groups())
 
-    async def _run_initial_bisect_for_all_groups(self):
+    async def _run_initial_bisect_for_all_groups(self) -> None:
         """Run a one-time bisect over all current blocks to discover unreadable entity bases.
         The result updates self.bad_recheck and schedules a delayed revalidation.
         """
@@ -1820,7 +1820,7 @@ class SolaXModbusHub:
         # Re-validate candidates after a short grace period
         self._recheck_task = self._hass.loop.create_task(self._recheck_bad_after(30))
 
-    async def _initial_bisect_block(self, block_obj, typ):
+    async def _initial_bisect_block(self, block_obj: Any, typ: int) -> None:
         """Bisect a block once at startup. Operates on *entity bases* only, so multi-register
         entities (U32/STR/WORDS) are never split apart. No value decoding happens here."""
         try:
@@ -1828,7 +1828,7 @@ class SolaXModbusHub:
         except Exception as ex:
             _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
 
-    async def _read_block_with_bisect_once(self, block_obj, typ, depth=0):
+    async def _read_block_with_bisect_once(self, block_obj: Any, typ: int, depth: int = 0) -> bool:
         """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
         list into halves and probe recursively until single-entity blocks are found.
         Single-entity failures are added to bad_recheck (not yet definitive)."""
@@ -1858,7 +1858,7 @@ class SolaXModbusHub:
         await self._read_block_with_bisect_once(right, typ, depth + 1)
         return True
 
-    async def _recheck_bad_after(self, seconds):
+    async def _recheck_bad_after(self, seconds: int) -> None:
         """After a grace period, re-validate all candidate bad entity bases. Only reproducible
         failures are promoted to definitive bad_regs; otherwise the candidate is dropped."""
         await asyncio.sleep(seconds)
@@ -1911,7 +1911,7 @@ class SolaXModbusHub:
         else:
             _LOGGER.info(f"{self._name}: no bad registers confirmed on recheck.")
 
-    def _entity_span_end(self, desc_map, base_reg):
+    def _entity_span_end(self, desc_map: dict[int, Any], base_reg: int) -> int:
         """Compute end address (exclusive) for a single entity starting at base_reg based on its unit.
         This ensures we never split STR/WORDS or 32-bit entities."""
         descr = desc_map.get(base_reg)
@@ -1928,7 +1928,7 @@ class SolaXModbusHub:
             return base_reg + wc
         return base_reg + 1
 
-    def _subblock_entity_span(self, block_obj, i0, i1):
+    def _subblock_entity_span(self, block_obj: Any, i0: int, i1: int) -> tuple[int, int]:
         """Create a sub-block using entity-base indices [i0, i1), computing a correct exclusive end
         based on the last entity's span. This preserves multi-register entities on reads."""
         regs = block_obj.regs[i0:i1]
@@ -1939,7 +1939,7 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
-    async def _probe_block(self, block_obj, typ):
+    async def _probe_block(self, block_obj: Any, typ: int) -> bool:
         if getattr(self, "_stopping", False):
             return False
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
@@ -1970,10 +1970,10 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
     def __init__(
         self,
-        hass,
-        plugin,
-        entry,
-    ):
+        hass: HomeAssistant,
+        plugin: ModuleType,
+        entry: ConfigEntry,
+    ) -> None:
         SolaXModbusHub.__init__(self, hass, plugin, entry)
         config = entry.options
         core_hub_name = config.get(CONF_CORE_HUB, "")
@@ -1983,7 +1983,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
 
         _LOGGER.debug("setup solax core modbus hub done %s", self.__dict__)
 
-    async def async_close(self):
+    async def async_close(self) -> None:  # type: ignore[override]
         """Disconnect client."""
         with self._lock:
             if self._hub:
@@ -1996,7 +1996,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     #        async with self._lock:
     #            await self._client.connect()
 
-    async def _check_connection(self):
+    async def _check_connection(self) -> Any:  # type: ignore[override]
         # get hold of temporary strong reference to CoreModbusHub object
         # and pass it on success to caller if available
         if self._hub is None or (hub := self._hub()) is None:
@@ -2026,7 +2026,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
             if ref_obj is self._hub:
                 self._hub = None
 
-    async def async_connect(self, hub=None):
+    async def async_connect(self, hub: Any = None) -> Any:  # type: ignore[override]
         delay = True
         while True:
             # check if strong reference to
@@ -2081,7 +2081,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
             delay = False
             await asyncio.sleep(10)
 
-    async def async_read_holding_registers(self, unit, address, count):
+    async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:  # type: ignore[override]
         """Read holding registers."""
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
@@ -2101,7 +2101,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus holding registers: core modbus access failed") from e
 
-    async def async_read_input_registers(self, unit, address, count):
+    async def async_read_input_registers(self, unit: int, address: int, count: int) -> Any:  # type: ignore[override]
         """Read input registers."""
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
@@ -2121,7 +2121,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus input registers: core modbus access failed") from e
 
-    async def async_lowlevel_write_register(self, unit, address, payload):
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:  # type: ignore[override]
         """
         Write a single register using the Core hub's client.
         """
