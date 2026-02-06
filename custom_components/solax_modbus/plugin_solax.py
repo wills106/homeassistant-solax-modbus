@@ -10030,17 +10030,28 @@ class solax_plugin(plugin_base):
         if parallel_setting == "Master":
             # Use inverter_power_kw (total system capacity) for remote control limits
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
-            for key in ["remotecontrol_active_power"]:
+            for key in ["remotecontrol_active_power", "remotecontrol_import_limit"]:
                 number_entity = hub.numberEntities.get(key)
                 if number_entity:
-                    number_entity._attr_native_min_value = -system_limit_w
-                    number_entity._attr_native_max_value = system_limit_w
-                    number_entity.entity_description = replace(
-                        number_entity.entity_description,
-                        native_min_value=-system_limit_w,
-                        native_max_value=system_limit_w,
-                    )
-                    _LOGGER.info(f"Parallel Master: Set {key} limits to ±{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+                    # remotecontrol_active_power uses ±limits, import_limit uses 0 to +limit
+                    if key == "remotecontrol_import_limit":
+                        number_entity._attr_native_min_value = 0
+                        number_entity._attr_native_max_value = system_limit_w
+                        number_entity.entity_description = replace(
+                            number_entity.entity_description,
+                            native_min_value=0,
+                            native_max_value=system_limit_w,
+                        )
+                        _LOGGER.info(f"Parallel Master: Set {key} limits to 0-{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+                    else:
+                        number_entity._attr_native_min_value = -system_limit_w
+                        number_entity._attr_native_max_value = system_limit_w
+                        number_entity.entity_description = replace(
+                            number_entity.entity_description,
+                            native_min_value=-system_limit_w,
+                            native_max_value=system_limit_w,
+                        )
+                        _LOGGER.info(f"Parallel Master: Set {key} limits to ±{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
 
         # For single inverters or if config_max_export is enabled, use config_max_export
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
