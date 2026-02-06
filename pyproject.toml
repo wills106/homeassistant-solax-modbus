@@ -60,24 +60,24 @@ python_version = "3.12"
 # Package resolution
 explicit_package_bases = true
 
-# Phase 2: Enable basic type checking
-strict = false
-warn_return_any = false
+# Phase 3: Stricter enforcement
+strict = false  # Still not full strict
+warn_return_any = true  # Changed from false
 warn_unused_configs = true
 
 # Still ignore missing imports (dependencies may not have stubs)
 ignore_missing_imports = true
 
-# Enforce type checking on typed functions
-check_untyped_defs = true  # Changed from false
-disallow_untyped_defs = false  # Will enable in Phase 3
-disallow_untyped_calls = false
-disallow_incomplete_defs = true  # New: Require complete signatures
+# Require type annotations
+disallow_untyped_defs = true  # Changed from false - Phase 3
+disallow_incomplete_defs = true
+check_untyped_defs = true
 
 # Stricter checks
 warn_redundant_casts = true
 warn_unused_ignores = true
-no_implicit_reexport = true  # Changed from false
+no_implicit_reexport = true
+disallow_any_generics = false  # Will enable in Phase 4
 
 # Output configuration
 show_error_codes = true
