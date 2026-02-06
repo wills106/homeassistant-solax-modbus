@@ -16,7 +16,7 @@ try:
     from packaging.version import parse as _v
 except Exception:  # packaging may be absent in some environments
 
-    def _v(s: str) -> tuple[int, ...]:  # minimal semantic-ish parser: converts 'X.Y.Z' -> (X,Y,Z)
+    def _v(s: str) -> tuple[int, ...]:  # type: ignore[misc]  # Fallback has different signature than packaging.version.parse
         """Parse version string into tuple of integers."""
         parts: list[int] = []
         for p in str(s).split("."):
@@ -113,7 +113,7 @@ if pymodbus is not None:
         try:
             from pymodbus.client.mixin import ModbusClientMixin as _MCM
         except Exception:
-            _MCM = None  # type: ignore[assignment]
+            _MCM = None  # type: ignore[assignment,misc]
         if _MCM is not None:
             _convert_to = getattr(_MCM, "convert_to_registers", None)
             _convert_from = getattr(_MCM, "convert_from_registers", None)
@@ -124,7 +124,7 @@ if pymodbus is not None:
 # Reject helper functions that don't support word_order (e.g., very old 3.x builds)
 if _convert_to and _convert_from:
 
-    def _helper_supports_word_order(func) -> bool:
+    def _helper_supports_word_order(func: Callable[..., Any]) -> bool:
         try:
             sig = inspect.signature(func)
             # Accept if explicit kw exists, or function has at least 4 params (self, value, dt, word_order)
@@ -156,7 +156,7 @@ try:
             try:
                 from pymodbus.client.mixin import ModbusClientMixin as _MCM
             except Exception:
-                _MCM = None  # type: ignore[assignment]
+                _MCM = None  # type: ignore[assignment,misc]
             if _MCM is not None:
                 _DT_TARGET = getattr(_MCM, "DATATYPE", None)
 except Exception:
@@ -165,7 +165,7 @@ except Exception:
 # If an official DATATYPE enum was found (module/mixin/class), alias DataType to it
 try:
     if _DT_TARGET is not None and DataType is not _DT_TARGET:
-        DataType = _DT_TARGET  # type: ignore[assignment,misc]
+        DataType = _DT_TARGET
 except Exception:
     pass
 # Re-evaluate unified alias DT after potential aliasing of DataType
@@ -206,7 +206,7 @@ if _convert_to and _convert_from:
     # start assuming fasttrack  - no coerce or wordorder adaption needed
     convert_to_registers = _convert_to
     convert_from_registers = _convert_from
-    DataType = _DT_TARGET  # type: ignore[assignment,misc]
+    DataType = _DT_TARGET
 
     if _PM_VER < _v("3.9.2"):  # not fast track, overwrite functions
 
@@ -215,19 +215,19 @@ if _convert_to and _convert_from:
             # Fast-path: exact enum + correct word_order string → call directly
             if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
-                    return _convert_to(value, dt, word_order=wordorder, string_encoding=string_encoding)  # type: ignore[misc]
+                    return _convert_to(value, dt, word_order=wordorder, string_encoding=string_encoding)  # type: ignore[misc,no-any-return]
                 except TypeError:
                     # Older helper with positional word order
-                    return _convert_to(value, dt, wordorder)  # type: ignore[misc]
+                    return _convert_to(value, dt, wordorder)  # type: ignore[misc,no-any-return]
 
             # Compat-path: accept local enum / mixed inputs
             dtc = _coerce_dt(dt)
             wo = _word_order_str(wordorder)
             try:
-                return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)  # type: ignore[misc]
+                return _convert_to(value, dtc, word_order=wo, string_encoding=string_encoding)  # type: ignore[misc,no-any-return]
             except TypeError:
                 # Older 3.8 helper may only accept positional word order (and no string_encoding kw)
-                return _convert_to(value, dtc, wo)  # type: ignore[misc]
+                return _convert_to(value, dtc, wo)  # type: ignore[misc,no-any-return]
 
         def convert_from_registers(regs: list[int], dt: Any, wordorder: Any, string_encoding: str = "utf-8") -> Any:
             """Convert Modbus registers to value."""
@@ -261,7 +261,7 @@ else:
         ) from e
 
     try:
-        from pymodbus.constants import Endian as _OldEndian
+        from pymodbus.constants import Endian as _OldEndian  # type: ignore[attr-defined]
     except Exception:
 
         class _OldEndian(str, Enum):  # type: ignore[no-redef]
@@ -280,21 +280,21 @@ else:
     def convert_to_registers(value: Any, dt: Any, wordorder: Any) -> list[int]:
         """Convert value to Modbus registers using legacy BinaryPayloadBuilder."""
         b = BinaryPayloadBuilder(byteorder=_OldEndian.BIG, wordorder=_old_endian(wordorder))
-        if dt == DataType.UINT16:
+        if dt == DataType.UINT16:  # type: ignore[attr-defined]
             b.add_16bit_uint(int(value))
-        elif dt == DataType.INT16:
+        elif dt == DataType.INT16:  # type: ignore[attr-defined]
             b.add_16bit_int(int(value))
-        elif dt == DataType.UINT32:
+        elif dt == DataType.UINT32:  # type: ignore[attr-defined]
             b.add_32bit_uint(int(value))
-        elif dt == DataType.INT32:
+        elif dt == DataType.INT32:  # type: ignore[attr-defined]
             b.add_32bit_int(int(value))
-        elif dt == DataType.FLOAT32:
+        elif dt == DataType.FLOAT32:  # type: ignore[attr-defined]
             b.add_32bit_float(float(value))
-        elif dt == DataType.STRING:
+        elif dt == DataType.STRING:  # type: ignore[attr-defined]
             b.add_string(str(value))
         else:
             raise ValueError(f"Unsupported data_type: {dt}")
-        return b.to_registers()
+        return b.to_registers()  # type: ignore[no-any-return]
 
     def convert_from_registers(regs: list[int], dt: Any, wordorder: Any) -> Any:
         """Convert Modbus registers to value using legacy BinaryPayloadDecoder."""
@@ -305,17 +305,17 @@ else:
             byteorder=_OldEndian.BIG,  # all our plugins use this
             wordorder=_old_endian(wordorder),
         )
-        if dt == DataType.UINT16:
+        if dt == DataType.UINT16:  # type: ignore[attr-defined]
             return d.decode_16bit_uint()
-        elif dt == DataType.INT16:
+        elif dt == DataType.INT16:  # type: ignore[attr-defined]
             return d.decode_16bit_int()
-        elif dt == DataType.UINT32:
+        elif dt == DataType.UINT32:  # type: ignore[attr-defined]
             return d.decode_32bit_uint()
-        elif dt == DataType.INT32:
+        elif dt == DataType.INT32:  # type: ignore[attr-defined]
             return d.decode_32bit_int()
-        elif dt == DataType.FLOAT32:
+        elif dt == DataType.FLOAT32:  # type: ignore[attr-defined]
             return d.decode_32bit_float()
-        elif dt == DataType.STRING:
+        elif dt == DataType.STRING:  # type: ignore[attr-defined]
             return d.decode_string(len(regs) * 2)
         else:
             raise ValueError(f"Unsupported data_type: {dt}")
