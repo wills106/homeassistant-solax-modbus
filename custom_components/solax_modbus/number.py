@@ -1,11 +1,15 @@
 import logging
 from dataclasses import replace
 from time import time
+from typing import Any
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONF_MODBUS_ADDR,
@@ -16,12 +20,13 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
+    BaseModbusNumberEntityDescription,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -84,11 +89,11 @@ class SolaXModbusNumber(NumberEntity):
 
     def __init__(
         self,
-        platform_name,
-        hub,
-        modbus_addr,
-        device_info,
-        number_info,
+        platform_name: str,
+        hub: Any,
+        modbus_addr: int,
+        device_info: DeviceInfo,
+        number_info: BaseModbusNumberEntityDescription,
         # read_scale
     ) -> None:
         """Initialize the number."""

@@ -1,8 +1,13 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
@@ -11,12 +16,13 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
+    BaseModbusSwitchEntityDescription,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -98,7 +104,14 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     """Representation of an SolaX Modbus switch."""
 
-    def __init__(self, platform_name, hub, modbus_addr, device_info, switch_info) -> None:
+    def __init__(
+        self,
+        platform_name: str,
+        hub: Any,
+        modbus_addr: int,
+        device_info: DeviceInfo,
+        switch_info: BaseModbusSwitchEntityDescription,
+    ) -> None:
         super().__init__()
         self._platform_name = platform_name
         self._hub = hub

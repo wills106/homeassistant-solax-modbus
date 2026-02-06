@@ -1,8 +1,13 @@
 import logging
 from time import time
+from typing import Any
 
 from homeassistant.components.button import ButtonEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     BUTTONREPEAT_FIRST,
@@ -12,13 +17,14 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
+    BaseModbusButtonEntityDescription,
     autorepeat_set,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -70,7 +76,14 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 class SolaXModbusButton(ButtonEntity):
     """Representation of an SolaX Modbus button."""
 
-    def __init__(self, platform_name, hub, modbus_addr, device_info, button_info) -> None:
+    def __init__(
+        self,
+        platform_name: str,
+        hub: Any,
+        modbus_addr: int,
+        device_info: DeviceInfo,
+        button_info: BaseModbusButtonEntityDescription,
+    ) -> None:
         """Initialize the button."""
         self._platform_name = platform_name
         self._hub = hub
