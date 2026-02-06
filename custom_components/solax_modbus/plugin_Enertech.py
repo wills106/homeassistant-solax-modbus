@@ -120,7 +120,7 @@ class EnertechModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass(kw_only=True)
 class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
-    unit: str = REGISTER_U16  # Default unit (16-bit)
+    register_data_type: str = REGISTER_U16  # Default unit (16-bit)
     register_type: int = REG_HOLDING  # Holding register type
     order32: str = "big"  # Default 32-bit endianness
 
@@ -212,7 +212,7 @@ NUMBER_TYPES = [
         name="DIESEL GENERATOR Start Voltage (V)",
         key="DIESEL_GENERATOR_Start_Voltage",
         register=0x199,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         # register_type = REG_HOLDING,
         native_min_value=10,
         native_max_value=100,
@@ -229,7 +229,7 @@ NUMBER_TYPES = [
         name="Grid/DIESEL GENERATOR Current Limit",
         key="Grid_DIESEL_GENERATOR_Current_Limit",
         register=0x197,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         # register_type = REG_HOLDING,
         native_min_value=10,
         native_max_value=100,
@@ -245,7 +245,7 @@ NUMBER_TYPES = [
         name="DIESEL GENERATOR Run time (Min)",
         key="DIESEL_GENERATOR_Run_time",
         register=0x198,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         # register_type = REG_HOLDING,
         native_min_value=10,
         native_max_value=300,
@@ -280,7 +280,7 @@ SELECT_TYPES = [
     EnertechModbusSelectEntityDescription(
         name="Inverter Mode",
         key="Inverter Mode",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         # register_type = REG_HOLDING,
         write_method=WRITE_SINGLE_MODBUS,
         register=0x1A5,  # Modbus register address
@@ -455,7 +455,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Battery Capacity",
         key="battery_capacity_charge",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
@@ -465,7 +465,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Load %",
         key="Load",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
@@ -475,7 +475,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Output PF",
         key="Output_PF",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -486,7 +486,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Input PF",
         key="Input_PF",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -497,7 +497,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Battery Voltage",
         key="battery_voltage",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -508,7 +508,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Battery Current",
         key="battery_current",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -520,7 +520,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Battery Current In",
         key="battery_current_in",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -532,7 +532,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="PV Voltage 1",
         key="pv_voltage_1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -542,7 +542,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="PV Current 1",
         key="pv_current_1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -558,7 +558,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x146,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         register_type=REG_HOLDING,
         wordcount=2,
         scale=0.1,
@@ -596,7 +596,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="PV Voltage 2",
         key="pv_voltage_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -606,7 +606,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="PV Current 2",
         key="pv_current_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -618,7 +618,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="PV Power 2",
         key="pv_power_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -630,7 +630,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Run Mode",
         key="run_mode",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x10F,
         scale={
@@ -646,7 +646,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Voltage R",
         key="grid_voltage_meter_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -656,7 +656,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Voltage Y",
         key="grid_voltage_meter_l2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -666,7 +666,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Voltage B",
         key="grid_voltage_meter_l3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -676,7 +676,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Current R",
         key="grid_current_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -687,7 +687,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Current Y",
         key="grid_current_l2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -698,7 +698,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Current B",
         key="grid_current_l3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -709,7 +709,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Grid Frequency",
         key="grid_frequency_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         state_class=SensorStateClass.MEASUREMENT,
@@ -720,7 +720,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Output Frequency",
         key="Output_frequency",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         state_class=SensorStateClass.MEASUREMENT,
@@ -731,7 +731,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Voltage R",
         key="inverter_voltage_meter_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -741,7 +741,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Voltage Y",
         key="inverter_voltage_meter_l2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -751,7 +751,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Voltage B",
         key="inverter_voltage_meter_l3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -761,7 +761,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Current R",
         key="inverter_current_11",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -772,7 +772,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Current Y",
         key="inverter_current_Y",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -783,7 +783,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Current B",
         key="inverter_current_B",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -794,7 +794,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Inverter Frequency",
         key="inverter_frequency_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         state_class=SensorStateClass.MEASUREMENT,
@@ -805,7 +805,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Load Current R",
         key="load_current_R",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -816,7 +816,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Load Current Y",
         key="load_current_Y",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -827,7 +827,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Load Current B",
         key="load_current_B",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -838,7 +838,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="DC-DC Temperature",
         key="dc_dc_temperature",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -851,7 +851,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="DC-AC Temperature",
         key="dc_ac_temperature",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -864,7 +864,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Translator Temperature",
         key="translator_temperature",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -877,7 +877,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Battery Charge PV",
         key="battery_charge_pv",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -889,7 +889,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Output Voltage R",
         key="Output_voltage_meter_l1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -899,7 +899,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Output Voltage Y",
         key="Output_voltage_meter_l2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -909,7 +909,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Output Voltage B",
         key="Output_voltage_meter_l3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -919,7 +919,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Inverter run time",
         key="Total_Inverter_run_time",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTime.HOURS,
         device_class=SensorDeviceClass.DURATION,
@@ -929,7 +929,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Bypass run time",
         key="Total_Bypass_run_time",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTime.HOURS,
         device_class=SensorDeviceClass.DURATION,
@@ -939,7 +939,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Grid fail hour",
         key="Total_Grid_fail_hour",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTime.HOURS,
         device_class=SensorDeviceClass.DURATION,
@@ -949,7 +949,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Grid fail Minutes",
         key="Total_Grid_fail_MINUTES",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         device_class=SensorDeviceClass.DURATION,
@@ -959,7 +959,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Grid IMP kWh - 1",
         key="Grid_IMP_kwh_1",
-        unit=REGISTER_F32,  # Change from REGISTER_U16 to REGISTER_F32
+        register_data_type=REGISTER_F32,  # Change from REGISTER_U16 to REGISTER_F32
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -973,7 +973,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Total Grid Export Kwh - 1",
         key="Grid_Export_kwh_1",
-        unit=REGISTER_F32,
+        register_data_type=REGISTER_F32,
         register_type=REG_HOLDING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -988,7 +988,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="MPPT Mode",
         key="info_MPPT_Mode",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x10E,
         scale={
@@ -1002,7 +1002,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Product Type",
         key="info_Product_Type",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x108,
         scale={
@@ -1018,7 +1018,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Configuration",
         key="info_Configuration",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x109,
         scale={
@@ -1042,7 +1042,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault Monitor",
         key="info_Fault Monitor",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x159,
         scale={
@@ -1065,7 +1065,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault Grid",
         key="info_Fault_Grid",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x15A,
         scale={
@@ -1086,7 +1086,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault PFC Rectifier",
         key="info_Fault_PFC",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x15B,
         scale={
@@ -1114,7 +1114,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault Solar 1",
         key="info_Fault_Solar1",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x15C,
         scale={
@@ -1134,7 +1134,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault Inverter",
         key="info_Fault_Inverter",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x15D,
         scale={
@@ -1165,7 +1165,7 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
     EnertechModbusSensorEntityDescription(
         name="Fault Battery",
         key="info_Fault_Battery",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         register_type=REG_HOLDING,
         register=0x15E,
         scale={

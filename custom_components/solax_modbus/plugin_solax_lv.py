@@ -141,7 +141,7 @@ class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass(kw_only=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: str = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -693,7 +693,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x180,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         rounding=1,
         allowedtypes=AC | HYBRID,
     ),
@@ -716,7 +716,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -727,7 +727,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x12D,
         scale=0.001,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -803,7 +803,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         register=0x402,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -862,7 +862,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x480,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -873,7 +873,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x481,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC,
         icon="mdi:current-dc",
     ),
@@ -885,7 +885,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x482,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         icon="mdi:battery-charging",
     ),
@@ -897,7 +897,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x484,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -930,7 +930,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         register=0xC08,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,

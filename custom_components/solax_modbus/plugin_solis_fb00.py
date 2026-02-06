@@ -149,7 +149,7 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     order16: str = "big"
     order32: str = "big"
-    unit: str = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -582,7 +582,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Sync RTC Offset",
         key="sync_rtc_offset",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=-3600,
@@ -598,7 +598,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours",
         key="timed_charge_start_hours",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -614,7 +614,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes",
         key="timed_charge_start_minutes",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -630,7 +630,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours",
         key="timed_charge_end_hours",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -646,7 +646,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes",
         key="timed_charge_end_minutes",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -662,7 +662,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours",
         key="timed_discharge_start_hours",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -678,7 +678,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes",
         key="timed_discharge_start_minutes",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -694,7 +694,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours",
         key="timed_discharge_end_hours",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -710,7 +710,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Minutes",
         key="timed_discharge_end_minutes",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -727,7 +727,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 2",
         key="timed_charge_start_hours_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -743,7 +743,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes 2",
         key="timed_charge_start_minutes_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -759,7 +759,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours 2",
         key="timed_charge_end_hours_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -775,7 +775,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes 2",
         key="timed_charge_end_minutes_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -791,7 +791,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours 2",
         key="timed_discharge_start_hours_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -807,7 +807,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes 2",
         key="timed_discharge_start_minutes_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -823,7 +823,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours 2",
         key="timed_discharge_end_hours_2",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -840,7 +840,7 @@ NUMBER_TYPES = [
         name="Timed Discharge End Minutes 2",
         key="timed_discharge_end_minutes_2",
         fmt="i",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         initvalue=0,
         native_min_value=0,
         native_max_value=59,
@@ -856,7 +856,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 3",
         key="timed_charge_start_hours_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -872,7 +872,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes 3",
         key="timed_charge_start_minutes_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -888,7 +888,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours 3",
         key="timed_charge_end_hours_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -904,7 +904,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes 3",
         key="timed_charge_end_minutes_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -920,7 +920,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours 3",
         key="timed_discharge_start_hours_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -936,7 +936,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes 3",
         key="timed_discharge_start_minutes_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -952,7 +952,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours 3",
         key="timed_discharge_end_hours_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -968,7 +968,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Minutes 3",
         key="timed_discharge_end_minutes_3",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -985,7 +985,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 4",
         key="timed_charge_start_hours_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1001,7 +1001,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes 4",
         key="timed_charge_start_minutes_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1017,7 +1017,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours 4",
         key="timed_charge_end_hours_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1033,7 +1033,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes 4",
         key="timed_charge_end_minutes_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1049,7 +1049,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours 4",
         key="timed_discharge_start_hours_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1065,7 +1065,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes 4",
         key="timed_discharge_start_minutes_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1081,7 +1081,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours 4",
         key="timed_discharge_end_hours_4",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1098,7 +1098,7 @@ NUMBER_TYPES = [
         name="Timed Discharge End Minutes 4",
         key="timed_discharge_end_minutes_4",
         fmt="i",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         initvalue=0,
         native_min_value=0,
         native_max_value=59,
@@ -1114,7 +1114,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 5",
         key="timed_charge_start_hours_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1130,7 +1130,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes 5",
         key="timed_charge_start_minutes_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1146,7 +1146,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours 5",
         key="timed_charge_end_hours_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1162,7 +1162,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes 5",
         key="timed_charge_end_minutes_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1178,7 +1178,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours 5",
         key="timed_discharge_start_hours_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1194,7 +1194,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes 5",
         key="timed_discharge_start_minutes_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1210,7 +1210,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours 5",
         key="timed_discharge_end_hours_5",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1227,7 +1227,7 @@ NUMBER_TYPES = [
         name="Timed Discharge End Minutes 5",
         key="timed_discharge_end_minutes_5",
         fmt="i",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         initvalue=0,
         native_min_value=0,
         native_max_value=59,
@@ -1243,7 +1243,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Hours 6",
         key="timed_charge_start_hours_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1259,7 +1259,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge Start Minutes 6",
         key="timed_charge_start_minutes_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1275,7 +1275,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Hours 6",
         key="timed_charge_end_hours_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1291,7 +1291,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Charge End Minutes 6",
         key="timed_charge_end_minutes_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1307,7 +1307,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Hours 6",
         key="timed_discharge_start_hours_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1323,7 +1323,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge Start Minutes 6",
         key="timed_discharge_start_minutes_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1339,7 +1339,7 @@ NUMBER_TYPES = [
     SolisModbusNumberEntityDescription(
         name="Timed Discharge End Hours 6",
         key="timed_discharge_end_hours_6",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=0,
         native_min_value=0,
@@ -1356,7 +1356,7 @@ NUMBER_TYPES = [
         name="Timed Discharge End Minutes 6",
         key="timed_discharge_end_minutes_6",
         fmt="i",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         initvalue=0,
         native_min_value=0,
         native_max_value=59,
@@ -2207,7 +2207,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register=33022,
         ignore_readerror=True,
         register_type=REG_INPUT,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc_ymd,
         entity_registry_enabled_default=False,
@@ -2224,7 +2224,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33029,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
     ),
@@ -2237,7 +2237,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33031,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
     ),
@@ -2250,7 +2250,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33033,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
     ),
@@ -2291,7 +2291,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33037,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
     ),
@@ -2304,7 +2304,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33039,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
     ),
@@ -2456,7 +2456,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33057,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
         icon="mdi:solar-power-variant",
     ),
@@ -2556,7 +2556,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33079,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2566,7 +2566,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33081,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2576,7 +2576,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33083,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2691,7 +2691,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         register=33126,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID,
@@ -2728,7 +2728,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=33130,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2768,7 +2768,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33134,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
@@ -2823,7 +2823,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33142,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=2,
         allowedtypes=HYBRID,
@@ -2882,7 +2882,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33149,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         icon="mdi:home",
@@ -2922,7 +2922,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         register=33161,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2956,7 +2956,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         register=33165,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -2991,7 +2991,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33169,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_registry_enabled_default=False,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
@@ -3034,7 +3034,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33173,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_registry_enabled_default=False,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
@@ -3077,7 +3077,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33177,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         rounding=1,
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
@@ -3228,7 +3228,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=33257,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.001,
         rounding=3,
         allowedtypes=HYBRID | X3,
@@ -3240,7 +3240,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=33259,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.001,
         rounding=3,
         allowedtypes=HYBRID | X3,
@@ -3252,7 +3252,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=33261,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.001,
         rounding=3,
         allowedtypes=HYBRID | X3,
@@ -3264,7 +3264,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=33263,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.001,
         rounding=3,
         allowedtypes=HYBRID,
@@ -3276,7 +3276,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33265,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
@@ -3286,7 +3286,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33265,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3296,7 +3296,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33267,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3306,7 +3306,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33269,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3316,7 +3316,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=33271,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -3326,7 +3326,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33273,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X1,
     ),
     SolisModbusSensorEntityDescription(
@@ -3336,7 +3336,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33273,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3346,7 +3346,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33275,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3356,7 +3356,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33277,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolisModbusSensorEntityDescription(
@@ -3366,7 +3366,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=33279,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -3377,7 +3377,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=33281,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID,
         scale=0.01,
         rounding=2,
@@ -3401,7 +3401,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33283,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         sleepmode=SLEEPMODE_LASTAWAKE,
@@ -3416,7 +3416,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=33285,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         sleepmode=SLEEPMODE_LASTAWAKE,

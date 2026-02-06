@@ -114,7 +114,7 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: str = "big"
     # order32: str = "big"
-    unit: str = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -131,7 +131,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=3005,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -142,7 +142,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=3007,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
         icon="mdi:solar-power-variant",
     ),
@@ -155,7 +155,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=3009,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -167,7 +167,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=3011,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -179,7 +179,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=3013,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -217,7 +217,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=3017,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
@@ -229,7 +229,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=3019,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(

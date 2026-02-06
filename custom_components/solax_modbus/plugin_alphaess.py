@@ -132,7 +132,7 @@ class AlphaESSModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass(kw_only=True)
 class AlphaESSModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: str = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -507,7 +507,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x21,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -517,7 +517,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x29,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -527,7 +527,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x100,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -537,7 +537,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x101,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
         icon="mdi:current-dc",
     ),
@@ -566,7 +566,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:battery-arrow-up",
         register=0x120,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         allowedtypes=GEN,
     ),
@@ -578,7 +578,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:battery-arrow-down",
         register=0x122,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         allowedtypes=GEN,
     ),
@@ -661,7 +661,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x406,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -671,7 +671,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x408,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -681,7 +681,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x40A,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -691,7 +691,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x40C,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -773,7 +773,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x414,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -783,7 +783,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x416,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -793,7 +793,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x418,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -803,7 +803,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41A,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | EPS,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -844,7 +844,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41F,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
         icon="mdi:solar-power-variant",
     ),
@@ -876,7 +876,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x423,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
         icon="mdi:solar-power-variant",
     ),
@@ -908,7 +908,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x427,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | MPPT3,
         icon="mdi:solar-power-variant",
     ),
@@ -947,7 +947,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         name="Software Master Version",
         key="software_master_version",
         register=0x640,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=5,
         allowedtypes=GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -957,7 +957,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         name="Software Slave Version",
         key="software_slave_version",
         register=0x645,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=GEN,
         entity_category=EntityCategory.DIAGNOSTIC,

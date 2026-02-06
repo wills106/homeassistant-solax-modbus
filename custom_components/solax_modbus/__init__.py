@@ -1250,7 +1250,7 @@ class SolaXModbusHub:
                         value = int(value)
                     except Exception:
                         _LOGGER.warning(f"{self._name}: could not cast '{value}' to int for {getattr(descr, 'key', '?')}; leaving value unchanged")
-                    typ = descr.unit
+                    typ = descr.register_data_type
                 try:
                     if typ == REGISTER_U16:
                         regs_out += convert_to_registers(value, DataType.UINT16, self.plugin.order32)
@@ -1306,36 +1306,36 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: treating register 0x{descr.register:02x} : {descr.key}")
         words_used = 0
         try:
-            if descr.unit == REGISTER_U16:
+            if descr.register_data_type == REGISTER_U16:
                 val = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, self.plugin.order32)
                 words_used = 1
-            elif descr.unit == REGISTER_S16:
+            elif descr.register_data_type == REGISTER_S16:
                 val = convert_from_registers(regs[idx : idx + 1], DataType.INT16, self.plugin.order32)
                 words_used = 1
-            elif descr.unit == REGISTER_U32:
+            elif descr.register_data_type == REGISTER_U32:
                 val = convert_from_registers(regs[idx : idx + 2], DataType.UINT32, order32)
                 words_used = 2
-            elif descr.unit == REGISTER_F32:
+            elif descr.register_data_type == REGISTER_F32:
                 val = convert_from_registers(regs[idx : idx + 2], DataType.FLOAT32, order32)
                 words_used = 2
-            elif descr.unit == REGISTER_S32:
+            elif descr.register_data_type == REGISTER_S32:
                 val = convert_from_registers(regs[idx : idx + 2], DataType.INT32, order32)
                 words_used = 2
-            elif descr.unit == REGISTER_STR:
+            elif descr.register_data_type == REGISTER_STR:
                 wc = descr.wordcount or 0
                 raw = convert_from_registers(regs[idx : idx + wc], DataType.STRING, self.plugin.order32)
                 words_used = wc
                 val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
-            elif descr.unit == REGISTER_WORDS:
+            elif descr.register_data_type == REGISTER_WORDS:
                 wc = descr.wordcount or 0
                 val = [convert_from_registers(regs[idx + i : idx + i + 1], DataType.UINT16, self.plugin.order32) for i in range(wc)]
                 words_used = wc
-            elif descr.unit == REGISTER_ULSB16MSB16:
+            elif descr.register_data_type == REGISTER_ULSB16MSB16:
                 lo = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, order32)
                 hi = convert_from_registers(regs[idx + 1 : idx + 2], DataType.UINT16, order32)
                 val = (hi + lo * 65536) if order32 == "big" else (lo + hi * 65536)
                 words_used = 2
-            elif descr.unit == REGISTER_U8L:
+            elif descr.register_data_type == REGISTER_U8L:
                 if advance:
                     base = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, self.plugin.order32)
                     words_used = 1
@@ -1343,7 +1343,7 @@ class SolaXModbusHub:
                 else:
                     val = initval % 256
                     words_used = 0
-            elif descr.unit == REGISTER_U8H:
+            elif descr.register_data_type == REGISTER_U8H:
                 if advance:
                     base = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, self.plugin.order32)
                     words_used = 1
@@ -1656,7 +1656,7 @@ class SolaXModbusHub:
                         _LOGGER.debug(f"{self._name}: Forcing poll for disabled sensor '{descr.key}' as it's a needed dependency.")
 
                 d_newblock = descr.newblock
-                d_unit = descr.unit
+                d_unit = descr.register_data_type
                 d_wordcount = descr.wordcount
                 d_key = descr.key
                 d_regtype = descr.register_type  # HOLDING or INPUT
@@ -2204,7 +2204,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                         except Exception:
                             _LOGGER.error(f"cannot treat payload scale {value} {descr}")
                     value = int(value)
-                    typ = descr.unit
+                    typ = descr.register_data_type
 
                 if typ == REGISTER_U16:
                     regs_out += convert_to_registers(value, DataType.UINT16, self.plugin.order32)

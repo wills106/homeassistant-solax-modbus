@@ -121,7 +121,7 @@ class SRNEModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: str = "big"
     # order32: str = "little"
-    unit: str = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -258,7 +258,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x102,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=ALLDEFAULT,
         icon="mdi:current-dc",
     ),
@@ -314,7 +314,7 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x10E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=ALLDEFAULT,
     ),
     SRNEModbusSensorEntityDescription(
