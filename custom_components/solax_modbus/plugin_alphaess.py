@@ -114,22 +114,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class AlphaESSModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class AlphaESSModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class AlphaESSModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class AlphaESSModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     unit: int = REGISTER_U16
@@ -1106,7 +1106,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class alphaess_plugin(plugin_base):
     async def async_determineInverterType(self, hub, configdict):
         # global SENSOR_TYPES

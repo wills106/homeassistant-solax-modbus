@@ -117,22 +117,22 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SofarOldModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SofarOldModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SofarOldModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
 
@@ -1093,7 +1093,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class sofar_old_plugin(plugin_base):
     """
     def isAwake(self, datadict):

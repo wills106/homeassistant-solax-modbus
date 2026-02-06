@@ -110,22 +110,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SwattenModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SwattenModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SwattenModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Swatten Modbus sensor entities."""
 
@@ -619,7 +619,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class swatten_plugin(plugin_base):
     async def async_determineInverterType(self, hub, configdict):
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")

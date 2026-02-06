@@ -235,7 +235,7 @@ def value_function_house_normal_load(initval: int, descr: Any, datadict: dict[st
 
 
 # gc: set defaults; not all classes have all fields...
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -244,7 +244,7 @@ class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
         super().__init__(**kwargs)
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -254,7 +254,7 @@ class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
         super().__init__(**kwargs)
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     def __init__(self, **kwargs):
         kwargs.setdefault("allowedtypes", ALLDEFAULT)
@@ -269,7 +269,7 @@ class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
         return True
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class SolintegModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solinteg Modbus sensor entities."""
 
@@ -1523,7 +1523,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class solinteg_plugin(plugin_base):
     """
     def isAwake(self, datadict):
@@ -1639,6 +1639,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
 )
 
 plugin_instance = solinteg_plugin(
+    ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     plugin_name="solinteg",
     plugin_manufacturer="Gabriel C.",
     SENSOR_TYPES=SENSOR_TYPES,
@@ -1653,4 +1654,3 @@ plugin_instance = solinteg_plugin(
 )
 
 # Attach Energy Dashboard mapping to plugin instance
-plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING

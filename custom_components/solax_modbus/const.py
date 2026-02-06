@@ -32,7 +32,9 @@ except ImportError:
 
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
 
-    class UnitOfReactivePower(StrEnum):
+    class UnitOfReactivePower(StrEnum):  # type: ignore[no-redef]
+        """Fallback for HA versions <2023.1."""
+
         VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
 
 
@@ -123,7 +125,7 @@ DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
 # ==================================== plugin base class ====================================================================
 
 
-@dataclass
+@dataclass(frozen=True)
 class base_battery_config:
     """Configuration for battery sensors."""
 
@@ -132,7 +134,7 @@ class base_battery_config:
     battery_sensor_key_prefix: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class plugin_base:
     """Base class for plugin implementations."""
 
@@ -144,6 +146,7 @@ class plugin_base:
     SELECT_TYPES: list[SelectEntityDescription]
     SWITCH_TYPES: list[SwitchEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
+    ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100
     auto_block_ignore_readerror: bool | None = None  # if True or False, inserts a ignore_readerror statement for each block
     # order16: str | None = None # ignored since 2025.09 - assuming "big" for all plugins
@@ -200,7 +203,7 @@ class plugin_base:
 # =================================== base class for sensor entity descriptions =========================================
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """Base class for modbus sensor declarations."""
 
@@ -238,7 +241,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
@@ -252,7 +255,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
     """Base class for modbus select declarations."""
 
@@ -270,7 +273,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     """Base class for modbus switch declarations."""
 
@@ -287,7 +290,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
@@ -359,40 +362,36 @@ def value_function_pv_power_total(initval: Any, descr: Any, datadict: dict[str, 
 
 def value_function_battery_output(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate battery output power (discharge)."""
-    val = datadict.get("battery_power_charge", 0)
+    val: int | float = datadict.get("battery_power_charge", 0)
     if val < 0:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
 def value_function_battery_input(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate battery input power (charge)."""
-    val = datadict.get("battery_power_charge", 0)
+    val: int | float = datadict.get("battery_power_charge", 0)
     if val > 0:
         return val
-    else:
-        return 0
+    return 0
 
 
 def value_function_battery_output_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate battery output power for Solis inverters."""
-    inout = datadict.get("battery_charge_direction", 0)
-    val = datadict.get("battery_power", 0)
+    inout: int = datadict.get("battery_charge_direction", 0)
+    val: int | float = datadict.get("battery_power", 0)
     if inout == 1:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
 def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate battery input power for Solis inverters."""
-    inout = datadict.get("battery_charge_direction", 0)
-    val = datadict.get("battery_power", 0)
+    inout: int = datadict.get("battery_charge_direction", 0)
+    val: int | float = datadict.get("battery_power", 0)
     if inout == 0:
         return val
-    else:
-        return 0
+    return 0
 
 
 def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
@@ -407,27 +406,25 @@ def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str
 def value_function_gain_offset(initval: Any, descr: Any, datadict: dict[str, Any]) -> float:
     """Apply gain and offset calibration to power measurement."""
     # Simple offset (unit) and gain (%) calibration of the measured power
-    offset = datadict.get(descr.key + "_offset", 0)
-    gain = datadict.get(descr.key + "_gain", 100)
-    return (initval + offset) * (gain / 100.0)
+    offset: int | float = datadict.get(descr.key + "_offset", 0)
+    gain: int | float = datadict.get(descr.key + "_gain", 100)
+    return float((initval + offset) * (gain / 100.0))
 
 
 def value_function_grid_import(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate grid import power."""
-    val = datadict.get("measured_power", 0)
+    val: int | float = datadict.get("measured_power", 0)
     if val < 0:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
 def value_function_grid_export(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate grid export power."""
-    val = datadict.get("measured_power", 0)
+    val: int | float = datadict.get("measured_power", 0)
     if val > 0:
         return val
-    else:
-        return 0
+    return 0
 
 
 def value_function_sync_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
