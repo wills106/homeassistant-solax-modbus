@@ -13,6 +13,7 @@ dev = [
     "pre-commit>=4.0.0",
     "codespell>=2.2.6",
     "ruff>=0.14.14",
+    "mypy>=1.8.0",
 ]
 test = [
     "pytest>=8.0.0",
@@ -51,3 +52,56 @@ asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
+
+[tool.mypy]
+# Python version targeting HA 2024.9.0+ (Python 3.12)
+python_version = "3.12"
+
+# Package resolution
+explicit_package_bases = true
+
+# Phase 2: Enable basic type checking
+strict = false
+warn_return_any = false
+warn_unused_configs = true
+
+# Still ignore missing imports (dependencies may not have stubs)
+ignore_missing_imports = true
+
+# Enforce type checking on typed functions
+check_untyped_defs = true  # Changed from false
+disallow_untyped_defs = false  # Will enable in Phase 3
+disallow_untyped_calls = false
+disallow_incomplete_defs = true  # New: Require complete signatures
+
+# Stricter checks
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_reexport = true  # Changed from false
+
+# Output configuration
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+
+# Files to check
+files = [
+    "custom_components/solax_modbus",
+]
+
+# Exclude patterns
+exclude = [
+    "^tests/",
+    "^scripts/",
+    "^\\.venv/",
+]
+
+# Per-file overrides for priority files (fully typed)
+[[tool.mypy.overrides]]
+module = [
+    "custom_components.solax_modbus.const",
+    "custom_components.solax_modbus.pymodbus_compat",
+    "custom_components.solax_modbus.config_flow",
+]
+disallow_untyped_defs = true
+warn_return_any = true
