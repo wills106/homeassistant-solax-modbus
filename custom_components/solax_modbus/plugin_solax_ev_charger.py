@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -40,7 +41,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # Debug helper for EV charger operations
-def _debug_charger_setting(hub_name, setting_name, value, register=None, mode=None):
+def _debug_charger_setting(hub_name: str, setting_name: str, value: Any, register: int | None = None, mode: str | None = None) -> None:
     """Log debug information about charger setting changes"""
     mode_info = f" (current mode: {mode})" if mode else ""
     reg_info = f" at register 0x{register:x}" if register else ""
