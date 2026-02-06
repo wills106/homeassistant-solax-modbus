@@ -203,8 +203,8 @@ class plugin_base:
 # =================================== base class for sensor entity descriptions =========================================
 
 
-@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
-class BaseModbusSensorEntityDescription(SensorEntityDescription):
+@dataclass(kw_only=True)
+class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -241,8 +241,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
-class BaseModbusButtonEntityDescription(ButtonEntityDescription):
+@dataclass(kw_only=True)
+class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -255,8 +255,8 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
-class BaseModbusSelectEntityDescription(SelectEntityDescription):
+@dataclass(kw_only=True)
+class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus select declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -273,8 +273,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
-@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
-class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
+@dataclass(kw_only=True)
+class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus switch declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -290,8 +290,8 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(kw_only=True)  # type: ignore[misc]  # Non-frozen inherits from frozen (runtime requires mutability)
-class BaseModbusNumberEntityDescription(NumberEntityDescription):
+@dataclass(kw_only=True)
+class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus number declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
