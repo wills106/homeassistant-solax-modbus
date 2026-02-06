@@ -57,6 +57,9 @@ markers = [
 # Python version targeting HA 2024.9.0+ (Python 3.12)
 python_version = "3.12"
 
+# Package resolution
+explicit_package_bases = true
+
 # Start with lenient settings - Phase 1
 strict = false
 warn_return_any = false
