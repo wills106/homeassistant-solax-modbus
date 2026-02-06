@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, replace
 from time import time
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -127,7 +128,7 @@ class SRNEModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_remotecontrol_recompute(initval, descr, datadict):
+def value_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     power_control = datadict.get("remotecontrol_power_control", "Disabled")
     set_type = datadict.get("remotecontrol_set_type", "Set")  # other options did not work
     target = datadict.get("remotecontrol_active_power", 0)
@@ -203,7 +204,7 @@ def value_function_remotecontrol_recompute(initval, descr, datadict):
     return res
 
 
-def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
+def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
     return autorepeat_remaining(datadict, "remotecontrol_trigger", time())
 
 

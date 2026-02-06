@@ -2,6 +2,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -75,7 +76,7 @@ class SunwayModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Funkce pro hodnoty ===============================================
 
 
-def sunway_rtc_function(initval, descr, datadict):
+def sunway_rtc_function(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
     """Dekóduje RTC čas ze tří registrů pro čtení."""
     try:
         year_month, day_hour, min_sec = initval
@@ -90,7 +91,7 @@ def sunway_rtc_function(initval, descr, datadict):
         return None
 
 
-def value_function_sync_rtc_sunway(initval, descr, datadict):
+def value_function_sync_rtc_sunway(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Vytvoří payload pro zápis RTC času do střídače."""
     now = datetime.now()
     # Formát podle PDF, strana 17, registry 20000-20002
