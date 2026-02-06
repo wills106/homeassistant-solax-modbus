@@ -60,24 +60,24 @@ python_version = "3.12"
 # Package resolution
 explicit_package_bases = true
 
-# Start with lenient settings - Phase 1
+# Phase 2: Enable basic type checking
 strict = false
 warn_return_any = false
 warn_unused_configs = true
 
-# Ignore missing imports initially to avoid dependency issues
+# Still ignore missing imports (dependencies may not have stubs)
 ignore_missing_imports = true
 
-# Allow untyped definitions for now
-disallow_untyped_defs = false
+# Enforce type checking on typed functions
+check_untyped_defs = true  # Changed from false
+disallow_untyped_defs = false  # Will enable in Phase 3
 disallow_untyped_calls = false
-disallow_incomplete_defs = false
+disallow_incomplete_defs = true  # New: Require complete signatures
 
-# Basic checks that should always pass
-check_untyped_defs = false
+# Stricter checks
 warn_redundant_casts = true
 warn_unused_ignores = true
-no_implicit_reexport = false
+no_implicit_reexport = true  # Changed from false
 
 # Output configuration
 show_error_codes = true
@@ -95,3 +95,13 @@ exclude = [
     "^scripts/",
     "^\\.venv/",
 ]
+
+# Per-file overrides for priority files (fully typed)
+[[tool.mypy.overrides]]
+module = [
+    "custom_components.solax_modbus.const",
+    "custom_components.solax_modbus.pymodbus_compat",
+    "custom_components.solax_modbus.config_flow",
+]
+disallow_untyped_defs = true
+warn_return_any = true
