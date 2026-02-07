@@ -14,7 +14,7 @@ handle:
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -448,8 +448,7 @@ def _create_energy_dashboard_diagnostic_sensors(  # type: ignore[no-untyped-def]
             )
         )
 
-    for description in diagnostics:
-        description._energy_dashboard_device_info = energy_dashboard_device_info
+    diagnostics = [replace(description, _energy_dashboard_device_info=energy_dashboard_device_info) for description in diagnostics]
 
     return diagnostics
 
@@ -552,17 +551,23 @@ def _create_sensor_from_mapping(
     )
 
     # Store mapping info for sensor creation
-    sensor_desc._energy_dashboard_device_info = energy_dashboard_device_info
-    sensor_desc._energy_dashboard_mapping = sensor_mapping
-    sensor_desc._energy_dashboard_source_hub = data_hub
+    sensor_desc = replace(
+        sensor_desc,
+        _energy_dashboard_device_info=energy_dashboard_device_info,
+        _energy_dashboard_mapping=sensor_mapping,
+        _energy_dashboard_source_hub=data_hub,
+    )
 
     # Mark Riemann sum sensors for special handling
     if sensor_mapping.use_riemann_sum:
-        sensor_desc._is_riemann_sum_sensor = True
-        sensor_desc._riemann_mapping = sensor_mapping
-        sensor_desc._riemann_data_hub = data_hub
+        sensor_desc = replace(
+            sensor_desc,
+            _is_riemann_sum_sensor=True,
+            _riemann_mapping=sensor_mapping,
+            _riemann_data_hub=data_hub,
+        )
     else:
-        sensor_desc._is_riemann_sum_sensor = False
+        sensor_desc = replace(sensor_desc, _is_riemann_sum_sensor=False)
 
     sensors.append(sensor_desc)
 
