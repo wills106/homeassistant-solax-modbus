@@ -204,7 +204,7 @@ class plugin_base:
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
+class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -248,7 +248,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignor
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
+class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -262,7 +262,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignor
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
+class BaseModbusSelectEntityDescription(SelectEntityDescription):
     """Base class for modbus select declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -280,7 +280,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignor
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
+class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     """Base class for modbus switch declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -297,7 +297,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignor
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
+class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin

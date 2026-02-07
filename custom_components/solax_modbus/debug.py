@@ -119,7 +119,7 @@ def get_debug_setting(
                 break
 
     if inverter_settings and setting_name in inverter_settings:
-        result = inverter_settings.get(setting_name, default)
+        result = bool(inverter_settings.get(setting_name, default))
         _LOGGER.debug(
             "get_debug_setting(%s, %s): %s",
             inverter_name,

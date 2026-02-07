@@ -206,7 +206,7 @@ if _convert_to and _convert_from:
     # start assuming fasttrack  - no coerce or wordorder adaption needed
     convert_to_registers = _convert_to
     convert_from_registers = _convert_from
-    DataType = _DT_TARGET
+    DataType = _DT_TARGET  # type: ignore[assignment]  # Dynamic enum aliasing for pymodbus compatibility
 
     if _PM_VER < _v("3.9.2"):  # not fast track, overwrite functions
 
