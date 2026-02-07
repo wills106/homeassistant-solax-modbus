@@ -805,12 +805,12 @@ class SolaXModbusHub:
 
         # DEFENSIVE: Check if device_info is None (should never happen)
         if device_info is None:
-            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")
+            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if it's a dict-like object
         if not isinstance(device_info, dict):
-            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")
+            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if "identifiers" key exists
@@ -825,7 +825,7 @@ class SolaXModbusHub:
 
         # DEFENSIVE: Check if identifiers is None
         if identifiers is None:
-            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")
+            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if identifiers is iterable
@@ -2044,10 +2044,10 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
 
         _LOGGER.debug("setup solax core modbus hub done %s", self.__dict__)
 
-    async def async_close(self) -> None:  # type: ignore[override]
+    async def async_close(self) -> None:
         """Disconnect client."""
         async with self._lock:
-            if self._hub:  # type: ignore[unreachable]
+            if self._hub:
                 self._hub = None
 
     # async def async_connect(self):
@@ -2057,12 +2057,12 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
     #        async with self._lock:
     #            await self._client.connect()
 
-    async def _check_connection(self) -> Any:  # type: ignore[override]
+    async def _check_connection(self) -> Any:
         # get hold of temporary strong reference to CoreModbusHub object
         # and pass it on success to caller if available
-        if self._hub is None or (hub := self._hub()) is None:  # type: ignore[unreachable]
+        if self._hub is None or (hub := self._hub()) is None:
             return await self.async_connect()
-        async with hub._lock:  # type: ignore[unreachable]
+        async with hub._lock:
             try:
                 if hub._client.connected:
                     return hub
@@ -2078,7 +2078,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except Exception:
             hub = None
         try:
-            return bool(hub and getattr(hub, "_client", None) and hub._client.connected and (self.slowdown == 1))  # type: ignore[unreachable]
+            return bool(hub and getattr(hub, "_client", None) and hub._client.connected and (self.slowdown == 1))
         except Exception:
             return False
 
@@ -2088,12 +2088,12 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         if ref_obj is self._hub:
             self._hub = None
 
-    async def async_connect(self, hub: Any = None) -> Any:  # type: ignore[override]
+    async def async_connect(self, hub: Any = None) -> Any:
         delay = True
         while True:
             # check if strong reference to
             # get one.
-            if hub is not None or (self._hub is not None and (hub := self._hub()) is not None):  # type: ignore[unreachable]
+            if hub is not None or (self._hub is not None and (hub := self._hub()) is not None):
                 port = hub._pb_params.get("port", 0)
                 host = hub._pb_params.get("host", port)
                 # TODO just wait some time and recheck again if client connected before
@@ -2143,7 +2143,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
             delay = False
             await asyncio.sleep(10)
 
-    async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:  # type: ignore[override]
+    async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers."""
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
@@ -2163,7 +2163,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus holding registers: core modbus access failed") from e
 
-    async def async_read_input_registers(self, unit: int, address: int, count: int) -> Any:  # type: ignore[override]
+    async def async_read_input_registers(self, unit: int, address: int, count: int) -> Any:
         """Read input registers."""
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
@@ -2183,7 +2183,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus input registers: core modbus access failed") from e
 
-    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:  # type: ignore[override]
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:
         """
         Write a single register using the Core hub's client.
         """
@@ -2232,7 +2232,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
 
-    async def async_write_registers_multi(self, unit: int, address: int, payload: list[tuple[Any, Any]]) -> Any:  # type: ignore[override]  # Needs adapting for register queue
+    async def async_write_registers_multi(self, unit: int, address: int, payload: list[tuple[Any, Any]]) -> Any:  # Needs adapting for register queue
         """Write registers multi.
         unit is the modbus address of the device that will be written to
         address us the start register address
