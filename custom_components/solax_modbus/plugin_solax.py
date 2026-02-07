@@ -54,7 +54,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
-    UnitOfReactivePower,
+    UnitOfReactivePower,  # type: ignore[attr-defined]  # Conditionally exported from const.py
     autorepeat_remaining,
     autorepeat_stop,
     plugin_base,
@@ -897,7 +897,7 @@ def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any
 
 
 def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
+    return int(datadict.get("battery_1_power_charge", 0)) + int(datadict.get("battery_2_power_charge", 0))
 
 
 def value_function_hardware_version_g1(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
@@ -921,9 +921,9 @@ def value_function_hardware_version_g5(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    inverter_power = datadict.get("inverter_power", 0)
-    measured_power = datadict.get("measured_power", 0)
-    meter_2_power = datadict.get("meter_2_measured_power", 0)
+    inverter_power = int(datadict.get("inverter_power", 0))
+    measured_power = int(datadict.get("measured_power", 0))
+    meter_2_power = int(datadict.get("meter_2_measured_power", 0))
     result = inverter_power - measured_power + meter_2_power
 
     _LOGGER.debug(
@@ -939,7 +939,7 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return (
+    return int(
         datadict.get("pv_power_1", 0)
         + datadict.get("pv_power_2", 0)
         + datadict.get("pv_power_3", 0)
@@ -950,14 +950,14 @@ def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, 
 
 
 def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("inverter_power_l1", 0) + datadict.get("inverter_power_l2", 0) + datadict.get("inverter_power_l3", 0)
+    return int(datadict.get("inverter_power_l1", 0)) + int(datadict.get("inverter_power_l2", 0)) + int(datadict.get("inverter_power_l3", 0))
 
 
 def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
-    l1_power = datadict.get("pm_activepower_l1", 0)
-    l2_power = datadict.get("pm_activepower_l2", 0)
-    l3_power = datadict.get("pm_activepower_l3", 0)
+    l1_power: int | float = datadict.get("pm_activepower_l1", 0)
+    l2_power: int | float = datadict.get("pm_activepower_l2", 0)
+    l3_power: int | float = datadict.get("pm_activepower_l3", 0)
 
     # Handle None values from overflow protection
     if l1_power is None:
@@ -967,13 +967,13 @@ def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: d
     if l3_power is None:
         l3_power = 0
 
-    return l1_power + l2_power + l3_power
+    return int(l1_power + l2_power + l3_power)
 
 
 def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
-    pv_power_1 = datadict.get("pm_pv_power_1", 0)
-    pv_power_2 = datadict.get("pm_pv_power_2", 0)
+    pv_power_1: int | float = datadict.get("pm_pv_power_1", 0)
+    pv_power_2: int | float = datadict.get("pm_pv_power_2", 0)
 
     # Handle None values from overflow protection
     if pv_power_1 is None:
@@ -981,7 +981,7 @@ def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[st
     if pv_power_2 is None:
         pv_power_2 = 0
 
-    return pv_power_1 + pv_power_2
+    return int(pv_power_1 + pv_power_2)
 
 
 def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -1007,10 +1007,12 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     to compensate for inverter measurement inflation.
     """
     # Get raw sensor values
-    pm_inverter_power = datadict.get("pm_activepower_l1", 0) + datadict.get("pm_activepower_l2", 0) + datadict.get("pm_activepower_l3", 0)
-    grid_power = datadict.get("measured_power", 0)
-    pv_power = datadict.get("pm_total_pv_power", 0)
-    battery_power = datadict.get("pm_battery_power_charge", 0)
+    pm_inverter_power: int | float = (
+        int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
+    )
+    grid_power: int | float = datadict.get("measured_power", 0)
+    pv_power: int | float = datadict.get("pm_total_pv_power", 0)
+    battery_power: int | float = datadict.get("pm_battery_power_charge", 0)
     # Note: pm_battery_power_charge represents grid-to-battery charging only
     # It does NOT include PV contribution to battery charging
 
@@ -1037,7 +1039,7 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
 
 def value_function_pm_total_reactive_or_apparentpower(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total reactive power in parallel mode (sum of all phases)."""
-    return (
+    return int(
         datadict.get("pm_reactive_or_apparentpower_l1", 0)
         + datadict.get("pm_reactive_or_apparentpower_l2", 0)
         + datadict.get("pm_reactive_or_apparentpower_l3", 0)
@@ -1046,13 +1048,13 @@ def value_function_pm_total_reactive_or_apparentpower(initval: int, descr: Any, 
 
 def value_function_pm_total_inverter_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter current in parallel mode (sum of all phases)."""
-    return datadict.get("pm__current_l1", 0) + datadict.get("pm__current_l2", 0) + datadict.get("pm__current_l3", 0)
+    return int(datadict.get("pm__current_l1", 0)) + int(datadict.get("pm__current_l2", 0)) + int(datadict.get("pm__current_l3", 0))
 
 
 def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV current in parallel mode (sum of all PV inputs)."""
-    pv_current_1 = datadict.get("pm_pv_current_1", 0)
-    pv_current_2 = datadict.get("pm_pv_current_2", 0)
+    pv_current_1: int | float = datadict.get("pm_pv_current_1", 0)
+    pv_current_2: int | float = datadict.get("pm_pv_current_2", 0)
 
     # Handle None values from overflow protection
     if pv_current_1 is None:
@@ -1060,25 +1062,25 @@ def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[
     if pv_current_2 is None:
         pv_current_2 = 0
 
-    return pv_current_1 + pv_current_2
+    return int(pv_current_1 + pv_current_2)
 
 
 def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Check if total capacity has a sane value, if so return that
-    total_charge = datadict.get("battery_total_capacity_charge", 0)
+    total_charge: int | float = datadict.get("battery_total_capacity_charge", 0)
     if total_charge > 0:
-        return total_charge
+        return int(total_charge)
     # Otherwise try to use the correct battery capacity field
-    bat1_charge = datadict.get("battery_1_capacity_charge", 0)
-    bat2_charge = datadict.get("battery_2_capacity_charge", 0)
+    bat1_charge: int | float = datadict.get("battery_1_capacity_charge", 0)
+    bat2_charge: int | float = datadict.get("battery_2_capacity_charge", 0)
     # Use the lesser if both available
     if (bat1_charge > 0) and (bat2_charge > 0):
-        return min(bat2_charge, bat1_charge)
+        return int(min(bat2_charge, bat1_charge))
     # Otherwise use whichever is available
     if bat1_charge > 0:
-        return bat1_charge  # batt 1 available, use that
+        return int(bat1_charge)  # batt 1 available, use that
     if bat2_charge > 0:
-        return bat2_charge  # batt 2 available, use that
+        return int(bat2_charge)  # batt 2 available, use that
     return 0
 
 
@@ -1107,7 +1109,7 @@ def value_function_software_version_air_g4(initval: int, descr: Any, datadict: d
 
 
 def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("cell_voltage_high", 0) - datadict.get("cell_voltage_low", 0)
+    return int(datadict.get("cell_voltage_high", 0)) - int(datadict.get("cell_voltage_low", 0))
 
 
 # ================================= Button Declarations ============================================================
