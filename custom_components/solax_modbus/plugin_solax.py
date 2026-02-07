@@ -1201,7 +1201,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = [
+MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("L30E", 100),  # Gen2 X1 SK-TL
     ("U30", 50),  # Gen2 X1 SK-SU
     ("L37E", 100),  # Gen2 X1 SK-TL
@@ -1243,7 +1243,7 @@ MAX_CURRENTS = [
     ### All known Inverters added
 ]
 
-MAX_EXPORT = [
+MAX_EXPORT: list[tuple[str, int | float]] = [
     ("L30E", 3000),  # Gen2 X1 SK-TL
     ("U30", 3000),  # Gen2 X1 SK-SU
     ("L37E", 3700),  # Gen2 X1 SK-TL
