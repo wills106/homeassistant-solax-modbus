@@ -960,9 +960,9 @@ def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[st
 
 def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
-    l1_power: int | float = datadict.get("pm_activepower_l1", 0)
-    l2_power: int | float = datadict.get("pm_activepower_l2", 0)
-    l3_power: int | float = datadict.get("pm_activepower_l3", 0)
+    l1_power: int | float | None = datadict.get("pm_activepower_l1", 0)
+    l2_power: int | float | None = datadict.get("pm_activepower_l2", 0)
+    l3_power: int | float | None = datadict.get("pm_activepower_l3", 0)
 
     # Handle None values from overflow protection
     if l1_power is None:
@@ -977,8 +977,8 @@ def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: d
 
 def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
-    pv_power_1: int | float = datadict.get("pm_pv_power_1", 0)
-    pv_power_2: int | float = datadict.get("pm_pv_power_2", 0)
+    pv_power_1: int | float | None = datadict.get("pm_pv_power_1", 0)
+    pv_power_2: int | float | None = datadict.get("pm_pv_power_2", 0)
 
     # Handle None values from overflow protection
     if pv_power_1 is None:
@@ -1058,8 +1058,8 @@ def value_function_pm_total_inverter_current(initval: int, descr: Any, datadict:
 
 def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV current in parallel mode (sum of all PV inputs)."""
-    pv_current_1: int | float = datadict.get("pm_pv_current_1", 0)
-    pv_current_2: int | float = datadict.get("pm_pv_current_2", 0)
+    pv_current_1: int | float | None = datadict.get("pm_pv_current_1", 0)
+    pv_current_2: int | float | None = datadict.get("pm_pv_current_2", 0)
 
     # Handle None values from overflow protection
     if pv_current_1 is None:
