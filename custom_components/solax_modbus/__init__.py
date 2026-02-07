@@ -797,11 +797,15 @@ class SolaXModbusHub:
 
     def device_group_key(self, device_info: DeviceInfo) -> str:
         key = ""
-        identifiers = device_info["identifiers"]
         _LOGGER.error(
-            f"{self._name}: device_group_key DEBUG - "
+            f"{self._name}: device_group_key ENTRY - "
             f"device_info type={type(device_info)}, "
-            f"device_info={device_info}, "
+            f"device_info is_none={device_info is None}, "
+            f"device_info={device_info if device_info is not None else 'IS_NONE!'}"
+        )
+        identifiers = device_info["identifiers"]  # LINE 800 - CRASH HERE
+        _LOGGER.error(
+            f"{self._name}: device_group_key POST-ASSIGN - "
             f"identifiers type={type(identifiers)}, "
             f"identifiers={identifiers}, "
             f"identifiers_is_none={identifiers is None}"
