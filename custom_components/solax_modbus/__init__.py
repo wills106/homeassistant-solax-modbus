@@ -128,14 +128,14 @@ VERBOSE_CYCLES = 20
 
 
 try:
-    from homeassistant.components.modbus import ModbusHub as CoreModbusHub
-    from homeassistant.components.modbus import get_hub as get_core_hub
+    from homeassistant.components.modbus import ModbusHub as CoreModbusHub  # type: ignore[attr-defined]
+    from homeassistant.components.modbus import get_hub as get_core_hub  # type: ignore[attr-defined]
 except ImportError:
 
-    def get_core_hub(hass: HomeAssistant, name: str) -> None:
+    def get_core_hub(hass: HomeAssistant, name: str) -> None:  # type: ignore[misc]
         return None
 
-    class CoreModbusHub:  # placeholder dummy
+    class CoreModbusHub:  # type: ignore[no-redef]  # placeholder dummy
         pass
 
 
@@ -532,47 +532,47 @@ class SolaXModbusHub:
         self.read_serial_port = serial_port
         self._baudrate = int(baudrate)
         self._time_out = int(time_out)
-        self.groups = {}  # group info, below
-        self.data = {"_repeatUntil": {}}  # _repeatuntil contains button autorepeat expiry times
-        self.tmpdata = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
-        self.tmpdata_expiry = {}  # expiry timestamps for tempdata
-        self.cyclecount = 0  # temporary - remove later
-        self.slowdown = 1  # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
-        self.computedSensors = {}
-        self.computedEntities = {}  # buttons and selects with value_function for autorepeat
-        self.computedSwitches = {}
-        self.sensorEntities = {}  # all sensor entities, indexed by key
-        self.numberEntities = {}  # all number entities, indexed by key
-        self.selectEntities = {}
-        self.switchEntities = {}
-        self.entity_dependencies = {}  # Maps a sensor key to a list of data control keys that use the sensor as data source
+        self.groups: dict[Any, Any] = {}  # group info, below
+        self.data: dict[str, Any] = {"_repeatUntil": {}}  # _repeatuntil contains button autorepeat expiry times
+        self.tmpdata: dict[Any, Any] = {}  # for WRITE_DATA_LOCAL entities with corresponding prevent_update number/sensor
+        self.tmpdata_expiry: dict[Any, Any] = {}  # expiry timestamps for tempdata
+        self.cyclecount: int = 0  # temporary - remove later
+        self.slowdown: int = 1  # slow down factor when modbus is not responding: 1 : no slowdown, 10: ignore 9 out of 10 cycles
+        self.computedSensors: dict[Any, Any] = {}
+        self.computedEntities: dict[Any, Any] = {}  # buttons and selects with value_function for autorepeat
+        self.computedSwitches: dict[Any, Any] = {}
+        self.sensorEntities: dict[Any, Any] = {}  # all sensor entities, indexed by key
+        self.numberEntities: dict[Any, Any] = {}  # all number entities, indexed by key
+        self.selectEntities: dict[Any, Any] = {}
+        self.switchEntities: dict[Any, Any] = {}
+        self.entity_dependencies: dict[str, list[str]] = {}  # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
-        self.writeLocals = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
-        self.sleepzero = []  # sensors that will be set to zero in sleepmode
-        self.sleepnone = []  # sensors that will be cleared in sleepmode
-        self.writequeue = {}  # queue requests when inverter is in sleep mode
+        self.writeLocals: dict[Any, Any] = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
+        self.sleepzero: list[str] = []  # sensors that will be set to zero in sleepmode
+        self.sleepnone: list[str] = []  # sensors that will be cleared in sleepmode
+        self.writequeue: dict[Any, Any] = {}  # queue requests when inverter is in sleep mode
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
         self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
         self._validate_register_func = getattr(plugin, "validate_register_data", None)  # Cache function reference
-        self.wakeupButton = None
-        self._invertertype = None
-        self.localsUpdated = False
-        self.localsLoaded = False
-        self.config = config
-        self.entry = entry
-        self.device_info = None
-        self.blocks_changed = False
-        self.initial_groups = {}  # as returned by the sensor setup - holdingRegs and inputRegs should not change
+        self.wakeupButton: Any = None
+        self._invertertype: int | None = None
+        self.localsUpdated: bool = False
+        self.localsLoaded: bool = False
+        self.config: dict[str, Any] = config
+        self.entry: ConfigEntry = entry
+        self.device_info: DeviceInfo | None = None
+        self.blocks_changed: bool = False
+        self.initial_groups: dict[Any, Any] = {}  # as returned by the sensor setup - holdingRegs and inputRegs should not change
 
         # Track in-flight I/O tasks for fast cancellation on stop
-        self._inflight_tasks = set()
+        self._inflight_tasks: set[Any] = set()
 
         # Bad register handling (startup bisect + deferred recheck)
         # bad_regs: definitively bad entity base-addresses (per register type)
         # bad_recheck: candidates found by bisect that must be revalidated later
-        self.bad_regs = {"holding": set(), "input": set()}
-        self.bad_recheck = {"holding": set(), "input": set()}
+        self.bad_regs: dict[str, set[int]] = {"holding": set(), "input": set()}
+        self.bad_recheck: dict[str, set[int]] = {"holding": set(), "input": set()}
         self._did_initial_bisect = False
         self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
 
