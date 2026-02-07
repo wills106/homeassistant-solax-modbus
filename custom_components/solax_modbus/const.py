@@ -144,7 +144,7 @@ class plugin_base:
     BUTTON_TYPES: Sequence[ButtonEntityDescription]
     NUMBER_TYPES: Sequence[NumberEntityDescription]
     SELECT_TYPES: Sequence[SelectEntityDescription]
-    SWITCH_TYPES: list[SwitchEntityDescription]
+    SWITCH_TYPES: Sequence[SwitchEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100

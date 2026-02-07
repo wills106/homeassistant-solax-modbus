@@ -1,6 +1,9 @@
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
+from typing import Any
 
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -12,7 +15,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
@@ -78,17 +81,17 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: Sequence["EnertechModbusSensorEntityDescription"] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=4)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:4], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:4], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -129,7 +132,7 @@ class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 class EnertechModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     """Base class for Enertech Modbus switch entities."""
 
-    register_bit: int = None  # Bit position in the register
+    register_bit: int | None = None  # Bit position in the register
     write_method: int = WRITE_SINGLE_MODBUS  # Default write method
 
 
@@ -199,11 +202,11 @@ def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: Sequence["EnertechModbusButtonEntityDescription"] = []
 
 # ================================= Number Declarations ============================================================
 
-NUMBER_TYPES = [
+NUMBER_TYPES: Sequence["EnertechModbusNumberEntityDescription"] = [
     EnertechModbusNumberEntityDescription(
         name="DIESEL GENERATOR Start Voltage (V)",
         key="DIESEL_GENERATOR_Start_Voltage",
@@ -215,7 +218,7 @@ NUMBER_TYPES = [
         native_step=1,
         fmt="i",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
+        device_class=NumberDeviceClass.VOLTAGE,
         write_method=WRITE_SINGLE_MODBUS,
         icon="mdi:battery-10",
         entity_registry_enabled_default=False,
@@ -248,7 +251,7 @@ NUMBER_TYPES = [
         native_step=1,
         fmt="i",
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        device_class=SensorDeviceClass.VOLTAGE,
+        device_class=NumberDeviceClass.VOLTAGE,
         write_method=WRITE_SINGLE_MODBUS,
         icon="mdi:battery-10",
         entity_registry_enabled_default=False,
@@ -257,7 +260,8 @@ NUMBER_TYPES = [
 ]
 
 
-async def async_update(self):
+# Placeholder function - not currently used
+async def async_update_placeholder(self: Any) -> None:
     """Fetch the current value from the Modbus register."""
     value = await self._hub.read_register(self._description["register"])
     if value is not None:
@@ -267,7 +271,7 @@ async def async_update(self):
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = [
+SELECT_TYPES: Sequence["EnertechModbusSelectEntityDescription"] = [
     ###
     #
     #  Data only select types
@@ -287,12 +291,12 @@ SELECT_TYPES = [
             4: "Battery Less",  # battery import without PV
             5: "Remote Control",  # self-consumption mode
         },
-        initvalue="Export Mode",
+        initvalue=3,  # Export Mode
         icon="mdi:transmission-tower",
     ),
 ]
 
-SWITCH_TYPES = [
+SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
     EnertechModbusSwitchEntityDescription(
         name="Force DIESEL GENERATOR Start/Stop",
         key="force_diesel_generator_start_stop",
@@ -1193,15 +1197,15 @@ SENSOR_TYPES_MAIN: list[EnertechModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class Enertech_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str | None:
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x14)
@@ -1237,7 +1241,7 @@ class Enertech_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: Any = None) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1252,7 +1256,7 @@ class Enertech_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -1294,6 +1298,7 @@ class Enertech_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return False
 
 
 plugin_instance = Enertech_plugin(
