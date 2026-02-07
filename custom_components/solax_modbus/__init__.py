@@ -1430,7 +1430,7 @@ class SolaXModbusHub:
             data[descr.key] = return_value  # case prevent_update number
         return idx + (words_used if advance else 0)
 
-    async def async_read_modbus_block(self, data: dict[str, Any], block: Any, typ: int) -> bool:
+    async def async_read_modbus_block(self, data: dict[str, Any], block: Any, typ: str) -> bool:
         errmsg = None
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
@@ -1559,7 +1559,8 @@ class SolaXModbusHub:
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for addr in self.writequeue.keys():
                 val = self.writequeue.get(addr)
-                await self.async_write_register(self._modbus_addr, addr, val)
+                if val is not None:
+                    await self.async_write_register(self._modbus_addr, addr, val)
             self.writequeue = {}  # make sure we do not write multiple times
 
         # execute autorepeat entities (buttons and selects)
@@ -2028,7 +2029,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except Exception:
             hub = None
         try:
-            return bool(hub and getattr(hub, "_client", None) and hub._client.connected and (self.slowdown == 1))
+            return bool(hub and getattr(hub, "_client", None) and hub._client.connected and (self.slowdown == 1))  # type: ignore[unreachable]
         except Exception:
             return False
 
@@ -2043,7 +2044,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         while True:
             # check if strong reference to
             # get one.
-            if hub is not None or (self._hub is not None and (hub := self._hub()) is not None):
+            if hub is not None or (self._hub is not None and (hub := self._hub()) is not None):  # type: ignore[unreachable]
                 port = hub._pb_params.get("port", 0)
                 host = hub._pb_params.get("host", port)
                 # TODO just wait some time and recheck again if client connected before
@@ -2162,7 +2163,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error writing single Modbus register: core modbus access failed") from e
 
-    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
+    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
