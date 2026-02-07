@@ -105,5 +105,6 @@ module = [
     "pymodbus.*",
     "homeassistant.*",
     "pytest_homeassistant_custom_component.*",
+    "pytest.*",
 ]
 ignore_missing_imports = true

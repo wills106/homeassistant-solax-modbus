@@ -180,7 +180,6 @@ class TestDeviceInfoBugs:
             file_path = get_source_file(filename)
             if not file_path.exists():
                 pytest.skip(f"{filename} not found")
-                continue  # type: ignore[unreachable]
 
             content = file_path.read_text()
 
