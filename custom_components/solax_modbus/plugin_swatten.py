@@ -12,9 +12,11 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -86,17 +88,15 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
-
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=8)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -140,11 +140,11 @@ class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 def value_function_pv_power_1(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("pv_voltage_1", 0) * datadict.get("pv_current_1", 0)
+    return float(datadict.get("pv_voltage_1", 0)) * float(datadict.get("pv_current_1", 0))
 
 
 def value_function_pv_power_2(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("pv_voltage_2", 0) * datadict.get("pv_current_2", 0)
+    return float(datadict.get("pv_voltage_2", 0)) * float(datadict.get("pv_current_2", 0))
 
 
 # ================================= Button Declarations ============================================================
@@ -163,7 +163,7 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
-NUMBER_TYPES = [
+NUMBER_TYPES: list[SwattenModbusNumberEntityDescription] = [
     ###
     #
     # Data only number types
@@ -178,7 +178,7 @@ NUMBER_TYPES = [
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = [
+SELECT_TYPES: list[SwattenModbusSelectEntityDescription] = [
     ###
     #
     #  Data only select types
@@ -621,7 +621,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class swatten_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 5809)
         if not seriesnumber:
@@ -660,7 +660,13 @@ class swatten_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)

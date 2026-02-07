@@ -14,7 +14,9 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
 from custom_components.solax_modbus.const import (
     REG_HOLDING,
@@ -80,12 +82,12 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     _LOGGER.debug(f"{hub.name}: Reading serial number from address 0x{address:x}")
     res = None
     try:
@@ -93,7 +95,7 @@ async def async_read_serialnr(hub, address):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
             _LOGGER.debug(f"{hub.name}: Successfully read registers: {inverter_data.registers[0:7]}")
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
@@ -109,7 +111,7 @@ async def async_read_serialnr(hub, address):
     return res
 
 
-async def async_read_firmware(hub, address=0x25):
+async def async_read_firmware(hub: Any, address: int = 0x25) -> float | None:
     """Read firmware version from input register.
 
     Args:
@@ -1071,16 +1073,16 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
 @dataclass(kw_only=True)
 class solax_ev_charger_plugin(plugin_base):
     '''
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """ determine if inverter is awake based on polled datadict"""
         return (datadict.get('run_mode', None) == 'Normal Mode')
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """ in order to wake up  the inverter , press this button """
         return 'battery_awaken'
     '''
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         _LOGGER.debug(f"{hub.name}: Reading serial number to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x600)
@@ -1176,7 +1178,13 @@ class solax_ev_charger_plugin(plugin_base):
         _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         _LOGGER.debug(f"matchInverterWithMask: inverterspec=0x{inverterspec:x}, entitymask=0x{entitymask:x}, serialnumber={serialnumber}")
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
@@ -1194,14 +1202,14 @@ class solax_ev_charger_plugin(plugin_base):
         _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
         return result
 
-    def getModel(self, new_data):
+    def getModel(self, new_data: dict[str, Any]) -> str | None:
         return getattr(self, "inverter_model", None)
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         fw = new_data.get("firmware_version")
         return f"ARM v{fw}" if fw is not None else None
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return getattr(self, "hardware_version", None)
 
 
