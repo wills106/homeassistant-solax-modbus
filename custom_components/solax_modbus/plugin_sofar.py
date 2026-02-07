@@ -3985,7 +3985,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass(kw_only=True, frozen=True)
+@dataclass(kw_only=True)
 class battery_config(base_battery_config):
     battery_sensor_type: list[SofarModbusSensorEntityDescription] | None = field(default_factory=lambda: BATTERY_SENSOR_TYPES)  # type: ignore[assignment]  # Covariant list typing
     battery_sensor_name_prefix: str | None = field(default="Battery {batt-nr}/{pack-nr} ")
