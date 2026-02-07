@@ -682,15 +682,15 @@ class SolaXModbusHub:
                     _LOGGER.debug(f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms")
                     # Prepare/refresh device_info in case it wasn't set
                     plugin_name = self.plugin.plugin_name
-                if self.inverterNameSuffix:
-                    plugin_name = plugin_name + " " + self.inverterNameSuffix
-                self.device_info = DeviceInfo(
-                    identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
-                    manufacturer=self.plugin.plugin_manufacturer,
-                    model=getattr(self.plugin, "inverter_model", None),
-                    name=plugin_name,
-                    serial_number=self.seriesnumber,
-                )
+                    if self.inverterNameSuffix:
+                        plugin_name = plugin_name + " " + self.inverterNameSuffix
+                    self.device_info = DeviceInfo(
+                        identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
+                        manufacturer=self.plugin.plugin_manufacturer,
+                        model=getattr(self.plugin, "inverter_model", None),
+                        name=plugin_name,
+                        serial_number=self.seriesnumber,
+                    )
                 if getattr(self, "_stopping", False):
                     return
                 await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
