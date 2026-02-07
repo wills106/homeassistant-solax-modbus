@@ -19,7 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
     BUTTONREPEAT_FIRST,
     BUTTONREPEAT_POST,
     CONF_READ_DCB,
@@ -54,7 +54,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
-    UnitOfReactivePower,  # type: ignore[attr-defined]
+    UnitOfReactivePower,
     autorepeat_remaining,
     autorepeat_stop,
     plugin_base,
@@ -869,7 +869,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def value_function_byteswapserial(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+def value_function_byteswapserial(initval: str, descr: Any, datadict: dict[str, Any]) -> str:
     if initval and not initval.startswith(("M", "X")):
         preswap = initval
         swapped = ""
@@ -894,11 +894,11 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
 
 
 def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get(descr.key, None)
+    return int(datadict.get(descr.key, 0))
 
 
 def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get(descr.key, None)
+    return int(datadict.get(descr.key, 0))
 
 
 def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -4394,7 +4394,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-sync",
-        blacklist=("XRE",),
+        blacklist=[
+            "XRE",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Model Number",
@@ -4406,7 +4408,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
-        blacklist=("XRE",),
+        blacklist=[
+            "XRE",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Service",
@@ -6331,7 +6335,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=2,
         allowedtypes=HYBRID | GEN2,
-        blacklist=("U50EC",),
+        blacklist=[
+            "U50EC",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Power L2",
@@ -7351,7 +7357,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_power,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_activepower_l1", "parallel_setting"),
+        depends_on=["pm_activepower_l1", "parallel_setting"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7362,7 +7368,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_power,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_pv_power_1", "parallel_setting"),
+        depends_on=["pm_pv_power_1", "parallel_setting"],
         icon="mdi:solar-power",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7373,7 +7379,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_house_load,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_activepower_l1", "parallel_setting"),
+        depends_on=["pm_activepower_l1", "parallel_setting"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7384,7 +7390,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_reactive_or_apparentpower,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_reactive_or_apparentpower_l1", "parallel_setting"),
+        depends_on=["pm_reactive_or_apparentpower_l1", "parallel_setting"],
         icon="mdi:flash",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7395,7 +7401,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_current,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm__current_l1", "parallel_setting"),
+        depends_on=["pm__current_l1", "parallel_setting"],
         icon="mdi:current-ac",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7406,7 +7412,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_current,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_pv_current_1", "parallel_setting"),
+        depends_on=["pm_pv_current_1", "parallel_setting"],
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8044,11 +8050,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=AC | HYBRID,
         entity_registry_enabled_default=False,
-        depends_on=(
+        depends_on=[
             "pv_power_1",
             "pv_power_2",
             "pv_power_3",
-        ),
+        ],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8068,12 +8074,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=HYBRID,
-        depends_on=(
+        depends_on=[
             "pv_power_1",
             "pv_power_2",
             "pv_power_3",
             "pv_power_4",
-        ),
+        ],
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8182,22 +8188,22 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="firmware_dsp",
         register=0x33D,
         allowedtypes=MIC | GEN,
-        blacklist=(
+        blacklist=[
             "MC402T",
             "MC502T",
             "MU802T",
-        ),
+        ],
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_arm",
         register=0x33E,
         allowedtypes=MIC | GEN,
-        blacklist=(
+        blacklist=[
             "MC402T",
             "MC502T",
             "MU802T",
-        ),
+        ],
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -9587,7 +9593,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="software_version",
         value_function=value_function_software_version_g4,
         allowedtypes=MIC | GEN | GEN2 | X3,
-        blacklist=("MU802T",),
+        blacklist=[
+            "MU802T",
+        ],
         internal=True,
     ),
 ]
