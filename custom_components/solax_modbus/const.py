@@ -307,8 +307,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignor
     fmt: str | None = None
     scale: float = 1
     state: str | None = None
-    max_exceptions: list[tuple[str, int]] | None = None  #  None or list with structure [ ('U50EC' , 40,) ]
-    min_exceptions_minus: list[tuple[str, int]] | None = None  # same structure as max_exceptions, values are applied with a minus
+    max_exceptions: list[tuple[str, int | float]] | None = None  #  None or list with structure [ ('U50EC' , 40,) ]
+    min_exceptions_minus: list[tuple[str, int | float]] | None = None  # same structure as max_exceptions, values are applied with a minus
     blacklist: list[str] | None = None  # None or list of serial number prefixes like
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
