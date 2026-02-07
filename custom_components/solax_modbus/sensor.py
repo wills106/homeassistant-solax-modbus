@@ -125,26 +125,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     #     inverter_name_suffix = hub.inverterNameSuffix + " "
 
     # Check if hub initialization is complete
-    if hub.device_info is None:
+    device_info_snapshot = hub.device_info  # Take snapshot to avoid race conditions
+    _LOGGER.warning(
+        f"{hub_name}: DIAGNOSTIC - device_info type={type(device_info_snapshot)}, "
+        f"is_none={device_info_snapshot is None}, value={device_info_snapshot}"
+    )
+
+    if device_info_snapshot is None:
         _LOGGER.error(
             f"{hub_name}: sensor setup aborted - hub device_info not initialized. "
             "This can happen if hub initialization failed or is still in progress."
         )
         return False
 
+    _LOGGER.warning(f"{hub_name}: DIAGNOSTIC - Passing device_info to entityToList: {device_info_snapshot}")
     entityToList(
         hub,
         hub_name,
         entities,
         initial_groups,
         computedRegs,
-        hub.device_info,
+        device_info_snapshot,  # Use snapshot instead of hub.device_info
         plugin.SENSOR_TYPES,
         inverter_name_suffix,
         "",
         None,
         readFollowUp,
     )
+    _LOGGER.warning(f"{hub_name}: DIAGNOSTIC - entityToList completed successfully")
 
     # Energy Dashboard check moved to after rebuild_blocks (see below) so initial_groups are ready for reading
 
