@@ -141,22 +141,22 @@ async def async_read_firmware(hub, address=0x25):
 # =================================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG

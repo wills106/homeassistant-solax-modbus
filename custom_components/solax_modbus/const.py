@@ -203,7 +203,7 @@ class plugin_base:
 # =================================== base class for sensor entity descriptions =========================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus sensor declarations."""
 
@@ -247,7 +247,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignor
     _riemann_data_hub: Any = None  # Riemann data hub reference
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus button declarations."""
 
@@ -261,7 +261,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignor
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus select declarations."""
 
@@ -279,7 +279,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignor
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus switch declarations."""
 
@@ -296,7 +296,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignor
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignore[misc]  # Non-frozen inherits from frozen
     """Base class for modbus number declarations."""
 

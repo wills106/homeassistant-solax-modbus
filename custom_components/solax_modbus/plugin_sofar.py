@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
@@ -19,7 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditional import
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -112,7 +112,7 @@ async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | 
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -277,11 +277,11 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-check",
         value_function=value_function_passivemode,
-        depends_on=(
+        depends_on=[
             "passive_mode_grid_power",
             "passive_mode_battery_power_min",
             "passive_mode_battery_power_max",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="Passive: Update Timeout",
@@ -291,10 +291,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:timer",
         value_function=value_function_passive_timeout,
-        depends_on=(
+        depends_on=[
             "passive_mode_timeout",
             "passive_mode_timeout_action",
-        ),
+        ],
     ),
     # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
     SofarModbusButtonEntityDescription(
@@ -314,10 +314,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:transmission-tower-import",
         value_function=value_function_refluxcontrol,
-        depends_on=(
+        depends_on=[
             "feedin_limitation_mode",
             "feedin_max_power",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="EPS: Update",
@@ -327,10 +327,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:power-plug-off",
         value_function=value_function_epscontrol,
-        depends_on=(
+        depends_on=[
             "eps_control",
             "eps_wait_time",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="IV Curve Scan",
@@ -3985,12 +3985,11 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class battery_config(base_battery_config):
-    def __init__(self) -> None:
-        self.battery_sensor_type = BATTERY_SENSOR_TYPES
-        self.battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
-        self.battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
+    battery_sensor_type: list[SofarModbusSensorEntityDescription] | None = field(default_factory=lambda: BATTERY_SENSOR_TYPES)  # type: ignore[assignment]  # Covariant list typing
+    battery_sensor_name_prefix: str | None = field(default="Battery {batt-nr}/{pack-nr} ")
+    battery_sensor_key_prefix: str | None = field(default="battery_{batt-nr}_{pack-nr}_")
 
     bapack_number_address = 0x900D
     bms_inquire_address = 0x9020
@@ -4000,13 +3999,15 @@ class battery_config(base_battery_config):
     batt_pack_model_address = 0x9007
     batt_pack_model_len = 4
 
-    number_cels_in_parallel: int = None  # number of battery pack cells in parallel
-    number_strings: int = None  # number of strings of all battery packs
-    batt_pack_serials = {}
-    selected_batt_nr: int = None
-    selected_batt_pack_nr: int = None
+    number_cels_in_parallel: int | None = None  # number of battery pack cells in parallel
+    number_strings: int | None = None  # number of strings of all battery packs
+    batt_pack_serials: dict[int, dict[int, str]] = field(default_factory=dict)
+    selected_batt_nr: int | None = None
+    selected_batt_pack_nr: int | None = None
 
     async def init_batt_pack(self, hub: Any, serial_number: str) -> None:
+        assert self.selected_batt_nr is not None
+        assert self.selected_batt_pack_nr is not None
         if not self.batt_pack_serials.__contains__(self.selected_batt_nr):
             self.batt_pack_serials[self.selected_batt_nr] = {}
         self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
@@ -4021,7 +4022,7 @@ class battery_config(base_battery_config):
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
-    async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> None:
+    async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> bool:
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
@@ -4031,34 +4032,35 @@ class battery_config(base_battery_config):
         self.selected_batt_pack_nr = batt_pack_nr
         return True
 
-    async def get_batt_pack_serial(self, hub, batt_nr: int, batt_pack_nr: int):
+    async def get_batt_pack_serial(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> str | None:
         if not self.batt_pack_serials.__contains__(batt_nr):
             return None
         if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
             return None
         return self.batt_pack_serials[batt_nr][batt_pack_nr]
 
-    async def get_batt_pack_model(self, hub):
+    async def get_batt_pack_model(self, hub: Any) -> str | None:
         try:
             inverter_data = await hub.async_read_holding_registers(
                 unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len
             )
             if inverter_data is not None and not inverter_data.isError():
-                raw = convert_from_registers(inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big")
+                raw = convert_from_registers(inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 serial = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
                 return serial
+            return None
         except Exception:
             _LOGGER.warning("Cannot read batt pack serial")
             return None
 
-    async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
+    async def get_batt_pack_sw_version(self, hub: Any, new_data: dict[str, Any], key_prefix: str) -> str | None:
         sw_version_key = key_prefix + "bms_version"
         if not new_data.__contains__(sw_version_key):
             _LOGGER.info(f"batt pack software version not received {sw_version_key}")
             return None
         return f"BMS: V{new_data[sw_version_key]}"
 
-    async def check_battery_on_start(self, hub, old_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+    async def check_battery_on_start(self, hub: Any, old_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int) -> bool:
         if not self.batt_pack_serials.__contains__(batt_nr):
             return False
         if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
@@ -4069,7 +4071,7 @@ class battery_config(base_battery_config):
         for _retry in range(0, 10):
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
-                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 ok = read == payload
                 if not ok:
                     await asyncio.sleep(0.3)
@@ -4078,9 +4080,11 @@ class battery_config(base_battery_config):
 
             else:
                 _LOGGER.error("can't read batt check register")
-                return False
+        return False
 
-    async def check_battery_on_end(self, hub, old_data, new_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+    async def check_battery_on_end(
+        self, hub: Any, old_data: dict[str, Any], new_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int
+    ) -> bool:
         # inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
         # if not inverter_data.isError():
         #     decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
@@ -4092,7 +4096,7 @@ class battery_config(base_battery_config):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
         if not inverter_data.isError():
             if inverter_data is not None and not inverter_data.isError():
-                new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 _LOGGER.debug(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
             if new_value == compare_value:
                 serial_key = key_prefix + "pack_serial_number"
@@ -4101,24 +4105,26 @@ class battery_config(base_battery_config):
                     return False
                 serial = new_data[serial_key]
                 _LOGGER.debug(f"batt pack serial: {serial}")
-                return serial == self.batt_pack_serials[batt_nr][batt_pack_nr]
+                return bool(serial == self.batt_pack_serials[batt_nr][batt_pack_nr])
             else:
                 return False
 
         return False
 
-    async def _determine_bat_quantitys(self, hub):
+    async def _determine_bat_quantitys(self, hub: Any) -> None:
         try:
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
-                val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 self.number_cels_in_parallel = (val >> 8) & 0xFF  # high byte
                 self.number_strings = val & 0xFF  # low byte
         except Exception:
             _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{self.bapack_number_address:x}", exc_info=True)
 
-    async def init_batt_pack_serials(self, hub):
+    async def init_batt_pack_serials(self, hub: Any) -> None:
         retry = 0
+        assert self.number_strings is not None
+        assert self.number_cels_in_parallel is not None
         while retry < 5:
             retry = retry + 1
             for batt_nr in range(self.number_strings):
@@ -4131,18 +4137,20 @@ class battery_config(base_battery_config):
                     if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
                         if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
                             retry = retry - 1
-                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
+                    # type narrowing: serial is str | None, dict expects str
+                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial  # type: ignore[assignment]  # serial can be None
 
         _LOGGER.info(f"serials {self.batt_pack_serials}")
 
-    async def _determinate_batt_pack_serial(self, hub):
+    async def _determinate_batt_pack_serial(self, hub: Any) -> str | None:
         inverter_data = await hub.async_read_holding_registers(
             unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len
         )
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[: self.batt_pack_serial_len], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[: self.batt_pack_serial_len], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             serial = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             return serial
+        return None
 
 
 # ============================ plugin declaration =================================================
@@ -4158,7 +4166,7 @@ class sofar_plugin(plugin_base):
         return 'battery_awaken'
     """
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x445, swapbytes=False)
         if not seriesnumber:
@@ -4238,7 +4246,7 @@ class sofar_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: Any = None) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -4254,10 +4262,10 @@ class sofar_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
 

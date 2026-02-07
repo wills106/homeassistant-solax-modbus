@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -102,34 +102,30 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class EnertechModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class EnertechModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class EnertechModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class EnertechModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # Default allowed types
     register_data_type: str = REGISTER_U16  # Default unit (16-bit)
     register_type: int = REG_HOLDING  # Holding register type
-    order32: str = "big"  # Default 32-bit endianness
-
-    def __init__(self, *args, order32="big", **kwargs):
-        super().__init__(*args, **kwargs)
-        self.order32 = order32  # Assign order32
+    order32: str = field(default="big")  # Default 32-bit endianness
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class EnertechModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     """Base class for Enertech Modbus switch entities."""
 

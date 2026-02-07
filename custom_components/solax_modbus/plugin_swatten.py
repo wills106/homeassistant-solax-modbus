@@ -110,22 +110,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Swatten Modbus sensor entities."""
 

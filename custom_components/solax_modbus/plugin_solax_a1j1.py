@@ -109,22 +109,22 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaxA1J1ModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaxA1J1ModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaxA1J1ModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolaXA1J1ModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG

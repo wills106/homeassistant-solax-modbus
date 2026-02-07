@@ -46,27 +46,27 @@ ALLDEFAULT = SUNWAY_STT_10KTL  # Všechny entity se budou vztahovat k našemu st
 # ============================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT
     register_data_type: str = REGISTER_U16
