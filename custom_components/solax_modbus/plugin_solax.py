@@ -9597,15 +9597,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class solax_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> None:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x0)
@@ -9986,7 +9986,9 @@ class solax_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: list[str] | None = None
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -10002,16 +10004,17 @@ class solax_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
+        return False
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
