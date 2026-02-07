@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from time import time
 from typing import Any
@@ -66,7 +67,7 @@ from custom_components.solax_modbus.const import (
     value_function_pv_power_total,
     value_function_rtc,
     value_function_sync_rtc,
-)
+)  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported from const.py
 
 from .pymodbus_compat import DataType, convert_from_registers
 
@@ -117,8 +118,8 @@ ALL_PM_GROUP = PM
 # ============================================================================
 
 # Global storage for last known good values
-_pm_last_known_values = {}
-_soc_last_known_values = {}
+_pm_last_known_values: dict[str, Any] = {}
+_soc_last_known_values: dict[str, Any] = {}
 
 
 def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
@@ -178,12 +179,12 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: Sequence["SolaXModbusSensorEntityDescription"] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
