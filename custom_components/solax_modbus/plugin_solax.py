@@ -10014,7 +10014,6 @@ class solax_plugin(plugin_base):
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
-        return False
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
@@ -10083,6 +10082,8 @@ class solax_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+
+        return False
 
 
 # Energy Dashboard Virtual Device mapping
