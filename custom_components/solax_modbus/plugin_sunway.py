@@ -15,7 +15,9 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
 from custom_components.solax_modbus.const import (
     REG_HOLDING,
@@ -928,12 +930,12 @@ SENSOR_TYPES = [
 
 @dataclass(kw_only=True)
 class sunway_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """Určuje, zda je střídač v aktivním stavu."""
         run_mode = datadict.get("inverter_running_status")
         return run_mode in ("On Grid", "Off Grid")
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine SunWay inverter type")
 
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=10000, count=4)
@@ -942,7 +944,7 @@ class sunway_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address.")
             return 0
 
-        raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")
+        raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
         seriesnumber = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
         seriesnumber = seriesnumber.strip()
         hub.seriesnumber = seriesnumber
@@ -955,17 +957,23 @@ class sunway_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: could not determine inverter type, serial number is empty.")
             return 0
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
-        return (inverterspec & entitymask) != 0
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
+        return bool((inverterspec & entitymask) != 0)
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         raw_version = new_data.get("firmware_version")
         if raw_version is not None:
             # Formát verze je dle dokumentace na uživateli, zkusíme jednoduché zobrazení
             return str(raw_version)
         return None
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return None
 
 

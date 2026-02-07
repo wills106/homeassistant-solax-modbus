@@ -290,8 +290,8 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignor
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
     sensor_key: str | None = None  # The associated sensor key
-    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = (
-        None  # Value function used to determine the new sensor value when the switch changes
+    value_function: Callable[[int | None, bool | None, str | None, dict[str, Any]], int] | None = (
+        None  # Value function: (bit, state, sensor_key, datadict) -> payload
     )
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
