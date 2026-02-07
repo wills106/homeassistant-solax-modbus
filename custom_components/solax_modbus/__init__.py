@@ -1109,7 +1109,7 @@ class SolaXModbusHub:
                 # Use high-level API; unit key is provided via ADDR_KW for compatibility
                 kwargs = {ADDR_KW: unit} if unit is not None else {}
                 _LOGGER.debug(f"{self._name}: READ HOLDING {ADDR_KW}={unit} addr=0x{address:x} cnt={count}")
-                resp = await self._track_task(self._client.read_holding_registers(address=address, count=count, **kwargs))
+                resp = await self._track_task(self._client.read_holding_registers(address=address, count=count, **kwargs))  # type: ignore[arg-type]
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -1135,7 +1135,7 @@ class SolaXModbusHub:
                 # Use high-level API; unit key is provided via ADDR_KW for compatibility
                 kwargs = {ADDR_KW: unit} if unit is not None else {}
                 _LOGGER.debug(f"{self._name}: READ INPUT  {ADDR_KW}={unit} addr=0x{address:x} cnt={count}")
-                resp = await self._track_task(self._client.read_input_registers(address=address, count=count, **kwargs))
+                resp = await self._track_task(self._client.read_input_registers(address=address, count=count, **kwargs))  # type: ignore[arg-type]
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
@@ -1155,7 +1155,7 @@ class SolaXModbusHub:
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._track_task(self._client.write_register(address=address, value=regs[0], **kwargs))
+                resp = await self._track_task(self._client.write_register(address=address, value=regs[0], **kwargs))  # type: ignore[arg-type]
                 # Plugin-level logging hook
                 if hasattr(self.plugin, "log_register_write"):
                     self.plugin.log_register_write(self, address, unit, payload, result=resp)
@@ -1196,7 +1196,7 @@ class SolaXModbusHub:
         async with self._lock:
             await self._check_connection()
             try:
-                resp = await self._track_task(self._client.write_registers(address=address, values=regs, **kwargs))
+                resp = await self._track_task(self._client.write_registers(address=address, values=regs, **kwargs))  # type: ignore[arg-type]
             except (ConnectionException, ModbusIOException) as e:
                 original_message = str(e)
                 raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -1274,7 +1274,7 @@ class SolaXModbusHub:
             if online:
                 async with self._lock:
                     try:
-                        resp = await self._track_task(self._client.write_registers(address=address, values=regs_out, **kwargs))
+                        resp = await self._track_task(self._client.write_registers(address=address, values=regs_out, **kwargs))  # type: ignore[arg-type]
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
@@ -1417,9 +1417,9 @@ class SolaXModbusHub:
                 max_val = getattr(descr, "max_value", None)
 
             if min_val is not None and return_value < min_val:
-                raise ModbusIOException(f"Value {return_value} of '{descr.key}' lower than {min_val}")
+                raise ModbusIOException(f"Value {return_value} of '{descr.key}' lower than {min_val}")  # type: ignore[no-untyped-call]
             if max_val is not None and return_value > max_val:
-                raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")
+                raise ModbusIOException(f"Value {return_value} of '{descr.key}' greater than {max_val}")  # type: ignore[no-untyped-call]
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (
             (self.tmpdata_expiry.get(descr.key, 0) == 0)
@@ -1612,14 +1612,21 @@ class SolaXModbusHub:
             # We can reuse the logic from should_register_be_loaded, but we need to find the correct descriptor first.
             control_descr = None
             # currently, a sensor can only have one associated control - is this comment still true???
-            if self.selectEntities.get(control_key):
-                control_descr = self.selectEntities.get(control_key).entity_description
-            if (not control_descr) and self.numberEntities.get(control_key):
-                control_descr = self.numberEntities.get(control_key).entity_description
-            if (not control_descr) and self.switchEntities.get(control_key):
-                control_descr = self.switchEntities.get(control_key).entity_description
-            if (not control_descr) and self.sensorEntities.get(control_key):
-                control_descr = self.sensorEntities.get(control_key).entity_description
+            control_entity = self.selectEntities.get(control_key)
+            if control_entity:
+                control_descr = control_entity.entity_description
+            if not control_descr:
+                control_entity = self.numberEntities.get(control_key)
+                if control_entity:
+                    control_descr = control_entity.entity_description
+            if not control_descr:
+                control_entity = self.switchEntities.get(control_key)
+                if control_entity:
+                    control_descr = control_entity.entity_description
+            if not control_descr:
+                control_entity = self.sensorEntities.get(control_key)
+                if control_entity:
+                    control_descr = control_entity.entity_description
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):
                 _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'.")
                 return True
