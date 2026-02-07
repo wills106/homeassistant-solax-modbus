@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -14,9 +15,11 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -99,12 +102,12 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=8)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -158,14 +161,16 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ============================================= Charging ===========================================================
 # This value function converts the bits to the number
-def value_function_timing_on_off(bit: int, state: int, descr: str, datadict: dict):
-    value = datadict.get(descr, 0)
+def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
+    assert bit is not None and descr is not None
+    state_int = 1 if state else 0
+    value = int(datadict.get(descr, 0))
     _LOGGER.debug(f">>> Old value of {descr}: {value}")
-    new_value = (value & ~(1 << bit)) | (state << bit)
+    new_value = (value & ~(1 << bit)) | (state_int << bit)
     return new_value
 
 
-def value_function_timingmode_charge_1(initval, descr, datadict):
+def value_function_timingmode_charge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours",
@@ -186,7 +191,7 @@ def value_function_timingmode_charge_1(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_charge_2(initval, descr, datadict):
+def value_function_timingmode_charge_2(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours_2",
@@ -207,7 +212,7 @@ def value_function_timingmode_charge_2(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_charge_3(initval, descr, datadict):
+def value_function_timingmode_charge_3(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours_3",
@@ -228,7 +233,7 @@ def value_function_timingmode_charge_3(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_charge_4(initval, descr, datadict):
+def value_function_timingmode_charge_4(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours_4",
@@ -249,7 +254,7 @@ def value_function_timingmode_charge_4(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_charge_5(initval, descr, datadict):
+def value_function_timingmode_charge_5(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours_5",
@@ -270,7 +275,7 @@ def value_function_timingmode_charge_5(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_charge_6(initval, descr, datadict):
+def value_function_timingmode_charge_6(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_charge_start_hours_6",
@@ -294,7 +299,7 @@ def value_function_timingmode_charge_6(initval, descr, datadict):
 # ============================================ Discharging =========================================================
 
 
-def value_function_timingmode_discharge_1(initval, descr, datadict):
+def value_function_timingmode_discharge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours",
@@ -315,7 +320,7 @@ def value_function_timingmode_discharge_1(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_discharge_2(initval, descr, datadict):
+def value_function_timingmode_discharge_2(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours_2",
@@ -336,7 +341,7 @@ def value_function_timingmode_discharge_2(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_discharge_3(initval, descr, datadict):
+def value_function_timingmode_discharge_3(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours_3",
@@ -357,7 +362,7 @@ def value_function_timingmode_discharge_3(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_discharge_4(initval, descr, datadict):
+def value_function_timingmode_discharge_4(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours_4",
@@ -378,7 +383,7 @@ def value_function_timingmode_discharge_4(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_discharge_5(initval, descr, datadict):
+def value_function_timingmode_discharge_5(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours_5",
@@ -399,7 +404,7 @@ def value_function_timingmode_discharge_5(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode_discharge_6(initval, descr, datadict):
+def value_function_timingmode_discharge_6(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     return [
         (
             "timed_discharge_start_hours_6",
@@ -420,20 +425,20 @@ def value_function_timingmode_discharge_6(initval, descr, datadict):
     ]
 
 
-def value_function_pv1_power(initval, descr, datadict):
-    return datadict.get("pv_voltage_1", 0) * datadict.get("pv_current_1", 0)
+def value_function_pv1_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_1", 0)) * float(datadict.get("pv_current_1", 0))
 
 
-def value_function_pv2_power(initval, descr, datadict):
-    return datadict.get("pv_voltage_2", 0) * datadict.get("pv_current_2", 0)
+def value_function_pv2_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_2", 0)) * float(datadict.get("pv_current_2", 0))
 
 
-def value_function_pv3_power(initval, descr, datadict):
-    return datadict.get("pv_voltage_3", 0) * datadict.get("pv_current_3", 0)
+def value_function_pv3_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_3", 0)) * float(datadict.get("pv_current_3", 0))
 
 
-def value_function_pv4_power(initval, descr, datadict):
-    return datadict.get("pv_voltage_4", 0) * datadict.get("pv_current_4", 0)
+def value_function_pv4_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_4", 0)) * float(datadict.get("pv_current_4", 0))
 
 
 # ================================= Button Declarations ============================================================
@@ -2895,10 +2900,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_input_solis,
         allowedtypes=HYBRID,
-        depends_on=(
+        depends_on=[
             "battery_power",
             "battery_charge_direction",
-        ),
+        ],
         icon="mdi:battery-arrow-up",
     ),
     SolisModbusSensorEntityDescription(
@@ -2908,10 +2913,10 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_output_solis,
-        depends_on=(
+        depends_on=[
             "battery_power",
             "battery_charge_direction",
-        ),
+        ],
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-down",
     ),
@@ -4406,7 +4411,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 @dataclass(kw_only=True)
 class solis_fb00_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 33004, swapbytes=False)
         if not seriesnumber:
@@ -4476,7 +4481,13 @@ class solis_fb00_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
