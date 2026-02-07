@@ -124,6 +124,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     # if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
     #     inverter_name_suffix = hub.inverterNameSuffix + " "
 
+    # Check if hub initialization is complete
+    if hub.device_info is None:
+        _LOGGER.error(
+            f"{hub_name}: sensor setup aborted - hub device_info not initialized. "
+            "This can happen if hub initialization failed or is still in progress."
+        )
+        return False
+
     entityToList(
         hub,
         hub_name,
