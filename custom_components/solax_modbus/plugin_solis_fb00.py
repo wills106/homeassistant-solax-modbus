@@ -565,7 +565,7 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = [
+MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("0602", 62.5),  # 3kW 48v
     ("0102", 62.5),  # 3kW 48v AC Only?
     ("110F", 62.5),  # 3.6kW 48v
