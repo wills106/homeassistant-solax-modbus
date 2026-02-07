@@ -67,7 +67,7 @@ from custom_components.solax_modbus.const import (
     value_function_pv_power_total,
     value_function_rtc,
     value_function_sync_rtc,
-)  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported from const.py
+)
 
 from .pymodbus_compat import DataType, convert_from_registers
 
@@ -1112,7 +1112,7 @@ def value_function_battery_voltage_cell_difference(initval: int, descr: Any, dat
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = [
+BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
     SolaxModbusButtonEntityDescription(
         name="Sync RTC",
         key="sync_rtc",
@@ -1384,7 +1384,7 @@ CHARGE_SCALE_EXCEPTIONS = [
     #    ('H1E', 1 ), # more specific entry comes last and wins
 ]
 
-NUMBER_TYPES = [
+NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     ###
     #
     # Data only number types
@@ -2457,11 +2457,11 @@ NUMBER_TYPES = [
 
 # ================================= Switch Declarations ============================================================
 
-SWITCH_TYPES = []
+SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = []
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = [
+SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     ###
     #
     #  Data only select types
@@ -2484,7 +2484,7 @@ SELECT_TYPES = [
             # 3: "Enabled SOC Target Control",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -2497,7 +2497,7 @@ SELECT_TYPES = [
             2: "Update",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -2516,7 +2516,7 @@ SELECT_TYPES = [
             # 9:  "Mode 9 - PV and BAT control - Target SOC",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3527,7 +3527,7 @@ SELECT_TYPES = [
             9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3540,7 +3540,7 @@ SELECT_TYPES = [
             2: "Update",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3554,7 +3554,7 @@ SELECT_TYPES = [
             9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=HYBRID | GEN4,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3567,7 +3567,7 @@ SELECT_TYPES = [
             2: "Update",
         },
         allowedtypes=HYBRID | GEN4,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     #####
