@@ -796,20 +796,45 @@ class SolaXModbusHub:
         return int(g)
 
     def device_group_key(self, device_info: DeviceInfo) -> str:
+        """Extract device group key from device_info identifiers.
+
+        CRITICAL: This is called during sensor setup for every entity.
+        The device_info parameter should NEVER be None.
+        """
         key = ""
-        _LOGGER.error(
-            f"{self._name}: device_group_key ENTRY - "
-            f"device_info type={type(device_info)}, "
-            f"device_info is_none={device_info is None}, "
-            f"device_info={device_info if device_info is not None else 'IS_NONE!'}"
-        )
-        identifiers = device_info["identifiers"]  # LINE 800 - CRASH HERE
-        _LOGGER.error(
-            f"{self._name}: device_group_key POST-ASSIGN - "
-            f"identifiers type={type(identifiers)}, "
-            f"identifiers={identifiers}, "
-            f"identifiers_is_none={identifiers is None}"
-        )
+
+        # DEFENSIVE: Check if device_info is None (should never happen)
+        if device_info is None:
+            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")
+            return ""
+
+        # DEFENSIVE: Check if it's a dict-like object
+        if not isinstance(device_info, dict):
+            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")
+            return ""
+
+        # DEFENSIVE: Check if "identifiers" key exists
+        if "identifiers" not in device_info:
+            _LOGGER.error(
+                f"{self._name}: device_group_key called with device_info missing 'identifiers' key! "
+                f"keys={list(device_info.keys())}, device_info={device_info}"
+            )
+            return ""
+
+        identifiers = device_info["identifiers"]
+
+        # DEFENSIVE: Check if identifiers is None
+        if identifiers is None:
+            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")
+            return ""
+
+        # DEFENSIVE: Check if identifiers is iterable
+        try:
+            iter(identifiers)
+        except TypeError:
+            _LOGGER.error(f"{self._name}: device_group_key got non-iterable identifiers! type={type(identifiers)}, value={identifiers}")
+            return ""
+
         for identifier in identifiers:
             identifier_tuple = cast(tuple[str, ...], identifier)
             if identifier_tuple[0] != DOMAIN:
