@@ -28,7 +28,7 @@ class TestDeviceInfoBugs:
     - All bugs were related to incorrect handling of device_info initialization/assignment
     """
 
-    def test_energy_dashboard_device_info_none_check(self):
+    def test_energy_dashboard_device_info_none_check(self) -> None:
         """Test that _energy_dashboard_device_info None check exists.
 
         Bug: sensor.py line 793-794 overwrote valid device_info with None
@@ -71,7 +71,7 @@ class TestDeviceInfoBugs:
                 f"Found code:\n{block[:200]}"
             )
 
-    def test_deferred_setup_device_info_indentation(self):
+    def test_deferred_setup_device_info_indentation(self) -> None:
         """Test that device_info assignment in deferred setup is correctly indented.
 
         Bug: __init__.py lines 685-693 had incorrect indentation
@@ -144,7 +144,7 @@ class TestDeviceInfoBugs:
                 f"Context:\n{context}"
             )
 
-    def test_computed_sensor_registration_check(self):
+    def test_computed_sensor_registration_check(self) -> None:
         """Test that computed sensors skip hub registration in base sensor classes.
 
         Bug: Sensors with register < 0 were attempting to register with hub
@@ -180,7 +180,7 @@ class TestDeviceInfoBugs:
             file_path = get_source_file(filename)
             if not file_path.exists():
                 pytest.skip(f"{filename} not found")
-                continue
+                continue  # type: ignore[unreachable]
 
             content = file_path.read_text()
 
@@ -219,7 +219,7 @@ class TestDeviceInfoBugs:
 class TestDeviceInfoInitializationPattern:
     """Test that device_info initialization follows consistent patterns."""
 
-    def test_initial_setup_device_info_pattern(self):
+    def test_initial_setup_device_info_pattern(self) -> None:
         """Test that initial setup device_info follows the same pattern as deferred setup.
 
         Both initialization paths should have identical structure to prevent divergence.
@@ -256,7 +256,7 @@ class TestDeviceInfoInitializationPattern:
 class TestSensorEntityListSingleFunction:
     """Test the entityToListSingle function for correct device_info handling."""
 
-    def test_device_info_parameter_not_lost(self):
+    def test_device_info_parameter_not_lost(self) -> None:
         """Test that device_info parameter is not lost in entityToListSingle.
 
         The function receives device_info as a parameter and should use it,
@@ -288,7 +288,7 @@ class TestSensorEntityListSingleFunction:
 class TestDeviceInfoRuntimeBehavior:
     """Runtime tests for device_info handling (require mock setup)."""
 
-    async def test_sensor_with_none_energy_dashboard_device_info(self):
+    async def test_sensor_with_none_energy_dashboard_device_info(self) -> None:
         """Test that sensor with _energy_dashboard_device_info=None gets parent device_info.
 
         This is the runtime validation of the fix in sensor.py line 793-794.
@@ -305,7 +305,7 @@ class TestDeviceInfoRuntimeBehavior:
         # Verify the fix is in place
         assert "is not None" in content or "!= None" in content, "The None check for _energy_dashboard_device_info is missing"
 
-    async def test_deferred_setup_without_suffix_creates_device_info(self):
+    async def test_deferred_setup_without_suffix_creates_device_info(self) -> None:
         """Test that deferred setup creates device_info even without inverterNameSuffix.
 
         This is the runtime validation of the fix in __init__.py line 685-693.

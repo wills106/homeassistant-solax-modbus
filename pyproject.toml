@@ -90,11 +90,11 @@ pretty = true
 # Files to check
 files = [
     "custom_components/solax_modbus",
+    "tests",
 ]
 
 # Exclude patterns
 exclude = [
-    "^tests/",
     "^scripts/",
     "^\\.venv/",
 ]
