@@ -138,6 +138,9 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
+        # Skip hub registration for computed/internal entities (those without modbus registers)
+        if self.entity_description.register is None or self.entity_description.register < 0:
+            return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:

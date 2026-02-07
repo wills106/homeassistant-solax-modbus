@@ -147,6 +147,9 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
+        # Skip hub registration for computed/internal entities (those without modbus registers)
+        if self.entity_description.register is None or self.entity_description.register < 0:
+            return
         if self.entity_description.write_method != WRITE_DATA_LOCAL:
             return
         last_state = await self.async_get_last_state()
