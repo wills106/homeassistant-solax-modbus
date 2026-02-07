@@ -7,7 +7,7 @@ import importlib
 import json
 import logging
 import time as _mtime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import timedelta
 from time import time
 from types import ModuleType, SimpleNamespace
@@ -1731,11 +1731,12 @@ class SolaXModbusHub:
                             if type(descr) is dict:
                                 for _sub, d in descr.items():
                                     if d.ignore_readerror is False:
-                                        d.ignore_readerror = auto_block_ignore_readerror
-                                        d_ignore_readerror = d_ignore_readerror or d.ignore_readerror
+                                        descr[_sub] = replace(d, ignore_readerror=auto_block_ignore_readerror)
+                                        d_ignore_readerror = d_ignore_readerror or auto_block_ignore_readerror
                             else:
                                 if descr.ignore_readerror is False:
-                                    descr.ignore_readerror = auto_block_ignore_readerror
+                                    descr = replace(descr, ignore_readerror=auto_block_ignore_readerror)
+                                    descriptions[reg] = descr
                                     d_ignore_readerror = descr.ignore_readerror
                         # newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
                         newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
