@@ -900,8 +900,16 @@ class SolaXModbusHub:
 
             _LOGGER.debug(f"{self._name}: starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(self._hass, _refresh, timedelta(seconds=interval))
+
+        # Defensive check: Skip sensors with no device_info (shouldn't happen normally)
         if sensor.device_info is None:
-            raise ValueError(f"Sensor {sensor.entity_description.key} has no device_info")
+            _LOGGER.error(
+                f"{self._name}: Sensor {sensor.entity_description.key} has no device_info - skipping registration. "
+                f"This may indicate a bug in sensor creation. "
+                f"_attr_device_info={getattr(sensor, '_attr_device_info', 'NO_ATTR')}"
+            )
+            return
+
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug(f"{self._name}: adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
@@ -914,6 +922,11 @@ class SolaXModbusHub:
         interval = self.scan_group(sensor)
         interval_group = self.groups.get(interval, None)
         if interval_group is None:
+            return
+
+        # Defensive check: Skip sensors with no device_info
+        if sensor.device_info is None:
+            _LOGGER.warning(f"{self._name}: Cannot remove sensor {sensor.entity_description.key} - no device_info")
             return
 
         device_key = self.device_group_key(sensor.device_info)
