@@ -374,8 +374,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                                 unique_id = f"{hub_unique_prefix}{sensor_mapping.target_key}"
                                 entity_id = entity_registry.async_get_entity_id("sensor", DOMAIN, unique_id)
                                 if entity_id:
-                                    entity_entry = entity_registry.async_get(entity_id)
-                                    if entity_entry is not None and entity_entry.disabled_by:
+                                    maybe_entry = entity_registry.async_get(entity_id)
+                                    if maybe_entry is not None and maybe_entry.disabled_by:
                                         _LOGGER.debug(f"{hub_name}: Enabling previously disabled Energy Dashboard entity: {entity_id}")
                                         entity_registry.async_update_entity(entity_id, disabled_by=None)
 
@@ -567,10 +567,10 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
 
         self._riemann_mapping = riemann_mapping
         self._filter_function = (riemann_mapping.filter_function if riemann_mapping else None) or (lambda v: v)
-        self._last_power_value = None
-        self._last_update_time = None
-        self._total_energy = 0.0  # kWh
-        self._last_reset_date = dt_util.now().date()
+        self._last_power_value: float | None = None
+        self._last_update_time: float | None = None
+        self._total_energy: float = 0.0  # kWh
+        self._last_reset_date: date = dt_util.now().date()
         self._attr_extra_state_attributes = self._riemann_extra_attrs()
 
     def _riemann_extra_attrs(self) -> dict[str, Any]:
@@ -721,9 +721,12 @@ def entityToList(
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):
                     newdescr = copy(sensor_description)
-                    newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value + 1))
-                    newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value + 1))
-                    newdescr.register = sensor_description.register + serie_value
+                    if isinstance(newdescr.name, str):
+                        newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value + 1))
+                    if isinstance(newdescr.key, str):
+                        newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value + 1))
+                    if isinstance(sensor_description.register, int):
+                        newdescr = replace(newdescr, register=sensor_description.register + serie_value)
                     entityToListSingle(
                         hub,
                         hub_name,
@@ -738,11 +741,13 @@ def entityToList(
             else:
                 newdescr = copy(sensor_description)
                 try:
-                    newdescr.name = name_prefix + newdescr.name
+                    if isinstance(newdescr.name, str):
+                        newdescr.name = name_prefix + newdescr.name
                 except Exception:
-                    newdescr.name = newdescr.name
+                    pass
 
-                newdescr.key = key_prefix + newdescr.key
+                if isinstance(newdescr.key, str):
+                    newdescr.key = key_prefix + newdescr.key
                 entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 
@@ -770,6 +775,7 @@ def entityToListSingle(
         device_info = newdescr._energy_dashboard_device_info
 
     # Check if this is a Riemann sum sensor
+    sensor: SensorEntity
     if getattr(newdescr, "_is_riemann_sum_sensor", False):
         sensor = RiemannSumEnergySensor(
             hub_name,
@@ -788,15 +794,7 @@ def entityToListSingle(
     hub.sensorEntities[newdescr.key] = sensor
     # register dependency chain
     deplist = newdescr.depends_on
-    if isinstance(deplist, str):
-        deplist = (deplist,)
-    if isinstance(
-        deplist,
-        (
-            list,
-            tuple,
-        ),
-    ):
+    if deplist is not None:
         _LOGGER.debug(f"{hub.name}: {newdescr.key} depends on entities {deplist}")
         for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
             if dep_on != newdescr.key:
@@ -828,15 +826,15 @@ def entityToListSingle(
 
         if newdescr.register_type == REG_HOLDING:
             if newdescr.register in holdingRegs:  # duplicate or 2 bytes in one register ?
-                if newdescr.unit in (
+                if newdescr.register_data_type in (
                     REGISTER_U8H,
                     REGISTER_U8L,
-                ) and holdingRegs[newdescr.register].unit in (
+                ) and holdingRegs[newdescr.register].register_data_type in (
                     REGISTER_U8H,
                     REGISTER_U8L,
                 ):
                     first = holdingRegs[newdescr.register]
-                    holdingRegs[newdescr.register] = {first.unit: first, newdescr.unit: newdescr}
+                    holdingRegs[newdescr.register] = {first.register_data_type: first, newdescr.register_data_type: newdescr}
                 else:
                     _LOGGER.warning(f"{hub_name}: holding register already used: 0x{newdescr.register:x} {newdescr.key}")
             else:
@@ -844,7 +842,7 @@ def entityToListSingle(
         elif newdescr.register_type == REG_INPUT:
             if newdescr.register in inputRegs:  # duplicate or 2 bytes in one register ?
                 first = inputRegs[newdescr.register]
-                inputRegs[newdescr.register] = {first.unit: first, newdescr.unit: newdescr}
+                inputRegs[newdescr.register] = {first.register_data_type: first, newdescr.register_data_type: newdescr}
                 _LOGGER.warning(f"{hub_name}: input register already declared: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 inputRegs[newdescr.register] = newdescr
