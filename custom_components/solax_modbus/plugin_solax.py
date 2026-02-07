@@ -147,7 +147,7 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
             _soc_last_known_values[descr.key] = value
 
     # PM U32 sensors only (filter by key prefix)
-    if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
+    if descr.key.startswith("pm_") and descr.register_data_type == REGISTER_U32:
         # Handle None from core errors
         if value is None:
             last_value = _pm_last_known_values.get(descr.key, 0)
