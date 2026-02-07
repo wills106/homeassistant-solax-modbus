@@ -816,7 +816,7 @@ class SolaXModbusHub:
         if not interval_group.device_groups:
             interval_group.interval = interval
 
-            async def _refresh(_now: int | None = None) -> None:
+            async def _refresh(_now: Any = None) -> None:
                 secs = interval_group.interval
                 self.cyclecount += 1
                 cycle_id = self.cyclecount
@@ -862,6 +862,8 @@ class SolaXModbusHub:
 
             _LOGGER.debug(f"{self._name}: starting timer loop for interval group: {interval}")
             interval_group.unsub_interval_method = async_track_time_interval(self._hass, _refresh, timedelta(seconds=interval))
+        if sensor.device_info is None:
+            raise ValueError(f"Sensor {sensor.entity_description.key} has no device_info")
         device_key = self.device_group_key(sensor.device_info)
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug(f"{self._name}: adding sensor {sensor.entity_description.key} available: {sensor._attr_available} ")
@@ -1279,11 +1281,10 @@ class SolaXModbusHub:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
                 return resp
-            else:
-                return None
-        else:
-            _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
             return None
+
+        _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
+        return None
 
     async def async_read_modbus_data(self, group: Any) -> bool:
         res = True
@@ -2009,9 +2010,9 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     async def _check_connection(self) -> Any:  # type: ignore[override]
         # get hold of temporary strong reference to CoreModbusHub object
         # and pass it on success to caller if available
-        if self._hub is None or (hub := self._hub()) is None:
+        if self._hub is None or (hub := self._hub()) is None:  # type: ignore[unreachable]
             return await self.async_connect()
-        async with hub._lock:
+        async with hub._lock:  # type: ignore[unreachable]
             try:
                 if hub._client.connected:
                     return hub
@@ -2020,7 +2021,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         _LOGGER.debug(f"{self._name}: Inverter is not connected, trying to connect")
         return await self.async_connect(hub)
 
-    async def is_online(self):
+    async def is_online(self) -> bool:
         """Reflect online state using the Core Modbus hub client."""
         try:
             hub = self._hub() if self._hub is not None else None
@@ -2031,10 +2032,11 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         except Exception:
             return False
 
-    def _hub_closed_now(self, ref_obj):
-        with self._lock:
-            if ref_obj is self._hub:
-                self._hub = None
+    def _hub_closed_now(self, ref_obj: Any) -> None:
+        # Called from WeakRef finalizer (synchronous context)
+        # Cannot use asyncio.Lock here - just clear the reference
+        if ref_obj is self._hub:
+            self._hub = None
 
     async def async_connect(self, hub: Any = None) -> Any:  # type: ignore[override]
         delay = True
