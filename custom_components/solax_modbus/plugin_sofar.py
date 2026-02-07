@@ -2,6 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -16,7 +17,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
@@ -106,7 +107,7 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
@@ -130,25 +131,25 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
 
@@ -162,7 +163,7 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_passivemode(initval, descr, datadict):
+def value_function_passivemode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (REGISTER_S32, datadict.get("passive_mode_grid_power", 0)),
         (REGISTER_S32, datadict.get("passive_mode_battery_power_min", 0)),
@@ -170,7 +171,7 @@ def value_function_passivemode(initval, descr, datadict):
     ]
 
 
-def value_function_passive_timeout(initval, descr, datadict):
+def value_function_passive_timeout(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "passive_mode_timeout",
@@ -183,7 +184,7 @@ def value_function_passive_timeout(initval, descr, datadict):
     ]
 
 
-def value_function_refluxcontrol(initval, descr, datadict):
+def value_function_refluxcontrol(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "feedin_limitation_mode",
@@ -196,7 +197,7 @@ def value_function_refluxcontrol(initval, descr, datadict):
     ]
 
 
-def value_function_epscontrol(initval, descr, datadict):
+def value_function_epscontrol(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "eps_control",
@@ -210,7 +211,7 @@ def value_function_epscontrol(initval, descr, datadict):
 
 
 # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
-# def value_function_timingmode(initval, descr, datadict):
+# def value_function_timingmode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
 #     return  [ ('timing_id', datadict.get('timing_id', 0), ),
 #               ('timing_charge', datadict.get('timing_charge', datadict.get('ro_timing_charge')), ),
 #               ('timing_charge_start_time', datadict.get('timing_charge_start_time', datadict.get('ro_timing_charge_start_time')), ),
@@ -221,7 +222,7 @@ def value_function_epscontrol(initval, descr, datadict):
 #               ('timing_discharge_power', datadict.get('timing_discharge_power', 0), ),
 #             ]
 
-# def value_function_toumode(initval, descr, datadict):
+# def value_function_toumode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
 #     return  [ ('tou_id', datadict.get('tou_id', 0), ),
 #               ('tou_control', datadict.get('tou_control', datadict.get('ro_tou_control')), ),
 #               ('tou_charge_start_time', datadict.get('tou_charge_start_time', datadict.get('ro_tou_charge_start_time')), ),
@@ -231,7 +232,7 @@ def value_function_epscontrol(initval, descr, datadict):
 #             ]
 
 
-def value_function_sync_rtc_ymd_sofar(initval, descr, datadict):
+def value_function_sync_rtc_ymd_sofar(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     now = datetime.now()
     return [
         (
@@ -3986,7 +3987,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class battery_config(base_battery_config):
-    def __init__(self):
+    def __init__(self) -> None:
         self.battery_sensor_type = BATTERY_SENSOR_TYPES
         self.battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
         self.battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
@@ -4005,22 +4006,22 @@ class battery_config(base_battery_config):
     selected_batt_nr: int = None
     selected_batt_pack_nr: int = None
 
-    async def init_batt_pack(self, hub, serial_number):
+    async def init_batt_pack(self, hub: Any, serial_number: str) -> None:
         if not self.batt_pack_serials.__contains__(self.selected_batt_nr):
             self.batt_pack_serials[self.selected_batt_nr] = {}
         self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
 
-    async def get_batt_pack_quantity(self, hub):
+    async def get_batt_pack_quantity(self, hub: Any) -> int | None:
         if self.number_cels_in_parallel is None:
             await self._determine_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
-    async def get_batt_quantity(self, hub):
+    async def get_batt_quantity(self, hub: Any) -> int | None:
         if self.number_strings is None:
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
-    async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
+    async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> None:
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")

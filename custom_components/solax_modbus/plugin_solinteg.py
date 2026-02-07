@@ -1,7 +1,8 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
+from homeassistant.components.number import NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -12,7 +13,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
@@ -95,12 +96,12 @@ _simple_switch = {0: "off", 1: "on"}
 # ====================== find inverter type and details ===========================================
 
 
-async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
+async def _read_serialnr(hub: Any, address: int = 10000, count: int = 8, swapbytes: bool = False) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=count)
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:count], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:count], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -115,12 +116,12 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
     return res
 
 
-async def _read_model(hub, address=10008):
+async def _read_model(hub: Any, address: int = 10008) -> int | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
         if inverter_data is not None and not inverter_data.isError():
-            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
+            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             hub._invertertype = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
@@ -235,51 +236,41 @@ def value_function_house_normal_load(initval: int, descr: Any, datadict: dict[st
 
 
 # gc: set defaults; not all classes have all fields...
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        # kwargs.setdefault("write_method",WRITE_SINGLE_MODBUS)
-        super().__init__(**kwargs)
+    """Button entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("sleepmode",SLEEPMODE_LASTAWAKE)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        kwargs.setdefault("register_data_type", REGISTER_U16)
-        super().__init__(**kwargs)
+    """Number entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
+    register_data_type: str = field(default=REGISTER_U16)
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("sleepmode",SLEEPMODE_LASTAWAKE)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        # kwargs.setdefault("write_method",WRITE_SINGLE_MODBUS)
-        kwargs.setdefault("register_data_type", REGISTER_U16)
-        super().__init__(**kwargs)
+    """Select entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
+    register_data_type: str = field(default=REGISTER_U16)
 
     @property
     def should_poll(self) -> bool:
         return True
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solinteg Modbus sensor entities."""
 
-    def __init__(self, **kwargs):
-        # _LOGGER.warning("sensor init")
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        kwargs.setdefault("sleepmode", SLEEPMODE_LASTAWAKE)
-        kwargs.setdefault("register_type", REG_HOLDING)
-        kwargs.setdefault("register_data_type", REGISTER_U16)
-        super().__init__(**kwargs)
+    allowedtypes: int = field(default=ALLDEFAULT)
+    sleepmode: int = field(default=SLEEPMODE_LASTAWAKE)
+    register_type: int = field(default=REG_HOLDING)
+    register_data_type: str = field(default=REGISTER_U16)
 
 
 # ================================= Button Declarations ============================================================
@@ -355,7 +346,7 @@ NUMBER_TYPES = [
         native_min_value=5,
         native_max_value=100,
         native_step=1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -370,7 +361,7 @@ NUMBER_TYPES = [
         native_min_value=5,
         native_max_value=100,
         native_step=1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -385,7 +376,7 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=200,
         native_step=0.1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.CONFIG,
@@ -400,7 +391,7 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=200,
         native_step=0.1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.CONFIG,
@@ -416,7 +407,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=0.1,
         register_data_type=REGISTER_S16,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -432,7 +423,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=0.1,
         register_data_type=REGISTER_U16,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         entity_category=EntityCategory.CONFIG,
@@ -1013,7 +1004,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         # register = 30256, not needed, take sign from power
         # scale = {0: "discharging", 1: "charging"},
         value_function=lambda v, d, dd: ["discharge", "charge"][dd.get("battery_power", 0) <= 0],
-        depends_on=("battery_power",),
+        depends_on=["battery_power"],
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         scan_group=SCAN_GROUP_MEDIUM,
@@ -1345,10 +1336,10 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Total Load",  # incl. backup
         key="house_total_load",
         value_function=value_function_house_total_load,
-        depends_on=(
+        depends_on=[
             "inverter_load",
             "measured_power",
-        ),
+        ],
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1359,11 +1350,11 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Normal Load",  # w/o backup
         key="house_normal_load",
         value_function=value_function_house_normal_load,
-        depends_on=(
+        depends_on=[
             "inverter_load",
             "measured_power",
             "backup_power",
-        ),
+        ],
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1531,7 +1522,7 @@ class solinteg_plugin(plugin_base):
 
     """
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await _read_serialnr(hub)
         if not seriesnumber:
@@ -1572,13 +1563,13 @@ class solinteg_plugin(plugin_base):
             # set the options
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
-                    sel.option_dict = sel_dd
+                    sel.option_dict = sel_dd  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
                     break
 
             # use own mask
-            for sel in self.SENSOR_TYPES:
+            for sel in self.SENSOR_TYPES:  # type: ignore[assignment]  # Runtime type compatibility
                 if sel.key == "shadow_scan":
-                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)
+                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -1592,7 +1583,7 @@ class solinteg_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: Any = None) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1606,10 +1597,10 @@ class solinteg_plugin(plugin_base):
                     return False
         return genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
 

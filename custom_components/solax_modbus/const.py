@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
@@ -140,10 +140,10 @@ class plugin_base:
 
     plugin_name: str
     plugin_manufacturer: str
-    SENSOR_TYPES: list[SensorEntityDescription]
-    BUTTON_TYPES: list[ButtonEntityDescription]
-    NUMBER_TYPES: list[NumberEntityDescription]
-    SELECT_TYPES: list[SelectEntityDescription]
+    SENSOR_TYPES: Sequence[SensorEntityDescription]
+    BUTTON_TYPES: Sequence[ButtonEntityDescription]
+    NUMBER_TYPES: Sequence[NumberEntityDescription]
+    SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: list[SwitchEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
@@ -218,7 +218,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignor
     rounding: int = 1
     register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
-    scan_group: int | None = None  # <=0 -> default group
+    scan_group: str | None = None  # SCAN_GROUP_MEDIUM, SCAN_GROUP_FAST, SCAN_GROUP_DEFAULT, etc.
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False  # set to True to start a new modbus read block operation - do not use frequently
     # prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
