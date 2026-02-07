@@ -522,6 +522,10 @@ class SolaXModbusSensor(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
+        # Skip hub registration for computed/internal sensors (those without modbus registers)
+        # These sensors don't participate in the polling cycle
+        if self.entity_description.register < 0:
+            return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
