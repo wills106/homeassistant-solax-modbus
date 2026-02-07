@@ -1,4 +1,14 @@
-"""Phase C regression tests - prevent reintroduction of linting errors."""
+"""Linting regression tests - prevent reintroduction of code quality issues.
+
+Tests for specific linting errors that were fixed and should never return:
+- F821: Undefined names
+- F811: Redefined imports
+- E722: Bare except clauses
+- E711: None comparisons using == instead of is
+- E741: Ambiguous variable names
+- E402: Late imports
+- B023: Closure variable capture bugs
+"""
 
 import ast
 import re
