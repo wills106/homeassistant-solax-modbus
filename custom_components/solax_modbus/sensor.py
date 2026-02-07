@@ -1,6 +1,5 @@
 import logging
 import time
-from copy import copy
 from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
@@ -739,11 +738,11 @@ def entityToList(
             # apply scale exceptions early
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):
-                    newdescr = copy(sensor_description)
+                    newdescr = sensor_description
                     if isinstance(newdescr.name, str):
-                        newdescr.name = name_prefix + newdescr.name.replace("{}", str(serie_value + 1))
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name.replace("{}", str(serie_value + 1)))
                     if isinstance(newdescr.key, str):
-                        newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value + 1))
+                        newdescr = replace(newdescr, key=key_prefix + newdescr.key.replace("{}", str(serie_value + 1)))
                     if isinstance(sensor_description.register, int):
                         newdescr = replace(newdescr, register=sensor_description.register + serie_value)
                     entityToListSingle(
@@ -758,15 +757,15 @@ def entityToList(
                         readFollowUp,
                     )
             else:
-                newdescr = copy(sensor_description)
+                newdescr = sensor_description
                 try:
                     if isinstance(newdescr.name, str):
-                        newdescr.name = name_prefix + newdescr.name
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name)
                 except Exception:
                     pass
 
                 if isinstance(newdescr.key, str):
-                    newdescr.key = key_prefix + newdescr.key
+                    newdescr = replace(newdescr, key=key_prefix + newdescr.key)
                 entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 
