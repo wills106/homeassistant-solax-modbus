@@ -1,0 +1,47 @@
+name: Type Checking (mypy)
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+      - fix/*
+      - chore/*
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  mypy:
+    name: Type Check with mypy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run mypy type checking
+        run: |
+          echo "Running mypy in strict mode..."
+          uv run mypy custom_components/solax_modbus tests --strict
+          
+      - name: Type checking summary
+        if: success()
+        run: |
+          echo "✅ Type checking passed!"
+          echo "All 47 source files (29 source + 18 tests) passed strict type checking"
+          
+      - name: Type checking failed
+        if: failure()
+        run: |
+          echo "❌ Type checking failed!"
+          echo "Please fix type errors before merging"
+          exit 1

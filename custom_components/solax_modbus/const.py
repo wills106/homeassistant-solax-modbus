@@ -1,7 +1,9 @@
 import logging
 import pathlib
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import (
@@ -30,7 +32,9 @@ except ImportError:
 
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
 
-    class UnitOfReactivePower(StrEnum):
+    class UnitOfReactivePower(StrEnum):  # type: ignore[no-redef]
+        """Fallback for HA versions <2023.1."""
+
         VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
 
 
@@ -123,84 +127,105 @@ DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
 
 @dataclass
 class base_battery_config:
-    def __init__(self):
-        self.battery_sensor_type: list[SelectEntityDescription] | None = None
-        self.battery_sensor_name_prefix: str | None = None
-        self.battery_sensor_key_prefix: str | None = None
+    """Configuration for battery sensors."""
+
+    battery_sensor_type: list[SelectEntityDescription] | None = None
+    battery_sensor_name_prefix: str | None = None
+    battery_sensor_key_prefix: str | None = None
 
 
 @dataclass
 class plugin_base:
+    """Base class for plugin implementations."""
+
     plugin_name: str
     plugin_manufacturer: str
-    SENSOR_TYPES: list[SensorEntityDescription]
-    BUTTON_TYPES: list[ButtonEntityDescription]
-    NUMBER_TYPES: list[NumberEntityDescription]
-    SELECT_TYPES: list[SelectEntityDescription]
-    SWITCH_TYPES: list[SwitchEntityDescription]
+    SENSOR_TYPES: Sequence[SensorEntityDescription]
+    BUTTON_TYPES: Sequence[ButtonEntityDescription]
+    NUMBER_TYPES: Sequence[NumberEntityDescription]
+    SELECT_TYPES: Sequence[SelectEntityDescription]
+    SWITCH_TYPES: Sequence[SwitchEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
+    ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100
     auto_block_ignore_readerror: bool | None = None  # if True or False, inserts a ignore_readerror statement for each block
     # order16: str | None = None # ignored since 2025.09 - assuming "big" for all plugins
     order32: str | None = None  # "big" or "little" - used to be Endian.BIG or Endian.LITTLE
-    inverter_model: str = None
+    inverter_model: str | None = None
     default_holding_scangroup: str = SCAN_GROUP_DEFAULT
     default_input_scangroup: str = SCAN_GROUP_DEFAULT  # or SCAN_GROUP_AUTO
     auto_default_scangroup: str = SCAN_GROUP_FAST  # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
     auto_slow_scangroup: str = SCAN_GROUP_MEDIUM  # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
 
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
+        """Check if inverter is awake."""
         return True  # always awake by default
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str | None:
+        """Return the key for the wakeup button, if any."""
         return None  # no wakeup button
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
+        """Determine the inverter type from configuration."""
         return 0
 
-    async def async_determineInverterData(self, hub, configdict):
+    async def async_determineInverterData(self, hub: Any, configdict: dict[str, Any]) -> bool:
+        """Determine inverter data from hub."""
         return False
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
+        """Match inverter with mask."""
         return False
 
-    def localDataCallback(self, hub):  # called when local data is updated or on startup
+    def localDataCallback(self, hub: Any) -> bool:
+        """Called when local data is updated or on startup."""
         return True
 
-    def getModel(self, new_data):
+    def getModel(self, new_data: dict[str, Any]) -> str | None:
+        """Get model from data dictionary."""
         return None
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
+        """Get software version from data dictionary."""
         return None
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
+        """Get hardware version from data dictionary."""
         return None
 
 
 # =================================== base class for sensor entity descriptions =========================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSensorEntityDescription(SensorEntityDescription):
-    """base class for modbus sensor declarations"""
+    """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    scale: float = 1  # can be float, dictionary or callable function(initval, descr, datadict)
-    read_scale_exceptions: list = None  # additional scaling when reading from modbus
+    scale: float | dict[Any, Any] | Callable[[Any, Any, dict[str, Any]], Any] = (
+        1  # can be float, dictionary or callable function(initval, descr, datadict)
+    )
+    read_scale_exceptions: list[Any] | None = None  # additional scaling when reading from modbus
     read_scale: float = 1
-    blacklist: list = None
+    blacklist: list[str] | None = None
     register: int = -1  # initialize with invalid register
     rounding: int = 1
-    register_type: int = None  # REG_HOLDING or REG_INPUT or REG_DATA
-    unit: int = None  # e.g. REGISTER_U16
-    scan_group: int = None  # <=0 -> default group
+    register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
+    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    scan_group: str | None = None  # SCAN_GROUP_MEDIUM, SCAN_GROUP_FAST, SCAN_GROUP_DEFAULT, etc.
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False  # set to True to start a new modbus read block operation - do not use frequently
     # prevent_update: bool = False # if set to True, value will not be re-read/updated with each polling cycle; only when read value changes
-    value_function: callable = None  #  value = function(initval, descr, datadict)
-    wordcount: int = None  # only for unit = REGISTER_STR and REGISTER_WORDS
-    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
-    ignore_readerror: bool = False  # not strictly boolean: boolean or static other value
+    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  #  value = function(initval, descr, datadict)
+    wordcount: int | None = None  # only for register_data_type = REGISTER_STR and REGISTER_WORDS
+    sleepmode: int | None = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
+    ignore_readerror: bool | Any = False  # not strictly boolean: boolean or static other value
     # if False, read errors will invalidate the data
     # if True, data will remain untouched
     # if not False nor True (e.g. a number): ignore read errors for this block and return this static value
@@ -209,73 +234,89 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # so typically this attribute can be set to None or "Unknown" or any other value
     # This only works if the first entity of a block contains this attribute
     # When simply set to True, no initial value will be returned, but the block will be considered valid
-    value_series: int = None  # if not None, the value is part of a series of values with similar properties
+    value_series: int | None = None  # if not None, the value is part of a series of values with similar properties
     # The name and key must contain a placeholder {} that is replaced by the preceding number
-    min_value: int = None
-    max_value: int = None
-    depends_on: list = None  # list of modbus register keys that must be read
+    min_value: int | None = None
+    max_value: int | None = None
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
+    _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
+    _energy_dashboard_mapping: Any = None  # EnergyDashboardMapping
+    _energy_dashboard_source_hub: Any = None  # Source hub reference
+    _is_riemann_sum_sensor: bool = False  # Whether this is a Riemann sum sensor
+    _riemann_mapping: Any = None  # Riemann mapping configuration
+    _riemann_data_hub: Any = None  # Riemann data hub reference
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusButtonEntityDescription(ButtonEntityDescription):
+    """Base class for modbus button declarations."""
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    register: int = None
-    command: int = None
-    blacklist: list = None  # none or list of serial number prefixes
+    register: int | None = None
+    command: int | None = None
+    blacklist: list[str] | None = None  # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
-    value_function: callable = None  #  value = function(initval, descr, datadict)
-    autorepeat: str = None  # if not None: name of entity that contains autorepeat duration in seconds
-    depends_on: list = None  # list of modbus register keys that must be read
+    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  #  value = function(initval, descr, datadict)
+    autorepeat: str | None = None  # if not None: name of entity that contains autorepeat duration in seconds
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSelectEntityDescription(SelectEntityDescription):
+    """Base class for modbus select declarations."""
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    register: int = None
-    option_dict: dict = None
-    reverse_option_dict: dict = None  # autocomputed
-    blacklist: list = None  # none or list of serial number prefixes
+    register: int | None = None
+    option_dict: dict[int, str] | None = None
+    reverse_option_dict: dict[str, int] | None = None  # autocomputed
+    blacklist: list[str] | None = None  # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
-    initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
-    unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
-    sensor_key: str = None  # specify only when corresponding sensor has a different key name
-    depends_on: list = None  # list of modbus register keys that must be read
-    value_function: callable = None  # value function for autorepeat (same pattern as buttons)
+    initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
+    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    sensor_key: str | None = None  # specify only when corresponding sensor has a different key name
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
+    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
+    """Base class for modbus switch declarations."""
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    register: int = None
-    register_bit: int = None
-    blacklist: list = None  # none or list of serial number prefixes
+    register: int | None = None
+    register_bit: int | None = None
+    blacklist: list[str] | None = None  # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
-    initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
-    sensor_key: str = None  # The associated sensor key
-    value_function: callable = None  # Value function used to determine the new sensor value when the switch changes
-    depends_on: list = None  # list of modbus register keys that must be read
+    initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
+    sensor_key: str | None = None  # The associated sensor key
+    value_function: Callable[[int | None, bool | None, str | None, dict[str, Any]], int] | None = (
+        None  # Value function: (bit, state, sensor_key, datadict) -> payload
+    )
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
+    """Base class for modbus number declarations."""
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    register: int = None
-    read_scale_exceptions: list = None
+    register: int | None = None
+    read_scale_exceptions: list[Any] | None = None
     read_scale: float = 1
-    fmt: str = None
+    fmt: str | None = None
     scale: float = 1
-    state: str = None
-    max_exceptions: list = None  #  None or list with structure [ ('U50EC' , 40,) ]
-    min_exceptions_minus: list = None  # same structure as max_exceptions, values are applied with a minus
-    blacklist: list = None  # None or list of serial number prefixes like
+    state: str | None = None
+    max_exceptions: list[tuple[str, int | float]] | None = None  #  None or list with structure [ ('U50EC' , 40,) ]
+    min_exceptions_minus: list[tuple[str, int | float]] | None = None  # same structure as max_exceptions, values are applied with a minus
+    blacklist: list[str] | None = None  # None or list of serial number prefixes like
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
-    initvalue: int = None  # initial default value for WRITE_DATA_LOCAL entities
-    unit: int = None  #  optional for WRITE_DATA_LOCAL e.g REGISTER_U16, REGISTER_S32 ...
+    initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
+    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     prevent_update: bool = False  # if set to True, value will not be re-read/updated with each polling cycle;
     # update only when read value changes
-    sensor_key: str = None  # only specify this if corresponding sensor has a different key name
-    depends_on: list = None  # list of modbus register keys that must be read
+    sensor_key: str | None = None  # only specify this if corresponding sensor has a different key name
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
     display_as_box: bool = False  # if true, displays the entity as a box rather than a slider.
     suggested_display_precision: int | None = None
 
@@ -283,19 +324,23 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
 
 
-def autorepeat_set(datadict, entitykey, value):
+def autorepeat_set(datadict: dict[str, Any], entitykey: str, value: float) -> None:
+    """Set autorepeat expiry time for an entity."""
     datadict["_repeatUntil"][entitykey] = value
 
 
-def autorepeat_stop(datadict, entitykey):
+def autorepeat_stop(datadict: dict[str, Any], entitykey: str) -> None:
+    """Stop autorepeat for an entity."""
     datadict["_repeatUntil"][entitykey] = 0
 
 
-def autorepeat_stop_with_postaction(datadict, entitykey):
+def autorepeat_stop_with_postaction(datadict: dict[str, Any], entitykey: str) -> None:
+    """Stop autorepeat with post-action trigger."""
     datadict["_repeatUntil"][entitykey] = 1
 
 
-def autorepeat_remaining(datadict, entitykey, timestamp):
+def autorepeat_remaining(datadict: dict[str, Any], entitykey: str, timestamp: float) -> int:
+    """Get remaining autorepeat time in seconds."""
     remaining = datadict["_repeatUntil"].get(entitykey, 0) - timestamp
     return int(remaining) if remaining > 0 else 0
 
@@ -303,12 +348,13 @@ def autorepeat_remaining(datadict, entitykey, timestamp):
 # ================================= Computed sensor value functions  =================================================
 
 
-MAX_PVSTRINGS = 10
+MAX_PVSTRINGS: int = 10
 
 
-def value_function_pv_power_total(initval, descr, datadict):
+def value_function_pv_power_total(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate total PV power from all strings."""
     # changed: for performance reasons, we should not iterate over the entire datadict every polling cycle (contains hundreds ...)
-    total = 0
+    total: int | float = 0
     i = 1
     while i <= MAX_PVSTRINGS:
         v = datadict.get(f"pv_power_{i}", None)
@@ -320,41 +366,42 @@ def value_function_pv_power_total(initval, descr, datadict):
     return total
 
 
-def value_function_battery_output(initval, descr, datadict):
-    val = datadict.get("battery_power_charge", 0)
+def value_function_battery_output(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate battery output power (discharge)."""
+    val: int | float = datadict.get("battery_power_charge", 0)
     if val < 0:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
-def value_function_battery_input(initval, descr, datadict):
-    val = datadict.get("battery_power_charge", 0)
+def value_function_battery_input(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate battery input power (charge)."""
+    val: int | float = datadict.get("battery_power_charge", 0)
     if val > 0:
         return val
-    else:
-        return 0
+    return 0
 
 
-def value_function_battery_output_solis(initval, descr, datadict):
-    inout = datadict.get("battery_charge_direction", 0)
-    val = datadict.get("battery_power", 0)
+def value_function_battery_output_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate battery output power for Solis inverters."""
+    inout: int = datadict.get("battery_charge_direction", 0)
+    val: int | float = datadict.get("battery_power", 0)
     if inout == 1:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
-def value_function_battery_input_solis(initval, descr, datadict):
-    inout = datadict.get("battery_charge_direction", 0)
-    val = datadict.get("battery_power", 0)
+def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate battery input power for Solis inverters."""
+    inout: int = datadict.get("battery_charge_direction", 0)
+    val: int | float = datadict.get("battery_power", 0)
     if inout == 0:
         return val
-    else:
-        return 0
+    return 0
 
 
-def value_function_disabled_enabled(initval, descr, datadict):
+def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Convert 0/1 to Disabled/Enabled string."""
     scale = {
         0: "Disabled",
         1: "Enabled",
@@ -362,30 +409,32 @@ def value_function_disabled_enabled(initval, descr, datadict):
     return scale.get(initval, str(initval) + " Unknown Status")
 
 
-def value_function_gain_offset(initval, descr, datadict):
+def value_function_gain_offset(initval: Any, descr: Any, datadict: dict[str, Any]) -> float:
+    """Apply gain and offset calibration to power measurement."""
     # Simple offset (unit) and gain (%) calibration of the measured power
-    offset = datadict.get(descr.key + "_offset", 0)
-    gain = datadict.get(descr.key + "_gain", 100)
-    return (initval + offset) * (gain / 100.0)
+    offset: int | float = datadict.get(descr.key + "_offset", 0)
+    gain: int | float = datadict.get(descr.key + "_gain", 100)
+    return float((initval + offset) * (gain / 100.0))
 
 
-def value_function_grid_import(initval, descr, datadict):
-    val = datadict.get("measured_power", 0)
+def value_function_grid_import(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate grid import power."""
+    val: int | float = datadict.get("measured_power", 0)
     if val < 0:
         return abs(val)
-    else:
-        return 0
+    return 0
 
 
-def value_function_grid_export(initval, descr, datadict):
-    val = datadict.get("measured_power", 0)
+def value_function_grid_export(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate grid export power."""
+    val: int | float = datadict.get("measured_power", 0)
     if val > 0:
         return val
-    else:
-        return 0
+    return 0
 
 
-def value_function_sync_rtc(initval, descr, datadict):
+def value_function_sync_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
+    """Generate RTC sync values in dmy order."""
     now = datetime.now()
     return [
         (
@@ -415,9 +464,10 @@ def value_function_sync_rtc(initval, descr, datadict):
     ]
 
 
-def value_function_sync_rtc_ymd(initval, descr, datadict):
+def value_function_sync_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
+    """Generate RTC sync values in ymd order with optional offset."""
     offset = datadict.get("sync_rtc_offset", 0)
-    if isinstance(offset, float) or isinstance(offset, int):
+    if isinstance(offset, (float, int)):
         now = datetime.now() + timedelta(seconds=offset)
     else:
         now = datetime.now()
@@ -450,7 +500,8 @@ def value_function_sync_rtc_ymd(initval, descr, datadict):
     ]
 
 
-def value_function_rtc(initval, descr, datadict):
+def value_function_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
+    """Parse RTC value in dmy order."""
     try:
         (
             rtc_seconds,
@@ -463,10 +514,11 @@ def value_function_rtc(initval, descr, datadict):
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
     except Exception:
-        pass
+        return None
 
 
-def value_function_rtc_ymd(initval, descr, datadict):
+def value_function_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
+    """Parse RTC value in ymd order."""
     try:
         (
             rtc_years,
@@ -479,16 +531,18 @@ def value_function_rtc_ymd(initval, descr, datadict):
         val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
     except Exception:
-        pass
+        return None
 
 
-def value_function_gen4time(initval, descr, datadict):
+def value_function_gen4time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse Gen4 time format."""
     h = initval % 256
     m = initval >> 8
     return f"{h:02d}:{m:02d}"
 
 
-def value_function_gen23time(initval, descr, datadict):
+def value_function_gen23time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse Gen2/3 time format."""
     (
         h,
         m,
@@ -496,27 +550,30 @@ def value_function_gen23time(initval, descr, datadict):
     return f"{h:02d}:{m:02d}"
 
 
-def value_function_sofartime(initval, descr, datadict):
+def value_function_sofartime(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse Sofar time format."""
     m = initval % 256
     h = initval >> 8
     return f"{h:02d}:{m:02d}"
 
 
-def value_function_firmware(initval, descr, datadict):
+def value_function_firmware(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse firmware version from two bytes."""
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
 
 
-def value_function_firmware_decimal_hundredths(initval, descr, datadict):
-    # Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11).
+def value_function_firmware_decimal_hundredths(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | Any:
+    """Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11)."""
     try:
         return f"{initval / 100:.2f}"
     except Exception:
         return initval
 
 
-def value_function_2byte_timestamp(initval, descr, datadict):
+def value_function_2byte_timestamp(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
+    """Parse 2-byte packed timestamp."""
     # Real-time data timestamp
     # Bit0-5: second, range 0-59
     # Bit6-11: minute, range 0-59
@@ -539,13 +596,13 @@ def value_function_2byte_timestamp(initval, descr, datadict):
         val = f"{day:02}/{month:02}/{year:02} {hour:02}:{minute:02}:{second:02}"
         return datetime.strptime(val, "%d/%m/%y %H:%M:%S")
     except Exception:
-        pass
+        return None
 
 
 # ================================= Computed Time Values =================================================
 
-TIME_OPTIONS = {}
-TIME_OPTIONS_GEN4 = {}
+TIME_OPTIONS: dict[int, str] = {}
+TIME_OPTIONS_GEN4: dict[int, str] = {}
 for h in range(0, 24):
     for m in range(0, 60, 5):
         TIME_OPTIONS[m * 256 + h] = f"{h:02}:{m:02}"

@@ -9,6 +9,7 @@ production user-facing configuration.
 """
 
 import logging
+from typing import Any
 
 from .const import (
     DOMAIN,
@@ -17,7 +18,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def load_debug_settings(config, hass=None):
+def load_debug_settings(config: dict[str, Any] | None, hass: Any = None) -> dict[str, dict[str, Any]]:
     """Load debug settings configuration for inverters.
 
     **DEVELOPMENT/TESTING/DEBUGGING ONLY**
@@ -56,7 +57,13 @@ def load_debug_settings(config, hass=None):
     return debug_settings
 
 
-def get_debug_setting(inverter_name, setting_name, config, hass=None, default=False):
+def get_debug_setting(
+    inverter_name: str,
+    setting_name: str,
+    config: dict[str, Any] | None,
+    hass: Any = None,
+    default: bool = False,
+) -> bool:
     """Get a boolean debug setting value for an inverter.
 
     **DEVELOPMENT/TESTING/DEBUGGING ONLY**
@@ -112,7 +119,7 @@ def get_debug_setting(inverter_name, setting_name, config, hass=None, default=Fa
                 break
 
     if inverter_settings and setting_name in inverter_settings:
-        result = inverter_settings.get(setting_name, default)
+        result = bool(inverter_settings.get(setting_name, default))
         _LOGGER.debug(
             "get_debug_setting(%s, %s): %s",
             inverter_name,

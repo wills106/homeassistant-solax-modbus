@@ -1,7 +1,8 @@
 import asyncio
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -16,9 +17,9 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditional import
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -106,12 +107,12 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -130,39 +131,39 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # write_method = WRITE_MULTISINGLE_MODBUS
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
 
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     order16: str = "big"
     order32: str = "big"
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_passivemode(initval, descr, datadict):
+def value_function_passivemode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (REGISTER_S32, datadict.get("passive_mode_grid_power", 0)),
         (REGISTER_S32, datadict.get("passive_mode_battery_power_min", 0)),
@@ -170,7 +171,7 @@ def value_function_passivemode(initval, descr, datadict):
     ]
 
 
-def value_function_passive_timeout(initval, descr, datadict):
+def value_function_passive_timeout(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "passive_mode_timeout",
@@ -183,7 +184,7 @@ def value_function_passive_timeout(initval, descr, datadict):
     ]
 
 
-def value_function_refluxcontrol(initval, descr, datadict):
+def value_function_refluxcontrol(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "feedin_limitation_mode",
@@ -196,7 +197,7 @@ def value_function_refluxcontrol(initval, descr, datadict):
     ]
 
 
-def value_function_epscontrol(initval, descr, datadict):
+def value_function_epscontrol(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     return [
         (
             "eps_control",
@@ -210,7 +211,7 @@ def value_function_epscontrol(initval, descr, datadict):
 
 
 # TIMING AND TOU DISABLED AS THESE ARE NOT WORKING
-# def value_function_timingmode(initval, descr, datadict):
+# def value_function_timingmode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
 #     return  [ ('timing_id', datadict.get('timing_id', 0), ),
 #               ('timing_charge', datadict.get('timing_charge', datadict.get('ro_timing_charge')), ),
 #               ('timing_charge_start_time', datadict.get('timing_charge_start_time', datadict.get('ro_timing_charge_start_time')), ),
@@ -221,7 +222,7 @@ def value_function_epscontrol(initval, descr, datadict):
 #               ('timing_discharge_power', datadict.get('timing_discharge_power', 0), ),
 #             ]
 
-# def value_function_toumode(initval, descr, datadict):
+# def value_function_toumode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
 #     return  [ ('tou_id', datadict.get('tou_id', 0), ),
 #               ('tou_control', datadict.get('tou_control', datadict.get('ro_tou_control')), ),
 #               ('tou_charge_start_time', datadict.get('tou_charge_start_time', datadict.get('ro_tou_charge_start_time')), ),
@@ -231,7 +232,7 @@ def value_function_epscontrol(initval, descr, datadict):
 #             ]
 
 
-def value_function_sync_rtc_ymd_sofar(initval, descr, datadict):
+def value_function_sync_rtc_ymd_sofar(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     now = datetime.now()
     return [
         (
@@ -276,11 +277,11 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:battery-check",
         value_function=value_function_passivemode,
-        depends_on=(
+        depends_on=[
             "passive_mode_grid_power",
             "passive_mode_battery_power_min",
             "passive_mode_battery_power_max",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="Passive: Update Timeout",
@@ -290,10 +291,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:timer",
         value_function=value_function_passive_timeout,
-        depends_on=(
+        depends_on=[
             "passive_mode_timeout",
             "passive_mode_timeout_action",
-        ),
+        ],
     ),
     # Unlikely to work as Sofar requires writing 7 registers, where the last needs to have the constant value of '1' during a write operation.
     SofarModbusButtonEntityDescription(
@@ -313,10 +314,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:transmission-tower-import",
         value_function=value_function_refluxcontrol,
-        depends_on=(
+        depends_on=[
             "feedin_limitation_mode",
             "feedin_max_power",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="EPS: Update",
@@ -326,10 +327,10 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:power-plug-off",
         value_function=value_function_epscontrol,
-        depends_on=(
+        depends_on=[
             "eps_control",
             "eps_wait_time",
-        ),
+        ],
     ),
     SofarModbusButtonEntityDescription(
         name="IV Curve Scan",
@@ -383,7 +384,7 @@ NUMBER_TYPES = [
         key="passive_mode_grid_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         native_max_value=20000,
         native_min_value=-20000,
@@ -399,7 +400,7 @@ NUMBER_TYPES = [
         key="passive_mode_battery_power_min",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         native_max_value=20000,
         native_min_value=-20000,
@@ -415,7 +416,7 @@ NUMBER_TYPES = [
         key="passive_mode_battery_power_max",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         native_max_value=20000,
         native_min_value=-20000,
@@ -429,7 +430,7 @@ NUMBER_TYPES = [
     SofarModbusNumberEntityDescription(
         name="FeedIn: Maximum Power",
         key="feedin_max_power",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         native_min_value=0,
         native_max_value=20000,
@@ -443,7 +444,7 @@ NUMBER_TYPES = [
     SofarModbusNumberEntityDescription(
         name="EPS Wait Time",
         key="eps_wait_time",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         native_min_value=0,
         native_max_value=21600,
@@ -558,7 +559,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name="FeedIn: Limitation Mode",
         key="feedin_limitation_mode",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         option_dict={
             0: "Disabled",
             1: "Enabled - Feed-in limitation",
@@ -658,7 +659,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name="Passive: Timeout",
         key="passive_mode_timeout",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Disabled",
@@ -680,7 +681,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name="Passive: Timeout Action",
         key="passive_mode_timeout_action",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Force Standby",
@@ -697,7 +698,7 @@ SELECT_TYPES = [
     SofarModbusSelectEntityDescription(
         name="EPS Mode",
         key="eps_control",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Turn Off",
@@ -1068,7 +1069,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="waiting_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         register=0x417,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1079,7 +1080,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x418,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1090,7 +1091,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x419,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1102,7 +1103,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41A,
         # newblock = True,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1113,7 +1114,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1124,7 +1125,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x420,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1135,7 +1136,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x421,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | PV,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1143,7 +1144,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="System Time",
         key="rtc",
         register=0x42C,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc_ymd,
         entity_registry_enabled_default=False,
@@ -1156,7 +1157,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="serial_number",
         register=0x445,
         # newblock=True,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=7,
         entity_category=EntityCategory.DIAGNOSTIC,
         allowedtypes=HYBRID | PV,
@@ -1165,7 +1166,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Hardware Version",
         key="hardware_version",
         register=0x44D,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         # newblock=True, # due to problems reported by some users
         entity_registry_enabled_default=False,  # causing problems for some users
         wordcount=2,
@@ -1176,7 +1177,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Software Version",
         key="software_version",
         register=0x44F,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=12,
         entity_category=EntityCategory.DIAGNOSTIC,
         allowedtypes=HYBRID | PV,
@@ -1204,7 +1205,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x485,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1216,7 +1217,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x486,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1229,7 +1230,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x487,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1241,7 +1242,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x488,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scan_group=SCAN_GROUP_FAST,
         scale=0.01,
         rounding=2,
@@ -1254,7 +1255,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x489,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1267,7 +1268,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x48A,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1299,7 +1300,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x48F,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1310,7 +1311,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x490,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1323,7 +1324,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x491,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1344,7 +1345,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x493,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1355,7 +1356,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x494,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1368,7 +1369,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x495,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1400,7 +1401,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x49A,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1411,7 +1412,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x49B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1424,7 +1425,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x49C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1445,7 +1446,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x49E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1456,7 +1457,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x49F,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1469,7 +1470,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x4A0,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1501,7 +1502,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4A5,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1512,7 +1513,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x4A6,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1525,7 +1526,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x4A7,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1546,7 +1547,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4A9,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1557,7 +1558,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x4AA,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1570,7 +1571,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=None,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x4AB,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | PV,
@@ -1623,7 +1624,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4B2,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1644,7 +1645,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4B4,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1675,7 +1676,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4B7,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1696,7 +1697,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x4B9,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -1744,7 +1745,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x504,
         # newblock = True,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1755,7 +1756,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x505,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1768,7 +1769,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x506,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1800,7 +1801,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x50B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1811,7 +1812,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x50C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1822,7 +1823,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x50D,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1834,7 +1835,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x50E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1866,7 +1867,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x513,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1877,7 +1878,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x514,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1888,7 +1889,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x515,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1900,7 +1901,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x516,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1932,7 +1933,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x51B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1943,7 +1944,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x51C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1954,7 +1955,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x51D,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1966,7 +1967,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x51E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -1997,7 +1998,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x523,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -2008,7 +2009,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         register=0x524,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -2029,7 +2030,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x526,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -2041,7 +2042,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x527,
         newblock=True,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
@@ -2419,7 +2420,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x605,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID,
@@ -2431,7 +2432,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x606,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scan_group=SCAN_GROUP_FAST,
         scale=0.01,
         rounding=2,
@@ -2444,7 +2445,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x607,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -2492,7 +2493,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x60C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2505,7 +2506,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x60D,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scan_group=SCAN_GROUP_FAST,
         scale=0.01,
         rounding=2,
@@ -2519,7 +2520,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x60E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2571,7 +2572,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x613,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2584,7 +2585,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x614,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2597,7 +2598,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x615,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2649,7 +2650,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x61A,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2662,7 +2663,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x61B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2675,7 +2676,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x61C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2727,7 +2728,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x621,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2740,7 +2741,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x622,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2753,7 +2754,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x623,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2805,7 +2806,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x628,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2818,7 +2819,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x629,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2831,7 +2832,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x62A,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2883,7 +2884,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x62F,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2896,7 +2897,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x630,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2909,7 +2910,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x631,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -2961,7 +2962,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x636,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2974,7 +2975,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x637,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -2987,7 +2988,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x638,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -3029,7 +3030,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x667,
         newblock=True,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
@@ -3066,7 +3067,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x684,
         ignore_readerror=True,
         newblock=True,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -3078,7 +3079,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x686,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | PV,
@@ -3090,7 +3091,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x688,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -3102,7 +3103,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x68A,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | PV,
@@ -3114,7 +3115,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x68C,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -3127,7 +3128,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x68E,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | PV,
@@ -3140,7 +3141,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x690,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | PV,
@@ -3153,7 +3154,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x692,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | PV,
@@ -3166,7 +3167,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x694,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID,
@@ -3179,7 +3180,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x696,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
@@ -3192,7 +3193,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x698,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID,
@@ -3205,7 +3206,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x69A,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
@@ -3511,7 +3512,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="bat_config_tempco",
         native_unit_of_measurement="mV/Cell",
         register=0x1057,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -3767,7 +3768,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name="Passive: Desired Grid Power",
         key="passive_mode_grid_power",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         internal=True,
         register=0x1187,
         allowedtypes=HYBRID,
@@ -3776,7 +3777,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name="Passive: Minimum Battery Power",
         key="passive_mode_battery_power_min",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         register=0x1189,
         internal=True,
         allowedtypes=HYBRID,
@@ -3785,7 +3786,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
     SofarModbusSensorEntityDescription(
         name="Passive: Maximum Battery Power",
         key="passive_mode_battery_power_max",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         register=0x118B,
         internal=True,
         allowedtypes=HYBRID,
@@ -3827,7 +3828,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x9010,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=BAT_BTS,
     ),
@@ -3858,7 +3859,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         name="Pack Time",
         key="pack_time",
         register=0x9045,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         wordcount=1,
         scale=value_function_2byte_timestamp,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -3870,7 +3871,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="pack_serial_number",
         register=0x9048,
         newblock=True,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=9,
         entity_category=EntityCategory.DIAGNOSTIC,
         allowedtypes=BAT_BTS,
@@ -3913,7 +3914,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x906B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=BAT_BTS,
         value_series=4,
@@ -3925,7 +3926,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x906F,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=BAT_BTS,
     ),
@@ -3936,7 +3937,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x9070,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=BAT_BTS,
     ),
@@ -3946,7 +3947,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x9071,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=BAT_BTS,
     ),
@@ -3984,12 +3985,11 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class battery_config(base_battery_config):
-    def __init__(self):
-        self.battery_sensor_type = BATTERY_SENSOR_TYPES
-        self.battery_sensor_name_prefix = "Battery {batt-nr}/{pack-nr} "
-        self.battery_sensor_key_prefix = "battery_{batt-nr}_{pack-nr}_"
+    battery_sensor_type: list[SofarModbusSensorEntityDescription] | None = field(default_factory=lambda: BATTERY_SENSOR_TYPES)  # type: ignore[assignment]  # Covariant list typing
+    battery_sensor_name_prefix: str | None = field(default="Battery {batt-nr}/{pack-nr} ")
+    battery_sensor_key_prefix: str | None = field(default="battery_{batt-nr}_{pack-nr}_")
 
     bapack_number_address = 0x900D
     bms_inquire_address = 0x9020
@@ -3999,28 +3999,30 @@ class battery_config(base_battery_config):
     batt_pack_model_address = 0x9007
     batt_pack_model_len = 4
 
-    number_cels_in_parallel: int = None  # number of battery pack cells in parallel
-    number_strings: int = None  # number of strings of all battery packs
-    batt_pack_serials = {}
-    selected_batt_nr: int = None
-    selected_batt_pack_nr: int = None
+    number_cels_in_parallel: int | None = None  # number of battery pack cells in parallel
+    number_strings: int | None = None  # number of strings of all battery packs
+    batt_pack_serials: dict[int, dict[int, str]] = field(default_factory=dict)
+    selected_batt_nr: int | None = None
+    selected_batt_pack_nr: int | None = None
 
-    async def init_batt_pack(self, hub, serial_number):
+    async def init_batt_pack(self, hub: Any, serial_number: str) -> None:
+        assert self.selected_batt_nr is not None
+        assert self.selected_batt_pack_nr is not None
         if not self.batt_pack_serials.__contains__(self.selected_batt_nr):
             self.batt_pack_serials[self.selected_batt_nr] = {}
         self.batt_pack_serials[self.selected_batt_nr][self.selected_batt_pack_nr] = serial_number
 
-    async def get_batt_pack_quantity(self, hub):
+    async def get_batt_pack_quantity(self, hub: Any) -> int | None:
         if self.number_cels_in_parallel is None:
             await self._determine_bat_quantitys(hub)
         return self.number_cels_in_parallel
 
-    async def get_batt_quantity(self, hub):
+    async def get_batt_quantity(self, hub: Any) -> int | None:
         if self.number_strings is None:
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
-    async def select_battery(self, hub, batt_nr: int, batt_pack_nr: int):
+    async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> bool:
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
@@ -4030,34 +4032,35 @@ class battery_config(base_battery_config):
         self.selected_batt_pack_nr = batt_pack_nr
         return True
 
-    async def get_batt_pack_serial(self, hub, batt_nr: int, batt_pack_nr: int):
+    async def get_batt_pack_serial(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> str | None:
         if not self.batt_pack_serials.__contains__(batt_nr):
             return None
         if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
             return None
         return self.batt_pack_serials[batt_nr][batt_pack_nr]
 
-    async def get_batt_pack_model(self, hub):
+    async def get_batt_pack_model(self, hub: Any) -> str | None:
         try:
             inverter_data = await hub.async_read_holding_registers(
                 unit=hub._modbus_addr, address=self.batt_pack_model_address, count=self.batt_pack_model_len
             )
             if inverter_data is not None and not inverter_data.isError():
-                raw = convert_from_registers(inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big")
+                raw = convert_from_registers(inverter_data.registers[: self.batt_pack_model_len], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 serial = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
                 return serial
+            return None
         except Exception:
             _LOGGER.warning("Cannot read batt pack serial")
             return None
 
-    async def get_batt_pack_sw_version(self, hub, new_data, key_prefix):
+    async def get_batt_pack_sw_version(self, hub: Any, new_data: dict[str, Any], key_prefix: str) -> str | None:
         sw_version_key = key_prefix + "bms_version"
         if not new_data.__contains__(sw_version_key):
             _LOGGER.info(f"batt pack software version not received {sw_version_key}")
             return None
         return f"BMS: V{new_data[sw_version_key]}"
 
-    async def check_battery_on_start(self, hub, old_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+    async def check_battery_on_start(self, hub: Any, old_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int) -> bool:
         if not self.batt_pack_serials.__contains__(batt_nr):
             return False
         if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
@@ -4068,7 +4071,7 @@ class battery_config(base_battery_config):
         for _retry in range(0, 10):
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
-                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 ok = read == payload
                 if not ok:
                     await asyncio.sleep(0.3)
@@ -4077,9 +4080,11 @@ class battery_config(base_battery_config):
 
             else:
                 _LOGGER.error("can't read batt check register")
-                return False
+        return False
 
-    async def check_battery_on_end(self, hub, old_data, new_data, key_prefix, batt_nr: int, batt_pack_nr: int):
+    async def check_battery_on_end(
+        self, hub: Any, old_data: dict[str, Any], new_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int
+    ) -> bool:
         # inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
         # if not inverter_data.isError():
         #     decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
@@ -4091,7 +4096,7 @@ class battery_config(base_battery_config):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
         if not inverter_data.isError():
             if inverter_data is not None and not inverter_data.isError():
-                new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 _LOGGER.debug(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
             if new_value == compare_value:
                 serial_key = key_prefix + "pack_serial_number"
@@ -4100,24 +4105,26 @@ class battery_config(base_battery_config):
                     return False
                 serial = new_data[serial_key]
                 _LOGGER.debug(f"batt pack serial: {serial}")
-                return serial == self.batt_pack_serials[batt_nr][batt_pack_nr]
+                return bool(serial == self.batt_pack_serials[batt_nr][batt_pack_nr])
             else:
                 return False
 
         return False
 
-    async def _determine_bat_quantitys(self, hub):
+    async def _determine_bat_quantitys(self, hub: Any) -> None:
         try:
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
-                val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")
+                val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
                 self.number_cels_in_parallel = (val >> 8) & 0xFF  # high byte
                 self.number_strings = val & 0xFF  # low byte
         except Exception:
             _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{self.bapack_number_address:x}", exc_info=True)
 
-    async def init_batt_pack_serials(self, hub):
+    async def init_batt_pack_serials(self, hub: Any) -> None:
         retry = 0
+        assert self.number_strings is not None
+        assert self.number_cels_in_parallel is not None
         while retry < 5:
             retry = retry + 1
             for batt_nr in range(self.number_strings):
@@ -4130,24 +4137,26 @@ class battery_config(base_battery_config):
                     if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
                         if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
                             retry = retry - 1
-                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial
+                    # type narrowing: serial is str | None, dict expects str
+                    self.batt_pack_serials[batt_nr][batt_pack_nr] = serial  # type: ignore[assignment]  # serial can be None
 
         _LOGGER.info(f"serials {self.batt_pack_serials}")
 
-    async def _determinate_batt_pack_serial(self, hub):
+    async def _determinate_batt_pack_serial(self, hub: Any) -> str | None:
         inverter_data = await hub.async_read_holding_registers(
             unit=hub._modbus_addr, address=self.batt_pack_serial_address, count=self.batt_pack_serial_len
         )
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[: self.batt_pack_serial_len], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[: self.batt_pack_serial_len], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             serial = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             return serial
+        return None
 
 
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class sofar_plugin(plugin_base):
     """
     def isAwake(self, datadict):
@@ -4157,7 +4166,7 @@ class sofar_plugin(plugin_base):
         return 'battery_awaken'
     """
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x445, swapbytes=False)
         if not seriesnumber:
@@ -4237,7 +4246,7 @@ class sofar_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: Any = None) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -4253,10 +4262,10 @@ class sofar_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
 

@@ -85,7 +85,8 @@ def getPlugin(instancename):
     return glob_plugin.get(instancename) """
 
 
-def getPluginName(plugin_path):
+def getPluginName(plugin_path: str) -> str:
+    """Extract plugin name from plugin path."""
     return plugin_path[len(PLUGIN_PATH) - 4 : -3]
 
 
@@ -227,7 +228,7 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
     user_input[CONF_PORT]
     host = user_input[CONF_HOST]
     try:
-        if ipaddress.ip_address(host).version == (4 or 6):
+        if ipaddress.ip_address(host).version in (4, 6):
             pass
     except Exception as e:
         _LOGGER.warning(e, exc_info=True)
@@ -258,10 +259,10 @@ async def _validate_core_modbus_hub(handler: SchemaCommonFlowHandler, user_input
 
 
 async def _next_step_modbus(user_input: Any) -> str:
-    return user_input[CONF_INTERFACE]  # eitheer "tcp" or "serial"
+    return str(user_input[CONF_INTERFACE])  # either "tcp" or "serial"
 
 
-async def _next_step_battery(user_input: Any) -> str:
+async def _next_step_battery(user_input: Any) -> str | None:
     _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
     if user_input.get("support-battery", False):
         return "battery"
@@ -276,7 +277,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
     return plugin
 
 
-if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION == 12)):
+if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)):  # type: ignore[comparison-overlap]  # backward compat
     _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
     CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "user": SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step=_next_step_modbus),
@@ -302,6 +303,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
+        return await super().async_step_user(user_input)
 
     _LOGGER.info(f"starting configflow - domain = {DOMAIN}")
     config_flow = CONFIG_FLOW

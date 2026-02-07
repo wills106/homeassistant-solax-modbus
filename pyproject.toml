@@ -13,11 +13,12 @@ dev = [
     "pre-commit>=4.0.0",
     "codespell>=2.2.6",
     "ruff>=0.14.14",
+    "mypy>=1.8.0",
 ]
 test = [
     "pytest>=8.0.0",
     "pytest-homeassistant-custom-component>=0.13.0",
-    "pytest-asyncio>=0.23.0",
+    "pytest-asyncio>=0.24.0,<1.0.0",
     "pytest-cov>=4.1.0",
 ]
 
@@ -46,8 +47,64 @@ skip = "*.csv,*.json"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 norecursedirs = [".git", "testing_config"]
-asyncio_mode = "auto"
+asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
+
+[tool.mypy]
+# Python version targeting HA 2024.9.0+ (Python 3.12)
+python_version = "3.12"
+
+# Package resolution
+explicit_package_bases = true
+
+# Phase 4: Full strict mode
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+# Only ignore truly missing stubs (use per-import overrides instead)
+ignore_missing_imports = false
+
+# Strictest settings
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_any_generics = true
+check_untyped_defs = true
+
+# Additional strict checks
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+no_implicit_reexport = true
+no_implicit_optional = true
+
+# Output configuration
+show_error_codes = true
+show_column_numbers = true
+pretty = true
+
+# Files to check
+files = [
+    "custom_components/solax_modbus",
+    "tests",
+]
+
+# Exclude patterns
+exclude = [
+    "^scripts/",
+    "^\\.venv/",
+]
+
+# Per-import overrides for dependencies without type stubs
+[[tool.mypy.overrides]]
+module = [
+    "pymodbus.*",
+    "homeassistant.*",
+    "pytest_homeassistant_custom_component.*",
+    "pytest.*",
+]
+ignore_missing_imports = true
