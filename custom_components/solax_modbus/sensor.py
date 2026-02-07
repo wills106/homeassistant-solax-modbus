@@ -738,8 +738,16 @@ def entityToList(
     readPreparation: Any,
     readFollowUp: Any,
 ) -> None:  # noqa: D103
-    for sensor_description in sensor_types:
+    _LOGGER.warning(f"{hub_name}: entityToList START - device_info is_none={device_info is None}")
+    for idx, sensor_description in enumerate(sensor_types):
         if hub.plugin.matchInverterWithMask(hub._invertertype, sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
+            # Check if sensor_description has device_info attribute that could shadow parameter
+            if hasattr(sensor_description, "device_info"):
+                _LOGGER.error(
+                    f"{hub_name}: FOUND IT! sensor_description #{idx} has device_info attr! "
+                    f"key={sensor_description.key}, desc_device_info={getattr(sensor_description, 'device_info', 'NO_ATTR')}"
+                )
+
             # apply scale exceptions early
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):
@@ -750,6 +758,12 @@ def entityToList(
                         newdescr.key = key_prefix + newdescr.key.replace("{}", str(serie_value + 1))
                     if isinstance(sensor_description.register, int):
                         newdescr = replace(newdescr, register=sensor_description.register + serie_value)
+
+                    _LOGGER.warning(
+                        f"{hub_name}: Calling entityToListSingle (series #{serie_value}) - "
+                        f"device_info is_none={device_info is None}, "
+                        f"newdescr.device_info={getattr(newdescr, 'device_info', 'NO_ATTR')}"
+                    )
                     entityToListSingle(
                         hub,
                         hub_name,
@@ -771,6 +785,12 @@ def entityToList(
 
                 if isinstance(newdescr.key, str):
                     newdescr.key = key_prefix + newdescr.key
+
+                _LOGGER.warning(
+                    f"{hub_name}: Calling entityToListSingle - "
+                    f"device_info is_none={device_info is None}, "
+                    f"newdescr.device_info={getattr(newdescr, 'device_info', 'NO_ATTR')}"
+                )
                 entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 
@@ -785,6 +805,10 @@ def entityToListSingle(
     readPreparation: Any,
     readFollowUp: Any,
 ) -> None:  # noqa: D103
+    _LOGGER.warning(
+        f"{hub_name}: entityToListSingle ENTRY - device_info is_none={device_info is None}, "
+        f"type={type(device_info)}, key={newdescr.key if hasattr(newdescr, 'key') else 'NO_KEY'}"
+    )
     if newdescr.read_scale_exceptions:
         for (
             prefix,
