@@ -23,7 +23,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfPower,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -272,13 +272,13 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
     )
 
 
-def _create_energy_dashboard_diagnostic_sensors(  # type: ignore[no-untyped-def]
-    hub,
-    hass,
-    config,
-    energy_dashboard_device_info,
+def _create_energy_dashboard_diagnostic_sensors(
+    hub: Any,
+    hass: HomeAssistant,
+    config: dict[str, Any],
+    energy_dashboard_device_info: DeviceInfo,
     mapping: EnergyDashboardMapping | None = None,
-):
+) -> list[Any]:
     """Create diagnostic sensors for the Energy Dashboard device."""
     hub_name = getattr(hub, "_name", "Unknown")
     config = config or {}
