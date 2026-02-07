@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from time import time
 from types import ModuleType, SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from weakref import ref as WeakRef
 
 import homeassistant.helpers.config_validation as cv
@@ -129,7 +129,7 @@ VERBOSE_CYCLES = 20
 
 try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub  # type: ignore[attr-defined]
-    from homeassistant.components.modbus import get_hub as get_core_hub  # type: ignore[attr-defined]
+    from homeassistant.components.modbus import get_hub as get_core_hub
 except ImportError:
 
     def get_core_hub(hass: HomeAssistant, name: str) -> None:  # type: ignore[misc]
@@ -366,6 +366,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # ====================== end of dynamic load ==============================================================
 
+    hub: SolaXModbusHub
     if config.get(CONF_INTERFACE, None) == "core":
         hub = SolaXCoreModbusHub(
             hass,
@@ -396,7 +397,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hub._init_task = hass.loop.create_task(hub.async_init())
     else:
         # Defer until HA is started, but still capture the task handle for cancellation
-        async def _deferred_init(event):
+        async def _deferred_init(event: Any) -> None:
             if getattr(hub, "_stopping", False):
                 return
             hub._init_task = hass.loop.create_task(hub.async_init())
@@ -453,8 +454,8 @@ def Gen4Timestring(numb: int) -> str:
 
 @dataclass
 class block:
-    start: int = None  # start address of the block
-    end: int = None  # end address of the block
+    start: int | None = None  # start address of the block
+    end: int | None = None  # end address of the block
     # order16: int = None # byte endian for 16bit registers
     # order32: int = None # word endian for 32bit registers
     descriptions: Any = None
@@ -496,6 +497,7 @@ class SolaXModbusHub:
         self._hass = hass
         # explicit init for stop flag
         self._stopping = False
+        self._client: AsyncModbusSerialClient | AsyncModbusTcpClient | SimpleNamespace
         if interface == "serial":
             self._client = AsyncModbusSerialClient(
                 port=serial_port,
@@ -559,7 +561,7 @@ class SolaXModbusHub:
         self._invertertype: int | None = None
         self.localsUpdated: bool = False
         self.localsLoaded: bool = False
-        self.config: dict[str, Any] = config
+        self.config: Any = config  # MappingProxyType from entry.options
         self.entry: ConfigEntry = entry
         self.device_info: DeviceInfo | None = None
         self.blocks_changed: bool = False
@@ -581,7 +583,7 @@ class SolaXModbusHub:
 
         # Deferred setup state
         self._platforms_forwarded = False
-        self._deferred_setup_task = None
+        self._deferred_setup_task: Any = None
 
         # _LOGGER.debug("solax modbushub done %s", self.__dict__)
 
@@ -589,7 +591,7 @@ class SolaXModbusHub:
         import asyncio
         import time as _t
 
-        self._init_task = asyncio.current_task()
+        self._init_task: Any = asyncio.current_task()
         # Exit early if teardown requested
         if getattr(self, "_stopping", False):
             return
@@ -636,7 +638,7 @@ class SolaXModbusHub:
         if self.inverterNameSuffix is not None and self.inverterNameSuffix != "":
             plugin_name = plugin_name + " " + self.inverterNameSuffix
         self.device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._name, INVERTER_IDENT)},
+            identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
             manufacturer=self.plugin.plugin_manufacturer,
             model=getattr(self.plugin, "inverter_model", None),
             name=plugin_name,
@@ -664,7 +666,7 @@ class SolaXModbusHub:
 
         self._init_task = None
 
-    async def _deferred_setup_loop(self, interval: int = 30):
+    async def _deferred_setup_loop(self, interval: int = 30) -> None:
         """Keep trying to detect inverter type and forward platforms once online."""
         import asyncio
 
@@ -680,20 +682,20 @@ class SolaXModbusHub:
                     _LOGGER.debug(f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms")
                     # Prepare/refresh device_info in case it wasn't set
                     plugin_name = self.plugin.plugin_name
-                    if self.inverterNameSuffix:
-                        plugin_name = plugin_name + " " + self.inverterNameSuffix
-                    self.device_info = DeviceInfo(
-                        identifiers={(DOMAIN, self._name, INVERTER_IDENT)},
-                        manufacturer=self.plugin.plugin_manufacturer,
-                        model=getattr(self.plugin, "inverter_model", None),
-                        name=plugin_name,
-                        serial_number=self.seriesnumber,
-                    )
-                    if getattr(self, "_stopping", False):
-                        return
-                    await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
-                    self._platforms_forwarded = True
+                if self.inverterNameSuffix:
+                    plugin_name = plugin_name + " " + self.inverterNameSuffix
+                self.device_info = DeviceInfo(
+                    identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
+                    manufacturer=self.plugin.plugin_manufacturer,
+                    model=getattr(self.plugin, "inverter_model", None),
+                    name=plugin_name,
+                    serial_number=self.seriesnumber,
+                )
+                if getattr(self, "_stopping", False):
                     return
+                await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+                self._platforms_forwarded = True
+                return
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: deferred setup iteration failed: {ex}")
             # Wait and try again
@@ -791,14 +793,15 @@ class SolaXModbusHub:
             g = self.config[SCAN_GROUP_DEFAULT]
         else:
             _LOGGER.debug(f"{self._name}: returning scan_group interval {g} for {sensor.entity_description.key}")
-        return g
+        return int(g)
 
     def device_group_key(self, device_info: DeviceInfo) -> str:
         key = ""
         for identifier in device_info["identifiers"]:
-            if identifier[0] != DOMAIN:
+            identifier_tuple = cast(tuple[str, ...], identifier)
+            if identifier_tuple[0] != DOMAIN:
                 continue
-            key = identifier[1] + "_" + identifier[2]
+            key = identifier_tuple[1] + "_" + identifier_tuple[2]
 
         return key
 
@@ -896,7 +899,7 @@ class SolaXModbusHub:
                     await self.async_close()
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    async def async_refresh_modbus_data(self, interval_group: Any, _now: int | None = None, cycle_id: int | None = None) -> None:
+    async def async_refresh_modbus_data(self, interval_group: Any, _now: int | None = None, cycle_id: int | None = None) -> tuple[bool, int]:
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
