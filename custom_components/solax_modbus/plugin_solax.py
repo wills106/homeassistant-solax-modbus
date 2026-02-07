@@ -369,13 +369,13 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # Phase envelope protection: Calculate safe ap_target based on phase limits
     # Get phase-specific data
-    measured_power_l1 = datadict.get("measured_power_l1", None)
-    measured_power_l2 = datadict.get("measured_power_l2", None)
-    measured_power_l3 = datadict.get("measured_power_l3", None)
-    grid_voltage_l1 = datadict.get("grid_voltage_l1", None)
-    grid_voltage_l2 = datadict.get("grid_voltage_l2", None)
-    grid_voltage_l3 = datadict.get("grid_voltage_l3", None)
-    main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
+    measured_power_l1: int | float | None = datadict.get("measured_power_l1", None)
+    measured_power_l2: int | float | None = datadict.get("measured_power_l2", None)
+    measured_power_l3: int | float | None = datadict.get("measured_power_l3", None)
+    grid_voltage_l1: int | float | None = datadict.get("grid_voltage_l1", None)
+    grid_voltage_l2: int | float | None = datadict.get("grid_voltage_l2", None)
+    grid_voltage_l3: int | float | None = datadict.get("grid_voltage_l3", None)
+    main_breaker_current_limit: int | float | None = datadict.get("main_breaker_current_limit", None)
 
     safe_ap_target_from_phase = None  # Initialize
     safe_ap_target_export_from_phase = None
@@ -386,6 +386,11 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         and main_breaker_current_limit is not None
         and main_breaker_current_limit > 0
     ):
+        # Type narrowing for mypy
+        assert measured_power_l1 is not None and measured_power_l2 is not None and measured_power_l3 is not None
+        assert grid_voltage_l1 is not None and grid_voltage_l2 is not None and grid_voltage_l3 is not None
+        assert main_breaker_current_limit is not None
+
         # Calculate house load per phase using imbalance
         # Imbalance in measured_power = imbalance in house load (inverters balance)
         avg_measured_power = (measured_power_l1 + measured_power_l2 + measured_power_l3) / 3
@@ -516,7 +521,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> dict[str, Any]:
+def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> tuple[int, int, int]:
     # Determines max rate for charging battery
 
     # User cap (% of BMS max charge power).
