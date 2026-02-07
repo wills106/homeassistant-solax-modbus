@@ -790,7 +790,7 @@ def entityToListSingle(
                 newdescr = replace(newdescr, read_scale=value)
 
     # Check if this sensor has custom Energy Dashboard device info
-    if hasattr(newdescr, "_energy_dashboard_device_info"):
+    if hasattr(newdescr, "_energy_dashboard_device_info") and newdescr._energy_dashboard_device_info is not None:
         device_info = newdescr._energy_dashboard_device_info
 
     # Check if this is a Riemann sum sensor
