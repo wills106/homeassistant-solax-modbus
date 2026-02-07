@@ -797,7 +797,16 @@ class SolaXModbusHub:
 
     def device_group_key(self, device_info: DeviceInfo) -> str:
         key = ""
-        for identifier in device_info["identifiers"]:
+        identifiers = device_info["identifiers"]
+        _LOGGER.error(
+            f"{self._name}: device_group_key DEBUG - "
+            f"device_info type={type(device_info)}, "
+            f"device_info={device_info}, "
+            f"identifiers type={type(identifiers)}, "
+            f"identifiers={identifiers}, "
+            f"identifiers_is_none={identifiers is None}"
+        )
+        for identifier in identifiers:
             identifier_tuple = cast(tuple[str, ...], identifier)
             if identifier_tuple[0] != DOMAIN:
                 continue
