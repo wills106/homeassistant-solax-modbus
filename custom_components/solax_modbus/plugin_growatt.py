@@ -14,9 +14,11 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -93,17 +95,17 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=5)
         if inverter_data and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:5], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:5], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -160,7 +162,7 @@ def encode_time_begin(begin_str: str | None, enabled: str, mode: str) -> int:
     return value
 
 
-def value_function_time_1_update(initval, descr, datadict):
+def value_function_time_1_update(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     time_begin = datadict.get("time_1_begin", "00:00")
     time_end = datadict.get("time_1_end", "00:00")
     enabled = datadict.get("time_1_enabled", "Disabled")
@@ -302,13 +304,13 @@ def value_function_time_clear(initval: int, descr: Any, datadict: dict[str, Any]
     ]
 
 
-def value_function_growatt_gen4time(initval, descr, datadict):
+def value_function_growatt_gen4time(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     hours = initval // 256  # Integer division to get the hours (higher 8 bits)
     minutes = initval % 256  # Modulo to get the minutes (lower 8 bits)
     return f"{hours:02}:{minutes:02}"
 
 
-def value_function_time_reverse_begin(initval, descr, datadict):
+def value_function_time_reverse_begin(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     initval = datadict.get("register_" + str(initval), 0)  # need to use a read entity to avoid overwriting the select
     initval = initval & 0x1FFF  # Remove bits 13-15 using a bitwise AND with 0x1FFF
     hours = initval // 256  # Integer division to get the hours
@@ -316,7 +318,7 @@ def value_function_time_reverse_begin(initval, descr, datadict):
     return f"{hours:02}:{minutes:02}"
 
 
-def value_function_time_reverse_enabled(initval, descr, datadict):
+def value_function_time_reverse_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     time_enabled = datadict.get("register_" + str(initval), 0)  # need to use a read entity to avoid overwriting the select
     if int(time_enabled) & (1 << 15):  # Check if bit 15 is set
         return "Enabled"
@@ -324,7 +326,7 @@ def value_function_time_reverse_enabled(initval, descr, datadict):
         return "Disabled"
 
 
-def value_function_time_reverse_mode(initval, descr, datadict):
+def value_function_time_reverse_mode(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
     time_mode = datadict.get("register_" + str(initval), 0)  # need to use a read entity to avoid overwriting the select
     if int(time_mode) & (1 << 14):  # Check bit 14 first for "Grid First" (1 << 14)
         return "Grid First"
@@ -4407,12 +4409,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        depends_on=(
+        depends_on=[
             "today_s_pv1_solar_energy",
             "today_s_pv2_solar_energy",
             "today_s_pv3_solar_energy",
             "today_s_pv4_solar_energy",
-        ),
+        ],
         allowedtypes=GEN2 | GEN3,
         icon="mdi:solar-power",
     ),
@@ -4626,10 +4628,10 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        depends_on=(
+        depends_on=[
             "battery_charge_power",
             "battery_discharge_power",
-        ),
+        ],
         allowedtypes=HYBRID | GEN3 | GEN4,
         icon="mdi:battery",
     ),
@@ -9496,7 +9498,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class growatt_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
@@ -9724,7 +9726,13 @@ class growatt_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
