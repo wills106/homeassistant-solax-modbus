@@ -1,5 +1,6 @@
 import importlib
 import pathlib
+from typing import Any
 
 import pytest
 
@@ -11,7 +12,7 @@ PLUGIN_FILES = [f.name[:-3] for f in PLUGIN_DIR.glob("plugin_*.py") if f.is_file
 
 
 @pytest.mark.parametrize("plugin_module_name", PLUGIN_FILES)
-def test_plugin_structure(plugin_module_name):
+def test_plugin_structure(plugin_module_name: str) -> None:
     """Verify that each plugin module has the required structure."""
 
     # Import the module dynamically
@@ -30,7 +31,9 @@ def test_plugin_structure(plugin_module_name):
     assert isinstance(plugin.SENSOR_TYPES, list), f"{plugin_module_name} SENSOR_TYPES must be a list"
 
     # 4. Verify Entity Integrity (basic check)
-    all_entities = plugin.SENSOR_TYPES + plugin.BUTTON_TYPES + plugin.NUMBER_TYPES + plugin.SELECT_TYPES + plugin.SWITCH_TYPES
+    all_entities: list[Any] = (
+        list(plugin.SENSOR_TYPES) + list(plugin.BUTTON_TYPES) + list(plugin.NUMBER_TYPES) + list(plugin.SELECT_TYPES) + list(plugin.SWITCH_TYPES)
+    )
 
     for entity in all_entities:
         # Verify key exists and is string

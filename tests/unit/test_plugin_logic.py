@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from custom_components.solax_modbus.plugin_solax import (
@@ -13,7 +15,7 @@ from custom_components.solax_modbus.plugin_solax import (
 )
 
 
-def test_match_inverter_with_mask_exact():
+def test_match_inverter_with_mask_exact() -> None:
     # Inverter: Gen4 Hybrid X3
     inverter = GEN4 | HYBRID | X3
 
@@ -22,7 +24,7 @@ def test_match_inverter_with_mask_exact():
     assert solax_plugin.matchInverterWithMask(inverter, mask) is True
 
 
-def test_match_inverter_with_mask_partial():
+def test_match_inverter_with_mask_partial() -> None:
     # Inverter: Gen4 Hybrid X3
     inverter = GEN4 | HYBRID | X3
 
@@ -33,7 +35,7 @@ def test_match_inverter_with_mask_partial():
     assert solax_plugin.matchInverterWithMask(inverter, mask) is True
 
 
-def test_match_inverter_with_mask_mismatch_type():
+def test_match_inverter_with_mask_mismatch_type() -> None:
     # Inverter: Gen4 Hybrid X3
     inverter = GEN4 | HYBRID | X3
 
@@ -42,7 +44,7 @@ def test_match_inverter_with_mask_mismatch_type():
     assert solax_plugin.matchInverterWithMask(inverter, mask) is False
 
 
-def test_match_inverter_with_mask_mismatch_gen():
+def test_match_inverter_with_mask_mismatch_gen() -> None:
     # Inverter: Gen4 Hybrid X3
     inverter = GEN4 | HYBRID | X3
 
@@ -51,7 +53,7 @@ def test_match_inverter_with_mask_mismatch_gen():
     assert solax_plugin.matchInverterWithMask(inverter, mask) is False
 
 
-def test_match_inverter_with_mask_or_condition():
+def test_match_inverter_with_mask_or_condition() -> None:
     # Inverter: Gen4 Hybrid X3
     inverter = GEN4 | HYBRID | X3
 
@@ -60,7 +62,7 @@ def test_match_inverter_with_mask_or_condition():
     assert solax_plugin.matchInverterWithMask(inverter, mask) is True
 
 
-def test_match_inverter_with_mask_eps():
+def test_match_inverter_with_mask_eps() -> None:
     # Inverter: Gen4 Hybrid X3 with EPS
     inverter = GEN4 | HYBRID | X3 | EPS
 
@@ -74,7 +76,7 @@ def test_match_inverter_with_mask_eps():
 
 
 @pytest.mark.asyncio
-async def test_determine_inverter_type_solax(mock_hub):
+async def test_determine_inverter_type_solax(mock_hub: Any) -> None:
     # Test detection logic using MockHub
 
     # Simulate a Gen4 X3 Hybrid serial number: H34T...
@@ -107,7 +109,7 @@ async def test_determine_inverter_type_solax(mock_hub):
     assert inverter_type == expected
 
 
-def test_parallel_master_scales_import_limit(mock_hub):
+def test_parallel_master_scales_import_limit(mock_hub: Any) -> None:
     """
     Verify parallel Master inverters scale remotecontrol_import_limit.
 
@@ -130,7 +132,7 @@ def test_parallel_master_scales_import_limit(mock_hub):
 
     # Create mock entity
     class MockEntity:
-        def __init__(self):
+        def __init__(self) -> None:
             self._attr_native_min_value = 0
             self._attr_native_max_value = 30000  # Bug: stuck at default
             self.entity_description = MockEntityDescription(native_min_value=0, native_max_value=30000)

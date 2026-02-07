@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -11,9 +12,11 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -85,17 +88,15 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
-
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=8)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -109,41 +110,41 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Swatten Modbus sensor entities."""
 
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     order16: str = "big"
     order32: str = "big"
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_pv_power_1(initval, descr, datadict):
-    return datadict.get("pv_voltage_1", 0) * datadict.get("pv_current_1", 0)
+def value_function_pv_power_1(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_1", 0)) * float(datadict.get("pv_current_1", 0))
 
 
-def value_function_pv_power_2(initval, descr, datadict):
-    return datadict.get("pv_voltage_2", 0) * datadict.get("pv_current_2", 0)
+def value_function_pv_power_2(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_voltage_2", 0)) * float(datadict.get("pv_current_2", 0))
 
 
 # ================================= Button Declarations ============================================================
@@ -162,7 +163,7 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
-NUMBER_TYPES = [
+NUMBER_TYPES: list[SwattenModbusNumberEntityDescription] = [
     ###
     #
     # Data only number types
@@ -177,7 +178,7 @@ NUMBER_TYPES = [
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = [
+SELECT_TYPES: list[SwattenModbusSelectEntityDescription] = [
     ###
     #
     #  Data only select types
@@ -198,7 +199,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         key="rtc",
         register=4050,
         register_type=REG_INPUT,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc_ymd,
         allowedtypes=HYBRID | GEN,
@@ -219,7 +220,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=4059,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN2,
     ),
     SwattenModbusSensorEntityDescription(
@@ -276,7 +277,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=4067,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         # scale = 0.1,
         # rounding = 1,
         allowedtypes=HYBRID | GEN,
@@ -378,7 +379,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=4081,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         # scale = 0.1,
         # rounding = 1,
         allowedtypes=HYBRID | GEN,
@@ -392,7 +393,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=4083,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN,
     ),
     SwattenModbusSensorEntityDescription(
@@ -402,7 +403,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         register=4085,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         # scale = 0.001,
         # entity_registry_enabled_default =  False,
         allowedtypes=HYBRID | GEN,
@@ -426,14 +427,14 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=5401,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN,
     ),
     SwattenModbusSensorEntityDescription(
         name="Model Type",
         key="model_type",
         register=5809,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         register_type=REG_INPUT,
         allowedtypes=HYBRID | GEN,
@@ -462,7 +463,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=10002,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | GEN,
@@ -511,7 +512,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=10022,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN,
         icon="mdi:battery-charging",
     ),
@@ -555,7 +556,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=10037,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | GEN,
@@ -582,7 +583,7 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=10046,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | GEN,
@@ -618,9 +619,9 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class swatten_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 5809)
         if not seriesnumber:
@@ -659,7 +660,13 @@ class swatten_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)

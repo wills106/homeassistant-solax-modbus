@@ -1,11 +1,15 @@
 import logging
 from dataclasses import replace
 from time import time
+from typing import Any
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
 from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONF_MODBUS_ADDR,
@@ -16,12 +20,13 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
+    BaseModbusNumberEntityDescription,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -47,7 +52,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                     newdescr = replace(number_info, read_scale=value)
         if plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist):
             if not (newdescr.name.startswith(inverter_name_suffix)):
-                newdescr.name = inverter_name_suffix + newdescr.name
+                newdescr = replace(newdescr, name=inverter_name_suffix + newdescr.name)
 
             number = SolaXModbusNumber(hub_name, hub, modbus_addr, hub.device_info, newdescr)
             if newdescr.write_method == WRITE_DATA_LOCAL:
@@ -82,13 +87,15 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
 class SolaXModbusNumber(NumberEntity):
     """Representation of an SolaX Modbus number."""
 
+    entity_description: BaseModbusNumberEntityDescription
+
     def __init__(
         self,
-        platform_name,
-        hub,
-        modbus_addr,
-        device_info,
-        number_info,
+        platform_name: str,
+        hub: Any,
+        modbus_addr: int,
+        device_info: DeviceInfo,
+        number_info: BaseModbusNumberEntityDescription,
         # read_scale
     ) -> None:
         """Initialize the number."""
@@ -101,9 +108,9 @@ class SolaXModbusNumber(NumberEntity):
         self._key = number_info.key
         self._register = number_info.register
         self._fmt = number_info.fmt
-        self._unit = number_info.unit
-        self._attr_native_min_value = number_info.native_min_value
-        self._attr_native_max_value = number_info.native_max_value
+        self._unit = number_info.register_data_type
+        self._attr_native_min_value: float = number_info.native_min_value  # type: ignore[assignment]
+        self._attr_native_max_value: float = number_info.native_max_value  # type: ignore[assignment]
         self._attr_scale = number_info.scale
         self.entity_description = number_info
         if number_info.max_exceptions:
@@ -119,8 +126,8 @@ class SolaXModbusNumber(NumberEntity):
                 native_value,
             ) in number_info.min_exceptions_minus:
                 if hub.seriesnumber.startswith(prefix):
-                    self._attr_native_min_value = -native_value
-        self._attr_native_step = number_info.native_step
+                    self._attr_native_min_value = float(-native_value)
+        self._attr_native_step = number_info.native_step or 1.0
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state  # not used AFAIK
         self.entity_description = number_info
@@ -131,6 +138,9 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
+        # Skip hub registration for computed/internal entities (those without modbus registers)
+        if self.entity_description.register is None or self.entity_description.register < 0:
+            return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
@@ -155,7 +165,7 @@ class SolaXModbusNumber(NumberEntity):
         return f"{self._platform_name}_{self._key}"
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         descr = self.entity_description
         if descr.prevent_update:
             if self._hub.tmpdata_expiry.get(descr.key, 0) > time():
@@ -163,8 +173,8 @@ class SolaXModbusNumber(NumberEntity):
                 if val is None:
                     _LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
                     val = 0
-                if descr.read_scale and self._hub.tmpdata[self._key]:
-                    res = val  # * descr.read_scale
+                if descr.read_scale and val:
+                    res: float | None = val  # * descr.read_scale
                 else:
                     res = val
                 # _LOGGER.debug(f"prevent_update returning native value {descr.key} : {res}")
@@ -174,12 +184,14 @@ class SolaXModbusNumber(NumberEntity):
                     self._hub.localsUpdated = True
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
-            return self._hub.data[self._key]
-            # try:
-            #    val = self._hub.data[self._key] * descr.read_scale
-            # except:
-            #    val = self._hub.data[self._key]
-            # return val
+            value = self._hub.data[self._key]
+            return float(value) if value is not None else None
+        return None
+        # try:
+        #    val = self._hub.data[self._key] * descr.read_scale
+        # except:
+        #    val = self._hub.data[self._key]
+        # return val
         # else:  # first time initialize
         #    if descr.initvalue == None:
         #        return None
@@ -195,7 +207,7 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
-        payload = value
+        payload: int | float = value
         if self._fmt == "i":
             payload = int(value / (self._attr_scale * self.entity_description.read_scale))
         elif self._fmt == "f":
