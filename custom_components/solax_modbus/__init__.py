@@ -1837,7 +1837,7 @@ class SolaXModbusHub:
         except Exception as ex:
             _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
 
-    async def _read_block_with_bisect_once(self, block_obj: Any, typ: int, depth: int = 0) -> bool:
+    async def _read_block_with_bisect_once(self, block_obj: Any, typ: str, depth: int = 0) -> bool:
         """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
         list into halves and probe recursively until single-entity blocks are found.
         Single-entity failures are added to bad_recheck (not yet definitive)."""
@@ -1937,7 +1937,7 @@ class SolaXModbusHub:
             return base_reg + wc
         return base_reg + 1
 
-    def _subblock_entity_span(self, block_obj: Any, i0: int, i1: int) -> tuple[int, int]:
+    def _subblock_entity_span(self, block_obj: Any, i0: int, i1: int) -> Any:
         """Create a sub-block using entity-base indices [i0, i1), computing a correct exclusive end
         based on the last entity's span. This preserves multi-register entities on reads."""
         regs = block_obj.regs[i0:i1]
@@ -1974,7 +1974,7 @@ class SolaXModbusHub:
 # --- SolaXCoreModbusHub class ---
 
 
-class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
+class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
     """Thread safe wrapper class for pymodbus."""
 
     def __init__(
@@ -1987,7 +1987,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
         config = entry.options
         core_hub_name = config.get(CONF_CORE_HUB, "")
         self._core_hub = core_hub_name
-        self._hub = None
+        self._hub: Any = None
         _LOGGER.debug(f"solax via core modbus hub '{core_hub_name}")
 
         _LOGGER.debug("setup solax core modbus hub done %s", self.__dict__)
@@ -1995,7 +1995,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
     async def async_close(self) -> None:  # type: ignore[override]
         """Disconnect client."""
         async with self._lock:
-            if self._hub:
+            if self._hub:  # type: ignore[unreachable]
                 self._hub = None
 
     # async def async_connect(self):
@@ -2171,7 +2171,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_registers(address=address, values=regs, **kwargs)
+                    resp = await self._client.write_registers(address=address, values=regs, **kwargs)  # type: ignore[arg-type]
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -2237,13 +2237,10 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):
                     return None
                 async with hub._lock:
                     try:
-                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)
+                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)  # type: ignore[arg-type]
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
                 return resp
             except (TypeError, AttributeError) as e:
                 raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
-        else:
-            _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
-        return None
