@@ -30,6 +30,7 @@ from .const import (
     CONF_ENERGY_DASHBOARD_DEVICE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     DOMAIN,
+    INVERTER_IDENT,
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
@@ -120,11 +121,11 @@ def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInf
     config_url = "https://homeassistant-solax-modbus.readthedocs.io/en/latest/"
 
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard")},
+        identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},  # type: ignore[arg-type]  # Runtime requires 3-element tuple
         manufacturer="providing curated Grid, Solar, Battery power & energy sensors with parallel mode aggregation support for Home Assistant Energy Dashboard integration",
         model="Energy Dashboard Metrics",
         name=f"{hub._name} Energy Dashboard",
-        via_device=(DOMAIN, hub._name),
+        via_device=(DOMAIN, hub._name, INVERTER_IDENT),  # type: ignore[typeddict-item]  # Runtime requires 3-element tuple
         configuration_url=config_url,
     )
 
