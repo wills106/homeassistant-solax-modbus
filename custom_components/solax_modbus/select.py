@@ -82,6 +82,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSelect(SelectEntity):
     """Representation of an SolaX Modbus select."""
 
+    entity_description: BaseModbusSelectEntityDescription
+
     def __init__(
         self,
         platform_name: str,
@@ -118,9 +120,11 @@ class SolaXModbusSelect(SelectEntity):
     @property
     def current_option(self) -> str | None:
         if self._key in self._hub.data:
-            return self._hub.data[self._key]
+            value = self._hub.data[self._key]
+            return str(value) if value is not None else None
         else:
-            return self.entity_description.initvalue
+            initval = self.entity_description.initvalue
+            return str(initval) if initval is not None else None
 
     @property
     def name(self) -> str:
@@ -138,7 +142,8 @@ class SolaXModbusSelect(SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the select option."""
-        payload: Any = self.entity_description.reverse_option_dict.get(option, None)
+        reverse_dict = self.entity_description.reverse_option_dict
+        payload: Any = reverse_dict.get(option, None) if reverse_dict else None
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
             await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
@@ -152,7 +157,7 @@ class SolaXModbusSelect(SelectEntity):
 
         # Handle autorepeat for selects with value_function (same pattern as buttons)
         if self.entity_description.value_function:
-            res: Any = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)  # type: ignore[call-arg]
+            res: Any = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
             if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
                 autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
 

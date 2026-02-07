@@ -104,6 +104,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     """Representation of an SolaX Modbus switch."""
 
+    entity_description: BaseModbusSwitchEntityDescription
+
     def __init__(
         self,
         platform_name: str,
@@ -178,7 +180,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             _LOGGER.debug(f"No value function for switch {self._key}")
             return
 
-        payload: int = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)  # type: ignore[call-arg]
+        payload: int = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)  # type: ignore[call-arg,arg-type]
         _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
         await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
 

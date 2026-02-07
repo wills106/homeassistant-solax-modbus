@@ -87,6 +87,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusNumber(NumberEntity):
     """Representation of an SolaX Modbus number."""
 
+    entity_description: BaseModbusNumberEntityDescription
+
     def __init__(
         self,
         platform_name: str,
@@ -106,7 +108,7 @@ class SolaXModbusNumber(NumberEntity):
         self._key = number_info.key
         self._register = number_info.register
         self._fmt = number_info.fmt
-        self._unit = number_info.unit
+        self._unit = number_info.register_data_type
         self._attr_native_min_value: float = number_info.native_min_value  # type: ignore[assignment]
         self._attr_native_max_value: float = number_info.native_max_value  # type: ignore[assignment]
         self._attr_scale = number_info.scale
@@ -124,8 +126,8 @@ class SolaXModbusNumber(NumberEntity):
                 native_value,
             ) in number_info.min_exceptions_minus:
                 if hub.seriesnumber.startswith(prefix):
-                    self._attr_native_min_value: float = -native_value  # type: ignore[assignment]
-        self._attr_native_step = number_info.native_step
+                    self._attr_native_min_value = float(-native_value)
+        self._attr_native_step = number_info.native_step or 1.0
         self._attr_native_unit_of_measurement = number_info.native_unit_of_measurement
         self._state = number_info.state  # not used AFAIK
         self.entity_description = number_info
@@ -179,7 +181,8 @@ class SolaXModbusNumber(NumberEntity):
                     self._hub.localsUpdated = True
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
-            return self._hub.data[self._key]
+            value = self._hub.data[self._key]
+            return float(value) if value is not None else None
         return None
         # try:
         #    val = self._hub.data[self._key] * descr.read_scale
@@ -203,9 +206,9 @@ class SolaXModbusNumber(NumberEntity):
         """Change the number value."""
         payload: int | float = value
         if self._fmt == "i":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))  # type: ignore[operator]
+            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
         elif self._fmt == "f":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))  # type: ignore[operator]
+            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
