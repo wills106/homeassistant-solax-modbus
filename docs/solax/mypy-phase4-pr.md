@@ -125,16 +125,6 @@ Enable **strict mypy type checking** with **full enforcement** across the entire
 
 ---
 
-## Documentation
-
-All validation reports and analysis documents are included in the `docs/solax/` directory:
-- Phase 4 baseline report
-- Type:ignore audit (134 comments analyzed)
-- Final validation report
-- Test coverage analysis
-
----
-
 ## Review Checklist
 
 - [ ] Verify mypy passes: `uv run mypy custom_components/solax_modbus tests --strict`
