@@ -27,6 +27,7 @@ nav:
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
 - Developer Guide: developer_guide.md
+- CI/CD Pipeline: developer/cicd-pipeline.md
 - Growatt:
   - FAQ: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
