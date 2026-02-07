@@ -1167,7 +1167,7 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
         return resp
 
-    async def async_write_register(self, unit: int, address: int, payload: int) -> None:
+    async def async_write_register(self, unit: int, address: int, payload: int) -> Any:
         """Write register."""
         awake = self.plugin.isAwake(self.data)
         if awake:
@@ -1189,7 +1189,7 @@ class SolaXModbusHub:
                 _LOGGER.warning("cannot wakeup inverter: no awake button found")
             return res
 
-    async def async_write_registers_single(self, unit, address, payload):  # Needs adapting for register queue
+    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
         regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]  # DataType compat layer
         kwargs = {ADDR_KW: unit} if unit is not None else {}
@@ -1627,13 +1627,13 @@ class SolaXModbusHub:
 
     # --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
 
-    def splitInBlocks(self, descriptions: list[Any]) -> dict[int, list[Any]]:
+    def splitInBlocks(self, descriptions: dict[Any, Any]) -> list[Any]:
         start = INVALID_START
         end = 0
-        blocks = []
+        blocks: list[Any] = []
         block_size = self.plugin.block_size
         auto_block_ignore_readerror = self.plugin.auto_block_ignore_readerror
-        curblockregs = []
+        curblockregs: list[Any] = []
         for reg, descr in descriptions.items():
             d_ignore_readerror = auto_block_ignore_readerror
             if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
