@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from datetime import datetime
 from typing import Any
 
@@ -41,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for switch_info in plugin.SWITCH_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
             if not (switch_info.name.startswith(inverter_name_suffix)):
-                switch_info.name = inverter_name_suffix + switch_info.name
+                switch_info = replace(switch_info, name=inverter_name_suffix + switch_info.name)
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
