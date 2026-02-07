@@ -16,7 +16,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,
@@ -190,7 +190,7 @@ async def async_read_serialnr(hub, address):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
             # Decode 7 registers (14 bytes) as string using clientless compat helper
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if address == 0x300:
                 # Some devices report swapped bytes; preserve the existing swap workaround
