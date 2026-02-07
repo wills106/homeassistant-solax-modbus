@@ -1283,9 +1283,6 @@ class SolaXModbusHub:
                 return resp
             return None
 
-        _LOGGER.error(f"write_registers_multi expects a list of tuples 0x{address:02x} payload: {payload}")
-        return None
-
     async def async_read_modbus_data(self, group: Any) -> bool:
         res = True
         try:
@@ -1832,7 +1829,7 @@ class SolaXModbusHub:
         # Re-validate candidates after a short grace period
         self._recheck_task = self._hass.loop.create_task(self._recheck_bad_after(30))
 
-    async def _initial_bisect_block(self, block_obj: Any, typ: int) -> None:
+    async def _initial_bisect_block(self, block_obj: Any, typ: str) -> None:
         """Bisect a block once at startup. Operates on *entity bases* only, so multi-register
         entities (U32/STR/WORDS) are never split apart. No value decoding happens here."""
         try:
@@ -1951,7 +1948,7 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
-    async def _probe_block(self, block_obj: Any, typ: int) -> bool:
+    async def _probe_block(self, block_obj: Any, typ: str) -> bool:
         if getattr(self, "_stopping", False):
             return False
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
