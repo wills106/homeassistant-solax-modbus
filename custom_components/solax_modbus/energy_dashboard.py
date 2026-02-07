@@ -969,7 +969,10 @@ async def create_energy_dashboard_sensors(hub, mapping: EnergyDashboardMapping, 
                     )
                     if aggregated_sensor:
                         # Replace value function with aggregated version
-                        aggregated_sensor[0].value_function = _create_aggregated_value_function(all_mapping, hub, slave_hubs)
+                        aggregated_sensor[0] = replace(
+                            aggregated_sensor[0],
+                            value_function=_create_aggregated_value_function(all_mapping, hub, slave_hubs),
+                        )
                         sensors.extend(aggregated_sensor)
             else:
                 # Grid energy: Master already aggregates all, use Master value for "All"
