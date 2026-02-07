@@ -342,27 +342,34 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 else:
                     result = await should_create_energy_dashboard_device(hub, config, hass, _LOGGER, initial_groups)
                     if result:
-                        start_time = time.time()
-                        energy_dashboard_sensors = await create_energy_dashboard_sensors(hub, mapping, hass, config)
-                        if energy_dashboard_sensors:
-                            _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
-                            # Create a new list to track Energy Dashboard entities
-                            energy_dashboard_entities = []
-                            # Use Energy Dashboard device name as platform name for entity_id prefix
-                            energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
-                            entityToList(
-                                hub,
-                                energy_dashboard_platform_name,
-                                energy_dashboard_entities,
-                                initial_groups,
-                                computedRegs,
-                                hub.device_info,
-                                energy_dashboard_sensors,
-                                inverter_name_suffix,
-                                "",
-                                None,
-                                readFollowUp,
+                        # Check if hub initialization is complete
+                        if hub.device_info is None:
+                            _LOGGER.error(
+                                f"{hub_name}: Energy Dashboard setup aborted - hub device_info not initialized. "
+                                "This can happen if hub initialization failed or is still in progress."
                             )
+                        else:
+                            start_time = time.time()
+                            energy_dashboard_sensors = await create_energy_dashboard_sensors(hub, mapping, hass, config)
+                            if energy_dashboard_sensors:
+                                _LOGGER.info(f"{hub_name}: Creating {len(energy_dashboard_sensors)} Energy Dashboard sensors")
+                                # Create a new list to track Energy Dashboard entities
+                                energy_dashboard_entities = []
+                                # Use Energy Dashboard device name as platform name for entity_id prefix
+                                energy_dashboard_platform_name = f"{hub_name} Energy Dashboard"
+                                entityToList(
+                                    hub,
+                                    energy_dashboard_platform_name,
+                                    energy_dashboard_entities,
+                                    initial_groups,
+                                    computedRegs,
+                                    hub.device_info,
+                                    energy_dashboard_sensors,
+                                    inverter_name_suffix,
+                                    "",
+                                    None,
+                                    readFollowUp,
+                                )
 
                             # Add Energy Dashboard entities to main entities list and register them
                             if energy_dashboard_entities:
