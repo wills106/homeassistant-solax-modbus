@@ -54,7 +54,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
-    UnitOfReactivePower,  # type: ignore[attr-defined]  # Conditionally exported from const.py
+    UnitOfReactivePower,  # type: ignore[attr-defined]
     autorepeat_remaining,
     autorepeat_stop,
     plugin_base,
@@ -9605,7 +9605,7 @@ class solax_plugin(plugin_base):
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> None:
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x0)
