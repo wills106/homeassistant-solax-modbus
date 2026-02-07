@@ -178,7 +178,7 @@ uv run pytest tests/ -v
 
 ## References
 
-- Related Issue: #262.14.29
+- Phase 4 Issue: #262.14.29
 - Commits: fd6893b, f35fb5b, 56e0d5a, 9f96ee5
-- Test File: `tests/unit/test_device_info_regressions.py`
-- Related Tests: Linting regressions (`test_phase_c_regressions.py`)
+- Test File: `tests/unit/test_phase_d_regressions.py`
+- Related: Phase C regression tests (`test_phase_c_regressions.py`)

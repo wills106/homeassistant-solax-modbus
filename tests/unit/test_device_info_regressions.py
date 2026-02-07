@@ -1,8 +1,11 @@
-"""Phase D (mypy strict mode) regression tests - prevent reintroduction of runtime bugs.
+"""Device info handling regression tests.
 
-These tests validate fixes for critical runtime bugs discovered during Phase 4
-type checking implementation. They ensure the fixes remain in place and catch
-any regressions.
+These tests prevent reintroduction of critical runtime bugs related to device_info
+initialization and handling. The bugs caused 300+ runtime errors on startup before
+being fixed.
+
+Background: These bugs were discovered during strict type checking implementation,
+but the tests focus on runtime behavior, not type checking.
 """
 
 import re
