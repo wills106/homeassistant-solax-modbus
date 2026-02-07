@@ -12,7 +12,9 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
@@ -77,17 +79,17 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=20)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:20], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:20], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -128,7 +130,7 @@ class SRNEModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+def value_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     power_control = datadict.get("remotecontrol_power_control", "Disabled")
     set_type = datadict.get("remotecontrol_set_type", "Set")  # other options did not work
     target = datadict.get("remotecontrol_active_power", 0)
@@ -216,15 +218,15 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: list[Any] = []
 
 # ================================= Number Declarations ============================================================
 
-NUMBER_TYPES = []
+NUMBER_TYPES: list[Any] = []
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = []
+SELECT_TYPES: list[Any] = []
 
 # ================================= Sennsor Declarations ============================================================
 
@@ -489,15 +491,15 @@ SENSOR_TYPES_MAIN: list[SRNEModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class srne_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x35)
@@ -533,7 +535,13 @@ class srne_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -548,7 +556,7 @@ class srne_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -590,6 +598,7 @@ class srne_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return True
 
 
 plugin_instance = srne_plugin(

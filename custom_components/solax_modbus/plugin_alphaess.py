@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, replace
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -12,9 +13,11 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -89,18 +92,18 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=10)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:10], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:10], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -140,15 +143,15 @@ class AlphaESSModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: list[Any] = []
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = []
+MAX_CURRENTS: list[Any] = []
 
-MAX_EXPORT = []
+MAX_EXPORT: list[Any] = []
 
-EXPORT_LIMIT_SCALE_EXCEPTIONS = []
+EXPORT_LIMIT_SCALE_EXCEPTIONS: list[Any] = []
 
 NUMBER_TYPES = [
     AlphaESSModbusNumberEntityDescription(
@@ -1108,7 +1111,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class alphaess_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x64A)
@@ -1140,7 +1143,13 @@ class alphaess_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1156,13 +1165,13 @@ class alphaess_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -1204,6 +1213,7 @@ class alphaess_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return True
 
 
 plugin_instance = alphaess_plugin(
