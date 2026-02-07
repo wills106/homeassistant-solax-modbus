@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -94,8 +95,6 @@ ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
-
-SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
@@ -356,7 +355,7 @@ def value_function_today_s_solar_energy(initval: int, descr: Any, datadict: dict
         if val in (None, "unknown", "unavailable"):  # unavailable if unknown
             return initval
         try:
-            val_f = float(val)
+            val_f = float(val) if val is not None else 0.0
         except (ValueError, TypeError):  # unavailable if conversion fails
             return initval
         if val_f != val_f:  # unavailable if detect a NaN
@@ -372,11 +371,12 @@ def value_function_today_s_solar_energy(initval: int, descr: Any, datadict: dict
 
 
 def value_function_combined_battery_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("battery_charge_power", 0) - datadict.get("battery_discharge_power", 0)
+    return float(datadict.get("battery_charge_power", 0)) - float(datadict.get("battery_discharge_power", 0))
 
 
 def value_function_combined_bms_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    amp = datadict.get("bms_1_module_2_amp", 0)
+    amp = float(datadict.get("bms_1_module_2_amp", 0))
+    result: int | float
     if 0 <= amp <= 250:
         result = amp
     elif 6303.5 <= amp <= 6553.5:
@@ -398,16 +398,17 @@ def value_function_module_status(initval: int, descr: Any, datadict: dict[str, A
 
 def value_function_battery_voltage(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     bms = datadict.get("bms_monitoring_version", 0)
+    result: float
     if bms == "ZECA":  # Battery system APX HV (ZECA) uses 0.1 scaling factor for battery voltage
-        initval = initval / 10
+        result = initval / 10
     else:
-        initval = initval / 100
-    return initval
+        result = initval / 100
+    return result
 
 
 def value_function_apx_module_soc(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
-    inverter_state = datadict.get("register_" + str(initval), 0)
-    return inverter_state & 0xFF  # Low byte (LSB)
+    inverter_state = int(datadict.get("register_" + str(initval), 0))
+    return str(inverter_state & 0xFF)  # Low byte (LSB)
 
 
 def value_function_bms_module_combined_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -433,7 +434,7 @@ def value_function_bms_module_combined_current(initval: int, descr: Any, datadic
 
 
 def value_function_total_grid_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("grid_power_l1", 0) + datadict.get("grid_power_l2", 0) + datadict.get("grid_power_l3", 0)
+    return float(datadict.get("grid_power_l1", 0)) + float(datadict.get("grid_power_l2", 0)) + float(datadict.get("grid_power_l3", 0))
 
 
 def value_function_firmware_control_version(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
@@ -444,10 +445,10 @@ def value_function_firmware_control_version(initval: int, descr: Any, datadict: 
 
 
 def value_function_inverter_state(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
-    inverter_state = datadict.get("register_3000", 0)
+    inverter_state = int(datadict.get("register_3000", 0))
     inverter_state = inverter_state >> 8  # Remove the lower 8 bits by right-shifting by 8 bits
     status_dict = {0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online"}
-    return status_dict.get(inverter_state)
+    return status_dict.get(inverter_state, "Unknown")
 
 
 def value_function_inverter_warning_text(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
@@ -571,10 +572,10 @@ def value_function_inverter_fault_text(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_run_mode(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
-    run_mode = datadict.get("register_3000", 0)
+    run_mode = int(datadict.get("register_3000", 0))
     run_mode = run_mode & 0xFF  # Mask out the upper 8 bits, keeping only the lower 8 bits
     run_mode_dict = {0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash"}
-    return run_mode_dict.get(run_mode)
+    return run_mode_dict.get(run_mode, "Unknown")
 
 
 def value_function_inverter_module(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
@@ -1012,7 +1013,7 @@ NUMBER_TYPES = [
         name="Peak Import Limit",
         key="peak_import_limit",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         register=3307,
         native_min_value=0,  # default to avoid complete discharge, documentation says 0.
         native_max_value=100,
@@ -1030,7 +1031,7 @@ NUMBER_TYPES = [
         name="Peak Export Limit",
         key="peak_export_limit",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         native_min_value=0,  # default to avoid complete discharge, documentation says 0.
         native_max_value=100,
         register=3308,
@@ -1071,7 +1072,7 @@ NUMBER_TYPES = [
         scale=0.1,
         fmt="i",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         allowedtypes=GEN4 | HYBRID,
         write_method=WRITE_SINGLE_MODBUS,
         icon="mdi:battery-arrow-down",
