@@ -3927,7 +3927,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             1: "Lithium",
         },
         entity_registry_enabled_default=False,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-unknown",
     ),
