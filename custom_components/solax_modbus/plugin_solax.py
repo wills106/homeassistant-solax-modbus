@@ -1091,11 +1091,11 @@ def value_function_software_version_g3(initval, descr, datadict):
 
 
 def value_function_software_version_g4(initval, descr, datadict):
-    return f"DSP v1.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
+    return f"DSP v1.{datadict.get('firmware_dsp'):>02} ARM v1.{datadict.get('firmware_arm'):>02}"
 
 
 def value_function_software_version_g5(initval, descr, datadict):
-    return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
+    return f"DSP {datadict.get('firmware_dsp_major')}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm'):>02}"
 
 
 def value_function_software_version_air_g3(initval, descr, datadict):
@@ -3808,13 +3808,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Inverter DSP firmware major version",
-        key="firmware_DSP_major_version",
-        entity_registry_enabled_default=False,
+        key="firmware_dsp_major",
         register=0x7F,
         allowedtypes=AC | HYBRID | GEN5,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_arm_major",
