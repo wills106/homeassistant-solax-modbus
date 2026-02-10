@@ -4343,6 +4343,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN4 | GEN5 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Inverter Power Type",
+        key="inverter_power_type",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        register=0xBA,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Language",
         key="language",
         register=0xBB,
@@ -4504,11 +4515,37 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | X3,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Machine Type",
+        key="machine_type",
+        scale={
+            1: "X1",
+            3: "X3",
+        },
+        register=0x105,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
         key="phase_power_balance_x3",
         register=0x106,
         scale={0: "Disabled", 1: "Enabled"},
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | X3,
         internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Machine Style",
+        key="machine_style",
+        scale={
+            0: "Hybrid",
+            1: "Fit",
+        },
+        register=0x107,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
         name="Meter Function",
@@ -5241,6 +5278,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN5 | GEN6 | DCB,
         internal=True,
     ),
+    SolaXModbusSensorEntityDescription(
+        name="BMS 1 Battery Subsystem Number",
+        key="bms_battery_subsystem_num",
+        register=0x200,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN5,
+    ),
     #####
     #
     # Input
@@ -5815,7 +5859,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS Charge Max Current",
+        name="BMS 1 Charge Max Current",
         key="bms_charge_max_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default=False,
@@ -5828,7 +5872,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS Discharge Max Current",
+        name="BMS 1 Discharge Max Current",
         key="bms_discharge_max_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default=False,
@@ -5841,7 +5885,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS Battery Capacity",
+        name="BMS 1 Battery Capacity",
         key="bms_battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
