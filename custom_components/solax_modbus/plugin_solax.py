@@ -230,6 +230,7 @@ class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
 @dataclass(kw_only=True, frozen=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+    order32: str | None = None  # optional per-sensor 32-bit word order override
     register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
@@ -3688,6 +3689,40 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     # Holding
     #
     #####
+    SolaXModbusSensorEntityDescription(
+        name="Manufacturer",
+        key="manufacturer_name",
+        register=0x07,
+        unit=REGISTER_STR,
+        order32="big",
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Model Number",
+        key="model_number",
+        register=0x0E,
+        unit=REGISTER_STR,
+        order32="big",
+        wordcount=7,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Inverter ID Number",
+        key="inverter_id",
+        register=0x15,
+        unit=REGISTER_U16,
+        entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
     SolaXModbusSensorEntityDescription(
         name="MateBox enabled",
         key="matebox_enabled",

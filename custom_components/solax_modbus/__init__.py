@@ -1375,7 +1375,7 @@ class SolaXModbusHub:
                 words_used = 2
             elif descr.register_data_type == REGISTER_STR:
                 wc = descr.wordcount or 0
-                raw = convert_from_registers(regs[idx : idx + wc], DataType.STRING, self.plugin.order32)  # type: ignore[attr-defined]
+                raw = convert_from_registers(regs[idx : idx + wc], DataType.STRING, order32)  # type: ignore[attr-defined]
                 words_used = wc
                 val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             elif descr.register_data_type == REGISTER_WORDS:
