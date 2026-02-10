@@ -1095,7 +1095,7 @@ def value_function_software_version_g4(initval, descr, datadict):
 
 
 def value_function_software_version_g5(initval, descr, datadict):
-    return f"DSP {datadict.get('firmware_dsp_major')}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm'):>02}"
+    return f"DSP {datadict.get('firmware_dsp_major'):>03}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major'):>03}.{datadict.get('firmware_arm'):>02}"
 
 
 def value_function_software_version_air_g3(initval, descr, datadict):
