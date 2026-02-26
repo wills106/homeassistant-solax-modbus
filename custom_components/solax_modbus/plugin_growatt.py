@@ -9526,7 +9526,10 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith("XVM"):
             invertertype = HYBRID | GEN4 | X1  # MIN 5000 TL-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("SMN"):
-            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XHUS Hybrid, 4 MPPT
+            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN ? TL-XH-US Hybrid, 4 MPPT
+        elif seriesnumber.startswith("JGQ"):
+            invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+            
 
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
@@ -9566,6 +9569,10 @@ class growatt_plugin(plugin_base):
         # SPH type:GEN3
         elif seriesnumber.startswith("YRP"):
             invertertype = HYBRID | GEN3 | X1  # SPH 5000 TL-HUB Hybrid, 2 MPPT
+        elif seriesnumber.startswith("ESM"):
+            invertertype = HYBRID | GEN3 | X1  # SPH 6000 TL BL-UP Hybrid, 2 MPPT            
+        elif seriesnumber.startswith("FBP"):
+            invertertype = HYBRID | GEN3 | X1  # SPH 10000 TL-HU-US Hybrid, 3 MPPT X2? GEN?
 
         # SPE type:?
         elif seriesnumber.startswith("NFR"):
@@ -9645,6 +9652,8 @@ class growatt_plugin(plugin_base):
             invertertype = PV | GEN | X1  # 1500-S, 1 MPPT
         elif seriesnumber.startswith("JLE"):
             invertertype = PV | GEN | X1  # 5000 TL3-S, x MPPT
+        elif seriesnumber.startswith("MAB"):
+            invertertype = PV | GEN | X3  # 10000 TL3-S, ? MPPT
         elif seriesnumber.startswith("MVC"):
             invertertype = PV | GEN | X3  # 12000 TL3-S, ? MPPT
 
