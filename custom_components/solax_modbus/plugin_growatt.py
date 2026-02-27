@@ -5289,14 +5289,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Inverter State",
+        name="Inverter Run State",
         key="inverter_state",
         value_function=value_function_inverter_state,
         allowedtypes=GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         value_function=value_function_run_mode,
         allowedtypes=GEN4,
