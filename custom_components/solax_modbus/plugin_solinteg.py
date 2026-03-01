@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -130,11 +131,11 @@ async def _read_model(hub, address=10008):
 # ====================================== Computed value functions  =================================================
 
 
-def _bytes_str(b_array):
+def _bytes_str(b_array: list[int]) -> str:
     return ".".join(str(x) for x in b_array)
 
 
-def _model_str(val):
+def _model_str(val: int) -> str:
     # there are models 40,41,42, docu not found
     d = {
         30: [
@@ -176,7 +177,7 @@ def _model_str(val):
         return "unknown"
 
 
-def _flag_list(v, flags, empty=""):
+def _flag_list(v: int, flags: list[str], empty: str = "") -> str:
     # v int, flags array of bit/string, empty string
     ret = []
     n = len(flags)
@@ -191,15 +192,15 @@ def _flag_list(v, flags, empty=""):
     return empty if not ret else ",".join(ret)
 
 
-def _fn_flags(flags, empty=""):
+def _fn_flags(flags: list[str], empty: str = "") -> Any:
     return lambda v, *a: _flag_list(v, flags, empty)
 
 
-def _fn_simple_hex(v, descr, dd):
+def _fn_simple_hex(v: int, descr: Any, dd: dict[str, Any]) -> str:
     return f"0x{v:x}"
 
 
-def _fw_str(wa, *a):
+def _fw_str(wa: Any, *a: Any) -> str:
     ba = [b for w in wa for b in w.to_bytes(2)]
     return f"V{_bytes_str(ba[0:4])}-{_bytes_str(ba[4:8])}"
 
@@ -209,23 +210,23 @@ _mppt_mask = 0xFF  # max 8 mppts
 _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
 
 
-def _fn_mppt_mask_ex(v, _mask):
-    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, v)
+def _fn_mppt_mask_ex(v: int, _mask: int) -> str | int:
+    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, str(v))
 
 
-def _fn_mppt_mask(v, descr, dd):
+def _fn_mppt_mask(v: int, descr: Any, dd: dict[str, Any]) -> str | int:
     return _fn_mppt_mask_ex(v, _mppt_mask)
 
 
 _nan = float("NaN")
 
 
-def value_function_house_total_load(initval, descr, datadict):
+def value_function_house_total_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan)
     return None if v != v else v  # test nan
 
 
-def value_function_house_normal_load(initval, descr, datadict):
+def value_function_house_normal_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
     return None if v != v else v  # test nan
 

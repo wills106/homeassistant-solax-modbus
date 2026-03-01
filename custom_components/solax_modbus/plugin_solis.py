@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -155,14 +156,14 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # This value function converts the bits to the number
-def mutate_bit_in_register(bit: int, state: int, descr: str, datadict: dict):
+def mutate_bit_in_register(bit: int, state: int, descr: str, datadict: dict[str, Any]) -> int:
     value = datadict.get(descr, 0)
     _LOGGER.debug(f">>> Old value of {descr}: {value}")
     new_value = (value & ~(1 << bit)) | (state << bit)
     return new_value
 
 
-def value_function_battery_control_override(initval, descr, datadict):
+def value_function_battery_control_override(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any] | None:
     """Value function for battery_control_override autorepeat - resends force charge/discharge commands."""
     current_option = datadict.get(descr.key)
     if current_option and hasattr(descr, "reverse_option_dict"):
@@ -175,7 +176,7 @@ def value_function_battery_control_override(initval, descr, datadict):
     return None
 
 
-def value_function_timingmode(initval, descr, datadict):
+def value_function_timingmode(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     return [
         (
             "timed_charge_start_hours",
@@ -212,7 +213,7 @@ def value_function_timingmode(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode2(initval, descr, datadict):
+def value_function_timingmode2(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     return [
         (
             "timed_charge_start_hours_2",
@@ -249,7 +250,7 @@ def value_function_timingmode2(initval, descr, datadict):
     ]
 
 
-def value_function_timingmode3(initval, descr, datadict):
+def value_function_timingmode3(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     return [
         (
             "timed_charge_start_hours_3",
@@ -286,19 +287,19 @@ def value_function_timingmode3(initval, descr, datadict):
     ]
 
 
-def value_function_pv1_power(initval, descr, datadict):
+def value_function_pv1_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_1", 0) * datadict.get("pv_current_1", 0)
 
 
-def value_function_pv2_power(initval, descr, datadict):
+def value_function_pv2_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_2", 0) * datadict.get("pv_current_2", 0)
 
 
-def value_function_pv3_power(initval, descr, datadict):
+def value_function_pv3_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_3", 0) * datadict.get("pv_current_3", 0)
 
 
-def value_function_pv4_power(initval, descr, datadict):
+def value_function_pv4_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_4", 0) * datadict.get("pv_current_4", 0)
 
 

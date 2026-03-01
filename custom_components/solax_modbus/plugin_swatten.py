@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -138,11 +139,11 @@ class SwattenModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_pv_power_1(initval, descr, datadict):
+def value_function_pv_power_1(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_1", 0) * datadict.get("pv_current_1", 0)
 
 
-def value_function_pv_power_2(initval, descr, datadict):
+def value_function_pv_power_2(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("pv_voltage_2", 0) * datadict.get("pv_current_2", 0)
 
 

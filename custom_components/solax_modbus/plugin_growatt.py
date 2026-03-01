@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -141,14 +142,14 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
-def time_to_int(time_str):
+def time_to_int(time_str: str | None) -> int:
     if time_str is None:
         time_str = "00:00"
     hours, minutes = map(int, time_str.split(":"))
     return (hours * 256) + minutes
 
 
-def encode_time_begin(begin_str, enabled, mode):
+def encode_time_begin(begin_str: str | None, enabled: str, mode: str) -> int:
     value = time_to_int(begin_str)
     if enabled == "Enabled":
         value += 32768
@@ -174,7 +175,7 @@ def value_function_time_1_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_2_update(initval, descr, datadict):
+def value_function_time_2_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_2_begin", "00:00")
     time_end = datadict.get("time_2_end", "00:00")
     enabled = datadict.get("time_2_enabled", "Disabled")
@@ -189,7 +190,7 @@ def value_function_time_2_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_3_update(initval, descr, datadict):
+def value_function_time_3_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_3_begin", "00:00")
     time_end = datadict.get("time_3_end", "00:00")
     enabled = datadict.get("time_3_enabled", "Disabled")
@@ -204,7 +205,7 @@ def value_function_time_3_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_4_update(initval, descr, datadict):
+def value_function_time_4_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_4_begin", "00:00")
     time_end = datadict.get("time_4_end", "00:00")
     enabled = datadict.get("time_4_enabled", "Disabled")
@@ -219,7 +220,7 @@ def value_function_time_4_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_5_update(initval, descr, datadict):
+def value_function_time_5_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_5_begin", "00:00")
     time_end = datadict.get("time_5_end", "00:00")
     enabled = datadict.get("time_5_enabled", "Disabled")
@@ -234,7 +235,7 @@ def value_function_time_5_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_6_update(initval, descr, datadict):
+def value_function_time_6_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_6_begin", "00:00")
     time_end = datadict.get("time_6_end", "00:00")
     enabled = datadict.get("time_6_enabled", "Disabled")
@@ -249,7 +250,7 @@ def value_function_time_6_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_7_update(initval, descr, datadict):
+def value_function_time_7_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_7_begin", "00:00")
     time_end = datadict.get("time_7_end", "00:00")
     enabled = datadict.get("time_7_enabled", "Disabled")
@@ -264,7 +265,7 @@ def value_function_time_7_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_8_update(initval, descr, datadict):
+def value_function_time_8_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_8_begin", "00:00")
     time_end = datadict.get("time_8_end", "00:00")
     enabled = datadict.get("time_8_enabled", "Disabled")
@@ -279,7 +280,7 @@ def value_function_time_8_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_9_update(initval, descr, datadict):
+def value_function_time_9_update(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]] | None:
     time_begin = datadict.get("time_9_begin", "00:00")
     time_end = datadict.get("time_9_end", "00:00")
     enabled = datadict.get("time_9_enabled", "Disabled")
@@ -294,7 +295,7 @@ def value_function_time_9_update(initval, descr, datadict):
     return [(REGISTER_U16, encode_time_begin(time_begin, enabled, mode)), (REGISTER_U16, time_to_int(time_end))]
 
 
-def value_function_time_clear(initval, descr, datadict):
+def value_function_time_clear(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     return [
         (REGISTER_U16, 0),  # time_begin
         (REGISTER_U16, 0),  # time_end
@@ -333,7 +334,7 @@ def value_function_time_reverse_mode(initval, descr, datadict):
         return "Load First"
 
 
-def value_function_today_s_solar_energy(initval, descr, datadict):
+def value_function_today_s_solar_energy(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Dipping this sensor to zero for any reason doubles the energy meter production reporting in Home Assistant, so need to be overly careful detecting issues before adding up
     keys = [
         "today_s_pv1_solar_energy",
@@ -368,11 +369,11 @@ def value_function_today_s_solar_energy(initval, descr, datadict):
     return total
 
 
-def value_function_combined_battery_power(initval, descr, datadict):
+def value_function_combined_battery_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("battery_charge_power", 0) - datadict.get("battery_discharge_power", 0)
 
 
-def value_function_combined_bms_current(initval, descr, datadict):
+def value_function_combined_bms_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     amp = datadict.get("bms_1_module_2_amp", 0)
     if 0 <= amp <= 250:
         result = amp
@@ -383,7 +384,7 @@ def value_function_combined_bms_current(initval, descr, datadict):
     return result
 
 
-def value_function_module_status(initval, descr, datadict):
+def value_function_module_status(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     scale = {
         1: "Standby",
         2: "Charging",
@@ -393,7 +394,7 @@ def value_function_module_status(initval, descr, datadict):
     return scale.get(initval, str(initval) + " Unknown Status")
 
 
-def value_function_battery_voltage(initval, descr, datadict):
+def value_function_battery_voltage(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     bms = datadict.get("bms_monitoring_version", 0)
     if bms == "ZECA":  # Battery system APX HV (ZECA) uses 0.1 scaling factor for battery voltage
         initval = initval / 10
@@ -402,12 +403,12 @@ def value_function_battery_voltage(initval, descr, datadict):
     return initval
 
 
-def value_function_apx_module_soc(initval, descr, datadict):
+def value_function_apx_module_soc(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     inverter_state = datadict.get("register_" + str(initval), 0)
     return inverter_state & 0xFF  # Low byte (LSB)
 
 
-def value_function_bms_module_combined_power(initval, descr, datadict):
+def value_function_bms_module_combined_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     watt = initval
     if 0 <= watt <= 2500:
         result = watt
@@ -418,7 +419,7 @@ def value_function_bms_module_combined_power(initval, descr, datadict):
     return result
 
 
-def value_function_bms_module_combined_current(initval, descr, datadict):
+def value_function_bms_module_combined_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     current = initval / 10
     if 0 <= current <= 250:
         result = current
@@ -429,25 +430,25 @@ def value_function_bms_module_combined_current(initval, descr, datadict):
     return result
 
 
-def value_function_total_grid_power(initval, descr, datadict):
+def value_function_total_grid_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return datadict.get("grid_power_l1", 0) + datadict.get("grid_power_l2", 0) + datadict.get("grid_power_l3", 0)
 
 
-def value_function_firmware_control_version(initval, descr, datadict):
+def value_function_firmware_control_version(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     fw_ascii = datadict.get("firmware_control_version_ascii", 0)
     fw_ver = datadict.get("firmware_control_version_number", 0)
     fw_ver = f"{fw_ver:04}"  # Convert to a 4-digit decimal number
     return f"{fw_ascii}-{fw_ver}"
 
 
-def value_function_inverter_state(initval, descr, datadict):
+def value_function_inverter_state(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     inverter_state = datadict.get("register_3000", 0)
     inverter_state = inverter_state >> 8  # Remove the lower 8 bits by right-shifting by 8 bits
     status_dict = {0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online"}
     return status_dict.get(inverter_state)
 
 
-def value_function_inverter_warning_text(initval, descr, datadict):
+def value_function_inverter_warning_text(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     main_code = datadict.get("inverter_warning_maincode", 0)
     sub_code = datadict.get("inverter_warning_subcode", 0)
     bit_labels = {
@@ -493,7 +494,7 @@ def value_function_inverter_warning_text(initval, descr, datadict):
     return bit_labels.get((main_code, sub_code), f"Unknown Warning (main_code={main_code}, sub_code={sub_code})")
 
 
-def value_function_module_warning_text(initval, descr, datadict):
+def value_function_module_warning_text(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     text = {
         0: "Normal",
         404: "Abnormal EEPROM",
@@ -513,7 +514,7 @@ def value_function_module_warning_text(initval, descr, datadict):
     return text.get(initval, str(initval) + " Unknown Warning")
 
 
-def value_function_inverter_fault_text(initval, descr, datadict):
+def value_function_inverter_fault_text(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     main_code = datadict.get("inverter_fault_maincode", 0)
     sub_code = datadict.get("inverter_fault_subcode", 0)
     bit_labels = {
@@ -567,14 +568,14 @@ def value_function_inverter_fault_text(initval, descr, datadict):
     return bit_labels.get((main_code, sub_code), f"Unknown Fault (main_code={main_code}, sub_code={sub_code})")
 
 
-def value_function_run_mode(initval, descr, datadict):
+def value_function_run_mode(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     run_mode = datadict.get("register_3000", 0)
     run_mode = run_mode & 0xFF  # Mask out the upper 8 bits, keeping only the lower 8 bits
     run_mode_dict = {0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash"}
     return run_mode_dict.get(run_mode)
 
 
-def value_function_inverter_module(initval, descr, datadict):
+def value_function_inverter_module(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     hexStr = f"{initval:08x}"
     return ("".join(f"{letter}{digit}" for letter, digit in zip("ABDTPUMS", hexStr, strict=False))).upper()
 
