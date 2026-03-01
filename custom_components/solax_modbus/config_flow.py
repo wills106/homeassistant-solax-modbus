@@ -85,7 +85,8 @@ def getPlugin(instancename):
     return glob_plugin.get(instancename) """
 
 
-def getPluginName(plugin_path):
+def getPluginName(plugin_path: str) -> str:
+    """Extract plugin name from plugin path."""
     return plugin_path[len(PLUGIN_PATH) - 4 : -3]
 
 

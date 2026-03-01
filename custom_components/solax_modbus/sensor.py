@@ -4,14 +4,17 @@ from copy import copy
 from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
+from typing import Any
 
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import RestoreEntity, SensorEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONF_READ_BATTERY,
@@ -30,7 +33,7 @@ from .debug import get_debug_setting
 _LOGGER = logging.getLogger(__name__)
 
 
-def _energy_dashboard_mapping_attrs(description, hub) -> dict:
+def _energy_dashboard_mapping_attrs(description: Any, hub: Any) -> dict[str, Any]:
     mapping = getattr(description, "_energy_dashboard_mapping", None)
     if not mapping:
         return {"ed_mapping_present": False}
@@ -53,11 +56,13 @@ def _energy_dashboard_mapping_attrs(description, hub) -> dict:
     }
 
 
-def empty_input_interval_group_lambda():
+def empty_input_interval_group_lambda() -> SimpleNamespace:
+    """Create empty interval group namespace."""
     return SimpleNamespace(interval=0, device_groups={})
 
 
-def empty_input_device_group_lambda():
+def empty_input_device_group_lambda() -> SimpleNamespace:
+    """Create empty device group namespace."""
     return SimpleNamespace(
         holdingRegs={},
         inputRegs={},
@@ -66,7 +71,8 @@ def empty_input_device_group_lambda():
     )
 
 
-def is_entity_enabled(hass, hub, descriptor, use_default=False):
+def is_entity_enabled(hass: HomeAssistant, hub: Any, descriptor: Any, use_default: bool = False) -> bool:
+    """Check if entity is enabled in registry."""
     # simple test, more complex counterpart is should_register_be_loaded
     unique_id = f"{hub._name}_{descriptor.key}"
     registry = er.async_get(hass)
@@ -86,7 +92,7 @@ def is_entity_enabled(hass, hub, descriptor, use_default=False):
     return False
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:
         hub_name = entry.data[CONF_NAME]  # old style - remove soon
     else:
@@ -477,11 +483,11 @@ class SolaXModbusSensor(SensorEntity):
 
     def __init__(
         self,
-        platform_name,
-        hub,
-        device_info,
+        platform_name: str,
+        hub: Any,
+        device_info: DeviceInfo,
         description: BaseModbusSensorEntityDescription,
-    ):
+    ) -> None:
         """Initialize the sensor."""
         self._platform_name = platform_name
         self._attr_device_info = device_info
@@ -537,11 +543,11 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
 
     def __init__(
         self,
-        platform_name,
-        hub,
-        device_info,
+        platform_name: str,
+        hub: Any,
+        device_info: DeviceInfo,
         description: BaseModbusSensorEntityDescription,
-    ):
+    ) -> None:
         """Initialize the Riemann sum energy sensor."""
         super().__init__(platform_name, hub, device_info, description)
 
