@@ -13,7 +13,9 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
 from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,
@@ -100,19 +102,19 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> Any:
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=1)
         if inverter_data is not None and not inverter_data.isError():
             # Decode 7 registers (14 bytes) as string using clientless compat helper
-            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
+            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             hub.seriesnumber = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
@@ -123,29 +125,29 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
@@ -528,7 +530,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def value_function_byteswapserial(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+def value_function_byteswapserial(initval: str, descr: Any, datadict: dict[str, Any]) -> str:
     if initval and not initval.startswith(("M", "X")):
         preswap = initval
         swapped = ""
@@ -553,15 +555,17 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
 
 
 def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get(descr.key, None)
+    result = datadict.get(descr.key, None)
+    return int(result) if result is not None else 0
 
 
 def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get(descr.key, None)
+    result = datadict.get(descr.key, None)
+    return int(result) if result is not None else 0
 
 
 def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
+    return float(datadict.get("battery_1_power_charge", 0)) + float(datadict.get("battery_2_power_charge", 0))
 
 
 def value_function_hardware_version_g1(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
@@ -585,32 +589,32 @@ def value_function_hardware_version_g5(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("inverter_power", 0) - datadict.get("measured_power", 0) + datadict.get("meter_2_measured_power", 0)
+    return float(datadict.get("inverter_power", 0)) - float(datadict.get("measured_power", 0)) + float(datadict.get("meter_2_measured_power", 0))
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return (
-        datadict.get("pv_power_1", 0)
-        + datadict.get("pv_power_2", 0)
-        + datadict.get("pv_power_3", 0)
-        - datadict.get("battery_power_charge", 0)
-        - datadict.get("measured_power", 0)
-        + datadict.get("meter_2_measured_power", 0)
+        float(datadict.get("pv_power_1", 0))
+        + float(datadict.get("pv_power_2", 0))
+        + float(datadict.get("pv_power_3", 0))
+        - float(datadict.get("battery_power_charge", 0))
+        - float(datadict.get("measured_power", 0))
+        + float(datadict.get("meter_2_measured_power", 0))
     )
 
 
 def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("inverter_power_l1", 0) + datadict.get("inverter_power_l2", 0) + datadict.get("inverter_power_l3", 0)
+    return float(datadict.get("inverter_power_l1", 0)) + float(datadict.get("inverter_power_l2", 0)) + float(datadict.get("inverter_power_l3", 0))
 
 
 def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Check if total capacity has a sane value, if so return that
-    total_charge = datadict.get("battery_total_capacity_charge", 0)
+    total_charge = float(datadict.get("battery_total_capacity_charge", 0))
     if total_charge > 0:
         return total_charge
     # Otherwise try to use the correct battery capacity field
-    bat1_charge = datadict.get("battery_1_capacity_charge", 0)
-    bat2_charge = datadict.get("battery_2_capacity_charge", 0)
+    bat1_charge = float(datadict.get("battery_1_capacity_charge", 0))
+    bat2_charge = float(datadict.get("battery_2_capacity_charge", 0))
     # Use the lesser if both available
     if (bat1_charge > 0) and (bat2_charge > 0):
         return min(bat2_charge, bat1_charge)
@@ -647,24 +651,24 @@ def value_function_software_version_air_g4(initval: int, descr: Any, datadict: d
 
 
 def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return datadict.get("cell_voltage_high", 0) - datadict.get("cell_voltage_low", 0)
+    return float(datadict.get("cell_voltage_high", 0)) - float(datadict.get("cell_voltage_low", 0))
 
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: list[Any] = []
 
 # ================================= Number Declarations ============================================================
 
-NUMBER_TYPES = []
+NUMBER_TYPES: list[Any] = []
 
 # ================================= Switch Declarations ============================================================
 
-SWITCH_TYPES = []
+SWITCH_TYPES: list[Any] = []
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = []
+SELECT_TYPES: list[Any] = []
 
 # ================================= Sennsor Declarations ============================================================
 
@@ -693,7 +697,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x180,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         rounding=1,
         allowedtypes=AC | HYBRID,
     ),
@@ -716,7 +720,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -727,7 +731,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x12D,
         scale=0.001,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -803,7 +807,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         register=0x402,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -862,7 +866,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x480,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -873,7 +877,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x481,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC,
         icon="mdi:current-dc",
     ),
@@ -885,7 +889,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x482,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         icon="mdi:battery-charging",
     ),
@@ -897,7 +901,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x484,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -930,7 +934,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         register=0xC08,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -978,17 +982,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class solax_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         await async_read_serialnr(hub, 0xC08)
@@ -1011,7 +1015,13 @@ class solax_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1027,13 +1037,13 @@ class solax_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -1075,6 +1085,7 @@ class solax_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return True
 
 
 plugin_instance = solax_plugin(

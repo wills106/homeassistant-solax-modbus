@@ -6,17 +6,18 @@ by preventing star imports from being reintroduced to the codebase.
 
 import ast
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 
-def get_all_python_files():
+def get_all_python_files() -> list[Path]:
     """Get all Python files in the custom component."""
     component_dir = Path(__file__).parent.parent.parent / "custom_components" / "solax_modbus"
     return sorted(component_dir.glob("*.py"))
 
 
-def check_star_imports(filepath):
+def check_star_imports(filepath: Path) -> list[dict[str, Any]]:
     """Check if a file contains any star imports."""
     with open(filepath) as f:
         tree = ast.parse(f.read(), filepath)
@@ -37,7 +38,7 @@ def check_star_imports(filepath):
 
 
 @pytest.mark.parametrize("python_file", get_all_python_files())
-def test_no_star_imports(python_file):
+def test_no_star_imports(python_file: Path) -> None:
     """Test that no Python files use star imports.
 
     Phase B eliminated all star imports to resolve 8,396 F405 errors.
@@ -58,20 +59,20 @@ def test_no_star_imports(python_file):
     )
 
 
-def test_const_module_not_star_imported():
+def test_const_module_not_star_imported() -> None:
     """Specific test for const.py star imports.
 
     The const.py star imports were the primary cause of F405 errors.
     This test specifically ensures they stay eliminated.
     """
-    plugin_files = Path(__file__).parent.parent.parent / "custom_components" / "solax_modbus"
-    plugin_files = sorted(plugin_files.glob("plugin_*.py"))
+    plugin_dir = Path(__file__).parent.parent.parent / "custom_components" / "solax_modbus"
+    plugin_files = sorted(plugin_dir.glob("plugin_*.py"))
 
-    files_with_const_star = []
+    files_with_const_star: list[str] = []
 
     for plugin_file in plugin_files:
         with open(plugin_file) as f:
-            tree = ast.parse(f.read(), plugin_file)
+            tree = ast.parse(f.read(), str(plugin_file))
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
@@ -88,7 +89,7 @@ def test_const_module_not_star_imported():
     )
 
 
-def test_star_import_documentation():
+def test_star_import_documentation() -> None:
     """Document that star imports were eliminated in Phase B.
 
     This test serves as documentation and will fail if the count changes,

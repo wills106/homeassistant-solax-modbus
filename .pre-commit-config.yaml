@@ -18,10 +18,8 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        args: ["custom_components/solax_modbus"]
-        # Set verbose to see output but don't fail
+        args: ["custom_components/solax_modbus", "tests"]
         verbose: true
-        stages: [manual]  # Only run when explicitly called
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.14

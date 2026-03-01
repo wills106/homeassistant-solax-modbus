@@ -14,7 +14,9 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
 from custom_components.solax_modbus.const import (
     REG_HOLDING,
@@ -80,12 +82,12 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     _LOGGER.debug(f"{hub.name}: Reading serial number from address 0x{address:x}")
     res = None
     try:
@@ -93,7 +95,7 @@ async def async_read_serialnr(hub, address):
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if not inverter_data.isError():
             _LOGGER.debug(f"{hub.name}: Successfully read registers: {inverter_data.registers[0:7]}")
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
@@ -109,7 +111,7 @@ async def async_read_serialnr(hub, address):
     return res
 
 
-async def async_read_firmware(hub, address=0x25):
+async def async_read_firmware(hub: Any, address: int = 0x25) -> float | None:
     """Read firmware version from input register.
 
     Args:
@@ -141,27 +143,27 @@ async def async_read_firmware(hub, address=0x25):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG
     order32: str | None = None  # optional per-sensor 32-bit word order override
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -511,7 +513,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="RTC",
         key="rtc",
         register=0x61E,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc,
         entity_registry_enabled_default=False,
@@ -809,7 +811,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charge_added_total",
         register=0x619,
         register_type=REG_HOLDING,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -822,7 +824,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_current",
         register=0x12,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -834,7 +836,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_current_l1",
         register=0x12,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -846,7 +848,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_current_l2",
         register=0x13,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -858,7 +860,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_current_l3",
         register=0x14,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -870,7 +872,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_power",
         register=0x15,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -882,7 +884,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_power_l1",
         register=0x15,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -894,7 +896,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_power_l2",
         register=0x16,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -906,7 +908,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_power_l3",
         register=0x17,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -918,7 +920,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="grid_power_total",
         register=0x18,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -965,7 +967,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         icon="mdi:alert",
         allowedtypes=GEN2,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Firmware version",
@@ -974,7 +976,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         icon="mdi:numeric",
         allowedtypes=GEN2,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -996,7 +998,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         icon="mdi:numeric",
         allowedtypes=GEN2,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=PERCENTAGE,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1008,7 +1010,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         allowedtypes=GEN2,
         # Per SolaX docs 32-bit values are little-endian, but this register
         # is verifyably flipped on GEN2 devices, so override word order here.
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         order32="big",
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
@@ -1068,19 +1070,19 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class solax_ev_charger_plugin(plugin_base):
     '''
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """ determine if inverter is awake based on polled datadict"""
         return (datadict.get('run_mode', None) == 'Normal Mode')
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """ in order to wake up  the inverter , press this button """
         return 'battery_awaken'
     '''
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         _LOGGER.debug(f"{hub.name}: Reading serial number to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x600)
@@ -1176,7 +1178,13 @@ class solax_ev_charger_plugin(plugin_base):
         _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         _LOGGER.debug(f"matchInverterWithMask: inverterspec=0x{inverterspec:x}, entitymask=0x{entitymask:x}, serialnumber={serialnumber}")
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
@@ -1194,14 +1202,14 @@ class solax_ev_charger_plugin(plugin_base):
         _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
         return result
 
-    def getModel(self, new_data):
+    def getModel(self, new_data: dict[str, Any]) -> str | None:
         return getattr(self, "inverter_model", None)
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         fw = new_data.get("firmware_version")
         return f"ARM v{fw}" if fw is not None else None
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return getattr(self, "hardware_version", None)
 
 

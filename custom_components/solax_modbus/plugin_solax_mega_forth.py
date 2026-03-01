@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, replace
+from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -12,9 +13,11 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -89,18 +92,18 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=8)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:8], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
@@ -114,25 +117,25 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -140,15 +143,15 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: list[Any] = []
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = []
+MAX_CURRENTS: list[Any] = []
 
-MAX_EXPORT = []
+MAX_EXPORT: list[Any] = []
 
-EXPORT_LIMIT_SCALE_EXCEPTIONS = []
+EXPORT_LIMIT_SCALE_EXCEPTIONS: list[Any] = []
 
 NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
@@ -179,7 +182,7 @@ NUMBER_TYPES = [
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = []
+SELECT_TYPES: list[Any] = []
 
 # ================================= Sennsor Declarations ============================================================
 
@@ -199,7 +202,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="model_type",
         register=0x12,
         register_type=REG_INPUT,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -210,7 +213,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="software_version",
         register=0x22,
         register_type=REG_INPUT,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -334,7 +337,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x183,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
@@ -345,7 +348,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x185,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
@@ -355,7 +358,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x187,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=MAX | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
@@ -377,7 +380,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x18A,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         allowedtypes=MAX | GEN2,
     ),
@@ -389,7 +392,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x18F,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.001,
         allowedtypes=MAX | GEN2,
     ),
@@ -401,7 +404,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x202,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -413,7 +416,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x28B,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -425,7 +428,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x28C,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -439,7 +442,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x28D,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
         icon="mdi:solar-power-variant",
     ),
@@ -451,7 +454,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x28F,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -462,7 +465,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x292,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -474,7 +477,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x293,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -488,7 +491,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x294,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
         icon="mdi:solar-power-variant",
     ),
@@ -500,7 +503,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x296,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -511,7 +514,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x299,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -523,7 +526,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x29A,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -537,7 +540,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x29B,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
         icon="mdi:solar-power-variant",
     ),
@@ -549,7 +552,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x29D,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -560,7 +563,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2A0,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -572,7 +575,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2A1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2,
@@ -586,7 +589,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2A2,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
         icon="mdi:solar-power-variant",
     ),
@@ -598,7 +601,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2A4,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -609,7 +612,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2A7,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
@@ -621,7 +624,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2A8,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
@@ -635,7 +638,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2A9,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
         icon="mdi:solar-power-variant",
     ),
@@ -647,7 +650,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2AB,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6 | MPPT5,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -658,7 +661,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2AE,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
@@ -670,7 +673,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2AF,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
@@ -684,7 +687,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2B0,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
         icon="mdi:solar-power-variant",
     ),
@@ -696,7 +699,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2B2,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9 | MPPT6,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -707,7 +710,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2B5,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -719,7 +722,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2B6,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -733,7 +736,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2B7,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         icon="mdi:solar-power-variant",
     ),
@@ -745,7 +748,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2B9,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -756,7 +759,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2BC,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -768,7 +771,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2BD,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -782,7 +785,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2BE,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         icon="mdi:solar-power-variant",
     ),
@@ -794,7 +797,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2C0,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -805,7 +808,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2C3,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -817,7 +820,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2C4,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
@@ -831,7 +834,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2C5,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         icon="mdi:solar-power-variant",
     ),
@@ -843,7 +846,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2C7,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12 | MPPT9,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -854,7 +857,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2CA,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -866,7 +869,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2CB,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -880,7 +883,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2CC,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12,
         icon="mdi:solar-power-variant",
     ),
@@ -892,7 +895,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2CE,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -903,7 +906,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2D1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -915,7 +918,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2D2,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -929,7 +932,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2D3,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12,
         icon="mdi:solar-power-variant",
     ),
@@ -941,7 +944,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2D5,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -952,7 +955,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x2D8,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -964,7 +967,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x2D9,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX | GEN2 | MPPT12,
@@ -978,7 +981,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2DA,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2 | MPPT12,
         icon="mdi:solar-power-variant",
     ),
@@ -990,7 +993,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2DC,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MAX | GEN2 | MPPT12,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1018,9 +1021,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class solax_mega_forth_plugin(plugin_base):
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x32)
@@ -1082,7 +1085,13 @@ class solax_mega_forth_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1098,13 +1107,13 @@ class solax_mega_forth_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -1146,6 +1155,7 @@ class solax_mega_forth_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return True
 
 
 plugin_instance = solax_mega_forth_plugin(

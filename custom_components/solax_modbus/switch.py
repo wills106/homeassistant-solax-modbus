@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from datetime import datetime
 from typing import Any
 
@@ -41,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for switch_info in plugin.SWITCH_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
             if not (switch_info.name.startswith(inverter_name_suffix)):
-                switch_info.name = inverter_name_suffix + switch_info.name
+                switch_info = replace(switch_info, name=inverter_name_suffix + switch_info.name)
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
@@ -104,6 +105,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     """Representation of an SolaX Modbus switch."""
 
+    entity_description: BaseModbusSwitchEntityDescription
+
     def __init__(
         self,
         platform_name: str,
@@ -127,24 +130,27 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = False
         self._bit = switch_info.register_bit if switch_info.register_bit is not None else 0
         self._value_function = switch_info.value_function
-        self._last_command_time = None  # Tracks last user action
+        self._last_command_time: datetime | None = None  # Tracks last user action
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         self._attr_is_on = True
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
         await self._write_switch_to_modbus()
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
         self._attr_is_on = False
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
         await self._write_switch_to_modbus()
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
+        # Skip hub registration for computed/internal entities (those without modbus registers)
+        if self.entity_description.register is None or self.entity_description.register < 0:
+            return
         if self.entity_description.write_method != WRITE_DATA_LOCAL:
             return
         last_state = await self.async_get_last_state()
@@ -156,7 +162,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             self._hub.data[self._sensor_key] = 1 if is_on else 0
         self.async_write_ha_state()
 
-    async def _write_switch_to_modbus(self):
+    async def _write_switch_to_modbus(self) -> None:
         if self.entity_description.write_method == WRITE_DATA_LOCAL:
             if self._sensor_key is None:
                 return
@@ -178,15 +184,15 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             _LOGGER.debug(f"No value function for switch {self._key}")
             return
 
-        payload = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)
+        payload: int = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)
         _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
         await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool | None:
         """Return the state of the switch."""
         # Prioritize user action within debounce time
-        if self._last_command_time and ((datetime.now() - self._last_command_time) < DEBOUNCE_TIME):
+        if self._last_command_time and ((datetime.now() - self._last_command_time).total_seconds() < DEBOUNCE_TIME.total_seconds()):
             return self._attr_is_on
 
         # Otherwise, return the sensor state
