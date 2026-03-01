@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import pathlib
 from dataclasses import dataclass
@@ -8,9 +10,8 @@ from homeassistant.components.number import (
     NumberEntityDescription,
 )
 from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.sensor import (
-    SensorEntityDescription,
-)
+from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.time import TimeEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.const import (
     CONF_SCAN_INTERVAL,
@@ -138,6 +139,7 @@ class plugin_base:
     NUMBER_TYPES: list[NumberEntityDescription]
     SELECT_TYPES: list[SelectEntityDescription]
     SWITCH_TYPES: list[SwitchEntityDescription]
+    TIME_TYPES: list[TimeEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     block_size: int = 100
     auto_block_ignore_readerror: bool | None = None  # if True or False, inserts a ignore_readerror statement for each block
@@ -214,6 +216,29 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     min_value: int = None
     max_value: int = None
     depends_on: list = None  # list of modbus register keys that must be read
+
+
+@dataclass
+class BaseModbusTimeEntityDescription(TimeEntityDescription):
+    """base class for modbus time entity declarations"""
+
+    allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    register: int = -1  # initialize with invalid register
+    option_dict: dict = None
+    blacklist: list = None
+    register_type: int = None  # REG_HOLDING or REG_INPUT or REG_DATA
+    unit: int = None  # e.g. REGISTER_U16
+    scan_group: int = None  # <=0 -> default group
+    internal: bool = False  # internal sensors are used for reading data only
+    sleepmode: int = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
+    ignore_readerror: bool = False  # not strictly boolean: boolean or static other value
+    value_function: callable = None  # value = function(initval, descr, datadict)
+    wordcount: int = None  # only for unit = REGISTER_STR and REGISTER_WORDS
+    value_series: int = None  # if not None, the value is part of a series of values
+    min_value: int = None
+    max_value: int = None
+    depends_on: list = None  # list of modbus register keys that must be read
+    write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
 
 
 @dataclass

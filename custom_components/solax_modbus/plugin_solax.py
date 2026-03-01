@@ -52,6 +52,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
+    BaseModbusTimeEntityDescription,
     UnitOfReactivePower,
     autorepeat_remaining,
     autorepeat_stop,
@@ -237,6 +238,9 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
+@dataclass
+class SolaXModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 # ====================================== Computed value functions  =================================================
 
@@ -9585,6 +9589,28 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
 ]
 
+TIME_TYPES = [
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 1",
+        key="charger_end_time_1",
+        register=0x27,
+        option_dict=TIME_OPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 1",
+        key="charger_end_time_1",
+        register=0x27,
+        option_dict=TIME_OPTIONS_GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+]
+
+
 # ============================ plugin declaration =================================================
 
 
@@ -10285,6 +10311,7 @@ plugin_instance = solax_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=TIME_TYPES,
     block_size=100,
     # order16=Endian.BIG,
     order32="little",
