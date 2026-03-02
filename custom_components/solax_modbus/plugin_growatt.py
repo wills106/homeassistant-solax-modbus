@@ -6804,10 +6804,10 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key = "backup_status",
         register = 3282,
         scale = { 
-		0: "Backup Offgrid",
+                0: "Backup Offgrid",
                 1: "Backup Ongrid",
                 2: "Backup Generator",
-		},
+        },
         register_type = REG_INPUT,
         allowedtypes = GEN4,
         entity_category = EntityCategory.DIAGNOSTIC,
