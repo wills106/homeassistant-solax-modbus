@@ -10,18 +10,18 @@ from pathlib import Path
 import pytest
 
 
-def get_plugin_files():
+def get_plugin_files() -> list[Path]:
     """Get all plugin files."""
     plugin_dir = Path(__file__).parent.parent.parent / "custom_components" / "solax_modbus"
     return sorted(plugin_dir.glob("plugin_*.py"))
 
 
-def get_import_sections(filepath):
+def get_import_sections(filepath: Path) -> dict[str, list[tuple[int, str]]]:
     """Extract import sections from a file."""
     with open(filepath) as f:
         lines = f.readlines()
 
-    imports = {
+    imports: dict[str, list[tuple[int, str]]] = {
         "stdlib": [],
         "homeassistant": [],
         "local": [],
@@ -64,7 +64,7 @@ def get_import_sections(filepath):
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
-def test_import_order(plugin_file):
+def test_import_order(plugin_file: Path) -> None:
     """Test that imports follow standard order: stdlib → HA → local.
 
     Phase B established this import structure:
@@ -93,7 +93,7 @@ def test_import_order(plugin_file):
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
-def test_const_import_explicit(plugin_file):
+def test_const_import_explicit(plugin_file: Path) -> None:
     """Test that const imports are explicit, not star imports.
 
     This is the core of Phase B: replacing 'from const import *'
@@ -110,7 +110,7 @@ def test_const_import_explicit(plugin_file):
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
-def test_has_local_const_import(plugin_file):
+def test_has_local_const_import(plugin_file: Path) -> None:
     """Test that plugin files import from their local const module.
 
     All plugin files should import from custom_components.solax_modbus.const
@@ -132,7 +132,7 @@ def test_has_local_const_import(plugin_file):
     )
 
 
-def test_no_parenthesized_imports_without_reason():
+def test_no_parenthesized_imports_without_reason() -> None:
     """Test that multi-line imports use parentheses consistently.
 
     Ruff formats multi-line imports with parentheses. This test
@@ -151,7 +151,7 @@ def test_no_parenthesized_imports_without_reason():
 
 
 @pytest.mark.parametrize("plugin_file", get_plugin_files())
-def test_unit_of_reactive_power_from_const_only(plugin_file):
+def test_unit_of_reactive_power_from_const_only(plugin_file: Path) -> None:
     """Test that UnitOfReactivePower is only imported from const.py, not homeassistant.const.
 
     CRITICAL REGRESSION TEST:

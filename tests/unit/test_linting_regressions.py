@@ -1,4 +1,14 @@
-"""Phase C regression tests - prevent reintroduction of linting errors."""
+"""Linting regression tests - prevent reintroduction of code quality issues.
+
+Tests for specific linting errors that were fixed and should never return:
+- F821: Undefined names
+- F811: Redefined imports
+- E722: Bare except clauses
+- E711: None comparisons using == instead of is
+- E741: Ambiguous variable names
+- E402: Late imports
+- B023: Closure variable capture bugs
+"""
 
 import ast
 import re
@@ -7,13 +17,13 @@ from pathlib import Path
 import pytest
 
 
-def get_plugin_files():
+def get_plugin_files() -> list[Path]:
     """Get all Python plugin files."""
     plugin_dir = Path("custom_components/solax_modbus")
     return list(plugin_dir.glob("plugin_*.py"))
 
 
-def get_all_python_files():
+def get_all_python_files() -> list[Path]:
     """Get all Python files in the integration."""
     source_dir = Path("custom_components/solax_modbus")
     return [f for f in source_dir.glob("*.py") if f.name != "__pycache__"]
@@ -22,7 +32,7 @@ def get_all_python_files():
 class TestF821UndefinedNames:
     """Test that all referenced names are defined or imported."""
 
-    def test_no_undefined_sensor_types_mic(self):
+    def test_no_undefined_sensor_types_mic(self) -> None:
         """SENSOR_TYPES_MIC must not be referenced (was never defined)."""
         plugin_files = get_plugin_files()
         violations = []
@@ -34,7 +44,7 @@ class TestF821UndefinedNames:
 
         assert not violations, f"Files still reference undefined SENSOR_TYPES_MIC: {violations}"
 
-    def test_required_imports_present(self):
+    def test_required_imports_present(self) -> None:
         """Critical imports must be present where used."""
         test_cases = [
             ("plugin_sofar.py", "datetime", "from datetime import datetime"),
@@ -58,7 +68,7 @@ class TestF821UndefinedNames:
 class TestF811RedefinedImports:
     """Test that _LOGGER is not imported and redefined."""
 
-    def test_no_duplicate_logger(self):
+    def test_no_duplicate_logger(self) -> None:
         """_LOGGER should not be imported from const and redefined."""
         plugin_files = get_plugin_files()
         violations = []
@@ -87,7 +97,7 @@ class TestE722BareExcept:
     """Test that no bare except clauses exist."""
 
     @pytest.mark.parametrize("python_file", get_all_python_files())
-    def test_no_bare_except(self, python_file):
+    def test_no_bare_except(self, python_file: Path) -> None:
         """No file should contain 'except:' without exception type (unless noqa)."""
         content = python_file.read_text()
 
@@ -104,7 +114,7 @@ class TestE711NoneComparisons:
     """Test that None comparisons use 'is' or 'is not'."""
 
     @pytest.mark.parametrize("python_file", get_all_python_files())
-    def test_no_equality_none_comparisons(self, python_file):
+    def test_no_equality_none_comparisons(self, python_file: Path) -> None:
         """No file should use == None or != None."""
         content = python_file.read_text()
 
@@ -126,7 +136,7 @@ class TestE741AmbiguousNames:
     """Test that no ambiguous variable names are used."""
 
     @pytest.mark.parametrize("python_file", get_all_python_files())
-    def test_no_single_letter_l(self, python_file):
+    def test_no_single_letter_l(self, python_file: Path) -> None:
         """No file should use 'l' as a variable name (ambiguous with 1)."""
         content = python_file.read_text()
         tree = ast.parse(content, filename=str(python_file))
@@ -143,7 +153,7 @@ class TestE741AmbiguousNames:
 class TestE402ImportLocation:
     """Test that late imports have proper noqa comments."""
 
-    def test_late_imports_documented(self):
+    def test_late_imports_documented(self) -> None:
         """Files with intentional late imports must have noqa: E402."""
         known_late_import_files = [
             "custom_components/solax_modbus/plugin_solax.py",
@@ -167,7 +177,7 @@ class TestE402ImportLocation:
 class TestB023ClosurePattern:
     """Test that B023 closure fixes are complete (all call sites updated)."""
 
-    def test_detect_variants_all_call_sites_have_parameters(self):
+    def test_detect_variants_all_call_sites_have_parameters(self) -> None:
         """
         Verify that _detect_variants closure calls have all required parameters.
 
