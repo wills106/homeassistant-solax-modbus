@@ -1098,11 +1098,11 @@ def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP v1.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
+    return f"DSP {datadict.get('firmware_dsp_major')}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm'):>02}"
 
 
 def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm')}"
+    return f"DSP {datadict.get('firmware_dsp_major'):>03}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major'):>03}.{datadict.get('firmware_arm'):>02}"
 
 
 def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
@@ -3815,18 +3815,15 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Inverter DSP firmware major version",
-        key="firmware_DSP_major_version",
-        entity_registry_enabled_default=False,
+        key="firmware_dsp_major",
         register=0x7F,
-        allowedtypes=AC | HYBRID | GEN5,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_arm_major",
         register=0x80,
-        allowedtypes=AC | HYBRID | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8114,7 +8111,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="software_version",
         value_function=value_function_software_version_g5,
-        allowedtypes=AC | HYBRID | GEN5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
