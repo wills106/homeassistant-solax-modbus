@@ -1,18 +1,17 @@
-name: CI/CD
+name: CI/CD Integrated
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - feature/*
-      - fix/*
-      - chore/*
+      - "**"
   pull_request:
-    branches:
-      - main
   schedule:
     - cron: "0 0 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality:
@@ -26,14 +25,57 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-groups
 
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
+  mypy:
+    name: Type Check (mypy)
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run mypy type checking
+        run: |
+          echo "Running mypy in strict mode..."
+          uv run mypy custom_components/solax_modbus tests --strict
+
+  hacs:
+    name: HACS Validation
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: HACS Action
+        uses: hacs/action@main
+        with:
+          category: integration
+
+  hassfest:
+    name: Hassfest Validation
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Hassfest Action
+        uses: home-assistant/actions/hassfest@master
+
   test-quick:
     name: Test Quick
-    needs: [quality]
+    needs: [mypy]
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
@@ -56,12 +98,12 @@ jobs:
 
   test-comprehensive:
     name: Test Comprehensive
-    needs: [quality]
+    needs: [mypy]
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -77,39 +119,45 @@ jobs:
       - name: Run Full Tests
         run: uv run pytest
 
-  all-tests-pass:
-    name: ✅ All Tests Passed
+  all-checks-passed:
+    name: ✅ All Checks Passed
     if: always()
-    needs: [test-quick, test-comprehensive]
+    needs: [hacs, hassfest, test-quick, test-comprehensive]
     runs-on: ubuntu-latest
     steps:
-      - name: Check test results
+      - name: Check all results
         run: |
-          # Check if either test job succeeded (depending on which one ran)
-          # We check the 'conclusion' of the needed jobs
-          
+          HACS="${{ needs.hacs.result }}"
+          HASSFEST="${{ needs.hassfest.result }}"
           QUICK="${{ needs.test-quick.result }}"
           COMPREHENSIVE="${{ needs.test-comprehensive.result }}"
           
+          echo "HACS: $HACS"
+          echo "Hassfest: $HASSFEST"
           echo "Quick Tests: $QUICK"
           echo "Comprehensive Tests: $COMPREHENSIVE"
           
-          # Logic:
-          # If Comprehensive ran, it MUST pass.
-          # If Quick ran (and Comprehensive didn't), it MUST pass.
-          # If skipped, it's neutral.
+          # 1. Static Analysis must pass
+          if [[ "$HACS" != "success" ]]; then
+            echo "❌ HACS validation failed"
+            exit 1
+          fi
+          if [[ "$HASSFEST" != "success" ]]; then
+            echo "❌ Hassfest validation failed"
+            exit 1
+          fi
           
+          # 2. Tests: One path must succeed
           if [[ "$COMPREHENSIVE" == "success" ]]; then
             echo "✅ Comprehensive tests passed"
             exit 0
           elif [[ "$QUICK" == "success" && "$COMPREHENSIVE" == "skipped" ]]; then
-             echo "✅ Quick tests passed"
-             exit 0
+            echo "✅ Quick tests passed"
+            exit 0
           elif [[ "$QUICK" == "skipped" && "$COMPREHENSIVE" == "skipped" ]]; then
-             # This shouldn't happen with current logic, but safe fallback
-             echo "⚠️ No tests ran?"
-             exit 1
+            echo "⚠️ No tests ran?"
+            exit 1
           else
-             echo "❌ Tests failed or cancelled"
-             exit 1
+            echo "❌ Tests failed or cancelled"
+            exit 1
           fi

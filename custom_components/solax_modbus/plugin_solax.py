@@ -1,6 +1,8 @@
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from time import time
+from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -15,9 +17,9 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
     BUTTONREPEAT_FIRST,
     BUTTONREPEAT_POST,
     CONF_READ_DCB,
@@ -116,13 +118,12 @@ ALL_PM_GROUP = PM
 # ============================================================================
 
 # Global storage for last known good values
-_pm_last_known_values = {}
-_soc_last_known_values = {}
+_pm_last_known_values: dict[str, Any] = {}
+_soc_last_known_values: dict[str, Any] = {}
 
 
-def validate_register_data(descr, value, datadict):
-    """
-    Validate register values for corruption.
+def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
+    """Validate register values for corruption.
 
     - PM U32 sensors: detect 0xFFFFFF00 overflow pattern and use last known value.
     - battery_capacity: treat zero SoC as invalid and use last known value.
@@ -147,7 +148,7 @@ def validate_register_data(descr, value, datadict):
             _soc_last_known_values[descr.key] = value
 
     # PM U32 sensors only (filter by key prefix)
-    if descr.key.startswith("pm_") and descr.unit == REGISTER_U32:
+    if descr.key.startswith("pm_") and descr.register_data_type == REGISTER_U32:
         # Handle None from core errors
         if value is None:
             last_value = _pm_last_known_values.get(descr.key, 0)
@@ -178,19 +179,19 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: Sequence["SolaXModbusSensorEntityDescription"] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
             # Decode 7 registers (14 bytes) as string using clientless compat helper
-            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if address == 0x300:
                 # Some devices report swapped bytes; preserve the existing swap workaround
@@ -211,29 +212,29 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaxModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
@@ -241,9 +242,8 @@ class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
-def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
-    """
-    Remote control power calculations for SolaX inverters - Redesigned Implementation.
+def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+    """Remote control power calculations for SolaX inverters - Redesigned Implementation.
 
     This function implements the redesigned remote control calculations based on clear
     variable names and logical formulas. For detailed documentation, see:
@@ -369,13 +369,13 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
 
     # Phase envelope protection: Calculate safe ap_target based on phase limits
     # Get phase-specific data
-    measured_power_l1 = datadict.get("measured_power_l1", None)
-    measured_power_l2 = datadict.get("measured_power_l2", None)
-    measured_power_l3 = datadict.get("measured_power_l3", None)
-    grid_voltage_l1 = datadict.get("grid_voltage_l1", None)
-    grid_voltage_l2 = datadict.get("grid_voltage_l2", None)
-    grid_voltage_l3 = datadict.get("grid_voltage_l3", None)
-    main_breaker_current_limit = datadict.get("main_breaker_current_limit", None)
+    measured_power_l1: int | float | None = datadict.get("measured_power_l1", None)
+    measured_power_l2: int | float | None = datadict.get("measured_power_l2", None)
+    measured_power_l3: int | float | None = datadict.get("measured_power_l3", None)
+    grid_voltage_l1: int | float | None = datadict.get("grid_voltage_l1", None)
+    grid_voltage_l2: int | float | None = datadict.get("grid_voltage_l2", None)
+    grid_voltage_l3: int | float | None = datadict.get("grid_voltage_l3", None)
+    main_breaker_current_limit: int | float | None = datadict.get("main_breaker_current_limit", None)
 
     safe_ap_target_from_phase = None  # Initialize
     safe_ap_target_export_from_phase = None
@@ -386,6 +386,11 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
         and main_breaker_current_limit is not None
         and main_breaker_current_limit > 0
     ):
+        # Type narrowing for mypy
+        assert measured_power_l1 is not None and measured_power_l2 is not None and measured_power_l3 is not None
+        assert grid_voltage_l1 is not None and grid_voltage_l2 is not None and grid_voltage_l3 is not None
+        assert main_breaker_current_limit is not None
+
         # Calculate house load per phase using imbalance
         # Imbalance in measured_power = imbalance in house load (inverters balance)
         avg_measured_power = (measured_power_l1 + measured_power_l2 + measured_power_l3) / 3
@@ -516,7 +521,7 @@ def autorepeat_function_remotecontrol_recompute(initval, descr, datadict):
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available):
+def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> tuple[int, int, int]:
     # Determines max rate for charging battery
 
     # User cap (% of BMS max charge power).
@@ -554,7 +559,7 @@ def autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
     return desired_charge, bms_cap_w, pct_cap_w
 
 
-def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
+def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     # initval = BUTTONREPEAT_FIRST means first run;
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
     # initval = BUTTONREPEAT_POST means final call for cleanup, normally no action needed
@@ -864,7 +869,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval, descr, datadict):
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def value_function_byteswapserial(initval, descr, datadict):
+def value_function_byteswapserial(initval: str, descr: Any, datadict: dict[str, Any]) -> str:
     if initval and not initval.startswith(("M", "X")):
         preswap = initval
         swapped = ""
@@ -874,56 +879,56 @@ def value_function_byteswapserial(initval, descr, datadict):
     return initval
 
 
-def valuefunction_firmware_g3(initval, descr, datadict):
+def valuefunction_firmware_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"3.{initval}"
 
 
-def valuefunction_firmware_g4(initval, descr, datadict):
+def valuefunction_firmware_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"1.{initval}"
 
 
-def value_function_remotecontrol_autorepeat_remaining(initval, descr, datadict):
+def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     mode_1to7 = autorepeat_remaining(datadict, "remotecontrol_trigger", time())
     mode_8to9 = autorepeat_remaining(datadict, "powercontrolmode8_trigger", time())
     return max(mode_1to7, mode_8to9)
 
 
-def value_function_remotecontrol_current_pushmode_power(initval, descr, datadict):
-    return datadict.get(descr.key, None)
+def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(datadict.get(descr.key, 0))
 
 
-def value_function_remotecontrol_current_pv_power_limit(initval, descr, datadict):
-    return datadict.get(descr.key, None)
+def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(datadict.get(descr.key, 0))
 
 
-def value_function_battery_power_charge(initval, descr, datadict):
-    return datadict.get("battery_1_power_charge", 0) + datadict.get("battery_2_power_charge", 0)
+def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(datadict.get("battery_1_power_charge", 0)) + int(datadict.get("battery_2_power_charge", 0))
 
 
-def value_function_hardware_version_g1(initval, descr, datadict):
+def value_function_hardware_version_g1(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen1"
 
 
-def value_function_hardware_version_g2(initval, descr, datadict):
+def value_function_hardware_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen2"
 
 
-def value_function_hardware_version_g3(initval, descr, datadict):
+def value_function_hardware_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen3"
 
 
-def value_function_hardware_version_g4(initval, descr, datadict):
+def value_function_hardware_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen4"
 
 
-def value_function_hardware_version_g5(initval, descr, datadict):
+def value_function_hardware_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return "Gen5"
 
 
-def value_function_house_load(initval, descr, datadict):
-    inverter_power = datadict.get("inverter_power", 0)
-    measured_power = datadict.get("measured_power", 0)
-    meter_2_power = datadict.get("meter_2_measured_power", 0)
+def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    inverter_power = int(datadict.get("inverter_power", 0))
+    measured_power = int(datadict.get("measured_power", 0))
+    meter_2_power = int(datadict.get("meter_2_measured_power", 0))
     result = inverter_power - measured_power + meter_2_power
 
     _LOGGER.debug(
@@ -938,8 +943,8 @@ def value_function_house_load(initval, descr, datadict):
     return result
 
 
-def value_function_house_load_alt(initval, descr, datadict):
-    return (
+def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(
         datadict.get("pv_power_1", 0)
         + datadict.get("pv_power_2", 0)
         + datadict.get("pv_power_3", 0)
@@ -949,15 +954,15 @@ def value_function_house_load_alt(initval, descr, datadict):
     )
 
 
-def value_function_inverter_power_g5(initval, descr, datadict):
-    return datadict.get("inverter_power_l1", 0) + datadict.get("inverter_power_l2", 0) + datadict.get("inverter_power_l3", 0)
+def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(datadict.get("inverter_power_l1", 0)) + int(datadict.get("inverter_power_l2", 0)) + int(datadict.get("inverter_power_l3", 0))
 
 
-def value_function_pm_total_inverter_power(initval, descr, datadict):
+def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
-    l1_power = datadict.get("pm_activepower_l1", 0)
-    l2_power = datadict.get("pm_activepower_l2", 0)
-    l3_power = datadict.get("pm_activepower_l3", 0)
+    l1_power: int | float | None = datadict.get("pm_activepower_l1", 0)
+    l2_power: int | float | None = datadict.get("pm_activepower_l2", 0)
+    l3_power: int | float | None = datadict.get("pm_activepower_l3", 0)
 
     # Handle None values from overflow protection
     if l1_power is None:
@@ -967,13 +972,13 @@ def value_function_pm_total_inverter_power(initval, descr, datadict):
     if l3_power is None:
         l3_power = 0
 
-    return l1_power + l2_power + l3_power
+    return int(l1_power + l2_power + l3_power)
 
 
-def value_function_pm_total_pv_power(initval, descr, datadict):
+def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
-    pv_power_1 = datadict.get("pm_pv_power_1", 0)
-    pv_power_2 = datadict.get("pm_pv_power_2", 0)
+    pv_power_1: int | float | None = datadict.get("pm_pv_power_1", 0)
+    pv_power_2: int | float | None = datadict.get("pm_pv_power_2", 0)
 
     # Handle None values from overflow protection
     if pv_power_1 is None:
@@ -981,10 +986,10 @@ def value_function_pm_total_pv_power(initval, descr, datadict):
     if pv_power_2 is None:
         pv_power_2 = 0
 
-    return pv_power_1 + pv_power_2
+    return int(pv_power_1 + pv_power_2)
 
 
-def value_function_pm_total_house_load(initval, descr, datadict):
+def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """
     Calculate total house load in parallel mode with delta correction.
 
@@ -1007,10 +1012,12 @@ def value_function_pm_total_house_load(initval, descr, datadict):
     to compensate for inverter measurement inflation.
     """
     # Get raw sensor values
-    pm_inverter_power = datadict.get("pm_activepower_l1", 0) + datadict.get("pm_activepower_l2", 0) + datadict.get("pm_activepower_l3", 0)
-    grid_power = datadict.get("measured_power", 0)
-    pv_power = datadict.get("pm_total_pv_power", 0)
-    battery_power = datadict.get("pm_battery_power_charge", 0)
+    pm_inverter_power: int | float = (
+        int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
+    )
+    grid_power: int | float = datadict.get("measured_power", 0)
+    pv_power: int | float = datadict.get("pm_total_pv_power", 0)
+    battery_power: int | float = datadict.get("pm_battery_power_charge", 0)
     # Note: pm_battery_power_charge represents grid-to-battery charging only
     # It does NOT include PV contribution to battery charging
 
@@ -1035,24 +1042,24 @@ def value_function_pm_total_house_load(initval, descr, datadict):
     return inverter_method
 
 
-def value_function_pm_total_reactive_or_apparentpower(initval, descr, datadict):
+def value_function_pm_total_reactive_or_apparentpower(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total reactive power in parallel mode (sum of all phases)."""
-    return (
+    return int(
         datadict.get("pm_reactive_or_apparentpower_l1", 0)
         + datadict.get("pm_reactive_or_apparentpower_l2", 0)
         + datadict.get("pm_reactive_or_apparentpower_l3", 0)
     )
 
 
-def value_function_pm_total_inverter_current(initval, descr, datadict):
+def value_function_pm_total_inverter_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter current in parallel mode (sum of all phases)."""
-    return datadict.get("pm__current_l1", 0) + datadict.get("pm__current_l2", 0) + datadict.get("pm__current_l3", 0)
+    return int(datadict.get("pm__current_l1", 0)) + int(datadict.get("pm__current_l2", 0)) + int(datadict.get("pm__current_l3", 0))
 
 
-def value_function_pm_total_pv_current(initval, descr, datadict):
+def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV current in parallel mode (sum of all PV inputs)."""
-    pv_current_1 = datadict.get("pm_pv_current_1", 0)
-    pv_current_2 = datadict.get("pm_pv_current_2", 0)
+    pv_current_1: int | float | None = datadict.get("pm_pv_current_1", 0)
+    pv_current_2: int | float | None = datadict.get("pm_pv_current_2", 0)
 
     # Handle None values from overflow protection
     if pv_current_1 is None:
@@ -1060,58 +1067,59 @@ def value_function_pm_total_pv_current(initval, descr, datadict):
     if pv_current_2 is None:
         pv_current_2 = 0
 
-    return pv_current_1 + pv_current_2
+    return int(pv_current_1 + pv_current_2)
 
 
-def value_function_battery_capacity_gen5(initval, descr, datadict):
+def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Check if total capacity has a sane value, if so return that
-    total_charge = datadict.get("battery_total_capacity_charge", 0)
+    total_charge: int | float = datadict.get("battery_total_capacity_charge", 0)
     if total_charge > 0:
-        return total_charge
+        return int(total_charge)
     # Otherwise try to use the correct battery capacity field
-    bat1_charge = datadict.get("battery_1_capacity_charge", 0)
-    bat2_charge = datadict.get("battery_2_capacity_charge", 0)
+    bat1_charge: int | float = datadict.get("battery_1_capacity_charge", 0)
+    bat2_charge: int | float = datadict.get("battery_2_capacity_charge", 0)
     # Use the lesser if both available
     if (bat1_charge > 0) and (bat2_charge > 0):
-        return min(bat2_charge, bat1_charge)
+        return int(min(bat2_charge, bat1_charge))
     # Otherwise use whichever is available
     if bat1_charge > 0:
-        return bat1_charge  # batt 1 available, use that
+        return int(bat1_charge)  # batt 1 available, use that
     if bat2_charge > 0:
-        return bat2_charge  # batt 2 available, use that
+        return int(bat2_charge)  # batt 2 available, use that
     return 0
 
 
-def value_function_software_version_g2(initval, descr, datadict):
+def value_function_software_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_g3(initval, descr, datadict):
+def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v3.{datadict.get('firmware_dsp')} ARM v3.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_g4(initval, descr, datadict):
+def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP {datadict.get('firmware_dsp_major')}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm'):>02}"
 
-def value_function_software_version_g5(initval, descr, datadict):
+
+def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP {datadict.get('firmware_dsp_major'):>03}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major'):>03}.{datadict.get('firmware_arm'):>02}"
 
 
-def value_function_software_version_air_g3(initval, descr, datadict):
+def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
 
 
-def value_function_software_version_air_g4(initval, descr, datadict):
+def value_function_software_version_air_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
 
 
-def value_function_battery_voltage_cell_difference(initval, descr, datadict):
-    return datadict.get("cell_voltage_high", 0) - datadict.get("cell_voltage_low", 0)
+def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return int(datadict.get("cell_voltage_high", 0)) - int(datadict.get("cell_voltage_low", 0))
 
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = [
+BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
     SolaxModbusButtonEntityDescription(
         name="Sync RTC",
         key="sync_rtc",
@@ -1193,7 +1201,7 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = [
+MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("L30E", 100),  # Gen2 X1 SK-TL
     ("U30", 50),  # Gen2 X1 SK-SU
     ("L37E", 100),  # Gen2 X1 SK-TL
@@ -1235,7 +1243,7 @@ MAX_CURRENTS = [
     ### All known Inverters added
 ]
 
-MAX_EXPORT = [
+MAX_EXPORT: list[tuple[str, int | float]] = [
     ("L30E", 3000),  # Gen2 X1 SK-TL
     ("U30", 3000),  # Gen2 X1 SK-SU
     ("L37E", 3700),  # Gen2 X1 SK-TL
@@ -1383,7 +1391,7 @@ CHARGE_SCALE_EXCEPTIONS = [
     #    ('H1E', 1 ), # more specific entry comes last and wins
 ]
 
-NUMBER_TYPES = [
+NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     ###
     #
     # Data only number types
@@ -1400,7 +1408,7 @@ NUMBER_TYPES = [
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
         min_exceptions_minus=MAX_EXPORT,  # negative
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1408,7 +1416,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Reactive Power (mode 1)",
         key="remotecontrol_reactive_power",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         native_min_value=-4000,
         native_max_value=4000,
@@ -1423,7 +1431,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Duration (mode 1-8)",
         key="remotecontrol_duration",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         icon="mdi:home-clock",
         initvalue=20,  # seconds
@@ -1438,7 +1446,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Autorepeat Duration (mode 1-9)",
         key="remotecontrol_autorepeat_duration",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:home-clock",
         initvalue=0,  # seconds -
@@ -1460,7 +1468,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=20000,  # will be reduced to MAX
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1475,7 +1483,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=30000,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1490,7 +1498,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
-        unit=REGISTER_S32,  # positive discharge; negative charge
+        register_data_type=REGISTER_S32,  # positive discharge; negative charge
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1504,7 +1512,7 @@ NUMBER_TYPES = [
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         initvalue=100,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1518,7 +1526,7 @@ NUMBER_TYPES = [
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         initvalue=95,
-        unit=REGISTER_U16,  #
+        register_data_type=REGISTER_U16,  #
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -1533,7 +1541,7 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfTime.SECONDS,
         initvalue=0,
         icon="mdi:home-clock",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
@@ -2180,7 +2188,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Active Power (mode 1; direct)",
         key="remotecontrol_active_power_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0x7E,
         native_min_value=-30000,
@@ -2197,7 +2205,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Reactive Power (mode 1; direct)",
         key="remotecontrol_reactive_power_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0x80,
         native_min_value=-4000,
@@ -2213,7 +2221,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Duration (mode 1; direct)",
         key="remotecontrol_duration_direct",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         register=0x82,
         icon="mdi:home-clock",
@@ -2230,7 +2238,7 @@ NUMBER_TYPES = [
         name="Remotecontrol Target SOC (mode 3; direct)",
         key="remotecontrol_target_soc_direct",
         register=0x83,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         native_min_value=0,
         native_max_value=100,
@@ -2243,7 +2251,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Target Energy (mode 2; direct)",
         key="remotecontrol_target_energy_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0x84,
         native_min_value=0,
@@ -2259,7 +2267,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Charge/Discharge Power (mode 2/3; direct)",
         key="remotecontrol_charge_discharge_power_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0x86,
         native_min_value=-30000,
@@ -2275,7 +2283,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol TimeOut (mode 1-7; direct)",
         key="remotecontrol_timeout_direct",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         register=0x88,
         icon="mdi:home-clock",
@@ -2291,7 +2299,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Push Mode Power (mode 4; direct)",
         key="remotecontrol_push_mode_power_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0x89,
         native_min_value=-30000,
@@ -2307,7 +2315,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol PV Power Limit (mode 8/9, direct)",
         key="remotecontrol_pv_power_limit_direct",
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         fmt="i",
         register=0xA2,
         native_min_value=0,
@@ -2323,7 +2331,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Push Mode Power (mode 8/9; direct)",
         key="remotecontrol_push_mode_power_8_9_direct",
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         fmt="i",
         register=0xA4,
         native_min_value=-30000,
@@ -2339,7 +2347,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Duration (mode 8; direct)",
         key="remotecontrol_duration_8_direct",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         register=0xA6,
         icon="mdi:home-clock",
@@ -2356,7 +2364,7 @@ NUMBER_TYPES = [
         name="Remotecontrol Target SOC (mode 9; direct)",
         key="remotecontrol_target_soc_9_direct",
         register=0xA6,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         initvalue=100,
         native_min_value=0,
@@ -2370,7 +2378,7 @@ NUMBER_TYPES = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol TimeOut (mode 8/9; direct)",
         key="remotecontrol_timeout_8_9_direct",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         fmt="i",
         register=0xA7,
         icon="mdi:home-clock",
@@ -2456,11 +2464,11 @@ NUMBER_TYPES = [
 
 # ================================= Switch Declarations ============================================================
 
-SWITCH_TYPES = []
+SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = []
 
 # ================================= Select Declarations ============================================================
 
-SELECT_TYPES = [
+SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     ###
     #
     #  Data only select types
@@ -2469,7 +2477,7 @@ SELECT_TYPES = [
     SolaxModbusSelectEntityDescription(
         name="Remotecontrol Power Control (mode 1)",
         key="remotecontrol_power_control",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Disabled",
@@ -2483,26 +2491,26 @@ SELECT_TYPES = [
             # 3: "Enabled SOC Target Control",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
         name="Remotecontrol Set Type (mode 1-9)",
         key="remotecontrol_set_type",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             1: "Set",
             2: "Update",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
         name="Remotecontrol Power Control Mode (mode 8/9)",
         key="remotecontrol_power_control_mode",
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         option_dict={
             0: "Disabled",  # not in older documentation, in recent docs added
@@ -2515,7 +2523,7 @@ SELECT_TYPES = [
             # 9:  "Mode 9 - PV and BAT control - Target SOC",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -2527,7 +2535,7 @@ SELECT_TYPES = [
             0xA1: "default choice",
         },
         initvalue=0xA1,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
     ),
     ###
@@ -3526,7 +3534,7 @@ SELECT_TYPES = [
             9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3539,7 +3547,7 @@ SELECT_TYPES = [
             2: "Update",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3553,7 +3561,7 @@ SELECT_TYPES = [
             9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=HYBRID | GEN4,
-        initvalue="Disabled",
+        initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
@@ -3566,7 +3574,7 @@ SELECT_TYPES = [
             2: "Update",
         },
         allowedtypes=HYBRID | GEN4,
-        initvalue="Set",
+        initvalue=1,  # Set
         icon="mdi:transmission-tower",
     ),
     #####
@@ -3855,7 +3863,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="RTC",
         key="rtc",
         register=0x85,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc,
         entity_registry_enabled_default=False,
@@ -3990,7 +3998,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="charger_start_time_1",
         register=0x92,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=AC | HYBRID | GEN2 | GEN3,
@@ -3999,14 +4007,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="selfuse_discharge_min_soc",
         register=0x93,
-        unit=REGISTER_U8H,
+        register_data_type=REGISTER_U8H,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="selfuse_night_charge_enable",
         register=0x93,
-        unit=REGISTER_U8L,
+        register_data_type=REGISTER_U8L,
         scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
@@ -4014,7 +4022,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="charger_end_time_1",
         register=0x94,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=AC | HYBRID | GEN2 | GEN3,
@@ -4029,21 +4037,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="feedin_nightcharge_upper_soc",
         register=0x95,
-        unit=REGISTER_U8H,
+        register_data_type=REGISTER_U8H,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="feedin_discharge_min_soc",
         register=0x95,
-        unit=REGISTER_U8L,
+        register_data_type=REGISTER_U8L,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="discharger_start_time_1",
         register=0x96,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=HYBRID | GEN2,
@@ -4052,14 +4060,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="backup_nightcharge_upper_soc",
         register=0x96,
-        unit=REGISTER_U8H,
+        register_data_type=REGISTER_U8H,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="backup_discharge_min_soc",
         register=0x96,
-        unit=REGISTER_U8L,
+        register_data_type=REGISTER_U8L,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
@@ -4073,7 +4081,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="discharger_end_time_1",
         register=0x98,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=HYBRID | GEN2,
@@ -4096,7 +4104,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="charger_start_time_2",
         register=0x9A,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=AC | HYBRID | GEN2 | GEN3,
@@ -4119,7 +4127,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="charger_end_time_2",
         register=0x9C,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=AC | HYBRID | GEN2 | GEN3,
@@ -4142,7 +4150,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="discharger_start_time_2",
         register=0x9E,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=HYBRID | GEN2,
@@ -4165,7 +4173,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="discharger_end_time_2",
         register=0xA0,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         allowedtypes=HYBRID | GEN2,
@@ -4227,7 +4235,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Registration Code Pocket",
         key="registration_code_pocket",
         register=0xAA,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
@@ -4238,7 +4246,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Registration Code Lan",
         key="registration_code_lan",
         register=0xAF,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=5,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3,
@@ -4331,15 +4339,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN4 | GEN5 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
-        name="EPS frequency",
-        key="eps_frequency",
-        native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        state_class=SensorStateClass.MEASUREMENT,
-        register=0xB9,
-        entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6 | EPS,
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Language",
         key="language",
         register=0xBB,
@@ -4383,19 +4382,23 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-sync",
-        blacklist=("XRE",),
+        blacklist=[
+            "XRE",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Model Number",
         key="inverter_model_number",
         register=0xE9,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=10,
         allowedtypes=AC | HYBRID | GEN3,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
-        blacklist=("XRE",),
+        blacklist=[
+            "XRE",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Service",
@@ -4415,7 +4418,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Backup Charge Start",
         key="backup_charge_start",
         register=0xFE,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         entity_registry_enabled_default=False,
@@ -4426,7 +4429,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Backup Charge End",
         key="backup_charge_end",
         register=0x100,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_gen23time,
         entity_registry_enabled_default=False,
@@ -5258,7 +5261,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         rounding=1,
         allowedtypes=AC | HYBRID,
     ),
@@ -5270,7 +5273,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5281,7 +5284,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x2,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6 | X1,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5348,7 +5351,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x8,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5360,7 +5363,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x8,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | X1,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5373,7 +5376,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x8,
         register_type=REG_INPUT,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5469,7 +5472,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x14,
         scale=0.01,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5480,7 +5483,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x14,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5491,7 +5494,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x14,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5502,7 +5505,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x15,
         scale=0.01,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
         icon="mdi:current-dc",
     ),
@@ -5514,7 +5517,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x15,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4,
         icon="mdi:current-dc",
     ),
@@ -5526,7 +5529,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x15,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:current-dc",
     ),
@@ -5538,7 +5541,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x16,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         icon="mdi:battery-charging",
     ),
@@ -5550,7 +5553,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x16,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         read_scale_exceptions=CHARGE_SCALE_EXCEPTIONS,
         icon="mdi:battery-charging",
@@ -5563,7 +5566,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x17,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5603,7 +5606,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x18,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5615,7 +5618,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x18,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5627,7 +5630,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x19,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -5701,7 +5704,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1D,
         register_type=REG_INPUT,
         scale=0.1,
-        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        register_data_type=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
     ),
@@ -5715,7 +5718,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1D,
         register_type=REG_INPUT,
         scale=0.001,
-        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        register_data_type=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN6,
     ),
@@ -5729,7 +5732,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x20,
         register_type=REG_INPUT,
         scale=0.1,
-        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        register_data_type=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN2,
     ),
@@ -5742,7 +5745,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:battery-arrow-down",
         register=0x20,
         register_type=REG_INPUT,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         scale=0.1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
@@ -5756,7 +5759,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x21,
         register_type=REG_INPUT,
         scale=0.1,
-        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        register_data_type=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
     ),
@@ -5770,7 +5773,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x21,
         register_type=REG_INPUT,
         scale=0.001,
-        unit=REGISTER_U32,  # REGISTER_ULSB16MSB16,
+        register_data_type=REGISTER_U32,  # REGISTER_ULSB16MSB16,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN6,
     ),
@@ -5804,7 +5807,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x23,
         register_type=REG_INPUT,
         scale=0.1,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5841,7 +5844,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x26,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6023,7 +6026,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x46,
         register_type=REG_INPUT,
         scale=value_function_gain_offset,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6035,7 +6038,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x48,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,  # Shouldn't this be UINT?
+        register_data_type=REGISTER_S32,  # Shouldn't this be UINT?
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID,
@@ -6049,7 +6052,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_registry_enabled_default=False,
         register=0x4A,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         register_type=REG_INPUT,
         scale=0.01,
         rounding=2,
@@ -6095,18 +6098,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.01,
         rounding=2,
-        allowedtypes=AC | HYBRID | GEN3 | EPS,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="EPS Frequency - Alt",
-        key="eps_frequency_alt",
-        native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        state_class=SensorStateClass.MEASUREMENT,
-        register=0x4F,
-        register_type=REG_INPUT,
-        scale=0.01,
-        rounding=2,
-        allowedtypes=AC | HYBRID | GEN6 | X1 | EPS,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
         name="Today's Solar Energy",
@@ -6117,7 +6109,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x50,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=2,
         allowedtypes=HYBRID | GEN2,
@@ -6146,7 +6138,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.001,
         rounding=2,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6160,7 +6152,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=2,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN3 | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6174,7 +6166,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.001,
         rounding=2,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6257,7 +6249,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x6B,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X3,
@@ -6270,7 +6262,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x6C,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6302,7 +6294,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x6F,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X3,
@@ -6316,11 +6308,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x70,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=2,
         allowedtypes=HYBRID | GEN2,
-        blacklist=("U50EC",),
+        blacklist=[
+            "U50EC",
+        ],
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Power L2",
@@ -6330,7 +6324,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x70,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6362,7 +6356,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x73,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X3,
@@ -6375,7 +6369,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x74,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6522,7 +6516,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x82,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6533,7 +6527,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x84,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6544,7 +6538,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x86,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=HYBRID | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6553,7 +6547,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         register=0x88,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | X3,
@@ -6565,7 +6559,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         register=0x8A,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | X3 | EPS,
@@ -6578,7 +6572,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x8C,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3,
@@ -6592,7 +6586,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x8E,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | GEN2 | GEN4 | GEN5 | EPS,
@@ -6605,7 +6599,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x8E,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
@@ -6616,7 +6610,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x8E,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=1,
         allowedtypes=HYBRID | GEN6 | EPS,
@@ -6657,7 +6651,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x92,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
@@ -6671,7 +6665,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x94,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
@@ -6685,7 +6679,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x94,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.001,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN6,
@@ -6712,7 +6706,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         register=0x98,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         icon="mdi:home-export-outline",
@@ -6725,7 +6719,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x9A,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
@@ -6736,7 +6730,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x9C,
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3,
         internal=True,
     ),
@@ -6748,7 +6742,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0xA8,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
     ),
@@ -6760,7 +6754,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0xAA,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
@@ -6775,7 +6769,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0xAC,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
@@ -6790,7 +6784,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0xAE,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
@@ -6805,7 +6799,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0xB0,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
@@ -6820,7 +6814,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0xB2,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | X3,
         entity_registry_enabled_default=False,
     ),
@@ -6832,7 +6826,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0xB4,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | X3,
         entity_registry_enabled_default=False,
     ),
@@ -6844,7 +6838,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0xB6,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | X3,
         entity_registry_enabled_default=False,
     ),
@@ -6881,7 +6875,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         register=0xBA,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -6893,7 +6887,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         register=0xBB,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -7051,7 +7045,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x102,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7062,7 +7056,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x104,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7073,7 +7067,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x106,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7084,7 +7078,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x108,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7095,7 +7089,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x10A,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7106,7 +7100,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x10C,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7132,7 +7126,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x10E,
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7144,7 +7138,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x110,
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7156,7 +7150,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x114,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7167,7 +7161,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x116,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7179,7 +7173,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         register=0x118,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7223,7 +7217,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x127,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7234,7 +7228,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x128,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN5 | GEN6,
         icon="mdi:current-dc",
     ),
@@ -7246,7 +7240,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x129,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging",
     ),
@@ -7277,7 +7271,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x132,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -7309,7 +7303,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x1E0,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7319,7 +7313,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x1E2,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7329,7 +7323,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x1E4,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7340,7 +7334,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_power,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_activepower_l1", "parallel_setting"),
+        depends_on=["pm_activepower_l1", "parallel_setting"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7351,7 +7345,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_power,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_pv_power_1", "parallel_setting"),
+        depends_on=["pm_pv_power_1", "parallel_setting"],
         icon="mdi:solar-power",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7362,7 +7356,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_house_load,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_activepower_l1", "parallel_setting"),
+        depends_on=["pm_activepower_l1", "parallel_setting"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7373,7 +7367,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_reactive_or_apparentpower,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_reactive_or_apparentpower_l1", "parallel_setting"),
+        depends_on=["pm_reactive_or_apparentpower_l1", "parallel_setting"],
         icon="mdi:flash",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7384,7 +7378,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_current,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm__current_l1", "parallel_setting"),
+        depends_on=["pm__current_l1", "parallel_setting"],
         icon="mdi:current-ac",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7395,7 +7389,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_current,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=("pm_pv_current_1", "parallel_setting"),
+        depends_on=["pm_pv_current_1", "parallel_setting"],
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7405,7 +7399,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x1E6,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7415,7 +7409,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x1E8,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7425,7 +7419,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x1EA,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7435,7 +7429,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x1EC,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7447,7 +7441,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x1EE,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7459,7 +7453,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x1F0,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7472,7 +7466,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1F2,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
     ),
@@ -7484,7 +7478,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1F4,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
     ),
@@ -7496,7 +7490,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1F6,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7510,7 +7504,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1F8,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7524,7 +7518,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1FA,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:battery-charging",
     ),
@@ -7537,7 +7531,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1FC,
         scale=0.01,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
     ),
@@ -7549,7 +7543,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x204,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7559,7 +7553,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x205,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7569,7 +7563,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x206,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7579,7 +7573,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x207,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7589,7 +7583,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x208,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7599,7 +7593,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x209,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7609,7 +7603,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x20A,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7621,7 +7615,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x20B,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7633,7 +7627,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x20C,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7718,7 +7712,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x213,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:battery-charging",
     ),
@@ -7740,7 +7734,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x215,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
     ),
@@ -7761,7 +7755,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x21E,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7771,7 +7765,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x21F,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7781,7 +7775,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         register=0x220,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7791,7 +7785,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x221,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7801,7 +7795,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x222,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7811,7 +7805,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.APPARENT_POWER,
         register=0x223,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
@@ -7821,7 +7815,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x224,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7833,7 +7827,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x225,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7845,7 +7839,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x226,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
@@ -7930,7 +7924,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x22D,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:battery-charging",
     ),
@@ -7952,7 +7946,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x22F,
         scale=0.1,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:current-dc",
     ),
@@ -8033,11 +8027,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=AC | HYBRID,
         entity_registry_enabled_default=False,
-        depends_on=(
+        depends_on=[
             "pv_power_1",
             "pv_power_2",
             "pv_power_3",
-        ),
+        ],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8057,12 +8051,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=HYBRID,
-        depends_on=(
+        depends_on=[
             "pv_power_1",
             "pv_power_2",
             "pv_power_3",
             "pv_power_4",
-        ),
+        ],
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8145,7 +8139,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="RTC",
         key="rtc",
         register=0x318,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=6,
         scale=value_function_rtc,
         entity_registry_enabled_default=False,
@@ -8171,22 +8165,22 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="firmware_dsp",
         register=0x33D,
         allowedtypes=MIC | GEN,
-        blacklist=(
+        blacklist=[
             "MC402T",
             "MC502T",
             "MU802T",
-        ),
+        ],
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_arm",
         register=0x33E,
         allowedtypes=MIC | GEN,
-        blacklist=(
+        blacklist=[
             "MC402T",
             "MC502T",
             "MU802T",
-        ),
+        ],
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8564,7 +8558,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x423,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.001,
         rounding=2,
         sleepmode=SLEEPMODE_LASTAWAKE,
@@ -8578,7 +8572,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x425,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.001,
         rounding=2,
         allowedtypes=MIC | GEN,
@@ -8592,7 +8586,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x423,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         sleepmode=SLEEPMODE_LASTAWAKE,
@@ -8606,7 +8600,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x425,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=MIC | GEN2,
@@ -8655,7 +8649,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         newblock=True,  # Do not remove, required for FW <1.38
         register=0x435,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN,
         icon="mdi:solar-power-variant",
@@ -8668,7 +8662,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x437,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -8683,7 +8677,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x439,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -8728,7 +8722,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         newblock=True,  # Do not remove, required for FW <1.38
         register=0x43B,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN2,
         icon="mdi:solar-power-variant",
@@ -8741,7 +8735,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x43D,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -8756,7 +8750,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x43F,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -8771,7 +8765,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x704,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X1,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8782,7 +8776,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x704,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8793,7 +8787,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x706,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8804,7 +8798,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x708,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MIC | GEN2 | X3,
     ),
     SolaXModbusSensorEntityDescription(
@@ -8815,7 +8809,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x705,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN2 | X3,
     ),
@@ -8827,7 +8821,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x707,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN2 | X3,
     ),
@@ -8839,7 +8833,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x709,
         register_type=REG_INPUT,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=MIC | GEN2 | X3,
     ),
@@ -8970,7 +8964,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x408,
         register_type=REG_INPUT,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
@@ -9133,7 +9127,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x42B,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -9147,7 +9141,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x42F,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -9162,7 +9156,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x431,
         register_type=REG_INPUT,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -9218,7 +9212,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1003,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX,
@@ -9260,7 +9254,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1008,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX,
@@ -9302,7 +9296,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x100D,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
         allowedtypes=MAX,
@@ -9469,7 +9463,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Model Number",
         key="model_number",
         register=0x1A00,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=MAX,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -9479,7 +9473,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Serial Number",
         key="serial_number",
         register=0x1A10,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=MAX,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -9489,7 +9483,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Software Version",
         key="software_version",
         register=0x1A1C,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=3,
         allowedtypes=MAX,
         icon="mdi:information",
@@ -9576,7 +9570,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="software_version",
         value_function=value_function_software_version_g4,
         allowedtypes=MIC | GEN | GEN2 | X3,
-        blacklist=("MU802T",),
+        blacklist=[
+            "MU802T",
+        ],
         internal=True,
     ),
 ]
@@ -9584,17 +9580,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class solax_plugin(plugin_base):
-    def isAwake(self, datadict):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
         return datadict.get("run_mode", None) == "Normal Mode"
 
-    def wakeupButton(self):
+    def wakeupButton(self) -> str:
         """in order to wake up  the inverter , press this button"""
         return "battery_awaken"
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x0)
@@ -9975,7 +9971,9 @@ class solax_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: list[str] | None = None
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -9991,13 +9989,13 @@ class solax_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
         _LOGGER.info("local data update callback")
@@ -10069,6 +10067,8 @@ class solax_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+
+        return False
 
 
 # Energy Dashboard Virtual Device mapping
@@ -10281,6 +10281,7 @@ plugin_instance = solax_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,
     order32="little",
@@ -10290,6 +10291,3 @@ plugin_instance = solax_plugin(
     auto_default_scangroup=SCAN_GROUP_FAST,
     auto_slow_scangroup=SCAN_GROUP_MEDIUM,
 )
-
-# Attach Energy Dashboard mapping to plugin instance
-plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING

@@ -14,11 +14,11 @@ from custom_components.solax_modbus.const import (
 
 
 class MockDescription:
-    def __init__(self, key):
+    def __init__(self, key: str) -> None:
         self.key = key
 
 
-def test_value_function_pv_power_total():
+def test_value_function_pv_power_total() -> None:
     # Test normal summation
     datadict = {
         "pv_power_1": 100,
@@ -39,7 +39,7 @@ def test_value_function_pv_power_total():
     assert value_function_pv_power_total(0, None, {}) == 0
 
 
-def test_value_function_battery_output():
+def test_value_function_battery_output() -> None:
     # Negative value means output (discharging)
     datadict = {"battery_power_charge": -500}
     assert value_function_battery_output(0, None, datadict) == 500
@@ -49,7 +49,7 @@ def test_value_function_battery_output():
     assert value_function_battery_output(0, None, datadict) == 0
 
 
-def test_value_function_battery_input():
+def test_value_function_battery_input() -> None:
     # Positive value means input (charging)
     datadict = {"battery_power_charge": 500}
     assert value_function_battery_input(0, None, datadict) == 500
@@ -59,7 +59,7 @@ def test_value_function_battery_input():
     assert value_function_battery_input(0, None, datadict) == 0
 
 
-def test_value_function_grid_import():
+def test_value_function_grid_import() -> None:
     # Negative value means import
     datadict = {"measured_power": -1000}
     assert value_function_grid_import(0, None, datadict) == 1000
@@ -69,7 +69,7 @@ def test_value_function_grid_import():
     assert value_function_grid_import(0, None, datadict) == 0
 
 
-def test_value_function_grid_export():
+def test_value_function_grid_export() -> None:
     # Positive value means export
     datadict = {"measured_power": 1000}
     assert value_function_grid_export(0, None, datadict) == 1000
@@ -79,7 +79,7 @@ def test_value_function_grid_export():
     assert value_function_grid_export(0, None, datadict) == 0
 
 
-def test_value_function_rtc():
+def test_value_function_rtc() -> None:
     # Format: (seconds, minutes, hours, days, months, years)
     # Note: The function expects a tuple/list of these values
     # Test case: 2023-10-25 14:30:45
@@ -92,7 +92,7 @@ def test_value_function_rtc():
     assert value_function_rtc(initval_invalid, None, {}) is None
 
 
-def test_value_function_gen4time():
+def test_value_function_gen4time() -> None:
     # Format: high byte = minutes, low byte = hours? No, code says:
     # h = initval % 256
     # m = initval >> 8
@@ -105,7 +105,7 @@ def test_value_function_gen4time():
     assert value_function_gen4time(val, None, {}) == "14:30"
 
 
-def test_value_function_firmware():
+def test_value_function_firmware() -> None:
     # Code: m = initval % 256, h = initval >> 8
     # return f"{h}.{m:02d}"
 
@@ -115,7 +115,7 @@ def test_value_function_firmware():
     assert value_function_firmware(val, None, {}) == "2.05"
 
 
-def test_entity_description_instantiation():
+def test_entity_description_instantiation() -> None:
     # Verify we can instantiate the base class with defaults
     desc = BaseModbusSensorEntityDescription(
         name="Test Sensor",

@@ -1,6 +1,8 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
+from homeassistant.components.number import NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -11,7 +13,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
@@ -94,12 +96,12 @@ _simple_switch = {0: "off", 1: "on"}
 # ====================== find inverter type and details ===========================================
 
 
-async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
+async def _read_serialnr(hub: Any, address: int = 10000, count: int = 8, swapbytes: bool = False) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=count)
         if inverter_data is not None and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:count], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:count], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -114,12 +116,12 @@ async def _read_serialnr(hub, address=10000, count=8, swapbytes=False):
     return res
 
 
-async def _read_model(hub, address=10008):
+async def _read_model(hub: Any, address: int = 10008) -> int | None:
     res = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
         if inverter_data is not None and not inverter_data.isError():
-            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")
+            res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             hub._invertertype = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
@@ -130,11 +132,11 @@ async def _read_model(hub, address=10008):
 # ====================================== Computed value functions  =================================================
 
 
-def _bytes_str(b_array):
+def _bytes_str(b_array: list[int]) -> str:
     return ".".join(str(x) for x in b_array)
 
 
-def _model_str(val):
+def _model_str(val: int) -> str:
     # there are models 40,41,42, docu not found
     d = {
         30: [
@@ -176,7 +178,7 @@ def _model_str(val):
         return "unknown"
 
 
-def _flag_list(v, flags, empty=""):
+def _flag_list(v: int, flags: list[str], empty: str = "") -> str:
     # v int, flags array of bit/string, empty string
     ret = []
     n = len(flags)
@@ -191,15 +193,15 @@ def _flag_list(v, flags, empty=""):
     return empty if not ret else ",".join(ret)
 
 
-def _fn_flags(flags, empty=""):
+def _fn_flags(flags: list[str], empty: str = "") -> Any:
     return lambda v, *a: _flag_list(v, flags, empty)
 
 
-def _fn_simple_hex(v, descr, dd):
+def _fn_simple_hex(v: int, descr: Any, dd: dict[str, Any]) -> str:
     return f"0x{v:x}"
 
 
-def _fw_str(wa, *a):
+def _fw_str(wa: Any, *a: Any) -> str:
     ba = [b for w in wa for b in w.to_bytes(2)]
     return f"V{_bytes_str(ba[0:4])}-{_bytes_str(ba[4:8])}"
 
@@ -209,23 +211,23 @@ _mppt_mask = 0xFF  # max 8 mppts
 _mppt_list = ["mppt1", "mppt2", "mppt3", "mppt4", "mppt5", "mppt6", "mppt7", "mppt8"]
 
 
-def _fn_mppt_mask_ex(v, _mask):
-    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, v)
+def _fn_mppt_mask_ex(v: int, _mask: int) -> str | int:
+    return "off" if v == 0 else "on" if v & _mask == _mask else _flag_list(v, _mppt_list, str(v))
 
 
-def _fn_mppt_mask(v, descr, dd):
+def _fn_mppt_mask(v: int, descr: Any, dd: dict[str, Any]) -> str | int:
     return _fn_mppt_mask_ex(v, _mppt_mask)
 
 
 _nan = float("NaN")
 
 
-def value_function_house_total_load(initval, descr, datadict):
+def value_function_house_total_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan)
     return None if v != v else v  # test nan
 
 
-def value_function_house_normal_load(initval, descr, datadict):
+def value_function_house_normal_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     v = datadict.get("inverter_load", _nan) - datadict.get("measured_power", _nan) - datadict.get("backup_power", _nan)
     return None if v != v else v  # test nan
 
@@ -234,51 +236,41 @@ def value_function_house_normal_load(initval, descr, datadict):
 
 
 # gc: set defaults; not all classes have all fields...
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        # kwargs.setdefault("write_method",WRITE_SINGLE_MODBUS)
-        super().__init__(**kwargs)
+    """Button entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("sleepmode",SLEEPMODE_LASTAWAKE)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        kwargs.setdefault("unit", REGISTER_U16)
-        super().__init__(**kwargs)
+    """Number entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
+    register_data_type: str = field(default=REGISTER_U16)
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
-    def __init__(self, **kwargs):
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        # kwargs.setdefault("sleepmode",SLEEPMODE_LASTAWAKE)
-        # kwargs.setdefault("register_type",REG_HOLDING)
-        # kwargs.setdefault("write_method",WRITE_SINGLE_MODBUS)
-        kwargs.setdefault("unit", REGISTER_U16)
-        super().__init__(**kwargs)
+    """Select entity description for Solinteg devices."""
+
+    allowedtypes: int = field(default=ALLDEFAULT)
+    register_data_type: str = field(default=REGISTER_U16)
 
     @property
     def should_poll(self) -> bool:
         return True
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SolintegModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Solinteg Modbus sensor entities."""
 
-    def __init__(self, **kwargs):
-        # _LOGGER.warning("sensor init")
-        kwargs.setdefault("allowedtypes", ALLDEFAULT)
-        kwargs.setdefault("sleepmode", SLEEPMODE_LASTAWAKE)
-        kwargs.setdefault("register_type", REG_HOLDING)
-        kwargs.setdefault("unit", REGISTER_U16)
-        super().__init__(**kwargs)
+    allowedtypes: int = field(default=ALLDEFAULT)
+    sleepmode: int = field(default=SLEEPMODE_LASTAWAKE)
+    register_type: int = field(default=REG_HOLDING)
+    register_data_type: str = field(default=REGISTER_U16)
 
 
 # ================================= Button Declarations ============================================================
@@ -331,7 +323,7 @@ BUTTON_TYPES = [
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = [
+MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("110C", 25),  # 10kW HV
 ]
 
@@ -354,7 +346,7 @@ NUMBER_TYPES = [
         native_min_value=5,
         native_max_value=100,
         native_step=1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -369,7 +361,7 @@ NUMBER_TYPES = [
         native_min_value=5,
         native_max_value=100,
         native_step=1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -384,7 +376,7 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=200,
         native_step=0.1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.CONFIG,
@@ -399,7 +391,7 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=200,
         native_step=0.1,
-        mode="box",
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.CONFIG,
@@ -414,8 +406,8 @@ NUMBER_TYPES = [
         native_min_value=-100,
         native_max_value=100,
         native_step=0.1,
-        unit=REGISTER_S16,
-        mode="box",
+        register_data_type=REGISTER_S16,
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.CONFIG,
@@ -430,8 +422,8 @@ NUMBER_TYPES = [
         native_min_value=0,
         native_max_value=100,
         native_step=0.1,
-        unit=REGISTER_U16,
-        mode="box",
+        register_data_type=REGISTER_U16,
+        mode=NumberMode.BOX,
         scale=0.1,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         entity_category=EntityCategory.CONFIG,
@@ -542,7 +534,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         register=10011,
         # both values
         # unit = REGISTER_U32,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=4,
         scale=_fw_str,  # v is array of words
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -569,7 +561,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10110,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=_fn_flags(
             [
                 "WorkMode Abn.",
@@ -606,7 +598,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10112,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         # scale=_fn_simple_hex,
         scale=_fn_flags(
             [
@@ -628,7 +620,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10114,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=_fn_flags(
             [
                 "",
@@ -648,7 +640,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10120,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=_fn_flags(
             [
                 "Bus Hardware Fault",  # ?
@@ -671,7 +663,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=18000,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=_fn_flags(
             [
                 "SCI Fault",
@@ -687,7 +679,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         scan_group=SCAN_GROUP_MEDIUM,
         register=18004,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=_fn_flags(
             [
                 "BMS Comm Fault",
@@ -703,7 +695,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31112,
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
     ),
     SolintegModbusSensorEntityDescription(
         name="Energy AC Generation Total",
@@ -714,7 +706,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=11020,
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
     ),
     SolintegModbusSensorEntityDescription(
         name="Energy Generation Today",
@@ -734,7 +726,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=11018,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
     ),
     SolintegModbusSensorEntityDescription(
@@ -805,7 +797,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=11062,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scan_group=SCAN_GROUP_MPPT,
         icon="mdi:solar-power-variant",
     ),
@@ -839,7 +831,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=MPPT_MIN2,
         register=11064,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scan_group=SCAN_GROUP_MPPT,
         icon="mdi:solar-power-variant",
     ),
@@ -873,7 +865,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=MPPT4,
         register=11066,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scan_group=SCAN_GROUP_MPPT,
         icon="mdi:solar-power-variant",
     ),
@@ -907,7 +899,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=MPPT4,
         register=11068,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scan_group=SCAN_GROUP_MPPT,
         icon="mdi:solar-power-variant",
     ),
@@ -918,7 +910,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=11028,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scan_group=SCAN_GROUP_FAST,
         icon="mdi:solar-power-variant",
     ),
@@ -960,7 +952,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         scan_group=SCAN_GROUP_FAST,
         register=11016,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
     ),
     SolintegModbusSensorEntityDescription(
         name="Inverter Frequency",
@@ -1000,7 +992,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=30255,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         allowedtypes=HYBRID,
         icon="mdi:current-dc",
@@ -1012,7 +1004,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         # register = 30256, not needed, take sign from power
         # scale = {0: "discharging", 1: "charging"},
         value_function=lambda v, d, dd: ["discharge", "charge"][dd.get("battery_power", 0) <= 0],
-        depends_on=("battery_power",),
+        depends_on=["battery_power"],
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         scan_group=SCAN_GROUP_MEDIUM,
@@ -1075,7 +1067,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         key="battery_rated_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         register=32007,  # working, from fw V27.52.3.0
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
         icon="mdi:battery",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -1151,7 +1143,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=30258,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scan_group=SCAN_GROUP_FAST,
         allowedtypes=HYBRID,
     ),
@@ -1163,7 +1155,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31108,
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolintegModbusSensorEntityDescription(
@@ -1184,7 +1176,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31110,
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=HYBRID,
     ),
     SolintegModbusSensorEntityDescription(
@@ -1204,7 +1196,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=30230,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scan_group=SCAN_GROUP_FAST,
         allowedtypes=HYBRID | ALL_EPS_GROUP,
     ),
@@ -1216,7 +1208,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31104,  # same as 11004??
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         icon="mdi:home-import-outline",
     ),
     SolintegModbusSensorEntityDescription(
@@ -1237,7 +1229,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31102,  # same as 11002??
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         icon="mdi:home-export-outline",
     ),
     SolintegModbusSensorEntityDescription(
@@ -1258,7 +1250,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=31114,
         scale=0.1,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         icon="mdi:home",
     ),
     SolintegModbusSensorEntityDescription(
@@ -1278,7 +1270,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10994,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=X1 | X3,
     ),
@@ -1289,7 +1281,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10996,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=X3,
     ),
@@ -1300,7 +1292,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         scan_group=SCAN_GROUP_MEDIUM,
         register=10998,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         entity_registry_enabled_default=False,
         allowedtypes=X3,
     ),
@@ -1311,7 +1303,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=11000,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         scan_group=SCAN_GROUP_FAST,
     ),
     SolintegModbusSensorEntityDescription(
@@ -1321,7 +1313,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=11004,  # 0?
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1334,7 +1326,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=11002,  # 0?
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
@@ -1344,10 +1336,10 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Total Load",  # incl. backup
         key="house_total_load",
         value_function=value_function_house_total_load,
-        depends_on=(
+        depends_on=[
             "inverter_load",
             "measured_power",
-        ),
+        ],
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1358,11 +1350,11 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         name="House Normal Load",  # w/o backup
         key="house_normal_load",
         value_function=value_function_house_normal_load,
-        depends_on=(
+        depends_on=[
             "inverter_load",
             "measured_power",
             "backup_power",
-        ),
+        ],
         scan_group=SCAN_GROUP_FAST,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -1411,7 +1403,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         key="export_limit_value",
         register=25103,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.1,
         internal=True,
     ),
@@ -1424,7 +1416,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         key="import_limit_value",
         register=50009,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         scale=0.1,
         internal=True,
     ),
@@ -1522,7 +1514,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class solinteg_plugin(plugin_base):
     """
     def isAwake(self, datadict):
@@ -1530,7 +1522,7 @@ class solinteg_plugin(plugin_base):
 
     """
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await _read_serialnr(hub)
         if not seriesnumber:
@@ -1571,13 +1563,13 @@ class solinteg_plugin(plugin_base):
             # set the options
             for sel in self.SELECT_TYPES:
                 if sel.key == "shadow_scan":
-                    sel.option_dict = sel_dd
+                    sel.option_dict = sel_dd  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
                     break
 
             # use own mask
-            for sel in self.SENSOR_TYPES:
+            for sel in self.SENSOR_TYPES:  # type: ignore[assignment]  # Runtime type compatibility
                 if sel.key == "shadow_scan":
-                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)
+                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -1591,7 +1583,7 @@ class solinteg_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(self, inverterspec: int, entitymask: int, serialnumber: str = "not relevant", blacklist: Any = None) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1605,10 +1597,10 @@ class solinteg_plugin(plugin_base):
                     return False
         return genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
 
@@ -1638,6 +1630,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
 )
 
 plugin_instance = solinteg_plugin(
+    ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     plugin_name="solinteg",
     plugin_manufacturer="Gabriel C.",
     SENSOR_TYPES=SENSOR_TYPES,
@@ -1652,4 +1645,3 @@ plugin_instance = solinteg_plugin(
 )
 
 # Attach Energy Dashboard mapping to plugin instance
-plugin_instance.ENERGY_DASHBOARD_MAPPING = ENERGY_DASHBOARD_MAPPING
