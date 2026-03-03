@@ -609,6 +609,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
         pvlimit = 0
         pushmode_power = houseload - import_limit
+    elif power_control == "Enabled Feedin Priority":
+        pvlimit = setpvlimit
+        pushmode_power = max(houseload - pv, 0.0)
     elif power_control == "Enabled No Discharge":
         # --- Battery No-Discharge (Mode 8 custom)
         # Split PV surplus into (a) battery charging up to charge rate limit (b) grid export if any excess
@@ -2520,6 +2523,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             83: "Export-First Battery Limit",
             84: "Enabled Grid Control",
             85: "Enabled No Discharge",
+            86: "Enabled Feedin Priority",
             # 9:  "Mode 9 - PV and BAT control - Target SOC",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
