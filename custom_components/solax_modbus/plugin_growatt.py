@@ -9527,6 +9527,9 @@ class growatt_plugin(plugin_base):
         seriesnumber = await async_read_serialnr(hub, 3001)
         if not seriesnumber:
             _LOGGER.info(f"{hub.name}: trying alternative location")
+            seriesnumber = await async_read_serialnr(hub, 209)
+        if not seriesnumber:
+            _LOGGER.info(f"{hub.name}: trying alternative location")
             seriesnumber = await async_read_serialnr(hub, 9)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
