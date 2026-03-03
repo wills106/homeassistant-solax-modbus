@@ -447,7 +447,7 @@ def value_function_firmware_control_version(initval: int, descr: Any, datadict: 
 def value_function_inverter_state(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     inverter_state = int(datadict.get("register_3000", 0))
     inverter_state = inverter_state >> 8  # Remove the lower 8 bits by right-shifting by 8 bits
-    status_dict = {0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online"}
+    status_dict = {0: "Waiting", 3: "Fault", 4: "Flash", 5: "PV Bat Online", 6: "Bat Online", 8: "Bat Offline Mode"}
     return status_dict.get(inverter_state, "Unknown")
 
 
@@ -574,7 +574,7 @@ def value_function_inverter_fault_text(initval: int, descr: Any, datadict: dict[
 def value_function_run_mode(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
     run_mode = int(datadict.get("register_3000", 0))
     run_mode = run_mode & 0xFF  # Mask out the upper 8 bits, keeping only the lower 8 bits
-    run_mode_dict = {0: "Standby", 1: "Normal", 3: "Fault", 4: "Flash"}
+    run_mode_dict = {0: "Standby", 1: "Normal", 2: "Off-Grid (Backup)", 3: "Fault", 4: "Flash"}
     return run_mode_dict.get(run_mode, "Unknown")
 
 
@@ -3069,6 +3069,16 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=GEN3,
         entity_registry_enabled_default=False,
         icon="mdi:dip-switch",
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="grid_status",
+        name="Grid Status",
+        allowedtypes=GEN4,
+        value_function=lambda initval, descr, datadict: "Off (Výpadek - z baterie)"
+        if (datadict.get("register_3000", 0) & 0xFF) == 2
+        else "On (Připojeno k síti)",
+        icon="mdi:transmission-tower",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
         name="Serial Number",
@@ -6790,6 +6800,19 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         value_function=value_function_inverter_fault_text,
         allowedtypes=GEN4,
         icon="mdi:battery-alert",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Backup Status",
+        key="backup_status",
+        register=3282,
+        scale={
+            0: "Backup Offgrid",
+            1: "Backup Ongrid",
+            2: "Backup Generator",
+        },
+        register_type=REG_INPUT,
+        allowedtypes=GEN4,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
         key="peak_shaving_enable",
