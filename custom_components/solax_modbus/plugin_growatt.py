@@ -3075,7 +3075,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         name="Grid Status",
         allowedtypes=GEN4,
         value_function=lambda initval, descr, datadict: "Off (Výpadek - z baterie)"
-        if (datadict.get('register_3000', 0) & 0xFF) == 2
+        if (datadict.get("register_3000", 0) & 0xFF) == 2
         else "On (Připojeno k síti)",
         icon="mdi:transmission-tower",
         entity_category=EntityCategory.DIAGNOSTIC,
