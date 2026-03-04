@@ -34,12 +34,14 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     SLEEPMODE_LASTAWAKE,
     WRITE_DATA_LOCAL,
     WRITE_MULTI_MODBUS,
+    WRITE_SINGLE_MODBUS,
     BaseModbusButtonEntityDescription,
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
     UnitOfReactivePower,
+    autorepeat_stop,
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
@@ -157,6 +159,20 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
+
+
+def value_function_battery_control_override(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any] | None:
+    """Value function for battery_control_override autorepeat - resends force charge/discharge commands."""
+    current_option = datadict.get(descr.key)
+    if current_option and hasattr(descr, "reverse_option_dict"):
+        payload = descr.reverse_option_dict.get(current_option)
+        # Only repeat for force charge (1) and force discharge (2), not for off (0)
+        if payload in (1, 2):
+            return {"action": WRITE_SINGLE_MODBUS, "register": descr.register, "payload": payload}
+    # Stop autorepeat when Off or invalid value
+    autorepeat_stop(datadict, descr.key)
+    return None
+
 
 
 # ============================================= Charging ===========================================================
@@ -1391,6 +1407,36 @@ NUMBER_TYPES = [
         icon="mdi:battery-sync",
     ),
     SolisModbusNumberEntityDescription(
+        name="Battery control override charge power",
+        key="battery_control_override_charge_power",
+        register=43136,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=9900,
+        native_step=1,
+        scale=10,
+        allowedtypes=HYBRID & X3,
+        icon="mdi:battery-sync",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolisModbusNumberEntityDescription(
+        name="Battery control override discharge power",
+        key="battery_control_override_discharge_power",
+        register=43129,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=9900,
+        native_step=1,
+        scale=10,
+        allowedtypes=HYBRID & X3,
+        icon="mdi:battery-sync",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolisModbusNumberEntityDescription(
         name="Force Charge SOC",
         key="force_charge_soc",
         register=43018,
@@ -2144,6 +2190,19 @@ SELECT_TYPES = [
         },
         allowedtypes=HYBRID | X1,
         icon="mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name="Battery control override",
+        key="battery_control_override_switch",
+        register=43135,
+        option_dict={
+            0: "Off",
+            1: "Force charge",
+            2: "Force discharge",
+        },
+        allowedtypes=HYBRID | X3,
+        icon="mdi:dip-switch",
+        value_function=value_function_battery_control_override,
     ),
     SolisModbusSelectEntityDescription(
         name="Backflow Power Switch",
