@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from homeassistant.components.number import NumberMode
@@ -78,9 +78,13 @@ ALL_EPS_GROUP = EPS
 DCB = 0x10000  # dry contact box - gen4
 ALL_DCB_GROUP = DCB
 
+#parallel mode
+PM = 0x20000
+ALL_PM_GROUP = PM
+
 # 1 is minimum
-MPPT2 = 0x20000
-MPPT4 = 0x40000
+MPPT2 = 0x40000
+MPPT4 = MPPT2 * 2
 MPPT_MIN2 = MPPT2 | MPPT4
 ALL_MPPT = MPPT2 | MPPT4
 
@@ -107,7 +111,7 @@ async def _read_serialnr(hub: Any, address: int = 10000, count: int = 8, swapbyt
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii")  # convert back to string
-            hub.seriesnumber = res
+            hub._seriesnumber = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
@@ -1527,7 +1531,6 @@ class solinteg_plugin(plugin_base):
         seriesnumber = await _read_serialnr(hub)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
-            seriesnumber = "unknown"
 
         model = await _read_model(hub)
         if model is None:
@@ -1554,22 +1557,22 @@ class solinteg_plugin(plugin_base):
             invertertype = invertertype | MPPT2
 
         if invertertype > 0:
-            _self_mppt_mask = 2**mppt - 1  # mask
-            # prepare mppt list
-            # data["mppt_mask"] = _self_mppt_mask
-            sel_dd = _mppt_dd.copy()  # copy
-            for i in range(mppt):
-                sel_dd[2**i] = f"mppt{i + 1}"
+            # prepare mppt mask/dict
+            _mppt_mask = 2**mppt - 1
+            # copy and update
+            sel_dd = _mppt_dd.copy() | {2**i: f"mppt{i + 1}" for i in range(mppt)}
             # set the options
-            for sel in self.SELECT_TYPES:
-                if sel.key == "shadow_scan":
-                    sel.option_dict = sel_dd  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
+            for i, sscan in enumerate(self.SELECT_TYPES):
+                if sscan.key == "shadow_scan":
+                    self.SELECT_TYPES[i] = replace(sscan, option_dict = sel_dd)
                     break
 
             # use own mask
-            for sel in self.SENSOR_TYPES:  # type: ignore[assignment]  # Runtime type compatibility
-                if sel.key == "shadow_scan":
-                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
+            for i, sscan in enumerate(self.SENSOR_TYPES):
+                if sscan.key == "shadow_scan":
+                    self.SENSOR_TYPES[i] = replace(sscan,
+                        scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask)
+                    )
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -1579,7 +1582,7 @@ class solinteg_plugin(plugin_base):
             if read_dcb:
                 invertertype = invertertype | DCB
 
-            _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+        _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
 
         return invertertype
 
