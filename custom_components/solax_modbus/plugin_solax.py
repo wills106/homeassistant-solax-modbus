@@ -688,12 +688,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Debug inputs
         _LOGGER.debug(
-            f"[Mode8 Export-First] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl_alt) exp_lim={export_limit}W imp_lim={import_limit}W "
+            f"[Mode8 Export-First] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) exp_lim={export_limit}W imp_lim={import_limit}W "
             f"soc={battery_capacity}% min_soc={min_discharge_soc}% max_soc={max_charge_soc}% pvlimit={pvlimit}W last_push={last_push}W"
         )
 
         # Use meter-based house load for all logic
-        hl = houseload_alt
+        hl = houseload
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
@@ -710,9 +710,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # Surplus path: export as much as allowed, battery only charges from excess beyond cap.
             surplus = pv - hl
 
-            # Keep a small undershoot margin on export to avoid micro-discharge from battery
-            export_margin_w = int(datadict.get("export_first_export_margin_w", 50) or 0)
-            export_target = max(0, min(export_limit, surplus) - max(0, export_margin_w))
+            # Signed margin on export target:
+            #  >0 = undershoot (e.g. 3950 for 4k limit with +50)
+            #  <0 = overshoot (e.g. 4200 for 4k limit with -200)
+            export_margin_w = int(datadict.get("export_first_export_margin_w", -100) or -100)
+            export_target = max(0, min(export_limit, surplus) - export_margin_w)
 
             # Export up to target, remainder for battery charging
             export_within_cap = export_target
