@@ -78,7 +78,7 @@ ALL_EPS_GROUP = EPS
 DCB = 0x10000  # dry contact box - gen4
 ALL_DCB_GROUP = DCB
 
-#parallel mode
+# parallel mode
 PM = 0x20000
 ALL_PM_GROUP = PM
 
@@ -1564,15 +1564,13 @@ class solinteg_plugin(plugin_base):
             # set the options
             for i, sscan in enumerate(self.SELECT_TYPES):
                 if sscan.key == "shadow_scan":
-                    self.SELECT_TYPES[i] = replace(sscan, option_dict = sel_dd)
+                    self.SELECT_TYPES[i] = replace(sscan, option_dict=sel_dd)
                     break
 
             # use own mask
             for i, sscan in enumerate(self.SENSOR_TYPES):
                 if sscan.key == "shadow_scan":
-                    self.SENSOR_TYPES[i] = replace(sscan,
-                        scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask)
-                    )
+                    self.SENSOR_TYPES[i] = replace(sscan, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))
                     break
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
