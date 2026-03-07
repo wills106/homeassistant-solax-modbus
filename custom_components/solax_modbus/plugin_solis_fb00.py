@@ -174,7 +174,6 @@ def value_function_battery_control_override(initval: int, descr: Any, datadict: 
     return None
 
 
-
 # ============================================= Charging ===========================================================
 # This value function converts the bits to the number
 def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
