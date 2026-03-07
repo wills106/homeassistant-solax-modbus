@@ -1117,7 +1117,7 @@ def value_function_software_version_air_g4(initval: int, descr: Any, datadict: d
 
 
 def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(datadict.get("cell_voltage_high", 0)) - int(datadict.get("cell_voltage_low", 0))
+    return float(datadict.get("cell_voltage_high", 0)) - float(datadict.get("cell_voltage_low", 0))
 
 
 # ================================= Button Declarations ============================================================
