@@ -308,6 +308,7 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
+    wordcount: int | None = None  # number of registers to write (for separate register format, e.g., hours and minutes in adjacent registers)
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -556,12 +557,23 @@ def value_function_gen4time(initval: Any, descr: Any, datadict: dict[str, Any]) 
 
 
 def value_function_gen23time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
-    """Parse Gen2/3 time format."""
+    """Parse Gen2/3 time format (from REGISTER_WORDS with wordcount=2)."""
     (
         h,
         m,
     ) = initval
     return f"{h:02d}:{m:02d}"
+
+
+def value_function_separate_registers_time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse time from separate registers format (hours in first register, minutes in second)."""
+    # initval is a list/tuple of [hours, minutes] from REGISTER_WORDS with wordcount=2
+    if isinstance(initval, (list, tuple)) and len(initval) >= 2:
+        h = int(initval[0])
+        m = int(initval[1])
+        return f"{h:02d}:{m:02d}"
+    # Fallback for single value (shouldn't happen with proper sensor config)
+    return "00:00"
 
 
 def value_function_sofartime(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
@@ -618,24 +630,15 @@ def value_function_2byte_timestamp(initval: Any, descr: Any, datadict: dict[str,
 TIME_OPTIONS: dict[int, str] = {}
 TIME_OPTIONS_GEN4: dict[int, str] = {}
 for h in range(0, 24):
-    for m in range(0, 60, 5):
+    for m in range(0, 60):
         TIME_OPTIONS[m * 256 + h] = f"{h:02}:{m:02}"
         TIME_OPTIONS_GEN4[h * 256 + m] = f"{h:02}:{m:02}"
-        if (
-            h,
-            m,
-        ) == (
-            0,
-            0,
-        ):  # add extra entry 00:01
-            TIME_OPTIONS[1 * 256 + h] = f"{h:02}:{m + 1:02}"
-            TIME_OPTIONS_GEN4[h * 256 + 1] = f"{h:02}:{m + 1:02}"
-        if (
-            h,
-            m,
-        ) == (
-            23,
-            55,
-        ):  # add extra entry 23:59
-            TIME_OPTIONS[(m + 4) * 256 + h] = f"{h:02}:{m + 4:02}"
-            TIME_OPTIONS_GEN4[h * 256 + m + 4] = f"{h:02}:{m + 4:02}"
+
+# For separate register format where hours and minutes are in adjacent registers
+# Hours written to first register, minutes written to second register
+TIME_OPTIONS_HOURS: dict[int, str] = {h: f"{h:02}" for h in range(0, 24)}
+TIME_OPTIONS_MINUTES: dict[int, str] = {m: f"{m:02}" for m in range(0, 60)}
+
+# Combined option dict for separate register format (hours in first register, minutes in second)
+# Used with wordcount=2 to write both registers sequentially
+TIME_OPTIONS_SEPARATE_REGISTERS: dict[int, str] = {h * 100 + m: f"{h:02}:{m:02}" for h in range(0, 24) for m in range(0, 60)}

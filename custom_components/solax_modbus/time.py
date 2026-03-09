@@ -80,6 +80,8 @@ class SolaXModbusTimeEntity(TimeEntity):
         self._option_dict = time_info.option_dict
         self.entity_description = time_info
         self._write_method = time_info.write_method
+        # wordcount for separate register format (e.g., hours and minutes in adjacent registers)
+        self._wordcount = getattr(time_info, "wordcount", None) or 1
 
     async def async_added_to_hass(self):
         """Register callbacks."""
@@ -219,14 +221,30 @@ class SolaXModbusTimeEntity(TimeEntity):
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_SINGLE_MODBUS:
-            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            # Handle separate register format (wordcount > 1)
+            if self._wordcount and self._wordcount >= 2:
+                # For TIME_OPTIONS_SEPARATE_REGISTERS format: payload = hours * 100 + minutes
+                # Extract hours and minutes from the combined payload
+                hours = payload // 100
+                minutes = payload % 100
+                _LOGGER.info(
+                    f"{self._platform_name}: writing separate registers - hours={hours} to reg {self._register}, "
+                    f"minutes={minutes} to reg {self._register + 1}"
+                )
+                # Write hours to first register
+                await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=hours)
+                # Write minutes to second register (adjacent)
+                await self._hub.async_write_register(unit=self._modbus_addr, address=self._register + 1, payload=minutes)
+            else:
+                # Standard single register write
+                await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {time_str}")
             self._hub.localsUpdated = True  # mark to save permanently
             self._hub.data[self._key] = time_str
 
         # Handle autorepeat for time entities with value_function (same pattern as buttons and selects)
-        if self.entity_description.value_function:
+        if hasattr(self.entity_description, "value_function") and self.entity_description.value_function:
             res = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
             if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
                 autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))

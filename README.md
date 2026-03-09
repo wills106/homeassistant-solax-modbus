@@ -1,3 +1,69 @@
+TimeV3.1
+
+Backup charge now working for GEN3 SolaX Hybrid.
+Writing the hours on one register and the mins are on the following register now working.
+
+Added GEN2:
+
+- Time "Discharge Start 1"
+- Time "Discharge End 1"
+- Time "Discharge Start 2"
+- Time "Discharge End 2"
+
+Added GEN2/3:
+
+- Time "Charge Start 1"
+- Time "Charge End 1"
+- Time "Charge Start 2"
+- Time "Charge End 2"
+
+Removed GEN2:
+
+- Select Select "Discharger Start Time 1"
+- Select Select "Discharger End Time 1"
+- Select Select "Discharger Start Time 2"
+- Select Select "Discharger End Time 2"
+
+Removed GEN2/3:
+
+- Number "Backup Charge Start Hours"
+- Number "Backup Charge Start Minutes"
+- Number "Backup Charge End Hours"
+- Number "Backup Charge End Minutes"
+
+- Select "Charger Start Time 1"
+- Select "Charger End Time 1"
+- Select "Charger Start Time 2"
+- Select "Charger End Time 2"
+
+- Sensor "Backup Charge Start"
+- Sensor "Backup Charge End"
+
+There will be a number of entities with the following error:
+"This entity is no longer being provided by the solax_modbus integration. If the entity is no longer in use, delete it in settings."
+
+So either delete them, or remove the Integration and add it back in, if you name the Integration exactly the same then the history will load back in.
+
+GEN3 Should return 102 entities without EPS enabled.
+
+For GEN4-6 it would make sense to shorten the time names to match GEN2/3.
+
+------
+
+Moved to Qwen3.5:27b with 104K Context, to reduce VRAM
+
+For TimeV3 I now have working time values displayed for time.solax_charger_end_time1 etc
+I have removed the selects for GEN2 / GEN3 SolaX Inverters
+I have left in the GEN4-6 Selects as I don't have the means to test them
+
+TIME_OPTIONS & TIME_OPTIONS_GEN4 need reworking to allow you to set time for every minute, currently it's still set in 5min blocks
+
+I also haven't looked into key="backup_charge_end_h", for the GEN3 yet, where you read / write the hours on one register and the mins are on seperate hours. This register set doesn't use high8 & low8
+
+------
+
+- From Branch time, Line numbers probably don't corolate to what they are in this branch.
+
 I have been working on time.py again, to replace these drop down selects.
 I was getting the below error, so for the first time I have been trying to use Roo Code and Qwen3.5:35b
 So I asked it the following: 
@@ -90,13 +156,3 @@ Initially Roo Code / Qwen was trying to change the time register to match the se
 It went off to try and put extra parsing in const.py for value_function_gen23time and value_function_gen4time
 But I think the issue is the linking is missing. As I keep running out of context size (I think) I have left it at this stage, as I can't fit anymore GPU's in the server...
 The quality of my prompting probably isn't helping.
-
-------
-
-For TimeV3 I now have working time values displayed for time.solax_charger_end_time1 etc
-I have removed the selects for GEN2 / GEN3 SolaX Inverters
-I have left in the GEN4-6 Selects as I don't have the means to test them
-
-TIME_OPTIONS & TIME_OPTIONS_GEN4 need reworking to allow you to set time for every minute, currently it's still set in 5min blocks
-
-I also haven't looked into key="backup_charge_end_h", for the GEN3 yet, where you read / write the hours on one register and the mins are on seperate hours. This register set doesn't use high8 & low8
