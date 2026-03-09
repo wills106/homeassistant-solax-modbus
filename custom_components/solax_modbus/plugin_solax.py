@@ -54,6 +54,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
+    BaseModbusTimeEntityDescription,
     UnitOfReactivePower,
     autorepeat_remaining,
     autorepeat_stop,
@@ -237,6 +238,11 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 @dataclass(kw_only=True, frozen=True)
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+
+
+@dataclass(kw_only=True, frozen=True)
+class SolaXModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
@@ -2625,27 +2631,9 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     SolaxModbusSelectEntityDescription(
         name="Charger End Time 1",
         key="charger_end_time_1",
-        register=0x27,
-        option_dict=TIME_OPTIONS,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:clock-end",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="Charger End Time 1",
-        key="charger_end_time_1",
         register=0x69,
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:clock-end",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="Charger End Time 2",
-        key="charger_end_time_2",
-        register=0x2B,
-        option_dict=TIME_OPTIONS,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-end",
     ),
@@ -2661,27 +2649,9 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     SolaxModbusSelectEntityDescription(
         name="Charger Start Time 1",
         key="charger_start_time_1",
-        register=0x26,
-        option_dict=TIME_OPTIONS,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:clock-start",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="Charger Start Time 1",
-        key="charger_start_time_1",
         register=0x68,
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:clock-start",
-    ),
-    SolaxModbusSelectEntityDescription(
-        name="Charger Start Time 2",
-        key="charger_start_time_2",
-        register=0x2A,
-        option_dict=TIME_OPTIONS,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
@@ -9659,6 +9629,81 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
 ]
 
+TIME_TYPES = [
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 1",
+        key="charger_end_time_1",
+        register=0x27,
+        option_dict=TIME_OPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 1",
+        key="charger_end_time_1",
+        register=0x27,
+        option_dict=TIME_OPTIONS_GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 2",
+        key="charger_end_time_2",
+        register=0x2B,
+        option_dict=TIME_OPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger End Time 2",
+        key="charger_end_time_2",
+        register=0x6E,
+        option_dict=TIME_OPTIONS_GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger Start Time 1",
+        key="charger_start_time_1",
+        register=0x26,
+        option_dict=TIME_OPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger Start Time 1",
+        key="charger_start_time_1",
+        register=0x68,
+        option_dict=TIME_OPTIONS_GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger Start Time 2",
+        key="charger_start_time_2",
+        register=0x2A,
+        option_dict=TIME_OPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+    SolaXModbusTimeEntityDescription(
+        name="Charger Start Time 2",
+        key="charger_start_time_2",
+        register=0x6D,
+        option_dict=TIME_OPTIONS_GEN4,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+]
+
 # ============================ plugin declaration =================================================
 
 
@@ -10363,6 +10408,7 @@ plugin_instance = solax_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=TIME_TYPES,
     ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,

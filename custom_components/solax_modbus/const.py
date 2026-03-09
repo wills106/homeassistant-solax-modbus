@@ -6,17 +6,12 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import (
-    NumberEntityDescription,
-)
+from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.sensor import (
-    SensorEntityDescription,
-)
+from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
-from homeassistant.const import (
-    CONF_SCAN_INTERVAL,
-)
+from homeassistant.components.time import TimeEntityDescription
+from homeassistant.const import CONF_SCAN_INTERVAL
 
 # TODO: Review if this fallback is still needed.
 # UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
@@ -145,6 +140,7 @@ class plugin_base:
     NUMBER_TYPES: Sequence[NumberEntityDescription]
     SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: Sequence[SwitchEntityDescription]
+    TIME_TYPES: Sequence[TimeEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100
@@ -294,6 +290,24 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
         None  # Value function: (bit, state, sensor_key, datadict) -> payload
     )
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
+
+
+@dataclass(kw_only=True, frozen=True)
+class BaseModbusTimeEntityDescription(TimeEntityDescription):
+    """Base class for modbus time declarations."""
+
+    allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    register: int | None = None
+    option_dict: dict[int, str] | None = None
+    reverse_option_dict: dict[str, int] | None = None  # autocomputed
+    blacklist: list[str] | None = None  # none or list of serial number prefixes
+    write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
+    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    sensor_key: str | None = None  # specify only when corresponding sensor has a different key name
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
+    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
+    autorepeat: bool = False  # if True: select will use value_function for autorepeat
 
 
 @dataclass(kw_only=True, frozen=True)
