@@ -1533,13 +1533,13 @@ class solinteg_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
 
         model = await _read_model(hub)
-        if model is None:
-            _LOGGER.error(f"{hub.name}: could not read model at 0x{10008:x}")
-            bh, bl = 0, 0
+        if model is None or model == 0:
+            _LOGGER.error(f"{hub.name}: could not read inverter model")
+            return 0
         else:
             self.inverter_model = _model_str(model)  # as string
-            bh, bl = model // 256, model % 256
 
+        bh, bl = model // 256, model % 256
         invertertype = 0
         if bh in [30, 31, 32]:
             invertertype = invertertype | HYBRID
@@ -1556,30 +1556,31 @@ class solinteg_plugin(plugin_base):
             mppt = 2
             invertertype = invertertype | MPPT2
 
-        if invertertype > 0:
+        try:
             # prepare mppt mask/dict
             _mppt_mask = 2**mppt - 1
             # copy and update
             sel_dd = _mppt_dd.copy() | {2**i: f"mppt{i + 1}" for i in range(mppt)}
             # set the options
-            for i, sscan in enumerate(self.SELECT_TYPES):
-                if sscan.key == "shadow_scan":
-                    self.SELECT_TYPES[i] = replace(sscan, option_dict=sel_dd)
+            for i, ssel in enumerate(self.SELECT_TYPES):
+                if ssel.key == "shadow_scan":
+                    self.SELECT_TYPES[i] = replace(ssel, option_dict=sel_dd)  # type: ignore
                     break
 
             # use own mask
-            for i, sscan in enumerate(self.SENSOR_TYPES):
-                if sscan.key == "shadow_scan":
-                    self.SENSOR_TYPES[i] = replace(sscan, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))
+            for i, ssensor in enumerate(self.SENSOR_TYPES):
+                if ssensor.key == "shadow_scan":
+                    self.SENSOR_TYPES[i] = replace(ssensor, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))  # type: ignore
                     break
+        except Exception:
+            _LOGGER.error(f"{hub.name}: unexpected error", exc_info=True)
 
-            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-            if read_eps:
-                invertertype = invertertype | EPS
-            if read_dcb:
-                invertertype = invertertype | DCB
-
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        if read_eps:
+            invertertype = invertertype | EPS
+        if read_dcb:
+            invertertype = invertertype | DCB
         _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
 
         return invertertype
