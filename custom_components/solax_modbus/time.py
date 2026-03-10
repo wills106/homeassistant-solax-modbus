@@ -1,20 +1,17 @@
 import logging
 from datetime import datetime, time as datetime_time
-from time import time
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 
 from .const import (
-    BUTTONREPEAT_FIRST,
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
-    autorepeat_set,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,23 +42,9 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
                     hub.data[time_info.key] = time_info.initvalue
                 hub.writeLocals[time_info.key] = time_info
             hub.timeEntities[time_info.key] = time_entity
-            # Register autorepeat time entities in computedEntities so they can use the unified autorepeat loop
-            if time_info.value_function:
-                hub.computedEntities[time_info.key] = time_info
-
-            # register dependency chain
-            deplist = time_info.depends_on
-            if isinstance(deplist, str):
-                deplist = (deplist,)
-            if isinstance(deplist, (list, tuple)):
-                _LOGGER.debug(f"{hub.name}: {time_info.key} depends on entities {deplist}")
-                for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
-                    if dep_on != time_info.key:
-                        hub.entity_dependencies.setdefault(dep_on, []).append(time_info.key)  # can be more than one
             entities.append(time_entity)
 
     async_add_entities(entities)
-    return True
 
 
 class SolaXModbusTimeEntity(TimeEntity):
@@ -242,12 +225,6 @@ class SolaXModbusTimeEntity(TimeEntity):
             _LOGGER.info(f"*** local data written {self._key}: {time_str}")
             self._hub.localsUpdated = True  # mark to save permanently
             self._hub.data[self._key] = time_str
-
-        # Handle autorepeat for time entities with value_function (same pattern as buttons and selects)
-        if hasattr(self.entity_description, "value_function") and self.entity_description.value_function:
-            res = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
-            if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
-                autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
 
         self.async_write_ha_state()
 

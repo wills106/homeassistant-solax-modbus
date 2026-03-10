@@ -304,10 +304,6 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
-    sensor_key: str | None = None  # specify only when corresponding sensor has a different key name
-    depends_on: list[str] | None = None  # list of modbus register keys that must be read
-    value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
-    autorepeat: bool = False  # if True: select will use value_function for autorepeat
     wordcount: int | None = None  # number of registers to write (for separate register format, e.g., hours and minutes in adjacent registers)
 
 
