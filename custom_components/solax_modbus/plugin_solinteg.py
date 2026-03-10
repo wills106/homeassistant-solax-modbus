@@ -1,8 +1,8 @@
 import logging
 from dataclasses import dataclass, field, replace
-from typing import Any
+from typing import Any, cast
 
-from homeassistant.components.number import NumberMode
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -348,7 +348,7 @@ NUMBER_TYPES = [
         register=50207,
         register_data_type=REGISTER_S16,
         native_unit_of_measurement="x0.01 kW",
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         native_min_value=-20000,
         native_max_value=20000,
         native_step=1,
@@ -1591,17 +1591,17 @@ class solinteg_plugin(plugin_base):
             # copy and update
             sel_dd = _mppt_dd.copy() | {2**i: f"mppt{i + 1}" for i in range(mppt)}
             # set the options
-            for i, sscan in enumerate(self.SELECT_TYPES):
+            select_types = cast(list[SolintegModbusSelectEntityDescription], self.SELECT_TYPES)
+            for i, sscan in enumerate(select_types):
                 if sscan.key == "shadow_scan":
-                    self.SELECT_TYPES[i] = replace(sscan, option_dict=sel_dd)
+                    select_types[i] = replace(sscan, option_dict=sel_dd)
                     break
-
             # use own mask
-            for i, sscan in enumerate(self.SENSOR_TYPES):
-                if sscan.key == "shadow_scan":
-                    self.SENSOR_TYPES[i] = replace(sscan, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))
+            sensor_types = cast(list[SolintegModbusSensorEntityDescription], self.SENSOR_TYPES)
+            for i, ssensor in enumerate(sensor_types):
+                if ssensor.key == "shadow_scan":
+                    sensor_types[i] = replace(ssensor, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))
                     break
-
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
             read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
             if read_eps:
