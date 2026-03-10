@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from homeassistant.components.number import NumberMode
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -343,6 +343,21 @@ NUMBER_TYPES = [
     #
     ###
     SolintegModbusNumberEntityDescription(
+        name="Battery Charge Discharge Power Target",
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
+    ),
+    SolintegModbusNumberEntityDescription(
         name="Battery SOC Min On Grid",
         key="battery_soc_min_ongrid",
         register=52503,
@@ -450,7 +465,8 @@ SELECT_TYPES = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            # 0x301, 0x302 : EMS Modes
+            0x303: "Charge-Discharge",
             0x400: "ToU",
         },
         entity_category=EntityCategory.CONFIG,
@@ -1377,7 +1393,8 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            # 0x301, 0x302 : EMS Modes
+            0x303: "Charge-Discharge",
             0x400: "ToU",
         },
         internal=True,
@@ -1430,6 +1447,18 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=_simple_switch,
         allowedtypes=HYBRID,
         internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        scale=1,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
     ),
     SolintegModbusSensorEntityDescription(
         key="battery_soc_min_ongrid",
