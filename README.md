@@ -1,3 +1,11 @@
+TimeV3.2
+
+Removed unneeded value_function:, autorepeat:, depends_on:, sensor_key: from "class BaseModbusTimeEntityDescription(TimeEntityDescription):" in const.py
+
+Also updated time.py code relating to these unused functions
+
+------
+
 TimeV3.1
 
 Backup charge now working for GEN3 SolaX Hybrid.
@@ -49,6 +57,8 @@ GEN3 Should return 102 entities without EPS enabled.
 For GEN4-6 it would make sense to shorten the time names to match GEN2/3.
 
 ------
+
+TimeV3.0
 
 Moved to Qwen3.5:27b with 104K Context, to reduce VRAM
 
