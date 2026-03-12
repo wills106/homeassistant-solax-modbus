@@ -898,10 +898,12 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
 
 
 def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+    # do not convert to int(); None is a valid value and is returned if VPP is inactive
     return datadict.get(descr.key, 0)
 
 
 def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+    # do not convert to int(); None is a valid value and is returned if VPP is inactive
     return datadict.get(descr.key, 0)
 
 
