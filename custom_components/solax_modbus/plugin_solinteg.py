@@ -1636,7 +1636,6 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             source_key="battery_power",
             target_key="battery_power",
             name="Battery Power",
-            invert=True,
         ),
         # Home Consumption Power
         EnergyDashboardSensorMapping(
