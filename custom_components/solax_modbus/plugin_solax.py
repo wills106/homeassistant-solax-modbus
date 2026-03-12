@@ -897,12 +897,12 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
     return max(mode_1to7, mode_8to9)
 
 
-def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(datadict.get(descr.key, 0))
+def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
+    return datadict.get(descr.key, 0)
 
 
-def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(datadict.get(descr.key, 0))
+def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
+    return datadict.get(descr.key, 0)
 
 
 def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
