@@ -351,6 +351,10 @@ def autorepeat_remaining(datadict: dict[str, Any], entitykey: str, timestamp: fl
 MAX_PVSTRINGS: int = 10
 
 
+def value_str_default(val: Any, default: str) -> str:
+    return str(val) if val is not None else default
+
+
 def value_function_pv_power_total(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power from all strings."""
     # changed: for performance reasons, we should not iterate over the entire datadict every polling cycle (contains hundreds ...)
