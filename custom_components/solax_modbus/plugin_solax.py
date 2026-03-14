@@ -5397,6 +5397,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
@@ -5408,6 +5409,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 1",
@@ -5418,6 +5420,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5430,6 +5433,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5540,6 +5544,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0xA,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5551,6 +5556,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0xB,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8151,6 +8157,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         depends_on=[
             "pv_power_1",
             "pv_power_2",
