@@ -593,6 +593,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     houseload = value_function_house_load(initval, descr, datadict)
     houseload_alt = value_function_house_load_alt(initval, descr, datadict)
 
+    # Disallow parallel mode for now
+    parallel_setting = datadict.get("parallel_setting", "Free")
+    if parallel_setting != "Free":
+        _LOGGER.warning("Mode 8 autorepeat is not currently supported for inverters where parallel mode != Free. Disabling remote control.")
+        power_control = "Disabled"
+
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit  # import capping is done later
     elif power_control == "Negative Injection Price":  # grid export zero; PV restricted to house_load and battery charge
