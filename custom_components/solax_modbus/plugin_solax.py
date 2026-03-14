@@ -4624,12 +4624,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3,
         internal=True,
     ),
-#    SolaXModbusSensorEntityDescription(
-#        key="forcetime_period_1_max_capacity",
-#        register=0x10C,
-#        allowedtypes=AC | GEN3,
-#        internal=True,
-#    ),
+    #    SolaXModbusSensorEntityDescription(
+    #        key="forcetime_period_1_max_capacity",
+    #        register=0x10C,
+    #        allowedtypes=AC | GEN3,
+    #        internal=True,
+    #    ),
     SolaXModbusSensorEntityDescription(
         name="EPS Auto Restart",
         key="eps_auto_restart",
@@ -4637,25 +4637,25 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=value_function_disabled_enabled,
         allowedtypes=HYBRID | GEN3 | EPS,
     ),
-#    SolaXModbusSensorEntityDescription(
-#        key="forcetime_period_2_max_capacity",
-#        register=0x10D,
-#        allowedtypes=AC | GEN3,
-#        internal=True,
-#    ),
-#    SolaXModbusSensorEntityDescription(
-#        name="CT Meter Setting",
-#        key="ct_meter_setting",
-#        register=0x10E,
-#        scale={
-#            0: "Meter",
-#            1: "CT",
-#        },
-#        entity_registry_enabled_default=False,
-#        allowedtypes=AC | GEN3,
-#        entity_category=EntityCategory.DIAGNOSTIC,
-#        icon="mdi:meter-electric",
-#    ),
+    #    SolaXModbusSensorEntityDescription(
+    #        key="forcetime_period_2_max_capacity",
+    #        register=0x10D,
+    #        allowedtypes=AC | GEN3,
+    #        internal=True,
+    #    ),
+    #    SolaXModbusSensorEntityDescription(
+    #        name="CT Meter Setting",
+    #        key="ct_meter_setting",
+    #        register=0x10E,
+    #        scale={
+    #            0: "Meter",
+    #            1: "CT",
+    #        },
+    #        entity_registry_enabled_default=False,
+    #        allowedtypes=AC | GEN3,
+    #        entity_category=EntityCategory.DIAGNOSTIC,
+    #        icon="mdi:meter-electric",
+    #    ),
     SolaXModbusSensorEntityDescription(
         key="battery_charge_upper_soc",
         register=0x10E,
