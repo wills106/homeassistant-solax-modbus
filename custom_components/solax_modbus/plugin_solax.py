@@ -67,6 +67,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     value_function_pv_power_total,
     value_function_rtc,
     value_function_sync_rtc,
+    value_str_default,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -897,12 +898,14 @@ def value_function_remotecontrol_autorepeat_remaining(initval: int, descr: Any, 
     return max(mode_1to7, mode_8to9)
 
 
-def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(datadict.get(descr.key, 0))
+def value_function_remotecontrol_current_pushmode_power(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+    # do not convert to int(); None is a valid value and is returned if VPP is inactive
+    return datadict.get(descr.key, 0)
 
 
-def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(datadict.get(descr.key, 0))
+def value_function_remotecontrol_current_pv_power_limit(initval: int, descr: Any, datadict: dict[str, Any]) -> Any:
+    # do not convert to int(); None is a valid value and is returned if VPP is inactive
+    return datadict.get(descr.key, 0)
 
 
 def value_function_battery_power_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -1102,11 +1105,21 @@ def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP {datadict.get('firmware_dsp_major')}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major')}.{datadict.get('firmware_arm'):>02}"
+    return (
+        f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '?')}."
+        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
+        f"ARM {value_str_default(datadict.get('firmware_arm_major'), '?')}."
+        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
+    )
 
 
 def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP {datadict.get('firmware_dsp_major'):>03}.{datadict.get('firmware_dsp'):>02} ARM {datadict.get('firmware_arm_major'):>03}.{datadict.get('firmware_arm'):>02}"
+    return (
+        f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '???'):>03}."
+        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
+        f"ARM {value_str_default(datadict.get('firmware_arm_major'), '???'):>03}."
+        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
+    )
 
 
 def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
