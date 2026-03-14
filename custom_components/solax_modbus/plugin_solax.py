@@ -672,9 +672,22 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # 2) If PV ≥ house load (surplus): let PV feed the grid first and only charge the battery once
         #    measured export is at or above the configured cap. Battery charge is then adjusted using
         #    bounded step changes based on the measured export.
+        # 3) Ensure that we don't exceed the inverter power limit in the calculations so that PV above
+        #    this limit is allocated to the battery charge rather than being limited.
+
+        # Use the main house load, but clamp obviously invalid negative values.
+        hl = max(0, int(houseload))
 
         # Export limit no readscale:
         export_limit = datadict.get("export_control_user_limit", 30000)
+        inverter_limit = datadict.get("inverter_power_type", 30000)
+
+        # Both house load and exported power come from the inverter and must fit within the inverter
+        # power limit. For example if we have a 6kW inverter and 4kW of house load, then we cannot
+        # export more than 2kW even if our export limit is higher. Trim the export limit so that any
+        # excess can be used for charging the battery rather than PV being clamped.
+        export_available = max(inverter_limit - hl, 0)
+        export_limit = min(export_limit, export_available)
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
@@ -695,12 +708,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Debug inputs
         _LOGGER.debug(
             f"[Mode8 Export-First] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) exp_lim={export_limit}W "
-            f"exp_target={export_target}W imp_lim={import_limit}W soc={battery_capacity}% min_soc={min_discharge_soc}% "
-            f"max_soc={max_charge_soc}% pvlimit={pvlimit}W last_push={last_push}W"
+            f"exp_avail={export_available}W exp_target={export_target}W imp_lim={import_limit}W soc={battery_capacity}% "
+            f"min_soc={min_discharge_soc}% max_soc={max_charge_soc}% pvlimit={pvlimit}W last_push={last_push}W"
         )
-
-        # Use the main house load, but clamp obviously invalid negative values.
-        hl = max(0, int(houseload))
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
