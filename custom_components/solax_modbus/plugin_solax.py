@@ -103,6 +103,7 @@ AC = 0x0800
 HYBRID = 0x1000
 MIC = 0x2000
 MAX = 0x4000
+FIT = AC | HYBRID  # X1-FIT: AC-coupled hardware but uses Hybrid register layout for some GEN3 registers
 ALL_TYPE_GROUP = PV | AC | HYBRID | MIC | MAX
 
 EPS = 0x8000
@@ -1238,7 +1239,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H460", 30),  # Gen4 X1 6kW
     ("H475", 30),  # Gen4 X1 7.5kW
     ("PRE", 30),  # Gen4 X1 RetroFit
-    ("PRI", 30),  # Gen4 X1 RetroFit
+    ("PRI", 30),  # Gen3 X1 FIT
     ("H53", 50),  # Gen5 X1-IES
     ("H55", 50),  # Gen5 X1-IES
     ("H56", 50),  # Gen5 X1-IES
@@ -1325,7 +1326,7 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H460", 9200),  # Gen4 X1 6kW
     ("H475", 9200),  # Gen4 X1 7.5kW
     ("PRE5", 9200),  # Gen4 X1 RetroFit 5kW
-    ("PRI5", 9200),  # Gen4 X1 RetroFit 5kW
+    ("PRI5", 9200),  # Gen3 X1 FIT 5kW
     ("F34", 10000),  # Gen4 X3 RetroFit
     ("H34A05", 7500),  # Gen4 X3 A
     ("H34A06", 6000),  # Gen4 X3 A
@@ -4540,6 +4541,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=value_function_disabled_enabled,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID | GEN3,
+        blacklist=["PRI"],  # X1-FIT has no DC MPPT input
         icon="mdi:sun-compass",
     ),
     SolaXModbusSensorEntityDescription(
@@ -4641,6 +4643,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="forcetime_period_1_max_capacity",
         register=0x10C,
         allowedtypes=AC | GEN3,
+        blacklist=["PRI"],  # X1-FIT uses HYBRID register layout (0x10F) instead
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4654,6 +4657,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="forcetime_period_2_max_capacity",
         register=0x10D,
         allowedtypes=AC | GEN3,
+        blacklist=["PRI"],  # X1-FIT uses HYBRID register layout (0x110) instead
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4666,6 +4670,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         allowedtypes=AC | GEN3,
+        blacklist=["PRI"],  # X1-FIT uses HYBRID register layout (0x115) instead
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:meter-electric",
     ),
@@ -5392,6 +5397,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 2",
@@ -5403,6 +5409,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Current 1",
@@ -5413,6 +5420,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5425,6 +5433,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5535,6 +5544,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0xA,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -5546,6 +5556,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0xB,
         register_type=REG_INPUT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8146,6 +8157,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=HYBRID,
+        blacklist=["PRI"],  # X1-FIT has no DC PV input
         depends_on=[
             "pv_power_1",
             "pv_power_2",
@@ -9735,8 +9747,8 @@ class solax_plugin(plugin_base):
             invertertype = AC | GEN3 | X1  # X1AC
             self.inverter_model = "X1-AC"
         elif seriesnumber.startswith("PRI"):
-            invertertype = AC | GEN3 | X1  # RetroFit
-            self.inverter_model = "X1-RetroFit"
+            invertertype = FIT | GEN3 | X1  # X1-FIT GEN3: AC hardware, uses Hybrid register layout for some registers
+            self.inverter_model = "X1-FIT"
         elif seriesnumber.startswith("H3DE"):
             invertertype = HYBRID | GEN3 | X3  # Gen3 X3
             self.inverter_model = f"X3-Hybrid-{seriesnumber[3:5]}kW"
