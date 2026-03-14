@@ -102,6 +102,7 @@ AC = 0x0800
 HYBRID = 0x1000
 MIC = 0x2000
 MAX = 0x4000
+FIT = AC | HYBRID  # X1-FIT: AC-coupled hardware but uses Hybrid register layout for some GEN3 registers
 ALL_TYPE_GROUP = PV | AC | HYBRID | MIC | MAX
 
 EPS = 0x8000
@@ -9726,8 +9727,8 @@ class solax_plugin(plugin_base):
             invertertype = AC | GEN3 | X1  # X1AC
             self.inverter_model = "X1-AC"
         elif seriesnumber.startswith("PRI"):
-            invertertype = AC | GEN3 | X1  # RetroFit
-            self.inverter_model = "X1-RetroFit"
+            invertertype = FIT | GEN3 | X1  # X1-FIT GEN3: AC hardware, uses Hybrid register layout for some registers
+            self.inverter_model = "X1-FIT"
         elif seriesnumber.startswith("H3DE"):
             invertertype = HYBRID | GEN3 | X3  # Gen3 X3
             self.inverter_model = f"X3-Hybrid-{seriesnumber[3:5]}kW"
