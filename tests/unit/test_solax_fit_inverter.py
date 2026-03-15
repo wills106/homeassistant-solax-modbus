@@ -4,7 +4,8 @@ Covers the Copilot PR review concern about correct entity matching
 for FIT inverters, which use FIT = AC | HYBRID as a semantic alias.
 """
 
-from typing import Any, Sequence, cast
+from collections.abc import Sequence
+from typing import Any, cast
 
 import pytest
 
@@ -42,9 +43,7 @@ PV_SENSOR_KEYS = {
 # Typed view of SENSOR_TYPES so mypy can resolve allowedtypes/blacklist attributes
 # (plugin_base declares SENSOR_TYPES as Sequence[SensorEntityDescription], the HA
 # base class, which does not carry these extra fields)
-SOLAX_SENSOR_TYPES: Sequence[SolaXModbusSensorEntityDescription] = cast(
-    Sequence[SolaXModbusSensorEntityDescription], solax_plugin.SENSOR_TYPES
-)
+SOLAX_SENSOR_TYPES: Sequence[SolaXModbusSensorEntityDescription] = cast(Sequence[SolaXModbusSensorEntityDescription], solax_plugin.SENSOR_TYPES)
 
 
 # ---------------------------------------------------------------------------
@@ -106,19 +105,17 @@ def test_pv_entity_blocked_by_blacklist_for_pri() -> None:
     assert solax_plugin.matchInverterWithMask(FIT_INVERTER, HYBRID) is True
 
     # With the blacklist applied, PRI serial must be excluded
-    assert (
-        solax_plugin.matchInverterWithMask(FIT_INVERTER, HYBRID, PRI_SERIAL, ["PRI"])
-        is False
-    ), "PV entities must be blocked for PRI serial numbers via blacklist"
+    assert solax_plugin.matchInverterWithMask(FIT_INVERTER, HYBRID, PRI_SERIAL, ["PRI"]) is False, (
+        "PV entities must be blocked for PRI serial numbers via blacklist"
+    )
 
 
 def test_blacklist_does_not_affect_non_pri_serial() -> None:
     """The blacklist has no effect on regular HYBRID (non-FIT) inverters."""
     hybrid_gen4_x3 = HYBRID | GEN4 | X3
-    assert (
-        solax_plugin.matchInverterWithMask(hybrid_gen4_x3, HYBRID, "H34T10H1234567", ["PRI"])
-        is True
-    ), "Non-PRI serials must not be blocked by the PRI blacklist"
+    assert solax_plugin.matchInverterWithMask(hybrid_gen4_x3, HYBRID, "H34T10H1234567", ["PRI"]) is True, (
+        "Non-PRI serials must not be blocked by the PRI blacklist"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -167,17 +164,13 @@ def test_all_pv_sensors_blacklist_pri() -> None:
             if sensor.blacklist is None or "PRI" not in sensor.blacklist:
                 missing.append(sensor.key)
 
-    assert not missing, (
-        f"PV sensor(s) missing blacklist=['PRI'] (FIT has no DC PV inputs): {missing}"
-    )
+    assert not missing, f"PV sensor(s) missing blacklist=['PRI'] (FIT has no DC PV inputs): {missing}"
 
 
 def test_all_pv_sensor_keys_present_in_sensor_types() -> None:
     """Confirm we found all 7 expected PV sensor entities in SENSOR_TYPES."""
     found = {s.key for s in SOLAX_SENSOR_TYPES if s.key in PV_SENSOR_KEYS}
-    assert found == PV_SENSOR_KEYS, (
-        f"Expected PV sensor keys {PV_SENSOR_KEYS}, found {found}"
-    )
+    assert found == PV_SENSOR_KEYS, f"Expected PV sensor keys {PV_SENSOR_KEYS}, found {found}"
 
 
 # ---------------------------------------------------------------------------
@@ -190,14 +183,10 @@ def test_pv_sensors_do_not_match_pri_inverter() -> None:
     mismatched: list[str] = []
     for sensor in SOLAX_SENSOR_TYPES:
         if sensor.key in PV_SENSOR_KEYS:
-            if solax_plugin.matchInverterWithMask(
-                FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist
-            ):
+            if solax_plugin.matchInverterWithMask(FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist):
                 mismatched.append(sensor.key)
 
-    assert not mismatched, (
-        f"PV sensor(s) incorrectly matching PRI inverter: {mismatched}"
-    )
+    assert not mismatched, f"PV sensor(s) incorrectly matching PRI inverter: {mismatched}"
 
 
 def test_battery_sensors_match_pri_inverter() -> None:
@@ -211,14 +200,10 @@ def test_battery_sensors_match_pri_inverter() -> None:
     matched = set()
     for sensor in SOLAX_SENSOR_TYPES:
         if sensor.key in battery_keys:
-            if solax_plugin.matchInverterWithMask(
-                FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist
-            ):
+            if solax_plugin.matchInverterWithMask(FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist):
                 matched.add(sensor.key)
 
-    assert matched == battery_keys, (
-        f"Battery sensors should match FIT inverter. Missing: {battery_keys - matched}"
-    )
+    assert matched == battery_keys, f"Battery sensors should match FIT inverter. Missing: {battery_keys - matched}"
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +236,4 @@ async def test_determine_inverter_type_pri_serial(mock_hub: Any) -> None:
     inverter_type = await solax_plugin.async_determineInverterType(mock_hub, config)
 
     expected = FIT | GEN3 | X1
-    assert inverter_type == expected, (
-        f"PRI serial should map to FIT|GEN3|X1 ({expected:#06x}), got {inverter_type:#06x}"
-    )
+    assert inverter_type == expected, f"PRI serial should map to FIT|GEN3|X1 ({expected:#06x}), got {inverter_type:#06x}"
