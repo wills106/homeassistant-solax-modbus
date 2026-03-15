@@ -4,7 +4,7 @@ Covers the Copilot PR review concern about correct entity matching
 for FIT inverters, which use FIT = AC | HYBRID as a semantic alias.
 """
 
-from typing import Any
+from typing import Any, Sequence, cast
 
 import pytest
 
@@ -16,6 +16,7 @@ from custom_components.solax_modbus.plugin_solax import (
     HYBRID,
     X1,
     X3,
+    SolaXModbusSensorEntityDescription,
 )
 from custom_components.solax_modbus.plugin_solax import (
     plugin_instance as solax_plugin,
@@ -37,6 +38,13 @@ PV_SENSOR_KEYS = {
     "pv_power_2",
     "pv_power_total",
 }
+
+# Typed view of SENSOR_TYPES so mypy can resolve allowedtypes/blacklist attributes
+# (plugin_base declares SENSOR_TYPES as Sequence[SensorEntityDescription], the HA
+# base class, which does not carry these extra fields)
+SOLAX_SENSOR_TYPES: Sequence[SolaXModbusSensorEntityDescription] = cast(
+    Sequence[SolaXModbusSensorEntityDescription], solax_plugin.SENSOR_TYPES
+)
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +162,7 @@ def test_all_pv_sensors_blacklist_pri() -> None:
     entity is added without a blacklist, this test will catch it.
     """
     missing: list[str] = []
-    for sensor in solax_plugin.SENSOR_TYPES:
+    for sensor in SOLAX_SENSOR_TYPES:
         if sensor.key in PV_SENSOR_KEYS and sensor.allowedtypes == HYBRID:
             if sensor.blacklist is None or "PRI" not in sensor.blacklist:
                 missing.append(sensor.key)
@@ -166,7 +174,7 @@ def test_all_pv_sensors_blacklist_pri() -> None:
 
 def test_all_pv_sensor_keys_present_in_sensor_types() -> None:
     """Confirm we found all 7 expected PV sensor entities in SENSOR_TYPES."""
-    found = {s.key for s in solax_plugin.SENSOR_TYPES if s.key in PV_SENSOR_KEYS}
+    found = {s.key for s in SOLAX_SENSOR_TYPES if s.key in PV_SENSOR_KEYS}
     assert found == PV_SENSOR_KEYS, (
         f"Expected PV sensor keys {PV_SENSOR_KEYS}, found {found}"
     )
@@ -180,7 +188,7 @@ def test_all_pv_sensor_keys_present_in_sensor_types() -> None:
 def test_pv_sensors_do_not_match_pri_inverter() -> None:
     """PV sensors must not match the FIT inverter when serial starts with PRI."""
     mismatched: list[str] = []
-    for sensor in solax_plugin.SENSOR_TYPES:
+    for sensor in SOLAX_SENSOR_TYPES:
         if sensor.key in PV_SENSOR_KEYS:
             if solax_plugin.matchInverterWithMask(
                 FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist
@@ -201,7 +209,7 @@ def test_battery_sensors_match_pri_inverter() -> None:
         "battery_current_charge",
     }
     matched = set()
-    for sensor in solax_plugin.SENSOR_TYPES:
+    for sensor in SOLAX_SENSOR_TYPES:
         if sensor.key in battery_keys:
             if solax_plugin.matchInverterWithMask(
                 FIT_INVERTER, sensor.allowedtypes, PRI_SERIAL, sensor.blacklist
