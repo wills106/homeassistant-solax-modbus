@@ -1386,23 +1386,6 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ### All known Inverters added
 ]
 
-EXPORT_LIMIT_SCALE_EXCEPTIONS = [
-    ("H4", 10),  # assuming all Gen4s
-    ("H34", 10),  # assuming all Gen4s
-    ("H3UE", 10),  # Issue #339, 922
-    ("H4372A", 1),  # Issue #857
-    ("H4502A", 1),  # Issue #857
-    ("H4502T", 1),  # Issue #418
-    ("H4602A", 1),  # Issue #882
-    ("H3BD", 10),  # X3-Ultra D
-    ("H3BF", 10),  # X3-Ultra F
-    ("H3BB", 10),  # X3-Ultra G
-    ("H4752A", 1),
-    ("H3BC", 10),
-    ("H34B10H", 10),  # need return @jansidlo ,
-    #    ('H1E', 10 ), # more specific entry comes last and wins
-]
-
 CHARGE_SCALE_EXCEPTIONS = [
     ("802", 10),  # assuming all Aelio #1590
     #    ('H1E', 1 ), # more specific entry comes last and wins
@@ -1801,12 +1784,39 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         fmt="i",
         native_min_value=0,
         native_max_value=2500,
-        scale=1,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN | GEN2 | GEN3,
+        max_exceptions=MAX_EXPORT,
+        icon="mdi:home-export-outline",
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Export Control User Limit",
+        key="export_control_user_limit",
+        register=0x42,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=6000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X1,
+        max_exceptions=MAX_EXPORT,
+        icon="mdi:home-export-outline",
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Export Control User Limit",
+        key="export_control_user_limit",
+        register=0x42,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=6000,
+        scale=10,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X3,
         max_exceptions=MAX_EXPORT,
         icon="mdi:home-export-outline",
     ),
@@ -1816,13 +1826,25 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         register=0xC8,
         fmt="i",
         native_min_value=0,
-        native_max_value=2500,
-        scale=1,
+        native_max_value=6000,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB | X1,
+        max_exceptions=MAX_EXPORT,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Generator Max Charge",
+        key="generator_max_charge",
+        register=0xC8,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=6000,
+        scale=10,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB | X3,
         max_exceptions=MAX_EXPORT,
     ),
     SolaxModbusNumberEntityDescription(
@@ -4357,8 +4379,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="export_control_user_limit",
         register=0xB6,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5,
-        read_scale_exceptions=EXPORT_LIMIT_SCALE_EXCEPTIONS,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="export_control_user_limit",
+        register=0xB6,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X1,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="export_control_user_limit",
+        register=0xB6,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X3,
+        read_scale=0.1,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
