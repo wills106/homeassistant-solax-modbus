@@ -364,10 +364,15 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         # Hold battery level by preventing discharge
         if battery_capacity < 98:
             # Use PV to supply house load, import from grid only what's needed
-            ap_target = 0 - pv_power
+            # Any excess PV above house load will go to the battery
+            ap_target = 0 - min(house_load, pv_power)
             power_control = "Enabled Power Control"
         else:
-            ap_target = 0  # Battery full, no action needed
+            # When the battery is fully charged (allowing a tolerance to prevent
+            # older inverters shutting down PV), then we can run the default work
+            # mode of the inverter. If the battery discharges during the default
+            # mode, then once below the 98% threshold we will resume VPP.
+            ap_target = 0
             power_control = "Disabled"
 
     elif power_control == "Disabled":
