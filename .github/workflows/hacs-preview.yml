@@ -1,6 +1,9 @@
 name: HACS Preview Release
 
 on:
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
       pr_number:
@@ -25,6 +28,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  cleanup-preview-on-release:
+    name: Clean up merged previews on stable release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.release.prerelease == false
+    steps:
+      - name: Delete merged preview releases
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            const deleteReleaseAndTag = async (release) => {
+              core.info(`Deleting preview release ${release.tag_name}`);
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.id,
+              });
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `tags/${release.tag_name}`,
+                });
+              } catch (error) {
+                core.warning(`Could not delete tag ${release.tag_name}: ${error.message}`);
+              }
+            };
+
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const previews = releases.filter((release) =>
+              release.prerelease &&
+              typeof release.body === "string" &&
+              release.body.includes("Managed-By: hacs-preview")
+            );
+
+            for (const release of previews) {
+              const match = release.body.match(/Preview-PR: (\\d+)/);
+              if (!match) {
+                continue;
+              }
+
+              const prNumber = Number(match[1]);
+              try {
+                const { data: pr } = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: prNumber,
+                });
+                if (pr.merged_at) {
+                  await deleteReleaseAndTag(release);
+                }
+              } catch (error) {
+                core.warning(`Could not inspect PR #${prNumber} for ${release.tag_name}: ${error.message}`);
+              }
+            }
+
   cleanup-preview:
     name: Clean up preview release
     runs-on: ubuntu-latest
