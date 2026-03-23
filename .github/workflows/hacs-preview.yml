@@ -1,0 +1,306 @@
+name: HACS Preview Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to publish as preview
+        required: true
+        type: number
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: read
+  checks: read
+
+concurrency:
+  group: hacs-preview-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup-preview:
+    name: Clean up preview release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
+    steps:
+      - name: Delete preview releases for PR
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = process.env.PR_NUMBER;
+
+            const deleteReleaseAndTag = async (release) => {
+              core.info(`Deleting preview release ${release.tag_name}`);
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.id,
+              });
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `tags/${release.tag_name}`,
+                });
+              } catch (error) {
+                core.warning(`Could not delete tag ${release.tag_name}: ${error.message}`);
+              }
+            };
+
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const matching = releases.filter((release) =>
+              release.prerelease &&
+              typeof release.body === "string" &&
+              release.body.includes("Managed-By: hacs-preview") &&
+              release.body.includes(`Preview-PR: ${prNumber}`)
+            );
+
+            for (const release of matching) {
+              await deleteReleaseAndTag(release);
+            }
+
+  publish-preview:
+    name: Publish preview release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
+    steps:
+      - name: Resolve pull request
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prNumber = context.eventName === "workflow_dispatch"
+              ? Number(core.getInput("pr_number"))
+              : context.payload.pull_request.number;
+
+            const { owner, repo } = context.repo;
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: prNumber,
+            });
+
+            if (pr.state !== "open") {
+              core.setFailed(`PR #${prNumber} is not open.`);
+              return;
+            }
+
+            if (pr.draft) {
+              core.setFailed(`PR #${prNumber} is still a draft.`);
+              return;
+            }
+
+            if (pr.head.repo.full_name !== `${owner}/${repo}`) {
+              core.setFailed(
+                "Preview releases are currently only supported for branches in the main repository."
+              );
+              return;
+            }
+
+            core.setOutput("number", String(pr.number));
+            core.setOutput("head_sha", pr.head.sha);
+            core.setOutput("head_ref", pr.head.ref);
+
+      - name: Wait for required checks to finish
+        uses: actions/github-script@v8
+        env:
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = process.env.HEAD_SHA;
+            const requiredChecks = [
+              "Code Quality",
+              "✅ All Tests Passed",
+              "validate",
+            ];
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+            const maxAttempts = 40;
+            const delayMs = 30000;
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner,
+                repo,
+                ref: sha,
+                per_page: 100,
+              });
+
+              let pending = [];
+              const seenChecks = new Map(requiredChecks.map((name) => [name, false]));
+
+              for (const check of checkRuns.check_runs) {
+                if (!seenChecks.has(check.name)) {
+                  continue;
+                }
+                seenChecks.set(check.name, true);
+                if (check.status !== "completed") {
+                  pending.push(`${check.name} (${check.status})`);
+                }
+              }
+
+              const missing = [...seenChecks.entries()]
+                .filter(([, seen]) => !seen)
+                .map(([name]) => name);
+
+              if (missing.length === 0 && pending.length === 0) {
+                core.info(`All required checks finished for ${sha}.`);
+                return;
+              }
+
+              if (attempt === maxAttempts) {
+                const problems = [
+                  missing.length ? `missing: ${missing.join(", ")}` : null,
+                  pending.length ? `pending: ${pending.join(", ")}` : null,
+                ].filter(Boolean).join("; ");
+                core.setFailed(`Timed out waiting for required checks on ${sha} (${problems}).`);
+                return;
+              }
+
+              core.info(
+                `Waiting for required checks to finish on ${sha} (attempt ${attempt}/${maxAttempts}). ` +
+                `Missing: ${missing.join(", ") || "none"}. Pending: ${pending.join(", ") || "none"}.`
+              );
+              await sleep(delayMs);
+            }
+
+      - name: Remove outdated preview for this PR and compute next sequence
+        id: sequence
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_PR: ${{ steps.pr.outputs.number }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = process.env.PREVIEW_PR;
+
+            const deleteReleaseAndTag = async (release) => {
+              core.info(`Deleting preview release ${release.tag_name}`);
+              await github.rest.repos.deleteRelease({
+                owner,
+                repo,
+                release_id: release.id,
+              });
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `tags/${release.tag_name}`,
+                });
+              } catch (error) {
+                core.warning(`Could not delete tag ${release.tag_name}: ${error.message}`);
+              }
+            };
+
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const matching = releases.filter((release) =>
+              release.prerelease &&
+              typeof release.body === "string" &&
+              release.body.includes("Managed-By: hacs-preview") &&
+              release.body.includes(`Preview-PR: ${prNumber}`)
+            );
+
+            let nextSequence = 1;
+            for (const release of matching) {
+              const match = release.tag_name.match(new RegExp(`^preview-pr-${prNumber}-(\\d+)$`));
+              if (match) {
+                nextSequence = Math.max(nextSequence, Number(match[1]) + 1);
+              }
+            }
+
+            for (const release of matching) {
+              await deleteReleaseAndTag(release);
+            }
+
+            core.setOutput("value", String(nextSequence));
+
+      - name: Create preview release
+        id: release
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_PR: ${{ steps.pr.outputs.number }}
+          PREVIEW_SHA: ${{ steps.pr.outputs.head_sha }}
+          PREVIEW_REF: ${{ steps.pr.outputs.head_ref }}
+          PREVIEW_SEQUENCE: ${{ steps.sequence.outputs.value }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = process.env.PREVIEW_PR;
+            const sha = process.env.PREVIEW_SHA;
+            const ref = process.env.PREVIEW_REF;
+            const sequence = process.env.PREVIEW_SEQUENCE;
+            const tag = `preview-pr-${prNumber}-${sequence}`;
+            const name = `Preview PR #${prNumber} (${sequence})`;
+            const body = [
+              "Automated preview release for HACS testing.",
+              "",
+              `Preview-PR: ${prNumber}`,
+              `Preview-Sequence: ${sequence}`,
+              `Branch: ${ref}`,
+              `Commit: ${sha}`,
+              "Managed-By: hacs-preview",
+              "",
+              "This preview is deleted automatically when the PR is closed or merged.",
+            ].join("\n");
+
+            const { data: created } = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tag,
+              target_commitish: sha,
+              name,
+              body,
+              prerelease: true,
+              draft: false,
+              make_latest: "false",
+            });
+
+            core.setOutput("html_url", created.html_url);
+            core.setOutput("tag", created.tag_name);
+
+      - name: Comment on pull request
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          RELEASE_URL: ${{ steps.release.outputs.html_url }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = Number(process.env.PR_NUMBER);
+            const body = [
+              "Created a HACS preview pre-release for this PR.",
+              "",
+              `Tag: \`${process.env.RELEASE_TAG}\``,
+              `Release: ${process.env.RELEASE_URL}`,
+              "",
+              "A newer preview for this PR will replace the current one automatically.",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body,
+            });
