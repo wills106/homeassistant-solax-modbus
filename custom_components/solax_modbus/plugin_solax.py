@@ -210,6 +210,75 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
     return res
 
 
+async def async_read_u16_register(hub: Any, address: int, register_type: int = REG_HOLDING) -> int | None:
+    """Read a single U16 register used for inverter identification."""
+    inverter_data = None
+    try:
+        if register_type == REG_INPUT:
+            inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=1)
+        else:
+            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=1)
+        if inverter_data is not None and not inverter_data.isError():
+            return int(convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big"))  # type: ignore[attr-defined]
+    except Exception:
+        _LOGGER.debug(f"{hub.name}: failed to read U16 register 0x{address:x} for identification", exc_info=True)
+    return None
+
+
+def _mppt_flag_from_count(mppt_count: int | None) -> int:
+    if mppt_count == 3:
+        return MPPT3
+    if mppt_count == 4:
+        return MPPT4
+    if mppt_count == 5:
+        return MPPT5
+    if mppt_count == 6:
+        return MPPT6
+    if mppt_count == 8:
+        return MPPT8
+    if mppt_count == 10:
+        return MPPT10
+    return 0
+
+
+def detect_inverter_from_pdf_registers(inverter_id: int | None, mppt_count: int | None) -> tuple[int, str] | None:
+    """Map the modern PDF-based inverter identification registers to plugin flags."""
+    if inverter_id is None:
+        return None
+
+    pdf_map: dict[int, tuple[int, str]] = {
+        0x0F: (HYBRID | GEN4 | X1, "X1-Hybrid G4"),
+        0x17: (HYBRID | GEN5 | X1, "X1-IES"),
+        0x29: (HYBRID | GEN5 | X1, "X1-IES-A"),
+        0x22: (HYBRID | GEN6 | X1, "X1-VAST"),
+        0x0E: (HYBRID | GEN4 | X3, "X3-Hybrid G4"),
+        0x20: (HYBRID | GEN6 | X3, "X3-Hybrid G4 PRO"),
+        0x18: (HYBRID | GEN5 | X3, "X3-IES"),
+        0x28: (HYBRID | GEN5 | X3, "X3-IES-A"),
+        0x23: (HYBRID | GEN5 | X3, "X3-IES-P"),
+        0x19: (HYBRID | GEN5 | X3, "X3-Ultra"),
+        0x1F: (HYBRID | GEN5 | X3, "X3-Aelio"),
+    }
+
+    mapped = pdf_map.get(inverter_id)
+    if mapped is None:
+        return None
+
+    invertertype, model = mapped
+    invertertype |= _mppt_flag_from_count(mppt_count)
+    return invertertype, model
+
+
+def _format_model_with_rated_power(model: str, rated_output_power_w: int | None) -> str:
+    """Append inverter rated output power to the family model name when available."""
+    if not rated_output_power_w or rated_output_power_w <= 0:
+        return model
+    if rated_output_power_w % 1000 == 0:
+        return f"{model} {rated_output_power_w // 1000}kW"
+    kw_value = rated_output_power_w / 1000
+    return f"{model} {kw_value:g}kW"
+
+
 # =================================================================================================
 
 
@@ -9696,6 +9765,40 @@ class solax_plugin(plugin_base):
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find any serial number(s)")
             seriesnumber = "unknown"
+
+        inverter_id = await async_read_u16_register(hub, 0x0015, REG_HOLDING)
+        mppt_count = await async_read_u16_register(hub, 0x001B, REG_INPUT)
+        bat_port_num = await async_read_u16_register(hub, 0x0059, REG_HOLDING)
+        min_firmware_version = await async_read_u16_register(hub, 0x0080, REG_HOLDING)
+        rated_output_power_w = await async_read_u16_register(hub, 0x00BA, REG_HOLDING)
+
+        pdf_detected = detect_inverter_from_pdf_registers(inverter_id, mppt_count)
+        if pdf_detected is not None:
+            invertertype, model = pdf_detected
+            self.inverter_model = _format_model_with_rated_power(model, rated_output_power_w)
+            _LOGGER.info(
+                f"{hub.name}: detected inverter via PDF registers "
+                f"(id=0x{inverter_id:02X}, mppt_count={mppt_count}, bat_ports={bat_port_num}, min_fw={min_firmware_version}, rated_output={rated_output_power_w}) -> {self.inverter_model}"
+            )
+            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+            read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+            if read_eps:
+                invertertype = invertertype | EPS
+            if read_dcb:
+                invertertype = invertertype | DCB
+            if read_pm:
+                invertertype = invertertype | PM
+            return invertertype
+
+        if inverter_id is None:
+            _LOGGER.debug(f"{hub.name}: PDF inverter detection unavailable; falling back to serial prefix detection")
+        else:
+            _LOGGER.warning(
+                f"{hub.name}: unknown PDF inverter id 0x{inverter_id:02X} "
+                f"(mppt_count={mppt_count}, bat_ports={bat_port_num}, min_fw={min_firmware_version}, rated_output={rated_output_power_w}, serial={seriesnumber}); "
+                "falling back to serial prefix detection"
+            )
 
         # derive invertertupe from seriiesnumber
         if seriesnumber.startswith("L30"):

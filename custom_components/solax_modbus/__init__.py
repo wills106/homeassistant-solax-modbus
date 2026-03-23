@@ -580,12 +580,25 @@ class SolaXModbusHub:
 
         # Gate normal polling until initial probe completes
         self._probe_ready = asyncio.Event()
+        self._initial_refresh_task: Any = None
+        self._initial_refresh_active: bool = False
+        self._initial_refresh_done: bool = False
 
         # Deferred setup state
         self._platforms_forwarded = False
         self._deferred_setup_task: Any = None
 
         # _LOGGER.debug("solax modbushub done %s", self.__dict__)
+
+    def _start_initial_refresh_if_needed(self) -> None:
+        """Start the one-shot initial refresh after platforms are available."""
+        if self._initial_refresh_done or self._initial_refresh_task is not None:
+            return
+        if getattr(self, "_stopping", False):
+            return
+        if not self._platforms_forwarded:
+            return
+        self._initial_refresh_task = self._hass.loop.create_task(self._run_initial_refresh_when_ready())
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
         import asyncio
@@ -656,13 +669,16 @@ class SolaXModbusHub:
                 await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
                 self._platforms_forwarded = True
                 _LOGGER.debug(f"{self._name}: platforms forwarded successfully")
+                self._start_initial_refresh_if_needed()
             except ValueError as ex:
                 # If platforms are already set up, log warning but continue
                 # This shouldn't happen if unload worked properly, but handle gracefully
                 _LOGGER.warning(f"{self._name}: platforms already forwarded - reload may not work correctly: {ex}")
                 self._platforms_forwarded = True
+                self._start_initial_refresh_if_needed()
         else:
             _LOGGER.debug(f"{self._name}: platforms already forwarded on this hub instance, skipping")
+            self._start_initial_refresh_if_needed()
 
         self._init_task = None
 
@@ -695,6 +711,7 @@ class SolaXModbusHub:
                     return
                 await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
                 self._platforms_forwarded = True
+                self._start_initial_refresh_if_needed()
                 return
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: deferred setup iteration failed: {ex}")
@@ -960,21 +977,30 @@ class SolaXModbusHub:
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
             return False, 0
+        if self._initial_refresh_active:
+            _LOGGER.debug(f"{self._name}: skipping scheduled poll – initial refresh still running")
+            return False, 0
+        agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group)
+        await self._maybe_refresh_energy_dashboard_on_primary_update()
+        # Return aggregate result and updated sensor count to caller for logging
+        return agg_res, updated_sensors
+
+    async def _refresh_interval_group_once(self, interval_group: Any, bypass_slowdown: bool = False) -> tuple[bool, int]:
+        """Refresh one interval group once."""
         if not interval_group.device_groups:
             return True, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
-        agg_res = True  # aggregate result across all device groups in this interval
-        updated_sensors = 0  # how many entities were pushed this cycle
-        # Use cyclecount from caller, not increment here
-        if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in list(interval_group.device_groups.values()):  # not sure if this does not break things or affects performance
+        agg_res = True
+        updated_sensors = 0
+        if bypass_slowdown or (self.cyclecount % self.slowdown) == 0:
+            for group in list(interval_group.device_groups.values()):
                 group_result = await self.async_read_modbus_data(group)
                 agg_res = agg_res and group_result
                 if group_result:
                     if self.slowdown > 1:
                         _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
-                    self.slowdown = 1  # return to full polling after successful cycle
+                    self.slowdown = 1
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                     updated_sensors += len(group.sensors)
@@ -986,12 +1012,33 @@ class SolaXModbusHub:
                         self.data.pop(i, None)
                     for i in self.sleepzero:
                         self.data[i] = 0
-                    # self.data = {} # invalidate data - do we want this ??
-
                 _LOGGER.debug(f"{self._name}: device group read done")
-        await self._maybe_refresh_energy_dashboard_on_primary_update()
-        # Return aggregate result and updated sensor count to caller for logging
         return agg_res, updated_sensors
+
+    async def _run_initial_refresh_when_ready(self) -> None:
+        """Do a one-time initial refresh of all scan groups after startup probe has completed."""
+        await self._probe_ready.wait()
+        if getattr(self, "_stopping", False) or self._initial_refresh_done or not self.groups:
+            return
+        # Let entity setup settle, then populate values once from slow to fast groups.
+        await asyncio.sleep(0.2)
+        self._initial_refresh_active = True
+        try:
+            for interval in sorted(self.groups.keys(), reverse=True):
+                interval_group = self.groups.get(interval)
+                if interval_group is None or not interval_group.device_groups:
+                    continue
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s")
+                async with interval_group.poll_lock:
+                    agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
+                await self._maybe_refresh_energy_dashboard_on_primary_update()
+                _LOGGER.debug(
+                    f"{self._name}: initial refresh for interval {interval}s finished "
+                    f"(ok={agg_res}, sensors={updated_sensors})"
+                )
+        finally:
+            self._initial_refresh_active = False
+            self._initial_refresh_done = True
 
     async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
         if not self._hass:
@@ -1076,7 +1123,7 @@ class SolaXModbusHub:
                 interval_group.unsub_interval_method = None
         self.groups.clear()
         # 2) stop any running tasks
-        for tname in ("_initial_bisect_task", "_recheck_task"):
+        for tname in ("_initial_bisect_task", "_recheck_task", "_initial_refresh_task"):
             task = getattr(self, tname, None)
             if task and not task.done():
                 try:
