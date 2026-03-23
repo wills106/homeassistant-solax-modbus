@@ -1798,6 +1798,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         name="Export Control User Limit",
         key="export_control_user_limit",
         register=0x42,
+        register_data_type=REGISTER_U16,
         fmt="i",
         native_min_value=0,
         native_max_value=2500,

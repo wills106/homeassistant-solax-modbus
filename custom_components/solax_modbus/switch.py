@@ -186,7 +186,12 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
         payload: int = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)
         _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
-        await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+        await self._hub.async_write_registers_single(
+            unit=self._modbus_addr,
+            address=self._register,
+            payload=payload,
+            register_data_type=getattr(self.entity_description, "register_data_type", None),
+        )
 
     @property
     def is_on(self) -> bool | None:
