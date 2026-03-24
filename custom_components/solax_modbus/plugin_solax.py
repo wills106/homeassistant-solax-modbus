@@ -349,19 +349,31 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     elif power_control == "Enabled Feedin Priority":
         # Maximize grid export by using excess PV and battery
         if pv_power > house_load:
-            ap_target = 0 - pv_power - battery_power_charge  # Export all excess
+            # If more power than house load, try to export all excess
+            # power. If this is larger than the inverter/export limit
+            # it will be internally limited and any excess PV will go
+            # to the battery.
+            ap_target = 0 - pv_power
         else:
-            ap_target = 0 - house_load  # Just supply house load
+            # Insufficient power from PV, so just cover house load. The
+            # battery will discharge to cover any deficit where possible.
+            # If the battery is drained completely, grid will cover deficit.
+            ap_target = 0 - house_load
         power_control = "Enabled Power Control"
 
     elif power_control == "Enabled No Discharge":
         # Hold battery level by preventing discharge
         if battery_capacity < 98:
             # Use PV to supply house load, import from grid only what's needed
-            ap_target = 0 - pv_power
+            # Any excess PV above house load will go to the battery
+            ap_target = 0 - min(house_load, pv_power)
             power_control = "Enabled Power Control"
         else:
-            ap_target = 0  # Battery full, no action needed
+            # When the battery is fully charged (allowing a tolerance to prevent
+            # older inverters shutting down PV), then we can run the default work
+            # mode of the inverter. If the battery discharges during the default
+            # mode, then once below the 98% threshold we will resume VPP.
+            ap_target = 0
             power_control = "Disabled"
 
     elif power_control == "Disabled":
