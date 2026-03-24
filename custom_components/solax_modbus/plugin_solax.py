@@ -949,9 +949,7 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return int(
-        datadict.get("pv_power_1", 0)
-        + datadict.get("pv_power_2", 0)
-        + datadict.get("pv_power_3", 0)
+        datadict.get("pv_power_total", 0)
         - datadict.get("battery_power_charge", 0)
         - datadict.get("measured_power", 0)
         + datadict.get("meter_2_measured_power", 0)
@@ -8121,22 +8119,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
-        name="House Load Alt",
-        key="house_load_alt",
-        value_function=value_function_house_load_alt,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=AC | HYBRID,
-        entity_registry_enabled_default=False,
-        depends_on=[
-            "pv_power_1",
-            "pv_power_2",
-            "pv_power_3",
-        ],
-        icon="mdi:home-lightning-bolt",
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Inverter Power",
         key="inverter_power",
         value_function=value_function_inverter_power_g5,
@@ -8161,6 +8143,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "pv_power_4",
         ],
         icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="House Load Alt",
+        key="house_load_alt",
+        value_function=value_function_house_load_alt,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=AC | HYBRID,
+        entity_registry_enabled_default=False,
+        depends_on=[
+            "pv_power_total",
+        ],
+        icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name="Remotecontrol Autorepeat Remaining",
