@@ -118,6 +118,7 @@ ALL_PM_GROUP = PM
 # Plugin-Level Register Validation
 # ============================================================================
 
+
 def _validation_cache(datadict: dict[str, Any], key: str) -> dict[str, Any]:
     """Return a per-hub cache stored inside the hub data dict."""
     cache = datadict.get("_validation_cache")
