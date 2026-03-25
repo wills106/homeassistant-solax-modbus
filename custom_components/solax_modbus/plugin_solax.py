@@ -119,9 +119,18 @@ ALL_PM_GROUP = PM
 # Plugin-Level Register Validation
 # ============================================================================
 
-# Global storage for last known good values
-_pm_last_known_values: dict[str, Any] = {}
-_soc_last_known_values: dict[str, Any] = {}
+
+def _validation_cache(datadict: dict[str, Any], key: str) -> dict[str, Any]:
+    """Return a per-hub cache stored inside the hub data dict."""
+    cache = datadict.get("_validation_cache")
+    if not isinstance(cache, dict):
+        cache = {}
+        datadict["_validation_cache"] = cache
+    scoped = cache.get(key)
+    if not isinstance(scoped, dict):
+        scoped = {}
+        cache[key] = scoped
+    return scoped
 
 
 def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
@@ -130,7 +139,8 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
     - PM U32 sensors: detect 0xFFFFFF00 overflow pattern and use last known value.
     - battery_capacity: treat zero SoC as invalid and use last known value.
     """
-    global _pm_last_known_values, _soc_last_known_values
+    pm_last_known_values = _validation_cache(datadict, "pm_last_known_values")
+    soc_last_known_values = _validation_cache(datadict, "soc_last_known_values")
 
     if descr.key == "battery_capacity":
         try:
@@ -139,7 +149,7 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
             soc_value = None
 
         if soc_value is not None and soc_value == 0:
-            last_value = _soc_last_known_values.get(descr.key)
+            last_value = soc_last_known_values.get(descr.key)
             if last_value is not None and last_value > 5:
                 # Only treat zero as invalid when a real SoC was seen before.
                 _LOGGER.warning(f"SoC zero reading for {descr.key} -> using last: {last_value}%")
@@ -147,24 +157,24 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
             return value
 
         if soc_value is not None and soc_value > 0:
-            _soc_last_known_values[descr.key] = value
+            soc_last_known_values[descr.key] = value
 
     # PM U32 sensors only (filter by key prefix)
     if descr.key.startswith("pm_") and descr.register_data_type == REGISTER_U32:
         # Handle None from core errors
         if value is None:
-            last_value = _pm_last_known_values.get(descr.key, 0)
+            last_value = pm_last_known_values.get(descr.key, 0)
             _LOGGER.warning(f"PM sensor {descr.key} received None -> using last: {last_value}W")
             return last_value
 
         # Handle U32 overflow pattern
         if value >= 0xFFFFFF00:
-            last_value = _pm_last_known_values.get(descr.key, 0)
+            last_value = pm_last_known_values.get(descr.key, 0)
             _LOGGER.warning(f"PM U32 overflow {descr.key}: 0x{value:08X} -> using last: {last_value}W")
             return last_value
 
         # Store valid values for future use
-        _pm_last_known_values[descr.key] = value
+        pm_last_known_values[descr.key] = value
 
     return value
 
