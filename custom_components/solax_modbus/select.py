@@ -12,6 +12,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     BUTTONREPEAT_FIRST,
+    CONF_BATTERY_COUNT,
+    CONF_MPPT_COUNT,
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
@@ -20,6 +22,7 @@ from .const import (
     WRITE_SINGLE_MODBUS,
     BaseModbusSelectEntityDescription,
     autorepeat_set,
+    topology_allows_entity,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,6 +44,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     entities = []
     for select_info in plugin.SELECT_TYPES:
+        if not topology_allows_entity(hub.config, select_info.key):
+            _LOGGER.debug(
+                "%s: skipping select %s due to topology limits mppt_count=%s battery_count=%s",
+                hub.name,
+                select_info.key,
+                hub.config.get(CONF_MPPT_COUNT),
+                hub.config.get(CONF_BATTERY_COUNT),
+            )
+            continue
         if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist):
             select_info = replace(select_info, reverse_option_dict={v: k for k, v in select_info.option_dict.items()})
             if not (select_info.name.startswith(inverter_name_suffix)):

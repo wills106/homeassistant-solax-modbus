@@ -12,6 +12,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    CONF_BATTERY_COUNT,
+    CONF_MPPT_COUNT,
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
@@ -21,6 +23,7 @@ from .const import (
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     BaseModbusNumberEntityDescription,
+    topology_allows_entity,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,6 +53,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             ) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix):
                     newdescr = replace(number_info, read_scale=value)
+        if not topology_allows_entity(hub.config, newdescr.key):
+            _LOGGER.debug(
+                "%s: skipping number %s due to topology limits mppt_count=%s battery_count=%s",
+                hub.name,
+                newdescr.key,
+                hub.config.get(CONF_MPPT_COUNT),
+                hub.config.get(CONF_BATTERY_COUNT),
+            )
+            continue
         if plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist):
             if not (newdescr.name.startswith(inverter_name_suffix)):
                 newdescr = replace(newdescr, name=inverter_name_suffix + newdescr.name)

@@ -12,12 +12,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
+    CONF_BATTERY_COUNT,
+    CONF_MPPT_COUNT,
     CONF_MODBUS_ADDR,
     DEBOUNCE_TIME,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
     BaseModbusSwitchEntityDescription,
+    topology_allows_entity,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,6 +43,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
+        if not topology_allows_entity(hub.config, switch_info.key):
+            _LOGGER.debug(
+                "%s: skipping switch %s due to topology limits mppt_count=%s battery_count=%s",
+                hub.name,
+                switch_info.key,
+                hub.config.get(CONF_MPPT_COUNT),
+                hub.config.get(CONF_BATTERY_COUNT),
+            )
+            continue
         if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
             if not (switch_info.name.startswith(inverter_name_suffix)):
                 switch_info = replace(switch_info, name=inverter_name_suffix + switch_info.name)
