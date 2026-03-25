@@ -1206,9 +1206,12 @@ class SolaXModbusHub:
                 return None
         return resp
 
-    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]  # DataType compat layer
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         async with self._lock:
             await self._check_connection()
             try:
@@ -1224,14 +1227,14 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
         return resp
 
-    async def async_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         """Write register."""
         awake = self.plugin.isAwake(self.data)
         if awake:
-            return await self.async_lowlevel_write_register(unit, address, payload)
+            return await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
         else:
             # try to write anyway - could be a command that inverter responds to while asleep
-            res = await self.async_lowlevel_write_register(unit, address, payload)
+            res = await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
             # put request in queue, in order to repeat it when inverter wakes up
             self.writequeue[address] = payload
             # wake up inverter
@@ -1246,9 +1249,14 @@ class SolaXModbusHub:
                 _LOGGER.warning("cannot wakeup inverter: no awake button found")
             return res
 
-    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
+    async def async_write_registers_single(
+        self, unit: int, address: int, payload: int, register_data_type: str | None = None
+    ) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]  # DataType compat layer
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             await self._check_connection()
@@ -2187,11 +2195,14 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus input registers: core modbus access failed") from e
 
-    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         """
         Write a single register using the Core hub's client.
         """
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
@@ -2216,9 +2227,14 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error writing single Modbus register: core modbus access failed") from e
 
-    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
+    async def async_write_registers_single(
+        self, unit: int, address: int, payload: int, register_data_type: str | None = None
+    ) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             hub = await self._check_connection()

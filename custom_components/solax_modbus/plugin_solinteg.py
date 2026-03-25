@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from homeassistant.components.number import NumberMode
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -343,6 +343,21 @@ NUMBER_TYPES = [
     #
     ###
     SolintegModbusNumberEntityDescription(
+        name="Battery Charge Discharge Power Target",
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
+    ),
+    SolintegModbusNumberEntityDescription(
         name="Battery SOC Min On Grid",
         key="battery_soc_min_ongrid",
         register=52503,
@@ -450,7 +465,8 @@ SELECT_TYPES = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            # 0x301, 0x302 : EMS Modes
+            0x303: "Charge-Discharge",
             0x400: "ToU",
         },
         entity_category=EntityCategory.CONFIG,
@@ -1377,7 +1393,8 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            # 0x301, 0x302 : EMS Modes
+            0x303: "Charge-Discharge",
             0x400: "ToU",
         },
         internal=True,
@@ -1430,6 +1447,18 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=_simple_switch,
         allowedtypes=HYBRID,
         internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        scale=1,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
     ),
     SolintegModbusSensorEntityDescription(
         key="battery_soc_min_ongrid",
@@ -1533,13 +1562,13 @@ class solinteg_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
 
         model = await _read_model(hub)
-        if model is None:
-            _LOGGER.error(f"{hub.name}: could not read model at 0x{10008:x}")
-            bh, bl = 0, 0
+        if model is None or model == 0:
+            _LOGGER.error(f"{hub.name}: could not read inverter model")
+            return 0
         else:
             self.inverter_model = _model_str(model)  # as string
-            bh, bl = model // 256, model % 256
 
+        bh, bl = model // 256, model % 256
         invertertype = 0
         if bh in [30, 31, 32]:
             invertertype = invertertype | HYBRID
@@ -1556,30 +1585,31 @@ class solinteg_plugin(plugin_base):
             mppt = 2
             invertertype = invertertype | MPPT2
 
-        if invertertype > 0:
+        try:
             # prepare mppt mask/dict
             _mppt_mask = 2**mppt - 1
             # copy and update
             sel_dd = _mppt_dd.copy() | {2**i: f"mppt{i + 1}" for i in range(mppt)}
             # set the options
-            for i, sscan in enumerate(self.SELECT_TYPES):
-                if sscan.key == "shadow_scan":
-                    self.SELECT_TYPES[i] = replace(sscan, option_dict=sel_dd)
+            for i, ssel in enumerate(self.SELECT_TYPES):
+                if ssel.key == "shadow_scan":
+                    self.SELECT_TYPES[i] = replace(ssel, option_dict=sel_dd)  # type: ignore
                     break
 
             # use own mask
-            for i, sscan in enumerate(self.SENSOR_TYPES):
-                if sscan.key == "shadow_scan":
-                    self.SENSOR_TYPES[i] = replace(sscan, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))
+            for i, ssensor in enumerate(self.SENSOR_TYPES):
+                if ssensor.key == "shadow_scan":
+                    self.SENSOR_TYPES[i] = replace(ssensor, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))  # type: ignore
                     break
+        except Exception:
+            _LOGGER.error(f"{hub.name}: unexpected error", exc_info=True)
 
-            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-            if read_eps:
-                invertertype = invertertype | EPS
-            if read_dcb:
-                invertertype = invertertype | DCB
-
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        if read_eps:
+            invertertype = invertertype | EPS
+        if read_dcb:
+            invertertype = invertertype | DCB
         _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
 
         return invertertype

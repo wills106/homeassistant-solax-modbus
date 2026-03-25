@@ -150,10 +150,20 @@ class SolaXModbusSelect(SelectEntity):
         payload: Any = reverse_dict.get(option, None) if reverse_dict else None
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
-            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_registers_single(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
-            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_register(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             self._hub.localsUpdated = True  # mark to save permanently
