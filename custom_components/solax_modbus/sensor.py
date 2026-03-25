@@ -501,7 +501,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     return True
 
 
-class SolaXModbusSensor(SensorEntity):
+class SolaXModbusSensor(SensorEntity):  # type: ignore[misc]
     """Representation of an SolaX Modbus sensor."""
 
     def __init__(
@@ -530,12 +530,12 @@ class SolaXModbusSensor(SensorEntity):
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback
+    @callback  # type: ignore[misc]
     def modbus_data_updated(self) -> None:
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         self.async_write_ha_state()
 
-    @callback
+    @callback  # type: ignore[misc]
     def _update_state(self) -> None:  # never called ?????
         _LOGGER.info(f"update_state {self.entity_description.key} : {self._hub.data.get(self.entity_description.key, 'None')}")
         if self.entity_description.key in self._hub.data:
@@ -565,7 +565,7 @@ class SolaXModbusSensor(SensorEntity):
         return self._attr_extra_state_attributes
 
 
-class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
+class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):  # type: ignore[misc]
     """Energy sensor that calculates cumulative energy using Riemann sum integration."""
 
     def __init__(
@@ -638,7 +638,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         # Register with hub
         await self._hub.async_add_solax_modbus_sensor(self)
 
-    @callback
+    @callback  # type: ignore[misc]
     def modbus_data_updated(self) -> None:
         """Calculate energy when data is updated."""
         if self._riemann_mapping is None:
@@ -740,9 +740,9 @@ def entityToList(
                 for serie_value in range(sensor_description.value_series):
                     newdescr = sensor_description
                     if isinstance(newdescr.name, str):
-                        newdescr = replace(newdescr, name=name_prefix + newdescr.name.replace("{}", str(serie_value + 1)))
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name.replace("{}", str(serie_value + 1)))  # type: ignore[call-arg]
                     if isinstance(newdescr.key, str):
-                        newdescr = replace(newdescr, key=key_prefix + newdescr.key.replace("{}", str(serie_value + 1)))
+                        newdescr = replace(newdescr, key=key_prefix + newdescr.key.replace("{}", str(serie_value + 1)))  # type: ignore[call-arg]
                     if isinstance(sensor_description.register, int):
                         newdescr = replace(newdescr, register=sensor_description.register + serie_value)
                     entityToListSingle(
@@ -760,12 +760,12 @@ def entityToList(
                 newdescr = sensor_description
                 try:
                     if isinstance(newdescr.name, str):
-                        newdescr = replace(newdescr, name=name_prefix + newdescr.name)
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name)  # type: ignore[call-arg]
                 except Exception:
                     pass
 
                 if isinstance(newdescr.key, str):
-                    newdescr = replace(newdescr, key=key_prefix + newdescr.key)
+                    newdescr = replace(newdescr, key=key_prefix + newdescr.key)  # type: ignore[call-arg]
                 entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 

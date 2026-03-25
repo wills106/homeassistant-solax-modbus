@@ -9,7 +9,6 @@ import logging
 import time as _mtime
 from dataclasses import dataclass, replace
 from datetime import timedelta
-from time import time
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 from weakref import ref as WeakRef
@@ -128,7 +127,7 @@ VERBOSE_CYCLES = 20
 
 
 try:
-    from homeassistant.components.modbus import ModbusHub as CoreModbusHub  # type: ignore[attr-defined]
+    from homeassistant.components.modbus import ModbusHub as CoreModbusHub
     from homeassistant.components.modbus import get_hub as get_core_hub
 except ImportError:
 
@@ -809,12 +808,12 @@ class SolaXModbusHub:
 
         # DEFENSIVE: Check if device_info is None (should never happen)
         if device_info is None:
-            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")  # type: ignore[unreachable]
+            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")
             return ""
 
         # DEFENSIVE: Check if it's a dict-like object
         if not isinstance(device_info, dict):
-            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")  # type: ignore[unreachable]
+            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")
             return ""
 
         # DEFENSIVE: Check if "identifiers" key exists
@@ -829,7 +828,7 @@ class SolaXModbusHub:
 
         # DEFENSIVE: Check if identifiers is None
         if identifiers is None:
-            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")  # type: ignore[unreachable]
+            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")
             return ""
 
         # DEFENSIVE: Check if identifiers is iterable
@@ -849,7 +848,7 @@ class SolaXModbusHub:
 
     # following function is the added_to_hass callback for sensors, numbers and selects
     @callback
-    async def async_add_solax_modbus_sensor(self, sensor: SolaXModbusSensor) -> None:
+    async def async_add_solax_modbus_sensor(self, sensor: Any) -> None:
         """Listen for data updates."""
         # attention, this function is not only called for sensors also for number, select
         # This is the first sensor, set up interval.
@@ -921,7 +920,7 @@ class SolaXModbusHub:
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
     @callback
-    async def async_remove_solax_modbus_sensor(self, sensor: Any) -> None:
+    async def async_remove_solax_modbus_sensor(self, sensor: SolaXModbusSensor) -> None:
         """Remove data update."""
         interval = self.scan_group(sensor)
         interval_group = self.groups.get(interval, None)

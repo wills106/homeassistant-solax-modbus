@@ -14,7 +14,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+from homeassistant.helpers.entity import (
     EntityCategory,
 )
 

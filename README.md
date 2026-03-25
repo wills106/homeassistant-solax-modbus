@@ -1,3 +1,55 @@
+TimeV3.3
+
+Merged updated Main branch back into TimeV3
+CI-CD failed, so asked Roo to fix, got the following outcome:
+
+Task Completed
+
+I've fixed all the pre-commit errors in the homeassistant-solax-modbus project:
+
+Summary of Changes
+1. README.md - Fixed codespell errors
+Changed "seperate" → "separate" (line 71)
+Changed "inpact" → "impact" (line 109)
+2. init.py - Fixed mypy and ruff errors
+Removed unused import from time import time (line 12)
+Removed unused # type: ignore[attr-defined] comments
+Removed unused # type: ignore[unreachable] comments
+Fixed async_add_solax_modbus_sensor and async_remove_solax_modbus_sensor parameter types
+Added # type: ignore[misc] to get_core_hub fallback function
+3. const.py - Fixed mypy errors
+Added # type: ignore[misc] to all base entity description classes:
+BaseModbusSensorEntityDescription
+BaseModbusButtonEntityDescription
+BaseModbusSelectEntityDescription
+BaseModbusSwitchEntityDescription
+BaseModbusTimeEntityDescription
+BaseModbusNumberEntityDescription
+4. time.py - Fixed mypy errors
+Added from typing import Any import
+Added type annotations to async_setup_entry and __init__ methods
+Added # type: ignore[misc] to @callback decorator
+Fixed async_set_value to return None explicitly
+5. switch.py, select.py, number.py, button.py, sensor.py - Fixed mypy errors
+Added # type: ignore[misc] to entity classes
+Added # type: ignore[misc] to @callback decorators
+Removed unused # type: ignore[assignment] comments
+Added # type: ignore[call-arg] to replace() calls in sensor.py
+6. config_flow.py - Fixed mypy errors
+Removed unused # type: ignore[comparison-overlap] comment
+Added # type: ignore[misc, call-arg] to ConfigFlowHandler class
+7. energy_dashboard.py - Fixed mypy errors
+Re-added necessary # type: ignore[arg-type] and # type: ignore[typeddict-item] comments for DeviceInfo
+Added # type: ignore[misc] to @callback decorators
+8. pymodbus_compat.py - Fixed mypy errors
+Removed unused # type: ignore[misc] comment
+9. Plugin files - Fixed mypy errors (all plugin_*.py files)
+Removed unused # type: ignore[attr-defined] comments from imports
+Added TIME_TYPES=[] parameter to plugin instance calls where missing
+All pre-commit errors have been resolved. The codebase now passes mypy, ruff, and codespell checks.
+
+------
+
 TimeV3.2
 
 Removed unneeded value_function:, autorepeat:, depends_on:, sensor_key: from "class BaseModbusTimeEntityDescription(TimeEntityDescription):" in const.py
@@ -68,7 +120,7 @@ I have left in the GEN4-6 Selects as I don't have the means to test them
 
 TIME_OPTIONS & TIME_OPTIONS_GEN4 need reworking to allow you to set time for every minute, currently it's still set in 5min blocks
 
-I also haven't looked into key="backup_charge_end_h", for the GEN3 yet, where you read / write the hours on one register and the mins are on seperate hours. This register set doesn't use high8 & low8
+I also haven't looked into key="backup_charge_end_h", for the GEN3 yet, where you read / write the hours on one register and the mins are on separate hours. This register set doesn't use high8 & low8
 
 ------
 
@@ -106,7 +158,7 @@ This fix ensures that the time module is always accessed via its alias _mtime, p
 
 ------
 
-I also asked it, if it would have an inpact on any of the other files...
+I also asked it, if it would have an impact on any of the other files...
 
 ------
 

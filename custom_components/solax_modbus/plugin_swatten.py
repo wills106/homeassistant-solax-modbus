@@ -12,11 +12,11 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
 )
-from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+from homeassistant.helpers.entity import (
     EntityCategory,
 )
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
+from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,
@@ -690,6 +690,7 @@ plugin_instance = swatten_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=100,
     # order16 = "big",
     order32="little",

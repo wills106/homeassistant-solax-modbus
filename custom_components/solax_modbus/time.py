@@ -1,5 +1,7 @@
 import logging
-from datetime import datetime, time as datetime_time
+from datetime import datetime
+from datetime import time as datetime_time
+from typing import Any
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.const import CONF_NAME
@@ -17,7 +19,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry, async_add_entities) -> None:
+async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> None:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
         modbus_addr = entry.data.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
@@ -47,10 +49,10 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     async_add_entities(entities)
 
 
-class SolaXModbusTimeEntity(TimeEntity):
+class SolaXModbusTimeEntity(TimeEntity):  # type: ignore[misc]
     """Representation of an SolaX Modbus time entity."""
 
-    def __init__(self, platform_name, hub, modbus_addr, device_info, time_info) -> None:
+    def __init__(self, platform_name: str, hub: Any, modbus_addr: int, device_info: Any, time_info: Any) -> None:
         """Initialize the time entity."""
         self._platform_name = platform_name
         self._hub = hub
@@ -66,14 +68,14 @@ class SolaXModbusTimeEntity(TimeEntity):
         # wordcount for separate register format (e.g., hours and minutes in adjacent registers)
         self._wordcount = getattr(time_info, "wordcount", None) or 1
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback
+    @callback  # type: ignore[misc]
     def modbus_data_updated(self) -> None:
         """Update the cached native_value when modbus data is updated."""
         # Clear the cached property by setting _attr_native_value
@@ -115,7 +117,7 @@ class SolaXModbusTimeEntity(TimeEntity):
                 except ValueError:
                     continue
             # Try parsing as HH:MM:SS with seconds (8 chars like 05:25:30)
-            if len(time_val) == 8 and time_val[2] == ':' and time_val[5] == ':':
+            if len(time_val) == 8 and time_val[2] == ":" and time_val[5] == ":":
                 try:
                     parsed = datetime.strptime(time_val, "%H:%M:%S")
                     _LOGGER.debug(f"{self._platform_name}: parsed {self._key} as HH:MM:SS: {parsed.time()}")
@@ -123,7 +125,7 @@ class SolaXModbusTimeEntity(TimeEntity):
                 except ValueError:
                     pass
             # Try parsing as HH:MM (5 chars like 05:25)
-            if len(time_val) == 5 and time_val[2] == ':':
+            if len(time_val) == 5 and time_val[2] == ":":
                 try:
                     parsed = datetime.strptime(time_val, "%H:%M")
                     _LOGGER.debug(f"{self._platform_name}: parsed {self._key} as HH:MM: {parsed.time()}")
@@ -138,14 +140,14 @@ class SolaXModbusTimeEntity(TimeEntity):
         if isinstance(time_val, (int, float)):
             # Try to convert to string and parse
             time_str = str(time_val)
-            if len(time_str) == 5 and time_str[2] == ':':
+            if len(time_str) == 5 and time_str[2] == ":":
                 try:
                     parsed = datetime.strptime(time_str, "%H:%M")
                     _LOGGER.debug(f"{self._platform_name}: parsed numeric {self._key} as HH:MM: {parsed.time()}")
                     return parsed.time()
                 except ValueError:
                     pass
-            if len(time_str) == 8 and time_str[2] == ':' and time_str[5] == ':':
+            if len(time_str) == 8 and time_str[2] == ":" and time_str[5] == ":":
                 try:
                     parsed = datetime.strptime(time_str, "%H:%M:%S")
                     _LOGGER.debug(f"{self._platform_name}: parsed numeric {self._key} as HH:MM:SS: {parsed.time()}")
@@ -167,7 +169,8 @@ class SolaXModbusTimeEntity(TimeEntity):
         return self._attr_native_value
 
     @property
-    def name(self):
+    @property
+    def name(self) -> str:
         """Return the name."""
         return f"{self._platform_name} {self._name}"
 
@@ -183,7 +186,7 @@ class SolaXModbusTimeEntity(TimeEntity):
     async def async_set_value(self, value: datetime_time) -> None:
         """Set the time value (required by Home Assistant time component)."""
         if value is None:
-            return
+            return None
 
         # Convert time to string
         time_str = value.strftime("%H:%M")

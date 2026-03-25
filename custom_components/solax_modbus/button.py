@@ -74,7 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     return True
 
 
-class SolaXModbusButton(ButtonEntity):
+class SolaXModbusButton(ButtonEntity):  # type: ignore[misc]
     """Representation of an SolaX Modbus button."""
 
     def __init__(

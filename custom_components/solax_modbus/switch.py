@@ -102,7 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     return True
 
 
-class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
+class SolaXModbusSwitch(SwitchEntity, RestoreEntity):  # type: ignore[misc]
     """Representation of an SolaX Modbus switch."""
 
     entity_description: BaseModbusSwitchEntityDescription

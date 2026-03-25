@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     return True
 
 
-class SolaXModbusSelect(SelectEntity):
+class SolaXModbusSelect(SelectEntity):  # type: ignore[misc]
     """Representation of an SolaX Modbus select."""
 
     entity_description: BaseModbusSelectEntityDescription
@@ -117,7 +117,7 @@ class SolaXModbusSelect(SelectEntity):
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback
+    @callback  # type: ignore[misc]
     def modbus_data_updated(self) -> None:
         self.async_write_ha_state()
 

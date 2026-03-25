@@ -165,7 +165,7 @@ def _register_energy_dashboard_switch_listener(hass: Any) -> None:
     if domain_data.get("_ed_switch_listener_registered"):
         return
 
-    @callback
+    @callback  # type: ignore[misc]
     def _handle_local_switch_event(event: Any) -> Any:
         data = event.data or {}
         hub_name = data.get("hub_name")
@@ -190,7 +190,7 @@ def _register_energy_dashboard_local_data_listener(hass: Any) -> None:
     if domain_data.get("_ed_local_data_listener_registered"):
         return
 
-    @callback
+    @callback  # type: ignore[misc]
     def _handle_local_data_loaded(event: Any) -> Any:
         data = event.data or {}
         hub_name = data.get("hub_name")

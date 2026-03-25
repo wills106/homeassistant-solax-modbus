@@ -200,7 +200,7 @@ class plugin_base:
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSensorEntityDescription(SensorEntityDescription):
+class BaseModbusSensorEntityDescription(SensorEntityDescription):  # type: ignore[misc]
     """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -244,7 +244,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusButtonEntityDescription(ButtonEntityDescription):
+class BaseModbusButtonEntityDescription(ButtonEntityDescription):  # type: ignore[misc]
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -258,7 +258,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSelectEntityDescription(SelectEntityDescription):
+class BaseModbusSelectEntityDescription(SelectEntityDescription):  # type: ignore[misc]
     """Base class for modbus select declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -276,7 +276,7 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
+class BaseModbusSwitchEntityDescription(SwitchEntityDescription):  # type: ignore[misc]
     """Base class for modbus switch declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -293,7 +293,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusTimeEntityDescription(TimeEntityDescription):
+class BaseModbusTimeEntityDescription(TimeEntityDescription):  # type: ignore[misc]
     """Base class for modbus time declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
@@ -308,7 +308,7 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseModbusNumberEntityDescription(NumberEntityDescription):
+class BaseModbusNumberEntityDescription(NumberEntityDescription):  # type: ignore[misc]
     """Base class for modbus number declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin

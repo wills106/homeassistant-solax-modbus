@@ -15,11 +15,11 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+from homeassistant.helpers.entity import (
     EntityCategory,
 )
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
+from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
     CONF_READ_EPS,
     DEFAULT_READ_DCB,

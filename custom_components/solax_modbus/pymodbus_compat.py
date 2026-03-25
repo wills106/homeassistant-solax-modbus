@@ -16,7 +16,7 @@ try:
     from packaging.version import parse as _v
 except Exception:  # packaging may be absent in some environments
 
-    def _v(s: str) -> tuple[int, ...]:  # type: ignore[misc]  # Fallback has different signature than packaging.version.parse
+    def _v(s: str) -> tuple[int, ...]:  # Fallback has different signature than packaging.version.parse
         """Parse version string into tuple of integers."""
         parts: list[int] = []
         for p in str(s).split("."):

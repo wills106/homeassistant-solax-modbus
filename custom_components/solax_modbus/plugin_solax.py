@@ -17,7 +17,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
+from homeassistant.helpers.entity import EntityCategory  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
     BUTTONREPEAT_FIRST,
