@@ -2,117 +2,121 @@
   "config": {
     "step": {
       "user": {
-        "title": "Definice připojení přes Modbus",
+        "title": "Základní nastavení měniče",
         "data": {
           "name": "Předpona pro názvy senzorů měniče",
-          "read_modbus_addr": "Adresa Modbus měniče",
-          "interface": "Rozhraní",
-          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Možnost záložního zdroje (EPS)",
+          "plugin": "Vyberte typ měniče",
+          "interface": "Rozhraní"
+        }
+      },
+      "connection": {
+        "title": "Připojení a detekce",
+        "data": {
+          "read_modbus_addr": "Modbus adresa měniče",
+          "host": "Adresa měniče nebo Modbus rozhraní",
+          "port": "TCP port pro připojení k měniči",
+          "tcp_type": "Varianta protokolu Modbus",
+          "read_serial_port": "Název sériového portu",
+          "baudrate": "Přenosová rychlost",
+          "read_core_hub": "Core Modbus hub použitý pro připojení k měniči",
+          "continue_without_detection": "Pokračovat i při neúspěšné detekci"
+        }
+      },
+      "topology": {
+        "title": "Detekovaná topologie",
+        "description": "Detekovaný model: {detected_model}\nDetekované sériové číslo: {detected_serial}\nDetekovaný počet MPPT: {mppt_value}\nDetekovaný počet baterií: {battery_value}\nDetekovaný výkon měniče: {power_value}\nPokud hodnota není zobrazena, zadejte ji ručně. Nastavením počtu baterií na 0 vypnete bateriové entity.",
+        "data": {
+          "mppt_count": "Nastavený počet MPPT",
+          "battery_count": "Nastavený počet baterií",
+          "inverter_power_kw": "Maximální výkon měniče v kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
+        }
+      },
+      "settings": {
+        "title": "Dotazování a volby",
+        "data": {
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "scan_interval_medium": "Střední interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)",
+          "inverter_name_suffix": "Přípona názvu měniče",
+          "energy_dashboard_device": "Virtuální zařízení Energy Dashboard",
+          "read_eps": "Nouzové napájení (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelní režim (Master-Slave)",
-          "plugin": "Vyberte druh měniče",
-          "scan_interval": "Výchozí interval dotazování (s)",
-          "time_out": "Časový limit dotazu (s)",
-          "inverter_name_suffix": "Přípona názvu měniče",
-          "scan_interval_medium": "Střední interval dotazování (s)",
-          "scan_interval_fast": "Rychlý interval dotazování (s)"
-        }
-      },
-      "serial": {
-        "title": "Parametry sériového rozhraní",
-        "data": {
-          "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
-        }
-      },
-      "tcp": {
-        "title": "Parametry TCP/IP",
-        "data": {
-          "host": "Adresa měniče nebo Modbus adaptéru",
-          "port": "TCP port připojení k měniči",
-          "tcp_type": "Varianta TCP protokolu Modbus"
-        }
-      },
-      "battery": {
-        "title": "Čtení bateriových modulů",
-        "data": {
-          "read_battery": "Povolit čtení"
-        }
-      },
-      "core": {
-        "title": "Core Modbus hub selection",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+          "time_out": "Časový limit požadavku (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
-      "already_configured": "Zařízení je již nakonfigurováno",
-      "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná adresa hostitele"
+      "already_configured": "Zařízení je již nastaveno",
+      "name_already_used": "Název již byl použit nebo je neplatný",
+      "invalid_host": "Neplatná adresa hostitele",
+      "invalid_core_hub": "Neplatný název Core Modbus hubu",
+      "cannot_detect": "Detekce měniče selhala. Zkontrolujte připojení nebo pokračujte ručně."
     },
     "abort": {
-      "already_configured": "Zařízení je již nakonfigurováno"
+      "already_configured": "Zařízení je již nastaveno"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Definice připojení přes Modbus",
+        "title": "Základní nastavení měniče",
         "data": {
           "name": "Předpona pro názvy senzorů měniče",
-          "read_modbus_addr": "Adresa Modbus měniče",
-          "interface": "Rozhraní",
-          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Možnost záložního zdroje (EPS)",
+          "plugin": "Vyberte typ měniče",
+          "interface": "Rozhraní"
+        }
+      },
+      "connection": {
+        "title": "Připojení a detekce",
+        "data": {
+          "read_modbus_addr": "Modbus adresa měniče",
+          "host": "Adresa měniče nebo Modbus rozhraní",
+          "port": "TCP port pro připojení k měniči",
+          "tcp_type": "Varianta protokolu Modbus",
+          "read_serial_port": "Název sériového portu",
+          "baudrate": "Přenosová rychlost",
+          "read_core_hub": "Core Modbus hub použitý pro připojení k měniči",
+          "continue_without_detection": "Pokračovat i při neúspěšné detekci"
+        }
+      },
+      "topology": {
+        "title": "Detekovaná topologie",
+        "description": "Detekovaný model: {detected_model}\nDetekované sériové číslo: {detected_serial}\nDetekovaný počet MPPT: {mppt_value}\nDetekovaný počet baterií: {battery_value}\nDetekovaný výkon měniče: {power_value}\nPokud hodnota není zobrazena, zadejte ji ručně. Nastavením počtu baterií na 0 vypnete bateriové entity.",
+        "data": {
+          "mppt_count": "Nastavený počet MPPT",
+          "battery_count": "Nastavený počet baterií",
+          "inverter_power_kw": "Maximální výkon měniče v kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
+        }
+      },
+      "settings": {
+        "title": "Dotazování a volby",
+        "data": {
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "scan_interval_medium": "Střední interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)",
+          "inverter_name_suffix": "Přípona názvu měniče",
+          "energy_dashboard_device": "Virtuální zařízení Energy Dashboard",
+          "read_eps": "Nouzové napájení (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Paralelní režim (Master-Slave)",
-          "plugin": "Vyberte druh měniče",
-          "scan_interval": "Výchozí interval dotazování (s)",
-          "time_out": "Časový limit dotazu (s)",
-          "inverter_name_suffix": "Přípona názvu měniče",
-          "scan_interval_medium": "Střední interval dotazování (s)",
-          "scan_interval_fast": "Rychlý interval dotazování (s)"
-        }
-      },
-      "serial": {
-        "title": "Parametry sériového rozhraní",
-        "data": {
-          "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
-        }
-      },
-      "tcp": {
-        "title": "Parametry TCP/IP",
-        "data": {
-          "host": "Adresa měniče nebo Modbus adaptéru",
-          "port": "TCP port připojení k měniči",
-          "tcp_type": "Varianta TCP protokolu Modbus"
-        }
-      },
-      "battery": {
-        "title": "Čtení bateriových modulů",
-        "data": {
-          "read_battery": "Povolit čtení"
-        }
-      },
-      "core": {
-        "title": "Core Modbus hub selection",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+          "time_out": "Časový limit požadavku (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
-      "already_configured": "Zařízení je již nakonfigurováno",
-      "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná adresa hostitele"
+      "already_configured": "Zařízení je již nastaveno",
+      "name_already_used": "Název již byl použit nebo je neplatný",
+      "invalid_host": "Neplatná adresa hostitele",
+      "invalid_core_hub": "Neplatný název Core Modbus hubu",
+      "cannot_detect": "Detekce měniče selhala. Zkontrolujte připojení nebo pokračujte ručně."
     },
     "abort": {
-      "already_configured": "Zařízení je již nakonfigurováno"
+      "already_configured": "Zařízení je již nastaveno"
     }
   }
 }

@@ -48,13 +48,16 @@ from .const import (
     BUTTONREPEAT_LOOP,
     BUTTONREPEAT_POST,
     CONF_BAUDRATE,
+    CONF_BATTERY_COUNT,
     CONF_CORE_HUB,
     CONF_DEBUG_SETTINGS,
     CONF_INTERFACE,
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
+    CONF_MPPT_COUNT,
     CONF_PLUGIN,
+    CONF_READ_BATTERY,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
@@ -309,6 +312,41 @@ def _load_plugin(plugin_name: str) -> ModuleType:
     return plugin
 
 
+def _mppt_flag_from_configured_count(plugin_module: ModuleType, mppt_count: int | None) -> int:
+    """Map a configured MPPT count to the plugin's MPPT mask bit, if any."""
+    if not isinstance(mppt_count, int):
+        return 0
+    flag_name = {
+        3: "MPPT3",
+        4: "MPPT4",
+        5: "MPPT5",
+        6: "MPPT6",
+        8: "MPPT8",
+        10: "MPPT10",
+    }.get(mppt_count)
+    if flag_name is None:
+        return 0
+    return int(getattr(plugin_module, flag_name, 0) or 0)
+
+
+def _apply_manual_topology_overrides(plugin_module: ModuleType, invertertype: int | None, config: dict[str, Any]) -> int | None:
+    """Apply configured MPPT/battery topology overrides to the detected inverter state."""
+    if invertertype in (None, 0):
+        return invertertype
+
+    battery_count = config.get(CONF_BATTERY_COUNT)
+    if isinstance(battery_count, int):
+        config[CONF_READ_BATTERY] = battery_count > 0
+
+    effective = int(invertertype)
+    all_mppt_group = int(getattr(plugin_module, "ALL_MPPT_GROUP", 0) or 0)
+    mppt_count = config.get(CONF_MPPT_COUNT)
+    if isinstance(mppt_count, int) and all_mppt_group:
+        effective &= ~all_mppt_group
+        effective |= _mppt_flag_from_configured_count(plugin_module, mppt_count)
+    return effective
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a SolaX modbus."""
     _LOGGER.debug(f"setup config entries - data: {entry.data}, options: {entry.options}")
@@ -320,7 +358,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    config = entry.options
+    config = {**dict(entry.data), **dict(entry.options)}
     # Stop a previously running hub with the same name before creating a new one
     old_name = config.get(CONF_NAME)
     try:
@@ -410,7 +448,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload SolaX modbus entry and tear down transports cleanly."""
-    name = entry.options.get("name")
+    config = {**dict(entry.data), **dict(entry.options)}
+    name = config.get("name")
     _LOGGER.debug(f"async_unload_entry called for {name} – state={entry.state}")
     hub = hass.data.get(DOMAIN, {}).get(name, {}).get("hub")
     if hub:
@@ -419,19 +458,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         except Exception as ex:
             _LOGGER.warning(f"{name}: error during hub stop: {ex}")
 
-    # Unload platforms - this must succeed for reload to work properly
-    # Always try to unload regardless of entry state - during reload, state might not be LOADED
     unload_ok = True
-    try:
-        _LOGGER.debug(f"{name}: attempting to unload platforms (state={entry.state})")
-        unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-        if unload_ok:
-            _LOGGER.debug(f"{name}: platforms unloaded successfully")
-        else:
-            _LOGGER.error(f"{name}: platform unload returned False")
-    except Exception as ex:
-        _LOGGER.error(f"{name}: error during platform unload: {ex}")
-        unload_ok = False
+    if hub and getattr(hub, "_platforms_forwarded", False):
+        try:
+            _LOGGER.debug(f"{name}: attempting to unload platforms (state={entry.state})")
+            unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+            if unload_ok:
+                _LOGGER.debug(f"{name}: platforms unloaded successfully")
+            else:
+                _LOGGER.error(f"{name}: platform unload returned False")
+        except Exception as ex:
+            _LOGGER.error(f"{name}: error during platform unload: {ex}")
+            unload_ok = False
+    else:
+        _LOGGER.debug(f"{name}: skipping platform unload because platforms were never forwarded")
 
     # Ensure removal from hass.data
     try:
@@ -471,7 +511,7 @@ class SolaXModbusHub:
         plugin: ModuleType,
         entry: ConfigEntry,
     ) -> None:
-        config = entry.options
+        config = {**dict(entry.data), **dict(entry.options)}
         name = config[CONF_NAME]
         host = config.get(CONF_HOST, None)
         port = config.get(CONF_PORT, DEFAULT_PORT)
@@ -580,12 +620,25 @@ class SolaXModbusHub:
 
         # Gate normal polling until initial probe completes
         self._probe_ready = asyncio.Event()
+        self._initial_refresh_task: Any = None
+        self._initial_refresh_active: bool = False
+        self._initial_refresh_done: bool = False
 
         # Deferred setup state
         self._platforms_forwarded = False
         self._deferred_setup_task: Any = None
 
         # _LOGGER.debug("solax modbushub done %s", self.__dict__)
+
+    def _start_initial_refresh_if_needed(self) -> None:
+        """Start the one-shot initial refresh after platforms are available."""
+        if self._initial_refresh_done or self._initial_refresh_task is not None:
+            return
+        if getattr(self, "_stopping", False):
+            return
+        if not self._platforms_forwarded:
+            return
+        self._initial_refresh_task = self._hass.loop.create_task(self._run_initial_refresh_when_ready())
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
         import asyncio
@@ -608,7 +661,8 @@ class SolaXModbusHub:
                 if getattr(self, "_stopping", False):
                     return
                 # Attempt type detection via plugin (may return 0/None if unreachable)
-                self._invertertype = await self.plugin.async_determineInverterType(self, self.config)
+                detected_type = await self.plugin.async_determineInverterType(self, self.config)
+                self._invertertype = _apply_manual_topology_overrides(self.plugin_module, detected_type, self.config)
                 attempts += 1
                 if self._invertertype not in (None, 0):
                     break
@@ -656,13 +710,16 @@ class SolaXModbusHub:
                 await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
                 self._platforms_forwarded = True
                 _LOGGER.debug(f"{self._name}: platforms forwarded successfully")
+                self._start_initial_refresh_if_needed()
             except ValueError as ex:
                 # If platforms are already set up, log warning but continue
                 # This shouldn't happen if unload worked properly, but handle gracefully
                 _LOGGER.warning(f"{self._name}: platforms already forwarded - reload may not work correctly: {ex}")
                 self._platforms_forwarded = True
+                self._start_initial_refresh_if_needed()
         else:
             _LOGGER.debug(f"{self._name}: platforms already forwarded on this hub instance, skipping")
+            self._start_initial_refresh_if_needed()
 
         self._init_task = None
 
@@ -676,7 +733,8 @@ class SolaXModbusHub:
                 await self._check_connection()
                 if getattr(self, "_stopping", False):
                     return
-                inv = await self.plugin.async_determineInverterType(self, self.config)
+                detected_type = await self.plugin.async_determineInverterType(self, self.config)
+                inv = _apply_manual_topology_overrides(self.plugin_module, detected_type, self.config)
                 if inv not in (None, 0):
                     self._invertertype = inv
                     _LOGGER.debug(f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms")
@@ -691,11 +749,12 @@ class SolaXModbusHub:
                         name=plugin_name,
                         serial_number=self.seriesnumber,
                     )
-                if getattr(self, "_stopping", False):
+                    if getattr(self, "_stopping", False):
+                        return
+                    await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+                    self._platforms_forwarded = True
+                    self._start_initial_refresh_if_needed()
                     return
-                await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
-                self._platforms_forwarded = True
-                return
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: deferred setup iteration failed: {ex}")
             # Wait and try again
@@ -960,21 +1019,30 @@ class SolaXModbusHub:
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
             return False, 0
+        if self._initial_refresh_active:
+            _LOGGER.debug(f"{self._name}: skipping scheduled poll – initial refresh still running")
+            return False, 0
+        agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group)
+        await self._maybe_refresh_energy_dashboard_on_primary_update()
+        # Return aggregate result and updated sensor count to caller for logging
+        return agg_res, updated_sensors
+
+    async def _refresh_interval_group_once(self, interval_group: Any, bypass_slowdown: bool = False) -> tuple[bool, int]:
+        """Refresh one interval group once."""
         if not interval_group.device_groups:
             return True, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
-        agg_res = True  # aggregate result across all device groups in this interval
-        updated_sensors = 0  # how many entities were pushed this cycle
-        # Use cyclecount from caller, not increment here
-        if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in list(interval_group.device_groups.values()):  # not sure if this does not break things or affects performance
+        agg_res = True
+        updated_sensors = 0
+        if bypass_slowdown or (self.cyclecount % self.slowdown) == 0:
+            for group in list(interval_group.device_groups.values()):
                 group_result = await self.async_read_modbus_data(group)
                 agg_res = agg_res and group_result
                 if group_result:
                     if self.slowdown > 1:
                         _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
-                    self.slowdown = 1  # return to full polling after successful cycle
+                    self.slowdown = 1
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                     updated_sensors += len(group.sensors)
@@ -986,12 +1054,30 @@ class SolaXModbusHub:
                         self.data.pop(i, None)
                     for i in self.sleepzero:
                         self.data[i] = 0
-                    # self.data = {} # invalidate data - do we want this ??
-
                 _LOGGER.debug(f"{self._name}: device group read done")
-        await self._maybe_refresh_energy_dashboard_on_primary_update()
-        # Return aggregate result and updated sensor count to caller for logging
         return agg_res, updated_sensors
+
+    async def _run_initial_refresh_when_ready(self) -> None:
+        """Do a one-time initial refresh of all scan groups after startup probe has completed."""
+        await self._probe_ready.wait()
+        if getattr(self, "_stopping", False) or self._initial_refresh_done or not self.groups:
+            return
+        # Let entity setup settle, then populate values once from slow to fast groups.
+        await asyncio.sleep(0.2)
+        self._initial_refresh_active = True
+        try:
+            for interval in sorted(self.groups.keys(), reverse=True):
+                interval_group = self.groups.get(interval)
+                if interval_group is None or not interval_group.device_groups:
+                    continue
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s")
+                async with interval_group.poll_lock:
+                    agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
+                await self._maybe_refresh_energy_dashboard_on_primary_update()
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s finished (ok={agg_res}, sensors={updated_sensors})")
+        finally:
+            self._initial_refresh_active = False
+            self._initial_refresh_done = True
 
     async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
         if not self._hass:
@@ -1076,7 +1162,7 @@ class SolaXModbusHub:
                 interval_group.unsub_interval_method = None
         self.groups.clear()
         # 2) stop any running tasks
-        for tname in ("_initial_bisect_task", "_recheck_task"):
+        for tname in ("_initial_bisect_task", "_recheck_task", "_initial_refresh_task"):
             task = getattr(self, tname, None)
             if task and not task.done():
                 try:
@@ -2044,7 +2130,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         entry: ConfigEntry,
     ) -> None:
         SolaXModbusHub.__init__(self, hass, plugin, entry)
-        config = entry.options
+        config = {**dict(entry.data), **dict(entry.options)}
         core_hub_name = config.get(CONF_CORE_HUB, "")
         self._core_hub = core_hub_name
         self._hub: Any = None

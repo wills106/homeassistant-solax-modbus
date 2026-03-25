@@ -1,4 +1,5 @@
 import logging
+import re
 import pathlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -63,6 +64,8 @@ CONF_SolaX_HUB = "solax_hub"
 CONF_BAUDRATE = "baudrate"
 CONF_PLUGIN = "plugin"
 CONF_READ_BATTERY = "read_battery"
+CONF_BATTERY_COUNT = "battery_count"
+CONF_MPPT_COUNT = "mppt_count"
 CONF_CORE_HUB = "read_core_hub"
 CONF_ENERGY_DASHBOARD_DEVICE = "energy_dashboard_device"
 CONF_DEBUG_SETTINGS = "debug_settings"
@@ -75,6 +78,8 @@ DEFAULT_READ_PM = False
 DEFAULT_BAUDRATE = "19200"
 DEFAULT_PLUGIN = "solax"
 DEFAULT_READ_BATTERY = False
+DEFAULT_BATTERY_COUNT = 0
+DEFAULT_MPPT_COUNT = 0
 ENERGY_DASHBOARD_DEVICE_ENABLED = True
 ENERGY_DASHBOARD_DEVICE_DISABLED = False
 DEFAULT_ENERGY_DASHBOARD_DEVICE = ENERGY_DASHBOARD_DEVICE_ENABLED
@@ -93,6 +98,45 @@ SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
 SCAN_GROUP_AUTO = "auto"  # _MEDIUM for temperatures, frequency and energy (kWh), otherwise _DEFAULT
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
+
+_BATTERY_KEY_RE = re.compile(r"^battery_(\d+)_")
+_MPPT_KEY_PATTERNS = (
+    re.compile(r"^pv_(?:voltage|current|power)_(\d+)$"),
+    re.compile(r"^mppt_scan_mode_pv(\d+)$"),
+)
+_BATTERY_GENERIC_PREFIXES = (
+    "battery_",
+    "bms_battery_",
+    "chargeable_battery_",
+    "remaining_battery_",
+)
+_BATTERY_GENERIC_SUBSTRINGS = (
+    "_to_battery_",
+)
+
+
+def topology_allows_entity(config: dict[str, Any], key: str | None) -> bool:
+    """Return whether an entity key is allowed by configured topology limits."""
+    if not isinstance(key, str):
+        return True
+
+    battery_count = config.get(CONF_BATTERY_COUNT, None)
+    if isinstance(battery_count, int):
+        if battery_count <= 0:
+            if key.startswith(_BATTERY_GENERIC_PREFIXES) or any(part in key for part in _BATTERY_GENERIC_SUBSTRINGS):
+                return False
+        match = _BATTERY_KEY_RE.match(key)
+        if match and int(match.group(1)) > battery_count:
+            return False
+
+    mppt_count = config.get(CONF_MPPT_COUNT, None)
+    if isinstance(mppt_count, int):
+        for pattern in _MPPT_KEY_PATTERNS:
+            match = pattern.match(key)
+            if match and int(match.group(1)) > mppt_count:
+                return False
+
+    return True
 
 # ================================= Button autorepeat initval codes for button value_functions ==========================
 BUTTONREPEAT_FIRST = 0  # first manual trigger click

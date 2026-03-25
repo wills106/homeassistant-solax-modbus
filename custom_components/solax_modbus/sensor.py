@@ -17,6 +17,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
+    CONF_BATTERY_COUNT,
+    CONF_MPPT_COUNT,
     CONF_READ_BATTERY,
     DOMAIN,
     INVERTER_IDENT,
@@ -27,6 +29,7 @@ from .const import (
     SLEEPMODE_NONE,
     SLEEPMODE_ZERO,
     BaseModbusSensorEntityDescription,
+    topology_allows_entity,
 )
 from .debug import get_debug_setting
 
@@ -147,7 +150,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     # Energy Dashboard check moved to after rebuild_blocks (see below) so initial_groups are ready for reading
 
-    readBattery = entry.options.get(CONF_READ_BATTERY, False)
+    readBattery = bool(hub.config.get(CONF_READ_BATTERY, False))
     if readBattery and plugin.BATTERY_CONFIG is not None:
         battery_config = plugin.BATTERY_CONFIG
         batt_pack_quantity = await battery_config.get_batt_pack_quantity(hub)
@@ -780,6 +783,16 @@ def entityToListSingle(
     readPreparation: Any,
     readFollowUp: Any,
 ) -> None:  # noqa: D103
+    if not topology_allows_entity(hub.config, newdescr.key):
+        _LOGGER.debug(
+            "%s: skipping sensor %s due to topology limits mppt_count=%s battery_count=%s",
+            hub.name,
+            newdescr.key,
+            hub.config.get(CONF_MPPT_COUNT),
+            hub.config.get(CONF_BATTERY_COUNT),
+        )
+        return
+
     if newdescr.read_scale_exceptions:
         for (
             prefix,
