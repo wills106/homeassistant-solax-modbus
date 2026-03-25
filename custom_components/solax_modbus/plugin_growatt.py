@@ -2338,6 +2338,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        scale={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
         name="Battery SOH",
         key="battery_soh",
         native_unit_of_measurement=PERCENTAGE,
@@ -9805,4 +9816,5 @@ plugin_instance = growatt_plugin(
     order32="big",
     auto_block_ignore_readerror=True,
 )
+
 
