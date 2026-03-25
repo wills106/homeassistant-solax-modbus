@@ -2,56 +2,58 @@
   "config": {
     "step": {
       "user": {
-        "title": "Modbus-verbinding definiëren",
+        "title": "Basisgegevens van de omvormer",
         "data": {
-          "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
-          "read_modbus_addr": "Het Modbus address van de Power-omvormer",
-          "interface": "Interface",
-          "inverter_name_suffix": "Inverter naam toevoeging",
-          "inverter_power_kw": "Maximaal omvormervermogen in kW (bij parallel: totale systeemcapaciteit)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Noodstroom optie (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "plugin": "Inverter Type",
+          "name": "Het voorvoegsel voor de sensoren van de omvormer",
+          "plugin": "Selecteer omvormertype",
+          "interface": "Interface"
+        }
+      },
+      "connection": {
+        "title": "Verbinding en detectie",
+        "data": {
+          "read_modbus_addr": "Het Modbus-adres van de omvormer",
+          "host": "Adres van de omvormer of Modbus-interface",
+          "port": "TCP-poort voor verbinding met de omvormer",
+          "tcp_type": "Modbus-protocolvariant",
+          "read_serial_port": "Naam van de seriële poort",
+          "baudrate": "Baudrate",
+          "read_core_hub": "De core Modbus-hub die wordt gebruikt om te verbinden",
+          "continue_without_detection": "Doorgaan als detectie mislukt"
+        }
+      },
+      "topology": {
+        "title": "Gedetecteerde topologie",
+        "description": "Gedetecteerd model: {detected_model}\nGedetecteerd serienummer: {detected_serial}\nGedetecteerd MPPT-aantal: {mppt_value}\nGedetecteerd batterijaantal: {battery_value}\nGedetecteerd omvormervermogen: {power_value}\nAls een waarde niet wordt getoond, voer die dan handmatig in. Zet het batterijaantal op 0 om batterij-entiteiten uit te schakelen.",
+        "data": {
+          "mppt_count": "Geconfigureerd MPPT-aantal",
+          "battery_count": "Geconfigureerd batterijaantal",
+          "inverter_power_kw": "Maximaal omvormervermogen in kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
+        }
+      },
+      "settings": {
+        "title": "Polling en opties",
+        "data": {
           "scan_interval": "Standaard polling-interval (s)",
           "scan_interval_medium": "Gemiddeld polling-interval (s)",
           "scan_interval_fast": "Snel polling-interval (s)",
-          "time_out": "Time-out voor verzoek (s)"
-        }
-      },
-      "serial": {
-        "title": "Seriele Poort Parameters",
-        "data": {
-          "read_serial_port": "Naam van de seriele poort",
-          "baudrate": "Baudrate"
-        }
-      },
-      "tcp": {
-        "title": "TCP/IP Parameters",
-        "data": {
-          "host": "Adres van de omvormer of Modbus-interface",
-          "port": "De TCP port voor Inverter of Modbus adapter",
-          "tcp_type": "De Modbus TCP variant"
-        }
-      },
-      "battery": {
-        "title": "Uitlezen van batterij module(s)",
-        "data": {
-          "read_battery": "Batterij uitlezen"
-        }
-      },
-      "core": {
-        "title": "Selectie van Core Modbus-hub",
-        "data": {
-          "read_core_hub": "De Core Modbus-hub die wordt gebruikt om met de omvormer te verbinden"
+          "inverter_name_suffix": "Naam-suffix voor de omvormer",
+          "energy_dashboard_device": "Virtueel apparaat voor Energy Dashboard",
+          "read_eps": "Noodstroomoptie (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallelmodus (Master-Slave)",
+          "time_out": "Timeout voor verzoek (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
       "already_configured": "Apparaat is al geconfigureerd",
-      "name_already_used": "Naam was al in gebruik of was ongeldig",
-      "invalid_host": "Ongeldig hostadres"
+      "name_already_used": "Naam is al gebruikt of ongeldig",
+      "invalid_host": "Ongeldig hostadres",
+      "invalid_core_hub": "Ongeldige naam van core Modbus-hub",
+      "cannot_detect": "Detectie van omvormer mislukt. Controleer de verbinding of ga handmatig verder."
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"
@@ -60,56 +62,58 @@
   "options": {
     "step": {
       "init": {
-        "title": "Modbus-verbinding definiëren",
+        "title": "Basisgegevens van de omvormer",
         "data": {
-          "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
-          "read_modbus_addr": "Het Modbus address van de Power-omvormer",
-          "interface": "Interface",
-          "inverter_name_suffix": "Inverter naam toevoeging",
-          "inverter_power_kw": "Maximaal omvormervermogen in kW (bij parallel: totale systeemcapaciteit)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Noodstroom Optie (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "plugin": "Inverter Type",
+          "name": "Het voorvoegsel voor de sensoren van de omvormer",
+          "plugin": "Selecteer omvormertype",
+          "interface": "Interface"
+        }
+      },
+      "connection": {
+        "title": "Verbinding en detectie",
+        "data": {
+          "read_modbus_addr": "Het Modbus-adres van de omvormer",
+          "host": "Adres van de omvormer of Modbus-interface",
+          "port": "TCP-poort voor verbinding met de omvormer",
+          "tcp_type": "Modbus-protocolvariant",
+          "read_serial_port": "Naam van de seriële poort",
+          "baudrate": "Baudrate",
+          "read_core_hub": "De core Modbus-hub die wordt gebruikt om te verbinden",
+          "continue_without_detection": "Doorgaan als detectie mislukt"
+        }
+      },
+      "topology": {
+        "title": "Gedetecteerde topologie",
+        "description": "Gedetecteerd model: {detected_model}\nGedetecteerd serienummer: {detected_serial}\nGedetecteerd MPPT-aantal: {mppt_value}\nGedetecteerd batterijaantal: {battery_value}\nGedetecteerd omvormervermogen: {power_value}\nAls een waarde niet wordt getoond, voer die dan handmatig in. Zet het batterijaantal op 0 om batterij-entiteiten uit te schakelen.",
+        "data": {
+          "mppt_count": "Geconfigureerd MPPT-aantal",
+          "battery_count": "Geconfigureerd batterijaantal",
+          "inverter_power_kw": "Maximaal omvormervermogen in kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
+        }
+      },
+      "settings": {
+        "title": "Polling en opties",
+        "data": {
           "scan_interval": "Standaard polling-interval (s)",
           "scan_interval_medium": "Gemiddeld polling-interval (s)",
           "scan_interval_fast": "Snel polling-interval (s)",
-          "time_out": "Time-out voor verzoek (s)"
-        }
-      },
-      "serial": {
-        "title": "Seriele Poort Parameters",
-        "data": {
-          "read_serial_port": "Naam van de seriele poort",
-          "baudrate": "Baudrate"
-        }
-      },
-      "tcp": {
-        "title": "TCP/IP Parameters",
-        "data": {
-          "host": "Adres van de omvormer of Modbus-interface",
-          "port": "De TCP port voor Inverter of Modbus adapter",
-          "tcp_type": "De Modbus TCP-variant"
-        }
-      },
-      "battery": {
-        "title": "Uitlezen van batterij module(s)",
-        "data": {
-          "read_battery": "Batterij uitlezen"
-        }
-      },
-      "core": {
-        "title": "Selectie van Core Modbus-hub",
-        "data": {
-          "read_core_hub": "De Core Modbus-hub die wordt gebruikt om met de omvormer te verbinden"
+          "inverter_name_suffix": "Naam-suffix voor de omvormer",
+          "energy_dashboard_device": "Virtueel apparaat voor Energy Dashboard",
+          "read_eps": "Noodstroomoptie (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallelmodus (Master-Slave)",
+          "time_out": "Timeout voor verzoek (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
       "already_configured": "Apparaat is al geconfigureerd",
-      "name_already_used": "Naam was al in gebruik of was ongeldig",
-      "invalid_host": "Ongeldig hostadres"
+      "name_already_used": "Naam is al gebruikt of ongeldig",
+      "invalid_host": "Ongeldig hostadres",
+      "invalid_core_hub": "Ongeldige naam van core Modbus-hub",
+      "cannot_detect": "Detectie van omvormer mislukt. Controleer de verbinding of ga handmatig verder."
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"

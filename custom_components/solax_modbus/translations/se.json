@@ -2,56 +2,58 @@
   "config": {
     "step": {
       "user": {
-        "title": "Definiera Modbus-anslutning",
+        "title": "Grunddata för växelriktaren",
         "data": {
-          "name": "Prefix för namnsättning av sensorer på växelriktaren",
+          "name": "Prefix för sensorerna för växelriktaren",
+          "plugin": "Välj växelriktartyp",
+          "interface": "Gränssnitt"
+        }
+      },
+      "connection": {
+        "title": "Anslutning och detektering",
+        "data": {
           "read_modbus_addr": "Modbus-adress för växelriktaren",
-          "interface": "Gränssnitt",
-          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Parallelläge (Master-Slave)",
-          "plugin": "Typ av växelriktare",
-          "scan_interval": "Standardpollningsintervall (s)",
-          "time_out": "Timeout för begäran (s)",
-          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
-          "scan_interval_fast": "Snabbt pollingintervall (s)",
-          "inverter_name_suffix": "Namnsuffix för växelriktaren"
-        }
-      },
-      "serial": {
-        "title": "Parametrar för seriell port",
-        "data": {
-          "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
-        }
-      },
-      "tcp": {
-        "title": "Parametrar för TCP/IP",
-        "data": {
           "host": "Adress till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
-          "tcp_type": "The Modbus TCP variant"
+          "tcp_type": "Modbus-protokollvariant",
+          "read_serial_port": "Namn på seriell port",
+          "baudrate": "Baudrate",
+          "read_core_hub": "Core Modbus-hubb som används för anslutningen",
+          "continue_without_detection": "Fortsätt även om detekteringen misslyckas"
         }
       },
-      "core": {
-        "title": "Val av Core Modbus-hubb",
+      "topology": {
+        "title": "Detekterad topologi",
+        "description": "Detekterad modell: {detected_model}\nDetekterat serienummer: {detected_serial}\nDetekterat antal MPPT: {mppt_value}\nDetekterat antal batterier: {battery_value}\nDetekterad växelriktareffekt: {power_value}\nOm ett värde inte visas, ange det manuellt. Sätt antal batterier till 0 för att inaktivera batterientiteter.",
         "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+          "mppt_count": "Konfigurerat antal MPPT",
+          "battery_count": "Konfigurerat antal batterier",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
         }
       },
-      "battery": {
-        "title": "Avläs batterimoduler",
+      "settings": {
+        "title": "Polling och alternativ",
         "data": {
-          "read_battery": "Aktivera avläsning"
+          "scan_interval": "Standardpollningsintervall (s)",
+          "scan_interval_medium": "Medellångt pollningsintervall (s)",
+          "scan_interval_fast": "Snabbt pollningsintervall (s)",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren",
+          "energy_dashboard_device": "Virtuell enhet för Energy Dashboard",
+          "read_eps": "Nödkraftsalternativ (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallelläge (Master-Slave)",
+          "time_out": "Timeout för begäran (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
-      "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
+      "name_already_used": "Namnet används redan eller är ogiltigt",
+      "invalid_host": "Ogiltig värdadress",
+      "invalid_core_hub": "Ogiltigt namn på Core Modbus-hubb",
+      "cannot_detect": "Detektering av växelriktare misslyckades. Kontrollera anslutningen eller fortsätt manuellt."
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"
@@ -60,56 +62,58 @@
   "options": {
     "step": {
       "init": {
-        "title": "Definiera Modbus-anslutning",
+        "title": "Grunddata för växelriktaren",
         "data": {
-          "name": "Prefix för namnsättning av sensorer på växelriktaren",
-          "read_modbus_addr": "Modbus-adress till växelriktaren",
-          "interface": "Gränssnitt",
-          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Parallelläge (Master-Slave)",
-          "plugin": "Typ av växelriktare",
-          "scan_interval": "Standardpollningsintervall (s)",
-          "time_out": "Timeout för begäran (s)",
-          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
-          "scan_interval_fast": "Snabbt pollingintervall (s)",
-          "inverter_name_suffix": "Namnsuffix för växelriktaren"
+          "name": "Prefix för sensorerna för växelriktaren",
+          "plugin": "Välj växelriktartyp",
+          "interface": "Gränssnitt"
         }
       },
-      "serial": {
-        "title": "Parametrar för seriell port",
+      "connection": {
+        "title": "Anslutning och detektering",
         "data": {
-          "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
-        }
-      },
-      "tcp": {
-        "title": "Parametrar för TCP/IP",
-        "data": {
+          "read_modbus_addr": "Modbus-adress för växelriktaren",
           "host": "Adress till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
-          "tcp_type": "Typ av Modbus TCP-anslutning"
+          "tcp_type": "Modbus-protokollvariant",
+          "read_serial_port": "Namn på seriell port",
+          "baudrate": "Baudrate",
+          "read_core_hub": "Core Modbus-hubb som används för anslutningen",
+          "continue_without_detection": "Fortsätt även om detekteringen misslyckas"
         }
       },
-      "core": {
-        "title": "Val av Core Modbus-hubb",
+      "topology": {
+        "title": "Detekterad topologi",
+        "description": "Detekterad modell: {detected_model}\nDetekterat serienummer: {detected_serial}\nDetekterat antal MPPT: {mppt_value}\nDetekterat antal batterier: {battery_value}\nDetekterad växelriktareffekt: {power_value}\nOm ett värde inte visas, ange det manuellt. Sätt antal batterier till 0 för att inaktivera batterientiteter.",
         "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+          "mppt_count": "Konfigurerat antal MPPT",
+          "battery_count": "Konfigurerat antal batterier",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW",
+          "recreate_entities": "Warning: delete and recreate all entities for this inverter if you reduced battery or MPPT count"
         }
       },
-      "battery": {
-        "title": "Avläs batterimoduler",
+      "settings": {
+        "title": "Polling och alternativ",
         "data": {
-          "read_battery": "Aktivera avläsning"
+          "scan_interval": "Standardpollningsintervall (s)",
+          "scan_interval_medium": "Medellångt pollningsintervall (s)",
+          "scan_interval_fast": "Snabbt pollningsintervall (s)",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren",
+          "energy_dashboard_device": "Virtuell enhet för Energy Dashboard",
+          "read_eps": "Nödkraftsalternativ (EPS)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallelläge (Master-Slave)",
+          "time_out": "Timeout för begäran (s)",
+          "recreate_entities": "Delete and recreate all entities for this inverter (recommended after reducing battery or MPPT count)"
         }
       }
     },
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
-      "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
+      "name_already_used": "Namnet används redan eller är ogiltigt",
+      "invalid_host": "Ogiltig värdadress",
+      "invalid_core_hub": "Ogiltigt namn på Core Modbus-hubb",
+      "cannot_detect": "Detektering av växelriktare misslyckades. Kontrollera anslutningen eller fortsätt manuellt."
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"
