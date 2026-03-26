@@ -9,8 +9,6 @@ I've fixed all the pre-commit errors in the homeassistant-solax-modbus project:
 
 Summary of Changes
 1. README.md - Fixed codespell errors
-Changed "seperate" → "separate" (line 71)
-Changed "inpact" → "impact" (line 109)
 2. init.py - Fixed mypy and ruff errors
 Removed unused import from time import time (line 12)
 Removed unused # type: ignore[attr-defined] comments
