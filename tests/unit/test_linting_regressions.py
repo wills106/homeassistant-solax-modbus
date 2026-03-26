@@ -96,7 +96,7 @@ class TestF811RedefinedImports:
 class TestE722BareExcept:
     """Test that no bare except clauses exist."""
 
-    @pytest.mark.parametrize("python_file", get_all_python_files())
+    @pytest.mark.parametrize("python_file", get_all_python_files())  # type: ignore[untyped-decorator]
     def test_no_bare_except(self, python_file: Path) -> None:
         """No file should contain 'except:' without exception type (unless noqa)."""
         content = python_file.read_text()
@@ -113,7 +113,7 @@ class TestE722BareExcept:
 class TestE711NoneComparisons:
     """Test that None comparisons use 'is' or 'is not'."""
 
-    @pytest.mark.parametrize("python_file", get_all_python_files())
+    @pytest.mark.parametrize("python_file", get_all_python_files())  # type: ignore[untyped-decorator]
     def test_no_equality_none_comparisons(self, python_file: Path) -> None:
         """No file should use == None or != None."""
         content = python_file.read_text()
@@ -135,7 +135,7 @@ class TestE711NoneComparisons:
 class TestE741AmbiguousNames:
     """Test that no ambiguous variable names are used."""
 
-    @pytest.mark.parametrize("python_file", get_all_python_files())
+    @pytest.mark.parametrize("python_file", get_all_python_files())  # type: ignore[untyped-decorator]
     def test_no_single_letter_l(self, python_file: Path) -> None:
         """No file should use 'l' as a variable name (ambiguous with 1)."""
         content = python_file.read_text()

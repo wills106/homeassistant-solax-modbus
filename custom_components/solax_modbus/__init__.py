@@ -131,7 +131,7 @@ try:
     from homeassistant.components.modbus import get_hub as get_core_hub
 except ImportError:
 
-    def get_core_hub(hass: HomeAssistant, name: str) -> None:  # type: ignore[misc]
+    def get_core_hub(hass: HomeAssistant, name: str) -> None:
         return None
 
     class CoreModbusHub:  # type: ignore[no-redef]  # placeholder dummy
@@ -847,7 +847,7 @@ class SolaXModbusHub:
         return key
 
     # following function is the added_to_hass callback for sensors, numbers and selects
-    @callback
+    @callback  # type: ignore[untyped-decorator]
     async def async_add_solax_modbus_sensor(self, sensor: Any) -> None:
         """Listen for data updates."""
         # attention, this function is not only called for sensors also for number, select
@@ -919,7 +919,7 @@ class SolaXModbusHub:
         grp.sensors.append(sensor)
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    @callback
+    @callback  # type: ignore[untyped-decorator]
     async def async_remove_solax_modbus_sensor(self, sensor: SolaXModbusSensor) -> None:
         """Remove data update."""
         interval = self.scan_group(sensor)

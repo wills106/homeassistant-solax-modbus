@@ -4587,6 +4587,7 @@ plugin_instance = solis_fb00_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=[],
     block_size=40,
     # order16="big",
     order32="big",

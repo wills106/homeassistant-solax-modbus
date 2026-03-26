@@ -106,5 +106,7 @@ module = [
     "homeassistant.*",
     "pytest_homeassistant_custom_component.*",
     "pytest.*",
+    "voluptuous.*",
+    "packaging.*",
 ]
 ignore_missing_imports = true

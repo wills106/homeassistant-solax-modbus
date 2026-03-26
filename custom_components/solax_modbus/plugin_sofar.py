@@ -19,7 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import EntityCategory  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditional import
+from custom_components.solax_modbus.const import (
     CONF_READ_DCB,
     CONF_READ_EPS,
     CONF_READ_PM,
@@ -3987,7 +3987,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
 
 @dataclass(kw_only=True)
 class battery_config(base_battery_config):
-    battery_sensor_type: list[SofarModbusSensorEntityDescription] | None = field(default_factory=lambda: BATTERY_SENSOR_TYPES)  # type: ignore[assignment]  # Covariant list typing
+    battery_sensor_type: list[SofarModbusSensorEntityDescription] | None = field(default_factory=lambda: BATTERY_SENSOR_TYPES)
     battery_sensor_name_prefix: str | None = field(default="Battery {batt-nr}/{pack-nr} ")
     battery_sensor_key_prefix: str | None = field(default="battery_{batt-nr}_{pack-nr}_")
 
@@ -4277,6 +4277,7 @@ plugin_instance = sofar_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     BATTERY_CONFIG=battery_config(),
     block_size=48,
     order32="big",

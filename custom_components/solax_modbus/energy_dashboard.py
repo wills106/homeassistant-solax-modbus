@@ -121,11 +121,11 @@ def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInf
     config_url = "https://homeassistant-solax-modbus.readthedocs.io/en/latest/"
 
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},  # type: ignore[arg-type]  # Runtime requires 3-element tuple
+        identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},
         manufacturer="providing curated Grid, Solar, Battery power & energy sensors with parallel mode aggregation support for Home Assistant Energy Dashboard integration",
         model="Energy Dashboard Metrics",
         name=f"{hub._name} Energy Dashboard",
-        via_device=(DOMAIN, hub._name, INVERTER_IDENT),  # type: ignore[typeddict-item]  # Runtime requires 3-element tuple
+        via_device=(DOMAIN, hub._name, INVERTER_IDENT),
         configuration_url=config_url,
     )
 
@@ -165,7 +165,7 @@ def _register_energy_dashboard_switch_listener(hass: Any) -> None:
     if domain_data.get("_ed_switch_listener_registered"):
         return
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def _handle_local_switch_event(event: Any) -> Any:
         data = event.data or {}
         hub_name = data.get("hub_name")
@@ -190,7 +190,7 @@ def _register_energy_dashboard_local_data_listener(hass: Any) -> None:
     if domain_data.get("_ed_local_data_listener_registered"):
         return
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def _handle_local_data_loaded(event: Any) -> Any:
         data = event.data or {}
         hub_name = data.get("hub_name")

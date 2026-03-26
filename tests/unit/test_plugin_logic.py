@@ -75,7 +75,7 @@ def test_match_inverter_with_mask_eps() -> None:
     assert solax_plugin.matchInverterWithMask(inverter_no_eps, mask) is False
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore[untyped-decorator]
 async def test_determine_inverter_type_solax(mock_hub: Any) -> None:
     # Test detection logic using MockHub
 

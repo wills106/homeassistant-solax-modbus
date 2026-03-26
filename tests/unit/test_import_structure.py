@@ -63,7 +63,7 @@ def get_import_sections(filepath: Path) -> dict[str, list[tuple[int, str]]]:
     return imports
 
 
-@pytest.mark.parametrize("plugin_file", get_plugin_files())
+@pytest.mark.parametrize("plugin_file", get_plugin_files())  # type: ignore[untyped-decorator]
 def test_import_order(plugin_file: Path) -> None:
     """Test that imports follow standard order: stdlib → HA → local.
 
@@ -92,7 +92,7 @@ def test_import_order(plugin_file: Path) -> None:
         assert max(stdlib_lines) < min(local_lines), f"{plugin_file.name}: stdlib imports should come before local imports"
 
 
-@pytest.mark.parametrize("plugin_file", get_plugin_files())
+@pytest.mark.parametrize("plugin_file", get_plugin_files())  # type: ignore[untyped-decorator]
 def test_const_import_explicit(plugin_file: Path) -> None:
     """Test that const imports are explicit, not star imports.
 
@@ -109,7 +109,7 @@ def test_const_import_explicit(plugin_file: Path) -> None:
                     assert alias.name != "*", f"{plugin_file.name} line {node.lineno}: Found 'from {node.module} import *' - must be explicit"
 
 
-@pytest.mark.parametrize("plugin_file", get_plugin_files())
+@pytest.mark.parametrize("plugin_file", get_plugin_files())  # type: ignore[untyped-decorator]
 def test_has_local_const_import(plugin_file: Path) -> None:
     """Test that plugin files import from their local const module.
 
@@ -150,7 +150,7 @@ def test_no_parenthesized_imports_without_reason() -> None:
         )
 
 
-@pytest.mark.parametrize("plugin_file", get_plugin_files())
+@pytest.mark.parametrize("plugin_file", get_plugin_files())  # type: ignore[untyped-decorator]
 def test_unit_of_reactive_power_from_const_only(plugin_file: Path) -> None:
     """Test that UnitOfReactivePower is only imported from const.py, not homeassistant.const.
 

@@ -109,8 +109,8 @@ class SolaXModbusNumber(NumberEntity):  # type: ignore[misc]
         self._register = number_info.register
         self._fmt = number_info.fmt
         self._unit = number_info.register_data_type
-        self._attr_native_min_value: float = number_info.native_min_value
-        self._attr_native_max_value: float = number_info.native_max_value
+        self._attr_native_min_value: float = number_info.native_min_value or 0.0
+        self._attr_native_max_value: float = number_info.native_max_value or 100.0
         self._attr_scale = number_info.scale
         self.entity_description = number_info
         if number_info.max_exceptions:
@@ -151,7 +151,7 @@ class SolaXModbusNumber(NumberEntity):  # type: ignore[misc]
         return self._hub.data[self._state]
     """
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def modbus_data_updated(self) -> None:
         self.async_write_ha_state()
 

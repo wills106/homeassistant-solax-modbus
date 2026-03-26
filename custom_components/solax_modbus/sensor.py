@@ -530,12 +530,12 @@ class SolaXModbusSensor(SensorEntity):  # type: ignore[misc]
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def modbus_data_updated(self) -> None:
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         self.async_write_ha_state()
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def _update_state(self) -> None:  # never called ?????
         _LOGGER.info(f"update_state {self.entity_description.key} : {self._hub.data.get(self.entity_description.key, 'None')}")
         if self.entity_description.key in self._hub.data:
@@ -638,7 +638,7 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):  # type: ignore[
         # Register with hub
         await self._hub.async_add_solax_modbus_sensor(self)
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def modbus_data_updated(self) -> None:
         """Calculate energy when data is updated."""
         if self._riemann_mapping is None:

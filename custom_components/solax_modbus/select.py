@@ -117,7 +117,7 @@ class SolaXModbusSelect(SelectEntity):  # type: ignore[misc]
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def modbus_data_updated(self) -> None:
         self.async_write_ha_state()
 

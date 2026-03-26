@@ -211,7 +211,7 @@ def test_battery_sensors_match_pri_inverter() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore[untyped-decorator]
 async def test_determine_inverter_type_pri_serial(mock_hub: Any) -> None:
     """PRI serial prefix must be classified as FIT | GEN3 | X1.
 

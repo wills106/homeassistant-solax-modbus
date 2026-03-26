@@ -36,6 +36,7 @@ class MockHub:
         return await self.async_read_input_registers(unit, address, count)
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[untyped-decorator]
 def mock_hub() -> MockHub:
+    """Create a mock hub for testing."""
     return MockHub()

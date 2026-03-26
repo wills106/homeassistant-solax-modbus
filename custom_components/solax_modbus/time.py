@@ -75,7 +75,7 @@ class SolaXModbusTimeEntity(TimeEntity):  # type: ignore[misc]
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback  # type: ignore[misc]
+    @callback  # type: ignore[untyped-decorator]
     def modbus_data_updated(self) -> None:
         """Update the cached native_value when modbus data is updated."""
         # Clear the cached property by setting _attr_native_value
@@ -183,10 +183,10 @@ class SolaXModbusTimeEntity(TimeEntity):  # type: ignore[misc]
     def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
 
-    async def async_set_value(self, value: datetime_time) -> None:
+    async def async_set_value(self, value: datetime_time | None) -> None:
         """Set the time value (required by Home Assistant time component)."""
         if value is None:
-            return None
+            return
 
         # Convert time to string
         time_str = value.strftime("%H:%M")

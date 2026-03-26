@@ -37,7 +37,7 @@ def check_star_imports(filepath: Path) -> list[dict[str, Any]]:
     return star_imports
 
 
-@pytest.mark.parametrize("python_file", get_all_python_files())
+@pytest.mark.parametrize("python_file", get_all_python_files())  # type: ignore[untyped-decorator]
 def test_no_star_imports(python_file: Path) -> None:
     """Test that no Python files use star imports.
 
