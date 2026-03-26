@@ -84,7 +84,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     return True
 
 
-class SolaXModbusNumber(NumberEntity):  # type: ignore[misc]
+class SolaXModbusNumber(NumberEntity):
     """Representation of an SolaX Modbus number."""
 
     entity_description: BaseModbusNumberEntityDescription
@@ -151,7 +151,7 @@ class SolaXModbusNumber(NumberEntity):  # type: ignore[misc]
         return self._hub.data[self._state]
     """
 
-    @callback  # type: ignore[untyped-decorator]
+    @callback
     def modbus_data_updated(self) -> None:
         self.async_write_ha_state()
 

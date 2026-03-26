@@ -49,7 +49,7 @@ async def async_setup_entry(hass: Any, entry: Any, async_add_entities: Any) -> N
     async_add_entities(entities)
 
 
-class SolaXModbusTimeEntity(TimeEntity):  # type: ignore[misc]
+class SolaXModbusTimeEntity(TimeEntity):
     """Representation of an SolaX Modbus time entity."""
 
     def __init__(self, platform_name: str, hub: Any, modbus_addr: int, device_info: Any, time_info: Any) -> None:
@@ -75,7 +75,7 @@ class SolaXModbusTimeEntity(TimeEntity):  # type: ignore[misc]
     async def async_will_remove_from_hass(self) -> None:
         await self._hub.async_remove_solax_modbus_sensor(self)
 
-    @callback  # type: ignore[untyped-decorator]
+    @callback
     def modbus_data_updated(self) -> None:
         """Update the cached native_value when modbus data is updated."""
         # Clear the cached property by setting _attr_native_value

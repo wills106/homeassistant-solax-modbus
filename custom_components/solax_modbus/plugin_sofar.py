@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
+from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -17,7 +18,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory  # HA stubs incomplete
+from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,

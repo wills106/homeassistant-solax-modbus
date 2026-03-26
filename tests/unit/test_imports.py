@@ -20,7 +20,7 @@ def get_all_modules() -> list[str]:
     return modules
 
 
-@pytest.mark.parametrize("module_name", get_all_modules())  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize("module_name", get_all_modules())
 def test_module_import(module_name: str) -> None:
     """Test that the module can be imported."""
     importlib.import_module(module_name)

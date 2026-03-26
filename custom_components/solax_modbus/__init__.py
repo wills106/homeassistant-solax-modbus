@@ -134,7 +134,7 @@ except ImportError:
     def get_core_hub(hass: HomeAssistant, name: str) -> None:
         return None
 
-    class CoreModbusHub:  # type: ignore[no-redef]  # placeholder dummy
+    class CoreModbusHub:
         pass
 
 
@@ -808,34 +808,26 @@ class SolaXModbusHub:
 
         # DEFENSIVE: Check if device_info is None (should never happen)
         if device_info is None:
-            _LOGGER.error(f"{self._name}: device_group_key called with None device_info! This is a BUG - device_info should never be None here.")
             return ""
 
         # DEFENSIVE: Check if it's a dict-like object
         if not isinstance(device_info, dict):
-            _LOGGER.error(f"{self._name}: device_group_key called with non-dict device_info! type={type(device_info)}, value={device_info}")
             return ""
 
         # DEFENSIVE: Check if "identifiers" key exists
         if "identifiers" not in device_info:
-            _LOGGER.error(
-                f"{self._name}: device_group_key called with device_info missing 'identifiers' key! "
-                f"keys={list(device_info.keys())}, device_info={device_info}"
-            )
             return ""
 
         identifiers = device_info["identifiers"]
 
         # DEFENSIVE: Check if identifiers is None
         if identifiers is None:
-            _LOGGER.error(f"{self._name}: device_group_key got None for device_info['identifiers']! device_info={device_info}")
             return ""
 
         # DEFENSIVE: Check if identifiers is iterable
         try:
             iter(identifiers)
         except TypeError:
-            _LOGGER.error(f"{self._name}: device_group_key got non-iterable identifiers! type={type(identifiers)}, value={identifiers}")
             return ""
 
         for identifier in identifiers:
@@ -847,7 +839,7 @@ class SolaXModbusHub:
         return key
 
     # following function is the added_to_hass callback for sensors, numbers and selects
-    @callback  # type: ignore[untyped-decorator]
+    @callback
     async def async_add_solax_modbus_sensor(self, sensor: Any) -> None:
         """Listen for data updates."""
         # attention, this function is not only called for sensors also for number, select
@@ -919,7 +911,7 @@ class SolaXModbusHub:
         grp.sensors.append(sensor)
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    @callback  # type: ignore[untyped-decorator]
+    @callback
     async def async_remove_solax_modbus_sensor(self, sensor: SolaXModbusSensor) -> None:
         """Remove data update."""
         interval = self.scan_group(sensor)

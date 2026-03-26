@@ -13,7 +13,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import EntityCategory  # HA stubs incomplete
+from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
     CONF_READ_DCB,

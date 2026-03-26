@@ -11,7 +11,7 @@ PLUGIN_DIR = pathlib.Path(__file__).parent.parent.parent / "custom_components" /
 PLUGIN_FILES = [f.name[:-3] for f in PLUGIN_DIR.glob("plugin_*.py") if f.is_file() and not f.name.startswith("__")]
 
 
-@pytest.mark.parametrize("plugin_module_name", PLUGIN_FILES)  # type: ignore[untyped-decorator]
+@pytest.mark.parametrize("plugin_module_name", PLUGIN_FILES)
 def test_plugin_structure(plugin_module_name: str) -> None:
     """Verify that each plugin module has the required structure."""
 

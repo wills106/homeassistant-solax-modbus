@@ -277,7 +277,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
     return plugin
 
 
-if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)):  # backward compat
+if (MAJOR_VERSION > 2022) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)):  # backward compat
     _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
     CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "user": SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step=_next_step_modbus),
@@ -298,7 +298,7 @@ else:  # for older versions - REMOVE SOON
     _LOGGER.error(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
 
 
-class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):  # type: ignore[misc, call-arg]
+class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     # Handle a config or options flow for Utility Meter.
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
