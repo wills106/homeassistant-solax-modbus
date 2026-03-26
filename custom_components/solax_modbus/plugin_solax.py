@@ -4410,7 +4410,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="export_control_user_limit",
         register=0xB6,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X3,
-        read_scale=0.1,
+        scale=10,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
