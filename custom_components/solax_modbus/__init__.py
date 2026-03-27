@@ -9,7 +9,6 @@ import logging
 import time as _mtime
 from dataclasses import dataclass, replace
 from datetime import timedelta
-from time import time
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 from weakref import ref as WeakRef
