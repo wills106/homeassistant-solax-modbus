@@ -192,7 +192,7 @@ class SolaXModbusTimeEntity(TimeEntity):
     def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
 
-    async def async_set_value(self, value: datetime_time) -> None:
+    async def async_set_value(self, value: datetime_time | None) -> None:
         """Set the time value (required by Home Assistant time component)."""
         if value is None:
             return
