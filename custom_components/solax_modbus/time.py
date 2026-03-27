@@ -195,7 +195,7 @@ class SolaXModbusTimeEntity(TimeEntity):
     async def async_set_value(self, value: datetime_time) -> None:
         """Set the time value (required by Home Assistant time component)."""
         if value is None:
-            return None
+            return
 
         # Convert time to string
         time_str = value.strftime("%H:%M")
