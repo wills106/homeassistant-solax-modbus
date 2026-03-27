@@ -128,7 +128,7 @@ VERBOSE_CYCLES = 20
 
 try:
     from homeassistant.components.modbus import ModbusHub as CoreModbusHub  # type: ignore[attr-defined]
-    from homeassistant.components.modbus import get_hub as get_core_hub  # type: ignore[misc]
+    from homeassistant.components.modbus import get_hub as get_core_hub
 except ImportError:
 
     def get_core_hub(hass: HomeAssistant, name: str) -> Any:  # type: ignore[misc]
