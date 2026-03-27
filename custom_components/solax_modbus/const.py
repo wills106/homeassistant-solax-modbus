@@ -6,17 +6,12 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import (
-    NumberEntityDescription,
-)
+from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.sensor import (
-    SensorEntityDescription,
-)
+from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
-from homeassistant.const import (
-    CONF_SCAN_INTERVAL,
-)
+from homeassistant.components.time import TimeEntityDescription
+from homeassistant.const import CONF_SCAN_INTERVAL
 
 # TODO: Review if this fallback is still needed.
 # UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
@@ -145,6 +140,7 @@ class plugin_base:
     NUMBER_TYPES: Sequence[NumberEntityDescription]
     SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: Sequence[SwitchEntityDescription]
+    TIME_TYPES: Sequence[TimeEntityDescription]
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100
@@ -295,6 +291,19 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     )
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
+@dataclass(kw_only=True, frozen=True)
+class BaseModbusTimeEntityDescription(TimeEntityDescription):
+    """Base class for modbus time declarations."""
+
+    allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    register: int | None = None
+    option_dict: dict[int, str] | None = None
+    reverse_option_dict: dict[str, int] | None = None  # autocomputed
+    blacklist: list[str] | None = None  # none or list of serial number prefixes
+    write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
+    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    wordcount: int | None = None  # number of registers to write (for separate register format, e.g., hours and minutes in adjacent registers)
 
 @dataclass(kw_only=True, frozen=True)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -553,6 +562,15 @@ def value_function_gen23time(initval: Any, descr: Any, datadict: dict[str, Any])
     ) = initval
     return f"{h:02d}:{m:02d}"
 
+def value_function_separate_registers_time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
+    """Parse time from separate registers format (hours in first register, minutes in second)."""
+    # initval is a list/tuple of [hours, minutes] from REGISTER_WORDS with wordcount=2
+    if isinstance(initval, (list, tuple)) and len(initval) >= 2:
+        h = int(initval[0])
+        m = int(initval[1])
+        return f"{h:02d}:{m:02d}"
+    # Fallback for single value (shouldn't happen with proper sensor config)
+    return "00:00"
 
 def value_function_sofartime(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
     """Parse Sofar time format."""
@@ -566,7 +584,6 @@ def value_function_firmware(initval: Any, descr: Any, datadict: dict[str, Any]) 
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
-
 
 def value_function_firmware_decimal_hundredths(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | Any:
     """Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11)."""
@@ -608,24 +625,15 @@ def value_function_2byte_timestamp(initval: Any, descr: Any, datadict: dict[str,
 TIME_OPTIONS: dict[int, str] = {}
 TIME_OPTIONS_GEN4: dict[int, str] = {}
 for h in range(0, 24):
-    for m in range(0, 60, 5):
+    for m in range(0, 60):
         TIME_OPTIONS[m * 256 + h] = f"{h:02}:{m:02}"
         TIME_OPTIONS_GEN4[h * 256 + m] = f"{h:02}:{m:02}"
-        if (
-            h,
-            m,
-        ) == (
-            0,
-            0,
-        ):  # add extra entry 00:01
-            TIME_OPTIONS[1 * 256 + h] = f"{h:02}:{m + 1:02}"
-            TIME_OPTIONS_GEN4[h * 256 + 1] = f"{h:02}:{m + 1:02}"
-        if (
-            h,
-            m,
-        ) == (
-            23,
-            55,
-        ):  # add extra entry 23:59
-            TIME_OPTIONS[(m + 4) * 256 + h] = f"{h:02}:{m + 4:02}"
-            TIME_OPTIONS_GEN4[h * 256 + m + 4] = f"{h:02}:{m + 4:02}"
+
+# For separate register format where hours and minutes are in adjacent registers
+# Hours written to first register, minutes written to second register
+TIME_OPTIONS_HOURS: dict[int, str] = {h: f"{h:02}" for h in range(0, 24)}
+TIME_OPTIONS_MINUTES: dict[int, str] = {m: f"{m:02}" for m in range(0, 60)}
+
+# Combined option dict for separate register format (hours in first register, minutes in second)
+# Used with wordcount=2 to write both registers sequentially
+TIME_OPTIONS_SEPARATE_REGISTERS: dict[int, str] = {h * 100 + m: f"{h:02}:{m:02}" for h in range(0, 24) for m in range(0, 60)}

@@ -985,6 +985,7 @@ plugin_instance = sunway_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=[],
     block_size=100,
     # order16="big",
     order32="big",

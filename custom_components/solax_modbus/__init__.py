@@ -141,7 +141,7 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH, Platform.TIME]
 
 # CONFIG_SCHEMA allows YAML configuration ONLY for debug_settings (DEVELOPMENT/TESTING/DEBUGGING ONLY)
 # All other configuration must be done via config flow (UI)
@@ -189,7 +189,7 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
         return True
     unique_id = f"{hub._name}_{descriptor.key}"
     unique_id_alt = f"{hub._name}.{descriptor.key}"  # dont knnow why
-    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON)
+    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON, Platform.TIME)
     registry = er.async_get(hass)
     entity_found = False
     # First, check if there is an existing enabled entity in the registry for this unique_id.
@@ -224,6 +224,9 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
         if d and d.entity_registry_enabled_default:
             return True
         d = hub.switchEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default:
+            return True
+        d = hub.timeEntities.get(descriptor.key)
         if d and d.entity_registry_enabled_default:
             return True
         _LOGGER.debug(
@@ -547,6 +550,7 @@ class SolaXModbusHub:
         self.numberEntities: dict[Any, Any] = {}  # all number entities, indexed by key
         self.selectEntities: dict[Any, Any] = {}
         self.switchEntities: dict[Any, Any] = {}
+        self.timeEntities: dict[Any, Any] = {}
         self.entity_dependencies: dict[str, list[str]] = {}  # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals: dict[Any, Any] = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
@@ -1014,7 +1018,7 @@ class SolaXModbusHub:
             return
         if refresh_pending:
             last_refresh_ts = hub_entry.get("energy_dashboard_last_refresh_ts", 0)
-            if time() - last_refresh_ts < 5:
+            if _mtime.time() - last_refresh_ts < 5:
                 return
 
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
@@ -1026,7 +1030,7 @@ class SolaXModbusHub:
 
         hub_entry["energy_dashboard_refresh_in_progress"] = True
         hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
-        hub_entry["energy_dashboard_last_refresh_ts"] = time()
+        hub_entry["energy_dashboard_last_refresh_ts"] = _mtime.time()
 
         async def _run_refresh() -> None:
             try:
@@ -1425,7 +1429,7 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"{self._name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         """ TO BE REMOVED
         if descr.prevent_update:
-            if  (self.tmpdata_expiry.get(descr.key, 0) > time()):
+            if  (self.tmpdata_expiry.get(descr.key, 0) > _mtime.time()):
                 val = self.tmpdata.get(descr.key, None)
                 if val is None:
                     LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
@@ -1620,7 +1624,7 @@ class SolaXModbusHub:
             self.writequeue = {}  # make sure we do not write multiple times
 
         # execute autorepeat entities (buttons and selects)
-        self.last_ts = time()
+        self.last_ts = _mtime.time()
         for (
             k,
             v,
