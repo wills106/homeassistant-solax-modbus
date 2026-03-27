@@ -253,9 +253,11 @@ class SolaXModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 class SolaXModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
+
 @dataclass(kw_only=True, frozen=True)
 class SolaXModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
+
 
 # ====================================== Computed value functions  =================================================
 

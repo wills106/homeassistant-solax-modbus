@@ -291,6 +291,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     )
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
+
 @dataclass(kw_only=True, frozen=True)
 class BaseModbusTimeEntityDescription(TimeEntityDescription):
     """Base class for modbus time declarations."""
@@ -304,6 +305,7 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     wordcount: int | None = None  # number of registers to write (for separate register format, e.g., hours and minutes in adjacent registers)
+
 
 @dataclass(kw_only=True, frozen=True)
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
@@ -562,6 +564,7 @@ def value_function_gen23time(initval: Any, descr: Any, datadict: dict[str, Any])
     ) = initval
     return f"{h:02d}:{m:02d}"
 
+
 def value_function_separate_registers_time(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
     """Parse time from separate registers format (hours in first register, minutes in second)."""
     # initval is a list/tuple of [hours, minutes] from REGISTER_WORDS with wordcount=2
@@ -571,6 +574,7 @@ def value_function_separate_registers_time(initval: Any, descr: Any, datadict: d
         return f"{h:02d}:{m:02d}"
     # Fallback for single value (shouldn't happen with proper sensor config)
     return "00:00"
+
 
 def value_function_sofartime(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
     """Parse Sofar time format."""
@@ -584,6 +588,7 @@ def value_function_firmware(initval: Any, descr: Any, datadict: dict[str, Any]) 
     m = initval % 256
     h = initval >> 8
     return f"{h}.{m:02d}"
+
 
 def value_function_firmware_decimal_hundredths(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | Any:
     """Decode firmware value expressed as integer hundredths (e.g. 611 -> 6.11)."""

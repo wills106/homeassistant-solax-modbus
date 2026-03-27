@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, time as datetime_time
+from datetime import datetime
+from datetime import time as datetime_time
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.const import CONF_NAME
@@ -115,7 +116,7 @@ class SolaXModbusTimeEntity(TimeEntity):
                 except ValueError:
                     continue
             # Try parsing as HH:MM:SS with seconds (8 chars like 05:25:30)
-            if len(time_val) == 8 and time_val[2] == ':' and time_val[5] == ':':
+            if len(time_val) == 8 and time_val[2] == ":" and time_val[5] == ":":
                 try:
                     parsed = datetime.strptime(time_val, "%H:%M:%S")
                     _LOGGER.debug(f"{self._platform_name}: parsed {self._key} as HH:MM:SS: {parsed.time()}")
@@ -123,7 +124,7 @@ class SolaXModbusTimeEntity(TimeEntity):
                 except ValueError:
                     pass
             # Try parsing as HH:MM (5 chars like 05:25)
-            if len(time_val) == 5 and time_val[2] == ':':
+            if len(time_val) == 5 and time_val[2] == ":":
                 try:
                     parsed = datetime.strptime(time_val, "%H:%M")
                     _LOGGER.debug(f"{self._platform_name}: parsed {self._key} as HH:MM: {parsed.time()}")
@@ -138,14 +139,14 @@ class SolaXModbusTimeEntity(TimeEntity):
         if isinstance(time_val, (int, float)):
             # Try to convert to string and parse
             time_str = str(time_val)
-            if len(time_str) == 5 and time_str[2] == ':':
+            if len(time_str) == 5 and time_str[2] == ":":
                 try:
                     parsed = datetime.strptime(time_str, "%H:%M")
                     _LOGGER.debug(f"{self._platform_name}: parsed numeric {self._key} as HH:MM: {parsed.time()}")
                     return parsed.time()
                 except ValueError:
                     pass
-            if len(time_str) == 8 and time_str[2] == ':' and time_str[5] == ':':
+            if len(time_str) == 8 and time_str[2] == ":" and time_str[5] == ":":
                 try:
                     parsed = datetime.strptime(time_str, "%H:%M:%S")
                     _LOGGER.debug(f"{self._platform_name}: parsed numeric {self._key} as HH:MM:SS: {parsed.time()}")
