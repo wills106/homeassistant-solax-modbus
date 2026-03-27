@@ -127,14 +127,14 @@ VERBOSE_CYCLES = 20
 
 
 try:
-    from homeassistant.components.modbus import ModbusHub as CoreModbusHub
-    from homeassistant.components.modbus import get_hub as get_core_hub
+    from homeassistant.components.modbus import ModbusHub as CoreModbusHub  # type: ignore[attr-defined]
+    from homeassistant.components.modbus import get_hub as get_core_hub  # type: ignore[attr-defined]
 except ImportError:
 
-    def get_core_hub(hass: HomeAssistant, name: str) -> None:
+    def get_core_hub(hass: HomeAssistant, name: str) -> Any:  # type: ignore[misc]
         return None
 
-    class CoreModbusHub:
+    class CoreModbusHub:  # type: ignore[no-redef]
         pass
 
 
@@ -807,21 +807,21 @@ class SolaXModbusHub:
         key = ""
 
         # DEFENSIVE: Check if device_info is None (should never happen)
-        if device_info is None:
+        if device_info is None:  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if it's a dict-like object
-        if not isinstance(device_info, dict):
+        if not isinstance(device_info, dict):  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if "identifiers" key exists
-        if "identifiers" not in device_info:
+        if "identifiers" not in device_info:  # type: ignore[unreachable]
             return ""
 
         identifiers = device_info["identifiers"]
 
         # DEFENSIVE: Check if identifiers is None
-        if identifiers is None:
+        if identifiers is None:  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if identifiers is iterable

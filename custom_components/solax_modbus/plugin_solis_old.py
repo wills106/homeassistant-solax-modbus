@@ -4,15 +4,13 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
     UnitOfTemperature,
-)
-from homeassistant.helpers.entity import (
-    EntityCategory,
 )
 
 from custom_components.solax_modbus.const import (

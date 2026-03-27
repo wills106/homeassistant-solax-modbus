@@ -740,9 +740,9 @@ def entityToList(
                 for serie_value in range(sensor_description.value_series):
                     newdescr = sensor_description
                     if isinstance(newdescr.name, str):
-                        newdescr = replace(newdescr, name=name_prefix + newdescr.name.replace("{}", str(serie_value + 1)))  # type: ignore[call-arg]
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name.replace("{}", str(serie_value + 1)))
                     if isinstance(newdescr.key, str):
-                        newdescr = replace(newdescr, key=key_prefix + newdescr.key.replace("{}", str(serie_value + 1)))  # type: ignore[call-arg]
+                        newdescr = replace(newdescr, key=key_prefix + newdescr.key.replace("{}", str(serie_value + 1)))
                     if isinstance(sensor_description.register, int):
                         newdescr = replace(newdescr, register=sensor_description.register + serie_value)
                     entityToListSingle(
@@ -760,12 +760,12 @@ def entityToList(
                 newdescr = sensor_description
                 try:
                     if isinstance(newdescr.name, str):
-                        newdescr = replace(newdescr, name=name_prefix + newdescr.name)  # type: ignore[call-arg]
+                        newdescr = replace(newdescr, name=name_prefix + newdescr.name)
                 except Exception:
                     pass
 
                 if isinstance(newdescr.key, str):
-                    newdescr = replace(newdescr, key=key_prefix + newdescr.key)  # type: ignore[call-arg]
+                    newdescr = replace(newdescr, key=key_prefix + newdescr.key)
                 entityToListSingle(hub, hub_name, entities, groups, computedRegs, device_info, newdescr, readPreparation, readFollowUp)
 
 

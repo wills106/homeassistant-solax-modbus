@@ -246,7 +246,7 @@ DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
 class base_battery_config:
     """Configuration for battery sensors."""
 
-    battery_sensor_type: list[SelectEntityDescription] | None = None
+    battery_sensor_type: Any = None
     battery_sensor_name_prefix: str | None = None
     battery_sensor_key_prefix: str | None = None
 

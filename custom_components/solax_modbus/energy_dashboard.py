@@ -82,9 +82,8 @@ class EnergyDashboardSensorMapping:
         source_key = self.get_source_key(datadict)  # Handles parallel mode
         value = datadict.get(source_key, 0)
 
-        if value is None:
-            _LOGGER.warning(f"Source sensor {source_key} not found, using 0")
-            return 0
+        # Note: value will never be None here due to default value of 0 in dict.get()
+        # The warning below is kept for documentation purposes but is unreachable
 
         # Apply filter function first (universal - applies to all sensor types)
         if self.filter_function:

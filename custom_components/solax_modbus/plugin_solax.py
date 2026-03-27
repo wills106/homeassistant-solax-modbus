@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
+    EntityCategory,
     PERCENTAGE,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
@@ -17,7 +18,6 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.helpers.entity import EntityCategory
 
 from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,

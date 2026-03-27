@@ -13,10 +13,13 @@ _STARTING = 10  # debug/info output restricted to startup
 
 # Version parsing – prefer packaging, fallback to a tiny tuple parser
 try:
-    from packaging.version import parse as _v
+    from packaging.version import parse as _parse_version
 except Exception:  # packaging may be absent in some environments
+    _parse_version = None  # type: ignore[assignment]
 
-    def _v(s: str) -> tuple[int, ...]:
+if _parse_version is None:
+
+    def _parse_version(s: str) -> tuple[int, ...]:
         """Parse version string into tuple of integers."""
         parts: list[int] = []
         for p in str(s).split("."):
@@ -27,6 +30,9 @@ except Exception:  # packaging may be absent in some environments
         while len(parts) < 3:
             parts.append(0)
         return tuple(parts)
+
+# Alias for consistent usage
+_v = _parse_version
 
 
 # Decide based on installed pymodbus version
