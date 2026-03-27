@@ -30,7 +30,6 @@ from .const import (
     CONF_ENERGY_DASHBOARD_DEVICE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     DOMAIN,
-    INVERTER_IDENT,
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,

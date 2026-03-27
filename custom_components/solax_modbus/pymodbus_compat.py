@@ -11,6 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _STARTING = 10  # debug/info output restricted to startup
 
+
 # Version parsing – prefer packaging, fallback to a tiny tuple parser
 def _parse_version(s: str) -> tuple[int, ...]:
     """Parse version string into tuple of integers."""
@@ -23,6 +24,7 @@ def _parse_version(s: str) -> tuple[int, ...]:
     while len(parts) < 3:
         parts.append(0)
     return tuple(parts)
+
 
 try:
     from packaging.version import parse as _parse_version  # type: ignore[assignment]

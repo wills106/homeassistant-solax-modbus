@@ -4,8 +4,8 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
-    EntityCategory,
     PERCENTAGE,
+    EntityCategory,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
