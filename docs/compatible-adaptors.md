@@ -19,6 +19,18 @@ This USB adaptor is one of the best and most reliable USB adaptors.
 
 Note that there are two versions with two different chipsets available. Make sure that you get the one with the FT232 RL chipset. Do not buy the adaptor with the CH343G chipset, which looks exactly the same.
 
+### FTDI USB-RS485-WE-1800
+
+A USB-A to RS485 cable with bare wire ends and an integrated FTDI chipset. Recognised out-of-the-box on Linux as `/dev/ttyUSB*`.
+
+| Wire colour | RS485 signal | Notes |
+|-------------|--------------|-------|
+| Orange | A (+) | Connect to inverter RS485 A pin |
+| Yellow | B (−) | Connect to inverter RS485 B pin |
+| All others | — | Leave disconnected (N/C) |
+
+**Tested with:** Growatt MIN3600TL-XH — Orange → pin 3 (A+), Yellow → pin 4 (B−), all other wires N/C.
+
 ## RS485 - Ethernet
 
 Whatever adapter you buy, make sure it supports Modbus transmission. Transparent adapters that do not look into the Modbus protocol cannot send the packages to the correct Modbus slave.
