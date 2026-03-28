@@ -217,18 +217,25 @@ Known Serial Numbers
 - MP15
 - MU80
 
+## Growatt
+
+### Single Phase
+
+#### Hybrid
+
+MIN xxxxTL-XH (x indicates inverter size, e.g. 3600 = 3.6kW)
+- Use plugin_growatt
+- Connect via RS485 serial, see [Compatible RS485 Adaptors](compatible-adaptors.md)
+
+Confirmed models
+- MIN3600TL-XH
+
 ## Untested or in Early Development Phase
 
 ### Single Phase
 
 #### Ginlong Solis
 Try plugin_solis & plugin_solis_old
-
-Known Serial Numbers
-- ???
-
-#### Growatt
-Try plugin_growatt
 
 Known Serial Numbers
 - ???

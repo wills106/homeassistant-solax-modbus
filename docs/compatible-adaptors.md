@@ -21,15 +21,15 @@ Note that there are two versions with two different chipsets available. Make sur
 
 ### FTDI USB-RS485-WE-1800
 
-A USB-A to RS485 cable with bare wire ends and an integrated FTDI chipset. Recognised out-of-the-box on Linux as `/dev/ttyUSB*`.
+A USB-A to RS485 cable with bare wire ends and an integrated FTDI chipset. Easily available from Mouser, Farnell etc. Recognised out-of-the-box on Linux as `/dev/ttyUSB*`.
 
-| Wire colour | RS485 signal | Notes |
-|-------------|--------------|-------|
-| Orange | A (+) | Connect to inverter RS485 A pin |
-| Yellow | B (−) | Connect to inverter RS485 B pin |
-| All others | — | Leave disconnected (N/C) |
+| Wire colour | Signal |
+|-------------|--------------|
+| Orange | A (+)  |
+| Yellow | B (−)  |
+| All others | Leave disconnected (N/C) |
 
-**Tested with:** Growatt MIN3600TL-XH — Orange → pin 3 (A+), Yellow → pin 4 (B−), all other wires N/C.
+Tested with: Growatt MIN3600TL-XH — Orange → COM connector pin 3 (A+), Yellow → pin 4 (B−)
 
 ## RS485 - Ethernet
 
