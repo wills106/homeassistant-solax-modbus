@@ -11,3 +11,104 @@ stop_hub:
       description: Name of the hub to stop (e.g., "SolaX")
       required: true
       example: SolaX
+
+growatt_charge_from_grid:
+  name: Growatt – Charge battery from grid (VPP)
+  description: >
+    Enable VPP-controlled AC charging from the grid on a Growatt inverter.
+    power_kw is converted to a percentage of rated power using the cached
+    rated_power_pn sensor.  If energy_kwh is provided, the charging duration
+    is calculated automatically (energy_kwh / power_kw * 60 minutes, max 1440).
+    Omitting energy_kwh charges indefinitely until the next inverter power
+    cycle or until growatt_stop_vpp_charge is called.
+    Note: registers 30407, 30408 and 30409 are "Not storage" – they reset on
+    inverter power cycle.
+  fields:
+    name:
+      name: Hub name
+      description: Name of the hub (e.g., "SolaX")
+      required: true
+      example: SolaX
+    power_kw:
+      name: Charge power (kW)
+      description: >
+        Charging power in kilowatts. Automatically clamped to the battery's
+        reported maximum charge power (battery_max_charge_power sensor).
+      required: true
+      example: 3.0
+      selector:
+        number:
+          min: 0.1
+          max: 100
+          step: 0.1
+          unit_of_measurement: kW
+    energy_kwh:
+      name: Energy target (kWh)
+      description: >
+        Total energy to charge in kWh. Duration is auto-calculated from
+        energy_kwh / power_kw. Omit for indefinite charging.
+      required: false
+      example: 5.0
+      selector:
+        number:
+          min: 0.1
+          max: 1000
+          step: 0.1
+          unit_of_measurement: kWh
+
+growatt_discharge_to_grid:
+  name: Growatt – Discharge battery to grid (VPP)
+  description: >
+    Enable VPP-controlled battery discharge to the grid on a Growatt inverter.
+    power_kw is converted to a percentage of rated power using the cached
+    rated_power_pn sensor.  If energy_kwh is provided, the discharge duration
+    is calculated automatically (energy_kwh / power_kw * 60 minutes, max 1440).
+    Omitting energy_kwh discharges indefinitely until the next inverter power
+    cycle or until growatt_stop_vpp_charge is called.
+    Note: registers 30407, 30408 and 30409 are "Not storage" – they reset on
+    inverter power cycle.
+  fields:
+    name:
+      name: Hub name
+      description: Name of the hub (e.g., "SolaX")
+      required: true
+      example: SolaX
+    power_kw:
+      name: Discharge power (kW)
+      description: >
+        Discharge power in kilowatts. Automatically clamped to the battery's
+        reported maximum discharge power (battery_max_discharge_power sensor).
+      required: true
+      example: 3.0
+      selector:
+        number:
+          min: 0.1
+          max: 100
+          step: 0.1
+          unit_of_measurement: kW
+    energy_kwh:
+      name: Energy target (kWh)
+      description: >
+        Total energy to discharge in kWh. Duration is auto-calculated from
+        energy_kwh / power_kw. Omit for indefinite discharging.
+      required: false
+      example: 5.0
+      selector:
+        number:
+          min: 0.1
+          max: 1000
+          step: 0.1
+          unit_of_measurement: kWh
+
+growatt_stop_vpp_charge:
+  name: Growatt – Stop VPP grid charge/discharge
+  description: >
+    Stop VPP-controlled charge or discharge on a Growatt inverter and release
+    VPP control authority. Writes 30407=0 (disable remote control), 30410=0
+    (disable AC charging), 30100=0 (release control authority).
+  fields:
+    name:
+      name: Hub name
+      description: Name of the hub (e.g., "SolaX")
+      required: true
+      example: SolaX
