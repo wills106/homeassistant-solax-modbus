@@ -301,10 +301,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         """
         rated_power_w = hub.data.get("rated_power_pn")
         if not rated_power_w:
-            _LOGGER.warning(
-                f"{service_name} – rated_power_pn not yet available in hub data "
-                f"(inverter may still be initialising)"
-            )
+            _LOGGER.warning(f"{service_name} – rated_power_pn not yet available in hub data (inverter may still be initialising)")
             return None
         return max(1, min(100, round(power_kw * 1000 / rated_power_w * 100)))
 
@@ -349,23 +346,17 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         if max_charge_w and power_kw * 1000 > max_charge_w:
             power_kw = max_charge_w / 1000
             power_percent = _kw_to_percent(power_kw, hub, "growatt_charge_from_grid")
-            _LOGGER.warning(
-                f"{name}: growatt_charge_from_grid – power clamped to battery max "
-                f"{power_kw:.2f} kW ({power_percent}%)"
-            )
+            _LOGGER.warning(f"{name}: growatt_charge_from_grid – power clamped to battery max {power_kw:.2f} kW ({power_percent}%)")
 
         duration_minutes = _kwh_to_minutes(float(energy_kwh), power_kw) if energy_kwh is not None else 0
 
-        _LOGGER.info(
-            f"{name}: growatt_charge_from_grid – {power_kw:.2f} kW ({power_percent}%), "
-            f"duration={duration_minutes} min"
-        )
+        _LOGGER.info(f"{name}: growatt_charge_from_grid – {power_kw:.2f} kW ({power_percent}%), duration={duration_minutes} min")
         for address, payload in [
-            (30100, 1),                  # VPP control authority: enable
-            (30410, 1),                  # AC charging: enable
-            (30408, duration_minutes),   # Charging duration
-            (30409, power_percent),      # Charge power (positive = charging)
-            (30407, 1),                  # Remote power control enable (triggers command)
+            (30100, 1),  # VPP control authority: enable
+            (30410, 1),  # AC charging: enable
+            (30408, duration_minutes),  # Charging duration
+            (30409, power_percent),  # Charge power (positive = charging)
+            (30407, 1),  # Remote power control enable (triggers command)
         ]:
             await hub.async_write_register(unit=unit, address=address, payload=payload)
 
@@ -403,23 +394,17 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         if max_discharge_w and power_kw * 1000 > max_discharge_w:
             power_kw = max_discharge_w / 1000
             power_percent = _kw_to_percent(power_kw, hub, "growatt_discharge_to_grid")
-            _LOGGER.warning(
-                f"{name}: growatt_discharge_to_grid – power clamped to battery max "
-                f"{power_kw:.2f} kW ({power_percent}%)"
-            )
+            _LOGGER.warning(f"{name}: growatt_discharge_to_grid – power clamped to battery max {power_kw:.2f} kW ({power_percent}%)")
 
         duration_minutes = _kwh_to_minutes(float(energy_kwh), power_kw) if energy_kwh is not None else 0
 
-        _LOGGER.info(
-            f"{name}: growatt_discharge_to_grid – {power_kw:.2f} kW ({power_percent}%), "
-            f"duration={duration_minutes} min"
-        )
+        _LOGGER.info(f"{name}: growatt_discharge_to_grid – {power_kw:.2f} kW ({power_percent}%), duration={duration_minutes} min")
         for address, payload in [
-            (30100, 1),                  # VPP control authority: enable
-            (30410, 0),                  # AC charging: disable
-            (30408, duration_minutes),   # Discharge duration
-            (30409, -power_percent),     # Discharge power (negative = discharge)
-            (30407, 1),                  # Remote power control enable (triggers command)
+            (30100, 1),  # VPP control authority: enable
+            (30410, 0),  # AC charging: disable
+            (30408, duration_minutes),  # Discharge duration
+            (30409, -power_percent),  # Discharge power (negative = discharge)
+            (30407, 1),  # Remote power control enable (triggers command)
         ]:
             await hub.async_write_register(unit=unit, address=address, payload=payload)
 
