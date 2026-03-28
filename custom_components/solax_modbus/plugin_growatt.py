@@ -7,7 +7,6 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfApparentPower,
-    UnitOfElectricCharge,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -27,11 +26,10 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     DEFAULT_READ_EPS,
     REG_HOLDING,
     REG_INPUT,
-    REGISTER_U8L,
-    REGISTER_U8H,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
+    REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
@@ -2366,7 +2364,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name="Battery Capacity (FCC)",
         key="battery_fcc",
-        native_unit_of_measurement=UnitOfElectricCharge.AMPERE_HOURS,
+        native_unit_of_measurement="Ah",
         register=31219,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
@@ -9860,5 +9858,3 @@ plugin_instance = growatt_plugin(
     order32="big",
     auto_block_ignore_readerror=True,
 )
-
-
