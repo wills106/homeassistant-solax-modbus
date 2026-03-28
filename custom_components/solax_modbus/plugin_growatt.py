@@ -375,6 +375,14 @@ def value_function_combined_battery_power(initval: int, descr: Any, datadict: di
     return float(datadict.get("battery_charge_power", 0)) - float(datadict.get("battery_discharge_power", 0))
 
 
+def value_function_battery_capacity_kwh(initval: int, descr: Any, datadict: dict[str, Any]) -> float | None:
+    fcc_ah = datadict.get("battery_fcc")
+    voltage_v = datadict.get("battery_voltage")
+    if fcc_ah is None or voltage_v is None or voltage_v == 0:
+        return None
+    return round(fcc_ah * voltage_v / 1000, 2)
+
+
 def value_function_combined_bms_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     amp = float(datadict.get("bms_1_module_2_amp", 0))
     result: int | float
@@ -2369,6 +2377,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
         scale=1,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=True,
+        icon="mdi:battery-high",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Battery Capacity (kWh)",
+        key="battery_capacity_kwh",
+        value_function=value_function_battery_capacity_kwh,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        depends_on=["battery_fcc", "battery_voltage"],
         allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=True,
