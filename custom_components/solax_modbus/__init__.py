@@ -282,8 +282,158 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         if rec:
             domain_data.pop(name, None)
 
+    def _resolve_hub(name: str, service_name: str):
+        """Look up a hub by name, returning (hub, unit) or (None, None) on failure."""
+        domain_data = hass.data.get(DOMAIN, {})
+        rec = domain_data.get(name)
+        hub = rec.get("hub") if rec else None
+        if not hub:
+            _LOGGER.warning(f"{service_name} service – hub '{name}' not found")
+            return None, None
+        return hub, hub._modbus_addr
+
+    def _kw_to_percent(power_kw: float, hub: Any, service_name: str) -> int | None:
+        """Convert kW to % of rated power using the cached rated_power_pn sensor value.
+
+        Returns None if rated power is not yet available in hub.data.
+        """
+        rated_power_w = hub.data.get("rated_power_pn")
+        if not rated_power_w:
+            _LOGGER.warning(f"{service_name} – rated_power_pn not yet available in hub data (inverter may still be initialising)")
+            return None
+        return max(1, min(100, round(power_kw * 1000 / rated_power_w * 100)))
+
+    def _kwh_to_minutes(energy_kwh: float, power_kw: float) -> int:
+        """Convert an energy target (kWh) and power (kW) to a duration in minutes."""
+        return max(1, min(1440, round(energy_kwh / power_kw * 60)))
+
+    async def _svc_growatt_charge_from_grid(call: Any) -> None:
+        """Enable VPP-controlled AC charging from the grid on a Growatt inverter.
+
+        Converts power_kw to a % of rated power using the cached rated_power_pn
+        sensor value.  If energy_kwh is given the charging duration is calculated
+        automatically (duration_minutes = energy_kwh / power_kw * 60, capped at
+        1440 min).  Omitting energy_kwh sets duration to 0 (unlimited until next
+        inverter power cycle).
+
+        Register sequence (Growatt VPP protocol V2.01):
+          30100 = 1             – Enable VPP control authority (stored)
+          30410 = 1             – Enable AC charging (stored)
+          30408 = duration_min  – Charging duration in minutes (not stored)
+          30409 = +percent      – Charge power, positive = charging (not stored)
+          30407 = 1             – Enable remote power control, triggers command (not stored)
+        """
+        name = call.data.get("name")
+        if not name:
+            _LOGGER.warning("growatt_charge_from_grid service – missing 'name'")
+            return
+
+        power_kw = float(call.data["power_kw"])
+        energy_kwh = call.data.get("energy_kwh")
+
+        hub, unit = _resolve_hub(name, "growatt_charge_from_grid")
+        if hub is None:
+            return
+
+        power_percent = _kw_to_percent(power_kw, hub, "growatt_charge_from_grid")
+        if power_percent is None:
+            return
+
+        # Clamp against the battery's reported maximum charge power
+        max_charge_w = hub.data.get("battery_max_charge_power")
+        if max_charge_w and power_kw * 1000 > max_charge_w:
+            power_kw = max_charge_w / 1000
+            power_percent = _kw_to_percent(power_kw, hub, "growatt_charge_from_grid")
+            _LOGGER.warning(f"{name}: growatt_charge_from_grid – power clamped to battery max {power_kw:.2f} kW ({power_percent}%)")
+
+        duration_minutes = _kwh_to_minutes(float(energy_kwh), power_kw) if energy_kwh is not None else 0
+
+        _LOGGER.info(f"{name}: growatt_charge_from_grid – {power_kw:.2f} kW ({power_percent}%), duration={duration_minutes} min")
+        for address, payload in [
+            (30100, 1),  # VPP control authority: enable
+            (30410, 1),  # AC charging: enable
+            (30408, duration_minutes),  # Charging duration
+            (30409, power_percent),  # Charge power (positive = charging)
+            (30407, 1),  # Remote power control enable (triggers command)
+        ]:
+            await hub.async_write_register(unit=unit, address=address, payload=payload)
+
+    async def _svc_growatt_discharge_to_grid(call: Any) -> None:
+        """Enable VPP-controlled battery discharge to the grid on a Growatt inverter.
+
+        Same parameter interface as growatt_charge_from_grid.  power_kw is the
+        desired discharge power; energy_kwh (optional) auto-calculates duration.
+
+        Register sequence:
+          30100 = 1             – Enable VPP control authority (stored)
+          30410 = 0             – Disable AC charging (stored)
+          30408 = duration_min  – Discharge duration in minutes (not stored)
+          30409 = -percent      – Discharge power, negative = discharging (not stored)
+          30407 = 1             – Enable remote power control, triggers command (not stored)
+        """
+        name = call.data.get("name")
+        if not name:
+            _LOGGER.warning("growatt_discharge_to_grid service – missing 'name'")
+            return
+
+        power_kw = float(call.data["power_kw"])
+        energy_kwh = call.data.get("energy_kwh")
+
+        hub, unit = _resolve_hub(name, "growatt_discharge_to_grid")
+        if hub is None:
+            return
+
+        power_percent = _kw_to_percent(power_kw, hub, "growatt_discharge_to_grid")
+        if power_percent is None:
+            return
+
+        # Clamp against the battery's reported maximum discharge power
+        max_discharge_w = hub.data.get("battery_max_discharge_power")
+        if max_discharge_w and power_kw * 1000 > max_discharge_w:
+            power_kw = max_discharge_w / 1000
+            power_percent = _kw_to_percent(power_kw, hub, "growatt_discharge_to_grid")
+            _LOGGER.warning(f"{name}: growatt_discharge_to_grid – power clamped to battery max {power_kw:.2f} kW ({power_percent}%)")
+
+        duration_minutes = _kwh_to_minutes(float(energy_kwh), power_kw) if energy_kwh is not None else 0
+
+        _LOGGER.info(f"{name}: growatt_discharge_to_grid – {power_kw:.2f} kW ({power_percent}%), duration={duration_minutes} min")
+        for address, payload in [
+            (30100, 1),  # VPP control authority: enable
+            (30410, 0),  # AC charging: disable
+            (30408, duration_minutes),  # Discharge duration
+            (30409, -power_percent),  # Discharge power (negative = discharge)
+            (30407, 1),  # Remote power control enable (triggers command)
+        ]:
+            await hub.async_write_register(unit=unit, address=address, payload=payload)
+
+    async def _svc_growatt_stop_vpp_charge(call: Any) -> None:
+        """Stop VPP-controlled charge/discharge on a Growatt inverter.
+
+        Disables remote power control (30407 = 0), AC charging (30410 = 0),
+        then releases VPP control authority (30100 = 0).
+        """
+        name = call.data.get("name")
+        if not name:
+            _LOGGER.warning("growatt_stop_vpp_charge service – missing 'name'")
+            return
+
+        hub, unit = _resolve_hub(name, "growatt_stop_vpp_charge")
+        if hub is None:
+            return
+
+        _LOGGER.info(f"{name}: growatt_stop_vpp_charge – disabling VPP remote control")
+        for address, payload in [
+            (30407, 0),  # Remote power control: disable
+            (30410, 0),  # AC charging: disable
+            (30100, 0),  # VPP control authority: release
+        ]:
+            await hub.async_write_register(unit=unit, address=address, payload=payload)
+
     hass.services.async_register(DOMAIN, "stop_all", _svc_stop_all)
     hass.services.async_register(DOMAIN, "stop_hub", _svc_stop_hub)
+    hass.services.async_register(DOMAIN, "growatt_charge_from_grid", _svc_growatt_charge_from_grid)
+    hass.services.async_register(DOMAIN, "growatt_discharge_to_grid", _svc_growatt_discharge_to_grid)
+    hass.services.async_register(DOMAIN, "growatt_stop_vpp_charge", _svc_growatt_stop_vpp_charge)
     # _LOGGER.debug("solax data %d", hass.data)
     return True
 
