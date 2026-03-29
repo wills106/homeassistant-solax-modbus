@@ -691,11 +691,13 @@ class SolaXModbusHub:
                         name=plugin_name,
                         serial_number=self.seriesnumber,
                     )
-                if getattr(self, "_stopping", False):
+                    if getattr(self, "_stopping", False):
+                        return
+                    await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+                    self._platforms_forwarded = True
                     return
-                await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
-                self._platforms_forwarded = True
-                return
+                else:
+                    _LOGGER.debug(f"{self._name}: deferred setup – inverter still not responding, will retry in {interval}s")
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: deferred setup iteration failed: {ex}")
             # Wait and try again
@@ -1135,7 +1137,7 @@ class SolaXModbusHub:
             return False
         if not self._client.connected:
             _LOGGER.debug(f"{self._name}: Inverter is not connected, trying to connect")
-            await self._client.connect()
+            await self.async_connect()
             await asyncio.sleep(1)
         return self._client.connected
 
@@ -1144,6 +1146,9 @@ class SolaXModbusHub:
 
     async def async_connect(self) -> None:
         if getattr(self, "_stopping", False):
+            return
+        if self._client.connected:
+            _LOGGER.debug(f"{self._name}: async_connect skipped - already connected")
             return
         _LOGGER.debug(
             f"{self._name}: Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
@@ -1166,13 +1171,11 @@ class SolaXModbusHub:
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
-                # Flush transport: close + short pause + reconnect to clear any late/queued frames
-                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
-                try:
-                    self._client.close()
-                finally:
-                    await asyncio.sleep(0.2)
-                    await self._client.connect()
+                if getattr(self, "_stopping", False):
+                    _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
+                    return None
+                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
+                self._client.close()
                 return None
         return resp
 
@@ -1192,13 +1195,11 @@ class SolaXModbusHub:
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
-                # Flush transport: close + short pause + reconnect to clear any late/queued frames
-                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
-                try:
-                    self._client.close()
-                finally:
-                    await asyncio.sleep(0.2)
-                    await self._client.connect()
+                if getattr(self, "_stopping", False):
+                    _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
+                    return None
+                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
+                self._client.close()
                 return None
         return resp
 
