@@ -1031,9 +1031,7 @@ class SolaXModbusHub:
                 async with interval_group.poll_lock:
                     agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
                 await self._maybe_refresh_energy_dashboard_on_primary_update()
-                _LOGGER.debug(
-                    f"{self._name}: initial refresh for interval {interval}s finished (ok={agg_res}, sensors={updated_sensors})"
-                )
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s finished (ok={agg_res}, sensors={updated_sensors})")
         finally:
             self._initial_refresh_active = False
             self._initial_refresh_done = True
