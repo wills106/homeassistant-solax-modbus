@@ -29,6 +29,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
+    REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
@@ -372,6 +373,14 @@ def value_function_today_s_solar_energy(initval: int, descr: Any, datadict: dict
 
 def value_function_combined_battery_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return float(datadict.get("battery_charge_power", 0)) - float(datadict.get("battery_discharge_power", 0))
+
+
+def value_function_battery_capacity_kwh(initval: int, descr: Any, datadict: dict[str, Any]) -> float | None:
+    fcc_ah = datadict.get("battery_fcc")
+    voltage_v = datadict.get("battery_voltage")
+    if fcc_ah is None or voltage_v is None or voltage_v == 0:
+        return None
+    return round(fcc_ah * voltage_v / 1000, 2)
 
 
 def value_function_combined_bms_current(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -809,7 +818,7 @@ NUMBER_TYPES = [
         native_max_value=1440,
         native_step=5,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-clock",
@@ -823,7 +832,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=5,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-sync",
@@ -1117,7 +1126,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -1126,11 +1135,26 @@ SELECT_TYPES = [
         name="VPP Remote Control",
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         option_dict={
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        icon="mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name="VPP Allow AC charging",
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -2293,23 +2317,24 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         scale={
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="vpp_time",
         register=30408,
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         scale=1,
         internal=True,
     ),
@@ -2317,8 +2342,19 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key="vpp_power",
         register=30409,
         register_data_type=REGISTER_S16,
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         scale=1,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        scale={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
@@ -2332,6 +2368,59 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=True,
         icon="mdi:information",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Battery Capacity (FCC)",
+        key="battery_fcc",
+        native_unit_of_measurement="Ah",
+        register=31219,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        scale=1,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=True,
+        icon="mdi:battery-high",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Battery Capacity (kWh)",
+        key="battery_capacity_kwh",
+        value_function=value_function_battery_capacity_kwh,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        depends_on=["battery_fcc", "battery_voltage"],
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=True,
+        icon="mdi:battery-high",
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="rated_power_pn",
+        register=30016,
+        register_data_type=REGISTER_U32,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        scale=0.1,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="battery_max_charge_power",
+        register=31210,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        scale=0.1,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="battery_max_discharge_power",
+        register=31212,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        scale=0.1,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="inverter_switch",
