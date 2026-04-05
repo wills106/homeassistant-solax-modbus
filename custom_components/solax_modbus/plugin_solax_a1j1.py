@@ -1203,7 +1203,6 @@ plugin_instance = solax_a1j1_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
-    TIME_TYPES=[],
     block_size=100,
     # order16=Endian.BIG,
     order32="little",

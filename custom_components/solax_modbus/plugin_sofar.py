@@ -4277,7 +4277,6 @@ plugin_instance = sofar_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
-    TIME_TYPES=[],
     BATTERY_CONFIG=battery_config(),
     block_size=48,
     order32="big",
