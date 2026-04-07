@@ -1363,6 +1363,7 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H34B12", 15000),  # Gen4 X3 B
     ("H34B15", 16500),  # Gen4 X3 B
     ("H34C05", 7500),  # Gen4 X3 C
+    ("H34C06", 6000),  # Gen4 X3 C
     ("H34C08", 12000),  # Gen4 X3 C
     ("H34C10", 15000),  # Gen4 X3 C
     ("H34C12", 15000),  # Gen4 X3 C
