@@ -1274,6 +1274,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H34C", 30),  # Gen4 X3 C
     ("H34T", 25),  # Gen4 X3 T
     ("H35A", 50),  # Gen5 X3-IES A
+    ("P35A", 50),  # Gen5 X3-IES P
     ("H35F", 50),  # Gen5 X3-IES F
     ("H3BC", 60),  # Gen5 X3 Ultra C
     ("H3BD", 60),  # Gen5 X3 Ultra D
@@ -1363,7 +1364,6 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H34B12", 15000),  # Gen4 X3 B
     ("H34B15", 16500),  # Gen4 X3 B
     ("H34C05", 7500),  # Gen4 X3 C
-    ("H34C06", 6000),  # Gen4 X3 C
     ("H34C08", 12000),  # Gen4 X3 C
     ("H34C10", 15000),  # Gen4 X3 C
     ("H34C12", 15000),  # Gen4 X3 C
@@ -1380,6 +1380,13 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H35A10", 10000),  # Gen5 X3-IES A
     ("H35A12", 12000),  # Gen5 X3-IES A
     ("H35A15", 15000),  # Gen5 X3-IES A
+    ("P35A04", 4000),  # Gen5 X3-IES P
+    ("P35A05", 5000),  # Gen5 X3-IES P
+    ("P35A06", 6000),  # Gen5 X3-IES P
+    ("P35A08", 8000),  # Gen5 X3-IES P
+    ("P35A10", 10000),  # Gen5 X3-IES P
+    ("P35A12", 12000),  # Gen5 X3-IES P
+    ("P35A15", 15000),  # Gen5 X3-IES P
     ("H35F04", 4000),  # Gen5 X3-IES F
     ("H35F05", 5000),  # Gen5 X3-IES F
     ("H35F06", 6000),  # Gen5 X3-IES F
@@ -9902,6 +9909,12 @@ class solax_plugin(plugin_base):
             self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
         elif seriesnumber.startswith("H35A1"):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW A
+            self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
+        elif seriesnumber.startswith("P35A0"):
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW P
+            self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
+        elif seriesnumber.startswith("P35A1"):
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW P
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("H35F0"):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW F
