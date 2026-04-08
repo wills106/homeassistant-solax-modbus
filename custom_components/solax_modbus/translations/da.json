@@ -1,0 +1,118 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Definer Modbus forbindelse",
+        "data": {
+          "name": "prefix for navngivning af sensorer på din Inverter",
+          "read_modbus_addr": "Modbus adressen på Inverteren",
+          "interface": "Interface",
+          "inverter_name_suffix": "Navne suffix til inverteren",
+          "inverter_power_kw": "Max inverter effekt i kW (ved parallelkobling: total system kapacitet)",
+          "energy_dashboard_device": "Energi Dashboard Virtual Device",
+          "read_eps": "Nød Drift Option (EPS)",
+          "read_dcb": "Dry Kontakt Boks (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallel Drift (Master-Slave)",
+          "plugin": "Vælg Inverter Type",
+          "scan_interval": "Standard polling interval (s)",
+          "scan_interval_medium": "Mellemlangt polling interval (s)",
+          "scan_interval_fast": "Hurtig polling interval (s)",
+          "time_out": "Timeout for forespørgsel (s)"
+        }
+      },
+      "serial": {
+        "title": "Parameter for Serial Interface",
+        "data": {
+          "read_serial_port": "Serial port navn",
+          "baudrate": "Overføringshastighed (baudrate)"
+        }
+      },
+      "tcp": {
+        "title": "TCP/IP Parametre",
+        "data": {
+          "host": "Adressen til din inverter eller Modbus interface",
+          "port": "TCP-port til at tilslutte til inverteren",
+          "tcp_type": "Modbus TCP variant"
+        }
+      },
+      "battery": {
+        "title": "Aflæs batteri moduler",
+        "data": {
+          "read_battery": "Aktiver aflæsning"
+        }
+      },
+      "core": {
+        "title": "Valg af Core Modbus-hub",
+        "data": {
+          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Enheden er allerede konfigureret",
+      "name_already_used": "Navn er allerede brugt eller ikke gyldigt",
+      "invalid_host": "Ugyldig host adresse"
+    },
+    "abort": {
+      "already_configured": "Enheden er allerede konfigureret"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Definer Modbus tilslutning",
+        "data": {
+          "name": "Prefix for navngivning af sensorer på din inverter",
+          "read_modbus_addr": "Modbus-adressen på Inverteren",
+          "interface": "Interface",
+          "inverter_name_suffix": "Navne suffix for inverteren",
+          "inverter_power_kw": "Max inverter effekt i kW (for parallelkobling: total system kapacitet)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "read_eps": "Nød Drift Option (EPS)",
+          "read_dcb": "Dry Contact Boks (SolaX Hybrid Gen4 & Gen5)",
+          "read_pm": "Parallel Drift (Master-Slave)",
+          "plugin": "Vælg Inverter Type",
+          "scan_interval": "Standard polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
+          "scan_interval_fast": "Hurtig polling interval (s)",
+          "time_out": "Timeout for forespørgsel (s)"
+        }
+      },
+      "serial": {
+        "title": "Serial Interface Parameters",
+        "data": {
+          "read_serial_port": "Serial port navn",
+          "baudrate": "Overføringshastighed (baudrate)"
+        }
+      },
+      "tcp": {
+        "title": "Parametre TCP/IP",
+        "data": {
+          "host": "Adressen på din inverters Modbus-interface",
+          "port": "TCP porten for forbindelsen til din inverter",
+          "tcp_type": "Modbus TCP variant"
+        }
+      },
+      "battery": {
+        "title": "Aflæs batteri moduler",
+        "data": {
+          "read_battery": "Aktiver aflæsning"
+        }
+      },
+      "core": {
+        "title": "Valg af Core Modbus-hub",
+        "data": {
+          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Enheden er allerede konfigureret",
+      "name_already_used": "Navn er allerede brugt eller ikke gyldigt",
+      "invalid_host": "Ugyldig host adresse"
+    },
+    "abort": {
+      "already_configured": "Enheden er allerede konfigureret"
+    }
+  }
+}
