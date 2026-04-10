@@ -123,12 +123,51 @@ class SolaXModbusSelect(SelectEntity):
 
     @property
     def current_option(self) -> str | None:
+        option_dict = self._option_dict or {}
+
         if self._key in self._hub.data:
             value = self._hub.data[self._key]
-            return str(value) if value is not None else None
         else:
-            initval = self.entity_description.initvalue
-            return str(initval) if initval is not None else None
+            value = self.entity_description.initvalue
+
+        if value is None:
+            return None
+
+        # If the value is already one of the select labels, return it as-is.
+        if isinstance(value, str) and value in self._attr_options:
+            return value
+
+        # Map raw register values back to the corresponding option labels.
+        if value in option_dict:
+            return option_dict[value]
+
+        # Some inverters report 65535 (-1) for uninitialized select registers.
+        # For the affected Sofar selects this is best treated like the zero option
+        # instead of exposing the select state as "unknown".
+        if value == 65535 and 0 in option_dict and self._key in {
+            "feedin_limitation_mode",
+            "passive_mode_timeout",
+            "passive_mode_timeout_action",
+        }:
+            return option_dict[0]
+
+        # Try again via integer coercion for values that may have been stored as strings/floats.
+        try:
+            int_value = int(value)
+        except (TypeError, ValueError):
+            return None
+
+        if int_value in option_dict:
+            return option_dict[int_value]
+
+        if int_value == 65535 and 0 in option_dict and self._key in {
+            "feedin_limitation_mode",
+            "passive_mode_timeout",
+            "passive_mode_timeout_action",
+        }:
+            return option_dict[0]
+
+        return None
 
     @property
     def name(self) -> str:
