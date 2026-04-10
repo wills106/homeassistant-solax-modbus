@@ -141,16 +141,6 @@ class SolaXModbusSelect(SelectEntity):
         if value in option_dict:
             return option_dict[value]
 
-        # Some inverters report 65535 (-1) for uninitialized select registers.
-        # For the affected Sofar selects this is best treated like the zero option
-        # instead of exposing the select state as "unknown".
-        if value == 65535 and 0 in option_dict and self._key in {
-            "feedin_limitation_mode",
-            "passive_mode_timeout",
-            "passive_mode_timeout_action",
-        }:
-            return option_dict[0]
-
         # Try again via integer coercion for values that may have been stored as strings/floats.
         try:
             int_value = int(value)
@@ -159,13 +149,6 @@ class SolaXModbusSelect(SelectEntity):
 
         if int_value in option_dict:
             return option_dict[int_value]
-
-        if int_value == 65535 and 0 in option_dict and self._key in {
-            "feedin_limitation_mode",
-            "passive_mode_timeout",
-            "passive_mode_timeout_action",
-        }:
-            return option_dict[0]
 
         return None
 
