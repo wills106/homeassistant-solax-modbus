@@ -413,14 +413,13 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-up-down",
     ),
-
     SolintegModbusNumberEntityDescription(
         name="EMS BattCtrl Max Grid Export",
         key="ems_battctrl_max_ac_power_limit",
         register=50208,
         register_data_type=REGISTER_S16,
         native_unit_of_measurement="x0.01 kW",
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         native_min_value=0,
         native_max_value=20000,
         native_step=1,
@@ -435,7 +434,7 @@ NUMBER_TYPES = [
         register=50209,
         register_data_type=REGISTER_S16,
         native_unit_of_measurement="x0.01 kW",
-        device_class=SensorDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
         native_min_value=-20000,
         native_max_value=0,
         native_step=1,
@@ -711,7 +710,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Bypass Wait",
                 "NPD Standby",
                 "Generator Abn.",
-                "S14 Undefined",			# S14 Unused
+                "S14 Undefined",     # S14 Unused
                 "OffGrid",
                 "NPD Clearing",
                 "Cmd PLim",
@@ -729,7 +728,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "S29 Undefined",
                 "S30 Undefined",
                 "S31 Undefined",
-                "PV PLim",				# listed as S32 in documentation.
+                "PV PLim",           # listed as S32 in documentation. 27-31 unused.
             ]
         ),
     ),
@@ -1873,6 +1872,7 @@ plugin_instance = solinteg_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=120,
     # order16=Endian.BIG,
     order32="big",
