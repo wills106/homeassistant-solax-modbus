@@ -710,7 +710,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Bypass Wait",
                 "NPD Standby",
                 "Generator Abn.",
-                "S14 Undefined",     # S14 Unused
+                "S14 Undefined",
                 "OffGrid",
                 "NPD Clearing",
                 "Cmd PLim",
@@ -728,7 +728,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "S29 Undefined",
                 "S30 Undefined",
                 "S31 Undefined",
-                "PV PLim",           # listed as S32 in documentation. 27-31 unused.
+                "PV PLim",
             ]
         ),
     ),
