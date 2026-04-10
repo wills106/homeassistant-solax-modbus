@@ -55,6 +55,12 @@ from .pymodbus_compat import DataType, convert_from_registers
 
 _LOGGER = logging.getLogger(__name__)
 
+_UNINITIALIZED_SELECT_DEFAULTS: dict[str, int] = {
+    "feedin_limitation_mode": 0,
+    "passive_mode_timeout": 0,
+    "passive_mode_timeout_action": 0,
+}
+
 """ ============================================================================================
 bitmasks  definitions to characterize inverters, organized by group
 these bitmasks are used in entity declarations to determine to which inverters the entity applies
@@ -158,6 +164,15 @@ class SofarModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     order32: str = "big"
     register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
+
+
+def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
+    """Normalize known Sofar sentinel values before entities consume them."""
+    if value == 0xFFFF and descr.key in _UNINITIALIZED_SELECT_DEFAULTS:
+        normalized = _UNINITIALIZED_SELECT_DEFAULTS[descr.key]
+        _LOGGER.debug(f"Sofar: normalizing uninitialized register value for {descr.key} from 65535 to {normalized}")
+        return normalized
+    return value
 
 
 # ====================================== Computed value functions  =================================================
