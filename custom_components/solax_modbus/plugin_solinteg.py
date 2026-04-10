@@ -346,7 +346,7 @@ NUMBER_TYPES = [
         name="EMS ACCtrl Total AC Power Scheduling",
         key="ems_acctrl_total_power",
         register=50203,
-        register_data_type=REGISTER_S16
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement="x0.01 kW",
         device_class=NumberDeviceClass.POWER,
         native_min_value=-20000,
@@ -1634,7 +1634,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
     SolintegModbusSensorEntityDescription(
         key="ems_acctrl_total_power",
         register=50203,
-        register_data_type=REGISTER_S16,       
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement="x0.01 kW",
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
