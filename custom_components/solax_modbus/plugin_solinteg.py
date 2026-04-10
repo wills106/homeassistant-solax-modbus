@@ -399,7 +399,7 @@ NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
         allowedtypes=HYBRID,
         icon="mdi:priority-high",
-    }
+    },
     SolintegModbusNumberEntityDescription(
         name="Battery SOC Min On Grid",
         key="battery_soc_min_ongrid",
