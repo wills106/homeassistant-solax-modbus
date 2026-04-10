@@ -723,13 +723,13 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Slow Loading",
                 "OVolt PLim",
                 "System PLim",
-		"EMS CmdLim",
-		"S27 Undefined",
-		"S28 Undefined",
-		"329 Undefined",
-		"S30 Undefined",
-		"S31 Undefined",
-		"PV PLim",				# listed as S32 in documentation.
+	            "EMS CmdLim",
+				"S27 Undefined",
+				"S28 Undefined",
+				"329 Undefined",
+				"S30 Undefined",
+				"S31 Undefined",
+				"PV PLim",				# listed as S32 in documentation.
             ]
         ),
     ),
