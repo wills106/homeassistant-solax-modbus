@@ -1128,6 +1128,7 @@ SELECT_TYPES = [
         name="VPP Remote Control",
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         option_dict={
             0: "Disabled",
             1: "Enabled",
@@ -1146,7 +1147,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -2315,6 +2316,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         scale={
             0: "Disabled",
             1: "Enabled",
@@ -2345,7 +2347,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=GEN3 | GEN4,
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
@@ -9816,5 +9818,3 @@ plugin_instance = growatt_plugin(
     order32="big",
     auto_block_ignore_readerror=True,
 )
-
-
