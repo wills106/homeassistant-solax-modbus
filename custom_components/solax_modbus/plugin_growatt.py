@@ -26,6 +26,8 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     DEFAULT_READ_EPS,
     REG_HOLDING,
     REG_INPUT,
+    REGISTER_U8L,
+    REGISTER_U8H,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
@@ -1126,11 +1128,26 @@ SELECT_TYPES = [
         name="VPP Remote Control",
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         option_dict={
             0: "Disabled",
             1: "Enabled",
         },
         allowedtypes=GEN3 | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        icon="mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name="VPP Allow AC charging",
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -2299,6 +2316,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         key="vpp_remote_control",
         register=30407,
+        register_data_type=REGISTER_U8L,
         scale={
             0: "Disabled",
             1: "Enabled",
@@ -2319,6 +2337,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         allowedtypes=GEN3 | GEN4,
         scale=1,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        scale={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(

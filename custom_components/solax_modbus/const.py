@@ -283,7 +283,7 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     register: int | None = None
     register_bit: int | None = None
     blacklist: list[str] | None = None  # none or list of serial number prefixes
-    write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
+    write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MODBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
     sensor_key: str | None = None  # The associated sensor key
     value_function: Callable[[int | None, bool | None, str | None, dict[str, Any]], int] | None = (
