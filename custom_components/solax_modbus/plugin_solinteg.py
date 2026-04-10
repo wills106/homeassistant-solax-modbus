@@ -357,6 +357,7 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:battery-arrow-up-down",
     ),
+
     SolintegModbusNumberEntityDescription(
         name="EMS BattCtrl Max Grid Export",
         key="ems_battctrl_max_ac_power_limit",
@@ -387,6 +388,18 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:current-ac",
     ),
+    SolintegModbusSelectEntityDescription(
+        name="EMS BattCtrl Priority of Power Output",
+        key="ems_battctrl_priority_power_output",
+        register=50210,
+        option_dict={
+            0: "PV",
+            1: "Battery",
+        },
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:priority-high",
+    }
     SolintegModbusNumberEntityDescription(
         name="Battery SOC Min On Grid",
         key="battery_soc_min_ongrid",
@@ -629,7 +642,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Bypass Wait",
                 "NPD Standby",
                 "Generator Abn.",
-                "S14 Undefined",  # S14 Unused
+                "S14 Undefined",			# S14 Unused
                 "OffGrid",
                 "NPD Clearing",
                 "Cmd PLim",
@@ -641,13 +654,13 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Slow Loading",
                 "OVolt PLim",
                 "System PLim",
-                "EMS CmdLim",
-                "S27 Undefined",
-                "S28 Undefined",
-                "329 Undefined",
-                "S30 Undefined",
-                "S31 Undefined",
-                "PV PLim",  # listed as S32 in documentation.
+		"EMS CmdLim",
+		"S27 Undefined",
+		"S28 Undefined",
+		"329 Undefined",
+		"S30 Undefined",
+		"S31 Undefined",
+		"PV PLim",				# listed as S32 in documentation.
             ]
         ),
     ),
@@ -1526,6 +1539,16 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         icon="mdi:current-ac",
     ),
     SolintegModbusSensorEntityDescription(
+        key="ems_battctrl_priority_power_output",
+        register=50210,
+        scale={
+            0: "PV",
+            1: "Battery",
+        },
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
         key="battery_soc_min_ongrid",
         register=52503,
         scale=0.1,
@@ -1734,6 +1757,7 @@ plugin_instance = solinteg_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=120,
     # order16=Endian.BIG,
     order32="big",
