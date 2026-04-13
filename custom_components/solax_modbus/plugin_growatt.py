@@ -1128,7 +1128,6 @@ SELECT_TYPES = [
         name="VPP Remote Control",
         key="vpp_remote_control",
         register=30407,
-        register_data_type=REGISTER_U8L,
         option_dict={
             0: "Disabled",
             1: "Enabled",
