@@ -2315,7 +2315,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         key="vpp_remote_control",
         register=30407,
-        register_data_type=REGISTER_U8L,
         scale={
             0: "Disabled",
             1: "Enabled",
