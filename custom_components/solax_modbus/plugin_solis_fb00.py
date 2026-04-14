@@ -2199,7 +2199,7 @@ SELECT_TYPES = [
             1: "Force charge",
             2: "Force discharge",
         },
-        allowedtypes=HYBRID | X3,
+        allowedtypes=HYBRID,
         icon="mdi:dip-switch",
         value_function=value_function_battery_control_override,
     ),
