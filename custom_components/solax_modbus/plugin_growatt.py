@@ -9545,6 +9545,8 @@ class growatt_plugin(plugin_base):
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 9000 TL3-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("DFK"):
             invertertype = HYBRID | GEN4 | X3  # MOD 100000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith("EGR"):
+            invertertype = HYBRID | GEN4 | X3  # MOD 150000 TL3-HU Hybrid, 3 MPPT
 
         # MID type:GEN4
         elif seriesnumber.startswith("KLN"):
