@@ -465,7 +465,8 @@ SELECT_TYPES = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302 : EMS Modes
+            # 0x301: EMS Modes
+            0x302: "EMS General",
             0x303: "Charge-Discharge",
             0x400: "ToU",
         },
@@ -1393,7 +1394,8 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302 : EMS Modes
+            # 0x301: EMS Modes
+            0x302: "EMS General",
             0x303: "Charge-Discharge",
             0x400: "ToU",
         },

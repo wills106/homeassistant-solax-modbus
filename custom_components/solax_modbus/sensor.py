@@ -331,9 +331,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     _LOGGER.info(f"{hub_name}: Removing Energy Dashboard device: {energy_dashboard_device.name}")
                     device_registry.async_remove_device(energy_dashboard_device.id)
                     await asyncio.sleep(0.1)
-            elif hasattr(plugin_obj, "ENERGY_DASHBOARD_MAPPING"):
+            elif getattr(plugin_obj, "ENERGY_DASHBOARD_MAPPING", None) is not None:
                 mapping = plugin_obj.ENERGY_DASHBOARD_MAPPING
-                _LOGGER.info(f"{hub_name}: Energy Dashboard mapping found for plugin: {mapping.plugin_name}")
+                if mapping is not None:
+                    _LOGGER.info(f"{hub_name}: Energy Dashboard mapping found for plugin: {mapping.plugin_name}")
 
                 validation_result = validate_mapping(mapping)
                 if not validation_result:
