@@ -1486,6 +1486,11 @@ class SolaXModbusHub:
         if self._validate_register_func is not None:
             val = self._validate_register_func(descr, val, data)
 
+        if isinstance(val, list) and descr.register_data_type != REGISTER_WORDS:
+            if self.cyclecount < VERBOSE_CYCLES:
+                _LOGGER.warning(f"{self._name}: invalid list value for numeric entity {descr.key}: {val} - setting value to None")
+            val = None
+
         if val is None:  # E.g. if errors have occurred during readout
             # _LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
