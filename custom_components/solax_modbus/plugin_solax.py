@@ -10129,6 +10129,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MP156T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith("PU"):
+            invertertype = MIC | GEN2 | X3  # MIC X3
+            self.inverter_model = "X3-MIC Pro"
         elif seriesnumber.startswith("MPT"):
             kw_value = int(seriesnumber[3:5])
             invertertype = MIC | GEN2 | X3
