@@ -3359,7 +3359,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #
     ###
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=0,
         scale={0: "Waiting", 1: "Normal Mode", 2: "?", 3: "Permanent Fault Mode"},
@@ -4613,7 +4613,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=1000,
         scale={
@@ -5336,7 +5336,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         value_function=value_function_run_mode,
         allowedtypes=GEN4,
@@ -8946,7 +8946,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #
     #####
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=0,
         scale={
@@ -9585,7 +9585,7 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XH-US Hybrid, 4 MPPT
         elif seriesnumber.startswith("JGQ"):
             invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
-            
+
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("XHL"):
