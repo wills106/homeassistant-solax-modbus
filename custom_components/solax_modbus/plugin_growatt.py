@@ -5329,7 +5329,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Inverter State",
+        name="Inverter Run State",
         key="inverter_state",
         value_function=value_function_inverter_state,
         allowedtypes=GEN4,
@@ -9582,8 +9582,10 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith("XVM"):
             invertertype = HYBRID | GEN4 | X1  # MIN 5000 TL-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("SMN"):
-            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XHUS Hybrid, 4 MPPT
-
+            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XH-US Hybrid, 4 MPPT
+        elif seriesnumber.startswith("JGQ"):
+            invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+            
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("XHL"):
@@ -9598,7 +9600,8 @@ class growatt_plugin(plugin_base):
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 9000 TL3-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("DFK"):
             invertertype = HYBRID | GEN4 | X3  # MOD 100000 TL3-XH Hybrid, 2 MPPT
-
+        elif seriesnumber.startswith("EGR"):
+            invertertype = HYBRID | GEN4 | X3  # MOD 150000 TL3-HU Hybrid, 3 MPPT
         # MID type:GEN4
         elif seriesnumber.startswith("KLN"):
             invertertype = HYBRID | GEN4 | X3  # MID 15000 TL3-XH Hybrid, 2 MPPT
