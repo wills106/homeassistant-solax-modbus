@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from datetime import datetime
 from datetime import time as datetime_time
 from typing import Any
@@ -40,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     for time_info in plugin.TIME_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist):
             if not (time_info.name.startswith(inverter_name_suffix)):
-                time_info.name = inverter_name_suffix + time_info.name
+                time_info = replace(time_info, name=inverter_name_suffix + time_info.name)
             time_entity = SolaXModbusTimeEntity(hub_name, hub, modbus_addr, hub.device_info, time_info)
             if time_info.write_method == WRITE_DATA_LOCAL:
                 if time_info.initvalue is not None:
