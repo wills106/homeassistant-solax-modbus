@@ -9765,6 +9765,8 @@ class growatt_plugin(plugin_base):
                 invertertype = HYBRID | GEN4 | X3  # Hybrid TL3-XH 3kW - 10kW (MOD)
             elif seriesnumber.startswith("067"):
                 invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
+            elif seriesnumber.startswith("113):
+                invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
             elif seriesnumber.startswith("500"):
                 invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
             # elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
