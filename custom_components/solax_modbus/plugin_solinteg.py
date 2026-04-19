@@ -21,6 +21,7 @@ from custom_components.solax_modbus.const import (
     DEFAULT_READ_DCB,
     DEFAULT_READ_EPS,
     REG_HOLDING,
+    REGISTER_STR,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_U16,
@@ -1225,6 +1226,17 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
         icon="mdi:battery",
         entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolintegModbusSensorEntityDescription(
+        name = "Battery Manufacturer",
+        key = "battery_manufacturer",
+        register = 32020, #working, from fw V10.53...
+        wordcount = 8,
+        register_data_type = REGISTER_STR,
+        allowedtypes = HYBRID,
+        icon = "mdi:battery",
+        entity_registry_enabled_default = False,
+        entity_category = EntityCategory.DIAGNOSTIC,
     ),
     SolintegModbusSensorEntityDescription(
         name="Bat. Min Cell Voltage",
