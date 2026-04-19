@@ -9763,14 +9763,9 @@ class growatt_plugin(plugin_base):
                 invertertype = HYBRID | GEN4 | X3  # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)
             elif seriesnumber.startswith("V"):
                 invertertype = HYBRID | GEN4 | X3  # Hybrid TL3-XH 3kW - 10kW (MOD)
-            elif seriesnumber.startswith("067"):
+            # Include additional SPF5000ES firmware branches for auto-detection (e.g. 113).
+            elif seriesnumber.startswith(("067", "113", "500")):
                 invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
-            elif seriesnumber.startswith("113):
-                invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
-            elif seriesnumber.startswith("500"):
-                invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
-            # elif seriesnumber.startswith('SPA'):  invertertype = AC | GEN2 | X3 # AC SPA 4kW - 10kW Could be based SPF?
-
             else:
                 invertertype = 0
                 _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
