@@ -563,6 +563,13 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     except Exception:
         f = 1.0
 
+    # Near full charge rate limit
+    chargeable_soc = max(0, max_charge_soc - battery_capacity)
+    if chargeable_soc <= 4:
+        # For last few % of charge, further reduce the rate limit to account
+        # for non-ideal charging curves and reduce battery wear
+        f = f * (float(chargeable_soc + 2.0) / 6.0)
+
     # BMS charge capability approximation
     bms_a = datadict.get("bms_charge_max_current", None)
     batt_v = (
