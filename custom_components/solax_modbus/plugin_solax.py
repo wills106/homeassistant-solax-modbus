@@ -688,6 +688,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             # Battery gets surplus up to BMS limit
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
+            pushmode_power = -desired_charge
 
             if abs(error) <= export_deadband_w:
                 step_w = 0
