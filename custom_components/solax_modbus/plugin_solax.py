@@ -663,7 +663,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
 
         # Local copies
-        pvlimit = max(0, setpvlimit)
+        pvlimit = max(0, datadict.get("remotecontrol_current_pv_power_limit", setpvlimit))
         pushmode_power = 0  # + = discharge, - = charge
 
         # Debug inputs
