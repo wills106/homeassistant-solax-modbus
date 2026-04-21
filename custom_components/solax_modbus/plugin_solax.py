@@ -663,13 +663,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
 
         # Local copies
-        pvlimit = max(0, datadict.get("remotecontrol_current_pv_power_limit", setpvlimit))
+        cur_pvlimit = max(0, datadict.get("remotecontrol_current_pv_power_limit", setpvlimit))
         pushmode_power = 0  # + = discharge, - = charge
 
         # Debug inputs
         _LOGGER.debug(
             f"[Mode8 Negative Injection] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) imp_lim={import_limit}W "
-            f"soc={battery_capacity}% min_soc={min_discharge_soc}% max_soc={max_charge_soc}% pvlimit={pvlimit}W "
+            f"soc={battery_capacity}% min_soc={min_discharge_soc}% max_soc={max_charge_soc}% cur_pvlimit={cur_pvlimit}W "
             f"battery_charge={battery_charge}W"
         )
 
@@ -677,7 +677,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         measured_power = datadict.get("measured_power", None)
         _LOGGER.debug(f"[Mode8 Negative Injection] probes: measured_power={measured_power if measured_power is not None else 'n/a'} ")
 
-        if pv >= hl or setpvlimit < hl:
+        if pv >= hl or cur_pvlimit < hl:
             # Surplus or limited pv path: battery is requested to charge at up to the rate
             # limit from PV alone then use measured export as the control signal to adjust PV limit.
             # Below target: PV should be reduced to prevent export.
@@ -692,15 +692,15 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             if abs(error) <= export_deadband_w:
                 step_w = 0
-                pvlimit = setpvlimit
+                pvlimit = cur_pvlimit
                 control_reason = "hold"
             elif error > 0:
                 step_w = min(max_step_w, max(min_step_w, error))
-                pvlimit = max(0, setpvlimit - step_w)
+                pvlimit = max(0, cur_pvlimit - step_w)
                 control_reason = "decrease-pv"
             else:
                 step_w = min(max_step_w, max(min_step_w, -error))
-                pvlimit = min(30000, setpvlimit + step_w)
+                pvlimit = min(30000, cur_pvlimit + step_w)
                 control_reason = "increase-pv"
 
             _LOGGER.debug(
