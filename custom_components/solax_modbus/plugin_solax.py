@@ -678,11 +678,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         measured_power = datadict.get("measured_power", None)
         _LOGGER.debug(f"[Mode8 Negative Injection] probes: measured_power={measured_power if measured_power is not None else 'n/a'} ")
 
-        if pv >= hl or cur_pvlimit < hl:
+        if pv >= hl or cur_pvlimit < setpvlimit:
             # Surplus or limited pv path: battery is requested to charge at up to the rate
             # limit from PV alone then use measured export as the control signal to adjust PV limit.
             # Below target: PV should be reduced to prevent export.
             # At/above target: PV can be increased to reduce import in bounded steps.
+            # If PV has been limited below the setpoint and is now below house load, continue in this
+            # loop to release PV restriction slowly.
             surplus = max(0, pv - hl)
             measured_power = int(measured_power or 0)
             error = measured_power - export_target
