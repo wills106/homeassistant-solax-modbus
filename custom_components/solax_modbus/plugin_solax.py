@@ -646,12 +646,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # 2) If PV ≥ house load (surplus): let PV feed the battery first. PV limit is then adjusted using
         #    bounded step changes based on the measured power to prevent export.
 
-        # Use the alternative house load basis, but remove the current battery charging
-        # component again. house_load_alt includes battery charging as part of "load",
-        # which makes the regulator subtract its own charging command from the available
-        # export headroom and settle too early below the export target.
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
-        hl = max(0, int(houseload_alt) - battery_charge)
+        # Use the alternative house load for house load measurement, clamping to strict positive values.
+        hl = max(0, int(houseload_alt))
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
@@ -663,6 +659,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
 
         # Local copies
+        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
         cur_pvlimit = max(0, datadict.get("remotecontrol_current_pv_power_limit", pvlimit))
         pushmode_power = 0  # + = discharge, - = charge
