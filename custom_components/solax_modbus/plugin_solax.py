@@ -661,7 +661,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Local copies
         battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
-        cur_pvlimit = max(0, datadict.get("remotecontrol_current_pv_power_limit", pvlimit))
+        cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
         pushmode_power = 0  # + = discharge, - = charge
 
         # Debug inputs
