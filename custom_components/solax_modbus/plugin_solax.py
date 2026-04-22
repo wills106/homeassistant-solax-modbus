@@ -685,6 +685,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             surplus = max(0, pv - hl)
             measured_power = int(measured_power or 0)
             error = measured_power - export_target
+            control_state = "surplus" if pv >= hl else "clipping"
 
             # Battery gets surplus up to BMS limit
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
@@ -704,7 +705,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 control_reason = "increase-pv"
 
             _LOGGER.debug(
-                f"[Mode8 Negative Injection] charge-first: surplus={surplus}W measured_power={measured_power}W "
+                f"[Mode8 Negative Injection] {control_state}: surplus={surplus}W measured_power={measured_power}W "
                 f"export_target={export_target}W error={error}W step={step_w}W reason={control_reason} "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W pvlimit={pvlimit}W hl={hl}W"
             )
