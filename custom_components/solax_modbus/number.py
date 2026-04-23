@@ -185,7 +185,11 @@ class SolaXModbusNumber(NumberEntity):
                 self._hub.tmpdata_expiry[descr.key] = 0  # update locals only once
         if self._key in self._hub.data:
             value = self._hub.data[self._key]
-            return float(value) if value is not None else None
+            if value is None:
+                return None
+            if self._fmt == "i":
+                return int(value)
+            return float(value)
         return None
         # try:
         #    val = self._hub.data[self._key] * descr.read_scale
@@ -216,12 +220,22 @@ class SolaXModbusNumber(NumberEntity):
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
             )
-            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_registers_single(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
             )
-            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_register(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_MULTI_MODBUS:
             pl = [
                 (

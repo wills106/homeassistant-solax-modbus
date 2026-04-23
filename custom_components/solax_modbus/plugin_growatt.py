@@ -29,6 +29,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
+    REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
@@ -1131,6 +1132,20 @@ SELECT_TYPES = [
             1: "Enabled",
         },
         allowedtypes=GEN3 | GEN4,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        icon="mdi:dip-switch",
+    ),
+    GrowattModbusSelectEntityDescription(
+        name="VPP Allow AC charging",
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        option_dict={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -2322,6 +2337,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
+        key="vpp_allow_ac_charging",
+        register=30410,
+        register_data_type=REGISTER_U8L,
+        scale={
+            0: "Disabled",
+            1: "Enabled",
+        },
+        allowedtypes=GEN3 | GEN4 | HYBRID,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
         name="Battery SOH",
         key="battery_soh",
         native_unit_of_measurement=PERCENTAGE,
@@ -3076,7 +3102,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=GEN4,
         value_function=lambda initval, descr, datadict: "Off (Výpadek - z baterie)"
         if (datadict.get("register_3000", 0) & 0xFF) == 2
-        else "On (Připojeno k síti)",
+        else "On (connected to net)",
         icon="mdi:transmission-tower",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -3333,7 +3359,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #
     ###
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=0,
         scale={0: "Waiting", 1: "Normal Mode", 2: "?", 3: "Permanent Fault Mode"},
@@ -4587,7 +4613,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=1000,
         scale={
@@ -5303,14 +5329,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Inverter State",
+        name="Inverter Run State",
         key="inverter_state",
         value_function=value_function_inverter_state,
         allowedtypes=GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         value_function=value_function_run_mode,
         allowedtypes=GEN4,
@@ -7073,7 +7099,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name="BMS 1 Module 1 Status",
         key="bms_1_module_1_status",
-        register=5080,
+        register=5880,
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=value_function_module_status,
@@ -7099,7 +7125,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5082,
+        register=5882,
         register_type=REG_HOLDING,  ### HOLDING!!!
         register_data_type=REGISTER_U16,
         allowedtypes=HYBRID | GEN4,
@@ -7112,7 +7138,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5083,
+        register=5883,
         register_type=REG_HOLDING,  ### HOLDING!!!
         register_data_type=REGISTER_U16,
         scale=0.1,
@@ -7126,7 +7152,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5084,
+        register=5884,
         register_type=REG_HOLDING,  ### HOLDING!!!
         register_data_type=REGISTER_U16,
         scale=value_function_bms_module_combined_current,
@@ -7140,7 +7166,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5085,
+        register=5885,
         register_type=REG_HOLDING,
         scale=value_function_bms_module_combined_power,
         register_data_type=REGISTER_U16,
@@ -7154,7 +7180,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        register=5087,  # maybe 5886 and U32
+        register=5887,  # maybe 5886 and U32
         register_type=REG_HOLDING,  ### HOLDING!!!
         register_data_type=REGISTER_U16,  # maybe U32 but then change register to 5886
         scale=0.1,
@@ -7168,7 +7194,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5090,
+        register=5890,
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=0.1,
@@ -7182,7 +7208,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        register=5091,
+        register=5891,
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=0.1,
@@ -7193,7 +7219,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name="BMS 1 Module 1 Warning Text",
         key="bms_1_module_1_warning_text",
-        register=5098,
+        register=5898,
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=value_function_module_warning_text,
@@ -7204,7 +7230,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         name="BMS 1 Module 1 Charge Cycles",
         key="bms_1_module_1_charge_cycles",
-        register=5108,
+        register=5908,
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         allowedtypes=GEN4 | HYBRID,
@@ -8920,7 +8946,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     #
     #####
     GrowattModbusSensorEntityDescription(
-        name="Run Mode",
+        name="Machine Status",
         key="run_mode",
         register=0,
         scale={
@@ -9556,7 +9582,9 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith("XVM"):
             invertertype = HYBRID | GEN4 | X1  # MIN 5000 TL-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("SMN"):
-            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XHUS Hybrid, 4 MPPT
+            invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XH-US Hybrid, 4 MPPT
+        elif seriesnumber.startswith("JGQ"):
+            invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
 
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
@@ -9572,6 +9600,8 @@ class growatt_plugin(plugin_base):
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 9000 TL3-XH Hybrid, 2 MPPT
         elif seriesnumber.startswith("DFK"):
             invertertype = HYBRID | GEN4 | X3  # MOD 100000 TL3-XH Hybrid, 2 MPPT
+        elif seriesnumber.startswith("EGR"):
+            invertertype = HYBRID | GEN4 | X3  # MOD 150000 TL3-HU Hybrid, 3 MPPT
 
         # MID type:GEN4
         elif seriesnumber.startswith("KLN"):
@@ -9685,7 +9715,7 @@ class growatt_plugin(plugin_base):
             invertertype = PV | GEN | X1  # 5000, ? MPPT
 
         else:
-            _LOGGER.error(f"{hub.name}: trying alternative location")
+            _LOGGER.info(f"{hub.name}: trying alternative location")
             seriesnumber = await async_read_serialnr(hub, 9)
             if not seriesnumber:
                 _LOGGER.error(f"{hub.name}: cannot find firmware version, even not for other Inverter")
@@ -9918,6 +9948,7 @@ plugin_instance = growatt_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=100,
     # order16 = "big",
     order32="big",

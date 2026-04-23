@@ -9,7 +9,6 @@ import logging
 import time as _mtime
 from dataclasses import dataclass, replace
 from datetime import timedelta
-from time import time
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 from weakref import ref as WeakRef
@@ -141,7 +140,7 @@ except ImportError:
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH, Platform.TIME]
 
 # CONFIG_SCHEMA allows YAML configuration ONLY for debug_settings (DEVELOPMENT/TESTING/DEBUGGING ONLY)
 # All other configuration must be done via config flow (UI)
@@ -189,7 +188,7 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
         return True
     unique_id = f"{hub._name}_{descriptor.key}"
     unique_id_alt = f"{hub._name}.{descriptor.key}"  # dont knnow why
-    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON)
+    platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON, Platform.TIME)
     registry = er.async_get(hass)
     entity_found = False
     # First, check if there is an existing enabled entity in the registry for this unique_id.
@@ -224,6 +223,9 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
         if d and d.entity_registry_enabled_default:
             return True
         d = hub.switchEntities.get(descriptor.key)
+        if d and d.entity_registry_enabled_default:
+            return True
+        d = hub.timeEntities.get(descriptor.key)
         if d and d.entity_registry_enabled_default:
             return True
         _LOGGER.debug(
@@ -547,6 +549,7 @@ class SolaXModbusHub:
         self.numberEntities: dict[Any, Any] = {}  # all number entities, indexed by key
         self.selectEntities: dict[Any, Any] = {}
         self.switchEntities: dict[Any, Any] = {}
+        self.timeEntities: dict[Any, Any] = {}
         self.entity_dependencies: dict[str, list[str]] = {}  # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals: dict[Any, Any] = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
@@ -580,12 +583,25 @@ class SolaXModbusHub:
 
         # Gate normal polling until initial probe completes
         self._probe_ready = asyncio.Event()
+        self._initial_refresh_task: Any = None
+        self._initial_refresh_active: bool = False
+        self._initial_refresh_done: bool = False
 
         # Deferred setup state
         self._platforms_forwarded = False
         self._deferred_setup_task: Any = None
 
         # _LOGGER.debug("solax modbushub done %s", self.__dict__)
+
+    def _start_initial_refresh_if_needed(self) -> None:
+        """Start the one-shot initial refresh after platforms are available."""
+        if self._initial_refresh_done or self._initial_refresh_task is not None:
+            return
+        if getattr(self, "_stopping", False):
+            return
+        if not self._platforms_forwarded:
+            return
+        self._initial_refresh_task = self._hass.loop.create_task(self._run_initial_refresh_when_ready())
 
     async def async_init(self, *args: Any) -> None:  # noqa: D102
         import asyncio
@@ -656,13 +672,16 @@ class SolaXModbusHub:
                 await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
                 self._platforms_forwarded = True
                 _LOGGER.debug(f"{self._name}: platforms forwarded successfully")
+                self._start_initial_refresh_if_needed()
             except ValueError as ex:
                 # If platforms are already set up, log warning but continue
                 # This shouldn't happen if unload worked properly, but handle gracefully
                 _LOGGER.warning(f"{self._name}: platforms already forwarded - reload may not work correctly: {ex}")
                 self._platforms_forwarded = True
+                self._start_initial_refresh_if_needed()
         else:
             _LOGGER.debug(f"{self._name}: platforms already forwarded on this hub instance, skipping")
+            self._start_initial_refresh_if_needed()
 
         self._init_task = None
 
@@ -691,11 +710,13 @@ class SolaXModbusHub:
                         name=plugin_name,
                         serial_number=self.seriesnumber,
                     )
-                if getattr(self, "_stopping", False):
+                    if getattr(self, "_stopping", False):
+                        return
+                    await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
+                    self._platforms_forwarded = True
                     return
-                await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
-                self._platforms_forwarded = True
-                return
+                else:
+                    _LOGGER.debug(f"{self._name}: deferred setup – inverter still not responding, will retry in {interval}s")
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: deferred setup iteration failed: {ex}")
             # Wait and try again
@@ -960,21 +981,30 @@ class SolaXModbusHub:
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
             return False, 0
+        if self._initial_refresh_active:
+            _LOGGER.debug(f"{self._name}: skipping scheduled poll – initial refresh still running")
+            return False, 0
+        agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group)
+        await self._maybe_refresh_energy_dashboard_on_primary_update()
+        # Return aggregate result and updated sensor count to caller for logging
+        return agg_res, updated_sensors
+
+    async def _refresh_interval_group_once(self, interval_group: Any, bypass_slowdown: bool = False) -> tuple[bool, int]:
+        """Refresh one interval group once."""
         if not interval_group.device_groups:
             return True, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
-        agg_res = True  # aggregate result across all device groups in this interval
-        updated_sensors = 0  # how many entities were pushed this cycle
-        # Use cyclecount from caller, not increment here
-        if (self.cyclecount % self.slowdown) == 0:  # only execute once every slowdown count
-            for group in list(interval_group.device_groups.values()):  # not sure if this does not break things or affects performance
+        agg_res = True
+        updated_sensors = 0
+        if bypass_slowdown or (self.cyclecount % self.slowdown) == 0:
+            for group in list(interval_group.device_groups.values()):
                 group_result = await self.async_read_modbus_data(group)
                 agg_res = agg_res and group_result
                 if group_result:
                     if self.slowdown > 1:
                         _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
-                    self.slowdown = 1  # return to full polling after successful cycle
+                    self.slowdown = 1
                     for sensor in group.sensors:
                         sensor.modbus_data_updated()
                     updated_sensors += len(group.sensors)
@@ -986,12 +1016,30 @@ class SolaXModbusHub:
                         self.data.pop(i, None)
                     for i in self.sleepzero:
                         self.data[i] = 0
-                    # self.data = {} # invalidate data - do we want this ??
-
                 _LOGGER.debug(f"{self._name}: device group read done")
-        await self._maybe_refresh_energy_dashboard_on_primary_update()
-        # Return aggregate result and updated sensor count to caller for logging
         return agg_res, updated_sensors
+
+    async def _run_initial_refresh_when_ready(self) -> None:
+        """Do a one-time initial refresh of all scan groups after startup probe has completed."""
+        await self._probe_ready.wait()
+        if getattr(self, "_stopping", False) or self._initial_refresh_done or not self.groups:
+            return
+        # Let entity setup settle, then populate values once from slow to fast groups.
+        await asyncio.sleep(0.2)
+        self._initial_refresh_active = True
+        try:
+            for interval in sorted(self.groups.keys(), reverse=True):
+                interval_group = self.groups.get(interval)
+                if interval_group is None or not interval_group.device_groups:
+                    continue
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s")
+                async with interval_group.poll_lock:
+                    agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
+                await self._maybe_refresh_energy_dashboard_on_primary_update()
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s finished (ok={agg_res}, sensors={updated_sensors})")
+        finally:
+            self._initial_refresh_active = False
+            self._initial_refresh_done = True
 
     async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
         if not self._hass:
@@ -1014,7 +1062,7 @@ class SolaXModbusHub:
             return
         if refresh_pending:
             last_refresh_ts = hub_entry.get("energy_dashboard_last_refresh_ts", 0)
-            if time() - last_refresh_ts < 5:
+            if _mtime.time() - last_refresh_ts < 5:
                 return
 
         refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
@@ -1026,7 +1074,7 @@ class SolaXModbusHub:
 
         hub_entry["energy_dashboard_refresh_in_progress"] = True
         hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
-        hub_entry["energy_dashboard_last_refresh_ts"] = time()
+        hub_entry["energy_dashboard_last_refresh_ts"] = _mtime.time()
 
         async def _run_refresh() -> None:
             try:
@@ -1076,7 +1124,7 @@ class SolaXModbusHub:
                 interval_group.unsub_interval_method = None
         self.groups.clear()
         # 2) stop any running tasks
-        for tname in ("_initial_bisect_task", "_recheck_task"):
+        for tname in ("_initial_bisect_task", "_recheck_task", "_initial_refresh_task"):
             task = getattr(self, tname, None)
             if task and not task.done():
                 try:
@@ -1135,7 +1183,7 @@ class SolaXModbusHub:
             return False
         if not self._client.connected:
             _LOGGER.debug(f"{self._name}: Inverter is not connected, trying to connect")
-            await self._client.connect()
+            await self.async_connect()
             await asyncio.sleep(1)
         return self._client.connected
 
@@ -1144,6 +1192,9 @@ class SolaXModbusHub:
 
     async def async_connect(self) -> None:
         if getattr(self, "_stopping", False):
+            return
+        if self._client.connected:
+            _LOGGER.debug(f"{self._name}: async_connect skipped - already connected")
             return
         _LOGGER.debug(
             f"{self._name}: Trying to connect to Inverter at {self._client.comm_params.host}:{self._client.comm_params.port} connected: {self._client.connected} ",
@@ -1166,13 +1217,11 @@ class SolaXModbusHub:
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
-                # Flush transport: close + short pause + reconnect to clear any late/queued frames
-                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
-                try:
-                    self._client.close()
-                finally:
-                    await asyncio.sleep(0.2)
-                    await self._client.connect()
+                if getattr(self, "_stopping", False):
+                    _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
+                    return None
+                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
+                self._client.close()
                 return None
         return resp
 
@@ -1192,19 +1241,20 @@ class SolaXModbusHub:
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 _LOGGER.error(error)
-                # Flush transport: close + short pause + reconnect to clear any late/queued frames
-                _LOGGER.debug(f"{self._name}: ModbusException – flushing transport and reconnecting")
-                try:
-                    self._client.close()
-                finally:
-                    await asyncio.sleep(0.2)
-                    await self._client.connect()
+                if getattr(self, "_stopping", False):
+                    _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
+                    return None
+                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
+                self._client.close()
                 return None
         return resp
 
-    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]  # DataType compat layer
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         async with self._lock:
             await self._check_connection()
             try:
@@ -1220,14 +1270,14 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
         return resp
 
-    async def async_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         """Write register."""
         awake = self.plugin.isAwake(self.data)
         if awake:
-            return await self.async_lowlevel_write_register(unit, address, payload)
+            return await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
         else:
             # try to write anyway - could be a command that inverter responds to while asleep
-            res = await self.async_lowlevel_write_register(unit, address, payload)
+            res = await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
             # put request in queue, in order to repeat it when inverter wakes up
             self.writequeue[address] = payload
             # wake up inverter
@@ -1242,9 +1292,14 @@ class SolaXModbusHub:
                 _LOGGER.warning("cannot wakeup inverter: no awake button found")
             return res
 
-    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
+    async def async_write_registers_single(
+        self, unit: int, address: int, payload: int, register_data_type: str | None = None
+    ) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]  # DataType compat layer
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             await self._check_connection()
@@ -1375,7 +1430,7 @@ class SolaXModbusHub:
                 words_used = 2
             elif descr.register_data_type == REGISTER_STR:
                 wc = descr.wordcount or 0
-                raw = convert_from_registers(regs[idx : idx + wc], DataType.STRING, self.plugin.order32)  # type: ignore[attr-defined]
+                raw = convert_from_registers(regs[idx : idx + wc], DataType.STRING, order32)  # type: ignore[attr-defined]
                 words_used = wc
                 val = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             elif descr.register_data_type == REGISTER_WORDS:
@@ -1417,7 +1472,7 @@ class SolaXModbusHub:
                 _LOGGER.warning(f"{self._name}: read failed at 0x{descr.register:02x}: {descr.key} ")
         """ TO BE REMOVED
         if descr.prevent_update:
-            if  (self.tmpdata_expiry.get(descr.key, 0) > time()):
+            if  (self.tmpdata_expiry.get(descr.key, 0) > _mtime.time()):
                 val = self.tmpdata.get(descr.key, None)
                 if val is None:
                     LOGGER.warning(f"cannot find tmpdata for {descr.key} - setting value to zero")
@@ -1430,6 +1485,11 @@ class SolaXModbusHub:
         # Plugin-level validation hook
         if self._validate_register_func is not None:
             val = self._validate_register_func(descr, val, data)
+
+        if isinstance(val, list) and descr.register_data_type != REGISTER_WORDS:
+            if self.cyclecount < VERBOSE_CYCLES:
+                _LOGGER.warning(f"{self._name}: invalid list value for numeric entity {descr.key}: {val} - setting value to None")
+            val = None
 
         if val is None:  # E.g. if errors have occurred during readout
             # _LOGGER.warning(f"****tmp*** treating {descr.key} failed")
@@ -1612,7 +1672,7 @@ class SolaXModbusHub:
             self.writequeue = {}  # make sure we do not write multiple times
 
         # execute autorepeat entities (buttons and selects)
-        self.last_ts = time()
+        self.last_ts = _mtime.time()
         for (
             k,
             v,
@@ -2183,11 +2243,14 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error reading Modbus input registers: core modbus access failed") from e
 
-    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int) -> Any:
+    async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         """
         Write a single register using the Core hub's client.
         """
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
@@ -2212,9 +2275,14 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         except (TypeError, AttributeError) as e:
             raise HomeAssistantError("Error writing single Modbus register: core modbus access failed") from e
 
-    async def async_write_registers_single(self, unit: int, address: int, payload: int) -> Any:  # Needs adapting for register queue
+    async def async_write_registers_single(
+        self, unit: int, address: int, payload: int, register_data_type: str | None = None
+    ) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        if register_data_type == REGISTER_U16:
+            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
+        else:
+            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
             hub = await self._check_connection()

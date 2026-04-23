@@ -174,7 +174,6 @@ def value_function_battery_control_override(initval: int, descr: Any, datadict: 
     return None
 
 
-
 # ============================================= Charging ===========================================================
 # This value function converts the bits to the number
 def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
@@ -2200,7 +2199,7 @@ SELECT_TYPES = [
             1: "Force charge",
             2: "Force discharge",
         },
-        allowedtypes=HYBRID | X3,
+        allowedtypes=HYBRID,
         icon="mdi:dip-switch",
         value_function=value_function_battery_control_override,
     ),
@@ -4588,6 +4587,7 @@ plugin_instance = solis_fb00_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=[],
     block_size=40,
     # order16="big",
     order32="big",

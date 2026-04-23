@@ -123,12 +123,34 @@ class SolaXModbusSelect(SelectEntity):
 
     @property
     def current_option(self) -> str | None:
+        option_dict = self._option_dict or {}
+
         if self._key in self._hub.data:
             value = self._hub.data[self._key]
-            return str(value) if value is not None else None
         else:
-            initval = self.entity_description.initvalue
-            return str(initval) if initval is not None else None
+            value = self.entity_description.initvalue
+
+        if value is None:
+            return None
+
+        # If the value is already one of the select labels, return it as-is.
+        if isinstance(value, str) and value in self._attr_options:
+            return value
+
+        # Map raw register values back to the corresponding option labels.
+        if value in option_dict:
+            return option_dict[value]
+
+        # Try again via integer coercion for values that may have been stored as strings/floats.
+        try:
+            int_value = int(value)
+        except (TypeError, ValueError):
+            return None
+
+        if int_value in option_dict:
+            return option_dict[int_value]
+
+        return None
 
     @property
     def name(self) -> str:
@@ -150,10 +172,20 @@ class SolaXModbusSelect(SelectEntity):
         payload: Any = reverse_dict.get(option, None) if reverse_dict else None
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
-            await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_registers_single(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_SINGLE_MODBUS:
             _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
-            await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
+            await self._hub.async_write_register(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info(f"*** local data written {self._key}: {payload}")
             self._hub.localsUpdated = True  # mark to save permanently

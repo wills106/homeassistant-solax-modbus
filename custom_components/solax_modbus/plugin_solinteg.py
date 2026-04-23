@@ -1,8 +1,8 @@
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
-from homeassistant.components.number import NumberMode
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -78,9 +78,13 @@ ALL_EPS_GROUP = EPS
 DCB = 0x10000  # dry contact box - gen4
 ALL_DCB_GROUP = DCB
 
+# parallel mode
+PM = 0x20000
+ALL_PM_GROUP = PM
+
 # 1 is minimum
-MPPT2 = 0x20000
-MPPT4 = 0x40000
+MPPT2 = 0x40000
+MPPT4 = MPPT2 * 2
 MPPT_MIN2 = MPPT2 | MPPT4
 ALL_MPPT = MPPT2 | MPPT4
 
@@ -107,7 +111,7 @@ async def _read_serialnr(hub: Any, address: int = 10000, count: int = 8, swapbyt
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
                 ba[0::2], ba[1::2] = ba[1::2], ba[0::2]  # swap bytes ourselves - due to bug in Endian.Little ?
                 res = str(ba, "ascii")  # convert back to string
-            hub.seriesnumber = res
+            hub._seriesnumber = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
@@ -339,6 +343,111 @@ NUMBER_TYPES = [
     #
     ###
     SolintegModbusNumberEntityDescription(
+        name="EMS ACCtrl Total AC Power Scheduling",
+        key="ems_acctrl_total_power",
+        register=50203,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS ACCtrl Phase A Power Scheduling",
+        key="ems_acctrl_phase_a_power",
+        register=50204,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS ACCtrl Phase B Power Scheduling",
+        key="ems_acctrl_phase_b_power",
+        register=50205,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS ACCtrl Phase C Power Scheduling",
+        key="ems_acctrl_phase_c_power",
+        register=50206,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:transmission-tower",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS BattCtrl Charge Discharge Power Target",
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS BattCtrl Max Grid Export",
+        key="ems_battctrl_max_ac_power_limit",
+        register=50208,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=0,
+        native_max_value=20000,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:current-ac",
+    ),
+    SolintegModbusNumberEntityDescription(
+        name="EMS BattCtrl Max Grid Import",
+        key="ems_battctrl_min_ac_power_limit",
+        register=50209,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=NumberDeviceClass.POWER,
+        native_min_value=-20000,
+        native_max_value=0,
+        native_step=1,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:current-ac",
+    ),
+    SolintegModbusNumberEntityDescription(
         name="Battery SOC Min On Grid",
         key="battery_soc_min_ongrid",
         register=52503,
@@ -446,12 +555,40 @@ SELECT_TYPES = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            0x301: "EMS ACCtrl",
+            0x302: "EMS General",
+            0x303: "EMS BattCtrl",
+            0x304: "EMS Off-Grid",
             0x400: "ToU",
         },
         entity_category=EntityCategory.CONFIG,
         allowedtypes=HYBRID,
         icon="mdi:dip-switch",
+    ),
+    SolintegModbusSelectEntityDescription(
+        name="EMS ACCtrl AC Power Scheduling Mode",
+        key="ems_acctrl_mode",
+        register=50202,
+        option_dict={
+            0: "Off",
+            1: "Total Power Setting",
+            2: "Power Setting on each Phase",
+        },
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:calendar-clock",
+    ),
+    SolintegModbusSelectEntityDescription(
+        name="EMS BattCtrl Priority of Power Output",
+        key="ems_battctrl_priority_power_output",
+        register=50210,
+        option_dict={
+            0: "PV",
+            1: "Battery",
+        },
+        entity_category=EntityCategory.CONFIG,
+        allowedtypes=HYBRID,
+        icon="mdi:priority-high",
     ),
     SolintegModbusSelectEntityDescription(
         name="UPS Function",
@@ -572,14 +709,14 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Batt. Abn.",
                 "Cmd Stop",
                 "SocLow&NoPV",
-                "B8",  # unused
-                "B9",
-                "B10",
-                "B11",
-                "B12",
-                "B13",
+                "ComErr Slave",
+                "Meter Abn.",
+                "Bypass Wait",
+                "NPD Standby",
+                "Generator Abn.",
+                "S14 Undefined",
                 "OffGrid",
-                "B15",
+                "NPD Clearing",
                 "Cmd PLim",
                 "OFreq PLim",
                 "OTemp PLim",
@@ -589,6 +726,13 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
                 "Slow Loading",
                 "OVolt PLim",
                 "System PLim",
+                "EMS CmdLim",
+                "S27 Undefined",
+                "S28 Undefined",
+                "S29 Undefined",
+                "S30 Undefined",
+                "S31 Undefined",
+                "PV PLim",
             ]
         ),
     ),
@@ -1373,7 +1517,10 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
             0x104: "PeakShift",
             0x105: "Feed-In",
             0x200: "Off-Grid",
-            # 0x301, 0x302, 0x303 : EMS Modes
+            0x301: "EMS ACCtrl",
+            0x302: "EMS General",
+            0x303: "EMS BattCtrl",
+            0x304: "EMS Off-Grid",
             0x400: "ToU",
         },
         internal=True,
@@ -1426,6 +1573,103 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=_simple_switch,
         allowedtypes=HYBRID,
         internal=True,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="battery_charge_discharge_power_target",
+        register=50207,
+        scale=1,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-arrow-up-down",
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_battctrl_max_ac_power_limit",
+        register=50208,
+        scale=1,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+        icon="mdi:current-ac",
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_battctrl_min_ac_power_limit",
+        register=50209,
+        scale=1,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+        icon="mdi:current-ac",
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_battctrl_priority_power_output",
+        register=50210,
+        scale={
+            0: "PV",
+            1: "Battery",
+        },
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_acctrl_mode",
+        register=50202,
+        scale={
+            0: "Off",
+            1: "Total Power Setting",
+            2: "Power Setting on each Phase",
+        },
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_acctrl_total_power",
+        register=50203,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_acctrl_phase_a_power",
+        register=50204,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_acctrl_phase_b_power",
+        register=50205,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="ems_acctrl_phase_c_power",
+        register=50206,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement="x0.01 kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        internal=True,
+        allowedtypes=HYBRID,
     ),
     SolintegModbusSensorEntityDescription(
         key="battery_soc_min_ongrid",
@@ -1527,16 +1771,15 @@ class solinteg_plugin(plugin_base):
         seriesnumber = await _read_serialnr(hub)
         if not seriesnumber:
             _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
-            seriesnumber = "unknown"
 
         model = await _read_model(hub)
-        if model is None:
-            _LOGGER.error(f"{hub.name}: could not read model at 0x{10008:x}")
-            bh, bl = 0, 0
+        if model is None or model == 0:
+            _LOGGER.error(f"{hub.name}: could not read inverter model")
+            return 0
         else:
             self.inverter_model = _model_str(model)  # as string
-            bh, bl = model // 256, model % 256
 
+        bh, bl = model // 256, model % 256
         invertertype = 0
         if bh in [30, 31, 32]:
             invertertype = invertertype | HYBRID
@@ -1553,33 +1796,32 @@ class solinteg_plugin(plugin_base):
             mppt = 2
             invertertype = invertertype | MPPT2
 
-        if invertertype > 0:
-            _self_mppt_mask = 2**mppt - 1  # mask
-            # prepare mppt list
-            # data["mppt_mask"] = _self_mppt_mask
-            sel_dd = _mppt_dd.copy()  # copy
-            for i in range(mppt):
-                sel_dd[2**i] = f"mppt{i + 1}"
+        try:
+            # prepare mppt mask/dict
+            _mppt_mask = 2**mppt - 1
+            # copy and update
+            sel_dd = _mppt_dd.copy() | {2**i: f"mppt{i + 1}" for i in range(mppt)}
             # set the options
-            for sel in self.SELECT_TYPES:
-                if sel.key == "shadow_scan":
-                    sel.option_dict = sel_dd  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
+            for i, ssel in enumerate(self.SELECT_TYPES):
+                if ssel.key == "shadow_scan":
+                    self.SELECT_TYPES[i] = replace(ssel, option_dict=sel_dd)  # type: ignore
                     break
 
             # use own mask
-            for sel in self.SENSOR_TYPES:  # type: ignore[assignment]  # Runtime type compatibility
-                if sel.key == "shadow_scan":
-                    sel.scale = lambda v, descr, dd: _fn_mppt_mask_ex(v, _self_mppt_mask)  # type: ignore[attr-defined]  # Dynamic frozen dataclass modification
+            for i, ssensor in enumerate(self.SENSOR_TYPES):
+                if ssensor.key == "shadow_scan":
+                    self.SENSOR_TYPES[i] = replace(ssensor, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))  # type: ignore
                     break
+        except Exception:
+            _LOGGER.error(f"{hub.name}: unexpected error", exc_info=True)
 
-            read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
-            read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
-            if read_eps:
-                invertertype = invertertype | EPS
-            if read_dcb:
-                invertertype = invertertype | DCB
-
-            _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+        read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
+        read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
+        if read_eps:
+            invertertype = invertertype | EPS
+        if read_dcb:
+            invertertype = invertertype | DCB
+        _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
 
         return invertertype
 
@@ -1638,6 +1880,7 @@ plugin_instance = solinteg_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=120,
     # order16=Endian.BIG,
     order32="big",
