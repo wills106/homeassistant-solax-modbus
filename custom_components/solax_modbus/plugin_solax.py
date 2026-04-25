@@ -800,14 +800,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Export limit no readscale:
         export_limit = datadict.get("export_control_user_limit", 30000)
-        inverter_limit = datadict.get("inverter_power_type", 30000)
 
-        # Both house load and exported power come from the inverter and must fit within the inverter
-        # power limit. For example if we have a 6kW inverter and 4kW of house load, then we cannot
-        # export more than 2kW even if our export limit is higher. Trim the export limit so that any
-        # excess can be used for charging the battery rather than PV being clamped.
-        export_available = max(inverter_limit - hl, 0)
-        export_limit = min(export_limit, export_available)
+        # Test mode: do not trim the export target by inverter power minus house load.
+        # This lets Export-First try to use the configured export limit directly before charging the battery.
+        export_available = export_limit
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
