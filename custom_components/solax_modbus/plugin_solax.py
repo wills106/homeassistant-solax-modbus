@@ -620,7 +620,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
     setpvlimit = datadict.get("remotecontrol_pv_power_limit", 10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
-    datadict.get("remotecontrol_target_soc_8_9", 95)
+    target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
@@ -645,13 +645,15 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         #    aiming to prefer a slight grid import bias over export bias.
         # 2) If PV ≥ house load (surplus): let PV feed the battery first. PV limit is then adjusted using
         #    bounded step changes based on the measured power to prevent export.
+        # 3) Use Target SoC as an upper limit for charging the battery. Once that is reached, limit PV
+        #    output to prevent further charging and export.
 
         # Use the alternative house load for house load measurement, clamping to strict positive values.
         hl = max(0, int(houseload_alt))
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
-        max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
+        max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         # bias towards import
         export_target = int(datadict.get("negative_injection_bias_w", -50) or -50)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
@@ -1647,7 +1649,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 9)",
+        name="Remotecontrol Target SOC (mode 8/9)",
         key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         native_min_value=-0,
