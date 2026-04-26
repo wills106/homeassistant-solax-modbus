@@ -620,7 +620,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     set_type = datadict.get("remotecontrol_set_type", "Set")  # Set for simplicity; otherwise First time should be Set, subsequent times Update
     setpvlimit = datadict.get("remotecontrol_pv_power_limit", 10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
-    datadict.get("remotecontrol_target_soc_8_9", 95)
+    target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
@@ -645,60 +645,73 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         #    aiming to prefer a slight grid import bias over export bias.
         # 2) If PV ≥ house load (surplus): let PV feed the battery first. PV limit is then adjusted using
         #    bounded step changes based on the measured power to prevent export.
+        # 3) Use Target SoC as an upper limit for charging the battery. Once that is reached, limit PV
+        #    output to prevent further charging and export.
 
         # Use the alternative house load for house load measurement, clamping to strict positive values.
         hl = max(0, int(houseload_alt))
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
-        max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
+        max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         # bias towards import
-        export_target = int(datadict.get("negative_injection_bias", -20) or -20)
+        export_target = int(datadict.get("negative_injection_bias_w", -50) or -50)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
         min_step_w = int(datadict.get("export_first_step_min_w", 100) or 100)
         max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
+        pv_unlimited_step = max(2 * max_step_w, int(datadict.get("pv_unlimited_delta_w", 1000) or 1000))
 
         # Local copies
         battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
+        pv_threshold = pv + pv_unlimited_step  # point at which PV is considered to be not actively limited
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
+        cur_push = max(0, battery_charge if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else (0 - cur_push))
         pushmode_power = 0  # + = discharge, - = charge
 
         # Debug inputs
         _LOGGER.debug(
             f"[Mode8 Negative Injection] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) imp_lim={import_limit}W "
             f"soc={battery_capacity}% min_soc={min_discharge_soc}% max_soc={max_charge_soc}% cur_pvlimit={cur_pvlimit}W "
-            f"battery_charge={battery_charge}W"
+            f"last_push={cur_push}W battery_charge={battery_charge}W"
         )
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
         _LOGGER.debug(f"[Mode8 Negative Injection] probes: measured_power={measured_power if measured_power is not None else 'n/a'} ")
 
-        if pv >= hl or cur_pvlimit < setpvlimit:
+        if pv >= hl or cur_pvlimit < min(setpvlimit, pv_threshold):
             # Surplus or limited pv path: battery is requested to charge at up to the rate
             # limit from PV alone then use measured export as the control signal to adjust PV limit.
             # Below target: PV should be reduced to prevent export.
             # At/above target: PV can be increased to reduce import in bounded steps.
-            # If PV has been limited below the setpoint and is now below house load, continue in this
-            # loop to release PV restriction slowly.
-            surplus = max(0, pv - hl)
+            # If PV is being actively limited, continue in this loop to release PV restriction slowly.
             measured_power = int(measured_power or 0)
-            error = measured_power - export_target
+            surplus = cur_push + measured_power - export_target
             control_state = "surplus" if pv >= hl else "clipping"
 
             # Battery gets surplus up to BMS limit
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
             pushmode_power = -desired_charge
 
+            # Any surplus not able to feed into the battery needs to be corrected through PV limiting
+            error = surplus - desired_charge
+
             if abs(error) <= export_deadband_w:
                 step_w = 0
                 pvlimit = cur_pvlimit
                 control_reason = "hold"
             elif error > 0:
+                if cur_pvlimit > pv_threshold:
+                    # If the current PV limit is above any active PV limiting, then we will make
+                    # a much larger step to allow for a faster response. Otherwise the steps will
+                    # not actually achieve anything for several loops.
+                    cur_pvlimit = pv_threshold
+                    control_reason = "decrease-pv-fast"
+                else:
+                    control_reason = "decrease-pv"
                 step_w = min(max_step_w, max(min_step_w, error))
                 pvlimit = max(0, cur_pvlimit - step_w)
-                control_reason = "decrease-pv"
             else:
                 step_w = min(max_step_w, max(min_step_w, -error))
                 pvlimit = min(setpvlimit, cur_pvlimit + step_w)
@@ -1632,7 +1645,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 9)",
+        name="Remotecontrol Target SOC (mode 8/9)",
         key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         native_min_value=-0,
@@ -8191,7 +8204,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.SECONDS,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_remotecontrol_autorepeat_remaining,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:home-clock",
     ),
     SolaXModbusSensorEntityDescription(
@@ -8200,7 +8213,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_remotecontrol_current_pv_power_limit,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         suggested_display_precision=0,
         icon="mdi:solar-power-variant",
         entity_registry_enabled_default=False,
@@ -8211,7 +8224,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_remotecontrol_current_pushmode_power,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:solar-power-variant",
         suggested_display_precision=0,
         entity_registry_enabled_default=False,
