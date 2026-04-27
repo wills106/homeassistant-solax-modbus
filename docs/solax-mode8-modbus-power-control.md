@@ -68,13 +68,130 @@ For deactivating these modes, select "Disabled"; clicking the trigger button aga
 
 The current state of the modbus power control mechanism can be examined with entity `solax_modbus_power_control`. If Mode 8 is active, it will show `Individual Setting - Duration Mode`
 
+
+## Example script for simple Mode 8 operations with Predbat
+
+The following script can be used to control some key Mode 8 options using a simple interface. This is useful in conjunction with other integrations such as Predbat.
+
+To use this script, create and save the following automation script (Settings/Automations/Scripts)
+
+* In the script, change `maxPvPower: "{{ 12000 }}"` to a value larger than your PV array size to prevent unintentional limiting of PV.
+* Change `max: 6600` - to a value slightly larger than the maximum charge/discharge power for your battery (doesn't matter how much higher).
+
+You will need to ensure the following entities are enabled:
+  * number.solax_remotecontrol_push_mode_power_8_9
+  * number.solax_remotecontrol_pv_power_limit
+  * number.solax_remotecontrol_duration
+  * number.solax_remotecontrol_timeout
+  * number.solax_remotecontrol_autorepeat_duration
+  * select.solax_remotecontrol_timeout_next_motion_mode_1_9
+  * select.solax_remotecontrol_power_control_mode
+  * button.solax_powercontrolmode8_trigger
+
+Please note that the entities might have slightly different names depending on how and when the SolaX integration was set up. For example they might have a prefix such as `number.solax_inverter_remotecontrol_duration`. If your entities have different names, make sure to update the script to match.
+
+```yaml
+alias: SolaX Remote Control (Mode 8)
+description: ""
+fields:
+  power:
+    selector:
+      number:
+        min: 0
+        max: 6600
+    default: 0
+  operation:
+    selector:
+      select:
+        multiple: false
+        options:
+          - Disabled
+          - Force Charge
+          - Force Discharge
+          - Freeze Charge
+          - Freeze Discharge
+    default: Disabled
+    required: false
+  duration:
+    selector:
+      number:
+        min: 60
+        max: 86400
+    default: 28800
+sequence:
+    - variables:
+      maxPvPower: "{{ 12000 }}"
+      defaultPower: "{{ 200 }}"
+      mode: |-
+        {% set map = {
+           'Disabled': 'Disabled',
+           'Force Charge': 'Mode 8 - PV and BAT control - Duration',
+           'Force Discharge': 'Mode 8 - PV and BAT control - Duration',
+           'Freeze Charge': 'Enabled No Discharge',
+           'Freeze Discharge': 'Export-First Battery Limit'} %}
+        {{ map.get( operation, 'Disabled' ) }}
+      activeP: >-
+        {% set dischargePower = (power | int(defaultPower)) if power is defined
+        else defaultPower %} {% set chargePower = (0 - dischargePower) %} {% set map
+        = {
+           'Disabled': 0,
+           'Force Charge': chargePower,
+           'Force Discharge': dischargePower,
+           'Freeze Charge': 0,
+           'Freeze Discharge': 0} %}
+        {{ map.get( operation, 0 ) }}
+    - action: number.set_value
+    data:
+      value: "{{ activeP }}"
+    target:
+      entity_id: number.solax_remotecontrol_push_mode_power_8_9
+    - action: number.set_value
+    data:
+      value: "{{ maxPvPower }}"
+    target:
+      entity_id: number.solax_remotecontrol_pv_power_limit
+    - action: number.set_value
+    data:
+      value: "30"
+    target:
+      entity_id: number.solax_remotecontrol_duration
+    - action: number.set_value
+    data:
+      value: "300"
+    target:
+      entity_id: number.solax_remotecontrol_timeout
+    - action: number.set_value
+    data:
+      value: "{{ duration if duration is defined else 28800 }}"
+    target:
+      entity_id: number.solax_remotecontrol_autorepeat_duration
+    - action: select.select_option
+    data:
+      option: VPP Off
+    target:
+      entity_id: select.solax_remotecontrol_timeout_next_motion_mode_1_9
+    - action: select.select_option
+    data:
+      option: "{{ mode if mode is defined else Disabled }}"
+    target:
+      entity_id: select.solax_remotecontrol_power_control_mode
+    - action: button.press
+    data: {}
+    enabled: true
+    target:
+      entity_id: button.solax_powercontrolmode8_trigger
+mode: queued
+max: 10
+```
+
+
 ## Example automation: Negative injection prices
 This sample automation will activate the 'Negative Injection Price' mode when the battery is nearly full. We deliberately do not activate it whenever injection prices are negative, to reduce the inaccuracies of the relatively slow autorepeat loop.
 These examples assume you have an integration that provides the current injection and consumption price (in my case dynamic_grid_prices).
 
 ### Automation to start negative prices mode:
 
-```
+```yaml
 alias: Negative Price - Mode 8
 description: ""
 triggers:
@@ -131,7 +248,7 @@ mode: single
 
 ### Automation to stop negative prices mode:
 
-```
+```yaml
 alias: Positive Price - Mode 8
 description: ""
 triggers:
