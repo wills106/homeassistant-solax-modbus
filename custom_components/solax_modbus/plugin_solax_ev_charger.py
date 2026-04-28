@@ -274,7 +274,7 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="ECO Gear",
+        name="ECO Mode",
         key="eco_gear",
         register=0x60E,
         option_dict={
@@ -287,7 +287,7 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Green Gear",
+        name="Green Mode",
         key="green_gear",
         register=0x60F,
         option_dict={
@@ -380,6 +380,7 @@ SELECT_TYPES = [
         key="control_command",
         register=0x627,
         option_dict={
+            0: "No Command",
             1: "Available",
             2: "Unavailable",
             3: "Stop charging",
@@ -438,7 +439,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="ECO Gear",
+        name="ECO Mode",
         key="eco_gear",
         register=0x60E,
         scale={
@@ -452,7 +453,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Green Gear",
+        name="Green Mode",
         key="green_gear",
         register=0x60F,
         scale={
@@ -560,6 +561,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="control_command",
         register=0x627,
         scale={
+            0: "No Command",
             1: "Available",
             2: "Unavailable",
             3: "Stop charging",
