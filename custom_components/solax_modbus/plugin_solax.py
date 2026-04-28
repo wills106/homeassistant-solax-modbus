@@ -1240,6 +1240,14 @@ def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[
     )
 
 
+def value_function_software_version_full(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    dsp = datadict.get('firmware_version_dsp')
+    arm = datadict.get('firmware_version_arm')
+    if dsp is None or arm is None:
+        return None
+    return f"DSP {dsp // 100}.{dsp % 100:02d} ARM {arm // 100}.{arm % 100:02d}"
+
+
 def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
 
@@ -3878,6 +3886,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXModbusSensorEntityDescription(
+        key="firmware_version_dsp",
+        register=0x7B,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="firmware_version_arm",
+        register=0x7C,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
         key="firmware_dsp",
         register=0x7D,
         allowedtypes=AC | HYBRID,
@@ -3905,19 +3925,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Firmware Version Modbus TCP Major",
-        key="firmwareversion_modbustcp_major",
+        name="Modbus Protocol Version",
+        key="modbus_protocol_version",
         entity_registry_enabled_default=False,
-        register=0x81,
-        allowedtypes=AC | HYBRID | GEN5,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Firmware Version Modbus TCP Minor",
-        key="firmwareversion_modbustcp_minor",
-        entity_registry_enabled_default=False,
-        allowedtypes=AC | HYBRID | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         register=0x82,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
@@ -8243,13 +8254,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
-        value_function=value_function_software_version_g4,
+        value_function=value_function_software_version_full,
         allowedtypes=AC | HYBRID | GEN4,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
-        value_function=value_function_software_version_g5,
+        value_function=value_function_software_version_full,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         internal=True,
     ),
@@ -9707,11 +9718,17 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
-        value_function=value_function_software_version_g4,
-        allowedtypes=MIC | GEN | GEN2 | X3,
+        value_function=value_function_software_version_air_g4,
+        allowedtypes=MIC | GEN | X3,
         blacklist=[
             "MU802T",
         ],
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="software_version",
+        value_function=value_function_software_version_g2,
+        allowedtypes=MIC | GEN2 | X3,
         internal=True,
     ),
 ]
@@ -10210,7 +10227,6 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MC208T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
-            self.software_version = "Unknown"
         elif seriesnumber.startswith("MC210T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
