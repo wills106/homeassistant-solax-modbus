@@ -380,6 +380,7 @@ SELECT_TYPES = [
         key="control_command",
         register=0x627,
         option_dict={
+            0: "No Command",
             1: "Available",
             2: "Unavailable",
             3: "Stop charging",
