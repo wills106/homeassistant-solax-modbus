@@ -466,13 +466,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Start Charge Mode",
         key="start_charge_mode",
         register=0x610,
-        scale={
-            0: "Plug & Charge",
-            1: "RFID to Charge",
-            2: "App start",
-        },
-        entity_registry_enabled_default=False,
-        icon="mdi:lock",
+        internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
