@@ -1243,9 +1243,9 @@ def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[
 def value_function_software_version_full(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     dsp = datadict.get('firmware_version_dsp')
     arm = datadict.get('firmware_version_arm')
-    if dsp is None or arm is None:
-        return None
-    return f"DSP {dsp // 100}.{dsp % 100:02d} ARM {arm // 100}.{arm % 100:02d}"
+    dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp is not None else "?.??"
+    arm_str = f"{arm // 100}.{arm % 100:02d}" if arm is not None else "?.??"
+    return f"DSP {dsp_str} ARM {arm_str}"
 
 
 def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
