@@ -975,7 +975,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x25,
         register_type=REG_INPUT,
         icon="mdi:numeric",
-        allowedtypes=GEN2,
+        allowedtypes=GEN1 | GEN2,
         register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
     ),
