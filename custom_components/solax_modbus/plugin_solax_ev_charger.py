@@ -233,6 +233,32 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
     ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Overload Limit",
+        key="overload_limit",
+        register=0x611,
+        fmt="i",
+        native_min_value=200,
+        native_max_value=280,
+        native_step=1,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=NumberDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Undervoltage Limit",
+        key="undervoltage_limit",
+        register=0x612,
+        fmt="i",
+        native_min_value=150,
+        native_max_value=220,
+        native_step=1,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=NumberDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.CONFIG,
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -249,7 +275,7 @@ SELECT_TYPES = [
     #
     ###
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Meter Setting",
+        name="Grid Data Source",
         key="meter_setting",
         register=0x60C,
         option_dict={
@@ -413,7 +439,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     #
     ###
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Meter Setting",
+        name="Grid Data Source",
         key="meter_setting",
         register=0x60C,
         scale={
@@ -468,6 +494,24 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="start_charge_mode",
         register=0x610,
         internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Overload Limit",
+        key="overload_limit",
+        register=0x611,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Undervoltage Limit",
+        key="undervoltage_limit",
+        register=0x612,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
@@ -590,6 +634,26 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Modbus Address",
+        key="modbus_address",
+        register=0x640,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Baud Rate",
+        key="baud_rate",
+        register=0x641,
+        scale={
+            0: "2400",
+            1: "4800",
+            2: "9600",
+            3: "19200",
+        },
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     ###
     #
