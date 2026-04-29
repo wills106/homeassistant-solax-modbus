@@ -12,6 +12,7 @@ from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
 from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.util import dt as dt_util
 
 # TODO: Review if this fallback is still needed.
 # UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
@@ -450,7 +451,7 @@ def value_function_grid_export(initval: Any, descr: Any, datadict: dict[str, Any
 
 def value_function_sync_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Generate RTC sync values in dmy order."""
-    now = datetime.now()
+    now = dt_util.now()
     return [
         (
             REGISTER_U16,
@@ -483,9 +484,9 @@ def value_function_sync_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, An
     """Generate RTC sync values in ymd order with optional offset."""
     offset = datadict.get("sync_rtc_offset", 0)
     if isinstance(offset, (float, int)):
-        now = datetime.now() + timedelta(seconds=offset)
+        now = dt_util.now() + timedelta(seconds=offset)
     else:
-        now = datetime.now()
+        now = dt_util.now()
 
     return [
         (
@@ -515,8 +516,8 @@ def value_function_sync_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, An
     ]
 
 
-def value_function_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
-    """Parse RTC value in dmy order."""
+def value_function_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """Parse RTC value in dmy order, return as formatted string."""
     try:
         (
             rtc_seconds,
@@ -526,14 +527,13 @@ def value_function_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> da
             rtc_months,
             rtc_years,
         ) = initval
-        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-        return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
+        return f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
     except Exception:
         return None
 
 
-def value_function_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
-    """Parse RTC value in ymd order."""
+def value_function_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """Parse RTC value in ymd order, return as formatted string."""
     try:
         (
             rtc_years,
@@ -543,8 +543,7 @@ def value_function_rtc_ymd(initval: Any, descr: Any, datadict: dict[str, Any]) -
             rtc_minutes,
             rtc_seconds,
         ) = initval
-        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-        return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
+        return f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
     except Exception:
         return None
 

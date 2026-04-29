@@ -97,6 +97,7 @@ class SolaXModbusButton(ButtonEntity):
         self._register = button_info.register
         self._command = button_info.command
         self._attr_icon = button_info.icon
+        self._attr_entity_category = button_info.entity_category
         self._write_method = button_info.write_method
 
     @property

@@ -516,7 +516,6 @@ class SolaXModbusSensor(SensorEntity):
         self._platform_name = platform_name
         self._attr_device_info = device_info
         self._hub = hub
-        # self.entity_id = "sensor." + platform_name + "_" + description.key
         self.entity_description: BaseModbusSensorEntityDescription = description
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
 

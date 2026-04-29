@@ -804,12 +804,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # 3) Ensure that we don't exceed the inverter power limit in the calculations so that PV above
         #    this limit is allocated to the battery charge rather than being limited.
 
-        # Use the alternative house load basis, but remove the current battery charging
-        # component again. house_load_alt includes battery charging as part of "load",
-        # which makes the regulator subtract its own charging command from the available
-        # export headroom and settle too early below the export target.
+        # Use the alternative house load basis directly. The current house_load_alt
+        # formula already subtracts battery charging, so subtracting it again here
+        # would understate the effective load and distort the export target logic.
         battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
-        hl = max(0, int(houseload_alt) - battery_charge)
+        hl = max(0, int(houseload_alt))
 
         # Export limit no readscale:
         export_limit = datadict.get("export_control_user_limit", 30000)
