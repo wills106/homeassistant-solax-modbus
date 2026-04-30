@@ -435,6 +435,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             3: "Green",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -449,6 +450,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             5: "25A",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -460,6 +462,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             2: "6A",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -472,6 +475,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             2: "App Start",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
@@ -483,6 +487,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             2: "Smart Boost",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -494,6 +499,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             1: "Lock",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -505,6 +511,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             1: "Enabled",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:card-account-details",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -517,6 +524,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             1: "OCPP",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -540,6 +548,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Phase",
@@ -553,6 +562,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         },
         allowedtypes=X3,
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -564,6 +574,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Control Command",
@@ -579,6 +590,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             6: "Cancel the Reservation",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -592,6 +604,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             2: "Green",
         },
         entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     ###
