@@ -34,7 +34,6 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_firmware_decimal_hundredths,
     value_function_rtc,
-    value_function_sync_rtc,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -169,16 +168,38 @@ class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescript
 
 # ====================================== Computed value functions  =================================================
 
+def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
+    """Write timezone (0x61D) then RTC time (0x61E–0x623) in one multi-register write.
+
+    Timezone is stored as uint16 on the device; negative offsets are encoded as
+    two's-complement (e.g. UTC-5 → 0xFFFB = 65531).
+    """
+    from datetime import datetime
+    now = datetime.now()
+    tz_offset = int(datadict.get("timezone", 0))
+    tz_u16 = tz_offset & 0xFFFF  # encodes negatives as uint16 two's-complement
+    return [
+        (REGISTER_U16, tz_u16),          # 0x61D: timezone
+        (REGISTER_U16, now.second),      # 0x61E: seconds
+        (REGISTER_U16, now.minute),      # 0x61F: minutes
+        (REGISTER_U16, now.hour),        # 0x620: hours
+        (REGISTER_U16, now.day),         # 0x621: days
+        (REGISTER_U16, now.month),       # 0x622: months
+        (REGISTER_U16, now.year % 100),  # 0x623: years
+    ]
+
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES = [
     SolaXEVChargerModbusButtonEntityDescription(
         name="Sync RTC",
         key="sync_rtc",
-        register=0x61E,
+        register=0x61D,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
-        value_function=value_function_sync_rtc,
+        value_function=value_function_sync_rtc_evc,
+        depends_on="timezone",
         entity_category=EntityCategory.CONFIG,
     ),
 ]
@@ -232,6 +253,18 @@ NUMBER_TYPES = [
         native_step=1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
+        entity_category=EntityCategory.CONFIG,
+        display_as_box=True,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Timezone",
+        key="timezone",
+        register=0x61D,
+        fmt="i",
+        native_min_value=-12,
+        native_max_value=12,
+        native_step=1,
+        icon="mdi:map-clock",
         entity_category=EntityCategory.CONFIG,
         display_as_box=True,
     ),
@@ -614,6 +647,15 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Timezone",
+        key="timezone",
+        register=0x61D,
+        register_data_type=REGISTER_S16,
+        icon="mdi:map-clock",
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="RTC",
