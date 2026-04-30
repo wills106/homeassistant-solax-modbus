@@ -8254,13 +8254,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="software_version",
         value_function=value_function_software_version_full,
-        allowedtypes=AC | HYBRID | GEN4,
-        internal=True,
-    ),
-    SolaXModbusSensorEntityDescription(
-        key="software_version",
-        value_function=value_function_software_version_full,
-        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
