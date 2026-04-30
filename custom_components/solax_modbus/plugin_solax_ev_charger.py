@@ -341,7 +341,7 @@ SELECT_TYPES = [
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Card Activation",
+        name="RFID Card Activation",
         key="rfid_program",
         register=0x616,
         option_dict={
@@ -463,6 +463,17 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Start Charge Mode",
+        key="start_charge_mode",
+        register=0x610,
+        scale={
+            0: "Plug and Charge",
+            1: "Swipe Card to Start",
+            2: "App Start",
+        },
+        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Boost Mode",
         key="boost_mode",
         register=0x613,
@@ -486,7 +497,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Card Activation",
+        name="RFID Card Activation",
         key="rfid_program",
         register=0x616,
         scale={
