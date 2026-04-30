@@ -33,7 +33,6 @@ from custom_components.solax_modbus.const import (
     BaseModbusSensorEntityDescription,
     plugin_base,
     value_function_firmware_decimal_hundredths,
-    value_function_rtc,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -168,18 +167,38 @@ class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescript
 
 # ====================================== Computed value functions  =================================================
 
+def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
+    """Parse EVC RTC block (7 words from 0x61D).
+
+    word[0] = timezone offset in minutes (uint16; negatives stored as two's-complement,
+              e.g. UTC-5 → 65236)
+    words[1-6] = seconds, minutes, hours, day, month, year (2-digit)
+
+    Returns a timezone-aware datetime using the offset read from the device.
+    """
+    from datetime import datetime as _dt, timezone as _tz_type, timedelta
+    try:
+        tz_raw, sec, minute, hour, day, month, year = initval
+        # Decode uint16 two's-complement → signed minutes offset
+        tz_minutes = tz_raw if tz_raw <= 32767 else tz_raw - 65536
+        tz = _tz_type(timedelta(minutes=tz_minutes))
+        return _dt(2000 + year % 100, month, day, hour, minute, sec, tzinfo=tz)
+    except Exception:
+        return None
+
+
 def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Write timezone (0x61D) then RTC time (0x61E–0x623) in one multi-register write.
 
-    Timezone is stored as uint16 on the device; negative offsets are encoded as
-    two's-complement (e.g. UTC-5 → 0xFFFB = 65531).
+    Uses dt_util.now() so the timezone offset comes from HA's configured timezone
+    (not the host OS), e.g. UTC+3 → 180 min, UTC-5 → -300 stored as uint16 two's-complement.
     """
-    from datetime import datetime
-    now = datetime.now()
-    tz_offset = int(datadict.get("timezone", 0))
-    tz_u16 = tz_offset & 0xFFFF  # encodes negatives as uint16 two's-complement
+    from homeassistant.util import dt as dt_util
+    now = dt_util.now()
+    tz_minutes = int(now.utcoffset().total_seconds() / 60)
+    tz_u16 = tz_minutes & 0xFFFF  # encodes negatives as uint16 two's-complement
     return [
-        (REGISTER_U16, tz_u16),          # 0x61D: timezone
+        (REGISTER_U16, tz_u16),          # 0x61D: timezone (minutes offset)
         (REGISTER_U16, now.second),      # 0x61E: seconds
         (REGISTER_U16, now.minute),      # 0x61F: minutes
         (REGISTER_U16, now.hour),        # 0x620: hours
@@ -199,7 +218,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_evc,
-        depends_on="timezone",
+
         entity_category=EntityCategory.CONFIG,
     ),
 ]
@@ -253,18 +272,6 @@ NUMBER_TYPES = [
         native_step=1,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
-        entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
-    ),
-    SolaXEVChargerModbusNumberEntityDescription(
-        name="Timezone",
-        key="timezone",
-        register=0x61D,
-        fmt="i",
-        native_min_value=-12,
-        native_max_value=12,
-        native_step=1,
-        icon="mdi:map-clock",
         entity_category=EntityCategory.CONFIG,
         display_as_box=True,
     ),
@@ -649,21 +656,12 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Timezone",
-        key="timezone",
-        register=0x61D,
-        register_data_type=REGISTER_S16,
-        icon="mdi:map-clock",
-        entity_registry_enabled_default=False,
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
         name="RTC",
         key="rtc",
-        register=0x61E,
+        register=0x61D,
         register_data_type=REGISTER_WORDS,
-        wordcount=6,
-        scale=value_function_rtc,
+        wordcount=7,
+        scale=value_function_rtc_evc,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:clock",
