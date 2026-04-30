@@ -179,6 +179,7 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc,
+        entity_category=EntityCategory.CONFIG,
     ),
 ]
 
