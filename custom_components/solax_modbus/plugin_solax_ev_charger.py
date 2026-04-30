@@ -765,6 +765,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         allowedtypes=X1,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current L1",
