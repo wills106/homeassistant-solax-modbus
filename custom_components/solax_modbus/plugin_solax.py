@@ -4382,19 +4382,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="export_control_user_limit",
         register=0xB6,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
+        allowedtypes=AC | HYBRID | GEN2,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="export_control_user_limit",
         register=0xB6,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X1,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | X1,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="export_control_user_limit",
         register=0xB6,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | X3,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | X3,
         scale=10,
         internal=True,
     ),
