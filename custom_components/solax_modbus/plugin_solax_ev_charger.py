@@ -190,11 +190,11 @@ def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
 def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Write timezone (0x61D) then RTC time (0x61E–0x623) in one multi-register write.
 
-    Uses dt_util.now() so the timezone offset comes from HA's configured timezone
-    (not the host OS), e.g. UTC+3 → 180 min, UTC-5 → -300 stored as uint16 two's-complement.
+    Uses datetime.now().astimezone() — same source as all other sync_rtc functions in
+    the codebase — so local time and UTC offset always match the host OS clock.
     """
-    from homeassistant.util import dt as dt_util
-    now = dt_util.now()
+    from datetime import datetime
+    now = datetime.now().astimezone()
     tz_minutes = int(now.utcoffset().total_seconds() / 60)
     tz_u16 = tz_minutes & 0xFFFF  # encodes negatives as uint16 two's-complement
     return [
