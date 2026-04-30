@@ -271,16 +271,6 @@ NUMBER_TYPES = [
         device_class=NumberDeviceClass.CURRENT,
         entity_category=EntityCategory.CONFIG,
     ),
-    SolaXEVChargerModbusNumberEntityDescription(
-        name="Modbus Address",
-        key="modbus_address",
-        register=0x640,
-        native_min_value=1,
-        native_max_value=247,
-        native_step=1,
-        entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
-    ),
 ]
 
 # ================================= Select Declarations ============================================================
