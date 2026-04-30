@@ -4,3 +4,7 @@ __pycache__
 *.html
 .venv
 mypy-txt-report/
+
+# Local tools and credentials — never push to GitHub
+tools/
+ha_credentials.env
