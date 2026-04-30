@@ -232,6 +232,7 @@ NUMBER_TYPES = [
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
+        entity_category=EntityCategory.CONFIG,
     ),
 ]
 
@@ -257,8 +258,7 @@ SELECT_TYPES = [
             1: "External Meter",
             2: "Inverter",
         },
-        entity_registry_enabled_default=False,
-        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:meter-electric",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -284,6 +284,7 @@ SELECT_TYPES = [
             4: "20A",
             5: "25A",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -294,6 +295,7 @@ SELECT_TYPES = [
             1: "3A",
             2: "6A",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -306,6 +308,7 @@ SELECT_TYPES = [
             1: "Swipe Card to Start",
             2: "App Start",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -317,6 +320,7 @@ SELECT_TYPES = [
             0: "Plug and Charge",
             1: "Swipe Card to Start",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -338,6 +342,7 @@ SELECT_TYPES = [
             0: "Unlock",
             1: "Lock",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:lock",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -348,6 +353,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:card-account-details",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -359,6 +365,7 @@ SELECT_TYPES = [
             0: "Private",
             1: "OCPP",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
@@ -371,6 +378,7 @@ SELECT_TYPES = [
             2: "L2 Phase",
             3: "L3 Phase",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
         allowedtypes=X3,
     ),
@@ -399,6 +407,7 @@ SELECT_TYPES = [
             1: "ECO",
             2: "Green",
         },
+        entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
     ),
 ]
