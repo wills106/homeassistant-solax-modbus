@@ -1003,6 +1003,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         allowedtypes=GEN1 | GEN2,
         register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
+        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
