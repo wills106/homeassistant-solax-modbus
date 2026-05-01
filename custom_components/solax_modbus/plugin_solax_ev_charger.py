@@ -26,13 +26,16 @@ from custom_components.solax_modbus.const import (
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
+    TIME_OPTIONS_SEPARATE_REGISTERS,
     WRITE_MULTI_MODBUS,
     BaseModbusButtonEntityDescription,
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
+    BaseModbusTimeEntityDescription,
     plugin_base,
     value_function_firmware_decimal_hundredths,
+    value_function_separate_registers_time,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -165,21 +168,27 @@ class SolaXEVChargerModbusSensorEntityDescription(BaseModbusSensorEntityDescript
     register_type: int = REG_HOLDING
 
 
+@dataclass(kw_only=True, frozen=True)
+class SolaXEVChargerModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
+    allowedtypes: int = ALLDEFAULT
+
+
 # ====================================== Computed value functions  =================================================
 
 def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
     """Parse EVC RTC block (7 words from 0x61D).
 
-    word[0] = timezone offset in minutes (uint16; negatives stored as two's-complement,
-              e.g. UTC-5 → 65236)
-    words[1-6] = seconds, minutes, hours, day, month, year (2-digit)
+    word[0] = timezone offset in MINUTES (device uses minutes; e.g. UTC+3 → 180,
+              negatives as uint16 two's-complement).
+    words[1-6] = seconds, minutes, hours, day, month, year (2-digit).
 
-    Returns a timezone-aware datetime using the offset read from the device.
+    Attaches the stored timezone directly to the stored time — no UTC assumption,
+    no conversion.  Whatever time the device holds is shown as-is with its offset.
+    e.g. stored: tz=180, time=11:18  ->  returns 2026-05-01 11:18:00+03:00
     """
     from datetime import datetime as _dt, timezone as _tz_type, timedelta
     try:
         tz_raw, sec, minute, hour, day, month, year = initval
-        # Decode uint16 two's-complement → signed minutes offset
         tz_minutes = tz_raw if tz_raw <= 32767 else tz_raw - 65536
         tz = _tz_type(timedelta(minutes=tz_minutes))
         return _dt(2000 + year % 100, month, day, hour, minute, sec, tzinfo=tz)
@@ -190,21 +199,24 @@ def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
 def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Write timezone (0x61D) then RTC time (0x61E–0x623) in one multi-register write.
 
-    Uses datetime.now().astimezone() — same source as all other sync_rtc functions in
-    the codebase — so local time and UTC offset always match the host OS clock.
+    The device displays stored_UTC_time + tz_offset as local time, so we write:
+      - 0x61D: the real UTC offset in minutes (e.g. 180 for UTC+3) so the device
+               can show correct local time on its own display / app.
+      - 0x61E–0x623: current UTC time so the stored instant is always correct.
     """
-    from datetime import datetime
-    now = datetime.now().astimezone()
-    tz_minutes = int(now.utcoffset().total_seconds() / 60)
-    tz_u16 = tz_minutes & 0xFFFF  # encodes negatives as uint16 two's-complement
+    from datetime import datetime, timezone
+    utc_now   = datetime.now(timezone.utc)
+    local_now = datetime.now().astimezone()
+    tz_minutes = int(local_now.utcoffset().total_seconds() / 60)
+    tz_u16 = tz_minutes & 0xFFFF        # e.g. UTC+3 → 180; UTC-5 → 65531
     return [
-        (REGISTER_U16, tz_u16),          # 0x61D: timezone (minutes offset)
-        (REGISTER_U16, now.second),      # 0x61E: seconds
-        (REGISTER_U16, now.minute),      # 0x61F: minutes
-        (REGISTER_U16, now.hour),        # 0x620: hours
-        (REGISTER_U16, now.day),         # 0x621: days
-        (REGISTER_U16, now.month),       # 0x622: months
-        (REGISTER_U16, now.year % 100),  # 0x623: years
+        (REGISTER_U16, tz_u16),              # 0x61D: timezone offset in minutes
+        (REGISTER_U16, utc_now.second),      # 0x61E: seconds  (UTC)
+        (REGISTER_U16, utc_now.minute),      # 0x61F: minutes  (UTC)
+        (REGISTER_U16, utc_now.hour),        # 0x620: hours    (UTC)
+        (REGISTER_U16, utc_now.day),         # 0x621: day      (UTC)
+        (REGISTER_U16, utc_now.month),       # 0x622: month    (UTC)
+        (REGISTER_U16, utc_now.year % 100),  # 0x623: year     (UTC)
     ]
 
 
@@ -323,6 +335,19 @@ NUMBER_TYPES = [
         native_max_value=247,
         native_step=1,
         icon="mdi:identifier",
+        entity_category=EntityCategory.CONFIG,
+        display_as_box=True,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Smart Boost Energy",
+        key="smart_boost_energy",
+        register=0x63A,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=200,
+        native_step=1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=NumberDeviceClass.ENERGY,
         entity_category=EntityCategory.CONFIG,
         display_as_box=True,
     ),
@@ -504,6 +529,38 @@ SELECT_TYPES = [
     ),
 ]
 
+# ================================= Time Declarations ==============================================================
+
+TIME_TYPES = [
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Timer Boost Start Time",
+        key="timer_boost_start_time",
+        register=0x634,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Timer Boost End Time",
+        key="timer_boost_end_time",
+        register=0x636,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Smart Boost End Time",
+        key="smart_boost_end_time",
+        register=0x638,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+]
+
 # ================================= Sensor Declarations ============================================================
 
 SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
@@ -662,6 +719,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_WORDS,
         wordcount=7,
         scale=value_function_rtc_evc,
+        device_class=SensorDeviceClass.TIMESTAMP,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:clock",
@@ -740,6 +798,48 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="modbus_address",
         register=0x640,
         icon="mdi:identifier",
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Timer Boost Start Time",
+        key="timer_boost_start_time",
+        register=0x634,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-start",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Timer Boost End Time",
+        key="timer_boost_end_time",
+        register=0x636,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-end",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Smart Boost End Time",
+        key="smart_boost_end_time",
+        register=0x638,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-end",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Smart Boost Energy",
+        key="smart_boost_energy",
+        register=0x63A,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -1385,7 +1485,7 @@ plugin_instance = solax_ev_charger_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
-    TIME_TYPES=[],
+    TIME_TYPES=TIME_TYPES,
     block_size=100,
     # order16=Endian.BIG,
     order32="little",
