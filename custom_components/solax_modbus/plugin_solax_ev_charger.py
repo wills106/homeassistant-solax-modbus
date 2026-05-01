@@ -79,6 +79,10 @@ POW11 = 0x0020
 POW22 = 0x0040
 ALL_POW_GROUP = POW4 | POW7 | POW11 | POW22
 
+# Feature flags — set dynamically in async_determineInverterType based on device registers
+PARALLEL = 0x0400   # device reports Is_support_parallel == 0xAA55
+ALL_FEATURE_GROUP = PARALLEL
+
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
@@ -500,6 +504,18 @@ SELECT_TYPES = [
         allowedtypes=X3,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
+        name="Parallel Function",
+        key="parallel_enable",
+        register=0x642,
+        option_dict={
+            0: "Disable",
+            1: "Enable",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:call-split",
+        allowedtypes=PARALLEL,
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
         name="Control Command",
         key="control_command",
         register=0x627,
@@ -843,11 +859,36 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Function",
+        key="parallel_enable",
+        register=0x642,
+        scale={
+            0: "Disable",
+            1: "Enable",
+        },
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:call-split",
+        allowedtypes=PARALLEL,
+    ),
     ###
     #
     # Input
     #
     ###
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Support",
+        key="is_support_parallel",
+        register=0x107,
+        register_type=REG_INPUT,
+        scale={
+            0: "Not Supported",
+            0xAA55: "Supported",
+        },
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:call-split",
+    ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage",
         key="charge_voltage",
@@ -896,6 +937,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current",
@@ -1431,6 +1473,18 @@ class solax_ev_charger_plugin(plugin_base):
         if invertertype == 0:
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
             _LOGGER.debug(f"{hub.name}: No match found for serial number prefix, returning type=0")
+
+        # Detect parallel support: input register 0x0107 == 0xAA55 means supported
+        try:
+            par_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x0107, count=1)
+            if not par_data.isError() and par_data.registers[0] == 0xAA55:
+                invertertype |= PARALLEL
+                _LOGGER.info(f"{hub.name}: Parallel charging supported (0x0107=0xAA55)")
+            else:
+                _LOGGER.debug(f"{hub.name}: Parallel charging not supported (0x0107={par_data.registers[0] if not par_data.isError() else 'error'})")
+        except Exception:
+            _LOGGER.debug(f"{hub.name}: Could not read parallel support register 0x0107", exc_info=True)
+
         _LOGGER.debug(f"{hub.name}: Final inverter type determination: 0x{invertertype:x}, model={self.inverter_model}")
         return invertertype
 
@@ -1446,7 +1500,8 @@ class solax_ev_charger_plugin(plugin_base):
         powmatch = ((inverterspec & entitymask & ALL_POW_GROUP) != 0) or (entitymask & ALL_POW_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
-        _LOGGER.debug(f"matchInverterWithMask: powmatch={powmatch}, xmatch={xmatch}, genmatch={genmatch}")
+        featurematch = ((inverterspec & entitymask & ALL_FEATURE_GROUP) != 0) or (entitymask & ALL_FEATURE_GROUP == 0)
+        _LOGGER.debug(f"matchInverterWithMask: powmatch={powmatch}, xmatch={xmatch}, genmatch={genmatch}, featurematch={featurematch}")
         blacklisted = False
         if blacklist:
             _LOGGER.debug(f"matchInverterWithMask: Checking blacklist: {blacklist}")
@@ -1454,7 +1509,7 @@ class solax_ev_charger_plugin(plugin_base):
                 if serialnumber.startswith(start):
                     blacklisted = True
                     _LOGGER.debug(f"matchInverterWithMask: Serial number {serialnumber} matches blacklist prefix {start}")
-        result = (xmatch and powmatch and genmatch) and not blacklisted
+        result = (xmatch and powmatch and genmatch and featurematch) and not blacklisted
         _LOGGER.debug(f"matchInverterWithMask: Final result: {result} (blacklisted={blacklisted})")
         return result
 
