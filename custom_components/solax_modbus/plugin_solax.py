@@ -598,6 +598,11 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     return desired_charge, bms_cap_w, pct_cap_w
 
 
+def autorepeat_setpoint_filter(current_value: float, desired_value: float, steps: int = 5) -> float:
+    # Simple rolling average filter for updating control setpoints to avoid oscillation
+    return (current_value * (steps - 1) + desired_value) / steps
+
+
 def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     # initval = BUTTONREPEAT_FIRST means first run;
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
@@ -692,8 +697,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # Battery gets surplus up to BMS limit
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
 
-            # Simple moving average filter to slow down changes to battery
-            selected_charge = (current_charge * 4 + desired_charge) / 5
+            # Setpoint filter to slow down changes to battery
+            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
             pushmode_power = -selected_charge
 
             # Any surplus not able to feed into the battery needs to be corrected through PV limiting
@@ -716,8 +721,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 target_pvlimit = min(setpvlimit, cur_pvlimit - error)
                 control_reason = "increase-pv"
 
-            # Simple moving average filter to slow down changes to PV limit
-            pvlimit = (cur_pvlimit * 4 + target_pvlimit) / 5
+            # Filter the setpoint to avoid oscillation
+            pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit)
 
             _LOGGER.debug(
                 f"[Mode8 Negative Injection] {control_state}: surplus={surplus}W measured_power={measured_power}W "
