@@ -657,9 +657,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # bias towards import
         export_target = int(datadict.get("negative_injection_bias_w", -50) or -50)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
-        min_step_w = int(datadict.get("export_first_step_min_w", 100) or 100)
-        max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
-        pv_unlimited_step = max(2 * max_step_w, int(datadict.get("pv_unlimited_delta_w", 1000) or 1000))
+        pv_unlimited_step = int(datadict.get("pv_unlimited_delta_w", 1000) or 1000)
 
         # Local copies
         battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
@@ -698,8 +696,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             error = surplus - desired_charge
 
             if abs(error) <= export_deadband_w:
-                step_w = 0
-                pvlimit = cur_pvlimit
+                target_pvlimit = cur_pvlimit
                 control_reason = "hold"
             elif error > 0:
                 if cur_pvlimit > pv_threshold:
@@ -710,16 +707,17 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                     control_reason = "decrease-pv-fast"
                 else:
                     control_reason = "decrease-pv"
-                step_w = min(max_step_w, max(min_step_w, error))
-                pvlimit = max(0, cur_pvlimit - step_w)
+                target_pvlimit = max(0, cur_pvlimit - error)
             else:
-                step_w = min(max_step_w, max(min_step_w, -error))
-                pvlimit = min(setpvlimit, cur_pvlimit + step_w)
+                target_pvlimit = min(setpvlimit, cur_pvlimit - error)
                 control_reason = "increase-pv"
+
+            # Simple moving average filter to slow down changes to PV limit
+            pvlimit = (cur_pvlimit * 7 + target_pvlimit) / 8
 
             _LOGGER.debug(
                 f"[Mode8 Negative Injection] {control_state}: surplus={surplus}W measured_power={measured_power}W "
-                f"export_target={export_target}W error={error}W step={step_w}W reason={control_reason} "
+                f"export_target={export_target}W error={error}W pvtarget={target_pvlimit}W reason={control_reason} "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W pvlimit={pvlimit}W hl={hl}W"
             )
 
