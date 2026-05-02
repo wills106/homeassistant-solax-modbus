@@ -690,10 +690,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             # Battery gets surplus up to BMS limit
             desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
-            pushmode_power = -desired_charge
+
+            # Simple moving average filter to slow down changes to battery
+            selected_charge = (cur_push * 4 + desired_charge) / 5
+            pushmode_power = -selected_charge
 
             # Any surplus not able to feed into the battery needs to be corrected through PV limiting
-            error = surplus - desired_charge
+            error = surplus - selected_charge
 
             if abs(error) <= export_deadband_w:
                 target_pvlimit = cur_pvlimit
@@ -713,12 +716,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 control_reason = "increase-pv"
 
             # Simple moving average filter to slow down changes to PV limit
-            pvlimit = (cur_pvlimit * 7 + target_pvlimit) / 8
+            pvlimit = (cur_pvlimit * 4 + target_pvlimit) / 5
 
             _LOGGER.debug(
                 f"[Mode8 Negative Injection] {control_state}: surplus={surplus}W measured_power={measured_power}W "
                 f"export_target={export_target}W error={error}W pvtarget={target_pvlimit}W reason={control_reason} "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W pvlimit={pvlimit}W hl={hl}W"
+                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W desired_charge={desired_charge}W -> charge={selected_charge}W "
+                f"pvlimit={pvlimit}W hl={hl}W"
             )
 
         else:
