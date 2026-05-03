@@ -34,6 +34,18 @@ DO NOT CONNECT THIS COM PORT TO AN ETHERNET SWITCH - your Ethernet switch port w
 
 - connects through Ethernet to your home network router/switch
 - use the "vircom" tool (Windows) to set the IP address matching your lan (or to let the device use DHCP, it does not use DHCP by default, however we recommend using a static IP)
+
+  ```{tip}
+  By default, this adapter (also tested on its `RS485 TO POE ETH (B)` variation) has a static IP configuration set up as as 192.168.1.210/24.
+
+  When you don't have Windows at hand, place both the adapter and your computer on the 192.168.1.0/24 subnet (you might already be using it as home LAN).
+  Then, open http://192.168.1.200 in your web browser from said computer (you can of course use a phone for a quick test if it's on the same network).
+
+  Additionally, [the FAQ mentions](https://www.waveshare.com/wiki/RS485_TO_ETH_(B)#FAQ) that post factory reset, it becomes http://192.168.1.254.
+
+  This eliminates the need to figure out getting a Windows VM if you're on a different computing stack or just don't want to download and execute a closed-source binary from a file share on the internet.
+  ```
+
 - configure it to use "Modbus TCP to RTU", make sure the work mode is "TCP Server" and the server listens to port 502. Make sure the baudrate matches the baudrate of your inverter (see:  settings > advanced settings > modbus > baud rate)
 ![Waveshare Device Settings](images/adaptor-rs485-eth-waveshare-b-settings-device.png)
 
@@ -68,7 +80,7 @@ When configuring the SolaX Modbus Integration, tick the 'RS485 serial port' flag
 
 It should be possible to connect multiple inverters to the same RS485 adapter (eg Waveshare). The inverters must have different Modbus addresses, so you need to change the Modbus addresses of the inverters first. Then configure one instance for each inverter. The configuration dialogue allows you to set the Modbus address.
 
-The use of Terminating resistors is required when connecting multiple Inverters. Place a 120Ohm resistor accross A&B at the RS485 adaptor and place a 120Ohm resistor accross A&B on the last connected Inverter.
+The use of Terminating resistors is required when connecting multiple Inverters. Place a 120Ohm resistor across A&B at the RS485 adaptor and place a 120Ohm resistor across A&B on the last connected Inverter.
 
 ## SolaX PocketWiFi 3.0
 

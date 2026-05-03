@@ -1,152 +1,72 @@
-# Home Assistant "Energy Dashboard"
+# SolaX Energy Dashboard
 
-Energy Dashboard isn't actually live. It lags behind by an hour.
+## Overview
 
-![Energy dashboard config](images/dashboard-energy-config.png)
+The Energy Dashboard feature provides a dedicated virtual Energy Dashboard device with curated grid, battery, and solar sensors designed to match Home Assistant Energy Dashboard requirements.
 
-## Entities
+Key outcomes:
+- Consistent sensor naming and sign conventions
+- A unified Energy Dashboard device with diagnostics
+- Parallel mode support (Primary + Secondary inverters)
 
-### Electricity Grid
+**Note:** The Home Assistant Energy Dashboard itself updates with a delay (typically around an hour).
 
-- SolaX Gen2
-  - Grid consumption - You need to enable "Grid Import Total"
-  - Return to grid - You need to enable "Grid Export Total"
-- SolaX Gen 3 & Gen4
-  - Grid consumption - sensor.solax_today_s_import_energy
-  - Return to grid - sensor.solax_today_s_export_energy
+## Energy Dashboard (Historic)
 
-### Solar Panels
+The main Energy Dashboard focuses on energy sensors and requires clean, correctly signed energy entities.
 
-- SolaX Gen2 - 4
-  - Solar production - sensor.solax_today_s_solar_energy
+![Energy dashboard overview](images/ha-energy-dashbord.png)
 
-### Home Battery Storage
+## Energy Dashboard Now (Realtime)
 
-- SolaX Gen2
-  - Energy going to the battery (kWh) - You need to enable "Battery Input Energy Total"
-  - Energy coming out of the battery (kWh) - You need to enable "Battery Output Energy Total"
-- SolaX Gen3 & Gen4
-  - Energy going to the battery (kWh) - sensor.solax_battery_input_energy_today
-  - Energy coming out of the battery (kWh) - sensor.solax_battery_output_energy_today
+The "Now" view focuses on power sensors and requires correct real‑time power entities. This used to be a major pain point, but the Energy Dashboard virtual device provides both energy and power sensors with consistent conventions.
 
-## [Power Distribution Card](https://github.com/JonahKr/power-distribution-card)
+![Energy dashboard realtime](images/ha-energy-dashboard-now.png)
 
-Real Time Visualization of Energy flows
+## Sensors and Adaptation
 
-![Power Distribution Card](images/cards-power-distribution-card.png)
+SolaX inverters expose many raw sensors that can feed the Home Assistant Energy Dashboard, but they typically need:
+- Naming and category alignment (grid, battery, solar)
+- Sign convention adjustments (import/export, charge/discharge)
+- Aggregation for parallel systems
 
-```
-type: custom:power-distribution-card
-title: Power Flow
-entities:
-  - decimals: '2'
-    display_abs: true
-    name: Grid
-    unit_of_display: W
-    icon: mdi:transmission-tower
-    entity: sensor.solax_measured_power
-    preset: grid
-    icon_color:
-      bigger: ''
-      equal: ''
-      smaller: ''
-    invert_value: true
-    threshold: ''
-    secondary_info_entity: ''
-  - decimals: 2
-    display_abs: true
-    name: House
-    unit_of_display: W
-    invert_value: true
-    consumer: true
-    icon: mdi:home-assistant
-    entity: sensor.solax_house_load
-    preset: home
-    threshold: ''
-    icon_color:
-      bigger: ''
-      equal: ''
-      smaller: ''
-  - decimals: 2
-    display_abs: true
-    name: Solar
-    unit_of_display: W
-    icon: mdi:solar-power
-    producer: true
-    entity: sensor.solax_pv_power_total
-    preset: solar
-    threshold: ''
-    icon_color:
-      bigger: ''
-      equal: ''
-      smaller: ''
-  - decimals: 2
-    display_abs: true
-    name: battery
-    unit_of_display: W
-    consumer: true
-    icon: mdi:battery
-    producer: true
-    entity: sensor.solax_battery_power_charge
-    preset: battery
-    threshold: ''
-    icon_color:
-      bigger: ''
-      equal: ''
-      smaller: ''
-    secondary_info_entity: sensor.solax_battery_capacity
-    invert_value: true
-    secondary_info_attribute: ''
-    battery_percentage_entity: sensor.solax_battery_capacity
-center:
-  type: card
-  content:
-    type: glance
-    entities:
-      - entity: sensor.octopus_agile_current_rate
-        name: Electric Cost
-    show_icon: false
-animation: flash
-```
+Historically this required custom helper entities and extra calculations. The Energy Dashboard implementation now provides ready‑made mappings that adapt inverter data to the exact requirements of the Home Assistant Energy Dashboard.
 
-## [Power Flow Card Plus](https://github.com/flixlix/power-flow-card-plus)
+## Why This Matters
 
-Another approach, uses the same visual style as Homeassistant energy dashboard
+With the virtual Energy Dashboard device enabled:
+- Advanced sensors are created automatically
+- Parallel mode systems are handled consistently
+- Setup in the Home Assistant Energy Dashboard becomes straightforward
 
-![Power Flow Card Plus](images/cards-power-flow-card-plus.png)
+## What the Integration Adds
 
-```
-type: custom:power-flow-card-plus
-entities:
-  battery:
-    entity: sensor.solax_battery_power_charge
-    state_of_charge: sensor.solax_battery_capacity
-    invert_state: true
-  grid:
-    entity:
-      consumption: sensor.solax_grid_import
-      production: sensor.solax_grid_export
-    name: EGD
-  solar:
-    entity: sensor.solax_pv_power_total
-    display_zero_state: true
-  home:
-    entity: sensor.solax_house_load
-clickable_entities: true
-display_zero_lines:
-  mode: show
-  transparency: 50
-  grey_color:
-    - 189
-    - 189
-    - 189
-use_new_flow_rate_model: true
-w_decimals: 0
-kw_decimals: 1
-min_flow_rate: 0.75
-max_flow_rate: 6
-max_expected_power: 2000
-min_expected_power: 0.01
-watt_threshold: 100
-transparency_zero_lines: 0
-```
+When Energy Dashboard is enabled, the integration creates:
+- A **virtual Energy Dashboard device** per inverter hub
+- Grid, battery, and solar **power** sensors
+- Grid, battery, and solar **energy** sensors
+- Diagnostics to explain mode and configuration
+
+![Energy Dashboard virtual devices](images/ha-solax-integration-virtual-devices.png)
+
+Standalone and parallel examples:
+
+Standalone view shows the curated, correctly signed sensors for a single inverter.
+
+![Energy Dashboard virtual device (standalone)](images/ha-solax-virtual-device-standalone.png)
+
+Parallel view includes **All** metrics (system‑wide totals across the parallel system) plus per‑inverter measurements for detailed solar and battery tracking.
+
+![Energy Dashboard virtual device (parallel)](images/ha-solax-virtual-device-parallel.png)
+
+## Parallel Mode Support
+
+Parallel systems are supported with a Primary inverter and one or more Secondary inverters. The virtual Energy Dashboard device:
+- Uses Primary totals for "All" sensors where available
+- Exposes per‑inverter sensors to show individual contributions
+
+For full parallel‑mode setup guidance, see: [solax-parallel-mode.md](solax-parallel-mode.md).
+
+## Next Steps
+
+For setup steps and config flow details, see: [energy-dashboard-setup.md](energy-dashboard-setup.md).

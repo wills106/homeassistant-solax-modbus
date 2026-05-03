@@ -1,11 +1,51 @@
 import logging
 import re
 from dataclasses import dataclass
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
+from typing import Any
+
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
+
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_READ_PM,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_PM,
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_S16,
+    REGISTER_STR,
+    REGISTER_U16,
+    REGISTER_U32,
+    SLEEPMODE_ZERO,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    UnitOfReactivePower,
+    plugin_base,
+    value_function_battery_input,
+    value_function_battery_output,
+    value_function_grid_export,
+    value_function_grid_import,
+    value_function_pv_power_total,
+)
+
 from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +56,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -52,16 +92,16 @@ ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 
 # ====================== find inverter type and details ===========================================
 
 
-def remove_special_chars(input_str):
+def remove_special_chars(input_str: str) -> str:
     return re.sub(r"[^A-z0-9 -]", "", input_str)
 
 
-async def async_read_serialnr(hub, address, swapbytes):
+async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | None:
     res = None
     try:
         inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=6)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:6], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:6], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             if swapbytes:
                 ba = bytearray(res, "ascii")  # convert to bytearray for swapping
@@ -69,12 +109,10 @@ async def async_read_serialnr(hub, address, swapbytes):
                 res = str(ba, "ascii")  # convert back to string
             res = remove_special_chars(res)
             hub.seriesnumber = res
-    except Exception as ex:
+    except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
     return res
 
@@ -82,37 +120,37 @@ async def async_read_serialnr(hub, address, swapbytes):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarOldModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarOldModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarOldModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class SofarOldModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     """A class that describes Sofar Modbus sensor entities."""
 
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     # order16: int = Endian.BIG
     # order32: int = Endian.BIG
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
-NUMBER_TYPES = []
-SELECT_TYPES = []
+BUTTON_TYPES: list[Any] = []
+NUMBER_TYPES: list[Any] = []
+SELECT_TYPES: list[Any] = []
 
 SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
     ###
@@ -185,7 +223,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0xD,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=PV | X1,
@@ -227,7 +265,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x15,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=PV | X1,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -235,7 +273,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key="total_time",
         native_unit_of_measurement=UnitOfTime.HOURS,
         register=0x17,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=PV | X1,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -263,7 +301,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         # entity_registry_enabled_default = False,
         allowedtypes=PV,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -275,7 +313,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1C,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         # entity_registry_enabled_default = False,
         allowedtypes=PV,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -299,7 +337,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x9,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=PV | X3,
@@ -321,7 +359,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0xB,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=PV | X3,
@@ -379,7 +417,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=SensorDeviceClass.REACTIVE_POWER,
         register=0x10,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=PV | X3,
@@ -460,7 +498,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         register=0x18,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=PV | X3,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -468,7 +506,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key="total_time",
         native_unit_of_measurement=UnitOfTime.HOURS,
         register=0x1A,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=PV | X3,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -495,7 +533,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1E,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=PV | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -507,7 +545,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1F,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         entity_registry_enabled_default=False,
         allowedtypes=PV | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -558,7 +596,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x207,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID,
@@ -579,7 +617,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x209,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | X3,
@@ -600,7 +638,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=0x20B,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID | X3,
@@ -622,7 +660,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x20D,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID,
@@ -665,7 +703,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         register=0x20F,
         scale=0.01,
         rounding=2,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         icon="mdi:current-dc",
     ),
@@ -694,7 +732,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x212,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
         allowedtypes=AC | HYBRID,
@@ -821,7 +859,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x21C,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -831,7 +869,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x21E,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID,
         icon="mdi:home-export-outline",
     ),
@@ -842,7 +880,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x220,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID,
         icon="mdi:home-import-outline",
     ),
@@ -853,7 +891,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=0x222,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -930,7 +968,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x238,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -941,7 +979,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x239,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -957,7 +995,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key="generation_time_today",
         native_unit_of_measurement=UnitOfTime.HOURS,
         register=0x244,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID,
     ),
     SofarOldModbusSensorEntityDescription(
@@ -1043,7 +1081,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
         key="serial_number",
         register=0x2002,
         register_type=REG_INPUT,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=6,
         allowedtypes=ALLDEFAULT,
     ),
@@ -1058,7 +1096,7 @@ SENSOR_TYPES: list[SofarOldModbusSensorEntityDescription] = [
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class sofar_old_plugin(plugin_base):
     """
     def isAwake(self, datadict):
@@ -1068,7 +1106,13 @@ class sofar_old_plugin(plugin_base):
         return 'battery_awaken'
     """
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1083,7 +1127,7 @@ class sofar_old_plugin(plugin_base):
                     blacklisted = True
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x2002, swapbytes=False)
         if not seriesnumber:
@@ -1149,8 +1193,9 @@ plugin_instance = sofar_old_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=100,
-    #order16=Endian.BIG,
+    # order16=Endian.BIG,
     order32="big",
     auto_block_ignore_readerror=True,
 )

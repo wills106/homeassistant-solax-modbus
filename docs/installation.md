@@ -38,19 +38,24 @@ Now it's only needed to add your inverter to Home Assistant.
 - Select your inverter type.
 - Check Emergency Power Option to load entities about EPS.
 - Check Dry Contact Box to load entities about Dry Contact.
+- Optional: adjust polling intervals (default/medium/fast) and request timeout to match your device and network.
+- Optional: set a name suffix to distinguish multiple inverters.
+- Optional: set the max inverter power (kW) to ignore out-of-range readings.
+- Optional: enable Parallel Mode if you run a master/slave setup.
 
 ![](images/integration-setup.png)
 
-- Only Sofar and Solinteg take advantage of the different poll speeds. "The default polling interval of the modbus registers in seconds" is the one to reduce from 15 if required. Do not try and poll quicker that 5 s on inverters with a baud of 9600.
+- Different polling intervals are used by plugins that define scan groups (for example SolaX/SolaX LV) or use AUTO grouping. The default polling interval is the one to reduce from 15 if required. Do not try and poll quicker than 5 s on inverters with a baud of 9600.
 
 - If you use RS485 to Ethernet adaptor:
-    - Enter IP address of your adaptor.
+    - Enter the address of your adaptor (IP or hostname).
+    - Select the Modbus TCP variant if needed (TCP / RTU over TCP / ASCII over TCP).
 
 ![](images/integration-setup-tcpip.png)
 
 - If you use RS485 to USB adaptor:
     - Select the right port.
-      - If your installation has a tendancy to swap between ttyUSB0 and ttyUSB1 you can define it by the id
+      - If your installation has a tendency to swap between ttyUSB0 and ttyUSB1 you can define it by the id
       - /dev/serial/by-id/usb-xyz
     - Enter correct baud rate that does match setting on your inverter.
 
@@ -60,6 +65,10 @@ Now it's only needed to add your inverter to Home Assistant.
     - Enter the hub name.
 
 ![](images/integration-setup-corehub.png)
+
+- Battery modules: for supported Sofar inverters, an extra battery step appears to enable per-pack battery entities.
+
+![](images/integration-setup-battery.png)
 
 
 ## Potential known problems:

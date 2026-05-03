@@ -1,4 +1,4 @@
-# Desciption of entities
+# Description of entities
 
 Note available entities differ based on your inverter model.
 
@@ -96,11 +96,36 @@ Only for Gen 4 inverters, 1.xx is your DSP firmware version.
 
 ## inverter_temperature
 
-Shows internal inverter temperature, you can use this information to know if your inverter overheats. Shows no value when the inventer is in idle mode.
+Shows internal inverter temperature, you can use this information to know if your inverter overheats. Shows no value when the inverter is in idle mode.
 
 ## lease_mode
 
 
+## measured_power
+
+Current power as measured by main grid connection CT or meter. Positive values indicate export and negative values indicate import.
+
+This entity is used in remote control (VPP) modes to monitor grid power such as negative-injection/zero-export modes.
+
+### measured_power_offset/measured_power_gain
+
+If your setup uses a CT (current transformer), the measured power may not be accurate - they are typically 3-10% tolerances which can include a zero-offset. As of writing there SolaX does not provide on all inverters a method to calibrate this measurement value (some older generations had such an option). Inaccuracies in this measurement affect the calculated house load, and can cause problems with remote control modes at low power levels.
+
+To achieve more accurate results from remote control modes, two additional optional configuration entities, `measured_power_offset` and `measured_power_gain` are provided to allow the sensor values to be calibrated. The values shown in home assistant will be scaled by the chosen values.
+
+The raw value from the inverter is corrected by first adding `measured_power_offset` (W), and then multiplying by `measured_power_gain` (%).
+
+The calibration values are disabled by default, and the default values (offset = 0, gain = 100%) mean no correction is applied to the value.
+
+To calculate the correct values, you will need a smart meter which provides real-time power information (e.g. with Octopus Home Mini, IHD, or reported values on the meter screen itself).
+1. Find a time when you have a relatively stable import (exact value doesn't matter, but say >> 1kW). Record the power reported by the `measured_power` sensor and the smart meter in Watts, ideally take a few readings over a minute or so and average them.
+2. Find a period of relatively stable export (exact value doesn't matter, but say >> 1kW). Again record the power reported by the `measured_power` sensor and the smart meter in Watts, again ideally take an average.
+3. Calculate the factors for the equation `smart_meter = gain * (measured_power + offset)` where:<br>
+   * `gain` is calculated as `abs(smart_meter {charge} - smart_meter {discharge}) / abs(measured_power {discharge} - measured_power {charge})` <br>
+   * `offset` is then `(smart meter {charge} / gain) - measured_power {charge}`
+4. Enter the `offset` value as calculated (in Watts). Enter the `gain` value multiplied by 100 (as the entity has units of %).
+
+Typical offsets will be +/-50W, and gains 90-110%. If you get values outside this range, considered repeating the measurements.
 
 ## manual_mode_select
 
@@ -116,7 +141,7 @@ Activates and deactivates manual mode.
 
 ## pgrid_bias
 
-Changes behavior of your inverter. When `inverter`, your inverter will supply aroud 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy. 
+Changes behavior of your inverter. When `inverter`, your inverter will supply around 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy. 
 
 ## phase_power_balance_x3
 

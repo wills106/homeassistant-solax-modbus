@@ -1,11 +1,45 @@
 import logging
-from dataclasses import dataclass
-from homeassistant.components.number import NumberEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
+from dataclasses import dataclass, replace
+from typing import Any
+
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
+
+from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
+    CONF_READ_DCB,
+    CONF_READ_EPS,
+    CONF_READ_PM,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_PM,
+    REG_HOLDING,
+    REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_STR,
+    REGISTER_U16,
+    REGISTER_U32,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    UnitOfReactivePower,
+    plugin_base,
+    value_function_disabled_enabled,
+)
+
 from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
-from time import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +50,7 @@ within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
 example: GEN3 | GEN4 | GEN5 | X1 | X3 | EPS
-means:  any inverter of tyoe (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
+means:  any inverter of type (GEN3 or GEN4 | GEN5) and (X1 or X3) and (EPS)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
@@ -58,28 +92,24 @@ ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN
 
 # ======================= end of bitmask handling code =============================================
 
-SENSOR_TYPES = []
+SENSOR_TYPES: list[Any] = []
 
 # ====================== find inverter type and details ===========================================
 
 
-async def async_read_serialnr(hub, address):
+async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=10)
         if not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:10], DataType.STRING, "big")
+            raw = convert_from_registers(inverter_data.registers[0:10], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
-    except Exception as ex:
-        _LOGGER.warning(
-            f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True
-        )
+    except Exception:
+        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
     if not res:
-        _LOGGER.warning(
-            f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed"
-        )
+        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
     return res
 
@@ -87,25 +117,25 @@ async def async_read_serialnr(hub, address):
 # =================================================================================================
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class AlphaESSModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class AlphaESSModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class AlphaESSModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class AlphaESSModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
 
 
@@ -113,15 +143,15 @@ class AlphaESSModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 # ================================= Button Declarations ============================================================
 
-BUTTON_TYPES = []
+BUTTON_TYPES: list[Any] = []
 
 # ================================= Number Declarations ============================================================
 
-MAX_CURRENTS = []
+MAX_CURRENTS: list[Any] = []
 
-MAX_EXPORT = []
+MAX_EXPORT: list[Any] = []
 
-EXPORT_LIMIT_SCALE_EXCEPTIONS = []
+EXPORT_LIMIT_SCALE_EXCEPTIONS: list[Any] = []
 
 NUMBER_TYPES = [
     AlphaESSModbusNumberEntityDescription(
@@ -369,7 +399,7 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     AlphaESSModbusSelectEntityDescription(
-        name="Time Preiod Control",
+        name="Time Period Control",
         key="time_preiod_control",
         register=0x84F,
         option_dict={
@@ -480,7 +510,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x21,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -490,7 +520,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x29,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=MAX | GEN2,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -500,7 +530,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         register=0x100,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -510,7 +540,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         register=0x101,
         scale=0.1,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         allowedtypes=HYBRID | GEN2,
         icon="mdi:current-dc",
     ),
@@ -539,7 +569,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:battery-arrow-up",
         register=0x120,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         allowedtypes=GEN,
     ),
@@ -551,7 +581,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:battery-arrow-down",
         register=0x122,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         scale=0.1,
         allowedtypes=GEN,
     ),
@@ -634,7 +664,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x406,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -644,7 +674,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x408,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -654,7 +684,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x40A,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -664,7 +694,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x40C,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -746,7 +776,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x414,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -756,7 +786,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x416,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -766,7 +796,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x418,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | X3,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -776,7 +806,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41A,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | EPS,
     ),
     AlphaESSModbusSensorEntityDescription(
@@ -817,7 +847,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x41F,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
         icon="mdi:solar-power-variant",
     ),
@@ -849,7 +879,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x423,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN,
         icon="mdi:solar-power-variant",
     ),
@@ -881,7 +911,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x427,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         allowedtypes=GEN | MPPT3,
         icon="mdi:solar-power-variant",
     ),
@@ -920,7 +950,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         name="Software Master Version",
         key="software_master_version",
         register=0x640,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=5,
         allowedtypes=GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -930,7 +960,7 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
         name="Software Slave Version",
         key="software_slave_version",
         register=0x645,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=8,
         allowedtypes=GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -1079,10 +1109,9 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
 # ============================ plugin declaration =================================================
 
 
-@dataclass
+@dataclass(kw_only=True)
 class alphaess_plugin(plugin_base):
-
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
         seriesnumber = await async_read_serialnr(hub, 0x64A)
@@ -1114,7 +1143,13 @@ class alphaess_plugin(plugin_base):
 
         return invertertype
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
         # returns true if the entity needs to be created for an inverter
         genmatch = ((inverterspec & entitymask & ALL_GEN_GROUP) != 0) or (entitymask & ALL_GEN_GROUP == 0)
         xmatch = ((inverterspec & entitymask & ALL_X_GROUP) != 0) or (entitymask & ALL_X_GROUP == 0)
@@ -1128,28 +1163,24 @@ class alphaess_plugin(plugin_base):
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (
-            genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch
-        ) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
 
-    def localDataCallback(self, hub):
+    def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
-        _LOGGER.info(f"local data update callback")
+        _LOGGER.info("local data update callback")
 
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
-            if new_read_scale != None:
-                _LOGGER.info(
-                    f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}"
-                )
+            if new_read_scale is not None:
+                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -1166,7 +1197,7 @@ class alphaess_plugin(plugin_base):
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
-            if new_max_export != None:
+            if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
                     "remotecontrol_import_limit",
@@ -1182,6 +1213,7 @@ class alphaess_plugin(plugin_base):
                             native_max_value=new_max_export,
                         )
                         _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+        return True
 
 
 plugin_instance = alphaess_plugin(
@@ -1192,8 +1224,9 @@ plugin_instance = alphaess_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
+    TIME_TYPES=[],
     block_size=100,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )

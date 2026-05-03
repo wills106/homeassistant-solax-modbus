@@ -1,0 +1,21 @@
+# Enforce LF line endings for all text files
+# This prevents accidental conversion to CRLF
+* text=auto eol=lf
+
+# Explicitly handle common file types
+*.py text
+*.yaml text
+*.yml text
+*.json text
+*.md text
+*.txt text
+*.sh text
+*.zsh text
+
+# Binary files should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

@@ -2,18 +2,22 @@
   "config": {
     "step": {
       "user": {
-        "title": "Inställningar för modbusanslutning till växelriktare",
+        "title": "Definiera Modbus-anslutning",
         "data": {
           "name": "Prefix för namnsättning av sensorer på växelriktaren",
           "read_modbus_addr": "Modbus-adress för växelriktaren",
           "interface": "Gränssnitt",
-          "inverter_power_kw": "Max växelriktareffekt i kW (värden över detta ignoreras)",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Brytar-box (SolaX Hybrid Gen4 & Gen5)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallelläge (Master-Slave)",
           "plugin": "Typ av växelriktare",
-          "scan_interval": "Uppdateringsintervall i sekunder för att läsa modbusregister",
-          "time_out": "Modbus-timeout i sekunder"
+          "scan_interval": "Standardpollningsintervall (s)",
+          "time_out": "Timeout för begäran (s)",
+          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
+          "scan_interval_fast": "Snabbt pollingintervall (s)",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren"
         }
       },
       "serial": {
@@ -26,15 +30,28 @@
       "tcp": {
         "title": "Parametrar för TCP/IP",
         "data": {
-          "host": "IP-adress för modbusenheten i växelriktaren",
-          "port": "TCP-port för anslutning till växelriktaren"
+          "host": "Adress till växelriktaren eller Modbus-gränssnittet",
+          "port": "TCP-port för anslutning till växelriktaren",
+          "tcp_type": "The Modbus TCP variant"
+        }
+      },
+      "core": {
+        "title": "Val av Core Modbus-hubb",
+        "data": {
+          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+        }
+      },
+      "battery": {
+        "title": "Avläs batterimoduler",
+        "data": {
+          "read_battery": "Aktivera avläsning"
         }
       }
     },
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
       "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig IP-adress"
+      "invalid_host": "Ogiltig värdadress"
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"
@@ -43,18 +60,22 @@
   "options": {
     "step": {
       "init": {
-        "title": "Inställningar för modbusanslutning till växelriktare",
+        "title": "Definiera Modbus-anslutning",
         "data": {
           "name": "Prefix för namnsättning av sensorer på växelriktaren",
           "read_modbus_addr": "Modbus-adress till växelriktaren",
           "interface": "Gränssnitt",
-          "inverter_power_kw": "Max växelriktareffekt (värden över detta ignoreras)",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Brytare-box (SolaX Hybrid Gen4 & Gen5)",
+          "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallelläge (Master-Slave)",
           "plugin": "Typ av växelriktare",
-          "scan_interval": "Uppdateringsintervall i sekunder för att läsa modbusregister",
-          "time_out": "Modbus-timeout i sekunder"
+          "scan_interval": "Standardpollningsintervall (s)",
+          "time_out": "Timeout för begäran (s)",
+          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
+          "scan_interval_fast": "Snabbt pollingintervall (s)",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren"
         }
       },
       "serial": {
@@ -67,16 +88,28 @@
       "tcp": {
         "title": "Parametrar för TCP/IP",
         "data": {
-          "host": "IP-adress för modbusenheten i växelriktaren",
+          "host": "Adress till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
           "tcp_type": "Typ av Modbus TCP-anslutning"
+        }
+      },
+      "core": {
+        "title": "Val av Core Modbus-hubb",
+        "data": {
+          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+        }
+      },
+      "battery": {
+        "title": "Avläs batterimoduler",
+        "data": {
+          "read_battery": "Aktivera avläsning"
         }
       }
     },
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
       "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig IP-adress"
+      "invalid_host": "Ogiltig värdadress"
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"

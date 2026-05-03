@@ -2,19 +2,22 @@
   "config": {
     "step": {
       "user": {
-        "title": "Definiert die Wechselrichter Modbus-Verbindung",
+        "title": "Modbus-Verbindung definieren",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
-          "interface" : "Schnittstelle",
+          "interface": "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
-          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
+          "inverter_power_kw": "Maximale Wechselrichterleistung in kW (bei Parallelbetrieb: Gesamtsystemleistung)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
-          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden",
-          "time_out" : "Modbus timeout in Sekunden"
+          "scan_interval": "Standard-Abfrageintervall (s)",
+          "time_out": "Anfrage-Timeout (s)",
+          "scan_interval_medium": "Mittleres Abfrageintervall (s)",
+          "scan_interval_fast": "Schnelles Abfrageintervall (s)"
         }
       },
       "serial": {
@@ -27,7 +30,7 @@
       "tcp": {
         "title": "TCP/IP Schnittstelle",
         "data": {
-          "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
+          "host": "Adresse des Wechselrichters oder Modbus-Adapters",
           "port": "Der TCP Port für die Verbindung zum Wechselrichter",
           "tcp_type": "Die Modbus TCP Variante"
         }
@@ -35,7 +38,7 @@
       "core": {
         "title": "Core Modbus Hub Auswahl",
         "data": {
-            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
+          "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
         }
       },
       "battery": {
@@ -48,7 +51,7 @@
     "error": {
       "already_configured": "Gerät ist bereits konfiguriert",
       "name_already_used": "Name war bereits vorhanden oder war ungültig",
-      "invalid_host": "IP Adresse ungültig"
+      "invalid_host": "Ungültige Hostadresse"
     },
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"
@@ -57,19 +60,22 @@
   "options": {
     "step": {
       "init": {
-        "title": "Definiert die Wechselrichter Modbus-Verbindung",
+        "title": "Modbus-Verbindung definieren",
         "data": {
           "name": "Das Präfix, das für die Wechselrichter Sensoren verwendet werden soll",
           "read_modbus_addr": "Die Modbus Adresse des Wechselrichter Modbus Geräts",
-          "interface" : "Schnittstelle",
+          "interface": "Schnittstelle",
           "inverter_name_suffix": "Namenszusatz für den Wechselrichters",
-          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
+          "inverter_power_kw": "Maximale Wechselrichterleistung in kW (bei Parallelbetrieb: Gesamtsystemleistung)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Notstromschalter (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Wechselrichter Typ",
-          "scan_interval": "Die Abfragefrequenz der Modbus Register in Sekunden",
-          "time_out" : "Modbus timeout in Sekunden"
+          "scan_interval": "Standard-Abfrageintervall (s)",
+          "time_out": "Anfrage-Timeout (s)",
+          "scan_interval_medium": "Mittleres Abfrageintervall (s)",
+          "scan_interval_fast": "Schnelles Abfrageintervall (s)"
         }
       },
       "serial": {
@@ -82,14 +88,15 @@
       "tcp": {
         "title": "TCP/IP Schnittstelle",
         "data": {
-          "host": "Die IP Adresse des Wechselrichters oder Modbus Geräts",
-          "port": "Der TCP Port für die Verbindung zum Wechselrichter"
+          "host": "Adresse des Wechselrichters oder Modbus-Adapters",
+          "port": "Der TCP Port für die Verbindung zum Wechselrichter",
+          "tcp_type": "Die Modbus TCP-Variante"
         }
       },
       "Core": {
         "title": "Core Modbus Hub Auswahl",
         "data": {
-            "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
+          "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
         }
       },
       "battery": {
@@ -97,12 +104,18 @@
         "data": {
           "read_battery": "Auslesen aktivieren"
         }
+      },
+      "core": {
+        "title": "Auswahl des Core-Modbus-Hubs",
+        "data": {
+          "read_core_hub": "Der Core-Modbus-Hub, der zum Verbinden mit dem Wechselrichter verwendet wird"
+        }
       }
     },
     "error": {
       "already_configured": "Gerät ist bereits konfiguriert",
       "name_already_used": "Name war bereits vorhanden oder war ungültig",
-      "invalid_host": "IP Adresse ungültig"
+      "invalid_host": "Ungültige Hostadresse"
     },
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"

@@ -1,29 +1,43 @@
 # Verze pluginu: 1.2.5
 import logging
-from dataclasses import dataclass, replace
-from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.switch import SwitchEntityDescription
-from homeassistant.helpers.entity import EntityCategory
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+from homeassistant.components.number import NumberDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
-    UnitOfPower,
-    UnitOfEnergy,
-    UnitOfElectricPotential,
-    UnitOfElectricCurrent,
-    UnitOfFrequency,
-    UnitOfTemperature,
     PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
 )
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorStateClass,
+from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
+    EntityCategory,
+)
+
+from custom_components.solax_modbus.const import (
+    REG_HOLDING,
+    REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_STR,
+    REGISTER_U16,
+    REGISTER_U32,
+    REGISTER_WORDS,
+    WRITE_MULTI_MODBUS,
+    WRITE_SINGLE_MODBUS,
+    BaseModbusButtonEntityDescription,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+    BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
+    plugin_base,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
-from custom_components.solax_modbus.const import *
-from time import time
-from datetime import datetime
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,31 +47,38 @@ SUNWAY_STT_10KTL = 0x0001
 ALLDEFAULT = SUNWAY_STT_10KTL  # Všechny entity se budou vztahovat k našemu střídači
 # ============================================================================================
 
-@dataclass
+
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusButtonEntityDescription(BaseModbusButtonEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
-@dataclass
+
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusNumberEntityDescription(BaseModbusNumberEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
-@dataclass
+
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSelectEntityDescription(BaseModbusSelectEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
-@dataclass
+
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSwitchEntityDescription(BaseModbusSwitchEntityDescription):
     allowedtypes: int = ALLDEFAULT
 
-@dataclass
+
+@dataclass(kw_only=True, frozen=True)
 class SunwayModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT
-    unit: int = REGISTER_U16
+    register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
+
 
 # ====================================== Funkce pro hodnoty ===============================================
 
-def sunway_rtc_function(initval, descr, datadict):
+
+def sunway_rtc_function(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
     """Dekóduje RTC čas ze tří registrů pro čtení."""
     try:
         year_month, day_hour, min_sec = initval
@@ -71,21 +92,23 @@ def sunway_rtc_function(initval, descr, datadict):
     except (ValueError, TypeError):
         return None
 
-def value_function_sync_rtc_sunway(initval, descr, datadict):
+
+def value_function_sync_rtc_sunway(initval: int, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
     """Vytvoří payload pro zápis RTC času do střídače."""
     now = datetime.now()
     # Formát podle PDF, strana 17, registry 20000-20002
     year_val = now.year % 100
-    
+
     payload_reg1 = (year_val << 8) | now.month
     payload_reg2 = (now.day << 8) | now.hour
     payload_reg3 = (now.minute << 8) | now.second
-    
+
     return [
         (REGISTER_U16, payload_reg1),
         (REGISTER_U16, payload_reg2),
         (REGISTER_U16, payload_reg3),
     ]
+
 
 # ================================= Tlačítka (Buttons) =======================================================
 BUTTON_TYPES = [
@@ -150,10 +173,10 @@ NUMBER_TYPES = [
         register=50009,
         fmt="f",
         native_min_value=0,
-        native_max_value=20, 
+        native_max_value=20,
         native_step=0.1,
         scale=0.1,
-        native_unit_of_measurement="kVA", 
+        native_unit_of_measurement="kVA",
         device_class=NumberDeviceClass.APPARENT_POWER,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
@@ -215,7 +238,7 @@ SELECT_TYPES = [
             258: "EMS General Mode",
             259: "EMS ACCtrlMode",
             513: "EMS BattCtrlMode",
-            772: "EMS OffGridMode"
+            772: "EMS OffGridMode",
         },
         entity_category=EntityCategory.CONFIG,
     ),
@@ -223,11 +246,7 @@ SELECT_TYPES = [
         name="Inverter AC Power Setting Mode",
         key="inverter_ac_power_setting_mode",
         register=50202,
-        option_dict={
-            0: "Off",
-            1: "Total Power Setting",
-            2: "Power on each Phase Setting"
-        },
+        option_dict={0: "Off", 1: "Total Power Setting", 2: "Power on each Phase Setting"},
         entity_category=EntityCategory.CONFIG,
     ),
     SunwayModbusSelectEntityDescription(
@@ -338,13 +357,12 @@ SENSOR_TYPES = [
         register=52504,
         internal=True,
     ),
-
     # ---------- Informace o střídači (RO - Read Only) ----------
     SunwayModbusSensorEntityDescription(
         name="Inverter SN",
         key="inverter_sn",
         register=10000,
-        unit=REGISTER_STR,
+        register_data_type=REGISTER_STR,
         wordcount=4,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -352,14 +370,14 @@ SENSOR_TYPES = [
         name="Firmware Version",
         key="firmware_version",
         register=10011,
-        unit=REGISTER_U16,
+        register_data_type=REGISTER_U16,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SunwayModbusSensorEntityDescription(
         name="RTC",
         key="rtc",
         register=10100,
-        unit=REGISTER_WORDS,
+        register_data_type=REGISTER_WORDS,
         wordcount=3,
         scale=sunway_rtc_function,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -376,30 +394,50 @@ SENSOR_TYPES = [
         name="Equipment Info",
         key="equipment_info",
         register=10008,
-        scale=lambda val, desc, data: {(0x30, 0): "WTS-4KW-3P", (0x31, 0): "N/A", (0x30, 1): "WTS-5KW-3P", (0x31, 1): "N/A", (0x30, 2): "WTS-6KW-3P", (0x31, 2): "WTS-4.2KW-1P", (0x30, 3): "WTS-8KW-3P", (0x31, 3): "WTS-4.6KW-1P", (0x30, 4): "WTS-10KW-3P", (0x31, 4): "WTS-5KW-1P", (0x30, 5): "WTS-12KW-3P", (0x31, 5): "WTS-6KW-1P", (0x30, 6): "N/A", (0x31, 6): "WTS-7KW-1P", (0x30, 7): "N/A", (0x31, 7): "WTS-8KW-1P", (0x30, 8): "N/A", (0x31, 8): "WTS-3KW-1P", (0x30, 9): "N/A", (0x31, 9): "WTS-3.6KW-1P",}.get(((val >> 8), (val & 0xFF)), "Unknown"),
+        scale=lambda val, desc, data: {
+            (0x30, 0): "WTS-4KW-3P",
+            (0x31, 0): "N/A",
+            (0x30, 1): "WTS-5KW-3P",
+            (0x31, 1): "N/A",
+            (0x30, 2): "WTS-6KW-3P",
+            (0x31, 2): "WTS-4.2KW-1P",
+            (0x30, 3): "WTS-8KW-3P",
+            (0x31, 3): "WTS-4.6KW-1P",
+            (0x30, 4): "WTS-10KW-3P",
+            (0x31, 4): "WTS-5KW-1P",
+            (0x30, 5): "WTS-12KW-3P",
+            (0x31, 5): "WTS-6KW-1P",
+            (0x30, 6): "N/A",
+            (0x31, 6): "WTS-7KW-1P",
+            (0x30, 7): "N/A",
+            (0x31, 7): "WTS-8KW-1P",
+            (0x30, 8): "N/A",
+            (0x31, 8): "WTS-3KW-1P",
+            (0x30, 9): "N/A",
+            (0x31, 9): "WTS-3.6KW-1P",
+        }.get(((val >> 8), (val & 0xFF)), "Unknown"),
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SunwayModbusSensorEntityDescription(
         name="Fault FLAG1",
         key="fault_flag_1",
         register=10112,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SunwayModbusSensorEntityDescription(
         name="ARM Fault FLAG1",
         key="arm_fault_flag_1",
         register=18000,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-
     # ---------- Měření ze sítě (Meter) ----------
     SunwayModbusSensorEntityDescription(
         name="Phase A Power on Meter",
         key="phase_a_power_on_meter",
         register=10994,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -410,7 +448,7 @@ SENSOR_TYPES = [
         name="Phase B Power on Meter",
         key="phase_b_power_on_meter",
         register=10996,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -421,7 +459,7 @@ SENSOR_TYPES = [
         name="Phase C Power on Meter",
         key="phase_c_power_on_meter",
         register=10998,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -432,7 +470,7 @@ SENSOR_TYPES = [
         name="Total Power on Meter",
         key="total_power_on_meter",
         register=11000,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -443,7 +481,7 @@ SENSOR_TYPES = [
         name="Total Grid Injection Energy on Meter",
         key="total_grid_injection_energy",
         register=11002,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -455,7 +493,7 @@ SENSOR_TYPES = [
         name="Total Purchasing Energy from Grid on Meter",
         key="total_purchasing_energy",
         register=11004,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -463,7 +501,6 @@ SENSOR_TYPES = [
         rounding=2,
         icon="mdi:home-import-outline",
     ),
-    
     # ---------- Síťové hodnoty ----------
     SunwayModbusSensorEntityDescription(
         name="Grid Phase A Voltage",
@@ -539,20 +576,19 @@ SENSOR_TYPES = [
         name="AC Power",
         key="ac_power",
         register=11016,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         scale=1,
         rounding=0,
     ),
-
     # ---------- PV hodnoty ----------
     SunwayModbusSensorEntityDescription(
         name="Total PV Generation Today",
         key="total_pv_generation_today",
         register=11018,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -563,7 +599,7 @@ SENSOR_TYPES = [
         name="Total PV Generation Since Installation",
         key="total_pv_generation_since_installation",
         register=11020,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -574,7 +610,7 @@ SENSOR_TYPES = [
         name="PV Input Total Power",
         key="pv_input_total_power",
         register=11028,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -605,7 +641,7 @@ SENSOR_TYPES = [
         name="PV1 Input Power",
         key="pv1_input_power",
         register=11062,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -636,14 +672,13 @@ SENSOR_TYPES = [
         name="PV2 Input Power",
         key="pv2_input_power",
         register=11064,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         scale=1,
         rounding=0,
     ),
-    
     # ---------- Backup / EPS hodnoty ----------
     SunwayModbusSensorEntityDescription(
         name="Backup A Voltage",
@@ -667,7 +702,7 @@ SENSOR_TYPES = [
         name="Backup A Power",
         key="backup_a_power",
         register=40204,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         scale=1,
@@ -677,13 +712,12 @@ SENSOR_TYPES = [
         name="Total Backup Power",
         key="total_backup_power",
         register=40230,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         scale=1,
         rounding=0,
     ),
-
     # ---------- Baterie ----------
     SunwayModbusSensorEntityDescription(
         name="Battery Voltage",
@@ -699,7 +733,7 @@ SENSOR_TYPES = [
         name="Battery Current",
         key="battery_current",
         register=40255,
-        unit=REGISTER_S16,
+        register_data_type=REGISTER_S16,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -716,7 +750,7 @@ SENSOR_TYPES = [
         name="Battery Power",
         key="battery_power",
         register=40258,
-        unit=REGISTER_S32,
+        register_data_type=REGISTER_S32,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -748,7 +782,7 @@ SENSOR_TYPES = [
         name="Total Energy Charged to Battery",
         key="total_energy_charged_to_battery",
         register=41108,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -760,7 +794,7 @@ SENSOR_TYPES = [
         name="Total Energy Discharged from Battery",
         key="total_energy_discharged_from_battery",
         register=41110,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -879,29 +913,29 @@ SENSOR_TYPES = [
         name="BMS Error Code",
         key="bms_error_code",
         register=43016,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SunwayModbusSensorEntityDescription(
         name="BMS Warn Code",
         key="bms_warn_code",
         register=43018,
-        unit=REGISTER_U32,
+        register_data_type=REGISTER_U32,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 ]
 
 # ============================ plugin declaration =================================================
 
-@dataclass
-class sunway_plugin(plugin_base):
 
-    def isAwake(self, datadict):
+@dataclass(kw_only=True)
+class sunway_plugin(plugin_base):
+    def isAwake(self, datadict: dict[str, Any]) -> bool:
         """Určuje, zda je střídač v aktivním stavu."""
         run_mode = datadict.get("inverter_running_status")
         return run_mode in ("On Grid", "Off Grid")
 
-    async def async_determineInverterType(self, hub, configdict):
+    async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         _LOGGER.info(f"{hub.name}: trying to determine SunWay inverter type")
 
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=10000, count=4)
@@ -910,7 +944,7 @@ class sunway_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address.")
             return 0
 
-        raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")
+        raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
         seriesnumber = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
         seriesnumber = seriesnumber.strip()
         hub.seriesnumber = seriesnumber
@@ -923,18 +957,25 @@ class sunway_plugin(plugin_base):
             _LOGGER.error(f"{hub.name}: could not determine inverter type, serial number is empty.")
             return 0
 
-    def matchInverterWithMask(self, inverterspec, entitymask, serialnumber="not relevant", blacklist=None):
-        return (inverterspec & entitymask) != 0
+    def matchInverterWithMask(
+        self,
+        inverterspec: Any,
+        entitymask: Any,
+        serialnumber: str = "not relevant",
+        blacklist: list[str] | None = None,
+    ) -> bool:
+        return bool((inverterspec & entitymask) != 0)
 
-    def getSoftwareVersion(self, new_data):
+    def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         raw_version = new_data.get("firmware_version")
         if raw_version is not None:
-             # Formát verze je dle dokumentace na uživateli, zkusíme jednoduché zobrazení
-             return str(raw_version)
+            # Formát verze je dle dokumentace na uživateli, zkusíme jednoduché zobrazení
+            return str(raw_version)
         return None
 
-    def getHardwareVersion(self, new_data):
+    def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return None
+
 
 plugin_instance = sunway_plugin(
     plugin_name="SunWay",
@@ -944,8 +985,9 @@ plugin_instance = sunway_plugin(
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
+    TIME_TYPES=[],
     block_size=100,
-    #order16="big",
+    # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
 )

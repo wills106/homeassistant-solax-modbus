@@ -2,21 +2,22 @@
   "config": {
     "step": {
       "user": {
-        "title": "Definieer uw inverter modbus-verbinding",
+        "title": "Modbus-verbinding definiëren",
         "data": {
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
-          "read_modbus_addr": "Het modbus address van de Power-omvormer",
-          "interface" : "Interface",
+          "read_modbus_addr": "Het Modbus address van de Power-omvormer",
+          "interface": "Interface",
           "inverter_name_suffix": "Inverter naam toevoeging",
-          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
+          "inverter_power_kw": "Maximaal omvormervermogen in kW (bij parallel: totale systeemcapaciteit)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Noodstroom optie (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
-          "scan_interval_medium": "Gemiddelde polling-frequenctie",
-          "scan_interval_fast": "Snelle polling-frequenctie",
-          "time_out" : "Modbus time-out in seconden"
+          "scan_interval": "Standaard polling-interval (s)",
+          "scan_interval_medium": "Gemiddeld polling-interval (s)",
+          "scan_interval_fast": "Snel polling-interval (s)",
+          "time_out": "Time-out voor verzoek (s)"
         }
       },
       "serial": {
@@ -29,7 +30,7 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "Het IP-address van uw inverter of modbus-tcp adapter",
+          "host": "Adres van de omvormer of Modbus-interface",
           "port": "De TCP port voor Inverter of Modbus adapter",
           "tcp_type": "De Modbus TCP variant"
         }
@@ -39,12 +40,18 @@
         "data": {
           "read_battery": "Batterij uitlezen"
         }
+      },
+      "core": {
+        "title": "Selectie van Core Modbus-hub",
+        "data": {
+          "read_core_hub": "De Core Modbus-hub die wordt gebruikt om met de omvormer te verbinden"
+        }
       }
     },
     "error": {
       "already_configured": "Apparaat is al geconfigureerd",
       "name_already_used": "Naam was al in gebruik of was ongeldig",
-      "invalid_host": "Ongeldig host IP address"
+      "invalid_host": "Ongeldig hostadres"
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"
@@ -53,21 +60,22 @@
   "options": {
     "step": {
       "init": {
-        "title": "Definieer uw inverter modbus-verbinding",
+        "title": "Modbus-verbinding definiëren",
         "data": {
           "name": "Het voorvoegsel dat moet worden gebruikt voor uw Power-sensoren",
-          "read_modbus_addr": "Het modbus address van de Power-omvormer",
-          "interface" : "Interface",
+          "read_modbus_addr": "Het Modbus address van de Power-omvormer",
+          "interface": "Interface",
           "inverter_name_suffix": "Inverter naam toevoeging",
-          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
+          "inverter_power_kw": "Maximaal omvormervermogen in kW (bij parallel: totale systeemcapaciteit)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Noodstroom Optie (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Inverter Type",
-          "scan_interval": "De polling-frequentie van de modbus registratie in seconden",
-          "scan_interval_medium": "Gemiddelde polling-frequenctie",
-          "scan_interval_fast": "Snelle polling-frequenctie",
-          "time_out" : "Modbus time-out in seconden"
+          "scan_interval": "Standaard polling-interval (s)",
+          "scan_interval_medium": "Gemiddeld polling-interval (s)",
+          "scan_interval_fast": "Snel polling-interval (s)",
+          "time_out": "Time-out voor verzoek (s)"
         }
       },
       "serial": {
@@ -80,21 +88,28 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "Het IP-address van uw inverter of modbus-tcp adapter",
-          "port": "De TCP port voor Inverter of Modbus adapter"
+          "host": "Adres van de omvormer of Modbus-interface",
+          "port": "De TCP port voor Inverter of Modbus adapter",
+          "tcp_type": "De Modbus TCP-variant"
         }
       },
-     "battery": {
+      "battery": {
         "title": "Uitlezen van batterij module(s)",
         "data": {
           "read_battery": "Batterij uitlezen"
+        }
+      },
+      "core": {
+        "title": "Selectie van Core Modbus-hub",
+        "data": {
+          "read_core_hub": "De Core Modbus-hub die wordt gebruikt om met de omvormer te verbinden"
         }
       }
     },
     "error": {
       "already_configured": "Apparaat is al geconfigureerd",
       "name_already_used": "Naam was al in gebruik of was ongeldig",
-      "invalid_host": "Ongeldig host IP address"
+      "invalid_host": "Ongeldig hostadres"
     },
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"

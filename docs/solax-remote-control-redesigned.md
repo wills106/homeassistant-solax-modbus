@@ -1,8 +1,12 @@
 # SolaX Remote Control - Redesigned Calculations
 
 **Author:** fxstein  
-**Date:** October 28, 2025  
+**Date:** October 28, 2025 (Updated: January 9, 2026)  
 **GitHub:** https://github.com/fxstein/homeassistant-solax-modbus
+
+**Recent Updates:**
+- Added Phase Envelope Protection for X3 inverters (January 9, 2026)
+- See [SolaX Phase Protection](solax-phase-protection.md) for details
 
 ## Overview
 
@@ -163,31 +167,77 @@ else:
 - **Positive `ap_target`**: Inverter is **importing** power from the grid
 - **Negative `ap_target`**: Inverter is **exporting** power to the grid
 
+### Phase Envelope Protection (X3 Inverters)
+
+**Purpose**: Prevent individual phases from exceeding fuse limits when phase imbalance exists
+
+Phase protection automatically activates on X3 inverters when:
+- Phase-specific sensors are available (`measured_power_l1/l2/l3`, `grid_voltage_l1/l2/l3`)
+- Main breaker current limit is configured in inverter settings
+- Remote control is active
+
+**How it works:**
+1. Calculates house load per phase using measured power imbalance
+2. Determines safe `ap_target` to keep worst phase below 95% of fuse limit
+3. Applies as additional constraint alongside import/export limits
+
+**Example:**
+- Rivian 16A EV charger on L1 creates 14A imbalance
+- Without protection: 30kW import → L1 reaches 60A (exceeds 59.85A limit)
+- With protection: Limits to 26kW import → L1 stays at 54A (safe)
+
+See [SolaX Phase Protection](solax-phase-protection.md) for detailed documentation.
 
 ### Import Limit (for positive ap_target)
-**Formula**: `ap_target = min(ap_target, import_limit - house_load)`
-**Explanation**: When importing, ensure total grid import doesn't exceed limit
+**Formula**: 
+```python
+# Without phase protection:
+ap_target = min(ap_target, import_limit - house_load)
+
+# With phase protection (X3 inverters):
+safe_ap_target_from_phase = (59.85A - worst_phase_house_current) × 3 × avg_voltage
+ap_target = min(ap_target, import_limit - house_load, safe_ap_target_from_phase)
+```
+
+**Explanation**: When importing, ensure:
+1. Total grid import doesn't exceed `import_limit`
+2. Worst phase doesn't exceed 95% of fuse limit (X3 only)
+
 **Example**:
-- House load: 6kW
-- Import limit: 40kW
-- If ap_target = 50kW: Cap to 40kW - 6kW = 34kW
-- Total grid import: 34kW + 6kW = 40kW (within limit)
+- House load: 6kW (L1=17A, L2=5A, L3=4A)
+- Import limit: 32kW
+- Fuse limit: 63A
+- Import limit check: 32kW - 6kW = 26kW
+- Phase limit check: (59.85A - 17A) × 3 × 228V = 29.3kW
+- Result: ap_target capped at 26kW (import limit more restrictive)
 
 ### Export Limit (for negative ap_target)
 **Formula**: `ap_target = max(ap_target, -export_limit)`
 **Explanation**: When exporting, ensure total grid export doesn't exceed limit
+
 **Example**:
 - House load: 6kW
 - Export limit: 20kW
 - If ap_target = -30kW: Cap to max(-30kW, -20kW) = -20kW
 - Total grid export: 20kW (within limit)
 
+**Note:** Phase protection for exports is planned but not yet implemented.
+
 ### Complete Bounds Checking Logic
 ```python
 if ap_target > 0:  # Importing 
-    ap_target = min(ap_target, import_limit - house_load)
+    import_bound = import_limit - house_load
+    
+    # Apply phase protection if available (X3 inverters)
+    if safe_ap_target_from_phase is not None:
+        import_bound = min(import_bound, safe_ap_target_from_phase)
+    
+    ap_target = min(ap_target, import_bound)
+    
 elif ap_target < 0:  # Exporting 
     ap_target = max(ap_target, -export_limit)
+    # Phase protection for exports: planned
+    
 # If ap_target = 0, no bounds checking needed
 ```
 

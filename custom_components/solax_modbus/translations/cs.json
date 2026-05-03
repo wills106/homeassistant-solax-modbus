@@ -2,18 +2,22 @@
   "config": {
     "step": {
       "user": {
-        "title": "Určete vaše připojení přes modbus k měniči",
+        "title": "Definice připojení přes Modbus",
         "data": {
-          "name": "Předpona pro použití senzory měniče",
-          "read_modbus_addr": "Adresa modbus měniče",
-          "interface" : "Rozhraní",
-          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
+          "name": "Předpona pro názvy senzorů měniče",
+          "read_modbus_addr": "Adresa Modbus měniče",
+          "interface": "Rozhraní",
+          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Možnost záložního zdroje (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Paralelení režim (Master-Slave)",
+          "read_pm": "Paralelní režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
-          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách",
-          "time_out" : "Modbus časový limit v sekundách"
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "time_out": "Časový limit dotazu (s)",
+          "inverter_name_suffix": "Přípona názvu měniče",
+          "scan_interval_medium": "Střední interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)"
         }
       },
       "serial": {
@@ -26,37 +30,52 @@
       "tcp": {
         "title": "Parametry TCP/IP",
         "data": {
-          "host": "IP adresa měniče nebo modbus adaptéru",
+          "host": "Adresa měniče nebo Modbus adaptéru",
           "port": "TCP port připojení k měniči",
-          "tcp_type": "Varianta TCP protokolu modbus"
+          "tcp_type": "Varianta TCP protokolu Modbus"
+        }
+      },
+      "battery": {
+        "title": "Čtení bateriových modulů",
+        "data": {
+          "read_battery": "Povolit čtení"
+        }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
       }
     },
     "error": {
       "already_configured": "Zařízení je již nakonfigurováno",
       "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná IP adresa hostitele"
+      "invalid_host": "Neplatná adresa hostitele"
     },
     "abort": {
       "already_configured": "Zařízení je již nakonfigurováno"
     }
   },
-
   "options": {
     "step": {
       "init": {
-        "title": "Určete vaše připojení přes modbus k měniči",
+        "title": "Definice připojení přes Modbus",
         "data": {
-          "name": "Předpona pro použití senzory měniče",
-          "read_modbus_addr": "Adresa modbus měniče",
-          "interface" : "Rozhraní",
-          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
+          "name": "Předpona pro názvy senzorů měniče",
+          "read_modbus_addr": "Adresa Modbus měniče",
+          "interface": "Rozhraní",
+          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Možnost záložního zdroje (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
-          "read_pm": "Paralelení režim (Master-Slave)",
+          "read_pm": "Paralelní režim (Master-Slave)",
           "plugin": "Vyberte druh měniče",
-          "scan_interval": "Dotazovací frekvence modbus registrů v sekundách",
-          "time_out" : "Modbus časový limit v sekundách"
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "time_out": "Časový limit dotazu (s)",
+          "inverter_name_suffix": "Přípona názvu měniče",
+          "scan_interval_medium": "Střední interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)"
         }
       },
       "serial": {
@@ -69,15 +88,28 @@
       "tcp": {
         "title": "Parametry TCP/IP",
         "data": {
-          "host": "IP adresa měniče nebo modbus adaptéru",
-          "port": "TCP port připojení k měniči"
+          "host": "Adresa měniče nebo Modbus adaptéru",
+          "port": "TCP port připojení k měniči",
+          "tcp_type": "Varianta TCP protokolu Modbus"
+        }
+      },
+      "battery": {
+        "title": "Čtení bateriových modulů",
+        "data": {
+          "read_battery": "Povolit čtení"
+        }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
       }
     },
     "error": {
       "already_configured": "Zařízení je již nakonfigurováno",
       "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná IP adresa hostitele"
+      "invalid_host": "Neplatná adresa hostitele"
     },
     "abort": {
       "already_configured": "Zařízení je již nakonfigurováno"

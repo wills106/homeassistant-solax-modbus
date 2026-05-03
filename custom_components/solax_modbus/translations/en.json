@@ -2,21 +2,22 @@
   "config": {
     "step": {
       "user": {
-        "title": "Define your inverter modbus-connection",
+        "title": "Define Modbus connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
-          "interface" : "Interface",
+          "read_modbus_addr": "The Modbus address of the Inverter",
+          "interface": "Interface",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power KW (value greater than that are ignored)",
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The default polling interval of the modbus registers in seconds",
-          "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval",
-          "time_out" : "Timeout in seconds"
+          "scan_interval": "Default polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
+          "scan_interval_fast": "Fast polling interval (s)",
+          "time_out": "Request timeout (s)"
         }
       },
       "serial": {
@@ -29,7 +30,7 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "The IP-address of your Inverter or Modbus Interface",
+          "host": "The address of your inverter or Modbus interface",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
         }
@@ -39,36 +40,42 @@
         "data": {
           "read_battery": "Enable readout"
         }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        }
       }
     },
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host IP address"
+      "invalid_host": "Invalid host address"
     },
     "abort": {
       "already_configured": "Device is already configured"
     }
   },
-
   "options": {
     "step": {
       "init": {
-        "title": "Define your inverter modbus-connection",
+        "title": "Define Modbus connection",
         "data": {
           "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The modbus address of the Inverter",
-          "interface" : "Interface",
+          "read_modbus_addr": "The Modbus address of the Inverter",
+          "interface": "Interface",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power (value greater than that are ignored)",
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "read_eps": "Emergency Power Option (EPS)",
           "read_dcb": "Dry Contact Box (SolaX Hybrid Gen4 & Gen5)",
           "read_pm": "Parallel Mode (Master-Slave)",
           "plugin": "Select Inverter Type",
-          "scan_interval": "The polling interval of the modbus registers in seconds",
-          "scan_interval_medium": "Medium polling interval",
-          "scan_interval_fast": "Fast polling interval"
-          
+          "scan_interval": "Default polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
+          "scan_interval_fast": "Fast polling interval (s)",
+          "time_out": "Request timeout (s)"
         }
       },
       "serial": {
@@ -81,8 +88,9 @@
       "tcp": {
         "title": "TCP/IP Parameters",
         "data": {
-          "host": "The IP-address of your Inverter or Modbus Interface",
-          "port": "The TCP port on which to connect to the inverter"
+          "host": "The address of your inverter or Modbus interface",
+          "port": "The TCP port on which to connect to the inverter",
+          "tcp_type": "The Modbus TCP variant"
         }
       },
       "battery": {
@@ -90,16 +98,21 @@
         "data": {
           "read_battery": "Enable readout"
         }
+      },
+      "core": {
+        "title": "Core Modbus hub selection",
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        }
       }
     },
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host IP address"
+      "invalid_host": "Invalid host address"
     },
     "abort": {
       "already_configured": "Device is already configured"
     }
   }
 }
-
