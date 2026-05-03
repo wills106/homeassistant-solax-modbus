@@ -757,10 +757,34 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 f"[Mode8 Negative Injection] deficit: deficit={deficit}W export_target={export_target}W "
                 f"soc={battery_capacity}% desired_charge={desired_charge}W -> chosen_push={pushmode_power}W"
             )
-
-    elif power_control == "Negative Injection and Consumption Price":  # disable PV, charge from grid
+    elif power_control == "Negative Injection and Consumption Price":
+        # Disables PV and charges as fast as possible from the grid
         pvlimit = 0
-        pushmode_power = houseload - import_limit
+        # Set maximum charge limit, respecting optional target SoC
+        max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
+        # Determine currently requested charge rate to allow filtering
+        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
+        cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
+        current_charge = -cur_push
+        # Debug inputs
+        _LOGGER.debug(
+            f"[Mode8 Negative Injection and Consumption Price] inputs hl={houseload}W hl_alt={houseload_alt}W (using hl) imp_lim={import_limit}W "
+            f"soc={battery_capacity}% max_soc={max_charge_soc}% last_push={current_charge}W battery_charge={battery_charge}W"
+        )
+        # Use the alternative house load for house load measurement, clamping to strict positive values,
+        # to determine maximum available power from the grid
+        hl = max(0, int(houseload_alt))
+        available = max(import_limit - hl, 0)
+        # Request maximum allowed charge rate based on current SoC
+        desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
+        # Setpoint filter to slow down changes to battery
+        selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
+        pushmode_power = -selected_charge
+
+        _LOGGER.debug(
+            f"[Mode8 Negative Injection and Consumption Price] charge: available={available}W within_bms={max_charge}W "
+            f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
+        )
     elif power_control == "Enabled Feedin Priority":
         pvlimit = setpvlimit
         pushmode_power = max(houseload - pv, 0.0)
