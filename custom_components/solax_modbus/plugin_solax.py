@@ -600,9 +600,9 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     return desired_charge, max_charge, bms_cap_w, pct_cap_w
 
 
-def autorepeat_setpoint_filter(current_value: float, desired_value: float, steps: int = 5) -> float:
+def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = 5) -> int:
     # Simple rolling average filter for updating control setpoints to avoid oscillation
-    return (current_value * (steps - 1) + desired_value) / steps
+    return int((current_value * (steps - 1) + desired_value) / steps)
 
 
 def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
