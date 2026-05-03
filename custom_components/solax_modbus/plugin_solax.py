@@ -669,7 +669,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pvlimit = setpvlimit
         pv_threshold = pv + pv_unlimited_step  # point at which PV is considered to be not actively limited
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
-        cur_push = min(0, (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push)
+        cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         pushmode_power = 0  # + = discharge, - = charge
         current_charge = -cur_push
 
