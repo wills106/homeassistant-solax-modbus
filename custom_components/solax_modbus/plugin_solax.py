@@ -553,7 +553,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
-def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> tuple[int, int, int]:
+def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> tuple[int, int, int, int]:
     # Determines max rate for charging battery
 
     # User cap (% of BMS max charge power).
@@ -590,12 +590,14 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     if battery_capacity < max_charge_soc:
         # Limit to charge rate to lesser of the available
         # power and the %age capped charge limit.
+        max_charge = int(max(0, pct_cap_w))
         desired_charge = int(max(0, min(available, pct_cap_w)))
     else:
         # Can't charge the battery
+        max_charge = 0
         desired_charge = 0
 
-    return desired_charge, bms_cap_w, pct_cap_w
+    return desired_charge, max_charge, bms_cap_w, pct_cap_w
 
 
 def autorepeat_setpoint_filter(current_value: float, desired_value: float, steps: int = 5) -> float:
@@ -695,7 +697,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             control_state = "surplus" if pv >= hl else "clipping"
 
             # Battery gets surplus up to BMS limit
-            desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
+            desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
 
             # Setpoint filter to slow down changes to battery
             selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
@@ -777,7 +779,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             surplus = pv - houseload
 
             # Battery gets surplus PV up to BMS limit
-            desired_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
+            desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
             pushmode_power = -desired_charge
 
             # If there is any left over, it goes to the grid
@@ -789,7 +791,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 surplus_export = export_limit
 
             _LOGGER.debug(
-                f"[Mode8 No-Discharge] charge-first: surplus={surplus}W within_bms={desired_charge}W "
+                f"[Mode8 No-Discharge] charge-first: surplus={surplus}W within_bms={max_charge}W "
                 f"surplus_export={surplus_export}W within_cap={export_within_cap}W pvlimit={pvlimit}W "
                 f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
             )
@@ -873,7 +875,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             error = measured_export - export_target
 
             # Extract BMS/user charge caps once; control law below only changes the requested charge.
-            _, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, 10**9)
+            _, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, 10**9)
 
             if battery_capacity >= max_charge_soc:
                 desired_charge = 0
@@ -892,7 +894,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 desired_charge = max(0, current_charge - step_w)
                 control_reason = "decrease-charge"
 
-            desired_charge = int(min(desired_charge, pct_cap_w))
+            desired_charge = int(min(desired_charge, max_charge))
             pushmode_power = -desired_charge
 
             # Export-First in this mode should not directly clamp PV.
