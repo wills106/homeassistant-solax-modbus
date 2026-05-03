@@ -708,20 +708,28 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             if abs(error) <= export_deadband_w:
                 target_pvlimit = cur_pvlimit
-                control_reason = "hold"
+                if desired_charge < max_charge:
+                    # If the battery can be charged more than it currently is being, then once stable
+                    # allow the limit to be increased to see if we can absorb more output from the PV.
+                    control_reason = "hold-increase-pv"
+                    target_pvlimit = min(setpvlimit, cur_pvlimit + (max_charge - desired_charge))
+                else:
+                    # Otherwise hold
+                    control_reason = "hold"
+                    target_pvlimit = cur_pvlimit
             elif error > 0:
                 if cur_pvlimit > pv_threshold:
                     # If the current PV limit is above any active PV limiting, then we will make
                     # a much larger step to allow for a faster response. Otherwise the steps will
                     # not actually achieve anything for several loops.
                     cur_pvlimit = pv_threshold
-                    control_reason = "decrease-pv-fast"
+                    control_reason = "error-decrease-pv-fast"
                 else:
-                    control_reason = "decrease-pv"
+                    control_reason = "error-decrease-pv"
                 target_pvlimit = max(0, cur_pvlimit - error)
             else:
                 target_pvlimit = min(setpvlimit, cur_pvlimit - error)
-                control_reason = "increase-pv"
+                control_reason = "error-increase-pv"
 
             # Filter the setpoint to avoid oscillation
             pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit)
