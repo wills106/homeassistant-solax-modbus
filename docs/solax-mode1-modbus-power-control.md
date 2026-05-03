@@ -108,6 +108,7 @@ The state of the modbus power control can be monitored by examining following se
 ***
 
 As we found no clear description of Solax Active Power, this sections describes our understanding, which may be wrong !
+Active Power seems to be measured at the combined Grid-House interface. So it represents the sum of the power delivered to grid and house (but made negative).
 
 Without PV, Activepower seems to be the amount of power injected or extracted into/from the battery. Positive means charging, negative discharging. In general, with PV, Activepower seems to be:
 
@@ -136,7 +137,7 @@ Conclusion: we can look at Activepower in 2 ways (both ways are correct):
 In these formulas:
 * Battery(_charge) is positive for charge and negative for discharge
 * Measured_power(_export) is positive for grid export and negative for grid import power. Grid(_import) is the negative of this value
-* Active power is positive for charge and negative for discharge
+* Active power increases when charging and decreases when discharging
 
 
 `House_load` is not directly measured by the inverter, but it can be computed in 2 ways:
