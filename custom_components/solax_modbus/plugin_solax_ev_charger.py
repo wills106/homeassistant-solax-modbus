@@ -104,6 +104,7 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
+            res = res.strip('\x00').strip()  # remove null padding and whitespace from register read
             hub.seriesnumber = res
             _LOGGER.debug(f"{hub.name}: Decoded serial number: {res}")
         else:
@@ -947,10 +948,21 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0000–0x0002  Phase voltages (GEN2 doc: VoltageA/B/C, 0.01V) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Voltage",
+        key="charge_voltage",
+        register=0x0,
+        register_type=REG_INPUT,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        allowedtypes=X1,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage A",
         key="charge_voltage_a",
         register=0x0,
         register_type=REG_INPUT,
+        allowedtypes=X3,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -989,10 +1001,23 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0004–0x0006  Phase currents (GEN2 doc: CurrentA/B/C, 0.01A) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current",
+        key="charge_current",
+        register=0x4,
+        register_type=REG_INPUT,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        allowedtypes=X1,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current A",
         key="charge_current_a",
         register=0x4,
         register_type=REG_INPUT,
+        allowedtypes=X3,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -1030,10 +1055,22 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0008–0x000A  Phase powers (GEN2 doc: ChargePowerA/B/C, 1W) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power",
+        key="charge_power",
+        register=0x8,
+        register_type=REG_INPUT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=X1,
+        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power A",
         key="charge_power_a",
         register=0x8,
         register_type=REG_INPUT,
+        allowedtypes=X3,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1073,10 +1110,21 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x000C–0x000E  Phase frequencies (GEN2 doc: Freq_A/B/C, 0.01Hz) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Frequency",
+        key="charge_frequency",
+        register=0xC,
+        register_type=REG_INPUT,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        allowedtypes=X1,
+        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Frequency A",
         key="charge_frequency_a",
         register=0xC,
         register_type=REG_INPUT,
+        allowedtypes=X3,
         scale=0.01,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         entity_registry_enabled_default=False,
@@ -1140,11 +1188,24 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0012–0x0014  Grid currents S16 (GEN2 doc: ExternCurrentA/B/C, 0.01A) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Grid Current",
+        key="grid_current",
+        register=0x12,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        allowedtypes=X1,
+        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current A",
         key="grid_current_a",
         register=0x12,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
+        allowedtypes=X3,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -1179,11 +1240,24 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0015–0x0017  Grid powers S16 (GEN2 doc: ExternPowerA/B/C, 1W) ----
     SolaXEVChargerModbusSensorEntityDescription(
+        name="Grid Power",
+        key="grid_power",
+        register=0x15,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=X1,
+        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Power A",
         key="grid_power_a",
         register=0x15,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
+        allowedtypes=X3,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1401,7 +1475,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:numeric",
     ),
@@ -1606,7 +1679,7 @@ class solax_ev_charger_plugin(plugin_base):
                 _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
 
             _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
-        elif len(seriesnumber) >= 5 and seriesnumber.startswith("5"):
+        elif len(seriesnumber) >= 6 and seriesnumber.startswith("5"):
             model_code = seriesnumber[1:3]
             power_code = seriesnumber[3:5]
 
