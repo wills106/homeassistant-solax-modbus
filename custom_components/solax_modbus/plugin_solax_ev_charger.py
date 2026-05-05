@@ -104,7 +104,7 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
-            res = res.strip('\x00').strip()  # remove null padding and whitespace from register read
+            res = res.strip('\x00').strip()[:7]  # remove null padding; serial number is 7 chars
             hub.seriesnumber = res
             _LOGGER.debug(f"{hub.name}: Decoded serial number: {res}")
         else:
