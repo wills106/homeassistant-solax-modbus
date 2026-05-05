@@ -104,7 +104,6 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
             _LOGGER.debug(f"{hub.name}: Converted raw data: {raw} (type: {type(raw)})")
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
-            res = res.strip('\x00').strip()  # remove null padding and whitespace from register read
             hub.seriesnumber = res
             _LOGGER.debug(f"{hub.name}: Decoded serial number: {res}")
         else:
@@ -1679,7 +1678,7 @@ class solax_ev_charger_plugin(plugin_base):
                 _LOGGER.info(f"{hub.name}: C322 detected with GEN2 firmware v{fw_version:.2f}, enabling GEN2 features")
 
             _LOGGER.debug(f"{hub.name}: Matched C322 - X3 | POW22 | type=0x{invertertype:x}, model={self.inverter_model}, hw={self.hardware_version}")
-        elif len(seriesnumber) >= 6 and seriesnumber.startswith("5"):
+        elif len(seriesnumber) >= 5 and seriesnumber.startswith("5"):
             model_code = seriesnumber[1:3]
             power_code = seriesnumber[3:5]
 
