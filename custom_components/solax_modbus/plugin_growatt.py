@@ -9585,6 +9585,8 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XH-US Hybrid, 4 MPPT
         elif seriesnumber.startswith("JGQ"):
             invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+        elif seriesnumber.startswith("HJU"):
+            invertertype = HYBRID | GEN4 | X1  # MIN 4200TL-XH2 Hybrid, 2 MPPT
 
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
@@ -9631,6 +9633,10 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith("NFR"):
             invertertype = HYBRID | SPF | X1  # SPE 8000 ES, 2 MPPT
 
+        # SPA type:GEN3 (AC-coupled)
+        elif seriesnumber.startswith("RH1"):
+            invertertype = AC | GEN3 | X1  # SPA 3000TL BL AC, no PV MPPT
+
         # SPF type:SPF
         elif seriesnumber.startswith("YRE"):
             invertertype = HYBRID | SPF | X1  # SPF 5000 ES, 1 MPPT
@@ -9648,6 +9654,8 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | GEN4 | X3  # WIT 12000-HU, 2 MPPT
         elif seriesnumber.startswith("0PH"):
             invertertype = HYBRID | GEN4 | X3 | MPPT10  # WIT 100000-HU, 10 MPPT
+        elif seriesnumber.startswith("0HU"):
+            invertertype = HYBRID | GEN4 | X3  # WIT 15K-HU, 2 MPPT
 
         # PV only
 
