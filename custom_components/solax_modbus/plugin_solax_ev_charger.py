@@ -80,9 +80,8 @@ POW22 = 0x0040
 ALL_POW_GROUP = POW4 | POW7 | POW11 | POW22
 
 # Feature flags — set dynamically in async_determineInverterType based on device registers
-PARALLEL   = 0x0400   # device reports Is_support_parallel == 0xAA55
 OCPP_TYPE  = 0x0800   # device reports TypeCharger (0x0023) == 1 (OCPP variant)
-ALL_FEATURE_GROUP = PARALLEL | OCPP_TYPE
+ALL_FEATURE_GROUP = OCPP_TYPE
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -544,18 +543,6 @@ SELECT_TYPES = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Parallel Function",
-        key="parallel_enable",
-        register=0x642,
-        option_dict={
-            0: "Disable",
-            1: "Enable",
-        },
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:call-split",
-        allowedtypes=PARALLEL,
-    ),
-    SolaXEVChargerModbusSelectEntityDescription(
         name="Control Command",
         key="control_command",
         register=0x627,
@@ -829,14 +816,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         internal=True,
     ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Parallel Function",
-        key="parallel_enable",
-        register=0x642,
-        scale={0: "Disable", 1: "Enable"},
-        allowedtypes=PARALLEL,
-        internal=True,
-    ),
     ###
     #
     # Input — 0x0100+
@@ -933,18 +912,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     # Input
     #
     ###
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Parallel Support",
-        key="is_support_parallel",
-        register=0x107,
-        register_type=REG_INPUT,
-        scale={
-            0: "Not Supported",
-            0xAA55: "Supported",
-        },
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:call-split",
-    ),
     # ---- 0x0000–0x0002  Phase voltages (GEN2 doc: VoltageA/B/C, 0.01V) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage",
@@ -1717,21 +1684,6 @@ class solax_ev_charger_plugin(plugin_base):
         if invertertype == 0:
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
             _LOGGER.debug(f"{hub.name}: No match found for serial number prefix, returning type=0")
-
-        # Detect parallel support via 0x0107 (Is_support_parallel).
-        # value == 0xAA55 means parallel charging is supported (PARALLEL flag).
-        try:
-            par_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x0107, count=1)
-            if not par_data.isError():
-                if par_data.registers[0] == 0xAA55:
-                    invertertype |= PARALLEL
-                    _LOGGER.info(f"{hub.name}: Parallel charging supported (0x0107=0xAA55)")
-                else:
-                    _LOGGER.debug(f"{hub.name}: Parallel charging not supported (0x0107=0x{par_data.registers[0]:04X})")
-            else:
-                _LOGGER.debug(f"{hub.name}: Could not read 0x0107 (parallel probe returned Modbus error)")
-        except Exception:
-            _LOGGER.debug(f"{hub.name}: Could not read 0x0107 (parallel probe)", exc_info=True)
 
         # Detect OCPP via 0x0023 — meaning differs by generation:
         # GEN1: TypeCharger (static hardware type); value 1 = OCPP variant.
