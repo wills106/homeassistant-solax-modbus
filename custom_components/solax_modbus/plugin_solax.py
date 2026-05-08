@@ -384,14 +384,12 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
             # Use PV to supply house load, import from grid only what's needed
             # Any excess PV above house load will go to the battery
             ap_target = 0 - min(house_load, pv_power)
-            power_control = "Enabled Power Control"
         else:
             # When the battery is fully charged (allowing a tolerance to prevent
-            # older inverters shutting down PV), then we can run the default work
-            # mode of the inverter. If the battery discharges during the default
-            # mode, then once below the 98% threshold we will resume VPP.
-            ap_target = 0
-            power_control = "Disabled"
+            # older inverters shutting down PV), then we emulate self-use mode
+            # by simply pushing all PV power through the grid connected port
+            ap_target = 0 - pv_power
+        power_control = "Enabled Power Control"
 
     elif power_control == "Disabled":
         ap_target = target
