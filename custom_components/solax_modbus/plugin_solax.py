@@ -661,6 +661,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
+        charge_soc_hysteresis = datadict.get("negative_injection_battery_hysteresis", 2)
         # bias towards import
         export_target = int(datadict.get("negative_injection_bias_w", -50) or -50)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
@@ -708,9 +709,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             if abs(error) <= export_deadband_w:
                 target_pvlimit = cur_pvlimit
-                if desired_charge < max_charge:
+                if desired_charge < max_charge and battery_capacity < max_charge_soc - charge_soc_hysteresis:
                     # If the battery can be charged more than it currently is being, then once stable
-                    # allow the limit to be increased to see if we can absorb more output from the PV.
+                    # allow the limit to be increased to see if we can absorb more output from the PV,
+                    # but only if the battery has plenty of headroom to absorb an increase.
                     control_reason = "hold-increase-pv"
                     target_pvlimit = min(setpvlimit, cur_pvlimit + (max_charge - desired_charge))
                 else:
