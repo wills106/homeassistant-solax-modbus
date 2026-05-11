@@ -1217,8 +1217,17 @@ def value_function_software_version_g2(initval: int, descr: Any, datadict: dict[
     return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
 
 
+def value_function_firmware_major_default(val: Any, default: int) -> Any:
+    return default if val in (None, 0, "0") else val
+
+
 def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP v3.{datadict.get('firmware_dsp')} ARM v3.{datadict.get('firmware_arm')}"
+    return (
+        f"DSP v{value_function_firmware_major_default(datadict.get('firmware_dsp_major'), 3)}."
+        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
+        f"ARM v{value_function_firmware_major_default(datadict.get('firmware_arm_major'), 3)}."
+        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
+    )
 
 
 def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
@@ -3894,13 +3903,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="firmware_dsp_major",
         register=0x7F,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
         key="firmware_arm_major",
         register=0x80,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
