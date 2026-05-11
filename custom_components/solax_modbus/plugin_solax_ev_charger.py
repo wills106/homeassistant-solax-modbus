@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
@@ -22,7 +23,6 @@ from custom_components.solax_modbus.const import (
     REG_HOLDING,
     REG_INPUT,
     REGISTER_S16,
-    REGISTER_S32,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
@@ -80,7 +80,7 @@ POW22 = 0x0040
 ALL_POW_GROUP = POW4 | POW7 | POW11 | POW22
 
 # Feature flags — set dynamically in async_determineInverterType based on device registers
-OCPP_TYPE  = 0x0800   # device reports TypeCharger (0x0023) == 1 (OCPP variant)
+OCPP_TYPE = 0x0800  # device reports TypeCharger (0x0023) == 1 (OCPP variant)
 ALL_FEATURE_GROUP = OCPP_TYPE
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
@@ -179,6 +179,7 @@ class SolaXEVChargerModbusTimeEntityDescription(BaseModbusTimeEntityDescription)
 
 # ====================================== Computed value functions  =================================================
 
+
 def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
     """Parse EVC RTC block (7 words from 0x61D).
 
@@ -190,7 +191,10 @@ def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
     no conversion.  Whatever time the device holds is shown as-is with its offset.
     e.g. stored: tz=180, time=11:18  ->  returns 2026-05-01 11:18:00+03:00
     """
-    from datetime import datetime as _dt, timezone as _tz_type, timedelta
+    from datetime import datetime as _dt
+    from datetime import timedelta
+    from datetime import timezone as _tz_type
+
     try:
         tz_raw, sec, minute, hour, day, month, year = initval
         tz_minutes = tz_raw if tz_raw <= 32767 else tz_raw - 65536
@@ -208,18 +212,19 @@ def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, An
                can show correct local time on its own display / app.
       - 0x61E–0x623: current UTC time so the stored instant is always correct.
     """
-    from datetime import datetime, timezone
-    utc_now   = datetime.now(timezone.utc)
+    from datetime import datetime
+
+    utc_now = datetime.now(UTC)
     local_now = datetime.now().astimezone()
     tz_minutes = int(local_now.utcoffset().total_seconds() / 60)
-    tz_u16 = tz_minutes & 0xFFFF        # e.g. UTC+3 → 180; UTC-5 → 65531
+    tz_u16 = tz_minutes & 0xFFFF  # e.g. UTC+3 → 180; UTC-5 → 65531
     return [
-        (REGISTER_U16, tz_u16),              # 0x61D: timezone offset in minutes
-        (REGISTER_U16, utc_now.second),      # 0x61E: seconds  (UTC)
-        (REGISTER_U16, utc_now.minute),      # 0x61F: minutes  (UTC)
-        (REGISTER_U16, utc_now.hour),        # 0x620: hours    (UTC)
-        (REGISTER_U16, utc_now.day),         # 0x621: day      (UTC)
-        (REGISTER_U16, utc_now.month),       # 0x622: month    (UTC)
+        (REGISTER_U16, tz_u16),  # 0x61D: timezone offset in minutes
+        (REGISTER_U16, utc_now.second),  # 0x61E: seconds  (UTC)
+        (REGISTER_U16, utc_now.minute),  # 0x61F: minutes  (UTC)
+        (REGISTER_U16, utc_now.hour),  # 0x620: hours    (UTC)
+        (REGISTER_U16, utc_now.day),  # 0x621: day      (UTC)
+        (REGISTER_U16, utc_now.month),  # 0x622: month    (UTC)
         (REGISTER_U16, utc_now.year % 100),  # 0x623: year     (UTC)
     ]
 
@@ -234,7 +239,6 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_evc,
-
         entity_category=EntityCategory.CONFIG,
     ),
 ]
@@ -754,8 +758,12 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="control_command",
         register=0x627,
         scale={
-            0: "No Command", 1: "Available", 2: "Unavailable",
-            3: "Stop Charging", 4: "Start Charging", 5: "Reserve",
+            0: "No Command",
+            1: "Available",
+            2: "Unavailable",
+            3: "Stop Charging",
+            4: "Start Charging",
+            5: "Reserve",
             6: "Cancel the Reservation",
         },
         internal=True,
@@ -1439,11 +1447,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="firmware_version",
         register=0x25,
         register_type=REG_INPUT,
-<<<<<<< evc/boost-time-entities-and-rtc-sync-fix
-=======
-        icon="mdi:numeric",
-        allowedtypes=GEN1 | GEN2,
->>>>>>> main
         register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
         entity_category=EntityCategory.DIAGNOSTIC,
