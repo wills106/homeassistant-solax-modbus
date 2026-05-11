@@ -360,6 +360,7 @@ def _create_energy_dashboard_diagnostic_sensors(
             allowedtypes=hub._invertertype,
             icon="mdi:swap-horizontal",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
         ),
         BaseModbusSensorEntityDescription(
             key="energy_dashboard_inverter_count",
@@ -369,6 +370,7 @@ def _create_energy_dashboard_diagnostic_sensors(
             allowedtypes=hub._invertertype,
             icon="mdi:counter",
             entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
         ),
     ]
 
@@ -406,6 +408,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                 allowedtypes=hub._invertertype,
                 icon="mdi:shuffle-variant",
                 entity_category=EntityCategory.DIAGNOSTIC,
+                entity_registry_enabled_default=False,
             )
         )
 
