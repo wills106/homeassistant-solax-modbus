@@ -6152,6 +6152,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
+        name="Total Battery Power Charge",
+        key="battery_power_charge",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x38,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        allowedtypes=AC | HYBRID | GEN6,  # Note, should be available on GEN5, testing needed.
+        icon="mdi:battery-charging",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Battery Total Capacity",
         key="battery_total_capacity_charge",
         native_unit_of_measurement=PERCENTAGE,
@@ -10387,14 +10399,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="PV Power {n}",
             allowedtypes=ALL_GEN_GROUP,
         ),
-        # Battery Power (GEN2-5 only)
+        # Battery Power (GEN2-6 only)
         EnergyDashboardSensorMapping(
             source_key="battery_power_charge",
             source_key_pm="pm_battery_power_charge",
             target_key="battery_power",
             name="Battery Power",
             invert=True,
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5,
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
         ),
         # Home Consumption Power
         EnergyDashboardSensorMapping(
