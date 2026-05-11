@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import UTC
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
@@ -180,7 +180,7 @@ class SolaXEVChargerModbusTimeEntityDescription(BaseModbusTimeEntityDescription)
 # ====================================== Computed value functions  =================================================
 
 
-def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
+def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
     """Parse EVC RTC block (7 words from 0x61D).
 
     word[0] = timezone offset in MINUTES (device uses minutes; e.g. UTC+3 → 180,
@@ -191,15 +191,12 @@ def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]):
     no conversion.  Whatever time the device holds is shown as-is with its offset.
     e.g. stored: tz=180, time=11:18  ->  returns 2026-05-01 11:18:00+03:00
     """
-    from datetime import datetime as _dt
-    from datetime import timedelta
-    from datetime import timezone as _tz_type
 
     try:
         tz_raw, sec, minute, hour, day, month, year = initval
         tz_minutes = tz_raw if tz_raw <= 32767 else tz_raw - 65536
-        tz = _tz_type(timedelta(minutes=tz_minutes))
-        return _dt(2000 + year % 100, month, day, hour, minute, sec, tzinfo=tz)
+        tz = timezone(timedelta(minutes=tz_minutes))
+        return datetime(2000 + year % 100, month, day, hour, minute, sec, tzinfo=tz)
     except Exception:
         return None
 
@@ -212,11 +209,10 @@ def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, An
                can show correct local time on its own display / app.
       - 0x61E–0x623: current UTC time so the stored instant is always correct.
     """
-    from datetime import datetime
 
     utc_now = datetime.now(UTC)
-    local_now = datetime.now().astimezone()
-    tz_minutes = int(local_now.utcoffset().total_seconds() / 60)
+    local_offset = datetime.now().astimezone().utcoffset()
+    tz_minutes = int(local_offset.total_seconds() / 60) if local_offset is not None else 0
     tz_u16 = tz_minutes & 0xFFFF  # e.g. UTC+3 → 180; UTC-5 → 65531
     return [
         (REGISTER_U16, tz_u16),  # 0x61D: timezone offset in minutes
