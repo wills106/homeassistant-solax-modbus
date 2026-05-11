@@ -1439,6 +1439,11 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="firmware_version",
         register=0x25,
         register_type=REG_INPUT,
+<<<<<<< evc/boost-time-entities-and-rtc-sync-fix
+=======
+        icon="mdi:numeric",
+        allowedtypes=GEN1 | GEN2,
+>>>>>>> main
         register_data_type=REGISTER_U16,
         scale=value_function_firmware_decimal_hundredths,
         entity_category=EntityCategory.DIAGNOSTIC,

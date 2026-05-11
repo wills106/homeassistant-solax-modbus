@@ -48,7 +48,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     value_function_sync_rtc_ymd,
 )
 
-from .pymodbus_compat import DataType, convert_from_registers
+from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -95,6 +95,11 @@ ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
+# SPF models known to expose only one PV input / MPPT even if the generic SPF block defines PV2 sensors.
+# Prefer real serial prefixes when available (e.g. KAM observed live on Simone's SPF5000ES units);
+# keep firmware-branch fallbacks for installations where only legacy family identifiers are exposed.
+SPF_SINGLE_MPPT_SERIAL_PREFIXES = ["YRE", "TTJ", "BNJ", "KAM", "067", "113", "500"]
+
 # ======================= end of bitmask handling code =============================================
 
 # ====================== find inverter type and details ===========================================
@@ -105,9 +110,12 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
     try:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=5)
         if inverter_data and not inverter_data.isError():
-            raw = convert_from_registers(inverter_data.registers[0:5], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
-            res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
-            hub.seriesnumber = res
+            raw_bytes = bytearray()
+            for register in inverter_data.registers[0:5]:
+                raw_bytes.extend(int(register).to_bytes(2, byteorder="big", signed=False))
+            res = raw_bytes.decode("ascii", errors="ignore").rstrip("\x00").strip() or None
+            if res:
+                hub.seriesnumber = res
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
     if not res:
@@ -385,6 +393,18 @@ def value_function_combined_bms_current(initval: int, descr: Any, datadict: dict
     else:
         result = 0
     return result
+
+
+def value_function_spf_pv_power_total(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("pv_power_1", 0) or 0) + float(datadict.get("pv_power_2", 0) or 0)
+
+
+def value_function_spf_today_s_solar_energy(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("today_s_solar_energy_pv1", 0) or 0) + float(datadict.get("today_s_solar_energy_pv2", 0) or 0)
+
+
+def value_function_spf_total_solar_energy(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return float(datadict.get("total_solar_energy_pv1", 0) or 0) + float(datadict.get("total_solar_energy_pv2", 0) or 0)
 
 
 def value_function_module_status(initval: int, descr: Any, datadict: dict[str, Any]) -> str:
@@ -3100,9 +3120,9 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key="grid_status",
         name="Grid Status",
         allowedtypes=GEN4,
-        value_function=lambda initval, descr, datadict: "Off (Výpadek - z baterie)"
-        if (datadict.get("register_3000", 0) & 0xFF) == 2
-        else "On (connected to net)",
+        value_function=lambda initval, descr, datadict: (
+            "Off (Výpadek - z baterie)" if (datadict.get("register_3000", 0) & 0xFF) == 2 else "On (connected to net)"
+        ),
         icon="mdi:transmission-tower",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -8989,6 +9009,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=SPF,
+        blacklist=SPF_SINGLE_MPPT_SERIAL_PREFIXES,
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Power 1",
@@ -9016,6 +9037,18 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=SPF,
+        blacklist=SPF_SINGLE_MPPT_SERIAL_PREFIXES,
+        icon="mdi:solar-power-variant",
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=-1,
+        value_function=value_function_spf_pv_power_total,
+        allowedtypes=SPF,
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9040,6 +9073,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=SPF,
+        blacklist=SPF_SINGLE_MPPT_SERIAL_PREFIXES,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9338,6 +9372,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=2,
         allowedtypes=SPF,
+        blacklist=SPF_SINGLE_MPPT_SERIAL_PREFIXES,
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Solar Energy PV2",
@@ -9350,6 +9385,31 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
         scale=0.1,
+        rounding=2,
+        allowedtypes=SPF,
+        blacklist=SPF_SINGLE_MPPT_SERIAL_PREFIXES,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Today's Solar Energy",
+        key="today_s_solar_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        register=-1,
+        value_function=value_function_spf_today_s_solar_energy,
+        rounding=2,
+        allowedtypes=SPF,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Total Solar Energy",
+        key="total_solar_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        register=-1,
+        value_function=value_function_spf_total_solar_energy,
         rounding=2,
         allowedtypes=SPF,
     ),
@@ -9585,6 +9645,8 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | GEN4 | X1 | MPPT4  # MIN TL-XH-US Hybrid, 4 MPPT
         elif seriesnumber.startswith("JGQ"):
             invertertype = HYBRID | GEN4 | X1  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+        elif seriesnumber.startswith("HJU"):
+            invertertype = HYBRID | GEN4 | X1  # MIN 4200TL-XH2 Hybrid, 2 MPPT
 
         # MOD type:GEN4
         # elif seriesnumber.startswith('???'):  invertertype = HYBRID | GEN4 | X1         # MOD 3000 TL3-XH Hybrid, 2 MPPT
@@ -9631,6 +9693,10 @@ class growatt_plugin(plugin_base):
         elif seriesnumber.startswith("NFR"):
             invertertype = HYBRID | SPF | X1  # SPE 8000 ES, 2 MPPT
 
+        # SPA type:GEN3 (AC-coupled)
+        elif seriesnumber.startswith("RH1"):
+            invertertype = AC | GEN3 | X1  # SPA 3000TL BL AC, no PV MPPT
+
         # SPF type:SPF
         elif seriesnumber.startswith("YRE"):
             invertertype = HYBRID | SPF | X1  # SPF 5000 ES, 1 MPPT
@@ -9638,6 +9704,8 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | SPF | X1  # SPF 5000 ES, 1 MPPT
         elif seriesnumber.startswith("BNJ"):
             invertertype = HYBRID | SPF | X1  # SPF 3000 TL LVM 24P, 1 MPPT
+        elif seriesnumber.startswith("KAM"):
+            invertertype = HYBRID | SPF | X1  # SPF 5000 ES observed live, 1 MPPT
         elif seriesnumber.startswith("NUK"):
             invertertype = HYBRID | SPF | X1  # SPF 12000T DVM-US MPV, 2 MPPT
 
@@ -9648,6 +9716,8 @@ class growatt_plugin(plugin_base):
             invertertype = HYBRID | GEN4 | X3  # WIT 12000-HU, 2 MPPT
         elif seriesnumber.startswith("0PH"):
             invertertype = HYBRID | GEN4 | X3 | MPPT10  # WIT 100000-HU, 10 MPPT
+        elif seriesnumber.startswith("0HU"):
+            invertertype = HYBRID | GEN4 | X3  # WIT 15K-HU, 2 MPPT
 
         # PV only
 
@@ -9763,9 +9833,9 @@ class growatt_plugin(plugin_base):
                 invertertype = HYBRID | GEN4 | X3  # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)
             elif seriesnumber.startswith("V"):
                 invertertype = HYBRID | GEN4 | X3  # Hybrid TL3-XH 3kW - 10kW (MOD)
-            # Include additional SPF5000ES firmware branches for auto-detection (e.g. 113).
+            # Include additional SPF5000ES firmware branches only as fallback when the real serial prefix is unavailable.
             elif seriesnumber.startswith(("067", "113", "500")):
-                invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW
+                invertertype = HYBRID | SPF | X1  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
             else:
                 invertertype = 0
                 _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {seriesnumber}")
@@ -9802,6 +9872,86 @@ class growatt_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
 
 
+ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
+    plugin_name="growatt",
+    mappings=[
+        EnergyDashboardSensorMapping(
+            source_key="ac_input_power",
+            target_key="grid_power",
+            name="Grid Power",
+            icon="mdi:transmission-tower-import",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="pv_power_total",
+            target_key="solar_power",
+            name="Solar Power",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="battery_power_charge",
+            target_key="battery_power",
+            name="Battery Power",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="ac_discharge_power",
+            target_key="home_consumption_power",
+            name="Home Consumption Power",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="ac_charge_power",
+            target_key="grid_to_battery_power",
+            name="Grid to Battery Power",
+            icon="mdi:transmission-tower-export",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="ac_input_power",
+            target_key="grid_energy_import",
+            name="Grid Import Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="today_s_solar_energy",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="today_s_ac_discharge",
+            target_key="home_consumption_energy",
+            name="Home Consumption Energy",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="battery_power_charge",
+            target_key="battery_energy_charge",
+            name="Battery Charge Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: abs(min(0, v)),
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="today_s_battery_discharge",
+            target_key="battery_energy_discharge",
+            name="Battery Discharge Energy",
+            allowedtypes=SPF,
+        ),
+        EnergyDashboardSensorMapping(
+            source_key="today_s_ac_charge",
+            target_key="grid_to_battery_energy",
+            name="Grid to Battery Energy",
+            icon="mdi:transmission-tower-export",
+            allowedtypes=SPF,
+        ),
+    ],
+)
+
+
 plugin_instance = growatt_plugin(
     plugin_name="Growatt",
     plugin_manufacturer="Growatt New Energy",
@@ -9811,6 +9961,7 @@ plugin_instance = growatt_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=[],
     TIME_TYPES=[],
+    ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16 = "big",
     order32="big",
