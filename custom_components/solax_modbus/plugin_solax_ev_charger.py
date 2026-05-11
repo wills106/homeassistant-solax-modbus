@@ -211,8 +211,8 @@ def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, An
     """
 
     utc_now = datetime.now(UTC)
-    local_now = datetime.now().astimezone()
-    tz_minutes = int(local_now.utcoffset().total_seconds() / 60)
+    local_offset = datetime.now().astimezone().utcoffset()
+    tz_minutes = int(local_offset.total_seconds() / 60) if local_offset is not None else 0
     tz_u16 = tz_minutes & 0xFFFF  # e.g. UTC+3 → 180; UTC-5 → 65531
     return [
         (REGISTER_U16, tz_u16),  # 0x61D: timezone offset in minutes
