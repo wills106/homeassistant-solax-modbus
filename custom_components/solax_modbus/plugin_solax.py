@@ -6152,6 +6152,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x32,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        allowedtypes=HYBRID | GEN6,  # Note, should be available on GEN5, testing needed.
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Total On-Grid Power",
         key="ongrid_power_total",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -8201,7 +8213,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | GEN | GEN2 | GEN3 | GEN4 | GEN5,
         blacklist=["PRI"],  # X1-FIT has no DC PV input
         depends_on=[
             "pv_power_1",
