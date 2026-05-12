@@ -1520,7 +1520,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x2B,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        order32="big",
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfTime.SECONDS,
