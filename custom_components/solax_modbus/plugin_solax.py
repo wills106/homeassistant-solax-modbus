@@ -6151,6 +6151,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN5 | MPPT6,
         icon="mdi:solar-power-variant",
     ),
+    #### Note regarding following totals registers
+    # These should technically also be available on GEN4/GEN5 however
+    # they all return 0 in testing, so leaving as GEN6 only. Will keep
+    # the original calculated pv_power_total sensor for earlier gens.
     SolaXModbusSensorEntityDescription(
         name="PV Power Total",
         key="pv_power_total",
@@ -6160,7 +6164,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x32,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        allowedtypes=HYBRID | GEN6,  # Note, should be available on GEN5, testing needed.
+        allowedtypes=HYBRID | GEN6,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -6172,8 +6176,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x34,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID | GEN5 | GEN6,
-        icon="mdi:battery-charging",
+        allowedtypes=AC | HYBRID | GEN6,
+        icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name="Total Off-Grid Power",
@@ -6184,8 +6188,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x36,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID | GEN5 | GEN6,
-        icon="mdi:battery-charging",
+        allowedtypes=AC | HYBRID | GEN6 | EPS,
+        icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name="Total Battery Power Charge",
@@ -6196,9 +6200,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x38,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID | GEN6,  # Note, should be available on GEN5, testing needed.
+        allowedtypes=AC | HYBRID | GEN6,
         icon="mdi:battery-charging",
     ),
+    #### End note
     SolaXModbusSensorEntityDescription(
         name="Battery Total Capacity",
         key="battery_total_capacity_charge",
@@ -8220,6 +8225,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "pv_power_2",
             "pv_power_3",
             "pv_power_4",
+            "pv_power_5",
+            "pv_power_6",
         ],
         icon="mdi:solar-power-variant",
     ),
