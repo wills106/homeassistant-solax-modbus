@@ -1977,7 +1977,11 @@ class SolaXModbusHub:
         )
         task = self._hass.loop.create_task(self._runtime_bisect_block(probe_block, typ, key))
         self._runtime_bisect_tasks[key] = task
-        task.add_done_callback(lambda _task, block_key=key: self._runtime_bisect_tasks.pop(block_key, None))
+
+        def _remove_runtime_bisect_task(_task: asyncio.Task[Any], block_key: str = key) -> None:
+            self._runtime_bisect_tasks.pop(block_key, None)
+
+        task.add_done_callback(_remove_runtime_bisect_task)
 
     async def _runtime_bisect_block(self, block_obj: Any, typ: str, key: str) -> None:
         if not getattr(self._client, "connected", False):
@@ -2150,11 +2154,7 @@ class SolaXModbusHub:
         }
 
     def communication_quarantine_attributes(self) -> dict[str, Any]:
-        registers = [
-            self._format_register(typ, addr)
-            for typ in ("holding", "input")
-            for addr in sorted(self.bad_regs[typ])
-        ]
+        registers = [self._format_register(typ, addr) for typ in ("holding", "input") for addr in sorted(self.bad_regs[typ])]
         return {
             "registers": registers,
             "next_recheck_interval_seconds": COMM_RECOVERY_INTERVAL,
