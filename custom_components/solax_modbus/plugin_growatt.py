@@ -9814,6 +9814,8 @@ class growatt_plugin(plugin_base):
                 invertertype = PV | GEN4 | X1  # PV TL-X 2.5kW - 6kW (MIN)
             elif seriesnumber.startswith("GH1"):
                 invertertype = PV | GEN4 | X1  # PV TL-X 2.5kW - 6kW (MIN)
+            elif seriesnumber.startswith("AK1"):
+                invertertype = PV | GEN4 | X1  # MIN 3600TL-X2, 2 MPPT #2027
             elif seriesnumber.startswith("AM1"):
                 invertertype = PV | GEN4 | X1 | MPPT3  # PV TL-X2 7kW - 120kW (MIN)
             # elif seriesnumber.startswith('MID'):  invertertype = PV | GEN4 | X3 | MPPT3 # PV X3 2MPPT 15-25kW, 3/4 MPPT 25-40kW & 30-50kW
