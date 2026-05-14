@@ -8,12 +8,11 @@ from typing import Any, cast
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, PERCENTAGE, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import CONF_NAME, PERCENTAGE, STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -581,7 +580,7 @@ class SolaXModbusSensor(SensorEntity):
     def name(self) -> str:
         """Return the name."""
         if self.entity_description.key in COMMUNICATION_SENSOR_KEYS:
-            return self.entity_description.name
+            return str(self.entity_description.name or self.entity_description.key)
         return f"{self._platform_name} {self.entity_description.name}"
 
     @property
