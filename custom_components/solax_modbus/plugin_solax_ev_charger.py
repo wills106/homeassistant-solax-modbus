@@ -519,9 +519,9 @@ SELECT_TYPES = [
         register=0x625,
         option_dict={
             0: "Three Phase",
-            1: "Phase A",
-            2: "Phase B",
-            3: "Phase C",
+            1: "L1 Phase",
+            2: "L2 Phase",
+            3: "L3 Phase",
         },
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
@@ -533,9 +533,9 @@ SELECT_TYPES = [
         register=0x63B,
         option_dict={
             0: "Three Phase",
-            1: "Phase A",
-            2: "Phase B",
-            3: "Phase C",
+            1: "L1 Phase",
+            2: "L2 Phase",
+            3: "L3 Phase",
         },
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
@@ -729,7 +729,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Charge Phase",
         key="charge_phase",
         register=0x625,
-        scale={0: "Three Phase", 1: "Phase A", 2: "Phase B", 3: "Phase C"},
+        scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
         allowedtypes=X3,
         internal=True,
     ),
@@ -737,7 +737,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Charge Phase Alt",
         key="charge_phase_alt",
         register=0x63B,
-        scale={0: "Three Phase", 1: "Phase A", 2: "Phase B", 3: "Phase C"},
+        scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
         allowedtypes=X3,
         internal=True,
     ),
@@ -823,13 +823,13 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ###
     #
     # Input — 0x0100+
-    # 0x0100-0x0102: ChargePowerA/B/C also available at 0x08-0x0A; exposed here with Alt suffix
+    # 0x0100-0x0102: ChargePower L1 (A) / L2 (B) / L3 (C) also available at 0x08-0x0A; exposed here with Alt suffix
     #
     ###
-    # ---- 0x0100–0x0102  Phase powers alt (same as 0x08-0x0A, disabled by default) ----
+    # ---- 0x0100–0x0102  Phase powers alt for L1 (A) / L2 (B) / L3 (C), disabled by default ----
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power A Alt",
-        key="charge_power_a_alt",
+        name="Charge Power L1 Alt",
+        key="charge_power_l1_alt",
         register=0x100,
         register_type=REG_INPUT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -838,8 +838,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power B Alt",
-        key="charge_power_b_alt",
+        name="Charge Power L2 Alt",
+        key="charge_power_l2_alt",
         register=0x101,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -849,8 +849,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power C Alt",
-        key="charge_power_c_alt",
+        name="Charge Power L3 Alt",
+        key="charge_power_l3_alt",
         register=0x102,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -916,7 +916,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     # Input
     #
     ###
-    # ---- 0x0000–0x0002  Phase voltages (GEN2 doc: VoltageA/B/C, 0.01V) ----
+    # ---- 0x0000–0x0002  Phase voltages L1 (A) / L2 (B) / L3 (C), 0.01V ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage",
         key="charge_voltage",
@@ -928,8 +928,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         allowedtypes=X1,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Voltage A",
-        key="charge_voltage_a",
+        name="Charge Voltage L1",
+        key="charge_voltage_l1",
         register=0x0,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -938,8 +938,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Voltage B",
-        key="charge_voltage_b",
+        name="Charge Voltage L2",
+        key="charge_voltage_l2",
         register=0x1,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -948,8 +948,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Voltage C",
-        key="charge_voltage_c",
+        name="Charge Voltage L3",
+        key="charge_voltage_l3",
         register=0x2,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -969,7 +969,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    # ---- 0x0004–0x0006  Phase currents (GEN2 doc: CurrentA/B/C, 0.01A) ----
+    # ---- 0x0004–0x0006  Phase currents L1 (A) / L2 (B) / L3 (C), 0.01A ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current",
         key="charge_current",
@@ -983,8 +983,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Current A",
-        key="charge_current_a",
+        name="Charge Current L1",
+        key="charge_current_l1",
         register=0x4,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -993,8 +993,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Current B",
-        key="charge_current_b",
+        name="Charge Current L2",
+        key="charge_current_l2",
         register=0x5,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1003,8 +1003,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Current C",
-        key="charge_current_c",
+        name="Charge Current L3",
+        key="charge_current_l3",
         register=0x6,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1023,7 +1023,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    # ---- 0x0008–0x000A  Phase powers (GEN2 doc: ChargePowerA/B/C, 1W) ----
+    # ---- 0x0008–0x000A  Phase powers L1 (A) / L2 (B) / L3 (C), 1W ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power",
         key="charge_power",
@@ -1036,8 +1036,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power A",
-        key="charge_power_a",
+        name="Charge Power L1",
+        key="charge_power_l1",
         register=0x8,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1047,8 +1047,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power B",
-        key="charge_power_b",
+        name="Charge Power L2",
+        key="charge_power_l2",
         register=0x9,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1058,8 +1058,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power C",
-        key="charge_power_c",
+        name="Charge Power L3",
+        key="charge_power_l3",
         register=0xA,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1078,7 +1078,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    # ---- 0x000C–0x000E  Phase frequencies (GEN2 doc: Freq_A/B/C, 0.01Hz) ----
+    # ---- 0x000C–0x000E  Phase frequencies L1 (A) / L2 (B) / L3 (C), 0.01Hz ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Frequency",
         key="charge_frequency",
@@ -1090,8 +1090,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Frequency A",
-        key="charge_frequency_a",
+        name="Charge Frequency L1",
+        key="charge_frequency_l1",
         register=0xC,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1101,8 +1101,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Frequency B",
-        key="charge_frequency_b",
+        name="Charge Frequency L2",
+        key="charge_frequency_l2",
         register=0xD,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1112,8 +1112,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Frequency C",
-        key="charge_frequency_c",
+        name="Charge Frequency L3",
+        key="charge_frequency_l3",
         register=0xE,
         register_type=REG_INPUT,
         allowedtypes=X3,
@@ -1156,7 +1156,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    # ---- 0x0012–0x0014  Grid currents S16 (GEN2 doc: ExternCurrentA/B/C, 0.01A) ----
+    # ---- 0x0012–0x0014  Grid currents L1 (A) / L2 (B) / L3 (C), S16, 0.01A ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current",
         key="grid_current",
@@ -1170,8 +1170,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Current A",
-        key="grid_current_a",
+        name="Grid Current L1",
+        key="grid_current_l1",
         register=0x12,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1183,8 +1183,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Current B",
-        key="grid_current_b",
+        name="Grid Current L2",
+        key="grid_current_l2",
         register=0x13,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1196,8 +1196,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Current C",
-        key="grid_current_c",
+        name="Grid Current L3",
+        key="grid_current_l3",
         register=0x14,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1208,7 +1208,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    # ---- 0x0015–0x0017  Grid powers S16 (GEN2 doc: ExternPowerA/B/C, 1W) ----
+    # ---- 0x0015–0x0017  Grid powers L1 (A) / L2 (B) / L3 (C), S16, 1W ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Power",
         key="grid_power",
@@ -1222,8 +1222,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Power A",
-        key="grid_power_a",
+        name="Grid Power L1",
+        key="grid_power_l1",
         register=0x15,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1235,8 +1235,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Power B",
-        key="grid_power_b",
+        name="Grid Power L2",
+        key="grid_power_l2",
         register=0x16,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1248,8 +1248,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Grid Power C",
-        key="grid_power_c",
+        name="Grid Power L3",
+        key="grid_power_l3",
         register=0x17,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
@@ -1481,9 +1481,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale={
             0: "Three Phase",
-            1: "Phase A",
-            2: "Phase B",
-            3: "Phase C",
+            1: "L1 Phase",
+            2: "L2 Phase",
+            3: "L3 Phase",
         },
         icon="mdi:cable-data",
     ),
@@ -1520,7 +1520,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x2B,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        order32="big",
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfTime.SECONDS,
