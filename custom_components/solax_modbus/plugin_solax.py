@@ -1276,29 +1276,19 @@ def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    if datadict.get("modbus_protocol_version", 0) >= 100:
+        # Use modern combined register if protocol version high enough
+        dsp = datadict.get("firmware_version_dsp")
+        arm = datadict.get("firmware_version_arm")
+        dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp is not None else "?.??"
+        arm_str = f"{arm // 100}.{arm % 100:02d}" if arm is not None else "?.??"
+        return f"DSP {dsp_str} ARM {arm_str}"
     return (
         f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '?')}."
         f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
         f"ARM {value_str_default(datadict.get('firmware_arm_major'), '?')}."
         f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
     )
-
-
-def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return (
-        f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '???'):>03}."
-        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
-        f"ARM {value_str_default(datadict.get('firmware_arm_major'), '???'):>03}."
-        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
-    )
-
-
-def value_function_software_version_full(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    dsp = datadict.get("firmware_version_dsp")
-    arm = datadict.get("firmware_version_arm")
-    dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp is not None else "?.??"
-    arm_str = f"{arm // 100}.{arm % 100:02d}" if arm is not None else "?.??"
-    return f"DSP {dsp_str} ARM {arm_str}"
 
 
 def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
@@ -3981,7 +3971,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Modbus Protocol Version",
         key="modbus_protocol_version",
-        entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         register=0x82,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -8290,7 +8279,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
-        value_function=value_function_software_version_full,
+        value_function=value_function_software_version_g4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
