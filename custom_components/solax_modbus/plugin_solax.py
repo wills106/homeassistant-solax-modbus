@@ -3987,7 +3987,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Modbus Protocol Version",
         key="modbus_protocol_version",
-        entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         register=0x82,
         entity_category=EntityCategory.DIAGNOSTIC,
