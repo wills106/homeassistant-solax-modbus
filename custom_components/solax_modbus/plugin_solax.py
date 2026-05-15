@@ -6154,20 +6154,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     #### Note regarding following totals registers
     # These should technically also be available on GEN4/GEN5 however
-    # they all return 0 in testing, so leaving as GEN6 only. Will keep
-    # the original calculated pv_power_total sensor for earlier gens.
-    SolaXModbusSensorEntityDescription(
-        name="PV Power Total",
-        key="pv_power_total",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        register=0x32,
-        register_type=REG_INPUT,
-        register_data_type=REGISTER_U32,
-        allowedtypes=HYBRID | GEN6,
-        icon="mdi:solar-power-variant",
-    ),
+    # they all return 0 in testing, so leaving as GEN6 only. 
+    # Keep the original calculated pv_power_total sensor as this one
+    # doesn't appear to work on all GEN6 either.
+    # SolaXModbusSensorEntityDescription(
+    #     name="PV Power Total",
+    #     key="pv_power_total",
+    #     native_unit_of_measurement=UnitOfPower.WATT,
+    #     device_class=SensorDeviceClass.POWER,
+    #     state_class=SensorStateClass.MEASUREMENT,
+    #     register=0x32,
+    #     register_type=REG_INPUT,
+    #     register_data_type=REGISTER_U32,
+    #     allowedtypes=HYBRID | GEN6,
+    #     icon="mdi:solar-power-variant",
+    # ),
     SolaXModbusSensorEntityDescription(
         name="Total On-Grid Power",
         key="ongrid_power_total",
@@ -8219,7 +8220,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=HYBRID | GEN | GEN2 | GEN3 | GEN4 | GEN5,
+        allowedtypes=HYBRID,
         blacklist=["PRI"],  # X1-FIT has no DC PV input
         depends_on=[
             "pv_power_1",
