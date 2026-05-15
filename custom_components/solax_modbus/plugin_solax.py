@@ -1276,6 +1276,9 @@ def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    if datadict.get("modbus_protocol_version", 0) >= 100:
+        # Use modern combined register if protocol version high enough
+        return value_function_software_version_full(initval, descr, datadict)
     return (
         f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '?')}."
         f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
@@ -1285,10 +1288,9 @@ def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    if datadict.get("firmware_version_dsp"):
-        # Use modern combined register if it gives a sensible value
+    if datadict.get("modbus_protocol_version", 0) >= 100:
+        # Use modern combined register if protocol version high enough
         return value_function_software_version_full(initval, descr, datadict)
-    # Use the split approach if combined is unavailable.
     return (
         f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '???'):>03}."
         f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
