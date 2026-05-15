@@ -6154,7 +6154,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     #### Note regarding following totals registers
     # These should technically also be available on GEN4/GEN5 however
-    # they all return 0 in testing, so leaving as GEN6 only. 
+    # they all return 0 in testing, so leaving as GEN6 only.
     # Keep the original calculated pv_power_total sensor as this one
     # doesn't appear to work on all GEN6 either.
     # SolaXModbusSensorEntityDescription(
