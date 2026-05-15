@@ -1285,6 +1285,10 @@ def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    if datadict.get("firmware_version_dsp"):
+        # Use modern combined register if it gives a sensible value
+        return value_function_software_version_full(initval, descr, datadict)
+    # Use the split approach if combined is unavailable.
     return (
         f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '???'):>03}."
         f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
@@ -8290,8 +8294,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         key="software_version",
-        value_function=value_function_software_version_full,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        value_function=value_function_software_version_g4,
+        allowedtypes=AC | HYBRID | GEN4,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="software_version",
+        value_function=value_function_software_version_g5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
