@@ -8,7 +8,7 @@ from typing import Any, cast
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import CONF_NAME, PERCENTAGE, STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -31,6 +31,34 @@ from .const import (
 from .debug import get_debug_setting
 
 _LOGGER = logging.getLogger(__name__)
+
+
+COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
+    BaseModbusSensorEntityDescription(
+        name="Communication Health",
+        key="communication_health",
+        value_function=lambda initval, descr, datadict: datadict.get("communication_health", "Unknown"),
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:heart-pulse",
+    ),
+    BaseModbusSensorEntityDescription(
+        name="Communication Success Rate",
+        key="communication_success_rate",
+        value_function=lambda initval, descr, datadict: datadict.get("communication_success_rate"),
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:percent-circle-outline",
+    ),
+    BaseModbusSensorEntityDescription(
+        name="Communication Quarantined Registers",
+        key="communication_quarantined_registers",
+        value_function=lambda initval, descr, datadict: datadict.get("communication_quarantined_registers", 0),
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:shield-alert-outline",
+    ),
+]
+
+COMMUNICATION_SENSOR_KEYS = {description.key for description in COMMUNICATION_SENSOR_TYPES}
 
 
 def _energy_dashboard_mapping_attrs(description: Any, hub: Any) -> dict[str, Any]:
@@ -144,6 +172,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         None,
         readFollowUp,
     )
+    for sensor_description in COMMUNICATION_SENSOR_TYPES:
+        entityToListSingle(
+            hub,
+            hub_name,
+            entities,
+            initial_groups,
+            computedRegs,
+            hub.device_info,
+            sensor_description,
+            None,
+            None,
+        )
 
     # Energy Dashboard check moved to after rebuild_blocks (see below) so initial_groups are ready for reading
 
@@ -227,12 +267,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub.computedSensors = computedRegs
     hub.rebuild_blocks(initial_groups)  # , computedRegs) # first time call
     _LOGGER.info(f"{hub.name}: computedRegs: {hub.computedSensors}")
-
-    # Give initial bisect task time to start before Energy Dashboard setup
-    # The bisect runs in background and may need a moment to begin
-    import asyncio
-
-    await asyncio.sleep(1.0)  # 1 second delay to let bisect task start
 
     # Energy Dashboard Virtual Device integration (after rebuild_blocks so initial_groups are ready for reading)
     try:
@@ -545,6 +579,8 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def name(self) -> str:
         """Return the name."""
+        if self.entity_description.key in COMMUNICATION_SENSOR_KEYS:
+            return str(self.entity_description.name or self.entity_description.key)
         return f"{self._platform_name} {self.entity_description.name}"
 
     @property
@@ -563,7 +599,12 @@ class SolaXModbusSensor(SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self._attr_extra_state_attributes
+        attrs = dict(self._attr_extra_state_attributes)
+        if self.entity_description.key == "communication_health":
+            attrs.update(self._hub.communication_health_attributes())
+        elif self.entity_description.key == "communication_quarantined_registers":
+            attrs.update(self._hub.communication_quarantine_attributes())
+        return attrs
 
 
 class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):

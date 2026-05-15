@@ -124,6 +124,10 @@ from .sensor import SolaXModbusSensor
 RETRIES = 1  # was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
 VERBOSE_CYCLES = 20
+COMM_HISTORY_LIMIT = 100
+COMM_BLOCK_FAILURE_THRESHOLD = 3
+COMM_BLOCK_FAILURE_WINDOW = 600
+COMM_RECOVERY_INTERVAL = 300
 
 
 try:
@@ -573,16 +577,28 @@ class SolaXModbusHub:
         # Track in-flight I/O tasks for fast cancellation on stop
         self._inflight_tasks: set[Any] = set()
 
-        # Bad register handling (startup bisect + deferred recheck)
-        # bad_regs: definitively bad entity base-addresses (per register type)
-        # bad_recheck: candidates found by bisect that must be revalidated later
+        # Runtime bad register handling. bad_regs are temporarily quarantined
+        # entity base-addresses that are excluded from normal polling.
         self.bad_regs: dict[str, set[int]] = {"holding": set(), "input": set()}
-        self.bad_recheck: dict[str, set[int]] = {"holding": set(), "input": set()}
-        self._did_initial_bisect = False
         self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
+        self._runtime_bisect_tasks: dict[str, asyncio.Task[Any]] = {}
+        self._quarantine_recheck_task: asyncio.Task[Any] | None = None
+        self._comm_block_failures: dict[str, list[float]] = {}
+        self._comm_last_block_success_time: float | None = None
+        self._comm_last_block_failure_time: float | None = None
+        self._comm_recent_results: list[bool] = []
+        self._comm_poll_durations: list[int] = []
+        self._comm_last_error: str | None = None
+        self._comm_last_error_time: str | None = None
+        self._comm_last_quarantined_register: str | None = None
+        self._comm_last_recovered_register: str | None = None
+        self._comm_overrun_count = 0
+        self._comm_recovery_active = False
 
-        # Gate normal polling until initial probe completes
+        # Polling is no longer blocked by a startup bisect. Bad registers are
+        # found at runtime and rechecked periodically.
         self._probe_ready = asyncio.Event()
+        self._probe_ready.set()
         self._initial_refresh_task: Any = None
         self._initial_refresh_active: bool = False
         self._initial_refresh_done: bool = False
@@ -897,6 +913,7 @@ class SolaXModbusHub:
                         f"duration={int(elapsed * 1000)} ms, ok={agg_res}, "
                         f"sensors={updated_sensors}, slowdown={self.slowdown}"
                     )
+                    self._record_poll_cycle(agg_res, elapsed, interval_group.interval or secs)
 
                     # If the configured interval is shorter than the actual run time, inform once per cycle
                     if elapsed >= (interval_group.interval or 0):
@@ -905,18 +922,19 @@ class SolaXModbusHub:
                         )
 
                     # Immediate catch-up if a tick arrived during our run.
-                    # Only perform catch-up when the last poll succeeded. On failure, drop the pending rerun.
+                    # Only perform catch-up when the previous poll succeeded and did not consume
+                    # the complete interval; otherwise this creates an endless backlog.
                     if getattr(interval_group, "pending_rerun", False):
-                        if agg_res:
-                            interval_group.pending_rerun = False
+                        interval_group.pending_rerun = False
+                        if agg_res and elapsed < (interval_group.interval or 0):
                             # Loop again immediately (no sleep) to catch up once
                             continue
+                        if agg_res:
+                            _LOGGER.debug(f"{self._name}: dropping pending catch-up because the previous poll already consumed the interval")
                         else:
-                            # Previous poll failed; do not schedule a back-to-back retry.
-                            interval_group.pending_rerun = False
                             _LOGGER.debug(f"{self._name}: dropping pending catch-up due to failed poll (slowdown={self.slowdown})")
-                            # Exit the loop; next attempt will occur per slowdown policy
-                            break
+                        # Exit the loop; next attempt will occur per normal schedule/slowdown policy
+                        break
                     break
 
             _LOGGER.debug(f"{self._name}: starting timer loop for interval group: {interval}")
@@ -1124,13 +1142,20 @@ class SolaXModbusHub:
                 interval_group.unsub_interval_method = None
         self.groups.clear()
         # 2) stop any running tasks
-        for tname in ("_initial_bisect_task", "_recheck_task", "_initial_refresh_task"):
+        for tname in ("_initial_refresh_task", "_quarantine_recheck_task"):
             task = getattr(self, tname, None)
             if task and not task.done():
                 try:
                     task.cancel()
                 except Exception:
                     pass
+        for task in list(getattr(self, "_runtime_bisect_tasks", {}).values()):
+            if task and not task.done():
+                try:
+                    task.cancel()
+                except Exception:
+                    pass
+        self._runtime_bisect_tasks.clear()
         # 2b) cancel init task if still running
         init_task = getattr(self, "_init_task", None)
         if init_task and not init_task.done():
@@ -1582,9 +1607,13 @@ class SolaXModbusHub:
                     idx += 1
                 else:
                     idx = self.treat_address(data, regs, idx, descr, initval=0, advance=True)
+            self._record_block_result(block, typ, True)
             return True
         else:  # block read failure
-            firstdescr = block.descriptions[block.start]  # check only first item in block
+            self._record_block_result(block, typ, False, errmsg)
+            # Check only the first item in the block for ignore_readerror behavior.
+            firstdescr_raw = block.descriptions.get(block.start) or block.descriptions[block.regs[0]]
+            firstdescr = next(iter(firstdescr_raw.values())) if isinstance(firstdescr_raw, dict) else firstdescr_raw
             _LOGGER.debug(
                 f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}"
             )
@@ -1631,11 +1660,13 @@ class SolaXModbusHub:
         res = True
         for block in group.holdingBlocks:
             _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} previous res:{res}")
-            res = res and await self.async_read_modbus_block(data, block, "holding")
+            block_res = await self.async_read_modbus_block(data, block, "holding")
+            res = res and block_res
             _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done; new res: {res}")
         for block in group.inputBlocks:
             _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} previous res: {res}")
-            res = res and await self.async_read_modbus_block(data, block, "input")
+            block_res = await self.async_read_modbus_block(data, block, "input")
+            res = res and block_res
             _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done; new res: {res}")
 
         if self.localsUpdated:
@@ -1879,158 +1910,259 @@ class SolaXModbusHub:
         self.blocks_changed = False
         _LOGGER.debug(f"{self._name}: done rebuilding groups and blocks - post: {self.initial_groups.keys()}")
 
-        # Trigger a single initial bisect run (non-blocking) after the very first build
-        if not self._did_initial_bisect:
-            self._did_initial_bisect = True
-            # hold off normal polling until probe finishes
-            self._probe_ready.clear()
-            # run in background to avoid delaying the event loop
-            self._initial_bisect_task = self._hass.loop.create_task(self._run_initial_bisect_for_all_groups())
+    def _block_key(self, block_obj: Any, typ: str) -> str:
+        return f"{typ}:0x{block_obj.start:x}-0x{block_obj.end:x}"
 
-    async def _run_initial_bisect_for_all_groups(self) -> None:
-        """Run a one-time bisect over all current blocks to discover unreadable entity bases.
-        The result updates self.bad_recheck and schedules a delayed revalidation.
-        """
-        import asyncio
-        import time as _t
+    def _format_register(self, typ: str, addr: int) -> str:
+        descr = self._find_descriptor_for_reg(typ, addr)
+        key: str | None = None
+        if isinstance(descr, dict):
+            key = "/".join(str(getattr(item, "key", "")) for item in descr.values() if getattr(item, "key", None))
+        elif descr is not None:
+            key = getattr(descr, "key", None)
+        label = f"{typ} 0x{addr:x}"
+        return f"{label} ({key})" if key else label
 
-        bisect_start_time = _t.monotonic()
-        bisect_timeout = 30.0  # Maximum 30 seconds for bisect to complete
+    def _find_descriptor_for_reg(self, typ: str, addr: int) -> Any | None:
+        for interval_group in self.initial_groups.values():
+            for device_group in getattr(interval_group, "device_groups", {}).values():
+                regs = getattr(device_group, "holdingRegs", {}) if typ == "holding" else getattr(device_group, "inputRegs", {})
+                if addr in regs:
+                    return regs[addr]
+        for interval_group in self.groups.values():
+            for device_group in getattr(interval_group, "device_groups", {}).values():
+                blocks = getattr(device_group, "holdingBlocks", []) if typ == "holding" else getattr(device_group, "inputBlocks", [])
+                for block_obj in blocks:
+                    if addr in (block_obj.regs or []):
+                        return block_obj.descriptions.get(addr) if block_obj.descriptions else None
+        return None
 
+    def _record_block_result(self, block_obj: Any, typ: str, success: bool, errmsg: str | None = None) -> None:
+        key = self._block_key(block_obj, typ)
+        if success:
+            self._comm_last_block_success_time = _mtime.time()
+            self._comm_block_failures.pop(key, None)
+            return
+
+        now = _mtime.time()
+        self._comm_last_block_failure_time = now
+        self._comm_last_error = f"{key}: {errmsg or 'read_error'}"
+        self._comm_last_error_time = _mtime.strftime("%Y-%m-%d %H:%M:%S")
+        failures = [ts for ts in self._comm_block_failures.get(key, []) if now - ts <= COMM_BLOCK_FAILURE_WINDOW]
+        failures.append(now)
+        self._comm_block_failures[key] = failures
+        if len(failures) >= COMM_BLOCK_FAILURE_THRESHOLD:
+            self._schedule_runtime_bisect(block_obj, typ)
+
+    def _schedule_runtime_bisect(self, block_obj: Any, typ: str) -> None:
+        if getattr(self, "_stopping", False):
+            return
+        key = self._block_key(block_obj, typ)
+        task = self._runtime_bisect_tasks.get(key)
+        if task and not task.done():
+            return
+        last_success = self._comm_last_block_success_time
+        if last_success is None or (_mtime.time() - last_success) > COMM_BLOCK_FAILURE_WINDOW:
+            _LOGGER.debug(f"{self._name}: skipping runtime bisect for {key}; no recent successful block reads")
+            return
+        recent = self._comm_recent_results[-20:]
+        if recent and sum(recent) == 0:
+            _LOGGER.debug(f"{self._name}: skipping runtime bisect for {key}; all recent polls failed")
+            return
+        probe_block = block(
+            start=block_obj.start,
+            end=block_obj.end,
+            descriptions=block_obj.descriptions,
+            regs=list(block_obj.regs or []),
+        )
+        task = self._hass.loop.create_task(self._runtime_bisect_block(probe_block, typ, key))
+        self._runtime_bisect_tasks[key] = task
+
+        def _remove_runtime_bisect_task(_task: asyncio.Task[Any], block_key: str = key) -> None:
+            self._runtime_bisect_tasks.pop(block_key, None)
+
+        task.add_done_callback(_remove_runtime_bisect_task)
+
+    async def _runtime_bisect_block(self, block_obj: Any, typ: str, key: str) -> None:
+        if not getattr(self._client, "connected", False):
+            return
+        candidates: set[int] = set()
+        _LOGGER.warning(f"{self._name}: repeated failures for {key}; probing block to isolate bad registers")
         try:
-            # If not online, postpone once to avoid mislabeling during startup flaps
-            if not await self.is_online():
-                _LOGGER.debug(f"{self._name}: initial bisect postponed (offline)")
-                await asyncio.sleep(5)
-                if not await self.is_online():
-                    _LOGGER.debug(f"{self._name}: initial bisect skipped (still offline) – allowing polling")
-                    self._probe_ready.set()
-                    return
-
-            # Walk through all currently built groups/blocks
-            for interval_group in self.groups.values():
-                # Check timeout periodically
-                if (_t.monotonic() - bisect_start_time) > bisect_timeout:
-                    _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
-                    self._probe_ready.set()
-                    return
-
-                for dev_group in list(interval_group.device_groups.values()):
-                    # Check timeout before each block
-                    if (_t.monotonic() - bisect_start_time) > bisect_timeout:
-                        _LOGGER.warning(f"{self._name}: initial bisect timeout after {bisect_timeout}s – enabling polling anyway")
-                        self._probe_ready.set()
-                        return
-
-                    for blk in getattr(dev_group, "holdingBlocks", []):
-                        await self._initial_bisect_block(blk, "holding")
-                    for blk in getattr(dev_group, "inputBlocks", []):
-                        await self._initial_bisect_block(blk, "input")
-
-            # If no suspects were identified by the initial bisect, log that explicitly
-            if not (self.bad_recheck["holding"] or self.bad_recheck["input"]):
-                _LOGGER.debug(f"{self._name}: initial bisect found no suspect registers.")
-
-            # Probing completed – enable polling
-            self._probe_ready.set()
-        except Exception as e:
-            _LOGGER.error(f"{self._name}: Exception in initial bisect: {e}", exc_info=True)
-            # Always set probe_ready on exception to avoid permanent blocking
-            self._probe_ready.set()
-
-        # Re-validate candidates after a short grace period
-        self._recheck_task = self._hass.loop.create_task(self._recheck_bad_after(30))
-
-    async def _initial_bisect_block(self, block_obj: Any, typ: str) -> None:
-        """Bisect a block once at startup. Operates on *entity bases* only, so multi-register
-        entities (U32/STR/WORDS) are never split apart. No value decoding happens here."""
-        try:
-            await self._read_block_with_bisect_once(block_obj, typ)
+            await self._find_bad_regs_in_block(block_obj, typ, candidates)
+            confirmed: list[int] = []
+            for addr in sorted(candidates):
+                if addr in self.bad_regs[typ]:
+                    continue
+                if await self._confirm_bad_register(typ, addr):
+                    self.bad_regs[typ].add(addr)
+                    self._comm_last_quarantined_register = self._format_register(typ, addr)
+                    confirmed.append(addr)
+            if confirmed:
+                self.blocks_changed = True
+                self._ensure_quarantine_recheck_task()
+                labels = ", ".join(self._format_register(typ, addr) for addr in confirmed)
+                _LOGGER.warning(f"{self._name}: quarantined unreadable Modbus register(s): {labels}")
+                self._update_communication_data()
+                self._publish_communication_diagnostics()
+        except asyncio.CancelledError:
+            raise
         except Exception as ex:
-            _LOGGER.debug(f"{self._name}: exception during initial bisect ({typ}) 0x{block_obj.start:x}-0x{block_obj.end:x}: {ex}")
+            _LOGGER.debug(f"{self._name}: runtime bisect for {key} failed: {ex}")
 
-    async def _read_block_with_bisect_once(self, block_obj: Any, typ: str, depth: int = 0) -> bool:
-        """Attempt a raw bulk read for the block. If it fails and we are online, split the entity-base
-        list into halves and probe recursively until single-entity blocks are found.
-        Single-entity failures are added to bad_recheck (not yet definitive)."""
+    async def _find_bad_regs_in_block(self, block_obj: Any, typ: str, candidates: set[int], depth: int = 0) -> None:
+        if getattr(self, "_stopping", False):
+            return
         if await self._probe_block(block_obj, typ):
-            return True
+            return
+        if not getattr(self._client, "connected", False):
+            return
 
-        # Avoid false positives when transport is down / slowed
-        if not await self.is_online():
-            _LOGGER.debug(f"{self._name}: assuming offline during bisect")
-            return False
-
-        _LOGGER.debug(f"{self._name}: probe not fully ok: depth {depth}/{self.bisect_max_depth} len: {len(block_obj.regs) or []}")
-        regs = block_obj.regs or []
+        regs = list(block_obj.regs or [])
         if depth >= self.bisect_max_depth or len(regs) <= 1:
             if len(regs) == 1:
-                addr = regs[0]
-                self.bad_recheck[typ].add(addr)
-                _LOGGER.debug(f"{self._name}: candidate bad {typ} entity base 0x{addr:x}")
-            return True
+                candidates.add(regs[0])
+                _LOGGER.debug(f"{self._name}: candidate bad {typ} entity base 0x{regs[0]:x}")
+            return
 
-        # Split entity-base list (keeps multi-register entities intact)
         mid = len(regs) // 2
-        left = self._subblock_entity_span(block_obj, 0, mid)
-        right = self._subblock_entity_span(block_obj, mid, len(regs))
+        await self._find_bad_regs_in_block(self._subblock_entity_span(block_obj, 0, mid), typ, candidates, depth + 1)
+        await self._find_bad_regs_in_block(self._subblock_entity_span(block_obj, mid, len(regs)), typ, candidates, depth + 1)
 
-        await self._read_block_with_bisect_once(left, typ, depth + 1)
-        await self._read_block_with_bisect_once(right, typ, depth + 1)
-        return True
+    async def _confirm_bad_register(self, typ: str, addr: int) -> bool:
+        single = self._single_register_block(typ, addr)
+        failures = 0
+        for _ in range(2):
+            if not getattr(self._client, "connected", False):
+                return False
+            if await self._probe_block(single, typ):
+                return False
+            failures += 1
+            await asyncio.sleep(1)
+        return failures >= 2
 
-    async def _recheck_bad_after(self, seconds: int) -> None:
-        """After a grace period, re-validate all candidate bad entity bases. Only reproducible
-        failures are promoted to definitive bad_regs; otherwise the candidate is dropped."""
-        await asyncio.sleep(seconds)
-        confirmed_any = False
-        for typ in ("holding", "input"):
-            candidates = list(self.bad_recheck[typ])
-            for addr in candidates:
-                ok = False
-                # Entity-Span ermitteln (damit STR/WORDS/U32 nicht zerschnitten werden)
+    def _single_register_block(self, typ: str, addr: int) -> Any:
+        descr = self._find_descriptor_for_reg(typ, addr)
+        desc_map = {addr: descr} if descr is not None else {}
+        try:
+            end = self._entity_span_end(desc_map, addr) if desc_map else addr + 1
+        except Exception:
+            end = addr + 1
+        return block(start=addr, end=end, descriptions=desc_map, regs=[addr])
+
+    def _ensure_quarantine_recheck_task(self) -> None:
+        task = self._quarantine_recheck_task
+        if task and not task.done():
+            return
+        self._quarantine_recheck_task = self._hass.loop.create_task(self._quarantine_recheck_loop())
+
+    async def _quarantine_recheck_loop(self) -> None:
+        try:
+            while not getattr(self, "_stopping", False):
+                await asyncio.sleep(COMM_RECOVERY_INTERVAL)
+                if not (self.bad_regs["holding"] or self.bad_regs["input"]):
+                    return
+                self._comm_recovery_active = True
                 try:
-                    desc_map = None
-                    for interval_group in self.groups.values():
-                        for dev_group in list(interval_group.device_groups.values()):
-                            blocks = getattr(dev_group, "holdingBlocks", []) if typ == "holding" else getattr(dev_group, "inputBlocks", [])
-                            for blk in blocks:
-                                if addr in (blk.regs or []):
-                                    desc_map = blk.descriptions
-                                    break
-                            if desc_map is not None:
-                                break
-                        if desc_map is not None:
-                            break
-                    if desc_map is not None:
-                        end = self._entity_span_end(desc_map, addr)
-                    else:
-                        end = addr + 1
-                    single = block(start=addr, end=end, descriptions=None, regs=[addr])
-                except Exception:
-                    single = block(start=addr, end=addr + 1, descriptions=None, regs=[addr])
+                    for typ in ("holding", "input"):
+                        for addr in sorted(list(self.bad_regs[typ])):
+                            await self._recheck_quarantined_register(typ, addr)
+                finally:
+                    self._comm_recovery_active = False
+                    self._update_communication_data()
+                    self._publish_communication_diagnostics()
+        except asyncio.CancelledError:
+            raise
+        except Exception as ex:
+            _LOGGER.debug(f"{self._name}: quarantine recheck loop failed: {ex}")
 
-                # Drei schnelle Re-Checks, um Transienten auszuschließen
-                for _ in range(3):
-                    if await self.is_online() and await self._probe_block(single, typ):
-                        ok = True
-                        break
-                    await asyncio.sleep(0.05)
+    async def _recheck_quarantined_register(self, typ: str, addr: int) -> None:
+        if not getattr(self._client, "connected", False):
+            return
+        single = self._single_register_block(typ, addr)
+        if not await self._probe_block(single, typ, timeout=self._quarantine_recheck_timeout()):
+            return
+        self.bad_regs[typ].discard(addr)
+        self._comm_last_recovered_register = self._format_register(typ, addr)
+        self.blocks_changed = True
+        _LOGGER.info(f"{self._name}: restored previously quarantined Modbus register {self._comm_last_recovered_register}")
 
-                if ok:
-                    self.bad_recheck[typ].discard(addr)
-                    _LOGGER.info(f"{self._name}: entity base 0x{addr:x} ({typ}) recovered on recheck")
-                else:
-                    self.bad_regs[typ].add(addr)
-                    self.bad_recheck[typ].discard(addr)
-                    confirmed_any = True
-                    _LOGGER.warning(f"{self._name}: confirmed bad {typ} entity base 0x{addr:x}")
+    def _quarantine_recheck_timeout(self) -> float:
+        return max(2.0, float(self._time_out) / 3.0)
 
-        if confirmed_any:
-            # Beim nächsten Poll werden Blöcke neu gebaut, schlechte Basen ausgeschlossen
-            self.blocks_changed = True
+    def _record_poll_cycle(self, ok: bool, elapsed: float, interval: int | float | None) -> None:
+        self._comm_recent_results.append(ok)
+        self._comm_recent_results = self._comm_recent_results[-COMM_HISTORY_LIMIT:]
+        elapsed_ms = int(elapsed * 1000)
+        self._comm_poll_durations.append(elapsed_ms)
+        self._comm_poll_durations = self._comm_poll_durations[-COMM_HISTORY_LIMIT:]
+        if interval and elapsed >= interval:
+            self._comm_overrun_count += 1
+        self._update_communication_data()
+        self._publish_communication_diagnostics()
+
+    def _update_communication_data(self) -> None:
+        recent = self._comm_recent_results
+        success_rate = round((sum(1 for item in recent if item) / len(recent)) * 100, 1) if recent else None
+        quarantined_count = sum(len(regs) for regs in self.bad_regs.values())
+        last_five = recent[-5:]
+
+        if recent and last_five and not any(last_five):
+            health = "Offline"
+        elif self._comm_recovery_active:
+            health = "Recovering"
+        elif quarantined_count:
+            health = "Quarantined"
+        elif self._comm_last_block_failure_time and (_mtime.time() - self._comm_last_block_failure_time) <= COMM_BLOCK_FAILURE_WINDOW:
+            health = "Degraded"
+        elif success_rate is not None and success_rate < 98:
+            health = "Degraded"
         else:
-            _LOGGER.info(f"{self._name}: no bad registers confirmed on recheck.")
+            health = "Healthy"
+
+        self.data["communication_health"] = health
+        self.data["communication_success_rate"] = success_rate
+        self.data["communication_quarantined_registers"] = quarantined_count
+
+    def _publish_communication_diagnostics(self) -> None:
+        for key in ("communication_health", "communication_success_rate", "communication_quarantined_registers"):
+            sens = self.sensorEntities.get(key)
+            if sens:
+                try:
+                    sens.modbus_data_updated()
+                except Exception:
+                    _LOGGER.debug(f"{self._name}: cannot send communication diagnostic update for {key}")
+
+    def communication_health_attributes(self) -> dict[str, Any]:
+        durations = self._comm_poll_durations
+        avg_duration = round(sum(durations) / len(durations), 1) if durations else None
+        max_duration = max(durations) if durations else None
+        return {
+            "success_rate": self.data.get("communication_success_rate"),
+            "last_error": self._comm_last_error,
+            "last_error_time": self._comm_last_error_time,
+            "last_block_failure_age_seconds": round(_mtime.time() - self._comm_last_block_failure_time, 1)
+            if self._comm_last_block_failure_time
+            else None,
+            "average_poll_duration_ms": avg_duration,
+            "max_poll_duration_ms": max_duration,
+            "overrun_count": self._comm_overrun_count,
+            "quarantined_registers": self.data.get("communication_quarantined_registers", 0),
+            "recovering": self._comm_recovery_active,
+            "last_quarantined_register": self._comm_last_quarantined_register,
+            "last_recovered_register": self._comm_last_recovered_register,
+        }
+
+    def communication_quarantine_attributes(self) -> dict[str, Any]:
+        registers = [self._format_register(typ, addr) for typ in ("holding", "input") for addr in sorted(self.bad_regs[typ])]
+        return {
+            "registers": registers,
+            "next_recheck_interval_seconds": COMM_RECOVERY_INTERVAL,
+            "recheck_timeout_seconds": round(self._quarantine_recheck_timeout(), 1),
+            "recheck_strategy": "all_quarantined_registers_per_interval",
+            "last_quarantined_register": self._comm_last_quarantined_register,
+            "last_recovered_register": self._comm_last_recovered_register,
+        }
 
     def _entity_span_end(self, desc_map: dict[int, Any], base_reg: int) -> int:
         """Compute end address (exclusive) for a single entity starting at base_reg based on its unit.
@@ -2041,7 +2173,7 @@ class SolaXModbusHub:
         # If the descriptor is a dict of byte-split entities (U8H/U8L), they share the same 16-bit reg
         if isinstance(descr, dict):
             return base_reg + 1
-        unit = getattr(descr, "unit", None)
+        unit = getattr(descr, "register_data_type", getattr(descr, "unit", None))
         if unit in (REGISTER_S32, REGISTER_U32, REGISTER_F32, REGISTER_ULSB16MSB16):
             return base_reg + 2
         if unit in (REGISTER_STR, REGISTER_WORDS):
@@ -2060,7 +2192,7 @@ class SolaXModbusHub:
         end = self._entity_span_end(block_obj.descriptions, last_base)
         return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
 
-    async def _probe_block(self, block_obj: Any, typ: str) -> bool:
+    async def _probe_block(self, block_obj: Any, typ: str, timeout: float | None = None) -> bool:
         if getattr(self, "_stopping", False):
             return False
         """Transport-level probe: perform a raw modbus read for [start, end) without decoding.
@@ -2069,15 +2201,21 @@ class SolaXModbusHub:
         if count <= 0:
             return True
         try:
-            _LOGGER.debug(f"{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}")
+            timeout_msg = f" timeout={timeout:.1f}s" if timeout is not None else ""
+            _LOGGER.debug(f"{self._name}: probing {typ} 0x{block_obj.start:x}-0x{block_obj.end:x}{timeout_msg}")
             if typ == "input":
-                resp = await self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
+                read_coro = self.async_read_input_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             else:
-                resp = await self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
+                read_coro = self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
+            resp = await asyncio.wait_for(read_coro, timeout=timeout) if timeout is not None else await read_coro
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
             return not is_err
+        except TimeoutError:
+            timeout_msg = f"{timeout:.1f}s" if timeout is not None else "configured timeout"
+            _LOGGER.debug(f"{self._name}: probe {typ} 0x{block_obj.start:x}-0x{block_obj.end:x} timed out after {timeout_msg}")
+            return False
         except Exception as ex:
             _LOGGER.info(f"{self._name}: probe {typ} 0x{block_obj.start:x}-0x{block_obj.end:x} failed: {ex}")
             return False
