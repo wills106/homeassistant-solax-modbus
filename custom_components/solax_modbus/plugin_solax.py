@@ -1422,6 +1422,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H55", 50),  # Gen5 X1-IES
     ("H56", 50),  # Gen5 X1-IES
     ("H58", 50),  # Gen5 X1-IES
+    ("10M", 30),  # Gen6 X1-VAST
     ("F34", 30),  # Gen4 X3 RetroFit
     ("H31", 30),  # Gen4 X3 TIGO
     ("H34A", 30),  # Gen4 X3 A
