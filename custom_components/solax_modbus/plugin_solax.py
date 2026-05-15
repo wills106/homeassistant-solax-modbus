@@ -5566,7 +5566,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x8,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN5 | X1,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6 | X1,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -5579,7 +5579,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         register_data_type=REGISTER_S16,
-        allowedtypes=AC | HYBRID | GEN5 | X3,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6 | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
