@@ -188,6 +188,8 @@ class SolaXModbusNumber(NumberEntity):
             if value is None:
                 return None
             if self._fmt == "i":
+                if float(self._attr_native_step) % 1:
+                    return float(value)
                 return int(value)
             return float(value)
         return None
