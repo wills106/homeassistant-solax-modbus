@@ -566,6 +566,7 @@ class SolaXModbusHub:
         self._validate_register_func = getattr(plugin, "validate_register_data", None)  # Cache function reference
         self.wakeupButton: Any = None
         self._invertertype: int | None = None
+        self.modbus_protocol_version: int | None = None
         self.localsUpdated: bool = False
         self.localsLoaded: bool = False
         self.config: Any = config  # MappingProxyType from entry.options
@@ -675,6 +676,8 @@ class SolaXModbusHub:
             model=getattr(self.plugin, "inverter_model", None),
             name=plugin_name,
             serial_number=self.seriesnumber,
+            sw_version=self.plugin.getSoftwareVersion(self.data),
+            hw_version=self.plugin.getHardwareVersion(self.data),
         )
 
         if getattr(self, "_stopping", False):
@@ -725,6 +728,8 @@ class SolaXModbusHub:
                         model=getattr(self.plugin, "inverter_model", None),
                         name=plugin_name,
                         serial_number=self.seriesnumber,
+                        sw_version=self.plugin.getSoftwareVersion(self.data),
+                        hw_version=self.plugin.getHardwareVersion(self.data),
                     )
                     if getattr(self, "_stopping", False):
                         return

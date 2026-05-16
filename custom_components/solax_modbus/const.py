@@ -204,6 +204,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     scale: float | dict[Any, Any] | Callable[[Any, Any, dict[str, Any]], Any] = (
         1  # can be float, dictionary or callable function(initval, descr, datadict)
     )
@@ -248,6 +250,8 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     register: int | None = None
     command: int | None = None
     blacklist: list[str] | None = None  # none or list of serial number prefixes
@@ -262,6 +266,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     """Base class for modbus select declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     register: int | None = None
     option_dict: dict[int, str] | None = None
     reverse_option_dict: dict[str, int] | None = None  # autocomputed
@@ -280,6 +286,8 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     """Base class for modbus switch declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     register: int | None = None
     register_bit: int | None = None
     blacklist: list[str] | None = None  # none or list of serial number prefixes
@@ -297,6 +305,8 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     """Base class for modbus time declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     register: int | None = None
     option_dict: dict[int, str] | None = None
     reverse_option_dict: dict[str, int] | None = None  # autocomputed
@@ -312,6 +322,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
+    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
     register: int | None = None
     read_scale_exceptions: list[Any] | None = None
     read_scale: float = 1
@@ -330,6 +342,39 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     display_as_box: bool = False  # if true, displays the entity as a box rather than a slider.
     suggested_display_precision: int | None = None
+
+
+def modbus_protocol_version(hub: Any) -> int:
+    """Return the detected Modbus protocol document version for a hub."""
+    version = getattr(hub, "modbus_protocol_version", None)
+    if version in (None, 0, "0", ""):
+        version = getattr(hub, "data", {}).get("modbus_protocol_version", 0)
+    try:
+        return int(version or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def matches_modbus_protocol(hub: Any, description: Any) -> bool:
+    """Return whether a description applies to the detected Modbus protocol version.
+
+    Unknown protocol versions keep legacy/fallback descriptions, but avoid creating
+    entities that explicitly require a newer protocol document.
+    """
+    min_version = getattr(description, "modbus_min", None)
+    max_version = getattr(description, "modbus_max", None)
+    if min_version is None and max_version is None:
+        return True
+
+    version = modbus_protocol_version(hub)
+    if version <= 0:
+        return min_version is None
+
+    if min_version is not None and version < min_version:
+        return False
+    if max_version is not None and version > max_version:
+        return False
+    return True
 
 
 # ========================= autorepeat aux functions to be used on hub.data dictionary ===============================
