@@ -40,9 +40,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     entities = []
     for time_info in plugin.TIME_TYPES:
-        if (
-            plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist)
-            and matches_modbus_protocol(hub, time_info)
+        if plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist) and matches_modbus_protocol(
+            hub, time_info
         ):
             if not (time_info.name.startswith(inverter_name_suffix)):
                 time_info = replace(time_info, name=inverter_name_suffix + time_info.name)

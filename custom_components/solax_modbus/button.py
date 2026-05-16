@@ -42,10 +42,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     entities = []
     for button_info in plugin.BUTTON_TYPES:
-        if (
-            plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist)
-            and matches_modbus_protocol(hub, button_info)
-        ):
+        if plugin.matchInverterWithMask(
+            hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist
+        ) and matches_modbus_protocol(hub, button_info):
             if not (button_info.name.startswith(inverter_name_suffix)):
                 button_info = replace(button_info, name=inverter_name_suffix + button_info.name)
             button = SolaXModbusButton(hub_name, hub, modbus_addr, hub.device_info, button_info)

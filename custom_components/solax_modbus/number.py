@@ -51,10 +51,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             ) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix):
                     newdescr = replace(number_info, read_scale=value)
-        if (
-            plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist)
-            and matches_modbus_protocol(hub, newdescr)
-        ):
+        if plugin.matchInverterWithMask(
+            hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist
+        ) and matches_modbus_protocol(hub, newdescr):
             if not (newdescr.name.startswith(inverter_name_suffix)):
                 newdescr = replace(newdescr, name=inverter_name_suffix + newdescr.name)
 
