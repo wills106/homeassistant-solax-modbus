@@ -27,6 +27,7 @@ from .const import (
     SLEEPMODE_NONE,
     SLEEPMODE_ZERO,
     BaseModbusSensorEntityDescription,
+    matches_modbus_protocol,
 )
 from .debug import get_debug_setting
 
@@ -776,7 +777,10 @@ def entityToList(
     readFollowUp: Any,
 ) -> None:  # noqa: D103
     for sensor_description in sensor_types:
-        if hub.plugin.matchInverterWithMask(hub._invertertype, sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist):
+        if (
+            hub.plugin.matchInverterWithMask(hub._invertertype, sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist)
+            and matches_modbus_protocol(hub, sensor_description)
+        ):
             # apply scale exceptions early
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):

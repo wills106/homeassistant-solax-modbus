@@ -18,6 +18,7 @@ from .const import (
     DOMAIN,
     WRITE_DATA_LOCAL,
     BaseModbusSwitchEntityDescription,
+    matches_modbus_protocol,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
-        if plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist):
+        if (
+            plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist)
+            and matches_modbus_protocol(hub, switch_info)
+        ):
             if not (switch_info.name.startswith(inverter_name_suffix)):
                 switch_info = replace(switch_info, name=inverter_name_suffix + switch_info.name)
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
