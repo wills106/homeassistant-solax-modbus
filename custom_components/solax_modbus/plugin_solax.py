@@ -223,8 +223,18 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
     return res
 
 
+def _ensure_hub_data(hub: Any) -> dict[str, Any]:
+    """Return hub.data, creating it for lightweight test hubs."""
+    data = getattr(hub, "data", None)
+    if not isinstance(data, dict):
+        data = {}
+        hub.data = data
+    return data
+
+
 async def async_read_modbus_protocol_version(hub: Any) -> int:
     """Read the Modbus protocol document version used for register-map gating."""
+    data = _ensure_hub_data(hub)
     version = 0
     inverter_data = None
     try:
@@ -236,18 +246,19 @@ async def async_read_modbus_protocol_version(hub: Any) -> int:
 
     if 0 < version < 1000:
         hub.modbus_protocol_version = version
-        hub.data["modbus_protocol_version"] = version
+        data["modbus_protocol_version"] = version
         _LOGGER.info(f"{hub.name}: Modbus protocol document version detected: {version}")
         return version
 
     hub.modbus_protocol_version = None
-    hub.data.pop("modbus_protocol_version", None)
+    data.pop("modbus_protocol_version", None)
     _LOGGER.debug(f"{hub.name}: Modbus protocol document version unavailable")
     return 0
 
 
 async def async_read_inverter_firmware_info(hub: Any) -> int:
     """Read early firmware metadata used for device info and protocol-specific register maps."""
+    data = _ensure_hub_data(hub)
     version = 0
     inverter_data = None
     try:
@@ -256,25 +267,25 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x7D, count=8)
         if inverter_data is not None and not inverter_data.isError():
             registers = inverter_data.registers
-            hub.data["firmware_dsp"] = int(registers[0])
-            hub.data["firmware_DSP_hardware_version"] = int(registers[1])
-            hub.data["firmware_dsp_major"] = int(registers[2])
-            hub.data["firmware_arm_major"] = int(registers[3])
+            data["firmware_dsp"] = int(registers[0])
+            data["firmware_DSP_hardware_version"] = int(registers[1])
+            data["firmware_dsp_major"] = int(registers[2])
+            data["firmware_arm_major"] = int(registers[3])
             version = int(registers[5])
-            hub.data["firmware_arm"] = int(registers[6])
-            hub.data["bootloader_version"] = int(registers[7])
+            data["firmware_arm"] = int(registers[6])
+            data["bootloader_version"] = int(registers[7])
     except Exception:
         _LOGGER.debug(f"{hub.name}: attempt to read inverter firmware info failed data: {inverter_data}", exc_info=True)
 
     if 0 < version < 1000:
         hub.modbus_protocol_version = version
-        hub.data["modbus_protocol_version"] = version
+        data["modbus_protocol_version"] = version
         _LOGGER.info(f"{hub.name}: Modbus protocol document version detected: {version}")
     else:
         hub.modbus_protocol_version = None
-        hub.data.pop("modbus_protocol_version", None)
-        hub.data.pop("firmware_version_dsp", None)
-        hub.data.pop("firmware_version_arm", None)
+        data.pop("modbus_protocol_version", None)
+        data.pop("firmware_version_dsp", None)
+        data.pop("firmware_version_arm", None)
         _LOGGER.debug(f"{hub.name}: Modbus protocol document version unavailable")
         return 0
 
@@ -283,13 +294,13 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
         try:
             full_version_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x7B, count=2)
             if full_version_data is not None and not full_version_data.isError():
-                hub.data["firmware_version_dsp"] = int(full_version_data.registers[0])
-                hub.data["firmware_version_arm"] = int(full_version_data.registers[1])
+                data["firmware_version_dsp"] = int(full_version_data.registers[0])
+                data["firmware_version_arm"] = int(full_version_data.registers[1])
         except Exception:
             _LOGGER.debug(f"{hub.name}: attempt to read full firmware version failed data: {full_version_data}", exc_info=True)
     else:
-        hub.data.pop("firmware_version_dsp", None)
-        hub.data.pop("firmware_version_arm", None)
+        data.pop("firmware_version_dsp", None)
+        data.pop("firmware_version_arm", None)
 
     return version
 
