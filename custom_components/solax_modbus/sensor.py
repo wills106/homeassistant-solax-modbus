@@ -779,9 +779,7 @@ def entityToList(
     for sensor_description in sensor_types:
         if hub.plugin.matchInverterWithMask(
             hub._invertertype, sensor_description.allowedtypes, hub.seriesnumber, sensor_description.blacklist
-        ) and matches_modbus_protocol(
-            hub, sensor_description
-        ):
+        ) and matches_modbus_protocol(hub, sensor_description):
             # apply scale exceptions early
             if sensor_description.value_series is not None:
                 for serie_value in range(sensor_description.value_series):
