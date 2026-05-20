@@ -20,6 +20,7 @@ from .const import (
     WRITE_SINGLE_MODBUS,
     BaseModbusSelectEntityDescription,
     autorepeat_set,
+    matches_modbus_protocol,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,7 +42,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     entities = []
     for select_info in plugin.SELECT_TYPES:
-        if plugin.matchInverterWithMask(hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist):
+        if plugin.matchInverterWithMask(
+            hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist
+        ) and matches_modbus_protocol(hub, select_info):
             select_info = replace(select_info, reverse_option_dict={v: k for k, v in select_info.option_dict.items()})
             if not (select_info.name.startswith(inverter_name_suffix)):
                 select_info = replace(select_info, name=inverter_name_suffix + select_info.name)
