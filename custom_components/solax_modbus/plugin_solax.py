@@ -4,6 +4,7 @@ from dataclasses import dataclass, replace
 from time import time
 from typing import Any
 
+
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
