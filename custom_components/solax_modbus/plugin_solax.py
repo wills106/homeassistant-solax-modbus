@@ -6595,6 +6595,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x1B,
         register_type=REG_INPUT,
         allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
