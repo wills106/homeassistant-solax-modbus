@@ -1526,7 +1526,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         key="system_off",
         register=0x690,
         command=0,
-        allowedtypes=MIC | GEN4  | X1,
+        allowedtypes=MIC | GEN4 | X1,
         icon="mdi:power-off",
     ),
 ]
