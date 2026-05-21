@@ -1497,6 +1497,38 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc,
     ),
+    SolaxModbusButtonEntityDescription(
+        name="System On",
+        key="system_on",
+        register=0x610,
+        command=1,
+        allowedtypes=MIC | X3,
+        icon="mdi:power-on",
+    ),
+    SolaxModbusButtonEntityDescription(
+        name="System Off",
+        key="system_off",
+        register=0x610,
+        command=0,
+        allowedtypes=MIC | X3,
+        icon="mdi:power-off",
+    ),
+    SolaxModbusButtonEntityDescription(
+        name="System On",
+        key="system_on",
+        register=0x690,
+        command=1,
+        allowedtypes=MIC | GEN4 | X1,
+        icon="mdi:power-on",
+    ),
+    SolaxModbusButtonEntityDescription(
+        name="System Off",
+        key="system_off",
+        register=0x690,
+        command=0,
+        allowedtypes=MIC | GEN4  | X1,
+        icon="mdi:power-off",
+    ),
 ]
 
 # ================================= Number Declarations ============================================================
