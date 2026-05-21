@@ -6936,11 +6936,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN5 | MPPT6,
         icon="mdi:solar-power-variant",
     ),
-    # V001.00 system-info register. Keep the existing calculated pv_power_total
-    # as the primary entity because this register returns 0 on some tested units.
     SolaXModbusSensorEntityDescription(
-        name="System PV Power Total",
-        key="system_pv_power_total",
+        name="PV Power Total",
+        key="pv_power_total",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -6978,6 +6976,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         modbus_min=100,
         icon="mdi:home-lightning-bolt",
     ),
+    # "Total Battery Power Charge" excludes GEN4 intentionally as the name
+    # conflicts with existing entity for register 0x16. As GEN4 is single
+    # battery this is not an issue.
     SolaXModbusSensorEntityDescription(
         name="Total Battery Power Charge",
         key="battery_power_charge",
@@ -6987,7 +6988,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x38,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID | GEN6,
+        modbus_min=100,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
@@ -9451,8 +9453,27 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | GEN | GEN2 | GEN3,
         blacklist=["PRI"],  # X1-FIT has no DC PV input
+        depends_on=[
+            "pv_power_1",
+            "pv_power_2",
+            "pv_power_3",
+            "pv_power_4",
+            "pv_power_5",
+            "pv_power_6",
+        ],
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        value_function=value_function_pv_power_total,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        modbus_max=99,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
         depends_on=[
             "pv_power_1",
             "pv_power_2",
@@ -9538,8 +9559,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
+        modbus_max=99,
         value_function=value_function_battery_power_charge,
-        allowedtypes=AC | HYBRID | GEN5,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging",
     ),
     #####
