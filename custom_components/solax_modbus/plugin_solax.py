@@ -2156,7 +2156,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        modbus_min=102, #test
+        modbus_min=102,
     ),
     SolaxModbusNumberEntityDescription(
         name="Bias Power",
