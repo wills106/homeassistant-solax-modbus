@@ -1707,6 +1707,13 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H3BG20", 20000),  # Gen5 X3 Ultra G
     ("H3BG25", 25000),  # Gen5 X3 Ultra G
     ("H3BG30", 30000),  # Gen5 X3 Ultra G
+    ("10K04", 4000),  # Gen6 X3-Pro-G4
+    ("10K05", 5000),  # Gen6 X3-Pro-G4
+    ("10K06", 6000),  # Gen6 X3-Pro-G4
+    ("10K08", 8000),  # Gen6 X3-Pro-G4
+    ("10K0A", 10000),  # Gen6 X3-Pro-G4
+    ("10K0C", 12000),  # Gen6 X3-Pro-G4
+    ("10K0F", 15000),  # Gen6 X3-Pro-G4
     ("8021", 60000),  # X3-Aelio #1555
     ### All known Inverters added
 ]
