@@ -1792,15 +1792,16 @@ class SolaXModbusHub:
             if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
                 d_newblock = False
                 d_enabled = False
+                first_descr = next(iter(descr.values()))
+                d_unit = first_descr.register_data_type
+                d_wordcount = 1  # U8L/U8H values share one 16-bit Modbus register.
+                d_key = first_descr.key
+                d_regtype = first_descr.register_type
                 for _sub, d in descr.items():
                     # d_newblock = d_newblock or d.newblock # ok, if needed, put a newblock on all subentries
                     if should_register_be_loaded(self._hass, self, d):  # *** CHANGED LINE: logic delegated to new function
                         d_enabled = True
                         break
-                    d_unit = d.unit
-                    d_wordcount = 1  # not used here
-                    d_key = d.key  # does not matter which key we use here
-                    d_regtype = d.register_type
             else:  # normal entity
                 # 1. First, check if the entity itself should be loaded based on its own state or defaults.
                 d_enabled = should_register_be_loaded(self._hass, self, descr)
