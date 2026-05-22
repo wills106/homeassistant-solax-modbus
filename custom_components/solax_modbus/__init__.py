@@ -128,6 +128,7 @@ COMM_HISTORY_LIMIT = 100
 COMM_BLOCK_FAILURE_THRESHOLD = 3
 COMM_BLOCK_FAILURE_WINDOW = 600
 COMM_RECOVERY_INTERVAL = 300
+CONNECT_RETRY_DELAY = 1.0
 
 
 try:
@@ -528,6 +529,8 @@ class SolaXModbusHub:
             # Fallback dummy client for unrecognized interface types
             self._client = SimpleNamespace(connected=False, comm_params=SimpleNamespace(host="", port=""))
         self._lock = asyncio.Lock()
+        self._connect_lock = asyncio.Lock()
+        self._next_connect_attempt = 0.0
         self._name: str = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug(f"{name}: using pymodbus version {pymodbus_version_info()}")
@@ -1211,11 +1214,31 @@ class SolaXModbusHub:
     async def _check_connection(self) -> bool:
         if getattr(self, "_stopping", False):
             return False
-        if not self._client.connected:
+        if self._client.connected:
+            return True
+        now = _mtime.monotonic()
+        if now < self._next_connect_attempt:
+            return False
+        async with self._connect_lock:
+            if getattr(self, "_stopping", False):
+                return False
+            if self._client.connected:
+                return True
+            now = _mtime.monotonic()
+            if now < self._next_connect_attempt:
+                return False
             _LOGGER.debug(f"{self._name}: Inverter is not connected, trying to connect")
-            await self.async_connect()
-            await asyncio.sleep(1)
-        return self._client.connected
+            try:
+                await self.async_connect()
+            except Exception as ex:
+                self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
+                _LOGGER.debug(f"{self._name}: connect attempt failed: {ex}")
+                return False
+            if not self._client.connected:
+                self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
+                return False
+            self._next_connect_attempt = 0.0
+            return True
 
     async def is_online(self) -> bool:
         return self._client.connected and (self.slowdown == 1)
@@ -1233,10 +1256,11 @@ class SolaXModbusHub:
 
     async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers using high-level pymodbus API."""
+        if not await self._check_connection():
+            return None
         async with self._lock:
             if getattr(self, "_stopping", False):
                 return None
-            await self._check_connection()
             if not self._client.connected:
                 return None
             try:
@@ -1252,15 +1276,17 @@ class SolaXModbusHub:
                     return None
                 _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
                 self._client.close()
+                self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
                 return None
         return resp
 
     async def async_read_input_registers(self, unit: int, address: int, count: int) -> Any:
         """Read input registers using high-level pymodbus API."""
+        if not await self._check_connection():
+            return None
         async with self._lock:
             if getattr(self, "_stopping", False):
                 return None
-            await self._check_connection()
             if not self._client.connected:
                 return None
             try:
@@ -1276,6 +1302,7 @@ class SolaXModbusHub:
                     return None
                 _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
                 self._client.close()
+                self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
                 return None
         return resp
 
@@ -1285,8 +1312,11 @@ class SolaXModbusHub:
             regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
         else:
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        if not await self._check_connection():
+            return None
         async with self._lock:
-            await self._check_connection()
+            if not self._client.connected:
+                return None
             try:
                 resp = await self._track_task(self._client.write_register(address=address, value=regs[0], **kwargs))  # type: ignore[arg-type]
                 # Plugin-level logging hook
@@ -1331,8 +1361,11 @@ class SolaXModbusHub:
         else:
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
+        if not await self._check_connection():
+            return None
         async with self._lock:
-            await self._check_connection()
+            if not self._client.connected:
+                return None
             try:
                 resp = await self._track_task(self._client.write_registers(address=address, values=regs, **kwargs))  # type: ignore[arg-type]
             except (ConnectionException, ModbusIOException) as e:
@@ -2293,67 +2326,53 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
             self._hub = None
 
     async def async_connect(self, hub: Any = None) -> Any:
-        delay = True
-        while True:
-            # check if strong reference to
-            # get one.
-            if hub is not None or (self._hub is not None and (hub := self._hub()) is not None):
-                port = hub._pb_params.get("port", 0)
-                host = hub._pb_params.get("host", port)
-                # TODO just wait some time and recheck again if client connected before
-                # giving up
-                await hub._lock.acquire()
-                try:
-                    if hub._client and hub._client.connected:
-                        hub._lock.release()
-                        _LOGGER.debug(
-                            "Inverter connected at %s:%s",
-                            host,
-                            port,
-                        )
-                        return hub
-                except (TypeError, AttributeError):
-                    pass
-                hub._lock.release()
-                if not delay:
-                    reason = " core modbus hub '{self._core_hub}' not ready" if hub._config_delay else ""
-                    _LOGGER.warning(f"Unable to connect to Inverter at {host}:{port}.{reason}")
-                    return None
-            else:
-                # get hold of current CoreModbusHub object with
-                # provided entity name
+        if getattr(self, "_stopping", False):
+            return None
+        now = _mtime.monotonic()
+        if now < self._next_connect_attempt:
+            return None
+        async with self._connect_lock:
+            if getattr(self, "_stopping", False):
+                return None
+            now = _mtime.monotonic()
+            if now < self._next_connect_attempt:
+                return None
+            if hub is None and self._hub is not None:
+                hub = self._hub()
+            if hub is None:
                 try:
                     hub = get_core_hub(self._hass, self._core_hub)
                 except KeyError:
-                    _LOGGER.warning(
-                        f"CoreModbusHub '{self._core_hub}' not available",
-                    )
+                    _LOGGER.warning(f"CoreModbusHub '{self._core_hub}' not available")
+                    self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
                     return None
-                else:
-                    if hub:
-                        # update weak reference handle to refer to
-                        # the actual CoreModbusHub object
-                        self._hub = WeakRef(hub, self._hub_closed_now)
-                        continue
-                if not delay:
-                    _LOGGER.warning(
-                        "Unable to join core modbus %s",
-                        self._core_hub,
-                    )
+                if not hub:
+                    _LOGGER.warning("Unable to join core modbus %s", self._core_hub)
+                    self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
                     return None
-            # wait some time (TODO make configurable) before
-            # rechecking if CoreModbusHub object has been created and
-            # connected
-            delay = False
-            await asyncio.sleep(10)
+                self._hub = WeakRef(hub, self._hub_closed_now)
+
+            port = hub._pb_params.get("port", 0)
+            host = hub._pb_params.get("host", port)
+            try:
+                async with hub._lock:
+                    if hub._client and hub._client.connected:
+                        _LOGGER.debug("Inverter connected at %s:%s", host, port)
+                        self._next_connect_attempt = 0.0
+                        return hub
+            except (TypeError, AttributeError):
+                pass
+            reason = f" core modbus hub '{self._core_hub}' not ready" if getattr(hub, "_config_delay", False) else ""
+            _LOGGER.debug(f"Unable to connect to Inverter at {host}:{port}.{reason}")
+            self._next_connect_attempt = _mtime.monotonic() + CONNECT_RETRY_DELAY
+            return None
 
     async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers."""
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
-        async with self._lock:
-            hub = await self._check_connection()
+        hub = await self._check_connection()
         try:
             if not hub or getattr(hub, "_config_delay", False):
                 return None
@@ -2372,8 +2391,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
-        async with self._lock:
-            hub = await self._check_connection()
+        hub = await self._check_connection()
         try:
             if not hub or getattr(hub, "_config_delay", False):
                 return None
@@ -2398,8 +2416,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
             return None
-        async with self._lock:
-            hub = await self._check_connection()
+        hub = await self._check_connection()
         try:
             if not hub or getattr(hub, "_config_delay", False):
                 return None
@@ -2428,14 +2445,13 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         else:
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
-        async with self._lock:
-            hub = await self._check_connection()
+        hub = await self._check_connection()
         try:
-            if hub._config_delay:
+            if not hub or hub._config_delay:
                 return None
             async with hub._lock:
                 try:
-                    resp = await self._client.write_registers(address=address, values=regs, **kwargs)  # type: ignore[arg-type]
+                    resp = await self._track_task(hub._client.write_registers(address=address, values=regs, **kwargs))
                 except (ConnectionException, ModbusIOException) as e:
                     original_message = str(e)
                     raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
@@ -2494,14 +2510,13 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
                     _LOGGER.error(f"unsupported unit type: {typ} for {key}")
             # for easier debugging, make next line a _LOGGER.info line
             _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
-            async with self._lock:
-                hub = await self._check_connection()
+            hub = await self._check_connection()
             try:
-                if hub._config_delay:
+                if not hub or hub._config_delay:
                     return None
                 async with hub._lock:
                     try:
-                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)  # type: ignore[arg-type]
+                        resp = await self._track_task(hub._client.write_registers(address=address, values=regs_out, **kwargs))
                     except (ConnectionException, ModbusIOException) as e:
                         original_message = str(e)
                         raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
