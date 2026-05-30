@@ -128,6 +128,7 @@ COMM_HISTORY_LIMIT = 100
 COMM_BLOCK_FAILURE_THRESHOLD = 3
 COMM_BLOCK_FAILURE_WINDOW = 600
 COMM_RECOVERY_INTERVAL = 300
+INFLIGHT_CANCEL_TIMEOUT = 2.0
 CONNECT_RETRY_DELAY = 1.0
 
 
@@ -1178,12 +1179,19 @@ class SolaXModbusHub:
                 dtask.cancel()
             except Exception:
                 pass
-        # 2d) cancel in-flight I/O tasks immediately
-        for task in list(self._inflight_tasks):
+        # 2d) cancel in-flight I/O tasks immediately and collect their
+        # cancellation results so pymodbus shutdown exceptions do not leak.
+        inflight_tasks = list(self._inflight_tasks)
+        for task in inflight_tasks:
             try:
                 task.cancel()
             except Exception:
                 pass
+        if inflight_tasks:
+            try:
+                await asyncio.wait_for(asyncio.gather(*inflight_tasks, return_exceptions=True), timeout=INFLIGHT_CANCEL_TIMEOUT)
+            except TimeoutError:
+                _LOGGER.debug(f"{self._name}: timed out waiting for in-flight Modbus tasks to cancel during shutdown")
         self._inflight_tasks.clear()
         # 3) freeze probe event
         try:
@@ -1203,6 +1211,12 @@ class SolaXModbusHub:
         self._inflight_tasks.add(task)
         task.add_done_callback(lambda t: self._inflight_tasks.discard(t))
         return task
+
+    def _is_expected_shutdown_modbus_error(self, ex: BaseException) -> bool:
+        """Return True for pymodbus cancellation errors caused by HA shutdown."""
+        if not getattr(self, "_stopping", False):
+            return False
+        return isinstance(ex, ModbusIOException) and "Request cancelled outside pymodbus" in str(ex)
 
     # async def async_connect(self):
     #    """Connect client."""
@@ -1270,6 +1284,9 @@ class SolaXModbusHub:
                 resp = await self._track_task(self._client.read_holding_registers(address=address, count=count, **kwargs))  # type: ignore[arg-type]
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
+                if self._is_expected_shutdown_modbus_error(exception_error):
+                    _LOGGER.debug(f"{self._name}: ignoring Modbus read cancellation during shutdown: {error}")
+                    return None
                 _LOGGER.error(error)
                 if getattr(self, "_stopping", False):
                     _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
@@ -1296,6 +1313,9 @@ class SolaXModbusHub:
                 resp = await self._track_task(self._client.read_input_registers(address=address, count=count, **kwargs))  # type: ignore[arg-type]
             except ModbusException as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
+                if self._is_expected_shutdown_modbus_error(exception_error):
+                    _LOGGER.debug(f"{self._name}: ignoring Modbus read cancellation during shutdown: {error}")
+                    return None
                 _LOGGER.error(error)
                 if getattr(self, "_stopping", False):
                     _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
@@ -2380,6 +2400,9 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
                 try:
                     resp = await self._track_task(hub._client.read_holding_registers(address=address, count=count, **kwargs))
                 except (ConnectionException, ModbusIOException) as e:
+                    if self._is_expected_shutdown_modbus_error(e):
+                        _LOGGER.debug(f"{self._name}: ignoring core Modbus read cancellation during shutdown: {e}")
+                        return None
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus holding registers: {original_message}") from e
             return resp
@@ -2399,6 +2422,9 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
                 try:
                     resp = await self._track_task(hub._client.read_input_registers(address=address, count=count, **kwargs))
                 except (ConnectionException, ModbusIOException) as e:
+                    if self._is_expected_shutdown_modbus_error(e):
+                        _LOGGER.debug(f"{self._name}: ignoring core Modbus read cancellation during shutdown: {e}")
+                        return None
                     original_message = str(e)
                     raise HomeAssistantError(f"Error reading Modbus input registers: {original_message}") from e
             return resp
