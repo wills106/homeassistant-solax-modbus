@@ -6,7 +6,7 @@ from typing import Any
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -151,10 +151,11 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        # Skip hub registration for computed/internal entities (those without modbus registers)
-        if self.entity_description.register is None or self.entity_description.register < 0:
-            return
         if self.entity_description.write_method != WRITE_DATA_LOCAL:
+            return
+        self.async_on_remove(self.hass.bus.async_listen("solax_modbus_local_data_loaded", self._handle_local_data_loaded))
+        if self._sensor_key is not None and self._sensor_key in self._hub.data:
+            self.async_write_ha_state()
             return
         last_state = await self.async_get_last_state()
         if not last_state or last_state.state in ("unknown", "unavailable"):
@@ -163,6 +164,12 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = is_on
         if self._sensor_key is not None:
             self._hub.data[self._sensor_key] = 1 if is_on else 0
+        self.async_write_ha_state()
+
+    @callback
+    def _handle_local_data_loaded(self, event: Any) -> None:
+        if (event.data or {}).get("hub_name") != self._hub._name:
+            return
         self.async_write_ha_state()
 
     async def _write_switch_to_modbus(self) -> None:
