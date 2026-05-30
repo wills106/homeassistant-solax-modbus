@@ -3759,7 +3759,6 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             2: "Inverter",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        modbus_min=100,
         icon="mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
@@ -4688,7 +4687,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             2: "Inverter",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        modbus_min=100,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
