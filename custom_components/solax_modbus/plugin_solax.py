@@ -7712,7 +7712,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=AC | HYBRID | X3,
+        allowedtypes=AC | HYBRID,
         icon="mdi:timer",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7724,7 +7724,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=AC | HYBRID | X3 | EPS,
+        allowedtypes=AC | HYBRID | EPS,
         icon="mdi:timer",
     ),
     SolaXModbusSensorEntityDescription(
