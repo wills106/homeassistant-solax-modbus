@@ -4768,19 +4768,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             0: "Off",
             1: "On",
         },
-        allowedtypes=AC | HYBRID | GEN2 | GEN3 | EPS,
-        icon="mdi:volume-mute",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="EPS Mute",
-        key="eps_mute",
-        register=0xB7,
-        scale={
-            0: "Off",
-            1: "On",
-        },
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | EPS,
-        modbus_min=102,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | EPS,
         icon="mdi:volume-mute",
     ),
     SolaXModbusSensorEntityDescription(
