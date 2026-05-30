@@ -18,6 +18,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
+    BaseModbusTimeEntityDescription,
     matches_modbus_protocol,
 )
 
@@ -59,6 +60,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusTimeEntity(TimeEntity):
     """Representation of an SolaX Modbus time entity."""
 
+    entity_description: BaseModbusTimeEntityDescription
+
     def __init__(
         self,
         platform_name: str,
@@ -79,14 +82,24 @@ class SolaXModbusTimeEntity(TimeEntity):
         self._option_dict = time_info.option_dict
         self.entity_description = time_info
         self._write_method = time_info.write_method
+        self._attr_native_value = None
         # wordcount for separate register format (e.g., hours and minutes in adjacent registers)
         self._wordcount = getattr(time_info, "wordcount", None) or 1
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
+        if self._write_method == WRITE_DATA_LOCAL:
+            self.async_on_remove(self.hass.bus.async_listen("solax_modbus_local_data_loaded", self._handle_local_data_loaded))
+            self.modbus_data_updated()
+            return
+
+        if self.entity_description.register is None or self.entity_description.register < 0:
+            return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
+        if self._write_method == WRITE_DATA_LOCAL or self.entity_description.register is None or self.entity_description.register < 0:
+            return
         await self._hub.async_remove_solax_modbus_sensor(self)
 
     @callback
@@ -95,6 +108,12 @@ class SolaXModbusTimeEntity(TimeEntity):
         # Clear the cached property by setting _attr_native_value
         self._attr_native_value = self._parse_time_value()
         self.async_write_ha_state()
+
+    @callback
+    def _handle_local_data_loaded(self, event: Any) -> None:
+        if (event.data or {}).get("hub_name") != self._hub._name:
+            return
+        self.modbus_data_updated()
 
     def _parse_time_value(self) -> datetime_time | None:
         """Parse the time value from hub.data and return a datetime.time object.

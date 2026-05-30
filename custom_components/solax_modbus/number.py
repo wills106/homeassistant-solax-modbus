@@ -141,12 +141,19 @@ class SolaXModbusNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
+        if self._write_method == WRITE_DATA_LOCAL:
+            self.async_on_remove(self.hass.bus.async_listen("solax_modbus_local_data_loaded", self._handle_local_data_loaded))
+            self.async_write_ha_state()
+            return
+
         # Skip hub registration for computed/internal entities (those without modbus registers)
         if self.entity_description.register is None or self.entity_description.register < 0:
             return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
+        if self._write_method == WRITE_DATA_LOCAL or self.entity_description.register is None or self.entity_description.register < 0:
+            return
         await self._hub.async_remove_solax_modbus_sensor(self)
 
     """ remove duplicate declaration
@@ -156,6 +163,12 @@ class SolaXModbusNumber(NumberEntity):
 
     @callback
     def modbus_data_updated(self) -> None:
+        self.async_write_ha_state()
+
+    @callback
+    def _handle_local_data_loaded(self, event: Any) -> None:
+        if (event.data or {}).get("hub_name") != self._hub._name:
+            return
         self.async_write_ha_state()
 
     @property
