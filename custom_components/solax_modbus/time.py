@@ -18,6 +18,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
+    BaseModbusTimeEntityDescription,
     matches_modbus_protocol,
 )
 
@@ -58,6 +59,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class SolaXModbusTimeEntity(TimeEntity):
     """Representation of an SolaX Modbus time entity."""
+
+    entity_description: BaseModbusTimeEntityDescription
 
     def __init__(
         self,
