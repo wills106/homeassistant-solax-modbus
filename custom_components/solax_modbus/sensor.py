@@ -560,6 +560,17 @@ class SolaXModbusSensor(SensorEntity):
         # Skip hub registration for computed/internal sensors (those without modbus registers)
         # These sensors don't participate in the polling cycle
         if self.entity_description.register < 0:
+            if self.entity_description.value_function:
+                self._hub.computedSensors[self.entity_description.key] = self.entity_description
+                try:
+                    self._hub.data[self.entity_description.key] = self.entity_description.value_function(
+                        0,
+                        self.entity_description,
+                        self._hub.data,
+                    )
+                    self.modbus_data_updated()
+                except Exception as e:
+                    _LOGGER.debug(f"{self._platform_name}: value_function failed for {self.entity_description.key}: {e}")
             return
         await self._hub.async_add_solax_modbus_sensor(self)
 
