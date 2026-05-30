@@ -21,6 +21,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PORT,
     EVENT_HOMEASSISTANT_STARTED,
+    EVENT_HOMEASSISTANT_STOP,
     PERCENTAGE,
     Platform,
     UnitOfElectricCurrent,
@@ -257,6 +258,22 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         hass.data[DOMAIN]["_debug_settings"] = debug_settings
     else:
         hass.data[DOMAIN]["_debug_settings"] = {}
+
+    async def _stop_hubs_on_homeassistant_stop(event: Any) -> None:
+        """Stop active hubs before HA reaches final task cancellation."""
+        domain_data = hass.data.get(DOMAIN, {})
+        for name, rec in list(domain_data.items()):
+            if not isinstance(rec, dict):
+                continue
+            hub = rec.get("hub")
+            if hub:
+                _LOGGER.debug(f"{name}: Home Assistant stop event - stopping hub")
+                try:
+                    await hub.async_stop()
+                except Exception as ex:
+                    _LOGGER.warning(f"{name}: error during Home Assistant stop: {ex}")
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _stop_hubs_on_homeassistant_stop)
 
     # Register helper services to force-stop hubs
     async def _svc_stop_all(call: Any) -> None:
@@ -1209,8 +1226,27 @@ class SolaXModbusHub:
         """Wrap coroutines in a Task we can cancel during stop."""
         task = asyncio.create_task(coro)
         self._inflight_tasks.add(task)
-        task.add_done_callback(lambda t: self._inflight_tasks.discard(t))
+        task.add_done_callback(self._handle_tracked_task_done)
         return task
+
+    def _handle_tracked_task_done(self, task: asyncio.Task[Any]) -> None:
+        """Collect finished in-flight task results during shutdown."""
+        self._inflight_tasks.discard(task)
+        if not getattr(self, "_stopping", False):
+            return
+        try:
+            exc = task.exception()
+        except asyncio.CancelledError:
+            return
+        except Exception as ex:
+            _LOGGER.debug(f"{self._name}: failed to collect in-flight Modbus task result during shutdown: {ex}")
+            return
+        if exc is None:
+            return
+        if self._is_expected_shutdown_modbus_error(exc):
+            _LOGGER.debug(f"{self._name}: collected expected Modbus task cancellation during shutdown: {exc}")
+            return
+        _LOGGER.debug(f"{self._name}: in-flight Modbus task ended during shutdown: {exc}")
 
     def _is_expected_shutdown_modbus_error(self, ex: BaseException) -> bool:
         """Return True for pymodbus cancellation errors caused by HA shutdown."""
