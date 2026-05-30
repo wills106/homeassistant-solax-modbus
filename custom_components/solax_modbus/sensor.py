@@ -599,6 +599,11 @@ class SolaXModbusSensor(SensorEntity):
         return None
 
     @property
+    def should_poll(self) -> bool:
+        """Data is delivered by the hub."""
+        return False
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         attrs = dict(self._attr_extra_state_attributes)
         if self.entity_description.key == "communication_health":

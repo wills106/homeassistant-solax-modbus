@@ -159,6 +159,11 @@ class SolaXModbusNumber(NumberEntity):
         self.async_write_ha_state()
 
     @property
+    def should_poll(self) -> bool:
+        """Data is delivered by the hub."""
+        return False
+
+    @property
     def name(self) -> str:
         """Return the name."""
         return f"{self._platform_name} {self._name}"
