@@ -3452,7 +3452,6 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             1: "Enabled",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        modbus_min=101,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:power-plug",
@@ -4727,7 +4726,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_HOLDING,
         scale=value_function_disabled_enabled,
         allowedtypes=AC | HYBRID | GEN4,
-        modbus_min=101,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
