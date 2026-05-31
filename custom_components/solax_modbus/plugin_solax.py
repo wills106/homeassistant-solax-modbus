@@ -5006,7 +5006,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:meter-electric",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Meter 1 id",
+        name="Meter 1 ID",
         key="meter_1_id",
         register=0x109,
         entity_registry_enabled_default=False,
@@ -5015,7 +5015,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:meter-electric",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Meter 2 id",
+        name="Meter 2 ID",
         key="meter_2_id",
         register=0x10A,
         entity_registry_enabled_default=False,
