@@ -6640,18 +6640,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x1C,
         register_type=REG_INPUT,
-        allowedtypes=AC | HYBRID | GEN2 | GEN3,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Battery Capacity",
-        key="battery_capacity",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=SensorDeviceClass.BATTERY,
-        state_class=SensorStateClass.MEASUREMENT,
-        register=0x1C,
-        register_type=REG_INPUT,
-        modbus_max=99,
-        allowedtypes=AC | HYBRID | GEN4,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
@@ -7110,9 +7099,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         modbus_min=100,
         icon="mdi:home-lightning-bolt",
     ),
-    # "Total Battery Power Charge" excludes GEN4 intentionally as the name
-    # conflicts with existing entity for register 0x16. As GEN4 is single
-    # battery this is not an issue.
+    # "Total Battery Power Charge" excludes GEN4 intentionally as
+    # they are always single battery, so uses base register 0x16.
     SolaXModbusSensorEntityDescription(
         name="Total Battery Power Charge",
         key="battery_power_charge",
@@ -7139,6 +7127,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         icon="mdi:battery",
     ),
+    # "Battery Capacity" excludes GEN4 intentionally as they
+    # are always single battery, so uses base register 0x1C.
     SolaXModbusSensorEntityDescription(
         name="Battery Capacity",
         key="battery_capacity",
@@ -7148,9 +7138,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x3C,
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=HYBRID | GEN5 | GEN6,
         modbus_min=100,
     ),
+    # "Battery State of Health" excludes GEN4 intentionally as they
+    # are always single battery, so uses base register 0xBF.
     SolaXModbusSensorEntityDescription(
         name="Battery State of Health",
         key="battery_soh",
@@ -7158,7 +7150,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x3D,
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=HYBRID | GEN5 | GEN6,
         modbus_min=100,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -8160,8 +8152,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_DEFAULT,
         register_type=REG_INPUT,
         entity_registry_enabled_default=False,
+        allowedtypes=AC | HYBRID | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery State of Health",
+        key="battery_soh",
+        icon="mdi:battery-heart",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0xBF,
+        scan_group=SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        entity_registry_enabled_default=False,
         modbus_max=99,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 1 State of Health",
