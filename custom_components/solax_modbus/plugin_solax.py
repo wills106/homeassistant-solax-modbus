@@ -473,7 +473,9 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
             ap_target = 0 - pv_power
         power_control = "Enabled Power Control"
 
-    elif power_control == "Disabled":
+    else:
+        # Otherwise disabled or unknown mode. Mark as disabled.
+        power_control = "Disabled"
         ap_target = target
 
     # Debug logging: Target calculation
@@ -1056,7 +1058,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     elif power_control == "Enabled Grid Control":
         pushmode_power = pushmode_power + houseload - pv
         pvlimit = setpvlimit
-    elif power_control == "Disabled":
+    else:
+        # Otherwise disabled or unknown mode. Mark as disabled.
+        power_control = "Disabled"
         pvlimit = setpvlimit
     # limit import to max import (capacity tarif in some countries)
     old_pushmode_power = pushmode_power
