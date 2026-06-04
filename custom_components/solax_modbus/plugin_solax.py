@@ -11304,6 +11304,7 @@ class solax_plugin(plugin_base):
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
         _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        self.inverter_model = None
         seriesnumber = await async_read_serialnr(hub, 0x0)
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x300)  # bug in Endian.LITTLE decoding?
@@ -11688,6 +11689,9 @@ class solax_plugin(plugin_base):
         else:
             invertertype = 0
             _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+
+        hub.inverter_model = self.inverter_model if invertertype > 0 else None
+        hub._has_local_inverter_model = True
 
         if invertertype > 0:
             # Firmware metadata is needed before the first poll so the device registry and

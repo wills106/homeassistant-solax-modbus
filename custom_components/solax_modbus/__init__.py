@@ -20,7 +20,6 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
-    EVENT_HOMEASSISTANT_STARTED,
     EVENT_HOMEASSISTANT_STOP,
     PERCENTAGE,
     Platform,
@@ -414,19 +413,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "hub": hub,
     }
 
-    # Tests on some systems have shown that establishing the Modbus connection
-    # can occasionally lead to errors if Home Assistant is not fully loaded.
-    if hass.is_running:
-        # Start init in background so it can be cancelled on unload
-        hub._init_task = hass.loop.create_task(hub.async_init())
-    else:
-        # Defer until HA is started, but still capture the task handle for cancellation
-        async def _deferred_init(event: Any) -> None:
-            if getattr(hub, "_stopping", False):
-                return
-            hub._init_task = hass.loop.create_task(hub.async_init())
-
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _deferred_init)
+    await hub.async_init()
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
@@ -590,6 +577,8 @@ class SolaXModbusHub:
         self.config: Any = config  # MappingProxyType from entry.options
         self.entry: ConfigEntry = entry
         self.device_info: DeviceInfo | None = None
+        self.inverter_model: str | None = None
+        self._has_local_inverter_model: bool = False
         self.blocks_changed: bool = False
         self.initial_groups: dict[Any, Any] = {}  # as returned by the sensor setup - holdingRegs and inputRegs should not change
 
@@ -691,7 +680,7 @@ class SolaXModbusHub:
         self.device_info = DeviceInfo(
             identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
             manufacturer=self.plugin.plugin_manufacturer,
-            model=getattr(self.plugin, "inverter_model", None),
+            model=self._get_inverter_model(),
             name=plugin_name,
             serial_number=self.seriesnumber,
             sw_version=self.plugin.getSoftwareVersion(self.data),
@@ -722,6 +711,11 @@ class SolaXModbusHub:
 
         self._init_task = None
 
+    def _get_inverter_model(self) -> str | None:
+        if self._has_local_inverter_model:
+            return self.inverter_model
+        return getattr(self.plugin, "inverter_model", None)
+
     async def _deferred_setup_loop(self, interval: int = 30) -> None:
         """Keep trying to detect inverter type and forward platforms once online."""
         import asyncio
@@ -743,7 +737,7 @@ class SolaXModbusHub:
                     self.device_info = DeviceInfo(
                         identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
                         manufacturer=self.plugin.plugin_manufacturer,
-                        model=getattr(self.plugin, "inverter_model", None),
+                        model=self._get_inverter_model(),
                         name=plugin_name,
                         serial_number=self.seriesnumber,
                         sw_version=self.plugin.getSoftwareVersion(self.data),
