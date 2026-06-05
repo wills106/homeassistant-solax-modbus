@@ -1176,6 +1176,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         key="battery_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
         register=33000,
         scale=0.01,
         rounding=2,
