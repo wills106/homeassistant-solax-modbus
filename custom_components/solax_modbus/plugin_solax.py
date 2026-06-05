@@ -11795,7 +11795,13 @@ class solax_plugin(plugin_base):
                         )
                         _LOGGER.info(f"Parallel Master: Set {key} limits to ±{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
 
-        # For single inverters or if config_max_export is enabled, use config_max_export
+        # For single inverters or if config_max_export is enabled, use config_max_export.
+        # Parallel Master remote-control limits are handled above using total system power,
+        # but export_control_user_limit still needs the configured max export range.
+        parallel_master_remotecontrol_keys = {
+            "remotecontrol_active_power",
+            "remotecontrol_import_limit",
+        }
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
@@ -11807,14 +11813,17 @@ class solax_plugin(plugin_base):
                     "generator_max_charge",
                 ]:
                     number_entity = hub.numberEntities.get(key)
-                    if number_entity and parallel_setting != "Master":  # Don't override parallel Master
-                        number_entity._attr_native_max_value = new_max_export
-                        # update description also, not sure whether needed or not
-                        number_entity.entity_description = replace(
-                            number_entity.entity_description,
-                            native_max_value=new_max_export,
-                        )
-                        _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+                    if not number_entity:
+                        continue
+                    if parallel_setting == "Master" and key in parallel_master_remotecontrol_keys:
+                        continue
+                    number_entity._attr_native_max_value = new_max_export
+                    # update description also, not sure whether needed or not
+                    number_entity.entity_description = replace(
+                        number_entity.entity_description,
+                        native_max_value=new_max_export,
+                    )
+                    _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
 
         return False
 
