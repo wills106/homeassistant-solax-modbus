@@ -501,8 +501,11 @@ def _create_sensor_from_mapping(
     source_sensor_desc = None
     source_key = sensor_mapping.get_source_key(getattr(data_hub, "data", None) or getattr(data_hub, "datadict", {}))
 
-    # Look for source sensor in hub's sensor entities
-    if hasattr(data_hub, "sensorEntities") and source_key in data_hub.sensorEntities:
+    # Prefer source descriptors; entity objects are only available for enabled entities.
+    sensor_descriptions = getattr(data_hub, "sensorDescriptions", {}) or {}
+    if source_key in sensor_descriptions:
+        source_sensor_desc = sensor_descriptions[source_key]
+    elif hasattr(data_hub, "sensorEntities") and source_key in data_hub.sensorEntities:
         source_sensor = data_hub.sensorEntities[source_key]
         if hasattr(source_sensor, "entity_description"):
             source_sensor_desc = source_sensor.entity_description
@@ -836,11 +839,12 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
 
             def _detect_variants(hub_obj: Any, mapping: Any, base_key: str) -> list[int]:
                 sensor_keys = getattr(hub_obj, "sensorEntities", {}) or {}
+                sensor_descriptions = getattr(hub_obj, "sensorDescriptions", {}) or {}
                 hub_data = getattr(hub_obj, "data", None) or getattr(hub_obj, "datadict", {})
                 variants = []
                 for n in range(1, mapping.max_variants + 1):
                     variant_key = f"{base_key}{n}"
-                    if variant_key in sensor_keys or variant_key in hub_data:
+                    if variant_key in sensor_keys or variant_key in sensor_descriptions or variant_key in hub_data:
                         variants.append(n)
                 return variants
 

@@ -554,6 +554,7 @@ class SolaXModbusHub:
         self.computedSensors: dict[Any, Any] = {}
         self.computedEntities: dict[Any, Any] = {}  # buttons and selects with value_function for autorepeat
         self.computedSwitches: dict[Any, Any] = {}
+        self.sensorDescriptions: dict[Any, Any] = {}  # all sensor descriptions, indexed by key
         self.sensorEntities: dict[Any, Any] = {}  # all sensor entities, indexed by key
         self.numberEntities: dict[Any, Any] = {}  # all number entities, indexed by key
         self.selectEntities: dict[Any, Any] = {}
@@ -1729,11 +1730,14 @@ class SolaXModbusHub:
             self.plugin.localDataCallback(self)
         if not self.localsLoaded:
             await self._hass.async_add_executor_job(self.loadLocalData)
-        for key, descr in self.computedSensors.items():
-            # Do NOT call modbus_data_updated() from here Race Condition:it calls hub.rebuild_blocks() before async_add_entities is called.
-            data[key] = descr.value_function(0, descr, data)
-            sens = self.sensorEntities[key]
-            _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data[descr.key]} ")
+        for key, descr in list(self.computedSensors.items()):
+            try:
+                data[key] = descr.value_function(0, descr, data)
+            except Exception as ex:
+                _LOGGER.debug(f"{self._name}: cannot compute value for {key}: {ex}")
+                continue
+            sens = self.sensorEntities.get(key)
+            _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data.get(descr.key)} ")
             if sens and (not descr.internal):
                 try:
                     sens.modbus_data_updated()  # publish state to GUI and automations faster - assuming enabled, otherwise exception
@@ -1823,6 +1827,8 @@ class SolaXModbusHub:
                 control_entity = self.sensorEntities.get(control_key)
                 if control_entity:
                     control_descr = control_entity.entity_description
+            if not control_descr:
+                control_descr = self.sensorDescriptions.get(control_key)
             if control_descr and should_register_be_loaded(self._hass, self, control_descr):
                 _LOGGER.debug(f"Sensor '{sensor_key}' is required by enabled control or value_function entity '{control_key}'.")
                 return True
