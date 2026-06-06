@@ -11554,6 +11554,10 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("H3BG30"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra G
             self.inverter_model = "X3-Ultra-30kW"
+        elif seriesnumber.startswith("10U"):
+            kw_value = int(seriesnumber[3:5], 16)
+            invertertype = HYBRID | GEN6 | X3  # X3-NEO-LV, low-voltage hybrid, 2 MPPT trackers
+            self.inverter_model = f"X3-NEO-{kw_value}K-LV"
         elif seriesnumber.startswith("10K"):
             kw_value = int(seriesnumber[3:5], 16)
             invertertype = HYBRID | GEN6 | X3  # X3-HYB-G4 PRO
