@@ -987,11 +987,20 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
             # Setpoint filter to slow down changes to battery to limit oscillation
             selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
-            pushmode_power = -selected_charge
+
+            # If current selected charge is higher than surplus PV (due to filter lag)
+            # clamp to PV to avoid grid import. This essentially means the filtering is
+            # fast at reacting to PV dips, but slows increasing charge which should still
+            # limit oscillation.
+            if selected_charge > surplus:
+                selected_charge = surplus
 
             # Any surplus not able to feed into the battery should be handled by inverter
             # self-limiting PV output.
             error = surplus - selected_charge
+
+            # Push mode is negative
+            pushmode_power = -selected_charge
 
             _LOGGER.debug(
                 f"[Mode8 Export-First] {control_state}: surplus={surplus}W inverter_limit={inverter_limit}W "
