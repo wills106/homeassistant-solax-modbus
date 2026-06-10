@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from time import time
 from typing import Any
 
@@ -11287,6 +11287,39 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
 ]
+
+
+_TIME_OPTION_DICTS = (TIME_OPTIONS, TIME_OPTIONS_GEN4, TIME_OPTIONS_SEPARATE_REGISTERS)
+_TIME_ENTITY_FIELD_NAMES = {field.name for field in fields(SolaXModbusTimeEntityDescription)}
+_TIME_ENTITY_KEYS = {(time_entity.key, time_entity.register, time_entity.allowedtypes) for time_entity in TIME_TYPES}
+
+
+def _is_time_select(select_entity: SolaxModbusSelectEntityDescription) -> bool:
+    """Return True for legacy time selects that should be exposed as TimeEntity."""
+    return any(select_entity.option_dict is option_dict for option_dict in _TIME_OPTION_DICTS)
+
+
+def _time_entity_from_select(select_entity: SolaxModbusSelectEntityDescription) -> SolaXModbusTimeEntityDescription:
+    """Convert a legacy time select descriptor into a native HA TimeEntity descriptor."""
+    return SolaXModbusTimeEntityDescription(
+        **{
+            field_name: getattr(select_entity, field_name)
+            for field_name in _TIME_ENTITY_FIELD_NAMES
+            if hasattr(select_entity, field_name)
+        }
+    )
+
+
+for _select_entity in SELECT_TYPES:
+    if not _is_time_select(_select_entity):
+        continue
+    _time_key = (_select_entity.key, _select_entity.register, _select_entity.allowedtypes)
+    if _time_key in _TIME_ENTITY_KEYS:
+        continue
+    TIME_TYPES.append(_time_entity_from_select(_select_entity))
+    _TIME_ENTITY_KEYS.add(_time_key)
+
+SELECT_TYPES = [select_entity for select_entity in SELECT_TYPES if not _is_time_select(select_entity)]
 
 # ============================ plugin declaration =================================================
 

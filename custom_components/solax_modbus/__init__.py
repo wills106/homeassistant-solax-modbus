@@ -1584,22 +1584,23 @@ class SolaXModbusHub:
                 return_value = round(val * descr.scale * read_scale, descr.rounding)
             except Exception:
                 return_value = val  # probably a REGISTER_WORDS instance
-            if descr.native_unit_of_measurement == UnitOfFrequency.HERTZ:
+            native_unit = getattr(descr, "native_unit_of_measurement", None)
+            if native_unit == UnitOfFrequency.HERTZ:
                 min_val = getattr(descr, "min_value", 20)
                 max_val = getattr(descr, "max_value", 80)
-            if descr.native_unit_of_measurement == PERCENTAGE:
+            if native_unit == PERCENTAGE:
                 min_val = getattr(descr, "min_value", 0)
                 max_val = getattr(descr, "max_value", 100)
-            elif descr.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
+            elif native_unit == UnitOfTemperature.CELSIUS:
                 min_val = getattr(descr, "min_value", -100)
                 max_val = getattr(descr, "max_value", 200)
-            elif descr.native_unit_of_measurement == UnitOfPower.KILO_WATT:
+            elif native_unit == UnitOfPower.KILO_WATT:
                 min_val = getattr(descr, "min_value", -self.inverterPowerKw * 2)
                 max_val = getattr(descr, "max_value", +self.inverterPowerKw * 2)
-            elif descr.native_unit_of_measurement == UnitOfElectricCurrent.AMPERE:
+            elif native_unit == UnitOfElectricCurrent.AMPERE:
                 min_val = getattr(descr, "min_value", -self.inverterPowerKw * 2)
                 max_val = getattr(descr, "max_value", +self.inverterPowerKw * 2)
-            elif descr.native_unit_of_measurement == UnitOfElectricPotential.VOLT:
+            elif native_unit == UnitOfElectricPotential.VOLT:
                 min_val = getattr(descr, "min_value", 0)
                 max_val = getattr(descr, "max_value", 2000)
             else:
