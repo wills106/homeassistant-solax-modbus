@@ -11302,16 +11302,14 @@ def _is_time_select(select_entity: SolaxModbusSelectEntityDescription) -> bool:
 def _time_entity_from_select(select_entity: SolaxModbusSelectEntityDescription) -> SolaXModbusTimeEntityDescription:
     """Convert a legacy time select descriptor into a native HA TimeEntity descriptor."""
     return SolaXModbusTimeEntityDescription(
-        **{
-            field_name: getattr(select_entity, field_name)
-            for field_name in _TIME_ENTITY_FIELD_NAMES
-            if hasattr(select_entity, field_name)
-        }
+        **{field_name: getattr(select_entity, field_name) for field_name in _TIME_ENTITY_FIELD_NAMES if hasattr(select_entity, field_name)}
     )
 
 
 for _select_entity in SELECT_TYPES:
     if not _is_time_select(_select_entity):
+        continue
+    if _select_entity.register is None:
         continue
     _time_key = (_select_entity.key, _select_entity.register, _select_entity.allowedtypes)
     if _time_key in _TIME_ENTITY_KEYS:
