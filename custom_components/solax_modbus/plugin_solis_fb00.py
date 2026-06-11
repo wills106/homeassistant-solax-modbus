@@ -3568,7 +3568,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=HYBRID,
         entity_registry_enabled_default=False,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Charge Current",
@@ -3581,7 +3581,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=HYBRID,
         entity_registry_enabled_default=False,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Discharge Current",
@@ -3594,7 +3594,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 1 ==============================
     SolisModbusSensorEntityDescription(
@@ -3604,7 +3604,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3614,7 +3614,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3624,7 +3624,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3634,7 +3634,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3644,7 +3644,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:switch",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge SOC",
@@ -3654,7 +3654,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt",
@@ -3664,7 +3664,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current",
@@ -3675,7 +3675,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours",
@@ -3684,7 +3684,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3694,7 +3694,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3704,7 +3704,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3714,7 +3714,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3725,7 +3725,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt",
@@ -3735,7 +3735,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current",
@@ -3746,7 +3746,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 2 ==============================
     SolisModbusSensorEntityDescription(
@@ -3756,7 +3756,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3766,7 +3766,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3776,7 +3776,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3786,7 +3786,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3797,7 +3797,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt 2",
@@ -3807,7 +3807,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current 2",
@@ -3818,7 +3818,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours 2",
@@ -3827,7 +3827,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3837,7 +3837,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3847,7 +3847,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3857,7 +3857,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3868,7 +3868,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt 2",
@@ -3878,7 +3878,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current 2",
@@ -3889,7 +3889,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 3 ==============================
     SolisModbusSensorEntityDescription(
@@ -3899,7 +3899,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3909,7 +3909,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3919,7 +3919,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3929,7 +3929,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3940,7 +3940,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt 3",
@@ -3950,7 +3950,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current 3",
@@ -3961,7 +3961,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours 3",
@@ -3970,7 +3970,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3980,7 +3980,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3990,7 +3990,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4000,7 +4000,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4011,7 +4011,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt 3",
@@ -4021,7 +4021,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current 3",
@@ -4032,7 +4032,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 4 ==============================
     SolisModbusSensorEntityDescription(
@@ -4042,7 +4042,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4052,7 +4052,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4062,7 +4062,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4072,7 +4072,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4083,7 +4083,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt 4",
@@ -4093,7 +4093,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current 4",
@@ -4104,7 +4104,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours 4",
@@ -4113,7 +4113,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4123,7 +4123,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4133,7 +4133,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4143,7 +4143,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4154,7 +4154,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt 4",
@@ -4164,7 +4164,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current 4",
@@ -4175,7 +4175,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 5 ==============================
     SolisModbusSensorEntityDescription(
@@ -4185,7 +4185,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4195,7 +4195,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4205,7 +4205,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4215,7 +4215,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4226,7 +4226,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt 5",
@@ -4236,7 +4236,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current 5",
@@ -4247,7 +4247,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours 5",
@@ -4256,7 +4256,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4266,7 +4266,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4276,7 +4276,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4286,7 +4286,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4297,7 +4297,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt 5",
@@ -4307,7 +4307,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current 5",
@@ -4318,7 +4318,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ============================ TimeSlot 6 ==============================
     SolisModbusSensorEntityDescription(
@@ -4328,7 +4328,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4338,7 +4338,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4348,7 +4348,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4358,7 +4358,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4369,7 +4369,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Volt 6",
@@ -4379,7 +4379,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current 6",
@@ -4390,7 +4390,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Start Hours 6",
@@ -4399,7 +4399,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4409,7 +4409,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4419,7 +4419,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4429,7 +4429,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -4440,7 +4440,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Volt 6",
@@ -4450,7 +4450,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current 6",
@@ -4461,7 +4461,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 ]
 
