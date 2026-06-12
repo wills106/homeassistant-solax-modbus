@@ -62,6 +62,16 @@ Sofar Solar
       <li>
        <details>
 <summary>
+Viessmann
+</summary>
+
+- HINV6.0-B1 Hybrid (plugin_viessmann)
+
+</details>
+      </li>
+      <li>
+       <details>
+<summary>
 SolaX Power
 </summary>
 

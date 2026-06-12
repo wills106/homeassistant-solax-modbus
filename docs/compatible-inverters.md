@@ -56,6 +56,15 @@ Known Serials
 Known Serials
 - SS2E
 
+## Viessmann
+
+### Hybrid
+
+HINV6.0-B1
+- Use plugin_viessmann
+- Uses holding registers over Modbus TCP or an RS485-to-TCP gateway
+- The inverter Modbus address defaults to 247
+
 ## SolaX
 
 ### AC / Battery Storage
