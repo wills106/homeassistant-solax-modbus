@@ -64,6 +64,7 @@ HINV6.0-B1
 - Use plugin_viessmann
 - Uses holding registers over Modbus TCP or an RS485-to-TCP gateway
 - The inverter Modbus address defaults to 247
+- See the [Viessmann / GoodWe installation guide](viessmann-installation.md)
 
 ## SolaX
 
