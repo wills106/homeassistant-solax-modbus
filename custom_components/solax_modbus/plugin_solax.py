@@ -12010,14 +12010,21 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # Solar Production Energy (GEN2-6 today)
+        # Solar Production Energy (AC and Hybrid GEN2-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production",
             name="Solar Production Energy",
             needs_aggregation=True,
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+            allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Solar Production Energy ( MIC today)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_yield",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+            allowedtypes=MIC | GEN | GEN2 | GEN4,
         ),
         # Solar Production Energy (GEN1 Riemann sum)
         # GEN1 lacks native energy counters; integrate power and aggregate in parallel mode.
@@ -12028,7 +12035,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),
             needs_aggregation=True,
-            allowedtypes=GEN,
+            allowedtypes=AC | HYBRID | GEN,
         ),
     ],
 )
