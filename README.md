@@ -87,6 +87,7 @@ Swatten -WIP
     </ul>
 </ul>
 
+Viessmann HINV6.0-B1
 
 
 ## Installation
