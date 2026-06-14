@@ -11641,6 +11641,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MU902T"):
             invertertype = MIC | GEN | X3  # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith("MU103T"):
+            invertertype = MIC | GEN | X3  # MIC X3
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC806T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
