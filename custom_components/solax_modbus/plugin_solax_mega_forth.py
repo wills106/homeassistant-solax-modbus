@@ -1050,7 +1050,7 @@ class solax_mega_forth_plugin(plugin_base):
         elif seriesnumber.startswith("X3G01"):
             invertertype = MAX | GEN2 | MPPT9  # MAX FORTH G2
             self.inverter_model = "X3- FORTH 100kW - G2"
-        elif seriesnumber.startswith("A3F01"):
+        elif seriesnumber.startswith("A3F10"):
             invertertype = MAX | GEN2 | MPPT9  # MAX FORTH G2
             self.inverter_model = "X3- FORTH 100kW - G2"
         elif seriesnumber.startswith("X3G011"):
