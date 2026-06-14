@@ -243,6 +243,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     _is_riemann_sum_sensor: bool = False  # Whether this is a Riemann sum sensor
     _riemann_mapping: Any = None  # Riemann mapping configuration
     _riemann_data_hub: Any = None  # Riemann data hub reference
+    _is_daily_delta_sensor: bool = False  # Whether this is a daily delta sensor calculated from a cumulative total
+    _daily_delta_source_key: str | None = None  # Source cumulative total key for daily delta sensors
 
 
 @dataclass(kw_only=True, frozen=True)
