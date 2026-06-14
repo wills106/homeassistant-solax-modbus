@@ -83,12 +83,11 @@ Solinteg - WIP
 SRNE - WIP
 
 Swatten -WIP
+
+Viessmann HINV6.0-B1
       </li>
     </ul>
 </ul>
-
-Viessmann HINV6.0-B1
-
 
 ## Installation
 
