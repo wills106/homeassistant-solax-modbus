@@ -109,6 +109,6 @@ def test_star_import_documentation() -> None:
 
     # Document the scope of Phase B work
     plugin_files = [f for f in all_files if f.name.startswith("plugin_")]
-    assert len(plugin_files) == 17, (
-        f"Expected 17 plugin files, found {len(plugin_files)}. If plugin files were added, ensure they don't use star imports."
+    assert len(plugin_files) == 18, (
+        f"Expected 18 plugin files, found {len(plugin_files)}. If plugin files were added, ensure they don't use star imports."
     )

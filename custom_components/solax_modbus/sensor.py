@@ -801,6 +801,112 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         return self._attr_extra_state_attributes or {}
 
 
+class DailyDeltaEnergySensor(SolaXModbusSensor, RestoreEntity):
+    """Daily energy sensor calculated from a cumulative total register."""
+
+    def __init__(
+        self,
+        platform_name: str,
+        hub: Any,
+        device_info: DeviceInfo,
+        description: BaseModbusSensorEntityDescription,
+    ) -> None:
+        """Initialize the daily delta energy sensor."""
+        super().__init__(platform_name, hub, device_info, description)
+        self._source_key: str | None = getattr(description, "_daily_delta_source_key", None)
+        self._baseline: float | None = None
+        self._last_total: float | None = None
+        self._last_reset_date: date = dt_util.now().date()
+        self._attr_extra_state_attributes = self._daily_delta_extra_attrs()
+
+    def _daily_delta_extra_attrs(self) -> dict[str, Any]:
+        attrs = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
+        attrs["daily_delta_source_key"] = self._source_key
+        attrs["last_reset_date"] = self._last_reset_date.isoformat()
+        if self._baseline is not None:
+            attrs["daily_delta_baseline"] = self._baseline
+        if self._last_total is not None:
+            attrs["daily_delta_last_total"] = self._last_total
+        return attrs
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks and restore the daily baseline."""
+        if last_state := await self.async_get_last_state():
+            attrs: dict[str, Any] = last_state.attributes or {}
+            reset_date = attrs.get("last_reset_date")
+            baseline = attrs.get("daily_delta_baseline")
+            last_total = attrs.get("daily_delta_last_total")
+            try:
+                if reset_date:
+                    self._last_reset_date = date.fromisoformat(reset_date)
+            except (TypeError, ValueError):
+                self._last_reset_date = dt_util.now().date()
+            try:
+                if baseline is not None:
+                    self._baseline = float(baseline)
+                if last_total is not None:
+                    self._last_total = float(last_total)
+            except (TypeError, ValueError):
+                self._baseline = None
+                self._last_total = None
+            if last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+                try:
+                    self._hub.data[self.entity_description.key] = float(last_state.state)
+                except (TypeError, ValueError):
+                    pass
+
+        self._register_hub_sensor_entity()
+        if self.entity_description.value_function:
+            self._hub.computedSensors[self.entity_description.key] = self.entity_description
+
+    async def async_will_remove_from_hass(self) -> None:
+        self._hub.computedSensors.pop(self.entity_description.key, None)
+        self._unregister_hub_sensor_entity()
+
+    @callback
+    def modbus_data_updated(self) -> None:
+        """Calculate today's delta from the cumulative total register."""
+        if not self._source_key:
+            return
+
+        total = self._hub.data.get(self._source_key)
+        if total is None:
+            return
+
+        try:
+            current_total = float(total)
+        except (TypeError, ValueError):
+            return
+
+        current_date = dt_util.now().date()
+        if self._last_reset_date != current_date or self._baseline is None:
+            self._last_reset_date = current_date
+            self._baseline = current_total
+
+        daily_delta = current_total - self._baseline
+        if daily_delta < 0:
+            self._baseline = current_total
+            daily_delta = 0.0
+
+        self._last_total = current_total
+        rounded = round(daily_delta, getattr(self.entity_description, "rounding", 3) or 3)
+        self._hub.data[self.entity_description.key] = rounded
+        self._attr_extra_state_attributes = self._daily_delta_extra_attrs()
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the calculated daily energy value."""
+        if self.entity_description.key in self._hub.data:
+            value = self._hub.data[self.entity_description.key]
+            return float(value) if value is not None else None
+        return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self._attr_extra_state_attributes or {}
+
+
 def entityToList(
     hub: Any,
     hub_name: str,
@@ -879,6 +985,13 @@ def entityToListSingle(
     sensor: SensorEntity
     if getattr(newdescr, "_is_riemann_sum_sensor", False):
         sensor = RiemannSumEnergySensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
+    elif getattr(newdescr, "_is_daily_delta_sensor", False):
+        sensor = DailyDeltaEnergySensor(
             hub_name,
             hub,
             device_info,

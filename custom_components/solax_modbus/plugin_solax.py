@@ -1562,7 +1562,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H55", 50),  # Gen5 X1-IES
     ("H56", 50),  # Gen5 X1-IES
     ("H58", 50),  # Gen5 X1-IES
-    ("10M", 30),  # Gen6 X1-VAST
+    ("10M", 50),  # Gen6 X1-VAST
     ("F34", 30),  # Gen4 X3 RetroFit
     ("H31", 30),  # Gen4 X3 TIGO
     ("H34A", 30),  # Gen4 X3 A
@@ -11672,6 +11672,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MU902T"):
             invertertype = MIC | GEN | X3  # MIC X3
             self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith("MU103T"):
+            invertertype = MIC | GEN | X3  # MIC X3
+            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC806T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
@@ -12038,14 +12041,21 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             needs_aggregation=True,
             allowedtypes=GEN3 | GEN4 | GEN5 | GEN6,
         ),
-        # Solar Production Energy (GEN2-6 today)
+        # Solar Production Energy (AC and Hybrid GEN2-6 today)
         # Aggregate energy totals across Primary + Secondary in parallel mode.
         EnergyDashboardSensorMapping(
             source_key="today_s_solar_energy",
             target_key="solar_energy_production",
             name="Solar Production Energy",
             needs_aggregation=True,
-            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+            allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
+        # Solar Production Energy ( MIC today)
+        EnergyDashboardSensorMapping(
+            source_key="today_s_yield",
+            target_key="solar_energy_production",
+            name="Solar Production Energy",
+            allowedtypes=MIC | GEN | GEN2 | GEN4,
         ),
         # Solar Production Energy (GEN1 Riemann sum)
         # GEN1 lacks native energy counters; integrate power and aggregate in parallel mode.
@@ -12056,7 +12066,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),
             needs_aggregation=True,
-            allowedtypes=GEN,
+            allowedtypes=AC | HYBRID | GEN,
         ),
     ],
 )

@@ -1932,6 +1932,7 @@ class SolaXModbusHub:
                 elif d_unit in (
                     REGISTER_S32,
                     REGISTER_U32,
+                    REGISTER_F32,
                     REGISTER_ULSB16MSB16,
                 ):
                     end = reg + 2
