@@ -309,14 +309,26 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
     modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
     modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
-    register: int | None = None
+    scale: float | dict[Any, Any] | Callable[[Any, Any, dict[str, Any]], Any] = 1
+    read_scale_exceptions: list[Any] | None = None
+    read_scale: float = 1
+    register: int = -1
+    rounding: int = 1
+    register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
+    register_data_type: str | None = REGISTER_U16  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    scan_group: str | None = None  # SCAN_GROUP_MEDIUM, SCAN_GROUP_FAST, SCAN_GROUP_DEFAULT, etc.
+    newblock: bool = False  # set to True to start a new modbus read block operation
     option_dict: dict[int, str] | None = None
     reverse_option_dict: dict[str, int] | None = None  # autocomputed
     blacklist: list[str] | None = None  # none or list of serial number prefixes
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     initvalue: int | None = None  # initial default value for WRITE_DATA_LOCAL entities
-    register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     wordcount: int | None = None  # number of registers to write (for separate register format, e.g., hours and minutes in adjacent registers)
+    sleepmode: int | None = SLEEPMODE_LAST  # or SLEEPMODE_ZERO, SLEEPMODE_NONE or SLEEPMODE_LASTAWAKE
+    ignore_readerror: bool | Any = False
+    min_value: int | None = None
+    max_value: int | None = None
+    depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
 @dataclass(kw_only=True, frozen=True)
