@@ -240,7 +240,6 @@ class SolaXModbusTimeEntity(TimeEntity):
 
         self._hub.data[self._key] = time_str
         self._attr_native_value = value
-
         self.async_write_ha_state()
 
     async def async_set_time(self, time_val: datetime_time) -> None:
