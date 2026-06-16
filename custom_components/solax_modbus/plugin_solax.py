@@ -1012,7 +1012,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # Deficit path: discharge battery up to the current house deficit (if SOC allows).
             deficit = export_deadband_w + hl - pv
             if battery_capacity > min_discharge_soc:
-                desired_charge = min(deficit, 30000)
+                desired_charge = -min(deficit, 30000)
                 selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
                 pushmode_power = -selected_charge
                 # Safety: do not discharge above the instantaneous deficit.
@@ -1028,7 +1028,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             )
 
         # Final debug and state
-        net_flow = pv - hl + pushmode_power
+        net_flow = pv + pushmode_power - hl
         _LOGGER.debug(f"[Mode8 Export-First] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
     elif power_control == "Enabled Grid Control":
         pushmode_power = pushmode_power + houseload - pv
