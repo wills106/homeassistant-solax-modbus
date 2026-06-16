@@ -1765,7 +1765,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Reactive Power Off-Grid Total",
@@ -1777,7 +1777,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Apparent Power Off-Grid Total",
@@ -1789,7 +1789,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Frequency",
@@ -1799,7 +1799,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x507,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage L1",
@@ -1810,7 +1810,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L1",
@@ -1821,7 +1821,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Active Power Output L1",
@@ -1832,7 +1832,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Reactive Power Output L1",
@@ -1844,7 +1844,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Apparent Power Output L1",
@@ -1855,7 +1855,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid LoadPeakRatio L1",
@@ -1865,7 +1865,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x50F,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage L2",
@@ -1876,7 +1876,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L2",
@@ -1887,7 +1887,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Active Power Output L2",
@@ -1898,7 +1898,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Reactive Power Output L2",
@@ -1910,7 +1910,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Apparent Power Output L2",
@@ -1921,7 +1921,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid LoadPeakRatio L2",
@@ -1931,7 +1931,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x517,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage L3",
@@ -1942,7 +1942,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L3",
@@ -1953,7 +1953,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Active Power Output L3",
@@ -1964,7 +1964,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Reactive Power Output L3",
@@ -1976,7 +1976,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Apparent Power Output L3",
@@ -1987,7 +1987,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid LoadPeakRatio L3",
@@ -1997,7 +1997,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x51F,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage Output L1N",
@@ -2007,7 +2007,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x522,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L1N",
@@ -2018,7 +2018,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Active Power Output L1N",
@@ -2029,7 +2029,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage Output L2N",
@@ -2039,7 +2039,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x525,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L2N",
@@ -2050,7 +2050,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Active Power Output L2N",
@@ -2062,7 +2062,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | PV,
     ),
     ###
     #
