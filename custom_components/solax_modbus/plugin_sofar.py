@@ -1931,7 +1931,8 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X3 | EPS,
-    ),    SofarModbusSensorEntityDescription(
+    ),  
+    SofarModbusSensorEntityDescription(
         name="Off-Grid Voltage L2",
         key="offgrid_voltage_l2",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
