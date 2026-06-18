@@ -1832,7 +1832,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         scale=0.01,
         rounding=2,
         allowedtypes=HYBRID | X1 | EPS,
-    ),    
+    ),
     SofarModbusSensorEntityDescription(
         name="Off-Grid Current Output L1",
         key="offgrid_current_output_l1",
