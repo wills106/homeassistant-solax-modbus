@@ -833,7 +833,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # the limited pv path and we therefore have insufficient PV to cover the load.
             deficit = hl + export_target - pv
             if battery_capacity > min_discharge_soc:
-                desired_charge = min(deficit, 30000)
+                desired_charge = -min(deficit, 30000)
                 selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
                 pushmode_power = -selected_charge
             else:
