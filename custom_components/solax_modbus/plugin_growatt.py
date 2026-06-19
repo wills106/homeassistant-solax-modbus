@@ -41,6 +41,7 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
+    BaseModbusTimeEntityDescription,
     UnitOfReactivePower,
     plugin_base,
     value_function_rtc_ymd,
@@ -149,6 +150,11 @@ class GrowattModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
     allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
     register_data_type: str = REGISTER_U16
     register_type: int = REG_HOLDING
+
+
+@dataclass(kw_only=True, frozen=True)
+class GrowattModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
+    allowedtypes: int = ALLDEFAULT  # maybe 0x0000 (nothing) is a better default choice
 
 
 # ====================================== Computed value functions  =================================================
