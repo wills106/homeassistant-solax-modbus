@@ -207,73 +207,79 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         batt_quantity = await battery_config.get_batt_quantity(hub)
         _LOGGER.info(f"batt_pack_quantity: {batt_pack_quantity}, batt_quantity: {batt_quantity}")
 
-        batt_nr = 0
-        for batt_pack_nr in range(0, batt_pack_quantity, 1):
-            if not await battery_config.select_battery(hub, batt_nr, batt_pack_nr):
-                _LOGGER.warning(f"cannot select batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
-                continue
-
-            batt_pack_id = f"battery_1_{batt_pack_nr + 1}"
-            dev_registry = dr.async_get(hass)
-            device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
-            if device is not None:
-                _LOGGER.debug(f"batt pack serial: {device.serial_number}")
-                await battery_config.init_batt_pack(hub, device.serial_number)
-
-            batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
-            if batt_pack_serial is None:
-                _LOGGER.warning(f"cannot get serial for batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
-                await battery_config.init_batt_pack_serials(hub)
-                batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
-                if batt_pack_serial is None:
+        for batt_nr in range(0, batt_quantity or 1, 1):
+            for batt_pack_nr in range(0, batt_pack_quantity, 1):
+                if not await battery_config.select_battery(hub, batt_nr, batt_pack_nr):
+                    _LOGGER.warning(f"cannot select batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
                     continue
 
-            device_info_battery = DeviceInfo(
-                identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}),
-                name=hub.plugin.plugin_name + f" Battery {batt_nr + 1}/{batt_pack_nr + 1}",
-                manufacturer=hub.plugin.plugin_manufacturer,
-                serial_number=batt_pack_serial,
-                via_device=cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)),
-            )
-
-            name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace("{pack-nr}", str(batt_pack_nr + 1))
-            key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace("{pack-nr}", str(batt_pack_nr + 1))
-
-            async def readPreparation(old_data: Any, key_prefix: str = key_prefix, batt_nr: int = 0, batt_pack_nr: int = batt_pack_nr) -> Any:
-                await battery_config.select_battery(hub, batt_nr, batt_pack_nr)
-                return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
-
-            async def readFollowUpBattery(
-                old_data: Any,
-                new_data: Any,
-                key_prefix: str = key_prefix,
-                hub_name: str = hub_name,
-                batt_pack_id: str = batt_pack_id,
-                batt_nr: int = batt_nr,
-                batt_pack_nr: int = batt_pack_nr,
-            ) -> bool:
+                batt_pack_id = f"battery_{batt_nr + 1}_{batt_pack_nr + 1}"
                 dev_registry = dr.async_get(hass)
                 device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
                 if device is not None:
-                    batt_pack_model = await battery_config.get_batt_pack_model(hub)
-                    batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
-                    dev_registry.async_update_device(device.id, sw_version=batt_pack_sw_version, model=batt_pack_model)
-                result = await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
-                return bool(result)
+                    _LOGGER.debug(f"batt pack serial: {device.serial_number}")
+                    await battery_config.init_batt_pack(hub, device.serial_number)
 
-            entityToList(
-                hub,
-                hub_name,
-                entities,
-                initial_groups,
-                computedRegs,
-                device_info_battery,
-                battery_config.battery_sensor_type,
-                name_prefix,
-                key_prefix,
-                readPreparation,
-                readFollowUpBattery,
-            )
+                batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
+                if batt_pack_serial is None:
+                    _LOGGER.warning(f"cannot get serial for batt_nr: {batt_nr}, batt_pack_nr: {batt_pack_nr}")
+                    await battery_config.init_batt_pack_serials(hub)
+                    batt_pack_serial = await battery_config.get_batt_pack_serial(hub, batt_nr, batt_pack_nr)
+                    if batt_pack_serial is None:
+                        continue
+
+                device_info_battery = DeviceInfo(
+                    identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}),
+                    name=hub.plugin.plugin_name + f" Battery {batt_nr + 1}/{batt_pack_nr + 1}",
+                    manufacturer=hub.plugin.plugin_manufacturer,
+                    serial_number=batt_pack_serial,
+                    via_device=cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)),
+                )
+
+                name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
+                    "{pack-nr}", str(batt_pack_nr + 1)
+                )
+                key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
+                    "{pack-nr}", str(batt_pack_nr + 1)
+                )
+
+                async def readPreparation(
+                    old_data: Any, key_prefix: str = key_prefix, batt_nr: int = batt_nr, batt_pack_nr: int = batt_pack_nr
+                ) -> Any:
+                    await battery_config.select_battery(hub, batt_nr, batt_pack_nr)
+                    return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
+
+                async def readFollowUpBattery(
+                    old_data: Any,
+                    new_data: Any,
+                    key_prefix: str = key_prefix,
+                    hub_name: str = hub_name,
+                    batt_pack_id: str = batt_pack_id,
+                    batt_nr: int = batt_nr,
+                    batt_pack_nr: int = batt_pack_nr,
+                ) -> bool:
+                    dev_registry = dr.async_get(hass)
+                    device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
+                    if device is not None:
+                        batt_pack_model = await battery_config.get_batt_pack_model(hub)
+                        batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
+                        dev_registry.async_update_device(device.id, sw_version=batt_pack_sw_version, model=batt_pack_model)
+                    result = await battery_config.check_battery_on_end(hub, old_data, new_data, key_prefix, batt_nr, batt_pack_nr)
+                    return bool(result)
+
+                entityToList(
+                    hub,
+                    hub_name,
+                    entities,
+                    initial_groups,
+                    computedRegs,
+                    device_info_battery,
+                    battery_config.battery_sensor_type,
+                    name_prefix,
+                    key_prefix,
+                    readPreparation,
+                    readFollowUpBattery,
+                )
 
     hub.computedSensors = computedRegs
     async_add_entities(entities)
@@ -801,6 +807,112 @@ class RiemannSumEnergySensor(SolaXModbusSensor, RestoreEntity):
         return self._attr_extra_state_attributes or {}
 
 
+class DailyDeltaEnergySensor(SolaXModbusSensor, RestoreEntity):
+    """Daily energy sensor calculated from a cumulative total register."""
+
+    def __init__(
+        self,
+        platform_name: str,
+        hub: Any,
+        device_info: DeviceInfo,
+        description: BaseModbusSensorEntityDescription,
+    ) -> None:
+        """Initialize the daily delta energy sensor."""
+        super().__init__(platform_name, hub, device_info, description)
+        self._source_key: str | None = getattr(description, "_daily_delta_source_key", None)
+        self._baseline: float | None = None
+        self._last_total: float | None = None
+        self._last_reset_date: date = dt_util.now().date()
+        self._attr_extra_state_attributes = self._daily_delta_extra_attrs()
+
+    def _daily_delta_extra_attrs(self) -> dict[str, Any]:
+        attrs = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
+        attrs["daily_delta_source_key"] = self._source_key
+        attrs["last_reset_date"] = self._last_reset_date.isoformat()
+        if self._baseline is not None:
+            attrs["daily_delta_baseline"] = self._baseline
+        if self._last_total is not None:
+            attrs["daily_delta_last_total"] = self._last_total
+        return attrs
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks and restore the daily baseline."""
+        if last_state := await self.async_get_last_state():
+            attrs: dict[str, Any] = last_state.attributes or {}
+            reset_date = attrs.get("last_reset_date")
+            baseline = attrs.get("daily_delta_baseline")
+            last_total = attrs.get("daily_delta_last_total")
+            try:
+                if reset_date:
+                    self._last_reset_date = date.fromisoformat(reset_date)
+            except (TypeError, ValueError):
+                self._last_reset_date = dt_util.now().date()
+            try:
+                if baseline is not None:
+                    self._baseline = float(baseline)
+                if last_total is not None:
+                    self._last_total = float(last_total)
+            except (TypeError, ValueError):
+                self._baseline = None
+                self._last_total = None
+            if last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+                try:
+                    self._hub.data[self.entity_description.key] = float(last_state.state)
+                except (TypeError, ValueError):
+                    pass
+
+        self._register_hub_sensor_entity()
+        if self.entity_description.value_function:
+            self._hub.computedSensors[self.entity_description.key] = self.entity_description
+
+    async def async_will_remove_from_hass(self) -> None:
+        self._hub.computedSensors.pop(self.entity_description.key, None)
+        self._unregister_hub_sensor_entity()
+
+    @callback
+    def modbus_data_updated(self) -> None:
+        """Calculate today's delta from the cumulative total register."""
+        if not self._source_key:
+            return
+
+        total = self._hub.data.get(self._source_key)
+        if total is None:
+            return
+
+        try:
+            current_total = float(total)
+        except (TypeError, ValueError):
+            return
+
+        current_date = dt_util.now().date()
+        if self._last_reset_date != current_date or self._baseline is None:
+            self._last_reset_date = current_date
+            self._baseline = current_total
+
+        daily_delta = current_total - self._baseline
+        if daily_delta < 0:
+            self._baseline = current_total
+            daily_delta = 0.0
+
+        self._last_total = current_total
+        rounded = round(daily_delta, getattr(self.entity_description, "rounding", 3) or 3)
+        self._hub.data[self.entity_description.key] = rounded
+        self._attr_extra_state_attributes = self._daily_delta_extra_attrs()
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the calculated daily energy value."""
+        if self.entity_description.key in self._hub.data:
+            value = self._hub.data[self.entity_description.key]
+            return float(value) if value is not None else None
+        return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self._attr_extra_state_attributes or {}
+
+
 def entityToList(
     hub: Any,
     hub_name: str,
@@ -884,6 +996,13 @@ def entityToListSingle(
             device_info,
             newdescr,
         )
+    elif getattr(newdescr, "_is_daily_delta_sensor", False):
+        sensor = DailyDeltaEnergySensor(
+            hub_name,
+            hub,
+            device_info,
+            newdescr,
+        )
     else:
         sensor = SolaXModbusSensor(
             hub_name,
@@ -934,7 +1053,10 @@ def entityToListSingle(
                     first = holdingRegs[newdescr.register]
                     holdingRegs[newdescr.register] = {first.register_data_type: first, newdescr.register_data_type: newdescr}
                 else:
-                    _LOGGER.warning(f"{hub_name}: holding register already used: 0x{newdescr.register:x} {newdescr.key}")
+                    # Allow duplicate BMS registers (0x9000-0x9FFF): dynamically
+                    # switched via BMS_Inquire per battery string (issue #1815)
+                    if not (0x9000 <= newdescr.register <= 0x9FFF):
+                        _LOGGER.warning(f"{hub_name}: holding register already used: 0x{newdescr.register:x} {newdescr.key}")
             else:
                 holdingRegs[newdescr.register] = newdescr
         elif newdescr.register_type == REG_INPUT:

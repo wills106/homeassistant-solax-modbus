@@ -37,6 +37,8 @@ nav:
   - Entity description: sofar-entity-description.md
   - Energy storage modes: sofar-energy-storage-modes.md
   - Feed-In limitation: sofar-feedin-limitation.md
+- Viessmann / GoodWe:
+  - Installation: viessmann-installation.md
 - SolaX:
   - FAQ: solax-faq.md
   - Firmware update: solax-firmware-update.md

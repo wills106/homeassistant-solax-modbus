@@ -2421,7 +2421,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=HYBRID,
         # entity_registry_enabled_default=False,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Charge Current",
@@ -2434,7 +2434,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=HYBRID,
         # entity_registry_enabled_default=False,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Discharge Current",
@@ -2447,7 +2447,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Current",
@@ -2460,7 +2460,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Discharge Current",
@@ -2473,7 +2473,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         rounding=1,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Timed Charge Start Hours",
@@ -2482,7 +2482,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2492,7 +2492,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2502,7 +2502,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2512,7 +2512,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2522,7 +2522,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2532,7 +2532,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2542,7 +2542,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         # native_unit_of_measurement=UnitOfTime.HOURS,
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2552,7 +2552,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     # ============================ TimeSlot2 ==============================
@@ -2563,7 +2563,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2573,7 +2573,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2583,7 +2583,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2593,7 +2593,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2603,7 +2603,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2613,7 +2613,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2623,7 +2623,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2633,7 +2633,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     # ============================ TimeSlot3 ==============================
@@ -2644,7 +2644,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2654,7 +2654,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2664,7 +2664,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2674,7 +2674,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2684,7 +2684,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2694,7 +2694,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2704,7 +2704,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.HOURS,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2714,7 +2714,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTime.MINUTES,
         # entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
-        entity_category=EntityCategory.CONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -2724,7 +2724,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:switch",
         entity_registry_enabled_default=True,
         allowedtypes=HYBRID,
-        # entity_category=EntityCategory.CONFIG,
+        # entity_category=EntityCategory.DIAGNOSTIC,
     ),
 ]
 
