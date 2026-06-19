@@ -9412,11 +9412,11 @@ TIME_TYPES = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-clock",
     ),
-###
-#
-# WRITE_DATA_LOCAL
-#
-###
+    ###
+    #
+    # WRITE_DATA_LOCAL
+    #
+    ###
     GrowattModbusTimeEntityDescription(
         name="Time 1 Begin",
         key="time_1_begin",
