@@ -3326,7 +3326,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
             2: "Turn On, Enable Cold Start",
         },
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | X3 | EPS,
+        allowedtypes=HYBRID | EPS,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SofarModbusSensorEntityDescription(
