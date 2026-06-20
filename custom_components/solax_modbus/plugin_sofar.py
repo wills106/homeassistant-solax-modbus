@@ -1195,7 +1195,7 @@ SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         key="software_version",
         register=0x44F,
         register_data_type=REGISTER_STR,
-        wordcount=12,
+        wordcount=4,
         entity_category=EntityCategory.DIAGNOSTIC,
         allowedtypes=HYBRID | PV,
     ),
