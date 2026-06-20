@@ -789,7 +789,7 @@ SELECT_TYPES = [
     ),
     SofarModbusSelectEntityDescription(
         name="Energy Storage Mode",
-        key="charger_use_mode_x1",  # <--- Chiave univoca per X1
+        key="charger_use_mode",
         register=0x1110,
         option_dict={
             0: "Self Use",
