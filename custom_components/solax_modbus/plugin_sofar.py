@@ -586,7 +586,7 @@ SELECT_TYPES = [
     ),
     SofarModbusSelectEntityDescription(
         name="FeedIn: Limitation Mode",
-        key="feedin_limitation_mode_x1",
+        key="feedin_limitation_mode",
         register_data_type=REGISTER_U16,
         option_dict={
             0: "Disabled",
