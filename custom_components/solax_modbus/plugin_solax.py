@@ -930,133 +930,108 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Controller goals (no PV limit adjustments in this mode):
         # 1) If PV < house load (deficit): discharge the battery up to the deficit (respecting min SOC).
         # 2) If PV ≥ house load (surplus): let PV feed the grid first and only charge the battery once
-        #    measured export is at or above the configured cap. Battery charge is then adjusted using
-        #    bounded step changes based on the measured export.
+        #    measured export is at or above the configured cap.
         # 3) Ensure that we don't exceed the inverter power limit in the calculations so that PV above
         #    this limit is allocated to the battery charge rather than being limited.
 
-        # Use the alternative house load basis directly. The current house_load_alt
-        # formula already subtracts battery charging, so subtracting it again here
-        # would understate the effective load and distort the export target logic.
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
+        # Use the alternative house load for house load measurement, clamping to strict positive values.
         hl = max(0, int(houseload_alt))
-
-        # Export limit no readscale:
-        export_limit = datadict.get("export_control_user_limit", 30000)
-
-        # Test mode: do not trim the export target by inverter power minus house load.
-        # This lets Export-First try to use the configured export limit directly before charging the battery.
-        export_available = export_limit
 
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
-        max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
+        max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
+        charge_soc_hysteresis = datadict.get("negative_injection_battery_hysteresis", 2)
         # Keep a small gap below the inverter's own export cap so our loop does not
         # constantly fight the inverter's internal export limiter.
         export_margin_w = int(datadict.get("export_first_export_margin_w", 150) or 0)
-        export_target = max(0, export_limit - export_margin_w)
+        export_limit = datadict.get("export_control_user_limit", 30000)
+        inverter_limit = datadict.get("inverter_power_type", 30000)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
-        min_step_w = int(datadict.get("export_first_step_min_w", 100) or 100)
-        max_step_w = int(datadict.get("export_feedback_max_w", 500) or 500)
 
         # Local copies
-        pvlimit = max(0, datadict.get("remotecontrol_pv_power_limit", 30000))
-        last_push = datadict.get("_mode8_last_push", 0)
+        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
+        pvlimit = setpvlimit
+        cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
+        cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         pushmode_power = 0  # + = discharge, - = charge
+        current_charge = -cur_push
 
         # Debug inputs
         _LOGGER.debug(
             f"[Mode8 Export-First] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) exp_lim={export_limit}W "
-            f"exp_avail={export_available}W exp_target={export_target}W imp_lim={import_limit}W soc={battery_capacity}% "
-            f"min_soc={min_discharge_soc}% max_soc={max_charge_soc}% pvlimit={pvlimit}W last_push={last_push}W "
-            f"battery_charge={battery_charge}W"
+            f"export_margin={export_margin_w}W inverter_limit={inverter_limit}W soc={battery_capacity}% min_soc={min_discharge_soc}% "
+            f"max_soc={max_charge_soc}% cur_pvlimit={cur_pvlimit}W last_push={cur_push}W battery_charge={battery_charge}W"
         )
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
-        grid_export_s = datadict.get("grid_export", None)
-        grid_import_s = datadict.get("grid_import", None)
+        grid_export = datadict.get("grid_export", None)
         _LOGGER.debug(
-            "[Mode8 Export-First] probes: "
+            f"[Mode8 Export-First] probes: "
             f"measured_power={measured_power if measured_power is not None else 'n/a'} "
-            f"grid_export={grid_export_s if grid_export_s is not None else 'n/a'} "
-            f"grid_import={grid_import_s if grid_import_s is not None else 'n/a'}"
+            f"measured_power={grid_export if grid_export is not None else 'n/a'} "
         )
 
         if pv >= hl:
             # Surplus path: use measured export as the control signal.
             # Below target: battery should not charge and may need to back off existing charge.
             # At/above target: battery can absorb the excess in bounded steps.
-            surplus = pv - hl
-            current_charge = max(0, -int(last_push))
-            measured_export = int(grid_export_s or 0)
-            error = measured_export - export_target
 
-            # Extract BMS/user charge caps once; control law below only changes the requested charge.
-            _, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, 10**9)
+            # Surplus is anything beyond what can cover our export target and house load.
+            # Clamp this output target to the inverters output limit. Apply a margin to
+            # account for measurement inaccuracies.
+            desired_output = hl + export_limit
+            control_state = "surplus" if desired_output <= inverter_limit else "limited"
+            surplus = max(0, pv - (min(inverter_limit, desired_output) - export_margin_w))
 
-            if battery_capacity >= max_charge_soc:
-                desired_charge = 0
-                step_w = 0
-                control_reason = "battery-full"
-            elif abs(error) <= export_deadband_w:
-                desired_charge = current_charge
-                step_w = 0
-                control_reason = "hold"
-            elif error > 0:
-                step_w = min(max_step_w, max(min_step_w, error))
-                desired_charge = current_charge + step_w
-                control_reason = "increase-charge"
-            else:
-                step_w = min(max_step_w, max(min_step_w, -error))
-                desired_charge = max(0, current_charge - step_w)
-                control_reason = "decrease-charge"
+            # Battery gets surplus up to BMS limit
+            desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
 
-            desired_charge = int(min(desired_charge, max_charge))
-            pushmode_power = -desired_charge
+            # Setpoint filter to slow down changes to battery to limit oscillation
+            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
 
-            # Export-First in this mode should not directly clamp PV.
-            pv_clamp_target = pvlimit
+            # If current selected charge is higher than surplus PV (due to filter lag)
+            # clamp to PV to avoid grid import. This essentially means the filtering is
+            # fast at reacting to PV dips, but slows increasing charge which should still
+            # limit oscillation.
+            if selected_charge > surplus:
+                selected_charge = surplus
+
+            # Any surplus not able to feed into the battery should be handled by inverter
+            # self-limiting PV output.
+            error = surplus - selected_charge
+
+            # Push mode is negative
+            pushmode_power = -selected_charge
 
             _LOGGER.debug(
-                f"[Mode8 Export-First] export-first: surplus={surplus}W measured_export={measured_export}W "
-                f"target={export_target}W error={error}W step={step_w}W reason={control_reason} "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W pv_clamp_target={pv_clamp_target}W hl={hl}W"
+                f"[Mode8 Export-First] {control_state}: surplus={surplus}W inverter_limit={inverter_limit}W "
+                f"error={error}W bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W desired_charge={desired_charge}W "
+                f"-> charge={selected_charge}W pvlimit={pvlimit}W hl={hl}W"
             )
 
         else:
             # Deficit path: discharge battery up to the current house deficit (if SOC allows).
-            deficit = max(0, hl - pv)
+            deficit = export_deadband_w + hl - pv
             if battery_capacity > min_discharge_soc:
-                pushmode_power = min(deficit, 30000)
+                desired_charge = -min(deficit, 30000)
+                selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
+                pushmode_power = -selected_charge
+                # Safety: do not discharge above the instantaneous deficit.
+                if pushmode_power > deficit:
+                    _LOGGER.debug(f"[Mode8 Export-First] clamp discharge to deficit: push={pushmode_power}W -> {deficit}W (pv={pv} hl={hl})")
+                    pushmode_power = deficit
             else:
+                desired_charge = 0
                 pushmode_power = 0
-            _LOGGER.debug(f"[Mode8 Export-First] deficit: deficit={deficit}W soc={battery_capacity}% chosen_push={pushmode_power}W")
-
-        # If we still see export while discharging, trim discharge a bit.
-        if pv < hl and pushmode_power > 0:
-            try:
-                measured_export = int(datadict.get("grid_export", 0) or 0)
-            except Exception:
-                measured_export = 0
-            if measured_export > export_deadband_w:
-                nudge = min(measured_export, max_step_w)
-                pushmode_power = max(0, pushmode_power - nudge)
-                _LOGGER.debug(
-                    f"[Mode8 Export-First] discharge feedback: -{nudge}W (measured_export={measured_export}W) to reduce grid export while discharging"
-                )
-
-        # Safety: do not discharge above the instantaneous deficit.
-        if pv < hl:
-            deficit_now = hl - pv
-            if pushmode_power > deficit_now:
-                _LOGGER.debug(f"[Mode8 Export-First] clamp discharge to deficit: push={pushmode_power}W -> {deficit_now}W (pv={pv} hl={hl})")
-                pushmode_power = deficit_now
+            _LOGGER.debug(
+                f"[Mode8 Export-First] deficit: deficit={deficit}W soc={battery_capacity}% "
+                f"desired_charge={desired_charge}W -> chosen_push={pushmode_power}W"
+            )
 
         # Final debug and state
-        net_flow = pv - hl + pushmode_power
+        net_flow = pv + pushmode_power - hl
         _LOGGER.debug(f"[Mode8 Export-First] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
-        datadict["_mode8_last_push"] = pushmode_power
     elif power_control == "Enabled Grid Control":
         pushmode_power = pushmode_power + houseload - pv
         pvlimit = setpvlimit
