@@ -4126,7 +4126,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="charger_start_time_1",
+        key="charge_start_1",
         register=0x97,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -4142,14 +4142,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="charger_end_time_1",
+        key="charge_end_1",
         register=0x98,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="discharger_start_time_1",
+        key="discharge_start_1",
         register=0x99,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -4165,7 +4165,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="discharger_end_time_1",
+        key="discharge_end_1",
         register=0x9A,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -4188,14 +4188,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="charger_start_time_2",
+        key="charge_start_2",
         register=0x9C,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="charger_end_time_2",
+        key="charge_end_2",
         register=0x9D,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
@@ -4211,14 +4211,14 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="discharger_start_time_2",
+        key="discharge_start_2",
         register=0x9E,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="discharger_end_time_2",
+        key="discharge_end_2",
         register=0x9F,
         scale=value_function_gen4time,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
