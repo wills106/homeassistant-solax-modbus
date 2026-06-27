@@ -470,9 +470,11 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
             ap_target = 0 - min(house_load, pv_power)
         else:
             # When the battery is fully charged (allowing a tolerance to prevent
-            # older inverters shutting down PV), then we emulate self-use mode
-            # by simply pushing all PV power through the grid connected port
-            ap_target = 0 - pv_power
+            # older inverters shutting down PV), then we push only the PV power
+            # through to the grid connected port. We add a little headroom so
+            # that PV output can grow after e.g. clouds. This will also trickle
+            # discharge the battery, keeping the SoC close to 98%.
+            ap_target = 0 - pv_power - 150
         power_control = "Enabled Power Control"
 
     else:
