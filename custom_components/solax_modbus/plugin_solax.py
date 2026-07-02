@@ -267,12 +267,12 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x7D, count=8)
         if inverter_data is not None and not inverter_data.isError():
             registers = inverter_data.registers
-            data["firmware_dsp"] = int(registers[0])
+            data["firmware_dsp_minor"] = int(registers[0])
             data["firmware_DSP_hardware_version"] = int(registers[1])
             data["firmware_dsp_major"] = int(registers[2])
             data["firmware_arm_major"] = int(registers[3])
             version = int(registers[5])
-            data["firmware_arm"] = int(registers[6])
+            data["firmware_arm_minor"] = int(registers[6])
             data["bootloader_version"] = int(registers[7])
     except Exception:
         _LOGGER.debug(f"{hub.name}: attempt to read inverter firmware info failed data: {inverter_data}", exc_info=True)
@@ -284,8 +284,8 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
     else:
         hub.modbus_protocol_version = None
         data.pop("modbus_protocol_version", None)
-        data.pop("firmware_version_dsp", None)
-        data.pop("firmware_version_arm", None)
+        data.pop("firmware_dsp", None)
+        data.pop("firmware_arm", None)
         _LOGGER.debug(f"{hub.name}: Modbus protocol document version unavailable")
         return 0
 
@@ -294,13 +294,13 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
         try:
             full_version_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x7B, count=2)
             if full_version_data is not None and not full_version_data.isError():
-                data["firmware_version_dsp"] = int(full_version_data.registers[0])
-                data["firmware_version_arm"] = int(full_version_data.registers[1])
+                data["firmware_dsp"] = int(full_version_data.registers[0])
+                data["firmware_arm"] = int(full_version_data.registers[1])
         except Exception:
             _LOGGER.debug(f"{hub.name}: attempt to read full firmware version failed data: {full_version_data}", exc_info=True)
     else:
-        data.pop("firmware_version_dsp", None)
-        data.pop("firmware_version_arm", None)
+        data.pop("firmware_dsp", None)
+        data.pop("firmware_arm", None)
 
     return version
 
@@ -1351,7 +1351,8 @@ def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dic
 
 
 def value_function_software_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP v2.{datadict.get('firmware_dsp')} ARM v2.{datadict.get('firmware_arm')}"
+    # AC/HYBRID GEN2: split registers hold raw minor versions with a fixed major of 2
+    return f"DSP v2.{datadict.get('firmware_dsp_minor')} ARM v2.{datadict.get('firmware_arm_minor')}"
 
 
 def value_function_firmware_major_default(val: Any, default: int) -> Any:
@@ -1361,27 +1362,9 @@ def value_function_firmware_major_default(val: Any, default: int) -> Any:
 def value_function_software_version_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     return (
         f"DSP v{value_function_firmware_major_default(datadict.get('firmware_dsp_major'), 3)}."
-        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
+        f"{value_str_default(datadict.get('firmware_dsp_minor'), '??'):>02} "
         f"ARM v{value_function_firmware_major_default(datadict.get('firmware_arm_major'), 3)}."
-        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
-    )
-
-
-def value_function_software_version_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return (
-        f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '?')}."
-        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
-        f"ARM {value_str_default(datadict.get('firmware_arm_major'), '?')}."
-        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
-    )
-
-
-def value_function_software_version_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return (
-        f"DSP {value_str_default(datadict.get('firmware_dsp_major'), '???'):>03}."
-        f"{value_str_default(datadict.get('firmware_dsp'), '??'):>02} "
-        f"ARM {value_str_default(datadict.get('firmware_arm_major'), '???'):>03}."
-        f"{value_str_default(datadict.get('firmware_arm'), '??'):>02}"
+        f"{value_str_default(datadict.get('firmware_arm_minor'), '??'):>02}"
     )
 
 
@@ -1392,31 +1375,68 @@ def value_function_modbus_protocol_version(datadict: dict[str, Any]) -> int:
         return 0
 
 
-def value_function_software_version_full(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    dsp = datadict.get("firmware_version_dsp")
-    arm = datadict.get("firmware_version_arm")
-    dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp is not None else "?.??"
-    arm_str = f"{arm // 100}.{arm % 100:02d}" if arm is not None else "?.??"
+def value_function_software_version_mic(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """MIC firmware version. firmware_dsp / firmware_arm hold the full version ÷100 encoded.
+
+    GEN1 — 0x33D/0x33E   GEN2 — 0x352/0x353 (+ 0x354 ARM boot, ÷100)   GEN4 — 0x394/0x390
+    Example (X3-MIC/PRO-G2): 136 → "DSP 1.36 ARM 1.36-1.00", matching SolaX Cloud.
+    """
+    dsp = datadict.get("firmware_dsp") or 0
+    arm = datadict.get("firmware_arm") or 0
+    dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp else "?.??"
+    arm_str = f"{arm // 100}.{arm % 100:02d}" if arm else "?.??"
+    arm_boot = datadict.get("firmware_arm_boot")
+    if arm_boot is not None:
+        arm_str += f"-{arm_boot // 100}.{arm_boot % 100:02d}"  # 0x354 is ÷100 encoded
     return f"DSP {dsp_str} ARM {arm_str}"
 
 
-def value_function_software_version_protocol_aware(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    # FirmwareVersionModbus 100 means V001.00; newer protocol versions can use the combined 0x7B/0x7C registers.
-    if (
-        value_function_modbus_protocol_version(datadict) >= 100
-        and datadict.get("firmware_version_dsp") is not None
-        and datadict.get("firmware_version_arm") is not None
-    ):
-        return value_function_software_version_full(initval, descr, datadict)
-    return value_function_software_version_g4(initval, descr, datadict)
+def value_function_software_version_hybrid_legacy(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """AC/HYBRID with modbus protocol < 100: version is major.minor from split registers.
+
+    DSP = firmware_dsp_major (0x7F) . firmware_dsp_minor (0x7D)
+    ARM = firmware_arm_major (0x80) . firmware_arm_minor (0x83), boot suffix from
+          bootloader_version (0x84, raw minor) — e.g. "ARM 1.58-1.15" (SolaX Cloud).
+    """
+    dsp_maj = datadict.get("firmware_dsp_major")
+    dsp_min = datadict.get("firmware_dsp_minor")
+    arm_maj = datadict.get("firmware_arm_major")
+    arm_min = datadict.get("firmware_arm_minor")
+    dsp_str = f"{dsp_maj}.{dsp_min:02d}" if dsp_maj is not None and dsp_min is not None else "?.??"
+    arm_str = f"{arm_maj}.{arm_min:02d}" if arm_maj is not None and arm_min is not None else "?.??"
+    arm_boot = datadict.get("bootloader_version")
+    if arm_maj is not None and arm_boot is not None:
+        arm_str += f"-{arm_maj}.{arm_boot:02d}"
+    return f"DSP {dsp_str} ARM {arm_str}"
 
 
-def value_function_software_version_air_g3(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP v2.{datadict.get('firmware_dsp')} ARM v1.{datadict.get('firmware_arm')}"
+def value_function_software_version_hybrid_full(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """AC/HYBRID with modbus protocol >= 100: full version ÷100 from combined registers.
+
+    DSP = firmware_dsp (0x7B), ARM = firmware_arm (0x7C), both ÷100 encoded.
+    ARM boot suffix from firmware_arm_major (0x80) + bootloader_version (0x84, raw minor).
+    """
+    dsp = datadict.get("firmware_dsp")
+    arm = datadict.get("firmware_arm")
+    dsp_str = f"{dsp // 100}.{dsp % 100:02d}" if dsp else "?.??"
+    arm_str = f"{arm // 100}.{arm % 100:02d}" if arm else "?.??"
+    arm_maj = datadict.get("firmware_arm_major")
+    arm_boot = datadict.get("bootloader_version")
+    if arm_maj is not None and arm_boot is not None:
+        arm_str += f"-{arm_maj}.{arm_boot:02d}"
+    return f"DSP {dsp_str} ARM {arm_str}"
 
 
-def value_function_software_version_air_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
-    return f"DSP {datadict.get('firmware_dsp')} ARM {datadict.get('firmware_arm')}"
+def value_function_software_version(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """AC/HYBRID dispatcher: pick the full or legacy formatter by modbus protocol version.
+
+    Protocol >= 100 exposes the combined full-version registers (0x7B/0x7C); older
+    firmware only has the split major/minor registers.
+    """
+    proto = datadict.get("modbus_protocol_version") or 0
+    if proto >= 100 and datadict.get("firmware_dsp") is not None:
+        return value_function_software_version_hybrid_full(initval, descr, datadict)
+    return value_function_software_version_hybrid_legacy(initval, descr, datadict)
 
 
 def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -3877,21 +3897,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
-        key="firmware_version_dsp",
+        key="firmware_dsp",
         register=0x7B,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         modbus_min=100,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="firmware_version_arm",
+        key="firmware_arm",
         register=0x7C,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         modbus_min=100,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="firmware_dsp",
+        key="firmware_dsp_minor",
         register=0x7D,
         allowedtypes=AC | HYBRID,
         internal=True,
@@ -3925,7 +3945,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        key="firmware_arm",
+        key="firmware_arm_minor",
         register=0x83,
         allowedtypes=AC | HYBRID,
         internal=True,
@@ -9323,7 +9343,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Software Version",
         key="software_version",
-        value_function=value_function_software_version_protocol_aware,
+        value_function=value_function_software_version,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
@@ -9427,6 +9447,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         key="firmware_arm",
         register=0x353,
+        allowedtypes=MIC | GEN2,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
+        key="firmware_arm_boot",
+        register=0x354,
         allowedtypes=MIC | GEN2,
         internal=True,
     ),
@@ -10781,35 +10807,11 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Software Version",
         key="software_version",
-        value_function=value_function_software_version_air_g3,
-        allowedtypes=MIC | GEN2 | X1,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Software Version",
-        key="software_version",
-        value_function=value_function_software_version_air_g4,
-        allowedtypes=MIC | GEN4 | X1,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Software Version",
-        key="software_version",
-        value_function=value_function_software_version_air_g4,
-        allowedtypes=MIC | GEN | X3,
+        value_function=value_function_software_version_mic,
+        allowedtypes=MIC,
         blacklist=[
             "MU802T",
         ],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Software Version",
-        key="software_version",
-        value_function=value_function_software_version_g2,
-        allowedtypes=MIC | GEN2 | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -11673,8 +11675,8 @@ class solax_plugin(plugin_base):
                     hub.data["hardware_version"] = value_function_hardware_version_g5(0, None, hub.data)
                 elif invertertype & GEN6:
                     hub.data["hardware_version"] = value_function_hardware_version_g6(0, None, hub.data)
-                if "firmware_dsp" in hub.data or "firmware_version_dsp" in hub.data:
-                    hub.data["software_version"] = value_function_software_version_protocol_aware(0, None, hub.data)
+                if "firmware_dsp" in hub.data or "firmware_dsp_minor" in hub.data:
+                    hub.data["software_version"] = value_function_software_version(0, None, hub.data)
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
             read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
