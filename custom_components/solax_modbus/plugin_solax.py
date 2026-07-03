@@ -117,6 +117,16 @@ ALL_DCB_GROUP = DCB
 PM = 0x20000
 ALL_PM_GROUP = PM
 
+MPPT3 = 0x40000
+MPPT4 = 0x80000
+MPPT5 = 0x100000
+MPPT6 = 0x200000
+MPPT8 = 0x400000
+MPPT10 = 0x800000
+ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT5 | MPPT6 | MPPT8 | MPPT10
+
+ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | X1 | X3
+
 # ============================================================================
 # Plugin-Level Register Validation
 # ============================================================================
@@ -180,16 +190,6 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
 
     return value
 
-
-MPPT3 = 0x40000
-MPPT4 = 0x80000
-MPPT5 = 0x100000
-MPPT6 = 0x200000
-MPPT8 = 0x400000
-MPPT10 = 0x800000
-ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT5 | MPPT6 | MPPT8 | MPPT10
-
-ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -712,6 +712,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     setpvlimit = datadict.get("remotecontrol_pv_power_limit", 10000)
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
     target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
+    default_min_soc = datadict.get("selfuse_discharge_min_soc", 10)
+    min_discharge_soc = datadict.get("remotecontrol_minimum_soc_8_9", default_min_soc)
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     battery_capacity = datadict.get("battery_capacity", 0)
@@ -743,7 +745,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         hl = max(0, int(houseload_alt))
 
         # SOC bounds
-        min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         charge_soc_hysteresis = datadict.get("negative_injection_battery_hysteresis", 2)
         # bias towards import
@@ -924,7 +925,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Final debug and state
         net_flow = min(pvlimit, pv) - houseload + pushmode_power
         _LOGGER.debug(f"[Mode8 No-Discharge] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
-
     elif power_control == "Export-First Battery Limit":
         # --- Export-First Battery Limit (Mode 8 custom) ---
         # Controller goals (no PV limit adjustments in this mode):
@@ -949,7 +949,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         export_available = export_limit
 
         # SOC bounds
-        min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
         max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
         # Keep a small gap below the inverter's own export cap so our loop does not
         # constantly fight the inverter's internal export limiter.
@@ -1065,13 +1064,18 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         power_control = "Disabled"
         pvlimit = setpvlimit
     # limit import to max import (capacity tarif in some countries)
-    old_pushmode_power = pushmode_power
     excess_import = houseload - pv - pushmode_power - import_limit
     if excess_import > 0:
+        old_pushmode_power = pushmode_power
         pushmode_power = pushmode_power + excess_import  # reduce import
+        _LOGGER.debug(f"import shaving: old_pushmode_power:{old_pushmode_power}W new pushmode_power:{pushmode_power}W")
 
-    if old_pushmode_power != pushmode_power:
-        _LOGGER.debug(f"import shaving: old_pushmode_power:{old_pushmode_power} new pushmode_power:{pushmode_power}")
+    # If commanding a discharge, but the battery capacity is at minimum
+    if pushmode_power > 0 and battery_capacity <= min_discharge_soc:
+        # Then stop pushing.
+        _LOGGER.debug(f"minimum soc limiter: requested pushmode_power:{pushmode_power}W but clamping to 0W")
+        pushmode_power = 0
+
     # res sequence only valid for mode 8 and  submodes of mode 8
     res = [
         (
@@ -1103,13 +1107,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             timeout_motion,
         ),
     ]
-    datadict["remotecontrol_current_pushmode_power"] = pushmode_power
-    datadict["remotecontrol_current_pv_power_limit"] = pvlimit
     if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
         _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}")
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
         _LOGGER.info("Stopping mode 8 loop by disabling mode 8")
+        datadict["remotecontrol_current_pushmode_power"] = None
+        datadict["remotecontrol_current_pv_power_limit"] = None
         return {
             "action": WRITE_MULTI_MODBUS,
             "register": 0xA0,
@@ -1119,9 +1123,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                     "Disabled",
                 ),
             ],
-        }  # was 0x7C
-        # datadict["remotecontrol_power_control"] = "Disabled" # disable the remotecontrol Mode 1 loop
-        # autorepeat_stop_with_postaction(datadict,"remotecontrol_trigger") # trigger the remotecontrol mode 1 button for a single BUTTONREPEAT_POST action
+        }
+    # Save current control values to allow loop filtering
+    datadict["remotecontrol_current_pushmode_power"] = pushmode_power
+    datadict["remotecontrol_current_pv_power_limit"] = pvlimit
     _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
@@ -1842,7 +1847,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Export-First Battery Charge Limit (mode 8/9)",
+        name="Remotecontrol Battery Charge Limit (mode 8/9)",
         key="export_first_battery_charge_limit_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         native_min_value=0,
@@ -1859,12 +1864,26 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         name="Remotecontrol Target SOC (mode 8/9)",
         key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
-        native_min_value=-0,
+        native_min_value=10,
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         initvalue=95,
-        register_data_type=REGISTER_U16,  #
+        register_data_type=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Minimum SOC (mode 8/9)",
+        key="remotecontrol_minimum_soc_8_9",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        native_min_value=10,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        initvalue=10,
+        register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
         suggested_display_precision=0,
