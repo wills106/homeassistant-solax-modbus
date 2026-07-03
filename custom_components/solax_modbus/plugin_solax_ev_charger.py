@@ -32,8 +32,10 @@ from custom_components.solax_modbus.const import (
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
+    BaseModbusSwitchEntityDescription,
     BaseModbusTimeEntityDescription,
     plugin_base,
+    value_function_enable_disable,
     value_function_firmware_decimal_hundredths,
     value_function_separate_registers_time,
 )
@@ -223,6 +225,11 @@ def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, An
         (REGISTER_U16, utc_now.month),  # 0x622: month    (UTC)
         (REGISTER_U16, utc_now.year % 100),  # 0x623: year     (UTC)
     ]
+
+
+def value_function_disable_enable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:
+    """Write 0 for on, 1 for off (inverted polarity: 0=Closed/Active, 1=Open/Inactive)."""
+    return 0 if state else 1
 
 
 # ================================= Button Declarations ============================================================
@@ -467,28 +474,6 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Device Lock",
-        key="device_lock",
-        register=0x615,
-        option_dict={
-            0: "Unlock",
-            1: "Lock",
-        },
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:lock",
-    ),
-    SolaXEVChargerModbusSelectEntityDescription(
-        name="RFID Card Activation",
-        key="rfid_program",
-        register=0x616,
-        option_dict={
-            0: "Disabled",
-            1: "Enabled",
-        },
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:card-account-details",
-    ),
-    SolaXEVChargerModbusSelectEntityDescription(
         name="Charging Mode",
         key="evse_scene",
         register=0x61C,
@@ -675,17 +660,17 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Device Lock",
-        key="device_lock",
+        name="Electronic Lock",
+        key="electronic_lock",
         register=0x615,
-        scale={0: "Unlock", 1: "Lock"},
+        scale={0: 0, 1: 1},
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="RFID Card Activation",
-        key="rfid_program",
+        key="rfid_card_activation",
         register=0x616,
-        scale={0: "Disabled", 1: "Enabled"},
+        scale={0: 0, 1: 1},
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -770,6 +755,15 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x668,
         scale=0.01,
         rounding=1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Main Breaker Limit Switch",
+        key="main_breaker_limit_switch",
+        register=0x664,
+        # Inverted scale: device 0=Closed/Active -> 1 (on), device 1=Open/Inactive -> 0 (off)
+        scale={0: 1, 1: 0},
+        allowedtypes=GEN2,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1756,7 +1750,38 @@ plugin_instance = solax_ev_charger_plugin(
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
     SELECT_TYPES=SELECT_TYPES,
-    SWITCH_TYPES=[],
+    SWITCH_TYPES=[
+        BaseModbusSwitchEntityDescription(
+            name="Electronic Lock",
+            key="electronic_lock",
+            register=0x615,
+            sensor_key="electronic_lock",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:lock",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="RFID Card Activation",
+            key="rfid_card_activation",
+            register=0x616,
+            sensor_key="rfid_card_activation",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:card-account-details",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="Main Breaker Limit Switch",
+            key="main_breaker_limit_switch",
+            register=0x664,
+            allowedtypes=GEN2,
+            sensor_key="main_breaker_limit_switch",
+            # Register polarity: 0=Closed/Active, 1=Open/Inactive
+            # Switch ON writes 0 (limit active), OFF writes 1 (limit inactive)
+            value_function=value_function_disable_enable,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:electric-switch",
+        ),
+    ],
     TIME_TYPES=TIME_TYPES,
     block_size=32,
     # order16=Endian.BIG,
