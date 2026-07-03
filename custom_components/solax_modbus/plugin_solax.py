@@ -382,6 +382,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     # Get power measurements
     measured_power = datadict.get("measured_power", 0)  # Grid power (positive = import, negative = export)
     battery_capacity = datadict.get("battery_capacity", 0)
+    battery_min_soc = datadict.get("selfuse_discharge_min_soc", 10)
 
     # Parallel mode support: Use PM power if in parallel mode and we're the Master
     parallel_setting = datadict.get("parallel_setting", "Free")
@@ -615,6 +616,21 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     if old_ap_target != ap_target:
         _LOGGER.debug(
             "[REMOTE_CONTROL] Bounds checking: "
+            f"initial_ap_target={old_ap_target}W final_ap_target={ap_target}W "
+            f"adjusted_by={old_ap_target - ap_target}W"
+        )
+
+    # Battery minimum SoC protection
+    old_ap_target = ap_target
+    if battery_capacity <= battery_min_soc:
+        # Battery is at or below minimum SoC, so limit target to
+        # allow pushes of no more than current PV power to prevent
+        # further discharge of the battery (or at the very least
+        # try to reduce it to no more than a trickle).
+        ap_target = max(ap_target, 0 - pv_power)
+    if old_ap_target != ap_target:
+        _LOGGER.debug(
+            "[REMOTE_CONTROL] Battery SoC checking: "
             f"initial_ap_target={old_ap_target}W final_ap_target={ap_target}W "
             f"adjusted_by={old_ap_target - ap_target}W"
         )
