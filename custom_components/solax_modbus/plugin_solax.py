@@ -940,7 +940,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # SOC bounds
         min_discharge_soc = datadict.get("selfuse_discharge_min_soc", 10)
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
-        charge_soc_hysteresis = datadict.get("negative_injection_battery_hysteresis", 2)
         # Keep a small gap below the inverter's own export cap so our loop does not
         # constantly fight the inverter's internal export limiter.
         export_margin_w = int(datadict.get("export_first_export_margin_w", 150) or 0)
