@@ -675,14 +675,16 @@ class SolaXModbusHub:
             return
 
         # Prepare device_info (inverter detected during initial window)
-        plugin_name = self.plugin.plugin_name
+        # Device name = hub name + optional suffix (e.g. "EV" + "Charger" -> "EV Charger").
+        # Unique per config entry; entity names never repeat it, HA composes the friendly name.
+        device_name = self._name
         if self.inverterNameSuffix is not None and self.inverterNameSuffix != "":
-            plugin_name = plugin_name + " " + self.inverterNameSuffix
+            device_name = device_name + " " + self.inverterNameSuffix
         self.device_info = DeviceInfo(
             identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
             manufacturer=self.plugin.plugin_manufacturer,
             model=self._get_inverter_model(),
-            name=plugin_name,
+            name=device_name,
             serial_number=self.seriesnumber,
             sw_version=self.plugin.getSoftwareVersion(self.data),
             hw_version=self.plugin.getHardwareVersion(self.data),
@@ -732,14 +734,14 @@ class SolaXModbusHub:
                     self._invertertype = inv
                     _LOGGER.debug(f"{self._name}: inverter detected during deferred setup (type={inv}) – forwarding platforms")
                     # Prepare/refresh device_info in case it wasn't set
-                    plugin_name = self.plugin.plugin_name
+                    device_name = self._name
                     if self.inverterNameSuffix:
-                        plugin_name = plugin_name + " " + self.inverterNameSuffix
+                        device_name = device_name + " " + self.inverterNameSuffix
                     self.device_info = DeviceInfo(
                         identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, INVERTER_IDENT)}),
                         manufacturer=self.plugin.plugin_manufacturer,
                         model=self._get_inverter_model(),
-                        name=plugin_name,
+                        name=device_name,
                         serial_number=self.seriesnumber,
                         sw_version=self.plugin.getSoftwareVersion(self.data),
                         hw_version=self.plugin.getHardwareVersion(self.data),

@@ -228,11 +228,11 @@ class TestDeviceInfoInitializationPattern:
 
         # Find both device_info initialization patterns
         # Pattern 1: Initial setup (in async_init_hub around line 640)
-        initial_pattern = r"plugin_name = self\.plugin\.plugin_name\s+if self\.inverterNameSuffix.*?self\.device_info = DeviceInfo\("
+        initial_pattern = r"device_name = self\._name\s+if self\.inverterNameSuffix.*?self\.device_info = DeviceInfo\("
         initial_match = re.search(initial_pattern, content, re.DOTALL)
 
         # Pattern 2: Deferred setup (in _deferred_setup_loop around line 687)
-        deferred_pattern = r"plugin_name = self\.plugin\.plugin_name\s+if self\.inverterNameSuffix.*?self\.device_info = DeviceInfo\("
+        deferred_pattern = r"device_name = self\._name\s+if self\.inverterNameSuffix.*?self\.device_info = DeviceInfo\("
         deferred_matches = list(re.finditer(deferred_pattern, content, re.DOTALL))
 
         assert len(deferred_matches) >= 1, "Could not find device_info initialization patterns"

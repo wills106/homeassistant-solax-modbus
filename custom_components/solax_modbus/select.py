@@ -36,18 +36,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     plugin = hub.plugin  # getPlugin(hub_name)
-    inverter_name_suffix = ""
-    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-        inverter_name_suffix = hub.inverterNameSuffix + " "
-
     entities = []
     for select_info in plugin.SELECT_TYPES:
         if plugin.matchInverterWithMask(
             hub._invertertype, select_info.allowedtypes, hub.seriesnumber, select_info.blacklist
         ) and matches_modbus_protocol(hub, select_info):
             select_info = replace(select_info, reverse_option_dict={v: k for k, v in select_info.option_dict.items()})
-            if not (select_info.name.startswith(inverter_name_suffix)):
-                select_info = replace(select_info, name=inverter_name_suffix + select_info.name)
             select = SolaXModbusSelect(hub_name, hub, modbus_addr, hub.device_info, select_info)
             if select_info.write_method == WRITE_DATA_LOCAL:
                 if select_info.initvalue is not None:
@@ -86,6 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSelect(SelectEntity):
     """Representation of an SolaX Modbus select."""
 
+    _attr_has_entity_name = True
     entity_description: BaseModbusSelectEntityDescription
 
     def __init__(
@@ -170,8 +165,8 @@ class SolaXModbusSelect(SelectEntity):
 
     @property
     def name(self) -> str:
-        """Return the name."""
-        return f"{self._platform_name} {self._name}"
+        """Return the entity name (description name only — the device name provides context)."""
+        return str(self._name or self._key)
 
     @property
     def should_poll(self) -> bool:
