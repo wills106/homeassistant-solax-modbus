@@ -654,18 +654,17 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
         # for non-ideal charging curves and reduce battery wear
         f = f * (float(chargeable_soc + 2.0) / 6.0)
 
-    # BMS charge capability approximation
-    bms_a = datadict.get("bms_charge_max_current", None)
-    batt_v = (
-        datadict.get("battery_1_voltage_charge", None)
-        or datadict.get("battery_2_voltage_charge", None)
-        or datadict.get("battery_voltage_charge", None)
-    )
-    if isinstance(bms_a, (int, float)) and isinstance(batt_v, (int, float)) and bms_a > 0 and batt_v > 0:
-        bms_cap_w = int(bms_a * batt_v)
-    else:
-        reg_a = datadict.get("battery_charge_max_current", 20)
-        bms_cap_w = int(reg_a * (batt_v if isinstance(batt_v, (int, float)) and batt_v > 0 else 360))
+    # Determine battery max charge power, first from total sensor
+    bms_cap_w = datadict.get("battery_max_charge_power", None)
+    if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
+        # If not available, try summing individual BMS estimates
+        bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
+        bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
+        bms_cap_w = bms_1_cap_w + bms_2_cap_w
+    if bms_cap_w <= 0:
+        # If still not found, failback guess using default voltage and max charge current
+        bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
+    bms_cap_w = int(bms_cap_w)
 
     # Cap BMS charge to user defined percentage. f is in range 0-1 so this is always same or lower
     pct_cap_w = int(f * bms_cap_w)
