@@ -11775,6 +11775,14 @@ from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMappi
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
     mappings=[
+        # ===== SOC SENSOR =====
+        # Battery SoC %
+        EnergyDashboardSensorMapping(
+            source_key="battery_capacity",
+            target_key="battery_soc",
+            name="Battery SoC",
+            allowedtypes=GEN2 | GEN3 | GEN4 | GEN5 | GEN6,
+        ),
         # ===== POWER SENSORS =====
         # Grid Power
         EnergyDashboardSensorMapping(
