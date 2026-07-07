@@ -955,7 +955,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         hl = max(0, int(houseload_alt))
 
         # SOC bounds
-        max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
+        max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         # Keep a small gap below the inverter's own export cap so our loop does not
         # constantly fight the inverter's internal export limiter.
         export_margin_w = int(datadict.get("export_first_export_margin_w", 150) or 0)
