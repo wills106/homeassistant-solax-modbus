@@ -1913,7 +1913,6 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         entity_category=EntityCategory.CONFIG,
         initvalue=0,
         entity_registry_enabled_default=False,
-        display_as_box=True,
         write_method=WRITE_DATA_LOCAL,
     ),
     SolaxModbusNumberEntityDescription(
@@ -1927,7 +1926,6 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         entity_category=EntityCategory.CONFIG,
         initvalue=100,
         entity_registry_enabled_default=False,
-        display_as_box=True,
         write_method=WRITE_DATA_LOCAL,
     ),
     ###
@@ -2215,7 +2213,6 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         modbus_min=101,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
-        display_as_box=True,
         icon="mdi:tune-variant",
     ),
     SolaxModbusNumberEntityDescription(
@@ -2568,7 +2565,6 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
-        display_as_box=True,
         icon="mdi:ev-station",
     ),
     SolaxModbusNumberEntityDescription(
@@ -2582,7 +2578,6 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_step=1,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | DCB,
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
         icon="mdi:connection",
     ),
     SolaxModbusNumberEntityDescription(

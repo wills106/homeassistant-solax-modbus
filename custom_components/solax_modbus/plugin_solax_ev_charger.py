@@ -263,7 +263,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=NumberDeviceClass.VOLTAGE,
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Undervoltage Limit",
@@ -276,7 +275,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=NumberDeviceClass.VOLTAGE,
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Main Breaker Limit",
@@ -289,7 +287,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Datahub Charge Current",
@@ -338,7 +335,6 @@ NUMBER_TYPES = [
         native_step=1,
         icon="mdi:identifier",
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Smart Boost Energy",
@@ -351,7 +347,6 @@ NUMBER_TYPES = [
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=NumberDeviceClass.ENERGY,
         entity_category=EntityCategory.CONFIG,
-        display_as_box=True,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="OCPP Charge Current",
