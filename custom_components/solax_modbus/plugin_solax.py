@@ -654,18 +654,17 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
         # for non-ideal charging curves and reduce battery wear
         f = f * (float(chargeable_soc + 2.0) / 6.0)
 
-    # BMS charge capability approximation
-    bms_a = datadict.get("bms_charge_max_current", None)
-    batt_v = (
-        datadict.get("battery_1_voltage_charge", None)
-        or datadict.get("battery_2_voltage_charge", None)
-        or datadict.get("battery_voltage_charge", None)
-    )
-    if isinstance(bms_a, (int, float)) and isinstance(batt_v, (int, float)) and bms_a > 0 and batt_v > 0:
-        bms_cap_w = int(bms_a * batt_v)
-    else:
-        reg_a = datadict.get("battery_charge_max_current", 20)
-        bms_cap_w = int(reg_a * (batt_v if isinstance(batt_v, (int, float)) and batt_v > 0 else 360))
+    # Determine battery max charge power, first from total sensor
+    bms_cap_w = datadict.get("battery_max_charge_power", None)
+    if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
+        # If not available, try summing individual BMS estimates
+        bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
+        bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
+        bms_cap_w = bms_1_cap_w + bms_2_cap_w
+    if bms_cap_w <= 0:
+        # If still not found, failback guess using default voltage and max charge current
+        bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
+    bms_cap_w = int(bms_cap_w)
 
     # Cap BMS charge to user defined percentage. f is in range 0-1 so this is always same or lower
     pct_cap_w = int(f * bms_cap_w)
@@ -1415,6 +1414,44 @@ def value_function_software_version(initval: int, descr: Any, datadict: dict[str
 
 def value_function_battery_voltage_cell_difference(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return float(datadict.get("cell_voltage_high", 0)) - float(datadict.get("cell_voltage_low", 0))
+
+
+def value_function_bms_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate maximum charge power for Battery 1 sensors."""
+    # Battery voltage has different sensor names based on version.
+    batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None) or 0
+    batt_a1 = datadict.get("bms_charge_max_current", None)
+    if batt_a1 is None:
+        # If BMS sensor is unavailable, fail back to total charge current
+        batt_at = datadict.get("battery_charge_max_current", 20)
+        # Note if we have two batteries (battery 2 has voltage) then total
+        # is split equally across both batteries.
+        batt_v2 = datadict.get("battery_2_voltage_charge", None)
+        if batt_v2 is None or batt_v2 <= 0:
+            batt_a1 = batt_at
+        else:
+            batt_a1 = batt_at / 2
+    # Calculate battery 1 max charge power
+    return int(batt_v1 * batt_a1)
+
+
+def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate maximum charge power for Battery 1 sensors."""
+    # Battery 1 voltage has different sensor names based on version. Set to default of none available.
+    batt_v2 = datadict.get("battery_2_voltage_charge", None) or 0
+    batt_a2 = datadict.get("bms_2_charge_max_current", None)
+    if batt_a2 is None:
+        # If BMS sensor is unavailable, fail back to total charge current
+        batt_at = datadict.get("battery_charge_max_current", 20)
+        # Note if we have two batteries (battery 1 has voltage) then total
+        # is split equally across both batteries.
+        batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None)
+        if batt_v1 is None or batt_v1 <= 0:
+            batt_a2 = batt_at
+        else:
+            batt_a2 = batt_at / 2
+    # Calculate battery 2 max charge power
+    return int(batt_v2 * batt_a2)
 
 
 # ================================= Button Declarations ============================================================
@@ -6463,7 +6500,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS 1 Charge Max Current",
+        name="Battery Charge Max Current",
         key="bms_charge_max_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default=False,
@@ -6472,11 +6509,24 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS 1 Discharge Max Current",
+        name="Battery 1 Charge Max Current",
+        key="bms_charge_max_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default=False,
+        register=0x24,
+        scan_group=SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Discharge Max Current",
         key="bms_discharge_max_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_registry_enabled_default=False,
@@ -6485,11 +6535,24 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4,
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="BMS 1 Battery Capacity",
+        name="Battery 1 Discharge Max Current",
+        key="bms_discharge_max_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default=False,
+        register=0x25,
+        scan_group=SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Total Energy",
         key="bms_battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -6497,7 +6560,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x26,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        allowedtypes=AC | HYBRID | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 1 Total Energy",
+        key="bms_battery_capacity",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False,
+        register=0x26,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 4",
@@ -7601,6 +7675,66 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Battery Max Charge Power",
+        key="battery_max_charge_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0xA2,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        scan_group=SCAN_GROUP_DEFAULT,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+        icon="mdi:battery-charging-high",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Max Discharge Power",
+        key="battery_max_discharge_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0xA4,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        scan_group=SCAN_GROUP_DEFAULT,
+        allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
+        icon="mdi:battery-charging-low",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Max Charge Rate",
+        key="bms_max_charge",
+        value_function=value_function_bms_max_charge,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        scan_group=SCAN_GROUP_DEFAULT,
+        allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
+        icon="mdi:battery-charging-high",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 1 Max Charge Rate",
+        key="bms_max_charge",
+        value_function=value_function_bms_max_charge,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        scan_group=SCAN_GROUP_DEFAULT,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:battery-charging-high",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 2 Max Charge Rate",
+        key="bms_2_max_charge",
+        value_function=value_function_bms_2_max_charge,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        scan_group=SCAN_GROUP_DEFAULT,
+        rounding=3,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:battery-charging-high",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Meter 2 Measured Power",
         key="meter_2_measured_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -8274,7 +8408,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Chargeable Battery Capacity",
+        name="Chargeable Battery Energy",
         key="chargeable_battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -8282,10 +8416,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x116,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remaining Battery Capacity",
+        name="Remaining Battery Energy",
         key="remaining_battery_capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY_STORAGE,
@@ -8294,7 +8428,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x118,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 3",
@@ -8425,11 +8559,51 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-        register=0x132,
+        register=0x131,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 2 Charge Max Current",
+        key="bms_2_charge_max_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default=False,
+        register=0x309,
+        scan_group=SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        modbus_min=100,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 2 Discharge Max Current",
+        key="bms_2_discharge_max_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_registry_enabled_default=False,
+        register=0x30A,
+        scan_group=SCAN_GROUP_DEFAULT,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        modbus_min=100,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery 2 Total Energy",
+        key="bms_2_battery_capacity",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False,
+        register=0x30B,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        modbus_min=100,
+        allowedtypes=AC | HYBRID | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 2 State of Health",
