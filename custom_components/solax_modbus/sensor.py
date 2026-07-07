@@ -159,10 +159,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 dev_registry.async_update_device(device.id, sw_version=sw_version, hw_version=hw_version)
         return True
 
+    # Entity names never carry the inverter suffix — the device name provides that context.
     inverter_name_suffix = ""
-    # Test: Comment out to prevent adding inverter suffix to Energy Dashboard sensors
-    # if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-    #     inverter_name_suffix = hub.inverterNameSuffix + " "
 
     # Check if hub initialization is complete
     if hub.device_info is None:
@@ -228,17 +226,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     if batt_pack_serial is None:
                         continue
 
+                # Battery pack device name = hub name + pack identity (unique per config entry);
+                # entity names never repeat it, HA composes the friendly name.
                 device_info_battery = DeviceInfo(
                     identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}),
-                    name=hub.plugin.plugin_name + f" Battery {batt_nr + 1}/{batt_pack_nr + 1}",
+                    name=f"{hub_name} Battery {batt_nr + 1}/{batt_pack_nr + 1}",
                     manufacturer=hub.plugin.plugin_manufacturer,
                     serial_number=batt_pack_serial,
                     via_device=cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)),
                 )
 
-                name_prefix = battery_config.battery_sensor_name_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
-                    "{pack-nr}", str(batt_pack_nr + 1)
-                )
                 key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
                     "{pack-nr}", str(batt_pack_nr + 1)
                 )
@@ -275,7 +272,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     computedRegs,
                     device_info_battery,
                     battery_config.battery_sensor_type,
-                    name_prefix,
+                    "",  # entity names never carry the pack prefix — the battery device name provides it
                     key_prefix,
                     readPreparation,
                     readFollowUpBattery,
@@ -553,6 +550,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSensor(SensorEntity):
     """Representation of an SolaX Modbus sensor."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         platform_name: str,
@@ -617,10 +616,8 @@ class SolaXModbusSensor(SensorEntity):
 
     @property
     def name(self) -> str:
-        """Return the name."""
-        if self.entity_description.key in COMMUNICATION_SENSOR_KEYS:
-            return str(self.entity_description.name or self.entity_description.key)
-        return f"{self._platform_name} {self.entity_description.name}"
+        """Return the entity name (description name only — the device name provides context)."""
+        return str(self.entity_description.name or self.entity_description.key)
 
     @property
     def unique_id(self) -> str | None:
