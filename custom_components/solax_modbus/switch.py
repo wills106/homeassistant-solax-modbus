@@ -1,5 +1,4 @@
 import logging
-from dataclasses import replace
 from datetime import datetime
 from typing import Any
 
@@ -34,18 +33,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     plugin = hub.plugin  # getPlugin(hub_name)
-    inverter_name_suffix = ""
-    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-        inverter_name_suffix = hub.inverterNameSuffix + " "
-
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
         if plugin.matchInverterWithMask(
             hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist
         ) and matches_modbus_protocol(hub, switch_info):
-            if not (switch_info.name.startswith(inverter_name_suffix)):
-                switch_info = replace(switch_info, name=inverter_name_suffix + switch_info.name)
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
@@ -108,6 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     """Representation of an SolaX Modbus switch."""
 
+    _attr_has_entity_name = True
     entity_description: BaseModbusSwitchEntityDescription
 
     def __init__(
@@ -223,6 +217,11 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             return bool(sensor_value & (1 << self._bit))
 
         return self._attr_is_on
+
+    @property
+    def name(self) -> str:
+        """Return the entity name (description name only — the device name provides context)."""
+        return str(self._name or self._key)
 
     @property
     def unique_id(self) -> str | None:

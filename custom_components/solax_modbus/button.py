@@ -1,5 +1,4 @@
 import logging
-from dataclasses import replace
 from time import time
 from typing import Any
 
@@ -36,17 +35,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     plugin = hub.plugin
-    inverter_name_suffix = ""
-    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-        inverter_name_suffix = hub.inverterNameSuffix + " "
-
     entities = []
     for button_info in plugin.BUTTON_TYPES:
         if plugin.matchInverterWithMask(
             hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist
         ) and matches_modbus_protocol(hub, button_info):
-            if not (button_info.name.startswith(inverter_name_suffix)):
-                button_info = replace(button_info, name=inverter_name_suffix + button_info.name)
             button = SolaXModbusButton(hub_name, hub, modbus_addr, hub.device_info, button_info)
             entities.append(button)
             if button_info.key == plugin.wakeupButton():
@@ -80,6 +73,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusButton(ButtonEntity):
     """Representation of an SolaX Modbus button."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         platform_name: str,
@@ -105,8 +100,8 @@ class SolaXModbusButton(ButtonEntity):
 
     @property
     def name(self) -> str:
-        """Return the name."""
-        return f"{self._platform_name} {self._name}"
+        """Return the entity name (description name only — the device name provides context)."""
+        return str(self._name or self._key)
 
     @property
     def unique_id(self) -> str | None:

@@ -354,7 +354,7 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     # update only when read value changes
     sensor_key: str | None = None  # only specify this if corresponding sensor has a different key name
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
-    display_as_box: bool = False  # if true, displays the entity as a box rather than a slider.
+    display_as_box: bool = True  # display numbers as an input box (default); set False for a slider.
     suggested_display_precision: int | None = None
 
 

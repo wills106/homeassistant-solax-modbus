@@ -1,5 +1,4 @@
 import logging
-from dataclasses import replace
 from datetime import datetime
 from datetime import time as datetime_time
 from typing import Any
@@ -35,17 +34,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
     plugin = hub.plugin  # getPlugin(hub_name)
-    inverter_name_suffix = ""
-    if hub.inverterNameSuffix is not None and hub.inverterNameSuffix != "":
-        inverter_name_suffix = hub.inverterNameSuffix + " "
-
     entities = []
     for time_info in plugin.TIME_TYPES:
         if plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist) and matches_modbus_protocol(
             hub, time_info
         ):
-            if not (time_info.name.startswith(inverter_name_suffix)):
-                time_info = replace(time_info, name=inverter_name_suffix + time_info.name)
             time_entity = SolaXModbusTimeEntity(hub_name, hub, modbus_addr, hub.device_info, time_info)
             if time_info.write_method == WRITE_DATA_LOCAL:
                 if time_info.initvalue is not None:
@@ -60,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class SolaXModbusTimeEntity(TimeEntity):
     """Representation of an SolaX Modbus time entity."""
 
+    _attr_has_entity_name = True
     entity_description: BaseModbusTimeEntityDescription
 
     def __init__(
@@ -180,14 +174,14 @@ class SolaXModbusTimeEntity(TimeEntity):
         return self._attr_native_value
 
     @property
-    def name(self) -> str:
-        """Return the name."""
-        return f"{self._platform_name} {self._name}"
-
-    @property
     def should_poll(self) -> bool:
         """Data is delivered by by the hub"""
         return False
+
+    @property
+    def name(self) -> str:
+        """Return the entity name (description name only — the device name provides context)."""
+        return str(self._name or self._key)
 
     @property
     def unique_id(self) -> str | None:
