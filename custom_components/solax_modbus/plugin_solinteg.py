@@ -2029,10 +2029,14 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             name="Grid Export Energy",
         ),
         # Home Consumption Energy
+        # The 'house_energy_today' sensor does not provide valid information
+        # on some inverters, so use riemann sum of house load power.
         EnergyDashboardSensorMapping(
-            source_key="house_energy_today",
+            source_key="house_load_total",
             target_key="home_consumption_energy",
             name="Home Consumption Energy",
+            use_riemann_sum=True,
+            filter_function=lambda v: max(0, v),
         ),
         # Battery Charge Energy
         EnergyDashboardSensorMapping(
