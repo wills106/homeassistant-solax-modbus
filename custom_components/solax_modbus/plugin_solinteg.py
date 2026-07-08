@@ -1624,6 +1624,7 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=HYBRID | ALL_EPS_GROUP,
         icon="mdi:home",
     ),
     # internal sensors are only used for polling values for selects, etc
