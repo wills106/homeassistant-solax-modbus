@@ -88,6 +88,8 @@ With these parameters a power control dashboard card can be created:
 
 Before issuing a `remotecontrol_trigger` button activation, an automation should make sure that the other remotecontrol_* parameters have the correct values. This also applies to manual interactions with the `remotecontrol_trigger` button.
 
+When using the autorepeat function, checks are in place to ensure that you cannot request the battery discharge below the minimum SoC limit set by the `selfuse_discharge_min_soc` entity. Once this SoC level is reached, any modes which would normally discharge the battery will be prevented from further discharging the battery.
+
 ### Related read-only sensors
 The state of the modbus power control can be monitored by examining following sensors:
 - `modbus_power_control`
