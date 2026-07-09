@@ -1135,6 +1135,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x10,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
+        order32="big",
         scale=0.1,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,

@@ -82,10 +82,12 @@ def test_value_function_grid_export() -> None:
 def test_value_function_rtc() -> None:
     # Format: (seconds, minutes, hours, days, months, years)
     # Note: The function expects a tuple/list of these values
-    # Test case: 2023-10-25 14:30:45
+    # Test case: 2023-10-25 14:30:45, stamped with the host's local timezone
     initval = (45, 30, 14, 25, 10, 23)
-    expected = datetime(2023, 10, 25, 14, 30, 45)
-    assert value_function_rtc(initval, None, {}) == expected
+    expected = datetime(2023, 10, 25, 14, 30, 45, tzinfo=datetime.now().astimezone().tzinfo)
+    result = value_function_rtc(initval, None, {})
+    assert result == expected
+    assert result.tzinfo is not None
 
     # Test invalid date handling (should return None/pass)
     initval_invalid = (99, 99, 99, 99, 99, 99)
