@@ -483,6 +483,16 @@ def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str
     return scale.get(initval, str(initval) + " Unknown Status")
 
 
+def value_function_enable_disable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:
+    """Switch value function: write 1 for on, 0 for off (standard enable/disable register)."""
+    return 1 if state else 0
+
+
+def value_function_disable_enable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:
+    """Switch value function: write 0 for on, 1 for off (inverted-polarity register)."""
+    return 0 if state else 1
+
+
 def value_function_gain_offset(initval: Any, descr: Any, datadict: dict[str, Any]) -> float:
     """Apply gain and offset calibration to power measurement."""
     # Simple offset (unit) and gain (%) calibration of the measured power
