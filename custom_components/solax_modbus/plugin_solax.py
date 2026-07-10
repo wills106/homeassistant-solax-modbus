@@ -6833,7 +6833,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         allowedtypes=HYBRID | GEN4 | GEN5 | GEN6,
         modbus_min=100,
-        entity_registry_enabled_default=False,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
