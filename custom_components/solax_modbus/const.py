@@ -204,8 +204,9 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     """Base class for modbus sensor declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    order32: str | None = None  # per-sensor 32-bit word order override ("big"/"little"); None = plugin default
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     scale: float | dict[Any, Any] | Callable[[Any, Any, dict[str, Any]], Any] = (
         1  # can be float, dictionary or callable function(initval, descr, datadict)
     )
@@ -252,8 +253,8 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None
     command: int | None = None
     blacklist: list[str] | None = None  # none or list of serial number prefixes
@@ -268,8 +269,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     """Base class for modbus select declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None
     option_dict: dict[int, str] | None = None
     reverse_option_dict: dict[str, int] | None = None  # autocomputed
@@ -288,8 +289,8 @@ class BaseModbusSwitchEntityDescription(SwitchEntityDescription):
     """Base class for modbus switch declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None
     register_bit: int | None = None
     blacklist: list[str] | None = None  # none or list of serial number prefixes
@@ -307,8 +308,8 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
     """Base class for modbus time declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     scale: float | dict[Any, Any] | Callable[[Any, Any, dict[str, Any]], Any] = 1
     read_scale_exceptions: list[Any] | None = None
     read_scale: float = 1
@@ -336,8 +337,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
-    modbus_min: int | None = None  # Minimum supported Modbus protocol document version, e.g. 102 for V001.02.
-    modbus_max: int | None = None  # Maximum supported Modbus protocol document version.
+    modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
+    modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None
     read_scale_exceptions: list[Any] | None = None
     read_scale: float = 1
@@ -585,8 +586,15 @@ def value_function_rtc(initval: Any, descr: Any, datadict: dict[str, Any]) -> da
             rtc_months,
             rtc_years,
         ) = initval
-        val = f"{rtc_days:02}/{rtc_months:02}/{rtc_years % 100:02} {rtc_hours:02}:{rtc_minutes:02}:{rtc_seconds:02}"
-        return datetime.strptime(val, "%d/%m/%y %H:%M:%S")  # ok since sensor.py has been adapted
+        return datetime(
+            2000 + rtc_years % 100,
+            rtc_months,
+            rtc_days,
+            rtc_hours,
+            rtc_minutes,
+            rtc_seconds,
+            tzinfo=datetime.now().astimezone().tzinfo,
+        )
     except Exception:
         return None
 
