@@ -2272,7 +2272,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | X3,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Bias Power",
+        name="Grid Bias Power",
         key="bias_power",
         register=0x119,
         sensor_key="bias_power",
@@ -2282,8 +2282,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_step=1,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        modbus_min=101,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        modbus_min=100,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
         icon="mdi:tune-variant",
@@ -3512,7 +3512,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Pgrid Bias",
+        name="Grid Bias Direction",
         key="pgrid_bias",
         register=0x8D,
         option_dict={
@@ -3520,7 +3520,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             1: "Grid",
             2: "Inverter",
         },
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:dip-switch",
     ),
     SolaxModbusSelectEntityDescription(
@@ -4412,7 +4412,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             1: "Grid",
             2: "Inverter",
         },
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
@@ -4420,8 +4420,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x5D,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
-        modbus_min=101,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        modbus_min=100,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
