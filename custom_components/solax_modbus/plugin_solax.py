@@ -1345,6 +1345,22 @@ def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dic
     return 0
 
 
+def value_function_remaining_battery_capacity(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    # Sum BMS reported capacities to get total available
+    bat1_capacity: int | float = datadict.get("bms_battery_capacity", 0)
+    bat2_capacity: int | float = datadict.get("bms_2_battery_capacity", 0)
+    # Check if we have a chargeable capacity sensor
+    chargeable_capacity: int | float = datadict.get("chargeable_battery_capacity", -1)
+    if chargeable_capacity >= 0:
+        # If so, remaining capacity is total less chargeable (clamp to strictly non-negative)
+        return max(bat1_capacity + bat2_capacity - chargeable_capacity, 0)
+    # Otherwise base value on per-battery nominal capacity and SoC %. We do not account for SoH
+    # as this is an approximation and SoH sensors may be unavailable.
+    bat1_soc = float(datadict.get("battery_1_capacity_charge", 0)) / 100.0
+    bat2_soc = float(datadict.get("battery_2_capacity_charge", 0)) / 100.0
+    return bat1_capacity * bat1_soc + bat2_capacity * bat2_soc
+
+
 def value_function_software_version_g2(initval: int, descr: Any, datadict: dict[str, Any]) -> str | None:
     # AC/HYBRID GEN2: split registers hold raw minor versions with a fixed major of 2
     return f"DSP v2.{datadict.get('firmware_dsp_minor')} ARM v2.{datadict.get('firmware_arm_minor')}"
@@ -8464,6 +8480,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x118,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
+        modbus_max=99,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remaining Battery Energy",
+        key="remaining_battery_capacity",
+        value_function=value_function_remaining_battery_capacity,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_registry_enabled_default=False,
+        depends_on=["bms_battery_capacity", "bms_2_battery_capacity", "chargeable_battery_capacity"],
+        modbus_min=100,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
