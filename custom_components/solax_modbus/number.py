@@ -27,6 +27,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _scale_native_value_to_register(value: float, scale: float, read_scale: float) -> int:
+    """Convert a native number value to its integer register representation."""
+    return int(round(value / (scale * read_scale)))
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
     if entry.data:  # old style - remove soon
         hub_name = entry.data[CONF_NAME]
@@ -229,10 +234,8 @@ class SolaXModbusNumber(NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Change the number value."""
         payload: int | float = value
-        if self._fmt == "i":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
-        elif self._fmt == "f":
-            payload = int(value / (self._attr_scale * self.entity_description.read_scale))
+        if self._fmt in ("i", "f"):
+            payload = _scale_native_value_to_register(value, self._attr_scale, self.entity_description.read_scale)
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(
                 f"writing {self._platform_name} {self._key} number register {self._register} value {payload} after div by readscale {self.entity_description.read_scale} scale {self._attr_scale} with mode {self._write_method}"
