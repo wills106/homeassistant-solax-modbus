@@ -19,6 +19,7 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
+    PERCENTAGE,
     EntityCategory,
     UnitOfEnergy,
     UnitOfPower,
@@ -515,6 +516,7 @@ def _create_sensor_from_mapping(
     # Power sensors: target_key contains "power" (even if it also contains "energy")
     target_key_lower = sensor_mapping.target_key.lower()
     is_energy_sensor = sensor_mapping.use_riemann_sum or ("energy" in target_key_lower and "power" not in target_key_lower)
+    is_soc_sensor = (source_sensor_desc.device_class == SensorDeviceClass.BATTERY) if source_sensor_desc else ("soc" in target_key_lower)
 
     # Set attributes - inherit from source if available, otherwise use defaults
     if is_energy_sensor:
@@ -523,6 +525,12 @@ def _create_sensor_from_mapping(
         state_class = SensorStateClass.TOTAL_INCREASING
         unit = sensor_mapping.unit or UnitOfEnergy.KILO_WATT_HOUR
         default_icon = source_sensor_desc.icon if source_sensor_desc and source_sensor_desc.icon else "mdi:lightning-bolt"
+    elif is_soc_sensor:
+        # State of Charge attributes - use hardcoded classes, skipping icon so that HA loads dynamic battery symbol
+        device_class = SensorDeviceClass.BATTERY
+        state_class = SensorStateClass.MEASUREMENT
+        unit = PERCENTAGE
+        default_icon = None
     else:
         # Power sensor attributes - inherit from source sensor
         device_class = source_sensor_desc.device_class if source_sensor_desc else SensorDeviceClass.POWER
@@ -550,7 +558,7 @@ def _create_sensor_from_mapping(
         state_class=state_class,
         value_function=make_value_function(sensor_mapping),
         allowedtypes=hub._invertertype,  # Use same types as source sensor
-        icon=sensor_mapping.icon or default_icon,
+        icon=(sensor_mapping.icon or default_icon) if default_icon else None,
         register=-1,  # No modbus register (computed sensor)
         # Custom device_info will be set during sensor creation
     )
