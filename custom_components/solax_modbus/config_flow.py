@@ -31,6 +31,9 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowMenuStep,
 )
 
+from .connection import (
+    matching_config_entries,
+)
 from .const import (
     CONF_BAUDRATE,
     CONF_CORE_HUB,
@@ -285,7 +288,31 @@ async def _next_step_battery(user_input: Any) -> str | None:
     _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
     if user_input.get("support-battery", False):
         return "battery"
-    return None
+    return "duplicate_inverter"
+
+
+def _current_config_entry_id(handler: SchemaCommonFlowHandler) -> str | None:
+    """Return the entry being edited by an options flow."""
+    try:
+        return cast(str, handler.parent_handler.config_entry.entry_id)
+    except (AttributeError, ValueError):
+        return None
+
+
+def _duplicate_inverter_entries(handler: SchemaCommonFlowHandler) -> list[Any]:
+    """Return other entries configured for the candidate connection."""
+    return matching_config_entries(
+        handler.parent_handler.hass,
+        handler.options,
+        exclude_entry_id=_current_config_entry_id(handler),
+    )
+
+
+async def _duplicate_inverter_schema(handler: SchemaCommonFlowHandler) -> vol.Schema | None:
+    """Only show the confirmation step when another config entry matches."""
+    if not _duplicate_inverter_entries(handler):
+        return None
+    return vol.Schema({})
 
 
 def _load_plugin(plugin_name: str) -> ModuleType:
@@ -303,14 +330,16 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
-        "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
+        "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
+        "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "init": SchemaFlowFormStep(OPTION_SCHEMA, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
-        "battery": SchemaFlowFormStep(BATTERY_SCHEMA),
+        "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
+        "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
 
 else:  # for older versions - REMOVE SOON
