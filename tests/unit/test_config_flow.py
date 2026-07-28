@@ -1,0 +1,77 @@
+"""Tests for the SolaX Modbus config flow."""
+
+from types import SimpleNamespace
+from typing import Any, cast
+
+import pytest
+from homeassistant.const import CONF_NAME
+from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
+
+from custom_components.solax_modbus.config_flow import _validate_base
+from custom_components.solax_modbus.const import CONF_INTERFACE, CONF_MODBUS_ADDR, CONF_PLUGIN, DEFAULT_PLUGIN, DOMAIN
+
+
+class _ConfigEntries:
+    def __init__(self, entries: list[Any]) -> None:
+        self._entries = entries
+
+    def async_entries(self, domain: str) -> list[Any]:
+        assert domain == DOMAIN
+        return self._entries
+
+
+def _handler_with_entries(entries: list[Any]) -> SchemaCommonFlowHandler:
+    hass = SimpleNamespace(config_entries=_ConfigEntries(entries))
+    return cast(SchemaCommonFlowHandler, SimpleNamespace(parent_handler=SimpleNamespace(hass=hass)))
+
+
+def _base_input(name: str) -> dict[str, Any]:
+    return {
+        CONF_NAME: name,
+        CONF_INTERFACE: "tcp",
+        CONF_MODBUS_ADDR: 1,
+        CONF_PLUGIN: DEFAULT_PLUGIN,
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("existing_name", ["SolaX", " solax ", "SOLAX"])
+async def test_validate_base_rejects_duplicate_hub_name(existing_name: str) -> None:
+    """Reject names that identify an already configured hub."""
+    entry = SimpleNamespace(options={CONF_NAME: existing_name}, data={})
+
+    with pytest.raises(SchemaFlowError, match="name_already_used"):
+        await _validate_base(_handler_with_entries([entry]), _base_input("SolaX"))
+
+
+@pytest.mark.asyncio
+async def test_validate_base_checks_legacy_entry_data() -> None:
+    """Reject a duplicate name stored in legacy config entry data."""
+    entry = SimpleNamespace(options={}, data={CONF_NAME: "SolaX"})
+
+    with pytest.raises(SchemaFlowError, match="name_already_used"):
+        await _validate_base(_handler_with_entries([entry]), _base_input("SolaX"))
+
+
+@pytest.mark.asyncio
+async def test_validate_base_allows_unique_hub_name() -> None:
+    """Allow a hub name that is not already configured."""
+    entry = SimpleNamespace(options={CONF_NAME: "SolaX Garage"}, data={})
+    user_input = _base_input("SolaX Loft")
+
+    result = await _validate_base(_handler_with_entries([entry]), user_input)
+
+    assert result == user_input
+
+
+@pytest.mark.asyncio
+async def test_validate_base_preserves_default_name_handling_for_other_plugins() -> None:
+    """Keep suggesting the plugin name when a non-SolaX plugin uses the default."""
+    entry = SimpleNamespace(options={CONF_NAME: "SolaX"}, data={})
+    user_input = _base_input("SolaX")
+    user_input[CONF_PLUGIN] = "growatt"
+
+    with pytest.raises(SchemaFlowError, match="name_already_used"):
+        await _validate_base(_handler_with_entries([entry]), user_input)
+
+    assert user_input[CONF_NAME] == "growatt"
