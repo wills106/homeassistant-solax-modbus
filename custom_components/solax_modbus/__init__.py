@@ -181,6 +181,7 @@ def empty_hub_device_group_lambda() -> SimpleNamespace:
         holdingBlocks={},
         readPreparation=None,  # function to call before read group
         readFollowUp=None,  # function to call after read group
+        publish_updates=False,
     )
 
 
@@ -543,6 +544,7 @@ class SolaXModbusHub:
             # Fallback dummy client for unrecognized interface types
             self._client = SimpleNamespace(connected=False, comm_params=SimpleNamespace(host="", port=""))
         self._lock = asyncio.Lock()
+        self._poll_data_lock = asyncio.Lock()
         self._name: str = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug(f"{name}: using pymodbus version {pymodbus_version_info()}")
@@ -1053,9 +1055,10 @@ class SolaXModbusHub:
                     if self.slowdown > 1:
                         _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
                     self.slowdown = 1
-                    for sensor in group.sensors:
-                        sensor.modbus_data_updated()
-                    updated_sensors += len(group.sensors)
+                    if getattr(group, "publish_updates", True):
+                        for sensor in group.sensors:
+                            sensor.modbus_data_updated()
+                        updated_sensors += len(group.sensors)
                 else:
                     if self.slowdown <= 1:
                         _LOGGER.debug(f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10")
@@ -1535,8 +1538,10 @@ class SolaXModbusHub:
 
     async def async_read_modbus_data(self, group: Any) -> bool:
         res = True
+        group.publish_updates = False
         try:
-            res = await self.async_read_modbus_registers_all(group)
+            async with self._poll_data_lock:
+                res = await self.async_read_modbus_registers_all(group)
         except ConnectionException as ex:
             _LOGGER.error(f"Reading data failed! Inverter is offline. {ex}")
             res = False
@@ -1677,7 +1682,7 @@ class SolaXModbusHub:
         # if (descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.awakeplugin(self.data): self.data[descr.key] = return_value
         if (
             (self.tmpdata_expiry.get(descr.key, 0) == 0)
-            and ((descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(self.data))
+            and ((descr.sleepmode != SLEEPMODE_LASTAWAKE) or self.plugin.isAwake(data))
             and (self.localsLoaded or not descr.read_scale_exceptions)  # ignore as long as read scale is not adapted; may delay real startup a bit
         ):
             data[descr.key] = return_value  # case prevent_update number
@@ -1767,7 +1772,25 @@ class SolaXModbusHub:
                     )
                 return False
 
+    def _commit_poll_snapshot(self, previous_data: dict[str, Any], new_data: dict[str, Any]) -> None:
+        """Commit polling changes without replacing the shared data dictionary."""
+        missing = object()
+
+        for key in previous_data.keys() - new_data.keys():
+            if self.data.get(key, missing) == previous_data[key]:
+                self.data.pop(key, None)
+
+        for key, value in new_data.items():
+            previous_value = previous_data.get(key, missing)
+            if previous_value is not missing and value == previous_value:
+                continue
+
+            current_value = self.data.get(key, missing)
+            if current_value is missing or current_value == previous_value:
+                self.data[key] = value
+
     async def async_read_modbus_registers_all(self, group: Any) -> bool:
+        group.publish_updates = False
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
                 _LOGGER.info(f"{self._name}: device group read cancel")
@@ -1775,8 +1798,8 @@ class SolaXModbusHub:
         else:
             _LOGGER.debug(f"{self._name}: device group inverter")
 
-        # data = {"_repeatUntil": self.data["_repeatUntil"]} # remove for issue #1440 but then does not recognize comm errors
-        data = self.data  # is an alias, not a copy (issue #1440)
+        previous_data = self.data.copy()
+        data = previous_data.copy()
         res = True
         for block in group.holdingBlocks:
             _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} previous res:{res}")
@@ -1789,32 +1812,44 @@ class SolaXModbusHub:
             res = res and block_res
             _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done; new res: {res}")
 
+        local_callback_needed = self.localsUpdated
         if self.localsUpdated:
             await self._hass.async_add_executor_job(self.saveLocalData)
             self.plugin.localDataCallback(self)
         if not self.localsLoaded:
             await self._hass.async_add_executor_job(self.loadLocalData)
-        for key, descr in list(self.computedSensors.items()):
-            try:
-                data[key] = descr.value_function(0, descr, data)
-            except Exception as ex:
-                _LOGGER.debug(f"{self._name}: cannot compute value for {key}: {ex}")
-                continue
-            sens = self.sensorEntities.get(key)
-            _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {data.get(descr.key)} ")
-            if sens and (not descr.internal):
+            local_callback_needed = local_callback_needed or self.localsLoaded
+
+        # Local controls can change independently while a Modbus group is being read.
+        for key in self.writeLocals:
+            if key in self.data:
+                data[key] = self.data[key]
+
+        if res:
+            for key, descr in list(self.computedSensors.items()):
                 try:
-                    sens.modbus_data_updated()  # publish state to GUI and automations faster - assuming enabled, otherwise exception
-                except Exception:
-                    _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
+                    data[key] = descr.value_function(0, descr, data)
+                except Exception as ex:
+                    _LOGGER.debug(f"{self._name}: cannot compute value for {key}: {ex}")
 
-        if group.readFollowUp is not None:
-            if not await group.readFollowUp(self.data, data):
-                _LOGGER.warning("device group check not success")
-                return True
+            if group.readFollowUp is not None:
+                if not await group.readFollowUp(previous_data, data):
+                    _LOGGER.warning(f"{self._name}: device group validation failed; discarding polling snapshot")
+                    return True
 
-        # for key, value in data.items(): # remove for issue #1440, but then does not recognize communication errors anymore
-        #    self.data[key] = value # remove for issue #1440, but then comm errors are not detected
+            self._commit_poll_snapshot(previous_data, data)
+            if local_callback_needed:
+                self.plugin.localDataCallback(self)
+
+            for key, descr in list(self.computedSensors.items()):
+                sens = self.sensorEntities.get(key)
+                _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {self.data.get(descr.key)} ")
+                if sens and (not descr.internal):
+                    try:
+                        sens.modbus_data_updated()
+                    except Exception:
+                        _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
+            group.publish_updates = True
 
         if res and self.writequeue and self.plugin.isAwake(self.data):  # self.awakeplugin(self.data):
             # process outstanding write requests
