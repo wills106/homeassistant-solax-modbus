@@ -9658,100 +9658,100 @@ SERIAL_NUMBER_REGISTERS = (3001, 209, 23)
 # Serial-number prefixes from the supported Growatt model families.
 SERIAL_PREFIX_TYPES = {
     # MIN hybrid
-    "ABJ": HYBRID | GEN4 | X1,
-    "SKL": HYBRID | GEN4 | X1,
-    "XVM": HYBRID | GEN4 | X1,
-    "SMN": HYBRID | GEN4 | X1 | MPPT4,
-    "JGQ": HYBRID | GEN4 | X1 | MPPT3,
-    "HJU": HYBRID | GEN4 | X1,
+    "ABJ": HYBRID | GEN4 | X1,  # MIN 2500 TL-XH Hybrid, 2 MPPT
+    "SKL": HYBRID | GEN4 | X1,  # MIN 3600 TL-XH Hybrid, 2 MPPT
+    "XVM": HYBRID | GEN4 | X1,  # MIN 5000 TL-XH Hybrid, 2 MPPT
+    "SMN": HYBRID | GEN4 | X1 | MPPT4,  # MIN TL-XH-US Hybrid, 4 MPPT
+    "JGQ": HYBRID | GEN4 | X1 | MPPT3,  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+    "HJU": HYBRID | GEN4 | X1,  # MIN 4200TL-XH2 Hybrid, 2 MPPT
     # MOD hybrid
-    "XHL": HYBRID | GEN4 | X1,
-    "DPS": HYBRID | GEN4 | X3,
-    "DMS": HYBRID | GEN4 | X3 | MPPT3,
-    "DKS": HYBRID | GEN4 | X3 | MPPT3,
-    "DO1": HYBRID | GEN4 | X3 | MPPT3,
-    "TTS": HYBRID | GEN4 | X3 | MPPT3,
-    "TSS": HYBRID | GEN4 | X3 | MPPT3,
-    "PYL": HYBRID | GEN4 | X3,
-    "JCM": HYBRID | GEN4 | X3,
-    "MEK": HYBRID | GEN4 | X3,
-    "MFK": HYBRID | GEN4 | X1,
-    "DFK": HYBRID | GEN4 | X3,
-    "EGR": HYBRID | GEN4 | X3 | MPPT3,
+    "XHL": HYBRID | GEN4 | X1,  # MOD 4000 TL3-XH Hybrid, 2 MPPT
+    "DPS": HYBRID | GEN4 | X3,  # MOD 5000 TL3-HU Hybrid, 2 MPPT
+    "DMS": HYBRID | GEN4 | X3 | MPPT3,  # MOD 8000 TL3-HU Hybrid, 3 MPPT
+    "DKS": HYBRID | GEN4 | X3 | MPPT3,  # MOD 10000 TL3-HU Hybrid, 3 MPPT
+    "DO1": HYBRID | GEN4 | X3 | MPPT3,  # MOD 12000 TL3-HU Hybrid, 3 MPPT
+    "TTS": HYBRID | GEN4 | X3 | MPPT3,  # Hybrid KTL3-HU 12kW
+    "TSS": HYBRID | GEN4 | X3 | MPPT3,  # Hybrid KTL3-HU 12kW
+    "PYL": HYBRID | GEN4 | X3,  # MOD 5000 TL3-XH Hybrid, 2 MPPT
+    "JCM": HYBRID | GEN4 | X3,  # MOD 6000 TL3-XH Hybrid, 2 MPPT
+    "MEK": HYBRID | GEN4 | X3,  # MOD 7000 TL3-XH Hybrid, 2 MPPT
+    "MFK": HYBRID | GEN4 | X1,  # MOD 8000 TL3-XH Hybrid, 2 MPPT
+    "DFK": HYBRID | GEN4 | X3,  # MOD 100000 TL3-XH Hybrid, 2 MPPT
+    "EGR": HYBRID | GEN4 | X3 | MPPT3,  # MOD 150000 TL3-HU Hybrid, 3 MPPT
     # MID hybrid
-    "KLN": HYBRID | GEN4 | X3,
-    "KMN": HYBRID | GEN4 | X3,
-    "KNN": HYBRID | GEN4 | X3 | MPPT3,
-    "RKM": HYBRID | GEN4 | X3 | MPPT3,
+    "KLN": HYBRID | GEN4 | X3,  # MID 15000 TL3-XH Hybrid, 2 MPPT
+    "KMN": HYBRID | GEN4 | X3,  # MID 17000 TL3-XH Hybrid, 2 MPPT
+    "KNN": HYBRID | GEN4 | X3 | MPPT3,  # MID 25000 TL3-XH Hybrid, 3 MPPT
+    "RKM": HYBRID | GEN4 | X3 | MPPT3,  # MID 30000 TL3-XH Hybrid, 3 MPPT
     # MOD BP hybrid
-    "FMP": HYBRID | GEN4 | X3,
-    "FPP": HYBRID | GEN4 | X3,
-    "FQP": HYBRID | GEN4 | X3,
-    "CZM": HYBRID | GEN4 | X3,
+    "FMP": HYBRID | GEN4 | X3,  # MOD 5000 TL3-XH (BP) Hybrid, 2 MPPT
+    "FPP": HYBRID | GEN4 | X3,  # MOD 7000 TL3-XH (BP) Hybrid, 2 MPPT
+    "FQP": HYBRID | GEN4 | X3,  # MOD 8000 TL3-XH (BP) Hybrid, 2 MPPT
+    "CZM": HYBRID | GEN4 | X3,  # MOD 10000 TL3-XH (BP) Hybrid, 2 MPPT
     # SPH, SPE and SPA storage
-    "YRP": HYBRID | GEN3 | X1,
-    "NFR": HYBRID | SPF | X1,
-    "WPD": AC | GEN3 | X1,
+    "YRP": HYBRID | GEN3 | X1,  # SPH 5000 TL-HUB Hybrid, 2 MPPT
+    "NFR": HYBRID | SPF | X1,  # SPE 8000 ES, 2 MPPT
+    "WPD": AC | GEN3 | X1,  # SPA 3000TL BL AC, no PV MPPT
     # SPF
-    "YRE": HYBRID | SPF | X1,
-    "TTJ": HYBRID | SPF | X1,
-    "BNJ": HYBRID | SPF | X1,
-    "KAM": HYBRID | SPF | X1,
-    "NUK": HYBRID | SPF | X1,
+    "YRE": HYBRID | SPF | X1,  # SPF 5000 ES, 1 MPPT
+    "TTJ": HYBRID | SPF | X1,  # SPF 5000 ES, 1 MPPT
+    "BNJ": HYBRID | SPF | X1,  # SPF 3000 TL LVM 24P, 1 MPPT
+    "KAM": HYBRID | SPF | X1,  # SPF 5000 ES observed live, 1 MPPT
+    "NUK": HYBRID | SPF | X1,  # SPF 12000T DVM-US MPV, 2 MPPT
     # WIT
-    "0PE": HYBRID | GEN4 | X3,
-    "0PC": HYBRID | GEN4 | X3,
-    "0PH": HYBRID | GEN4 | X3 | MPPT10,
-    "0HU": HYBRID | GEN4 | X3,
+    "0PE": HYBRID | GEN4 | X3,  # WIT 8000-HU, 2 MPPT
+    "0PC": HYBRID | GEN4 | X3,  # WIT 12000-HU, 2 MPPT
+    "0PH": HYBRID | GEN4 | X3 | MPPT10,  # WIT 100000-HU, 10 MPPT
+    "0HU": HYBRID | GEN4 | X3,  # WIT 15K-HU, 2 MPPT
     # MIC and MIN PV
-    "FPH": PV | GEN4 | X1,
-    "FWJ": PV | GEN4 | X1,
-    "QYL": PV | GEN4 | X1,
-    "XTD": PV | GEN4 | X1,
-    "BDK": PV | GEN4 | X1,
-    "WVN": PV | GEN4 | X1 | MPPT3,
+    "FPH": PV | GEN4 | X1,  # MIC 2000 TL-X, 1 MPPT
+    "FWJ": PV | GEN4 | X1,  # MIC 3300 TL-X, 1 MPPT
+    "QYL": PV | GEN4 | X1,  # MIN 2500 TL-X, 2 MPPT
+    "XTD": PV | GEN4 | X1,  # MIN 5000 TL-X, 2 MPPT
+    "BDK": PV | GEN4 | X1,  # MIN 4200 TL-XE, 2 MPPT
+    "WVN": PV | GEN4 | X1 | MPPT3,  # MIN 8000 TL-X2, 3 MPPT
     # MOD, MID and MAX PV
-    "RDH": PV | GEN2 | X3,
-    "QEH": PV | GEN2 | X3,
-    "RPH": PV | GEN2 | X3,
-    "GXF": PV | GEN4 | X3,
-    "NAH": PV | GEN4 | X3 | MPPT6,
+    "RDH": PV | GEN2 | X3,  # MOD 4000 TL3-X, 2 MPPT
+    "QEH": PV | GEN2 | X3,  # MOD 8000 TL3-X, 2 MPPT
+    "RPH": PV | GEN2 | X3,  # MOD 15000 TL3-X, 2 MPPT
+    "GXF": PV | GEN4 | X3,  # MID 12000 TL3-XL, 2 MPPT
+    "NAH": PV | GEN4 | X3 | MPPT6,  # MAX 60000 TL3 LV, 6 MPPT
     # SPH PV
-    "DIE": PV | GEN3 | X1,
-    "PYH": PV | GEN3 | X1,
-    "NLC": PV | GEN3 | X1,
-    "NRC": PV | GEN3 | X1,
+    "DIE": PV | GEN3 | X1,  # SPH 1000-S, 1 MPPT
+    "PYH": PV | GEN3 | X1,  # SPH 1500 TL-X, 1 MPPT
+    "NLC": PV | GEN3 | X1,  # SPH 3000 BP, 1 MPPT
+    "NRC": PV | GEN3 | X1,  # SPH 5000, 1 MPPT
     # NEO and older PV models
-    "BZP": PV | GEN | X1,
-    "QNB": PV | GEN | X1,
-    "QMB": PV | GEN | X1,
-    "JLE": PV | GEN | X1,
-    "MVC": PV | GEN | X3,
-    "4FZ": PV | GEN | X1,
-    "BY3": PV | GEN | X1,
+    "BZP": PV | GEN | X1,  # Neo 800M-X, 2 MPPT
+    "QNB": PV | GEN | X1,  # 1000-S, 1 MPPT
+    "QMB": PV | GEN | X1,  # 1500-S, 1 MPPT
+    "JLE": PV | GEN | X1,  # 5000 TL3-S, x MPPT
+    "MVC": PV | GEN | X3,  # 12000 TL3-S, ? MPPT
+    "4FZ": PV | GEN | X1,  # 5000 MTL-S, 2 MPPT
+    "BY3": PV | GEN | X1,  # 5000, ? MPPT
 }
 
 # Firmware/build prefixes used when no supported serial-number prefix is available.
 FIRMWARE_PREFIX_TYPES = {
-    "dha": PV | GEN | X3,
-    "DL1": PV | GEN2 | X3,
-    "DM1": PV | GEN2 | X3 | MPPT4,
-    "AH1": PV | GEN3 | X1,
-    "AJ1": PV | GEN4 | X1,
-    "GH1": PV | GEN4 | X1,
-    "AK1": PV | GEN4 | X1,
-    "AM1": PV | GEN4 | X1 | MPPT3,
-    "RAA": HYBRID | GEN3 | X1,
-    "RA1": HYBRID | GEN3 | X1,
-    "SPH": HYBRID | GEN3 | X3,
-    "YA1": HYBRID | GEN3 | X3,
-    "RH1": AC | GEN3 | X1,
-    "AL1": HYBRID | GEN4 | X1,
-    "DN1": HYBRID | GEN4 | X3,
-    "V": HYBRID | GEN4 | X3,
-    "067": HYBRID | SPF | X1,
-    "113": HYBRID | SPF | X1,
-    "500": HYBRID | SPF | X1,
+    "dha": PV | GEN | X3,  # PV TL3-SL 10-22kW #1067
+    "DL1": PV | GEN2 | X3,  # PV TL3-X 15kW 3Phase (MOD)
+    "DM1": PV | GEN2 | X3 | MPPT4,  # PV TL3-X 35kW 3Phase (MID)
+    "AH1": PV | GEN3 | X1,  # Hybrid SPH 4kW - 10kW
+    "AJ1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)
+    "GH1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)
+    "AK1": PV | GEN4 | X1,  # MIN 3600TL-X2, 2 MPPT #2027
+    "AM1": PV | GEN4 | X1 | MPPT3,  # PV TL-X2 7kW - 120kW (MIN)
+    "RAA": HYBRID | GEN3 | X1,  # Hybrid SPH 3kW - 6kW
+    "RA1": HYBRID | GEN3 | X1,  # Hybrid SPH 3kW - 6kW
+    "SPH": HYBRID | GEN3 | X3,  # Hybrid SPH 4kW - 10kW
+    "YA1": HYBRID | GEN3 | X3,  # Hybrid SPH 4kW - 10kW 3P TL UP
+    "RH1": AC | GEN3 | X1,  # SPA 3000TL BL AC, no PV MPPT
+    "AL1": HYBRID | GEN4 | X1,  # Hybrid TL-XH 2.5kW - 6kW (MIN)
+    "DN1": HYBRID | GEN4 | X3,  # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)
+    "V": HYBRID | GEN4 | X3,  # Hybrid TL3-XH 3kW - 10kW (MOD)
+    "067": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
+    "113": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
+    "500": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
 }
 
 
