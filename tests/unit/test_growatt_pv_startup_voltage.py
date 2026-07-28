@@ -34,7 +34,7 @@ def test_growatt_pv_startup_voltage_descriptions() -> None:
     assert number.native_step == 0.1
     assert number.write_method == WRITE_SINGLE_MODBUS
     assert number.entity_category == EntityCategory.CONFIG
-    assert number.entity_registry_enabled_default is False
+    assert number.entity_registry_enabled_default is True
 
     assert _scale_native_value_to_register(150.0, number.scale, number.read_scale) == 1500
     assert plugin_instance.matchInverterWithMask(HYBRID | GEN3 | X1, number.allowedtypes)

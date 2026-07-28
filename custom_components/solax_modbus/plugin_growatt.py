@@ -892,7 +892,6 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID | GEN3,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
-        entity_registry_enabled_default=False,
         icon="mdi:solar-power",
     ),
     GrowattModbusNumberEntityDescription(
