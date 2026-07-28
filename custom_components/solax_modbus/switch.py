@@ -16,6 +16,7 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
+    WRITE_MULTISINGLE_MODBUS,
     BaseModbusSwitchEntityDescription,
     matches_modbus_protocol,
 )
@@ -190,13 +191,21 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             return
 
         payload: int = self._value_function(self._bit, is_on, self._sensor_key, self._hub.data)
-        _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
-        await self._hub.async_write_registers_single(
-            unit=self._modbus_addr,
-            address=self._register,
-            payload=payload,
-            register_data_type=getattr(self.entity_description, "register_data_type", None),
-        )
+        _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload} method {self._write_method}")
+        if self._write_method == WRITE_MULTISINGLE_MODBUS:
+            await self._hub.async_write_registers_single(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
+        else:
+            await self._hub.async_write_register(
+                unit=self._modbus_addr,
+                address=self._register,
+                payload=payload,
+                register_data_type=getattr(self.entity_description, "register_data_type", None),
+            )
 
     @property
     def is_on(self) -> bool | None:
@@ -208,13 +217,18 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         # Otherwise, return the sensor state
         if self._sensor_key and (self._sensor_key in self._hub.data):
             sensvalue = self._hub.data.get(self._sensor_key, None)
-            if sensvalue is not None:
+            if sensvalue is None:
+                # Readback register temporarily unreadable (failed or quarantined read);
+                # report unknown instead of a fabricated off state, like selects do.
+                _LOGGER.debug(f"{self._hub.name}: Sensor {self._sensor_key} for switch {self._key} has no value yet, state unknown")
+                return None
+            try:
                 sensor_value = int(sensvalue)
-            else:
-                _LOGGER.error(
-                    f"{self._hub.name}: Sensor {self._sensor_key} corresponding to switch {self._key} bit {self._bit} has no integer value {sensvalue}"
+            except (TypeError, ValueError):
+                _LOGGER.debug(
+                    f"{self._hub.name}: Sensor {self._sensor_key} for switch {self._key} has non-integer value {sensvalue!r}, state unknown"
                 )
-                sensor_value = 0  # probably completely wrong, but at least we can continue with other entities
+                return None
             return bool(sensor_value & (1 << self._bit))
 
         return self._attr_is_on
