@@ -90,6 +90,21 @@ def getPluginName(plugin_path: str) -> str:
     return plugin_path[len(PLUGIN_PATH) - 4 : -3]
 
 
+def _normalized_hub_name(name: str) -> str:
+    """Normalize a hub name for uniqueness checks."""
+    return name.strip().casefold()
+
+
+def _configured_hub_names(handler: SchemaCommonFlowHandler) -> set[str]:
+    """Return normalized hub names already configured for this integration."""
+    names: set[str] = set()
+    for entry in handler.parent_handler.hass.config_entries.async_entries(DOMAIN):
+        name = entry.options.get(CONF_NAME) or entry.data.get(CONF_NAME)
+        if isinstance(name, str):
+            names.add(_normalized_hub_name(name))
+    return names
+
+
 # ####################################################################################################
 
 BAUDRATES = [
@@ -219,6 +234,10 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
     if (name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN):
         _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
         user_input[CONF_NAME] = user_input[CONF_PLUGIN]  # getPluginName(user_input[CONF_PLUGIN])
+        raise SchemaFlowError("name_already_used")
+
+    normalized_name = _normalized_hub_name(name)
+    if normalized_name in _configured_hub_names(handler):
         raise SchemaFlowError("name_already_used")
 
     return user_input
