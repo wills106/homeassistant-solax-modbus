@@ -6,6 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -16,6 +17,8 @@ from .const import (
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
     WRITE_DATA_LOCAL,
+    WRITE_MULTISINGLE_MODBUS,
+    WRITE_SINGLE_MODBUS,
     BaseModbusSwitchEntityDescription,
     matches_modbus_protocol,
 )
@@ -42,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
-            if switch_info.sensor_key is not None:
+            if switch_info.write_method == WRITE_DATA_LOCAL and switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
             if dependency_key != switch_info.key:
@@ -86,7 +89,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             )
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
-            if switch_info.sensor_key is not None:
+            if switch_info.write_method == WRITE_DATA_LOCAL and switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
             if dependency_key != switch_info.key:
@@ -191,12 +194,18 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
         payload: int = self._value_function(self._bit, is_on, self._sensor_key, self._hub.data)
         _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
-        await self._hub.async_write_registers_single(
-            unit=self._modbus_addr,
-            address=self._register,
-            payload=payload,
-            register_data_type=getattr(self.entity_description, "register_data_type", None),
-        )
+        write_args = {
+            "unit": self._modbus_addr,
+            "address": self._register,
+            "payload": payload,
+            "register_data_type": getattr(self.entity_description, "register_data_type", None),
+        }
+        if self._write_method == WRITE_SINGLE_MODBUS:
+            await self._hub.async_write_register(**write_args)
+        elif self._write_method == WRITE_MULTISINGLE_MODBUS:
+            await self._hub.async_write_registers_single(**write_args)
+        else:
+            raise HomeAssistantError(f"Unsupported write method {self._write_method} for switch {self._key}")
 
     @property
     def is_on(self) -> bool | None:
@@ -206,15 +215,17 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             return self._attr_is_on
 
         # Otherwise, return the sensor state
-        if self._sensor_key and (self._sensor_key in self._hub.data):
-            sensvalue = self._hub.data.get(self._sensor_key, None)
-            if sensvalue is not None:
+        if self._sensor_key:
+            sensvalue = self._hub.data.get(self._sensor_key)
+            if sensvalue is None:
+                return None
+            try:
                 sensor_value = int(sensvalue)
-            else:
+            except (TypeError, ValueError):
                 _LOGGER.error(
                     f"{self._hub.name}: Sensor {self._sensor_key} corresponding to switch {self._key} bit {self._bit} has no integer value {sensvalue}"
                 )
-                sensor_value = 0  # probably completely wrong, but at least we can continue with other entities
+                return None
             return bool(sensor_value & (1 << self._bit))
 
         return self._attr_is_on
