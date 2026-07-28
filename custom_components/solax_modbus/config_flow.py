@@ -294,9 +294,12 @@ async def _next_step_battery(user_input: Any) -> str | None:
 def _current_config_entry_id(handler: SchemaCommonFlowHandler) -> str | None:
     """Return the entry being edited by an options flow."""
     try:
-        return cast(str, handler.parent_handler.config_entry.entry_id)
-    except (AttributeError, ValueError):
+        config_entry = getattr(handler.parent_handler, "config_entry", None)
+    except ValueError:
         return None
+    if config_entry is None:
+        return None
+    return str(config_entry.entry_id)
 
 
 def _duplicate_inverter_entries(handler: SchemaCommonFlowHandler) -> list[Any]:

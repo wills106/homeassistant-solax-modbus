@@ -180,7 +180,9 @@ async def test_duplicate_warning_step_allows_save_after_confirmation() -> None:
 
     assert warning["type"] == "form"
     assert warning["step_id"] == "duplicate_inverter"
-    assert warning["data_schema"].schema == {}
+    data_schema = warning["data_schema"]
+    assert data_schema is not None
+    assert data_schema.schema == {}
 
     result = await handler.async_step("duplicate_inverter", {})
 
