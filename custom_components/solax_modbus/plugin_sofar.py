@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Any
 
@@ -4366,6 +4366,22 @@ class sofar_plugin(plugin_base):
 
     def getHardwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("hardware_version", None)
+
+    def localDataCallback(self, hub: Any) -> bool:
+        parallel_setting = hub.data.get("parallel_masterslave", "Slave")
+        if parallel_setting == "Master":
+            system_limit_w = hub.inverterPowerKw * 1000
+            number_entity = hub.numberEntities.get("feedin_max_power")
+            if number_entity:
+                number_entity._attr_native_min_value = 0
+                number_entity._attr_native_max_value = system_limit_w
+                number_entity.entity_description = replace(
+                    number_entity.entity_description,
+                    native_min_value=0,
+                    native_max_value=system_limit_w,
+                )
+                _LOGGER.info(f"Parallel Master: Set feedin_max_power limit to 0-{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+        return True
 
 
 plugin_instance = sofar_plugin(
