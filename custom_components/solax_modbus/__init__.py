@@ -473,6 +473,16 @@ class block:
     regs: Any = None  # sorted list of registers used in this block
 
 
+@dataclass(frozen=True)
+class PendingWrite:
+    """A single-register write that must be retried when the inverter wakes."""
+
+    unit: int
+    address: int
+    payload: int
+    register_data_type: str | None = None
+
+
 class SolaXModbusHub:
     """Thread safe wrapper class for pymodbus."""
 
@@ -565,7 +575,7 @@ class SolaXModbusHub:
         self.writeLocals: dict[Any, Any] = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
         self.sleepzero: list[str] = []  # sensors that will be set to zero in sleepmode
         self.sleepnone: list[str] = []  # sensors that will be cleared in sleepmode
-        self.writequeue: dict[Any, Any] = {}  # queue requests when inverter is in sleep mode
+        self.writequeue: dict[tuple[int, int], PendingWrite] = {}  # requests to retry when the inverter wakes
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
         self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
@@ -1332,25 +1342,91 @@ class SolaXModbusHub:
                 return None
         return resp
 
+    def _validate_write_response(self, response: Any, *, unit: int, address: int, operation: str) -> Any:
+        """Raise when pymodbus did not confirm a write operation."""
+        if response is None:
+            raise HomeAssistantError(f"{self._name}: {operation} returned no response for device {unit} at register 0x{address:x}")
+        try:
+            is_error = bool(response.isError())
+        except (AttributeError, TypeError) as ex:
+            raise HomeAssistantError(
+                f"{self._name}: {operation} returned an invalid response for device {unit} at register 0x{address:x}: {response}"
+            ) from ex
+        if is_error:
+            raise HomeAssistantError(f"{self._name}: {operation} was rejected by device {unit} at register 0x{address:x}: {response}")
+        return response
+
+    def _encode_multi_write_payload(self, payload: list[tuple[Any, Any]]) -> list[int]:
+        """Encode a complete multi-register payload before any data is sent."""
+        if not isinstance(payload, list) or not payload:
+            raise HomeAssistantError(f"{self._name}: multi-register write requires a non-empty payload")
+
+        data_type_enum = cast(Any, DataType)
+        data_types: dict[str, Any] = {
+            REGISTER_U16: data_type_enum.UINT16,
+            REGISTER_S16: data_type_enum.INT16,
+            REGISTER_U32: data_type_enum.UINT32,
+            REGISTER_F32: data_type_enum.FLOAT32,
+            REGISTER_S32: data_type_enum.INT32,
+        }
+        registers: list[int] = []
+        for item in payload:
+            try:
+                key, value = item
+                if key.startswith("_"):
+                    register_data_type = key
+                    value = int(value)
+                else:
+                    descr = self.writeLocals[key]
+                    reverse_options = getattr(descr, "reverse_option_dict", None)
+                    if reverse_options:
+                        if isinstance(value, str):
+                            if value in reverse_options:
+                                value = reverse_options[value]
+                            else:
+                                value = int(value)
+                    elif callable(descr.scale):
+                        value = descr.scale(value, descr, self.data)
+                    else:
+                        value = value * descr.scale
+                    value = int(value)
+                    register_data_type = descr.register_data_type
+
+                data_type = data_types.get(register_data_type)
+                if data_type is None:
+                    raise ValueError(f"unsupported register data type {register_data_type}")
+                registers.extend(convert_to_registers(value, data_type, self.plugin.order32))
+            except Exception as ex:
+                raise HomeAssistantError(f"{self._name}: cannot encode multi-register write item {item!r}: {ex}") from ex
+
+        return registers
+
     async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
         if register_data_type == REGISTER_U16:
             regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
         else:
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
-        async with self._lock:
-            await self._check_connection()
-            try:
+        try:
+            async with self._lock:
+                if not await self._check_connection():
+                    raise HomeAssistantError(f"{self._name}: inverter is not connected")
                 resp = await self._track_task(self._client.write_register(address=address, value=regs[0], **kwargs))  # type: ignore[arg-type]
-                # Plugin-level logging hook
-                if hasattr(self.plugin, "log_register_write"):
-                    self.plugin.log_register_write(self, address, unit, payload, result=resp)
-            except (ConnectionException, ModbusIOException) as e:
-                original_message = str(e)
-                # Plugin-level logging hook
-                if hasattr(self.plugin, "log_register_write"):
-                    self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
-                raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
+            resp = self._validate_write_response(
+                resp,
+                unit=unit,
+                address=address,
+                operation="single-register write",
+            )
+        except (ModbusException, HomeAssistantError) as ex:
+            if hasattr(self.plugin, "log_register_write"):
+                self.plugin.log_register_write(self, address, unit, payload, error=(type(ex).__name__, str(ex)))
+            if isinstance(ex, HomeAssistantError):
+                raise
+            raise HomeAssistantError(f"Error writing single Modbus register: {ex}") from ex
+
+        if hasattr(self.plugin, "log_register_write"):
+            self.plugin.log_register_write(self, address, unit, payload, result=resp)
         return resp
 
     async def async_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
@@ -1358,22 +1434,52 @@ class SolaXModbusHub:
         awake = self.plugin.isAwake(self.data)
         if awake:
             return await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
-        else:
-            # try to write anyway - could be a command that inverter responds to while asleep
-            res = await self.async_lowlevel_write_register(unit, address, payload, register_data_type=register_data_type)
-            # put request in queue, in order to repeat it when inverter wakes up
-            self.writequeue[address] = payload
-            # wake up inverter
+
+        request = PendingWrite(
+            unit=unit,
+            address=address,
+            payload=int(payload),
+            register_data_type=register_data_type,
+        )
+        try:
+            # Some commands are accepted even while the inverter reports sleep mode.
+            response = await self.async_lowlevel_write_register(
+                unit,
+                address,
+                payload,
+                register_data_type=register_data_type,
+            )
+        except HomeAssistantError as ex:
+            self.writequeue[(unit, address)] = request
             if self.wakeupButton:
                 _LOGGER.info("waking up inverter: pressing awake button")
-                return await self.async_lowlevel_write_register(
+                try:
+                    await self.async_lowlevel_write_register(
+                        unit=self._modbus_addr,
+                        address=self.wakeupButton.register,
+                        payload=self.wakeupButton.command,
+                    )
+                except HomeAssistantError as wake_ex:
+                    _LOGGER.warning(f"{self._name}: inverter wake-up command failed: {wake_ex}")
+            else:
+                _LOGGER.warning("cannot wakeup inverter: no awake button found")
+            raise HomeAssistantError(f"{self._name}: write to register 0x{address:x} was not confirmed and was queued for retry") from ex
+
+        # Preserve the existing behavior of repeating an acknowledged command after wake-up.
+        self.writequeue[(unit, address)] = request
+        if self.wakeupButton:
+            _LOGGER.info("waking up inverter: pressing awake button")
+            try:
+                await self.async_lowlevel_write_register(
                     unit=self._modbus_addr,
                     address=self.wakeupButton.register,
                     payload=self.wakeupButton.command,
                 )
-            else:
-                _LOGGER.warning("cannot wakeup inverter: no awake button found")
-            return res
+            except HomeAssistantError as ex:
+                _LOGGER.warning(f"{self._name}: inverter wake-up command failed after confirmed write: {ex}")
+        else:
+            _LOGGER.warning("cannot wakeup inverter: no awake button found")
+        return response
 
     async def async_write_registers_single(
         self, unit: int, address: int, payload: int, register_data_type: str | None = None
@@ -1385,13 +1491,18 @@ class SolaXModbusHub:
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         async with self._lock:
-            await self._check_connection()
+            if not await self._check_connection():
+                raise HomeAssistantError(f"{self._name}: inverter is not connected")
             try:
                 resp = await self._track_task(self._client.write_registers(address=address, values=regs, **kwargs))  # type: ignore[arg-type]
-            except (ConnectionException, ModbusIOException) as e:
-                original_message = str(e)
-                raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
-        return resp
+            except ModbusException as ex:
+                raise HomeAssistantError(f"Error writing single Modbus registers: {ex}") from ex
+        return self._validate_write_response(
+            resp,
+            unit=unit,
+            address=address,
+            operation="multi-function single-register write",
+        )
 
     async def async_write_registers_multi(self, unit: int, address: int, payload: list[tuple[Any, Any]]) -> Any:  # Needs adapting for register queue
         """Write registers multi.
@@ -1406,71 +1517,21 @@ class SolaXModbusHub:
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
-        if isinstance(payload, list):
-            regs_out = []
-            for (
-                key,
-                value,
-            ) in payload:
-                if key.startswith("_"):
-                    typ = key
-                    value = int(value)
-                else:
-                    descr = self.writeLocals[key]
-                    # --- Begin safer reverse_option_dict mapping logic ---
-                    if hasattr(descr, "reverse_option_dict") and descr.reverse_option_dict:
-                        # Only map label->int if value is a str; if already numeric, keep as-is
-                        if isinstance(value, str):
-                            mapped = descr.reverse_option_dict.get(value)
-                            if mapped is None:
-                                # Accept numeric-like strings, else warn and leave as-is
-                                try:
-                                    value = int(value)
-                                except Exception:
-                                    _LOGGER.warning(
-                                        f"{self._name}: unknown option '{value}' for {getattr(descr, 'key', '?')}; leaving value unchanged"
-                                    )
-                            else:
-                                value = mapped
-                        # if value is already int, leave it
-                    elif callable(descr.scale):  # function to call ?
-                        value = descr.scale(value, descr, self.data)
-                    else:  # apply simple numeric scaling and rounding if not a list of words
-                        try:
-                            value = value * descr.scale
-                        except Exception:
-                            _LOGGER.error(f"cannot treat payload scale {value} {descr}")
-                    try:
-                        value = int(value)
-                    except Exception:
-                        _LOGGER.warning(f"{self._name}: could not cast '{value}' to int for {getattr(descr, 'key', '?')}; leaving value unchanged")
-                    typ = descr.register_data_type
-                try:
-                    if typ == REGISTER_U16:
-                        regs_out += convert_to_registers(value, DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
-                    elif typ == REGISTER_S16:
-                        regs_out += convert_to_registers(value, DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
-                    elif typ == REGISTER_U32:
-                        regs_out += convert_to_registers(value, DataType.UINT32, self.plugin.order32)  # type: ignore[attr-defined]
-                    elif typ == REGISTER_F32:
-                        regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)  # type: ignore[attr-defined]
-                    elif typ == REGISTER_S32:
-                        regs_out += convert_to_registers(value, DataType.INT32, self.plugin.order32)  # type: ignore[attr-defined]
-                    else:
-                        _LOGGER.error(f"unsupported unit type: {typ} for {key}")
-                except Exception as ex:
-                    _LOGGER.error(f"{self._name}: conversion for typ={typ} value={value} failed payload:{payload} with exception {ex}")
-            online = await self.is_online()
-            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out} online: {online} ")
-            if online:
-                async with self._lock:
-                    try:
-                        resp = await self._track_task(self._client.write_registers(address=address, values=regs_out, **kwargs))  # type: ignore[arg-type]
-                    except (ConnectionException, ModbusIOException) as e:
-                        original_message = str(e)
-                        raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
-                return resp
-            return None
+        regs_out = self._encode_multi_write_payload(payload)
+        _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
+        async with self._lock:
+            if not await self._check_connection():
+                raise HomeAssistantError(f"{self._name}: inverter is not connected")
+            try:
+                resp = await self._track_task(self._client.write_registers(address=address, values=regs_out, **kwargs))  # type: ignore[arg-type]
+            except ModbusException as ex:
+                raise HomeAssistantError(f"Error writing multiple Modbus registers: {ex}") from ex
+        return self._validate_write_response(
+            resp,
+            unit=unit,
+            address=address,
+            operation="multi-register write",
+        )
 
     async def async_read_modbus_data(self, group: Any) -> bool:
         res = True
@@ -1758,11 +1819,18 @@ class SolaXModbusHub:
         if res and self.writequeue and self.plugin.isAwake(self.data):  # self.awakeplugin(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
-            for addr in self.writequeue.keys():
-                val = self.writequeue.get(addr)
-                if val is not None:
-                    await self.async_write_register(self._modbus_addr, addr, val)
-            self.writequeue = {}  # make sure we do not write multiple times
+            for queue_key, request in list(self.writequeue.items()):
+                try:
+                    await self.async_lowlevel_write_register(
+                        unit=request.unit,
+                        address=request.address,
+                        payload=request.payload,
+                        register_data_type=request.register_data_type,
+                    )
+                except HomeAssistantError as ex:
+                    _LOGGER.warning(f"{self._name}: queued write to register 0x{request.address:x} is still not confirmed: {ex}")
+                else:
+                    self.writequeue.pop(queue_key, None)
 
         # execute autorepeat entities (buttons and selects)
         self.last_ts = _mtime.time()
@@ -2463,27 +2531,30 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
             regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         kwargs = {ADDR_KW: unit} if unit is not None else {}
         if getattr(self, "_stopping", False):
-            return None
+            raise HomeAssistantError(f"{self._name}: integration is stopping")
         async with self._lock:
             hub = await self._check_connection()
         try:
             if not hub or getattr(hub, "_config_delay", False):
-                return None
+                raise HomeAssistantError(f"{self._name}: core Modbus hub is not ready")
             async with hub._lock:
-                try:
-                    resp = await self._track_task(hub._client.write_register(address=address, value=regs[0], **kwargs))
-                    # Plugin-level logging hook
-                    if hasattr(self.plugin, "log_register_write"):
-                        self.plugin.log_register_write(self, address, unit, payload, result=resp)
-                except (ConnectionException, ModbusIOException) as e:
-                    original_message = str(e)
-                    # Plugin-level logging hook
-                    if hasattr(self.plugin, "log_register_write"):
-                        self.plugin.log_register_write(self, address, unit, payload, error=(type(e).__name__, original_message))
-                    raise HomeAssistantError(f"Error writing single Modbus register: {original_message}") from e
-            return resp
-        except (TypeError, AttributeError) as e:
-            raise HomeAssistantError("Error writing single Modbus register: core modbus access failed") from e
+                resp = await self._track_task(hub._client.write_register(address=address, value=regs[0], **kwargs))
+            resp = self._validate_write_response(
+                resp,
+                unit=unit,
+                address=address,
+                operation="core single-register write",
+            )
+        except (ModbusException, HomeAssistantError, TypeError, AttributeError) as ex:
+            if hasattr(self.plugin, "log_register_write"):
+                self.plugin.log_register_write(self, address, unit, payload, error=(type(ex).__name__, str(ex)))
+            if isinstance(ex, HomeAssistantError):
+                raise
+            raise HomeAssistantError(f"Error writing single register through core Modbus: {ex}") from ex
+
+        if hasattr(self.plugin, "log_register_write"):
+            self.plugin.log_register_write(self, address, unit, payload, result=resp)
+        return resp
 
     async def async_write_registers_single(
         self, unit: int, address: int, payload: int, register_data_type: str | None = None
@@ -2497,18 +2568,18 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         async with self._lock:
             hub = await self._check_connection()
         try:
-            if hub._config_delay:
-                return None
+            if not hub or getattr(hub, "_config_delay", False):
+                raise HomeAssistantError(f"{self._name}: core Modbus hub is not ready")
             async with hub._lock:
-                try:
-                    resp = await self._client.write_registers(address=address, values=regs, **kwargs)  # type: ignore[arg-type]
-                except (ConnectionException, ModbusIOException) as e:
-                    original_message = str(e)
-                    raise HomeAssistantError(f"Error writing single Modbus registers: {original_message}") from e
-
-            return resp
-        except (TypeError, AttributeError) as e:
-            raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
+                resp = await self._track_task(hub._client.write_registers(address=address, values=regs, **kwargs))
+        except (ModbusException, TypeError, AttributeError) as ex:
+            raise HomeAssistantError(f"Error writing single register through core Modbus: {ex}") from ex
+        return self._validate_write_response(
+            resp,
+            unit=unit,
+            address=address,
+            operation="core multi-function single-register write",
+        )
 
     async def async_write_registers_multi(self, unit: int, address: int, payload: list[tuple[Any, Any]]) -> Any:  # Needs adapting for register queue
         """Write registers multi.
@@ -2523,54 +2594,20 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
         32bit integers will be converted to 2 modbus register values according to the endian strategy of the plugin
         """
         kwargs: dict[str, int] = {ADDR_KW: unit} if unit is not None else {}
-        if isinstance(payload, list):
-            regs_out = []
-            for (
-                key,
-                value,
-            ) in payload:
-                if key.startswith("_"):
-                    typ = key
-                    value = int(value)
-                else:
-                    descr = self.writeLocals[key]
-                    if hasattr(descr, "reverse_option_dict"):
-                        value = descr.reverse_option_dict[value]  # string to int
-                    elif callable(descr.scale):  # function to call ?
-                        value = descr.scale(value, descr, self.data)
-                    else:  # apply simple numeric scaling and rounding if not a list of words
-                        try:
-                            value = value * descr.scale
-                        except Exception:
-                            _LOGGER.error(f"cannot treat payload scale {value} {descr}")
-                    value = int(value)
-                    typ = descr.register_data_type
-
-                if typ == REGISTER_U16:
-                    regs_out += convert_to_registers(value, DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
-                elif typ == REGISTER_S16:
-                    regs_out += convert_to_registers(value, DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
-                elif typ == REGISTER_U32:
-                    regs_out += convert_to_registers(value, DataType.UINT32, self.plugin.order32)  # type: ignore[attr-defined]
-                elif typ == REGISTER_F32:
-                    regs_out += convert_to_registers(value, DataType.FLOAT32, self.plugin.order32)  # type: ignore[attr-defined]
-                elif typ == REGISTER_S32:
-                    regs_out += convert_to_registers(value, DataType.INT32, self.plugin.order32)  # type: ignore[attr-defined]
-                else:
-                    _LOGGER.error(f"unsupported unit type: {typ} for {key}")
-            # for easier debugging, make next line a _LOGGER.info line
-            _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
-            async with self._lock:
-                hub = await self._check_connection()
-            try:
-                if hub._config_delay:
-                    return None
-                async with hub._lock:
-                    try:
-                        resp = await self._client.write_registers(address=address, values=regs_out, **kwargs)  # type: ignore[arg-type]
-                    except (ConnectionException, ModbusIOException) as e:
-                        original_message = str(e)
-                        raise HomeAssistantError(f"Error writing multiple Modbus registers: {original_message}") from e
-                return resp
-            except (TypeError, AttributeError) as e:
-                raise HomeAssistantError("Error writing single Modbus registers: core modbus access failed") from e
+        regs_out = self._encode_multi_write_payload(payload)
+        _LOGGER.debug(f"Ready to write multiple registers at 0x{address:02x}: {regs_out}")
+        async with self._lock:
+            hub = await self._check_connection()
+        try:
+            if not hub or getattr(hub, "_config_delay", False):
+                raise HomeAssistantError(f"{self._name}: core Modbus hub is not ready")
+            async with hub._lock:
+                resp = await self._track_task(hub._client.write_registers(address=address, values=regs_out, **kwargs))
+        except (ModbusException, TypeError, AttributeError) as ex:
+            raise HomeAssistantError(f"Error writing multiple registers through core Modbus: {ex}") from ex
+        return self._validate_write_response(
+            resp,
+            unit=unit,
+            address=address,
+            operation="core multi-register write",
+        )

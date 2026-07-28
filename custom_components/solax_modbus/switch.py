@@ -131,17 +131,18 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
-        self._attr_is_on = True
-        self._last_command_time = datetime.now()  # Record user action time
-        self.async_write_ha_state()
-        await self._write_switch_to_modbus()
+        await self._async_set_state(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
-        self._attr_is_on = False
+        await self._async_set_state(False)
+
+    async def _async_set_state(self, is_on: bool) -> None:
+        """Write and publish a new state only after the write was accepted."""
+        await self._write_switch_to_modbus(is_on)
+        self._attr_is_on = is_on
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
-        await self._write_switch_to_modbus()
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -166,11 +167,11 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             return
         self.async_write_ha_state()
 
-    async def _write_switch_to_modbus(self) -> None:
+    async def _write_switch_to_modbus(self, is_on: bool) -> None:
         if self.entity_description.write_method == WRITE_DATA_LOCAL:
             if self._sensor_key is None:
                 return
-            self._hub.data[self._sensor_key] = 1 if self._attr_is_on else 0
+            self._hub.data[self._sensor_key] = 1 if is_on else 0
             self._hub.localsUpdated = True
             try:
                 self._hub._hass.bus.async_fire(
@@ -178,7 +179,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
                     {
                         "hub_name": self._hub._name,
                         "key": self._sensor_key,
-                        "state": self._attr_is_on,
+                        "state": is_on,
                     },
                 )
             except Exception as ex:
@@ -188,7 +189,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             _LOGGER.debug(f"No value function for switch {self._key}")
             return
 
-        payload: int = self._value_function(self._bit, self._attr_is_on, self._sensor_key, self._hub.data)
+        payload: int = self._value_function(self._bit, is_on, self._sensor_key, self._hub.data)
         _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload}")
         await self._hub.async_write_registers_single(
             unit=self._modbus_addr,
