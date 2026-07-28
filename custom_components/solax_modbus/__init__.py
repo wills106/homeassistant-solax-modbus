@@ -1345,9 +1345,7 @@ class SolaXModbusHub:
     def _validate_write_response(self, response: Any, *, unit: int, address: int, operation: str) -> Any:
         """Raise when pymodbus did not confirm a write operation."""
         if response is None:
-            raise HomeAssistantError(
-                f"{self._name}: {operation} returned no response for device {unit} at register 0x{address:x}"
-            )
+            raise HomeAssistantError(f"{self._name}: {operation} returned no response for device {unit} at register 0x{address:x}")
         try:
             is_error = bool(response.isError())
         except (AttributeError, TypeError) as ex:
@@ -1355,9 +1353,7 @@ class SolaXModbusHub:
                 f"{self._name}: {operation} returned an invalid response for device {unit} at register 0x{address:x}: {response}"
             ) from ex
         if is_error:
-            raise HomeAssistantError(
-                f"{self._name}: {operation} was rejected by device {unit} at register 0x{address:x}: {response}"
-            )
+            raise HomeAssistantError(f"{self._name}: {operation} was rejected by device {unit} at register 0x{address:x}: {response}")
         return response
 
     def _encode_multi_write_payload(self, payload: list[tuple[Any, Any]]) -> list[int]:
@@ -1365,12 +1361,13 @@ class SolaXModbusHub:
         if not isinstance(payload, list) or not payload:
             raise HomeAssistantError(f"{self._name}: multi-register write requires a non-empty payload")
 
-        data_types = {
-            REGISTER_U16: DataType.UINT16,
-            REGISTER_S16: DataType.INT16,
-            REGISTER_U32: DataType.UINT32,
-            REGISTER_F32: DataType.FLOAT32,
-            REGISTER_S32: DataType.INT32,
+        data_type_enum = cast(Any, DataType)
+        data_types: dict[str, Any] = {
+            REGISTER_U16: data_type_enum.UINT16,
+            REGISTER_S16: data_type_enum.INT16,
+            REGISTER_U32: data_type_enum.UINT32,
+            REGISTER_F32: data_type_enum.FLOAT32,
+            REGISTER_S32: data_type_enum.INT32,
         }
         registers: list[int] = []
         for item in payload:
@@ -1398,7 +1395,7 @@ class SolaXModbusHub:
                 data_type = data_types.get(register_data_type)
                 if data_type is None:
                     raise ValueError(f"unsupported register data type {register_data_type}")
-                registers.extend(convert_to_registers(value, data_type, self.plugin.order32))  # type: ignore[attr-defined]
+                registers.extend(convert_to_registers(value, data_type, self.plugin.order32))
             except Exception as ex:
                 raise HomeAssistantError(f"{self._name}: cannot encode multi-register write item {item!r}: {ex}") from ex
 
@@ -1466,9 +1463,7 @@ class SolaXModbusHub:
                     _LOGGER.warning(f"{self._name}: inverter wake-up command failed: {wake_ex}")
             else:
                 _LOGGER.warning("cannot wakeup inverter: no awake button found")
-            raise HomeAssistantError(
-                f"{self._name}: write to register 0x{address:x} was not confirmed and was queued for retry"
-            ) from ex
+            raise HomeAssistantError(f"{self._name}: write to register 0x{address:x} was not confirmed and was queued for retry") from ex
 
         # Preserve the existing behavior of repeating an acknowledged command after wake-up.
         self.writequeue[(unit, address)] = request
@@ -1833,9 +1828,7 @@ class SolaXModbusHub:
                         register_data_type=request.register_data_type,
                     )
                 except HomeAssistantError as ex:
-                    _LOGGER.warning(
-                        f"{self._name}: queued write to register 0x{request.address:x} is still not confirmed: {ex}"
-                    )
+                    _LOGGER.warning(f"{self._name}: queued write to register 0x{request.address:x} is still not confirmed: {ex}")
                 else:
                     self.writequeue.pop(queue_key, None)
 
@@ -2578,7 +2571,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
             if not hub or getattr(hub, "_config_delay", False):
                 raise HomeAssistantError(f"{self._name}: core Modbus hub is not ready")
             async with hub._lock:
-                resp = await self._track_task(hub._client.write_registers(address=address, values=regs, **kwargs))  # type: ignore[arg-type]
+                resp = await self._track_task(hub._client.write_registers(address=address, values=regs, **kwargs))
         except (ModbusException, TypeError, AttributeError) as ex:
             raise HomeAssistantError(f"Error writing single register through core Modbus: {ex}") from ex
         return self._validate_write_response(
@@ -2609,7 +2602,7 @@ class SolaXCoreModbusHub(SolaXModbusHub, CoreModbusHub):  # type: ignore[misc]
             if not hub or getattr(hub, "_config_delay", False):
                 raise HomeAssistantError(f"{self._name}: core Modbus hub is not ready")
             async with hub._lock:
-                resp = await self._track_task(hub._client.write_registers(address=address, values=regs_out, **kwargs))  # type: ignore[arg-type]
+                resp = await self._track_task(hub._client.write_registers(address=address, values=regs_out, **kwargs))
         except (ModbusException, TypeError, AttributeError) as ex:
             raise HomeAssistantError(f"Error writing multiple registers through core Modbus: {ex}") from ex
         return self._validate_write_response(
