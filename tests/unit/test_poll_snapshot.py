@@ -60,7 +60,7 @@ async def test_failed_group_discards_all_partial_values() -> None:
 
     async def read_block(data: dict[str, Any], block: Any, typ: str) -> bool:
         data["raw"] = block.start * 10
-        return block.start == 1
+        return bool(block.start == 1)
 
     hub.async_read_modbus_block = read_block
     original_data_object = hub.data
@@ -193,12 +193,13 @@ async def test_group_reads_are_serialized() -> None:
     first_group = make_group()
     second_group = make_group()
 
-    results = await asyncio.gather(
+    first_result, second_result = await asyncio.gather(
         hub.async_read_modbus_data(first_group),
         hub.async_read_modbus_data(second_group),
     )
 
-    assert results == [True, True]
+    assert first_result is True
+    assert second_result is True
     assert maximum_active_reads == 1
 
 
