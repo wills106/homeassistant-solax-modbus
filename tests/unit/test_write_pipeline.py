@@ -11,6 +11,7 @@ from pymodbus.pdu import ExceptionResponse
 
 from custom_components.solax_modbus import PendingWrite, SolaXCoreModbusHub, SolaXModbusHub
 from custom_components.solax_modbus.const import REGISTER_S16, REGISTER_U16
+from custom_components.solax_modbus.modbus_transport import CoreModbusTransport, NativeModbusTransport
 from custom_components.solax_modbus.switch import SolaXModbusSwitch
 
 
@@ -38,7 +39,7 @@ def make_hub(client: FakeClient | None = None) -> Any:
     hub.plugin = SimpleNamespace(order32="big")
     hub.data = {}
     hub.writeLocals = {}
-    hub._client = client
+    hub._transport = NativeModbusTransport(client)
     hub._lock = asyncio.Lock()
     hub._inflight_tasks = set()
     hub._stopping = False
@@ -132,22 +133,34 @@ async def test_sleeping_write_queues_full_request_without_reporting_success() ->
 @pytest.mark.asyncio
 async def test_core_multi_write_uses_core_client_and_validates_response() -> None:
     response = SimpleNamespace(isError=lambda: False)
-    core_client = FakeClient(response)
-    core_hub = SimpleNamespace(
-        _client=core_client,
-        _lock=asyncio.Lock(),
-        _config_delay=False,
-    )
+
+    class FakeCoreHub:
+        def __init__(self) -> None:
+            self._client = SimpleNamespace(connected=True)
+            self.config_delay = 0
+            self.calls: list[tuple[int, int, int | list[int], str]] = []
+
+        async def async_pb_call(self, unit: int, address: int, value: int | list[int], call_type: str) -> object:
+            self.calls.append((unit, address, value, call_type))
+            return response
+
+    core_hub = FakeCoreHub()
     hub = cast(Any, object.__new__(SolaXCoreModbusHub))
     hub._name = "test"
     hub.plugin = SimpleNamespace(order32="big")
     hub.data = {}
     hub.writeLocals = {}
-    hub._client = SimpleNamespace()
+    hub._transport = CoreModbusTransport(
+        cast(Any, object()),
+        "core",
+        "test",
+        hub_getter=lambda hass, name: core_hub,
+        reconnect_delay=0,
+    )
     hub._lock = asyncio.Lock()
     hub._inflight_tasks = set()
     hub._stopping = False
-    hub._check_connection = AsyncMock(return_value=core_hub)
+    hub._check_connection = AsyncMock(return_value=True)
 
     result = await hub.async_write_registers_multi(
         unit=1,
@@ -156,7 +169,7 @@ async def test_core_multi_write_uses_core_client_and_validates_response() -> Non
     )
 
     assert result is response
-    assert core_client.write_registers_calls == 1
+    assert core_hub.calls == [(1, 100, [7, 65534], "write_registers")]
 
 
 @pytest.mark.asyncio
