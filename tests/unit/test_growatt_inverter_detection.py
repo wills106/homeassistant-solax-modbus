@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import pytest
@@ -104,7 +105,10 @@ async def test_known_secondary_serial_is_not_blocked_by_unknown_primary_value() 
 
 
 @pytest.mark.asyncio
-async def test_existing_firmware_fallback_is_preserved() -> None:
+async def test_existing_firmware_fallback_is_preserved_without_probe_warnings(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.DEBUG, logger="custom_components.solax_modbus.plugin_growatt")
     hub = GrowattHub(
         {
             9: "GH1.0 ZAAa",
@@ -116,3 +120,7 @@ async def test_existing_firmware_fallback_is_preserved() -> None:
     assert invertertype == PV | GEN4 | X1
     assert hub.seriesnumber == "GH1.0 ZAAa"
     assert hub.read_addresses == [3001, 209, 23, 9]
+    assert "no inverter identifier at 0x17; other address may succeed" in caplog.text
+    assert not [
+        record for record in caplog.records if record.name == "custom_components.solax_modbus.plugin_growatt" and record.levelno >= logging.WARNING
+    ]
