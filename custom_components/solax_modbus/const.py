@@ -3,6 +3,7 @@ import pathlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import StrEnum
 from typing import Any
 
 from homeassistant.components.button import ButtonEntityDescription
@@ -23,8 +24,6 @@ try:
         UnitOfReactivePower,
     )
 except ImportError:
-    from enum import StrEnum
-
     from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
 
     class UnitOfReactivePower(StrEnum):  # type: ignore[no-redef]
@@ -116,6 +115,21 @@ WRITE_MULTI_MODBUS = 4  # use write_multiple modbus command
 _LOGGER = logging.getLogger(__name__)
 
 DEBOUNCE_TIME = timedelta(seconds=5)  # Time to prioritize user actions
+
+
+class PollOutcome(StrEnum):
+    """Result of a scheduled Modbus poll."""
+
+    SUCCESS = "success"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+    DISCARDED = "discarded"
+
+    @property
+    def communication_succeeded(self) -> bool:
+        """Return whether the poll completed without a communication failure."""
+        return self in (PollOutcome.SUCCESS, PollOutcome.DISCARDED)
+
 
 # ==================================== plugin base class ====================================================================
 

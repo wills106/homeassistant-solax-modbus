@@ -35,6 +35,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
+    PollOutcome,
 )
 from .debug import get_debug_setting
 
@@ -1192,15 +1193,15 @@ async def should_create_energy_dashboard_device(hub: Any, config: Any, hass: Any
                             # Read each device group in this interval group
                             for device_group in interval_group.device_groups.values():
                                 read_result = await hub.async_read_modbus_data(device_group)
-                                if read_result:
+                                if read_result is PollOutcome.SUCCESS:
                                     # Data is written to hub.data during the read (data is alias to self.data), check immediately after
                                     if hub_data:
                                         parallel_setting = hub_data.get("parallel_setting")
                                         if parallel_setting and parallel_setting != "unknown":
                                             _LOGGER.debug("parallel_setting read from inverter")
                                             break
-                                elif not read_result and retry < max_retries - 1:
-                                    _LOGGER.debug("Modbus read failed, retrying")
+                                elif retry < max_retries - 1:
+                                    _LOGGER.debug(f"Modbus read outcome was {read_result.value}, retrying")
                             if parallel_setting and parallel_setting != "unknown":
                                 break
                     if parallel_setting and parallel_setting != "unknown":

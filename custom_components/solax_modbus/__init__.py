@@ -84,6 +84,7 @@ from .const import (
     SLEEPMODE_LASTAWAKE,
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
+    PollOutcome,
 )
 from .const import (
     CONF_READ_DCB as CONF_READ_DCB,
@@ -607,7 +608,7 @@ class SolaXModbusHub:
         self._comm_block_failures: dict[str, list[float]] = {}
         self._comm_last_block_success_time: float | None = None
         self._comm_last_block_failure_time: float | None = None
-        self._comm_recent_results: list[bool] = []
+        self._comm_recent_outcomes: list[PollOutcome] = []
         self._comm_poll_durations: list[int] = []
         self._comm_last_error: str | None = None
         self._comm_last_error_time: str | None = None
@@ -938,14 +939,14 @@ class SolaXModbusHub:
                 while True:
                     start = _mtime.monotonic()
                     async with interval_group.poll_lock:
-                        agg_res, updated_sensors = await self.async_refresh_modbus_data(interval_group, _now, cycle_id=cycle_id)
+                        outcome, updated_sensors = await self.async_refresh_modbus_data(interval_group, _now, cycle_id=cycle_id)
                     elapsed = _mtime.monotonic() - start
                     _LOGGER.debug(
                         f"{self._name}: [{secs}s] poll finished – cycle #{cycle_id}, "
-                        f"duration={int(elapsed * 1000)} ms, ok={agg_res}, "
+                        f"duration={int(elapsed * 1000)} ms, outcome={outcome.value}, "
                         f"sensors={updated_sensors}, slowdown={self.slowdown}"
                     )
-                    self._record_poll_cycle(agg_res, elapsed, interval_group.interval or secs)
+                    self._record_poll_cycle(outcome, elapsed, interval_group.interval or secs)
 
                     # If the configured interval is shorter than the actual run time, inform once per cycle
                     if elapsed >= (interval_group.interval or 0):
@@ -958,11 +959,13 @@ class SolaXModbusHub:
                     # the complete interval; otherwise this creates an endless backlog.
                     if getattr(interval_group, "pending_rerun", False):
                         interval_group.pending_rerun = False
-                        if agg_res and elapsed < (interval_group.interval or 0):
+                        if outcome.communication_succeeded and elapsed < (interval_group.interval or 0):
                             # Loop again immediately (no sleep) to catch up once
                             continue
-                        if agg_res:
+                        if outcome.communication_succeeded:
                             _LOGGER.debug(f"{self._name}: dropping pending catch-up because the previous poll already consumed the interval")
+                        elif outcome is PollOutcome.SKIPPED:
+                            _LOGGER.debug(f"{self._name}: dropping pending catch-up because polling was skipped")
                         else:
                             _LOGGER.debug(f"{self._name}: dropping pending catch-up due to failed poll (slowdown={self.slowdown})")
                         # Exit the loop; next attempt will occur per normal schedule/slowdown policy
@@ -1023,52 +1026,65 @@ class SolaXModbusHub:
                     await self.async_close()
         self.blocks_changed = True  # will force rebuild_blocks to be called
 
-    async def async_refresh_modbus_data(self, interval_group: Any, _now: int | None = None, cycle_id: int | None = None) -> tuple[bool, int]:
+    async def async_refresh_modbus_data(self, interval_group: Any, _now: int | None = None, cycle_id: int | None = None) -> tuple[PollOutcome, int]:
         """Time to update."""
         _LOGGER.debug(f"{self._name}: scan_group timer initiated refresh_modbus_data call - interval {interval_group.interval}")
         # self.cyclecount = self.cyclecount + 1  # Now incremented in _refresh
         # Do not start normal polling until initial probe is done
         if not self._probe_ready.is_set():
             _LOGGER.debug(f"{self._name}: skipping poll – initial probe not done yet")
-            return False, 0
+            return PollOutcome.SKIPPED, 0
         if self._initial_refresh_active:
             _LOGGER.debug(f"{self._name}: skipping scheduled poll – initial refresh still running")
-            return False, 0
-        agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group)
+            return PollOutcome.SKIPPED, 0
+        outcome, updated_sensors = await self._refresh_interval_group_once(interval_group)
         await self._maybe_refresh_energy_dashboard_on_primary_update()
         # Return aggregate result and updated sensor count to caller for logging
-        return agg_res, updated_sensors
+        return outcome, updated_sensors
 
-    async def _refresh_interval_group_once(self, interval_group: Any, bypass_slowdown: bool = False) -> tuple[bool, int]:
+    async def _refresh_interval_group_once(self, interval_group: Any, bypass_slowdown: bool = False) -> tuple[PollOutcome, int]:
         """Refresh one interval group once."""
         if not interval_group.device_groups:
-            return True, 0
+            return PollOutcome.SKIPPED, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
-        agg_res = True
+        if not bypass_slowdown and (self.cyclecount % self.slowdown) != 0:
+            return PollOutcome.SKIPPED, 0
+
+        outcomes: list[PollOutcome] = []
         updated_sensors = 0
-        if bypass_slowdown or (self.cyclecount % self.slowdown) == 0:
-            for group in list(interval_group.device_groups.values()):
-                group_result = await self.async_read_modbus_data(group)
-                agg_res = agg_res and group_result
-                if group_result:
-                    if self.slowdown > 1:
-                        _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
-                    self.slowdown = 1
-                    if getattr(group, "publish_updates", True):
-                        for sensor in group.sensors:
-                            sensor.modbus_data_updated()
-                        updated_sensors += len(group.sensors)
-                else:
-                    if self.slowdown <= 1:
-                        _LOGGER.debug(f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10")
-                    self.slowdown = 10
-                    for i in self.sleepnone:
-                        self.data.pop(i, None)
-                    for i in self.sleepzero:
-                        self.data[i] = 0
-                _LOGGER.debug(f"{self._name}: device group read done")
-        return agg_res, updated_sensors
+        for group in list(interval_group.device_groups.values()):
+            group_outcome = await self.async_read_modbus_data(group)
+            outcomes.append(group_outcome)
+            if group_outcome is PollOutcome.SUCCESS and getattr(group, "publish_updates", True):
+                for sensor in group.sensors:
+                    sensor.modbus_data_updated()
+                updated_sensors += len(group.sensors)
+            _LOGGER.debug(f"{self._name}: device group read done with outcome={group_outcome.value}")
+
+        if PollOutcome.FAILED in outcomes:
+            outcome = PollOutcome.FAILED
+        elif PollOutcome.SUCCESS in outcomes:
+            outcome = PollOutcome.SUCCESS
+        elif PollOutcome.DISCARDED in outcomes:
+            outcome = PollOutcome.DISCARDED
+        else:
+            outcome = PollOutcome.SKIPPED
+
+        if outcome is PollOutcome.FAILED:
+            if self.slowdown <= 1:
+                _LOGGER.debug(f"{self._name}: modbus group read failed - assuming sleep mode - slowing down by factor 10")
+            self.slowdown = 10
+            for key in self.sleepnone:
+                self.data.pop(key, None)
+            for key in self.sleepzero:
+                self.data[key] = 0
+        elif outcome.communication_succeeded:
+            if self.slowdown > 1:
+                _LOGGER.debug(f"{self._name}: communication restored, resuming normal speed after slowdown")
+            self.slowdown = 1
+
+        return outcome, updated_sensors
 
     async def _run_initial_refresh_when_ready(self) -> None:
         """Do a one-time initial refresh of all scan groups after startup probe has completed."""
@@ -1085,9 +1101,9 @@ class SolaXModbusHub:
                     continue
                 _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s")
                 async with interval_group.poll_lock:
-                    agg_res, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
+                    outcome, updated_sensors = await self._refresh_interval_group_once(interval_group, bypass_slowdown=True)
                 await self._maybe_refresh_energy_dashboard_on_primary_update()
-                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s finished (ok={agg_res}, sensors={updated_sensors})")
+                _LOGGER.debug(f"{self._name}: initial refresh for interval {interval}s finished (outcome={outcome.value}, sensors={updated_sensors})")
         finally:
             self._initial_refresh_active = False
             self._initial_refresh_done = True
@@ -1536,22 +1552,18 @@ class SolaXModbusHub:
             operation="multi-register write",
         )
 
-    async def async_read_modbus_data(self, group: Any) -> bool:
-        res = True
+    async def async_read_modbus_data(self, group: Any) -> PollOutcome:
         group.publish_updates = False
         try:
             async with self._poll_data_lock:
-                res = await self.async_read_modbus_registers_all(group)
+                return await self.async_read_modbus_registers_all(group)
         except ConnectionException as ex:
             _LOGGER.error(f"Reading data failed! Inverter is offline. {ex}")
-            res = False
         except ModbusIOException as ex:
             _LOGGER.error(f"ModbusIOError: {ex}")
-            res = False
         except Exception as ex:
             _LOGGER.exception(f"Something went wrong reading from modbus: {ex}")
-            res = False
-        return res
+        return PollOutcome.FAILED
 
     def treat_address(self, data: dict[str, Any], regs: list[int], idx: int, descr: Any, initval: int = 0, advance: bool = True) -> int:
         return_value: int | None = None
@@ -1789,12 +1801,12 @@ class SolaXModbusHub:
             if current_value is missing or current_value == previous_value:
                 self.data[key] = value
 
-    async def async_read_modbus_registers_all(self, group: Any) -> bool:
+    async def async_read_modbus_registers_all(self, group: Any) -> PollOutcome:
         group.publish_updates = False
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
                 _LOGGER.info(f"{self._name}: device group read cancel")
-                return True
+                return PollOutcome.SKIPPED
         else:
             _LOGGER.debug(f"{self._name}: device group inverter")
 
@@ -1835,7 +1847,7 @@ class SolaXModbusHub:
             if group.readFollowUp is not None:
                 if not await group.readFollowUp(previous_data, data):
                     _LOGGER.warning(f"{self._name}: device group validation failed; discarding polling snapshot")
-                    return True
+                    return PollOutcome.DISCARDED
 
             self._commit_poll_snapshot(previous_data, data)
             if local_callback_needed:
@@ -1906,7 +1918,7 @@ class SolaXModbusHub:
                                 address=reg,
                                 payload=payload.get("data"),
                             )
-        return res
+        return PollOutcome.SUCCESS if res else PollOutcome.FAILED
 
     # --------------------------------------------- Check if sensor is a dependency -----------------------------------------------
 
@@ -2134,8 +2146,8 @@ class SolaXModbusHub:
         if last_success is None or (_mtime.time() - last_success) > COMM_BLOCK_FAILURE_WINDOW:
             _LOGGER.debug(f"{self._name}: skipping runtime bisect for {key}; no recent successful block reads")
             return
-        recent = self._comm_recent_results[-20:]
-        if recent and sum(recent) == 0:
+        recent = self._comm_recent_outcomes[-20:]
+        if recent and not any(outcome.communication_succeeded for outcome in recent):
             _LOGGER.debug(f"{self._name}: skipping runtime bisect for {key}; all recent polls failed")
             return
         probe_block = block(
@@ -2259,9 +2271,11 @@ class SolaXModbusHub:
     def _quarantine_recheck_timeout(self) -> float:
         return max(2.0, float(self._time_out) / 3.0)
 
-    def _record_poll_cycle(self, ok: bool, elapsed: float, interval: int | float | None) -> None:
-        self._comm_recent_results.append(ok)
-        self._comm_recent_results = self._comm_recent_results[-COMM_HISTORY_LIMIT:]
+    def _record_poll_cycle(self, outcome: PollOutcome, elapsed: float, interval: int | float | None) -> None:
+        if outcome is PollOutcome.SKIPPED:
+            return
+        self._comm_recent_outcomes.append(outcome)
+        self._comm_recent_outcomes = self._comm_recent_outcomes[-COMM_HISTORY_LIMIT:]
         elapsed_ms = int(elapsed * 1000)
         self._comm_poll_durations.append(elapsed_ms)
         self._comm_poll_durations = self._comm_poll_durations[-COMM_HISTORY_LIMIT:]
@@ -2271,12 +2285,12 @@ class SolaXModbusHub:
         self._publish_communication_diagnostics()
 
     def _update_communication_data(self) -> None:
-        recent = self._comm_recent_results
-        success_rate = round((sum(1 for item in recent if item) / len(recent)) * 100, 1) if recent else None
+        recent = self._comm_recent_outcomes
+        success_rate = round((sum(1 for outcome in recent if outcome.communication_succeeded) / len(recent)) * 100, 1) if recent else None
         quarantined_count = sum(len(regs) for regs in self.bad_regs.values())
         last_five = recent[-5:]
 
-        if recent and last_five and not any(last_five):
+        if recent and last_five and not any(outcome.communication_succeeded for outcome in last_five):
             health = "Offline"
         elif self._comm_recovery_active:
             health = "Recovering"
