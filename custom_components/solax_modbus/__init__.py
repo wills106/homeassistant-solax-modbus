@@ -20,6 +20,7 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
+    CONF_SCAN_INTERVAL,
     EVENT_HOMEASSISTANT_STOP,
     PERCENTAGE,
     Platform,
@@ -40,6 +41,12 @@ from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
 
+from .connection import (
+    describe_modbus_connection,
+    format_config_entry_names,
+    matching_config_entries,
+    modbus_connection_identity,
+)
 from .const import (
     BUTTONREPEAT_FIRST as BUTTONREPEAT_FIRST,
 )
@@ -580,7 +587,7 @@ class SolaXModbusHub:
         self.sleepnone: list[str] = []  # sensors that will be cleared in sleepmode
         self.writequeue: dict[tuple[int, int], PendingWrite] = {}  # requests to retry when the inverter wakes
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
-        self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
+        self.plugin = plugin.plugin_instance.create_hub_instance()
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
         self._validate_register_func = getattr(plugin, "validate_register_data", None)  # Cache function reference
         self.wakeupButton: Any = None
@@ -865,6 +872,29 @@ class SolaXModbusHub:
             _LOGGER.debug(f"{self._name}: returning scan_group interval {g} for {sensor.entity_description.key}")
         return int(g)
 
+    def _warn_duplicate_inverter_configuration(self, interval: int) -> None:
+        """Warn from one active duplicate configuration on every slow poll."""
+        slow_interval = int(self.config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+        if interval != slow_interval:
+            return
+
+        entries = matching_config_entries(self._hass, self.config, active_only=True)
+        if len(entries) < 2:
+            return
+
+        warning_owner = min(entries, key=lambda entry: str(entry.entry_id))
+        if warning_owner.entry_id != self.entry.entry_id:
+            return
+
+        identity = modbus_connection_identity(self.config)
+        if identity is None:
+            return
+        _LOGGER.warning(
+            "Duplicate inverter configuration detected: %s are enabled and poll the same Modbus device (%s).",
+            format_config_entry_names(entries),
+            describe_modbus_connection(identity),
+        )
+
     def device_group_key(self, device_info: DeviceInfo) -> str:
         """Extract device group key from device_info identifiers.
 
@@ -926,6 +956,7 @@ class SolaXModbusHub:
 
             async def _refresh(_now: Any = None) -> None:
                 secs = interval_group.interval
+                self._warn_duplicate_inverter_configuration(secs)
                 self.cyclecount += 1
                 cycle_id = self.cyclecount
                 _LOGGER.debug(f"{self._name}: [{secs}s] poll started – cycle #{cycle_id}")

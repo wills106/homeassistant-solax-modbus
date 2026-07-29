@@ -26,9 +26,16 @@ def test_plugin_structure(plugin_module_name: str) -> None:
     # 2. Verify inheritance
     assert isinstance(plugin, plugin_base), f"{plugin_module_name} plugin_instance must inherit from plugin_base"
 
+    runtime_plugin = plugin.create_hub_instance()
+    assert runtime_plugin is not plugin, f"{plugin_module_name} must create a separate runtime plugin per hub"
+
     # 3. Verify attributes
     assert plugin.plugin_name, f"{plugin_module_name} missing plugin_name"
     assert isinstance(plugin.SENSOR_TYPES, list), f"{plugin_module_name} SENSOR_TYPES must be a list"
+    for collection_name in ("SENSOR_TYPES", "BUTTON_TYPES", "NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES"):
+        assert getattr(runtime_plugin, collection_name) is not getattr(plugin, collection_name), (
+            f"{plugin_module_name} runtime plugin must not share {collection_name} with its template"
+        )
 
     # 4. Verify Entity Integrity (basic check)
     all_entities: list[Any] = (

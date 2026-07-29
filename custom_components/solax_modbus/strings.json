@@ -46,6 +46,10 @@
         "data": {
           "read_battery": "Enable readout"
         }
+      },
+      "duplicate_inverter": {
+        "title": "Duplicate inverter configuration",
+        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
       }
     },
     "error": {
@@ -104,6 +108,10 @@
         "data": {
           "read_battery": "Enable readout"
         }
+      },
+      "duplicate_inverter": {
+        "title": "Duplicate inverter configuration",
+        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
       }
     },
     "error": {
