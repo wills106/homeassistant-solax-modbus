@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from custom_components.solax_modbus import SolaXModbusHub
+from custom_components.solax_modbus.const import PollOutcome
 
 
 def make_hub() -> Any:
@@ -46,6 +47,16 @@ def make_group(*, follow_up: Any = None) -> Any:
     )
 
 
+def prepare_communication_diagnostics(hub: Any) -> None:
+    """Add the minimal communication diagnostic state to a test hub."""
+    hub._comm_recent_outcomes = []
+    hub._comm_poll_durations = []
+    hub._comm_overrun_count = 0
+    hub._comm_recovery_active = False
+    hub._comm_last_block_failure_time = None
+    hub.bad_regs = {"holding": set(), "input": set()}
+
+
 @pytest.mark.asyncio
 async def test_failed_group_discards_all_partial_values() -> None:
     hub = make_hub()
@@ -67,7 +78,7 @@ async def test_failed_group_discards_all_partial_values() -> None:
 
     result = await hub.async_read_modbus_registers_all(group)
 
-    assert result is False
+    assert result is PollOutcome.FAILED
     assert hub.data is original_data_object
     assert hub.data["raw"] == 1
     assert "computed" not in hub.data
@@ -92,7 +103,7 @@ async def test_tolerated_block_failure_commits_rest_of_snapshot() -> None:
 
     result = await hub.async_read_modbus_registers_all(group)
 
-    assert result is True
+    assert result is PollOutcome.SUCCESS
     assert hub.data["raw"] == 10
     assert "unavailable" not in hub.data
     assert group.publish_updates is True
@@ -125,7 +136,7 @@ async def test_successful_group_commits_raw_and_computed_values_together() -> No
 
     result = await hub.async_read_modbus_registers_all(group)
 
-    assert result is True
+    assert result is PollOutcome.SUCCESS
     assert follow_up_observations == [(1, 2, 1)]
     assert hub.data is original_data_object
     assert hub.data["raw"] == 2
@@ -154,11 +165,25 @@ async def test_failed_follow_up_discards_snapshot_without_publishing() -> None:
 
     result = await hub.async_read_modbus_registers_all(group)
 
-    assert result is True
+    assert result is PollOutcome.DISCARDED
     assert hub.data["raw"] == 1
     assert "computed" not in hub.data
     assert group.publish_updates is False
     computed_sensor.modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cancelled_read_preparation_returns_skipped() -> None:
+    hub = make_hub()
+    group = make_group()
+    group.readPreparation = AsyncMock(return_value=False)
+    hub.async_read_modbus_block = AsyncMock()
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SKIPPED
+    assert group.publish_updates is False
+    hub.async_read_modbus_block.assert_not_awaited()
 
 
 def test_snapshot_commit_preserves_concurrent_local_change() -> None:
@@ -180,14 +205,14 @@ async def test_group_reads_are_serialized() -> None:
     active_reads = 0
     maximum_active_reads = 0
 
-    async def read_group(group: Any) -> bool:
+    async def read_group(group: Any) -> PollOutcome:
         nonlocal active_reads, maximum_active_reads
         active_reads += 1
         maximum_active_reads = max(maximum_active_reads, active_reads)
         await asyncio.sleep(0)
         active_reads -= 1
         group.publish_updates = True
-        return True
+        return PollOutcome.SUCCESS
 
     hub.async_read_modbus_registers_all = read_group
     first_group = make_group()
@@ -198,8 +223,8 @@ async def test_group_reads_are_serialized() -> None:
         hub.async_read_modbus_data(second_group),
     )
 
-    assert first_result is True
-    assert second_result is True
+    assert first_result is PollOutcome.SUCCESS
+    assert second_result is PollOutcome.SUCCESS
     assert maximum_active_reads == 1
 
 
@@ -215,14 +240,109 @@ async def test_successful_but_discarded_snapshot_does_not_publish_group() -> Non
     hub.sleepnone = []
     hub.sleepzero = []
 
-    async def read_group(current_group: Any) -> bool:
+    async def read_group(current_group: Any) -> PollOutcome:
         current_group.publish_updates = False
-        return True
+        return PollOutcome.DISCARDED
 
     hub.async_read_modbus_data = read_group
 
     result, updated_sensors = await hub._refresh_interval_group_once(interval_group)
 
-    assert result is True
+    assert result is PollOutcome.DISCARDED
     assert updated_sensors == 0
     sensor.modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_slowdown_skip_does_not_read_or_change_slowdown() -> None:
+    hub = make_hub()
+    hub.blocks_changed = False
+    hub.cyclecount = 1
+    hub.slowdown = 10
+    hub.sleepnone = []
+    hub.sleepzero = []
+    hub.async_read_modbus_data = AsyncMock(return_value=PollOutcome.SUCCESS)
+    interval_group = SimpleNamespace(device_groups={"test": make_group()})
+
+    outcome, updated_sensors = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.SKIPPED
+    assert updated_sensors == 0
+    assert hub.slowdown == 10
+    hub.async_read_modbus_data.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "group_outcomes",
+    [
+        [PollOutcome.SUCCESS, PollOutcome.FAILED],
+        [PollOutcome.FAILED, PollOutcome.SUCCESS],
+    ],
+)
+async def test_any_failed_device_group_enables_slowdown_regardless_of_order(group_outcomes: list[PollOutcome]) -> None:
+    hub = make_hub()
+    hub.blocks_changed = False
+    hub.cyclecount = 10
+    hub.sleepnone = []
+    hub.sleepzero = []
+    hub.async_read_modbus_data = AsyncMock(side_effect=group_outcomes)
+    interval_group = SimpleNamespace(
+        device_groups={
+            "first": make_group(),
+            "second": make_group(),
+        }
+    )
+
+    outcome, _updated_sensors = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.FAILED
+    assert hub.slowdown == 10
+
+
+@pytest.mark.asyncio
+async def test_successful_aggregate_restores_normal_polling_after_all_groups() -> None:
+    hub = make_hub()
+    hub.blocks_changed = False
+    hub.cyclecount = 1
+    hub.slowdown = 10
+    hub.sleepnone = []
+    hub.sleepzero = []
+    hub.async_read_modbus_data = AsyncMock(side_effect=[PollOutcome.DISCARDED, PollOutcome.SUCCESS])
+    interval_group = SimpleNamespace(
+        device_groups={
+            "discarded": make_group(),
+            "success": make_group(),
+        }
+    )
+
+    outcome, _updated_sensors = await hub._refresh_interval_group_once(interval_group, bypass_slowdown=True)
+
+    assert outcome is PollOutcome.SUCCESS
+    assert hub.slowdown == 1
+
+
+def test_skipped_cycles_are_not_recorded_as_communication_successes() -> None:
+    hub = make_hub()
+    prepare_communication_diagnostics(hub)
+
+    for _ in range(5):
+        hub._record_poll_cycle(PollOutcome.FAILED, elapsed=0.1, interval=15)
+    for _ in range(9):
+        hub._record_poll_cycle(PollOutcome.SKIPPED, elapsed=0.0, interval=15)
+
+    assert hub._comm_recent_outcomes == [PollOutcome.FAILED] * 5
+    assert len(hub._comm_poll_durations) == 5
+    assert hub.data["communication_success_rate"] == 0.0
+    assert hub.data["communication_health"] == "Offline"
+
+
+def test_discarded_snapshot_counts_as_successful_communication() -> None:
+    hub = make_hub()
+    prepare_communication_diagnostics(hub)
+
+    hub._record_poll_cycle(PollOutcome.DISCARDED, elapsed=0.1, interval=15)
+
+    assert hub._comm_recent_outcomes == [PollOutcome.DISCARDED]
+    assert hub.data["communication_success_rate"] == 100.0
+    assert hub.data["communication_health"] == "Healthy"
