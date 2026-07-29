@@ -11,7 +11,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SCAN_INTER
 
 import custom_components.solax_modbus as solax_modbus
 from custom_components.solax_modbus import SolaXModbusHub
-from custom_components.solax_modbus.const import CONF_INTERFACE, CONF_MODBUS_ADDR, DOMAIN
+from custom_components.solax_modbus.const import CONF_INTERFACE, CONF_MODBUS_ADDR, DOMAIN, PollOutcome
 from custom_components.solax_modbus.sensor import SolaXModbusSensor
 
 
@@ -129,9 +129,9 @@ async def test_scheduled_poll_checks_warning_on_every_cycle(monkeypatch: Any) ->
     monkeypatch.setattr(hub, "_warn_duplicate_inverter_configuration", warn_duplicate)
     monkeypatch.setattr(hub, "_record_poll_cycle", Mock())
 
-    async def _refresh_data(_interval_group: Any, _now: Any, *, cycle_id: int) -> tuple[bool, int]:
+    async def _refresh_data(_interval_group: Any, _now: Any, *, cycle_id: int) -> tuple[PollOutcome, int]:
         assert cycle_id > 0
-        return True, 0
+        return PollOutcome.SUCCESS, 0
 
     monkeypatch.setattr(hub, "async_refresh_modbus_data", _refresh_data)
     sensor = cast(
