@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
-            if switch_info.sensor_key is not None:
+            if switch_info.write_method == WRITE_DATA_LOCAL and switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
             if dependency_key != switch_info.key:
@@ -87,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             )
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
-            if switch_info.sensor_key is not None:
+            if switch_info.write_method == WRITE_DATA_LOCAL and switch_info.sensor_key is not None:
                 hub.writeLocals[switch_info.sensor_key] = switch_info
             dependency_key = getattr(switch_info, "sensor_key", switch_info.key)
             if dependency_key != switch_info.key:
@@ -148,6 +148,11 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         if self.entity_description.write_method != WRITE_DATA_LOCAL:
+            if self._sensor_key is not None and self._sensor_key in self._hub.data:
+                return
+            last_state = await self.async_get_last_state()
+            if last_state and last_state.state in ("on", "off"):
+                self._attr_is_on = last_state.state == "on"
             return
         self.async_on_remove(self.hass.bus.async_listen("solax_modbus_local_data_loaded", self._handle_local_data_loaded))
         if self._sensor_key is not None and self._sensor_key in self._hub.data:
