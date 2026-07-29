@@ -36,7 +36,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
+from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
 
@@ -128,6 +128,7 @@ from .const import (
 from .modbus_transport import CoreModbusTransport, ModbusTransport, NativeModbusTransport, UnavailableModbusTransport
 from .pymodbus_compat import DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 from .sensor import SolaXModbusSensor
+from .serial_modbus import AsyncSerialModbusClient, SerialModbusError
 
 RETRIES = 1  # was 6 then 0, which worked also, but 1 is probably the safe choice
 INVALID_START = 99999
@@ -518,7 +519,7 @@ class SolaXModbusHub:
         self._transport: ModbusTransport
         if interface == "serial":
             self._transport = NativeModbusTransport(
-                AsyncModbusSerialClient(
+                AsyncSerialModbusClient(
                     port=serial_port,
                     baudrate=baudrate,
                     parity="N",
@@ -1337,7 +1338,7 @@ class SolaXModbusHub:
             try:
                 _LOGGER.debug(f"{self._name}: READ {register_type.upper()} device={unit} addr=0x{address:x} cnt={count}")
                 response = await self._track_task(self._transport.read(register_type, unit, address, count))
-            except (ModbusException, AttributeError, TypeError) as exception_error:
+            except (ModbusException, SerialModbusError, AttributeError, TypeError) as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 if self._is_expected_shutdown_modbus_error(exception_error):
                     _LOGGER.debug(f"{self._name}: ignoring Modbus read cancellation during shutdown: {error}")
@@ -1427,7 +1428,7 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"{self._name}: inverter is not connected")
             try:
                 response = await self._track_task(self._transport.write(unit, address, values, multiple=multiple))
-            except (ModbusException, AttributeError, TypeError) as ex:
+            except (ModbusException, SerialModbusError, AttributeError, TypeError) as ex:
                 raise HomeAssistantError(f"{self._name}: {operation} failed: {ex}") from ex
         return self._validate_write_response(
             response,
