@@ -1666,6 +1666,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pymodbus" },
+    { name = "tmodbus", extra = ["async-serial", "smart"] },
 ]
 
 [package.dev-dependencies]
@@ -1686,7 +1687,10 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pymodbus", specifier = ">=3.8.3" }]
+requires-dist = [
+    { name = "pymodbus", specifier = ">=3.8.3" },
+    { name = "tmodbus", extras = ["async-serial", "smart"], specifier = "==0.4.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -3457,6 +3461,25 @@ wheels = [
 ]
 
 [[package]]
+name = "pywin32"
+version = "312"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/ff/32aa7d2ed0ab12b323aaa64f9b75e6ad4f8fd09f9ccfc28c79414d46838d/pywin32-312-cp312-cp312-win32.whl", hash = "sha256:dab4f65ac9c4e48400a2a0530c46c3c579cd5905ecd11b80692373915269208b", size = 6371877, upload-time = "2026-06-04T07:49:28.836Z" },
+    { url = "https://files.pythonhosted.org/packages/03/d9/77040d3b43df3f3be32ea289433d660d2727f5ba327bc73be835127d9d60/pywin32-312-cp312-cp312-win_amd64.whl", hash = "sha256:b457f6d628a47e8a7346ce22acb7e1a46a4a78b52e1d17e1af56871bd19a93bc", size = 6914841, upload-time = "2026-06-04T07:49:31.85Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/cc/7b1ec671775756020a0ee7f4feeaf3c568f0ab86bd3900088cf986937a92/pywin32-312-cp312-cp312-win_arm64.whl", hash = "sha256:6017c58e12f6809fbb0555b75df144c2922a9ffd18e4b9b5afa863b6c1a9d950", size = 6727901, upload-time = "2026-06-04T07:49:34.244Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/41/12fbfd7f36ed2146d8bc9de96c2741296bf0d490b98508496cff322e274c/pywin32-312-cp313-cp313-win32.whl", hash = "sha256:7a27df850933d16a8eabfbaeb73d52b273e2da667f80d70b01a89d1f6828d02c", size = 6370184, upload-time = "2026-06-04T07:49:36.253Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/db/36a78e3403099d31d9746d13fdcde5accc43c1155f375a34d15983a479a7/pywin32-312-cp313-cp313-win_amd64.whl", hash = "sha256:c53e878d15a1c44788082bfe712a905433473aa38f86375b7cf8b45e3acbaaf9", size = 6914298, upload-time = "2026-06-04T07:49:38.876Z" },
+    { url = "https://files.pythonhosted.org/packages/84/37/c1697194092b76de9ed47ca124323f02c57ffc8a45c06f88a3d5acaf01eb/pywin32-312-cp313-cp313-win_arm64.whl", hash = "sha256:59aba5d5940842075343a5ddc6b11f1cdf0d1567fe745290359dfbcc7c2eb831", size = 6727640, upload-time = "2026-06-04T07:49:41.083Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/2b/1f3cded5822fd49c02f40544cbb5f58c7cfd6b1694869fd476cb6170ee97/pywin32-312-cp314-cp314-win32.whl", hash = "sha256:a77a90fbb6881238d2ca9c6fd797b25817f3768fe78d214a90137ff055a75f5b", size = 6468928, upload-time = "2026-06-04T07:49:43.188Z" },
+    { url = "https://files.pythonhosted.org/packages/21/82/3bf86d2e2808902013132e1ce905a7da0da53790f3836c64bf44d55e24f3/pywin32-312-cp314-cp314-win_amd64.whl", hash = "sha256:a4dd3a848290ef724347b19f301045831d8e802fa4464f491b98b1e0a081432e", size = 7024157, upload-time = "2026-06-04T07:49:45.34Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/0e/73f6d6800b4f27655abd9e9f6aaeaefcddb2b946e4674efa2bab184a7f7b/pywin32-312-cp314-cp314-win_arm64.whl", hash = "sha256:9fce94568364e0155e6dfb781ac5d95903be8baf28670632beab1b523f300daa", size = 6839598, upload-time = "2026-06-04T07:49:47.613Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/61/caa39686032d2ebdd04ff0ab5cbe163126c0066d98e00c9018646e42393b/pywin32-312-cp315-cp315-win32.whl", hash = "sha256:5c1fbe4a937a73ae9297384a3da38518cbc694c68ad8a809b2e19acd350f03ed", size = 6471159, upload-time = "2026-06-04T07:49:50.035Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/cd/7e1de64a4a6f69c04214169657ccab0d93a670ea50e35eb8f489d7378249/pywin32-312-cp315-cp315-win_amd64.whl", hash = "sha256:c2f03a0f73f804a13c2735b99392b0cd426bb4f2c4d0178e5ac966a0f21618d5", size = 7025293, upload-time = "2026-06-04T07:49:54.857Z" },
+    { url = "https://files.pythonhosted.org/packages/23/ed/4532e9388e65fa16b46776ef47ad631a64eda1631884488af707666350ed/pywin32-312-cp315-cp315-win_arm64.whl", hash = "sha256:a8597d28f267b39074aef51fa593530082b39cbe5a074226096857b1fed2dfb9", size = 6840337, upload-time = "2026-06-04T07:49:57.531Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3609,6 +3632,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/88/5b/da5f56ad39cbb1ca49bd0d4cccde7e97ea7d01fa724fa953746fa2b32ee6/securetar-2025.2.1.tar.gz", hash = "sha256:59536a73fe5cecbc1f00b1838c8b1052464a024e2adcf6c9ce1d200d91990fb1", size = 16124, upload-time = "2025-02-25T14:17:51.784Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/e0/b93a18e9bb7f7d2573a9c6819d42d996851edde0b0406d017067d7d23a0a/securetar-2025.2.1-py3-none-any.whl", hash = "sha256:760ad9d93579d5923f3d0da86e0f185d0f844cf01795a8754539827bb6a1bab4", size = 11545, upload-time = "2025-02-25T14:17:50.832Z" },
+]
+
+[[package]]
+name = "serialx"
+version = "1.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/80/778c6da23924b718c282024bcde331cf8e417ec1274d2f198f65cff7503a/serialx-1.8.2.tar.gz", hash = "sha256:90c912ec8ceb4ae26a7dca158ca21e5bd8d73ddfc93c5e8d8b101a22ddccbb9a", size = 695526, upload-time = "2026-06-12T16:06:57.055Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4f/4b/b4c05bfbe7021874f4f8b007d0057bf50e92854d63bb1dab07fd3677e376/serialx-1.8.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:d2904605e59357b9815aaa70828f28429767821638fceef228f32b8fca9ffb5c", size = 285301, upload-time = "2026-06-12T16:06:48.23Z" },
+    { url = "https://files.pythonhosted.org/packages/38/32/e6998be005770fbefd71bd3b9e095eb3a4fc055649967dcf82a6747fb6dc/serialx-1.8.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:abaee5c042194eaf95466e8e5eec6920af2eb0dbc00b91f1d765a0602bfd0d23", size = 282856, upload-time = "2026-06-12T16:06:49.91Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/d5/598fc77e904c584e4420cc4be7878292f595f40e6f32092649d7cd580f28/serialx-1.8.2-cp310-abi3-win32.whl", hash = "sha256:42cd054add10e390856608a6b0abb3bdf1b8aa078f26f60d7fcd852603f91417", size = 183863, upload-time = "2026-06-12T16:06:51.191Z" },
+    { url = "https://files.pythonhosted.org/packages/65/1d/8dfbd66cdf4129d991574c4be7878292f595f40e6f32092649d7cd580f28/serialx-1.8.2-cp310-abi3-win_amd64.whl", hash = "sha256:3e098c502639c7b220c419634101f28b9878a82fcee0cf06e074abb3e97f2c3e", size = 189886, upload-time = "2026-06-12T16:06:52.792Z" },
+    { url = "https://files.pythonhosted.org/packages/85/b9/138584b89a109f4e4ce82176380b44a748808033d55c9cbb1b39de0f52eb/serialx-1.8.2-cp310-abi3-win_arm64.whl", hash = "sha256:36f82e21c9b0215beae4c983d221071a44ecdcf2f7a98c659af596ff7adbaa65", size = 186459, upload-time = "2026-06-12T16:06:54.283Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/90/9cd83042a221756e41ed8c018344e8833788c16e9bac144dab3292f9fa3c/serialx-1.8.2-py3-none-any.whl", hash = "sha256:6e6cffc1caec242fb06d8e16dd7880c8ba53c366ee2c43045fc38e8935ac8a6d", size = 66674, upload-time = "2026-06-12T16:06:55.724Z" },
 ]
 
 [[package]]
@@ -3806,6 +3847,15 @@ wheels = [
 ]
 
 [[package]]
+name = "tenacity"
+version = "9.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/c6/ee486fd809e357697ee8a44d3d69222b344920433d3b6666ccd9b374630c/tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a", size = 49413, upload-time = "2026-02-07T10:45:33.841Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55", size = 28926, upload-time = "2026-02-07T10:45:32.24Z" },
+]
+
+[[package]]
 name = "termcolor"
 version = "3.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3821,6 +3871,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ab/e2/e9a00f0ccb71718418230718b3d900e71a5d16e701a3dae079a21e9cd8f8/text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93", size = 76885, upload-time = "2019-08-30T21:36:45.405Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a6/a5/c0b6468d3824fe3fde30dbb5e1f687b291608f9473681bbf7dabbf5a87d7/text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8", size = 78154, upload-time = "2019-08-30T21:37:03.543Z" },
+]
+
+[[package]]
+name = "tmodbus"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/d2/253e6b097053287d5ac15b90589380e38a6c4d5d149c6440623447c84dca/tmodbus-0.4.1.tar.gz", hash = "sha256:240bd7c2081a73b895cb579e1fa61888ab5001bfc7a0987f8b331605672196b0", size = 110439, upload-time = "2026-07-03T04:38:11.18Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/22/a224e550ce9565e7cffb58bbbd7d2ef01b5b02285b11d3881e363a3ffd22/tmodbus-0.4.1-py3-none-any.whl", hash = "sha256:b0fcc5a9735aed2deec21a4e347d9a11515978e04d18e1bd536a1819c6160eb0", size = 64179, upload-time = "2026-07-03T04:38:09.761Z" },
+]
+
+[package.optional-dependencies]
+async-serial = [
+    { name = "serialx" },
+]
+smart = [
+    { name = "tenacity" },
 ]
 
 [[package]]

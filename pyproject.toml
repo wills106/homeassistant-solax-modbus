@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pymodbus>=3.8.3",
+    "tmodbus[async-serial,smart]==0.4.1",
 ]
 
 [dependency-groups]

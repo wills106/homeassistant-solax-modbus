@@ -184,7 +184,9 @@ OPTION_SCHEMA = vol.Schema(
 
 SERIAL_SCHEMA = vol.Schema(
     {
-        vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): str,
+        vol.Optional(CONF_SERIAL_PORT, default=DEFAULT_SERIAL_PORT): (
+            selector.SerialPortSelector() if hasattr(selector, "SerialPortSelector") else str
+        ),
         vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): selector.SelectSelector(
             selector.SelectSelectorConfig(options=BAUDRATES),
         ),
