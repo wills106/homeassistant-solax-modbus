@@ -189,7 +189,7 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
     """
     Check if an entity is enabled in the entity registry, checking across multiple platforms.
     """
-    if descriptor.internal:
+    if getattr(descriptor, "internal", False):
         _LOGGER.debug(f"{hub.name}: should be loaded: entity with key {descriptor.key} is internal, returning True.")
         return True
     unique_id = f"{hub._name}_{descriptor.key}"
