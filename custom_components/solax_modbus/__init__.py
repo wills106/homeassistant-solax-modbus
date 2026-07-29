@@ -6,6 +6,7 @@ import asyncio
 import importlib
 import json
 import logging
+import struct
 import time as _mtime
 from dataclasses import dataclass, replace
 from datetime import timedelta
@@ -76,9 +77,11 @@ from .const import (
     REG_HOLDING,
     REG_INPUT,
     REGISTER_F32,
+    REGISTER_INT_RANGES,
     REGISTER_S16,
     REGISTER_S32,
     REGISTER_STR,
+    REGISTER_TYPE_WORDS,
     REGISTER_U8H,
     REGISTER_U8L,
     REGISTER_U16,
@@ -490,6 +493,10 @@ class PendingWrite:
     address: int
     payload: int
     register_data_type: str | None = None
+
+
+class RegisterEncodingError(HomeAssistantError):
+    """Raised when a value cannot be represented by its Modbus register type."""
 
 
 class SolaXModbusHub:
@@ -1345,11 +1352,17 @@ class SolaXModbusHub:
             raise HomeAssistantError(f"{self._name}: {operation} was rejected by device {unit} at register 0x{address:x}: {response}")
         return response
 
-    def _encode_multi_write_payload(self, payload: list[tuple[Any, Any]]) -> list[int]:
-        """Encode a complete multi-register payload before any data is sent."""
-        if not isinstance(payload, list) or not payload:
-            raise HomeAssistantError(f"{self._name}: multi-register write requires a non-empty payload")
-
+    def _encode_write_value(
+        self,
+        payload: int | float,
+        register_data_type: str | None,
+        *,
+        single_register: bool,
+    ) -> list[int]:
+        """Validate and encode one value before it reaches the transport."""
+        effective_type = register_data_type or (REGISTER_S16 if single_register else None)
+        if effective_type is None:
+            raise RegisterEncodingError(f"{self._name}: unsupported register data type {register_data_type}")
         data_type_enum = cast(Any, DataType)
         data_types: dict[str, Any] = {
             REGISTER_U16: data_type_enum.UINT16,
@@ -1358,13 +1371,44 @@ class SolaXModbusHub:
             REGISTER_F32: data_type_enum.FLOAT32,
             REGISTER_S32: data_type_enum.INT32,
         }
+        data_type = data_types.get(effective_type)
+        word_count = REGISTER_TYPE_WORDS.get(effective_type)
+        if data_type is None or word_count is None:
+            raise RegisterEncodingError(f"{self._name}: unsupported register data type {register_data_type}")
+        if single_register and word_count != 1:
+            raise RegisterEncodingError(
+                f"{self._name}: register data type {effective_type} requires {word_count} registers and cannot be written as a single register"
+            )
+
+        try:
+            if effective_type == REGISTER_F32:
+                value: int | float = float(payload)
+            else:
+                value = int(payload)
+                minimum, maximum = REGISTER_INT_RANGES[effective_type]
+                if value < minimum or value > maximum:
+                    raise RegisterEncodingError(f"{self._name}: value {value} is outside the {effective_type} register range {minimum}..{maximum}")
+            registers = cast(list[int], convert_to_registers(value, data_type, self.plugin.order32))
+        except RegisterEncodingError:
+            raise
+        except (OverflowError, TypeError, ValueError, struct.error) as ex:
+            raise RegisterEncodingError(f"{self._name}: cannot encode value {payload!r} as {effective_type}: {ex}") from ex
+
+        if len(registers) != word_count:
+            raise RegisterEncodingError(f"{self._name}: encoding {effective_type} produced {len(registers)} registers instead of {word_count}")
+        return registers
+
+    def _encode_multi_write_payload(self, payload: list[tuple[Any, Any]]) -> list[int]:
+        """Encode a complete multi-register payload before any data is sent."""
+        if not isinstance(payload, list) or not payload:
+            raise HomeAssistantError(f"{self._name}: multi-register write requires a non-empty payload")
+
         registers: list[int] = []
         for item in payload:
             try:
                 key, value = item
                 if key.startswith("_"):
                     register_data_type = key
-                    value = int(value)
                 else:
                     descr = self.writeLocals[key]
                     reverse_options = getattr(descr, "reverse_option_dict", None)
@@ -1378,13 +1422,9 @@ class SolaXModbusHub:
                         value = descr.scale(value, descr, self.data)
                     else:
                         value = value * descr.scale
-                    value = int(value)
                     register_data_type = descr.register_data_type
 
-                data_type = data_types.get(register_data_type)
-                if data_type is None:
-                    raise ValueError(f"unsupported register data type {register_data_type}")
-                registers.extend(convert_to_registers(value, data_type, self.plugin.order32))
+                registers.extend(self._encode_write_value(value, register_data_type, single_register=False))
             except Exception as ex:
                 raise HomeAssistantError(f"{self._name}: cannot encode multi-register write item {item!r}: {ex}") from ex
 
@@ -1417,11 +1457,8 @@ class SolaXModbusHub:
         )
 
     async def async_lowlevel_write_register(self, unit: int, address: int, payload: int, register_data_type: str | None = None) -> Any:
-        if register_data_type == REGISTER_U16:
-            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
-        else:
-            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
         try:
+            regs = self._encode_write_value(payload, register_data_type, single_register=True)
             response = await self._async_transport_write(
                 unit=unit,
                 address=address,
@@ -1458,6 +1495,8 @@ class SolaXModbusHub:
                 payload,
                 register_data_type=register_data_type,
             )
+        except RegisterEncodingError:
+            raise
         except HomeAssistantError as ex:
             self.writequeue[(unit, address)] = request
             if self.wakeupButton:
@@ -1494,10 +1533,7 @@ class SolaXModbusHub:
         self, unit: int, address: int, payload: int, register_data_type: str | None = None
     ) -> Any:  # Needs adapting for register queue
         """Write registers multi, but write only one register of type 16bit"""
-        if register_data_type == REGISTER_U16:
-            regs = convert_to_registers(int(payload), DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
-        else:
-            regs = convert_to_registers(int(payload), DataType.INT16, self.plugin.order32)  # type: ignore[attr-defined]
+        regs = self._encode_write_value(payload, register_data_type, single_register=True)
         return await self._async_transport_write(
             unit=unit,
             address=address,

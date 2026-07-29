@@ -108,6 +108,20 @@ REGISTER_STR = "_string"  # nr of bytes must be specified in wordcount and is 2*
 REGISTER_WORDS = "_words"  # nr or words must be specified in wordcount
 REGISTER_U8L = "_int8L"
 REGISTER_U8H = "_int8H"
+REGISTER_U16_MAX = 0xFFFF
+REGISTER_INT_RANGES: dict[str, tuple[int, int]] = {
+    REGISTER_U16: (0, REGISTER_U16_MAX),
+    REGISTER_S16: (-(1 << 15), (1 << 15) - 1),
+    REGISTER_U32: (0, (1 << 32) - 1),
+    REGISTER_S32: (-(1 << 31), (1 << 31) - 1),
+}
+REGISTER_TYPE_WORDS: dict[str, int] = {
+    REGISTER_U16: 1,
+    REGISTER_S16: 1,
+    REGISTER_U32: 2,
+    REGISTER_S32: 2,
+    REGISTER_F32: 2,
+}
 WRITE_SINGLE_MODBUS = 1  # use write_single_modbus command
 WRITE_MULTISINGLE_MODBUS = 2  # use write_mutiple modbus command for single register
 WRITE_DATA_LOCAL = 3  # write only to local data storage (not persistent)

@@ -9,8 +9,8 @@ import pytest
 from homeassistant.exceptions import HomeAssistantError
 from pymodbus.pdu import ExceptionResponse
 
-from custom_components.solax_modbus import PendingWrite, SolaXCoreModbusHub, SolaXModbusHub
-from custom_components.solax_modbus.const import REGISTER_S16, REGISTER_U16
+from custom_components.solax_modbus import PendingWrite, RegisterEncodingError, SolaXCoreModbusHub, SolaXModbusHub
+from custom_components.solax_modbus.const import REGISTER_S16, REGISTER_S32, REGISTER_U16, REGISTER_U32
 from custom_components.solax_modbus.modbus_transport import CoreModbusTransport, NativeModbusTransport
 from custom_components.solax_modbus.switch import SolaXModbusSwitch
 
@@ -68,6 +68,66 @@ def test_encode_multi_write_payload_is_all_or_nothing() -> None:
         )
 
 
+def test_multi_write_rejects_descriptor_without_register_type() -> None:
+    hub = make_hub()
+    hub.writeLocals["missing_type"] = SimpleNamespace(
+        reverse_option_dict=None,
+        scale=1,
+        register_data_type=None,
+    )
+
+    with pytest.raises(HomeAssistantError, match="unsupported register data type"):
+        hub._encode_multi_write_payload([("missing_type", 7)])
+
+
+@pytest.mark.parametrize(
+    ("register_data_type", "minimum", "maximum"),
+    [
+        (REGISTER_U16, 0, 65535),
+        (REGISTER_S16, -32768, 32767),
+        (REGISTER_U32, 0, 4294967295),
+        (REGISTER_S32, -2147483648, 2147483647),
+    ],
+)
+def test_encode_write_value_accepts_integer_register_boundaries(
+    register_data_type: str,
+    minimum: int,
+    maximum: int,
+) -> None:
+    hub = make_hub()
+
+    assert len(hub._encode_write_value(minimum, register_data_type, single_register=False)) in (1, 2)
+    assert len(hub._encode_write_value(maximum, register_data_type, single_register=False)) in (1, 2)
+
+
+@pytest.mark.parametrize(
+    ("register_data_type", "value"),
+    [
+        (REGISTER_U16, -1),
+        (REGISTER_U16, 65536),
+        (REGISTER_S16, -32769),
+        (REGISTER_S16, 32768),
+        (REGISTER_U32, -1),
+        (REGISTER_U32, 4294967296),
+        (REGISTER_S32, -2147483649),
+        (REGISTER_S32, 2147483648),
+    ],
+)
+def test_encode_write_value_rejects_values_outside_integer_register_range(register_data_type: str, value: int) -> None:
+    hub = make_hub()
+
+    with pytest.raises(RegisterEncodingError, match="outside"):
+        hub._encode_write_value(value, register_data_type, single_register=False)
+
+
+def test_legacy_unspecified_single_register_type_remains_signed_16_bit() -> None:
+    hub = make_hub()
+
+    assert hub._encode_write_value(32767, None, single_register=True) == [32767]
+    with pytest.raises(RegisterEncodingError, match="outside"):
+        hub._encode_write_value(32768, None, single_register=True)
+
+
 @pytest.mark.asyncio
 async def test_multi_write_does_not_send_partially_encoded_payload() -> None:
     client = FakeClient(SimpleNamespace(isError=lambda: False))
@@ -83,6 +143,23 @@ async def test_multi_write_does_not_send_partially_encoded_payload() -> None:
             ],
         )
 
+    assert client.write_registers_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_single_write_rejects_multi_register_type_before_transport() -> None:
+    client = FakeClient(SimpleNamespace(isError=lambda: False))
+    hub = make_hub(client)
+
+    with pytest.raises(RegisterEncodingError, match="requires 2 registers"):
+        await hub.async_lowlevel_write_register(
+            unit=1,
+            address=36,
+            payload=65536,
+            register_data_type=REGISTER_U32,
+        )
+
+    assert client.write_register_calls == 0
     assert client.write_registers_calls == 0
 
 
@@ -128,6 +205,28 @@ async def test_sleeping_write_queues_full_request_without_reporting_success() ->
         payload=40000,
         register_data_type=REGISTER_U16,
     )
+
+
+@pytest.mark.asyncio
+async def test_sleeping_write_does_not_queue_unencodable_value() -> None:
+    client = FakeClient(SimpleNamespace(isError=lambda: False))
+    hub = make_hub(client)
+    hub.plugin.isAwake = Mock(return_value=False)
+    hub.writequeue = {}
+    hub.wakeupButton = SimpleNamespace(register=1, command=1)
+    hub._modbus_addr = 1
+
+    with pytest.raises(RegisterEncodingError, match="outside"):
+        await hub.async_write_register(
+            unit=2,
+            address=36,
+            payload=65536,
+            register_data_type=REGISTER_U16,
+        )
+
+    assert hub.writequeue == {}
+    assert client.write_register_calls == 0
+    assert client.write_registers_calls == 0
 
 
 @pytest.mark.asyncio
