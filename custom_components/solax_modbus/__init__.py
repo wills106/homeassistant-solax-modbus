@@ -400,11 +400,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry,
         )
     try:
-        from .energy_dashboard import register_energy_dashboard_switch_provider
+        from .energy_dashboard import (
+            get_energy_dashboard_coordinator,
+            register_energy_dashboard_switch_provider,
+        )
 
         register_energy_dashboard_switch_provider(hass)
+        get_energy_dashboard_coordinator(hass).register_hub(entry.entry_id, hub)
     except Exception as ex:
-        _LOGGER.debug(f"{hub.name}: Energy Dashboard switch provider registration failed: {ex}")
+        _LOGGER.debug(f"{hub.name}: Energy Dashboard coordinator registration failed: {ex}")
     """Register the hub."""
     hass.data[DOMAIN][hub._name] = {
         "hub": hub,
@@ -446,6 +450,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data.get(DOMAIN, {}).pop(name, None)
     except Exception as ex:
         _LOGGER.warning(f"{name}: error removing from hass.data: {ex}")
+
+    try:
+        from .energy_dashboard import get_energy_dashboard_coordinator
+
+        get_energy_dashboard_coordinator(hass).unregister_hub(entry.entry_id)
+    except Exception as ex:
+        _LOGGER.debug(f"{name}: Energy Dashboard coordinator cleanup failed: {ex}")
 
     return unload_ok
 
@@ -820,7 +831,7 @@ class SolaXModbusHub:
                 self._hass.loop.call_soon_threadsafe(
                     self._hass.bus.async_fire,
                     "solax_modbus_local_data_loaded",
-                    {"hub_name": self._name},
+                    {"entry_id": self.entry.entry_id, "hub_name": self._name},
                 )
             except Exception as ex:
                 _LOGGER.debug(f"{self._name}: failed to fire local data event: {ex}")
@@ -1136,45 +1147,12 @@ class SolaXModbusHub:
     async def _maybe_refresh_energy_dashboard_on_primary_update(self) -> None:
         if not self._hass:
             return
-        if self.data.get("parallel_setting") != "Master":
-            return
+        try:
+            from .energy_dashboard import get_energy_dashboard_coordinator
 
-        pm_inverter_count = self.data.get("pm_inverter_count")
-        if pm_inverter_count is None:
-            return
-
-        domain_data = self._hass.data.setdefault(DOMAIN, {})
-        hub_entry = domain_data.setdefault(self._name, {})
-        last_count = hub_entry.get("energy_dashboard_last_total_inverter_count")
-        if last_count is None:
-            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
-            return
-        refresh_pending = hub_entry.get("energy_dashboard_refresh_pending")
-        if pm_inverter_count <= last_count and not refresh_pending:
-            return
-        if refresh_pending:
-            last_refresh_ts = hub_entry.get("energy_dashboard_last_refresh_ts", 0)
-            if _mtime.time() - last_refresh_ts < 5:
-                return
-
-        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
-        if not refresh_callback:
-            hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
-            return
-        if hub_entry.get("energy_dashboard_refresh_in_progress"):
-            return
-
-        hub_entry["energy_dashboard_refresh_in_progress"] = True
-        hub_entry["energy_dashboard_last_total_inverter_count"] = pm_inverter_count
-        hub_entry["energy_dashboard_last_refresh_ts"] = _mtime.time()
-
-        async def _run_refresh() -> None:
-            try:
-                await refresh_callback()
-            finally:
-                hub_entry["energy_dashboard_refresh_in_progress"] = False
-
-        self._hass.async_create_task(_run_refresh())
+            get_energy_dashboard_coordinator(self._hass).hub_data_updated(self.entry.entry_id)
+        except Exception as ex:
+            _LOGGER.debug(f"{self._name}: Energy Dashboard topology update failed: {ex}")
 
     @property
     def invertertype(self) -> int | None:
