@@ -763,6 +763,7 @@ class SolaXModbusHub:
                         return
                     await self._hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
                     self._platforms_forwarded = True
+                    self._start_initial_refresh_if_needed()
                     return
                 else:
                     _LOGGER.debug(f"{self._name}: deferred setup – inverter still not responding, will retry in {interval}s")
