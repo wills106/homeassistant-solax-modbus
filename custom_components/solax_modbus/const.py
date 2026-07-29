@@ -1,9 +1,10 @@
 import logging
 import pathlib
 from collections.abc import Callable, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Self
 
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription
@@ -152,6 +153,10 @@ class plugin_base:
     default_input_scangroup: str = SCAN_GROUP_DEFAULT  # or SCAN_GROUP_AUTO
     auto_default_scangroup: str = SCAN_GROUP_FAST  # only used when default_xxx_scangroup is set to SCAN_GROUP_AUTO
     auto_slow_scangroup: str = SCAN_GROUP_MEDIUM  # only usedwhen default_xxx_scangroup is set to SCAN_GROUP_AUTO
+
+    def create_hub_instance(self) -> Self:
+        """Create an independent runtime plugin instance for one hub."""
+        return deepcopy(self)
 
     def isAwake(self, datadict: dict[str, Any]) -> bool:
         """Check if inverter is awake."""

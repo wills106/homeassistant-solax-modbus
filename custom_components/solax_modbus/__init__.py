@@ -586,7 +586,7 @@ class SolaXModbusHub:
         self.sleepnone: list[str] = []  # sensors that will be cleared in sleepmode
         self.writequeue: dict[tuple[int, int], PendingWrite] = {}  # requests to retry when the inverter wakes
         _LOGGER.debug(f"{self.name}: ready to call plugin to determine inverter type")
-        self.plugin = plugin.plugin_instance  # getPlugin(name).plugin_instance
+        self.plugin = plugin.plugin_instance.create_hub_instance()
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
         self._validate_register_func = getattr(plugin, "validate_register_data", None)  # Cache function reference
         self.wakeupButton: Any = None
