@@ -13,8 +13,8 @@ handle:
 """
 
 import logging
-from collections.abc import Callable
-from dataclasses import dataclass, replace
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -29,13 +29,13 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
     CONF_ENERGY_DASHBOARD_DEVICE,
+    CONF_PLUGIN,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     DOMAIN,
     INVERTER_IDENT,
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
-    PollOutcome,
 )
 from .debug import get_debug_setting
 
@@ -44,6 +44,246 @@ _LOGGER = logging.getLogger(__name__)
 # Central Riemann sum configuration (applies to all Riemann sensors)
 RIEMANN_METHOD = "trapezoidal"  # Integration method: "trapezoidal", "left", "right"
 RIEMANN_ROUND_DIGITS = 3  # Precision for integration result
+ENERGY_DASHBOARD_COORDINATOR = "_energy_dashboard_coordinator"
+
+EnergyDashboardRefreshCallback = Callable[[], Awaitable[None]]
+
+
+@dataclass
+class EnergyDashboardHubState:
+    """Runtime state for one config entry."""
+
+    entry_id: str
+    hub: Any
+    role: str | None
+    inverter_count: int | None
+    refresh_callback: EnergyDashboardRefreshCallback | None = None
+    last_total_inverter_count: int | None = None
+    dashboard_entity_keys: set[str] = field(default_factory=set)
+
+
+class EnergyDashboardCoordinator:
+    """Coordinate dashboard topology and refreshes across config entries."""
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.hass = hass
+        self._hubs: dict[str, EnergyDashboardHubState] = {}
+        self._pending_refreshes: set[str] = set()
+        self._refresh_task: Any = None
+
+    @staticmethod
+    def _hub_role(hub: Any) -> str | None:
+        hub_data = getattr(hub, "data", None) or getattr(hub, "datadict", {}) or {}
+        role = hub_data.get("parallel_setting")
+        return role if role in ("Master", "Slave", "Free") else None
+
+    @staticmethod
+    def _hub_inverter_count(hub: Any) -> int | None:
+        hub_data = getattr(hub, "data", None) or getattr(hub, "datadict", {}) or {}
+        count = hub_data.get("pm_inverter_count")
+        try:
+            return int(count) if count is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _hub_family(hub: Any) -> str | None:
+        config = getattr(hub, "config", {}) or {}
+        family = config.get(CONF_PLUGIN)
+        if family:
+            return str(family)
+        plugin_module = getattr(hub, "plugin_module", None)
+        return getattr(plugin_module, "__name__", None)
+
+    def _entry_id_for_hub(self, hub: Any) -> str | None:
+        entry = getattr(hub, "entry", None)
+        entry_id = getattr(entry, "entry_id", None)
+        if entry_id:
+            return str(entry_id)
+        for candidate_entry_id, state in self._hubs.items():
+            if state.hub is hub:
+                return candidate_entry_id
+        return None
+
+    def _entry_id_from_event(self, data: dict[str, Any]) -> str | None:
+        entry_id = data.get("entry_id")
+        if entry_id in self._hubs:
+            return str(entry_id)
+        hub_name = data.get("hub_name")
+        for candidate_entry_id, state in self._hubs.items():
+            if getattr(state.hub, "_name", None) == hub_name:
+                return candidate_entry_id
+        return None
+
+    def _master_entry_ids(self) -> set[str]:
+        return {entry_id for entry_id, state in self._hubs.items() if state.role == "Master"}
+
+    def register_hub(self, entry_id: str, hub: Any) -> None:
+        """Register or replace a hub using its stable config entry ID."""
+        old_masters = self._master_entry_ids()
+        previous = self._hubs.get(entry_id)
+        if previous is not None and previous.hub is hub:
+            self.hub_data_updated(entry_id)
+            return
+        self._hubs[entry_id] = EnergyDashboardHubState(
+            entry_id=entry_id,
+            hub=hub,
+            role=self._hub_role(hub),
+            inverter_count=self._hub_inverter_count(hub),
+            dashboard_entity_keys=set(previous.dashboard_entity_keys) if previous else set(),
+        )
+        affected = old_masters | self._master_entry_ids()
+        if previous is not None:
+            affected.add(entry_id)
+        self.request_refresh_many(affected)
+
+    def unregister_hub(self, entry_id: str) -> None:
+        """Remove a hub and refresh masters affected by the topology change."""
+        old_masters = self._master_entry_ids()
+        removed = self._hubs.pop(entry_id, None)
+        self._pending_refreshes.discard(entry_id)
+        if removed is None:
+            return
+        self.request_refresh_many(old_masters | self._master_entry_ids())
+
+    def register_refresh_callback(
+        self,
+        entry_id: str,
+        refresh_callback: EnergyDashboardRefreshCallback,
+    ) -> Callable[[], None]:
+        """Register a platform refresh callback and return its cleanup callback."""
+        state = self._hubs.get(entry_id)
+        if state is None:
+            raise KeyError(f"Energy Dashboard hub {entry_id} is not registered")
+        state.refresh_callback = refresh_callback
+        # Platform setup performs one synchronous reconciliation before registering
+        # the callback, so it already includes all topology changes seen so far.
+        self._pending_refreshes.discard(entry_id)
+        self._schedule_refreshes()
+
+        @callback
+        def _remove_callback() -> None:
+            current = self._hubs.get(entry_id)
+            if current is not None and current.refresh_callback is refresh_callback:
+                current.refresh_callback = None
+
+        return _remove_callback
+
+    def hub_data_updated(self, entry_id: str) -> None:
+        """Reconcile topology after a hub published a complete poll snapshot."""
+        state = self._hubs.get(entry_id)
+        if state is None:
+            return
+        old_role = state.role
+        old_count = state.inverter_count
+        old_masters = self._master_entry_ids()
+        state.role = self._hub_role(state.hub)
+        state.inverter_count = self._hub_inverter_count(state.hub)
+        new_masters = self._master_entry_ids()
+
+        affected: set[str] = set()
+        if old_role != state.role:
+            affected.update(old_masters | new_masters)
+            affected.add(entry_id)
+        elif state.role == "Master" and old_count != state.inverter_count:
+            affected.add(entry_id)
+        self.request_refresh_many(affected)
+
+    def request_refresh_for_event(self, data: dict[str, Any]) -> None:
+        """Request a refresh for an integration-local event."""
+        if entry_id := self._entry_id_from_event(data):
+            self.request_refresh(entry_id)
+
+    def hub_for_event(self, data: dict[str, Any]) -> Any | None:
+        """Return the registered hub addressed by an integration-local event."""
+        entry_id = self._entry_id_from_event(data)
+        state = self._hubs.get(entry_id) if entry_id else None
+        return state.hub if state else None
+
+    def request_refresh_many(self, entry_ids: set[str]) -> None:
+        for entry_id in entry_ids:
+            self.request_refresh(entry_id, schedule=False)
+        self._schedule_refreshes()
+
+    def request_refresh(self, entry_id: str, *, schedule: bool = True) -> None:
+        if entry_id not in self._hubs:
+            return
+        self._pending_refreshes.add(entry_id)
+        if schedule:
+            self._schedule_refreshes()
+
+    def _schedule_refreshes(self) -> None:
+        if self._refresh_task is not None and not self._refresh_task.done():
+            return
+        if not any(self._hubs[entry_id].refresh_callback for entry_id in self._pending_refreshes if entry_id in self._hubs):
+            return
+        self._refresh_task = self.hass.async_create_task(self._async_refresh_pending())
+
+    async def _async_refresh_pending(self) -> None:
+        try:
+            while True:
+                ready = [
+                    entry_id for entry_id in self._pending_refreshes if entry_id in self._hubs and self._hubs[entry_id].refresh_callback is not None
+                ]
+                if not ready:
+                    return
+                for entry_id in ready:
+                    self._pending_refreshes.discard(entry_id)
+                    state = self._hubs.get(entry_id)
+                    refresh_callback = state.refresh_callback if state else None
+                    if refresh_callback is None:
+                        continue
+                    try:
+                        await refresh_callback()
+                    except Exception:
+                        _LOGGER.exception(
+                            "%s: Energy Dashboard refresh failed",
+                            getattr(getattr(state, "hub", None), "_name", entry_id),
+                        )
+        finally:
+            self._refresh_task = None
+            if any(self._hubs[entry_id].refresh_callback for entry_id in self._pending_refreshes if entry_id in self._hubs):
+                self._schedule_refreshes()
+
+    def slave_hubs_for(self, master_hub: Any) -> list[tuple[str, Any]]:
+        """Return registered slave hubs compatible with the master plugin."""
+        master_entry_id = self._entry_id_for_hub(master_hub)
+        master_family = self._hub_family(master_hub)
+        slaves = []
+        for entry_id, state in self._hubs.items():
+            if entry_id == master_entry_id or state.role != "Slave":
+                continue
+            if self._hub_family(state.hub) != master_family:
+                continue
+            slaves.append((getattr(state.hub, "_name", entry_id), state.hub))
+        return sorted(slaves, key=lambda item: item[0].casefold())
+
+    def set_last_total_inverter_count(self, hub: Any, count: int | None) -> None:
+        if entry_id := self._entry_id_for_hub(hub):
+            if state := self._hubs.get(entry_id):
+                state.last_total_inverter_count = count
+
+    def last_total_inverter_count(self, hub: Any) -> int | None:
+        if entry_id := self._entry_id_for_hub(hub):
+            if state := self._hubs.get(entry_id):
+                return state.last_total_inverter_count
+        return None
+
+    def dashboard_entity_keys(self, hub: Any) -> set[str]:
+        if entry_id := self._entry_id_for_hub(hub):
+            if state := self._hubs.get(entry_id):
+                return state.dashboard_entity_keys
+        return set()
+
+
+def get_energy_dashboard_coordinator(hass: HomeAssistant) -> EnergyDashboardCoordinator:
+    """Return the integration-wide Energy Dashboard coordinator."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    coordinator = domain_data.get(ENERGY_DASHBOARD_COORDINATOR)
+    if not isinstance(coordinator, EnergyDashboardCoordinator):
+        coordinator = EnergyDashboardCoordinator(hass)
+        domain_data[ENERGY_DASHBOARD_COORDINATOR] = coordinator
+    return coordinator
 
 
 @dataclass
@@ -153,6 +393,7 @@ def get_energy_dashboard_switch_state(hub: Any, key: str) -> bool | None:
 def register_energy_dashboard_switch_provider(hass: Any) -> None:
     """Register ED switch provider in hass data."""
     domain_data = hass.data.setdefault(DOMAIN, {})
+    get_energy_dashboard_coordinator(hass)
     providers = domain_data.setdefault("_switch_entity_providers", [])
     for provider in providers:
         if getattr(provider, "__name__", "") == "_energy_dashboard_switch_provider":
@@ -170,7 +411,6 @@ def _register_energy_dashboard_switch_listener(hass: Any) -> None:
     @callback
     def _handle_local_switch_event(event: Any) -> Any:
         data = event.data or {}
-        hub_name = data.get("hub_name")
         key = data.get("key")
         if key not in (
             ED_SWITCH_PV_VARIANTS,
@@ -178,10 +418,7 @@ def _register_energy_dashboard_switch_listener(hass: Any) -> None:
             ED_SWITCH_GRID_TO_BATTERY,
         ):
             return
-        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
-        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
-        if refresh_callback:
-            hass.async_create_task(refresh_callback())
+        get_energy_dashboard_coordinator(hass).request_refresh_for_event(data)
 
     hass.bus.async_listen("solax_modbus_local_switch_changed", _handle_local_switch_event)
     domain_data["_ed_switch_listener_registered"] = True
@@ -195,9 +432,8 @@ def _register_energy_dashboard_local_data_listener(hass: Any) -> None:
     @callback
     def _handle_local_data_loaded(event: Any) -> Any:
         data = event.data or {}
-        hub_name = data.get("hub_name")
-        hub_entry = hass.data.get(DOMAIN, {}).get(hub_name, {})
-        hub = hub_entry.get("hub")
+        coordinator = get_energy_dashboard_coordinator(hass)
+        hub = coordinator.hub_for_event(data)
         if hub is None:
             return
         if (
@@ -206,9 +442,7 @@ def _register_energy_dashboard_local_data_listener(hass: Any) -> None:
             and get_energy_dashboard_switch_state(hub, ED_SWITCH_GRID_TO_BATTERY) is not True
         ):
             return
-        refresh_callback = hub_entry.get("energy_dashboard_refresh_callback")
-        if refresh_callback:
-            hass.async_create_task(refresh_callback())
+        coordinator.request_refresh_for_event(data)
 
     hass.bus.async_listen("solax_modbus_local_data_loaded", _handle_local_data_loaded)
     domain_data["_ed_local_data_listener_registered"] = True
@@ -349,9 +583,7 @@ def _create_energy_dashboard_diagnostic_sensors(
     def _last_total_inverter_count_value(_initval: Any, _descr: Any, _datadict: Any) -> Any:
         if not hass:
             return None
-        domain_data = hass.data.get(DOMAIN, {})
-        hub_entry = domain_data.get(hub_name, {})
-        return hub_entry.get("energy_dashboard_last_total_inverter_count")
+        return get_energy_dashboard_coordinator(hass).last_total_inverter_count(hub)
 
     diagnostics = [
         BaseModbusSensorEntityDescription(
@@ -589,78 +821,10 @@ def _create_sensor_from_mapping(
 
 
 def _find_slave_hubs(hass: Any, master_hub: Any) -> Any:
-    """Find all Slave hubs in parallel mode.
-
-    Args:
-        hass: Home Assistant instance
-        master_hub: The Master hub instance
-
-    Returns:
-        List of Slave hub instances
-    """
-    slave_hubs: list[Any] = []
+    """Return registered Slave hubs from the stable entry topology."""
     if not hass:
-        return slave_hubs
-
-    domain_data = hass.data.get(DOMAIN, {})
-    master_name = getattr(master_hub, "_name", None)
-
-    _LOGGER.debug(f"Scanning for Slave hubs. Master: {master_name}, Available hubs: {list(domain_data.keys())}")
-
-    for hub_name, hub_data in domain_data.items():
-        if hub_name.startswith("_"):
-            continue
-        if not isinstance(hub_data, dict):
-            continue
-        # Skip self (Master)
-        if hub_name == master_name:
-            continue
-
-        _LOGGER.debug(f"Checking hub: {hub_name}")
-
-        hub_instance = hub_data.get("hub")
-        if not hub_instance:
-            _LOGGER.debug(f"Hub {hub_name} has no hub instance, skipping")
-            continue
-
-        # Check if Slave - try hub.data first, then entity state as fallback
-        hub_data_dict = getattr(hub_instance, "data", None) or getattr(hub_instance, "datadict", {})
-        parallel_setting = hub_data_dict.get("parallel_setting")
-        _LOGGER.debug(f"Hub {hub_name} parallel_setting from data check: {parallel_setting}")
-
-        # If not in hub data, try entity state (may not have been read from inverter yet)
-        if parallel_setting is None or parallel_setting == "unknown":
-            _LOGGER.debug(f"Hub {hub_name} trying fallback methods (parallel_setting was {parallel_setting})")
-            entity_name = hub_name.lower().replace(" ", "_")
-            entity_id = f"select.{entity_name}_parallel_setting"
-            try:
-                state = hass.states.get(entity_id)
-                _LOGGER.debug(f"Hub {hub_name} entity {entity_id} state: {state.state if state else 'not found'}")
-                if state and state.state and state.state != "unknown":
-                    parallel_setting = state.state
-                    _LOGGER.debug(f"Hub {hub_name} parallel_setting from entity state: {parallel_setting}")
-                else:
-                    # Entity state is unknown, try config entry options as last resort
-                    _LOGGER.debug(f"Hub {hub_name} entity state unusable, trying config entries")
-                    # This reads the user-configured value before inverter polling
-                    for entry in hass.config_entries.async_entries(DOMAIN):
-                        _LOGGER.debug(f"Hub {hub_name} checking config entry: {entry.title}")
-                        if entry.title == hub_name or entry.data.get("name") == hub_name:
-                            parallel_setting = entry.options.get("parallel_setting")
-                            _LOGGER.debug(f"Hub {hub_name} found matching entry, parallel_setting: {parallel_setting}")
-                            if parallel_setting:
-                                _LOGGER.debug(f"Hub {hub_name} parallel_setting from config entry: {parallel_setting}")
-                            break
-            except Exception as e:
-                _LOGGER.debug(f"Hub {hub_name} could not read parallel_setting: {e}")
-        else:
-            _LOGGER.debug(f"Hub {hub_name} parallel_setting from hub.data: {parallel_setting}")
-
-        if parallel_setting == "Slave":
-            slave_hubs.append((hub_name, hub_instance))
-            _LOGGER.debug(f"Added {hub_name} as Slave hub")
-
-    return slave_hubs
+        return []
+    return get_energy_dashboard_coordinator(hass).slave_hubs_for(master_hub)
 
 
 def _needs_aggregation(target_key: str) -> Any:
@@ -765,40 +929,16 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
     ed_is_master = is_master and not debug_standalone
     _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
 
-    def _store_energy_dashboard_last_total_inverter_count(count: int | None) -> None:
-        if not hass or count is None:
-            return
-        domain_data = hass.data.setdefault(DOMAIN, {})
-        hub_entry = domain_data.setdefault(hub_name, {})
-        hub_entry["energy_dashboard_last_total_inverter_count"] = count
-
-    skip_store_total = False
-    if hass and ed_is_master:
-        domain_data = hass.data.setdefault(DOMAIN, {})
-        hub_entry = domain_data.setdefault(hub_name, {})
-        if "energy_dashboard_refresh_callback" not in hub_entry:
-            hub_entry["energy_dashboard_last_total_inverter_count"] = 0
-            skip_store_total = True
-
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if ed_is_master and hass:
-        # Allow a short delay so Slave hubs can register before detection.
-        import asyncio
-
-        await asyncio.sleep(1.0)
         slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
-            _LOGGER.info(f"Found {len(slave_hubs)} Slave hub(s) for Energy Dashboard after startup delay")
+            _LOGGER.info(f"Found {len(slave_hubs)} registered Slave hub(s) for Energy Dashboard")
         else:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif ed_is_master and not hass:
         _LOGGER.warning("Master hub detected but hass not provided - cannot find Slave hubs for aggregation")
-
-    if hass and ed_is_master:
-        domain_data = hass.data.setdefault(DOMAIN, {})
-        hub_entry = domain_data.setdefault(hub_name, {})
-        hub_entry["energy_dashboard_last_slave_hub_count"] = len(slave_hubs)
 
     total_inverter_count = None
     pm_inverter_count = hub_data.get("pm_inverter_count")
@@ -809,8 +949,8 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
     elif parallel_setting in ("Master", "Slave", "Free"):
         total_inverter_count = 1
 
-    if not skip_store_total:
-        _store_energy_dashboard_last_total_inverter_count(total_inverter_count)
+    if hass:
+        get_energy_dashboard_coordinator(hass).set_last_total_inverter_count(hub, total_inverter_count)
 
     # Get inverter name for prefix (e.g., "Solax 1")
     inverter_name = hub_name
@@ -1068,54 +1208,16 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
 
 
 async def should_create_energy_dashboard_device(hub: Any, config: Any, hass: Any = None, logger: Any = None, initial_groups: Any = None) -> bool:
-    """Determine if Energy Dashboard virtual device should be created.
-
-    Args:
-        hub: SolaXModbusHub instance
-        config: Integration configuration dict
-        hass: Home Assistant instance (optional, for entity state lookup)
-
-    Returns:
-        bool: True if virtual device should be created
-    """
-    from .const import (
-        CONF_ENERGY_DASHBOARD_DEVICE,
-        DEFAULT_ENERGY_DASHBOARD_DEVICE,
-    )
-
-    # Simple boolean check - if enabled, always create device (like old "manual" mode)
-    # User's explicit choice should be respected regardless of parallel mode
+    """Return whether this entry should currently expose a dashboard device."""
     energy_dashboard_enabled = config.get(CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE)
 
-    # Handle legacy string values for backward compatibility
     if isinstance(energy_dashboard_enabled, str):
         if energy_dashboard_enabled == "disabled":
             return False
-        elif energy_dashboard_enabled == "manual":
+        if energy_dashboard_enabled == "manual":
             return True
-        elif energy_dashboard_enabled == "enabled":
-            # Legacy "enabled" mode: Auto-detect (skip Slaves)
-            hub_name = getattr(hub, "name", getattr(hub, "_name", "unknown"))
-            debug_standalone = get_debug_setting(
-                hub_name,
-                "treat_as_standalone_energy_dashboard",
-                config,
-                hass,
-                default=False,
-            )
-            if debug_standalone:
-                return True
-            parallel_setting = None
-            datadict = getattr(hub, "datadict", None)
-            if datadict:
-                parallel_setting = datadict.get("parallel_setting")
-            if parallel_setting == "Slave":
-                return False
-            return True
-        else:  # Any other value, default to enabled
-            energy_dashboard_enabled = True
+        energy_dashboard_enabled = True
 
-    # Boolean value: If disabled, don't create
     if not energy_dashboard_enabled:
         return False
 
@@ -1130,117 +1232,12 @@ async def should_create_energy_dashboard_device(hub: Any, config: Any, hass: Any
     if debug_standalone:
         return True
 
-    # Enabled: Check parallel mode - skip Slaves (Master has system totals)
-    parallel_setting = None
-
-    # Try hub.data first (most direct access to register values)
-    hub_data = getattr(hub, "data", None)
-    if hub_data:
-        parallel_setting = hub_data.get("parallel_setting")
-        _LOGGER.debug("parallel_setting found in hub.data")
-
-    # If not in hub.data, try to trigger a read from hub.groups (after rebuild_blocks)
-    # Wait for initial probe to complete before polling to avoid interference
-    if parallel_setting is None:
-        hub_groups = getattr(hub, "groups", None)
-        if hub_groups:
-            import asyncio
-
-            # Wait for initial probe to complete (with timeout to avoid blocking forever)
-            probe_ready = getattr(hub, "_probe_ready", None)
-            initial_bisect_task = getattr(hub, "_initial_bisect_task", None)
-
-            # Check if probe is still running
-            if probe_ready and not probe_ready.is_set():
-                _LOGGER.debug("Waiting for initial probe to complete before polling parallel_setting")
-
-                # Wait for the initial bisect task to complete (if it exists)
-                if initial_bisect_task and not initial_bisect_task.done():
-                    _LOGGER.debug("Initial bisect task still running, waiting for completion")
-                    try:
-                        # Wait up to 15 seconds for bisect task to complete
-                        await asyncio.wait_for(initial_bisect_task, timeout=15.0)
-                        _LOGGER.debug("Initial bisect task completed")
-                    except TimeoutError:
-                        _LOGGER.warning("Initial bisect task timeout after 15s, may be stuck")
-                    except Exception:
-                        _LOGGER.debug("Error waiting for bisect task")
-
-                # Also wait for probe_ready event (in case task completed but event not set yet)
-                if probe_ready and not probe_ready.is_set():
-                    try:
-                        # Wait up to 5 seconds for probe event (shorter since task should be done)
-                        await asyncio.wait_for(probe_ready.wait(), timeout=5.0)
-                        _LOGGER.debug("Initial probe completed, proceeding with parallel_setting read")
-                    except TimeoutError:
-                        _LOGGER.warning("Initial probe event timeout after 5s, proceeding anyway")
-                    except Exception:
-                        _LOGGER.debug("Error waiting for probe event, proceeding anyway")
-
-            # Small delay to let probe settle if it just completed
-            await asyncio.sleep(0.5)
-
-            _LOGGER.debug("parallel_setting not in hub.data, polling inverter registers")
-            max_retries = 3
-            retry_delay = 0.5
-            for retry in range(max_retries):
-                try:
-                    # Find the first interval group that has device groups and read all device groups in it
-                    for interval_group in hub_groups.values():
-                        if hasattr(interval_group, "device_groups") and interval_group.device_groups:
-                            if retry > 0:
-                                _LOGGER.debug("Retrying parallel_setting read")
-                            # Read each device group in this interval group
-                            for device_group in interval_group.device_groups.values():
-                                read_result = await hub.async_read_modbus_data(device_group)
-                                if read_result is PollOutcome.SUCCESS:
-                                    # Data is written to hub.data during the read (data is alias to self.data), check immediately after
-                                    if hub_data:
-                                        parallel_setting = hub_data.get("parallel_setting")
-                                        if parallel_setting and parallel_setting != "unknown":
-                                            _LOGGER.debug("parallel_setting read from inverter")
-                                            break
-                                elif retry < max_retries - 1:
-                                    _LOGGER.debug(f"Modbus read outcome was {read_result.value}, retrying")
-                            if parallel_setting and parallel_setting != "unknown":
-                                break
-                    if parallel_setting and parallel_setting != "unknown":
-                        break
-                    # Wait before retry (except on last attempt)
-                    if retry < max_retries - 1:
-                        await asyncio.sleep(retry_delay)
-                except Exception:
-                    _LOGGER.debug("Error during parallel_setting read")
-                    if retry < max_retries - 1:
-                        await asyncio.sleep(retry_delay)
-
-    # Try datadict as fallback (safely check if attribute exists)
-    if parallel_setting is None:
-        datadict = getattr(hub, "datadict", None)
-        if datadict:
-            parallel_setting = datadict.get("parallel_setting")
-            _LOGGER.debug("parallel_setting found in datadict")
-
-    # If still not found and hass available, try entity lookup
-    if parallel_setting is None and hass is not None:
-        hub_name_for_entity = getattr(hub, "_name", hub_name)
-        # Convert "SolaX 1" to "solax_1" format for entity ID
-        entity_name = hub_name_for_entity.lower().replace(" ", "_")
-        entity_id = f"select.{entity_name}_parallel_setting"
-        try:
-            state = hass.states.get(entity_id)
-            if state and state.state:
-                parallel_setting = state.state
-                _LOGGER.debug("parallel_setting found from entity state")
-        except Exception:
-            _LOGGER.debug("Error looking up entity state")
-
-    # Skip only if definitively a Slave
+    hub_data = getattr(hub, "data", None) or getattr(hub, "datadict", {}) or {}
+    parallel_setting = hub_data.get("parallel_setting")
     if parallel_setting == "Slave":
         _LOGGER.warning("Energy Dashboard device will not be created (Slave inverter)")
         return False
 
-    # Master, single, or unknown: Create device
     _LOGGER.info("Creating Energy Dashboard device")
     return True
 

@@ -178,6 +178,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
                 self._hub._hass.bus.async_fire(
                     "solax_modbus_local_switch_changed",
                     {
+                        "entry_id": self._hub.entry.entry_id,
                         "hub_name": self._hub._name,
                         "key": self._sensor_key,
                         "state": is_on,
