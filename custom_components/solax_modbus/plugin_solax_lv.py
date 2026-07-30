@@ -2172,7 +2172,7 @@ class solax_lv_plugin(plugin_base):
         if seriesnumber.startswith("HL1060"):
             invertertype = HYBRID | GEN | X1  # X1-Hybrid-LV 6kW
             self.inverter_model = f"X1-Hybrid-LV {seriesnumber[4:5]}.{seriesnumber[5:6]}kW"
-        elif seriesnumber.startswith(10J080"):
+        elif seriesnumber.startswith("10J080"):
             invertertype = HYBRID | GEN2 | X1  # X1-Lite-LV 6kW
             self.inverter_model = f"X1-Lite-LV {seriesnumber[4:5]}.{seriesnumber[5:6]}kW"
         else:
