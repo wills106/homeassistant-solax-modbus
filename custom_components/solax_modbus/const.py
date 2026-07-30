@@ -136,6 +136,7 @@ class PollOutcome(StrEnum):
     """Result of a scheduled Modbus poll."""
 
     SUCCESS = "success"
+    PARTIAL = "partial"
     FAILED = "failed"
     SKIPPED = "skipped"
     DISCARDED = "discarded"
@@ -143,7 +144,7 @@ class PollOutcome(StrEnum):
     @property
     def communication_succeeded(self) -> bool:
         """Return whether the poll completed without a communication failure."""
-        return self in (PollOutcome.SUCCESS, PollOutcome.DISCARDED)
+        return self in (PollOutcome.SUCCESS, PollOutcome.PARTIAL, PollOutcome.DISCARDED)
 
 
 # ==================================== plugin base class ====================================================================
@@ -270,7 +271,9 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # The name and key must contain a placeholder {} that is replaced by the preceding number
     min_value: int | None = None
     max_value: int | None = None
-    depends_on: list[str] | None = None  # list of modbus register keys that must be read
+    # Register keys that must be read. On partial polls, computed sensors are only
+    # recalculated when every explicitly declared dependency is fresh.
+    depends_on: list[str] | None = None
     _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
     _energy_dashboard_mapping: Any = None  # EnergyDashboardMapping
     _energy_dashboard_source_hub: Any = None  # Source hub reference
