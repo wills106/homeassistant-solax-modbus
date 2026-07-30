@@ -4,7 +4,6 @@ from dataclasses import dataclass, replace
 from time import time
 from typing import Any
 
-from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -15,7 +14,6 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
     UnitOfTemperature,
-    UnitOfTime,
 )
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
@@ -32,43 +30,24 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     REG_INPUT,
     REGISTER_S16,
     REGISTER_S32,
-    REGISTER_STR,
-    REGISTER_U8H,
-    REGISTER_U8L,
     REGISTER_U16,
     REGISTER_U32,
-    REGISTER_WORDS,
     SCAN_GROUP_AUTO,
     SCAN_GROUP_DEFAULT,
     SCAN_GROUP_FAST,
     SCAN_GROUP_MEDIUM,
-    SLEEPMODE_LASTAWAKE,
-    TIME_OPTIONS,
     TIME_OPTIONS_GEN4,
-    TIME_OPTIONS_SEPARATE_REGISTERS,
-    WRITE_DATA_LOCAL,
     WRITE_MULTI_MODBUS,
-    WRITE_MULTISINGLE_MODBUS,
-    WRITE_SINGLE_MODBUS,
     BaseModbusButtonEntityDescription,
     BaseModbusNumberEntityDescription,
     BaseModbusSelectEntityDescription,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
     BaseModbusTimeEntityDescription,
-    UnitOfReactivePower,
     autorepeat_remaining,
     autorepeat_stop,
     plugin_base,
-    value_function_disabled_enabled,
-    value_function_gain_offset,
     value_function_gen4time,
-    value_function_gen23time,
-    value_function_grid_export,
-    value_function_grid_import,
-    value_function_pv_power_total,
-    value_function_rtc,
-    value_function_sync_rtc,
     value_str_default,
 )
 
@@ -1424,6 +1403,8 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = []
 
 MAX_CURRENTS: list[tuple[str, int | float]] = []
 
+NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = []
+
 # ================================= Switch Declarations ============================================================
 
 SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = []
@@ -1688,7 +1669,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x242,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
-        allowedtypes=AC | HYBRID| GEN2,
+        allowedtypes=AC | HYBRID | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1810,7 +1791,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         rounding=1,
         allowedtypes=HYBRID,
-        icon="mdi:generator-stationary"
+        icon="mdi:generator-stationary",
     ),
     SolaXModbusSensorEntityDescription(
         name="Generator Current",
@@ -1890,7 +1871,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x484,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
-        allowedtypes=AC | HYBRID| GEN,
+        allowedtypes=AC | HYBRID | GEN,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
@@ -1940,7 +1921,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x48B,
         register_type=REG_INPUT,
         scale=0.1,
-        allowedtypes=AC | HYBRID ,
+        allowedtypes=AC | HYBRID,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery Output Energy Total",
