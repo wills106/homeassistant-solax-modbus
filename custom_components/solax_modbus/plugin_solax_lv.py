@@ -17,7 +17,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
+from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,
     BUTTONREPEAT_POST,
     CONF_READ_DCB,
