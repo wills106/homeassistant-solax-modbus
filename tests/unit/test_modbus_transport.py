@@ -6,8 +6,11 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from homeassistant.exceptions import HomeAssistantError
+from pymodbus.exceptions import ConnectionException, ModbusIOException
 
 from custom_components.solax_modbus import SolaXModbusHub, block
+from custom_components.solax_modbus.const import REGISTER_U16
 from custom_components.solax_modbus.modbus_transport import (
     CORE_CALL_TYPE_REGISTER_HOLDING,
     CORE_CALL_TYPE_REGISTER_INPUT,
@@ -22,31 +25,43 @@ from custom_components.solax_modbus.pymodbus_compat import ADDR_KW
 class FakeNativeClient:
     """Minimal pymodbus client for native transport contract tests."""
 
-    def __init__(self) -> None:
-        self.connected = False
+    def __init__(self, *, connected: bool = False, read_error: Exception | None = None, write_error: Exception | None = None) -> None:
+        self.connected = connected
         self.comm_params = SimpleNamespace(host="192.0.2.1", port=502)
         self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.close_calls = 0
+        self.read_error = read_error
+        self.write_error = write_error
 
     async def connect(self) -> None:
         self.connected = True
 
     def close(self) -> None:
+        self.close_calls += 1
         self.connected = False
 
     async def read_holding_registers(self, **kwargs: Any) -> Any:
         self.calls.append(("read_holding", kwargs))
+        if self.read_error is not None:
+            raise self.read_error
         return SimpleNamespace(isError=lambda: False)
 
     async def read_input_registers(self, **kwargs: Any) -> Any:
         self.calls.append(("read_input", kwargs))
+        if self.read_error is not None:
+            raise self.read_error
         return SimpleNamespace(isError=lambda: False)
 
     async def write_register(self, **kwargs: Any) -> Any:
         self.calls.append(("write_register", kwargs))
+        if self.write_error is not None:
+            raise self.write_error
         return SimpleNamespace(isError=lambda: False)
 
     async def write_registers(self, **kwargs: Any) -> Any:
         self.calls.append(("write_registers", kwargs))
+        if self.write_error is not None:
+            raise self.write_error
         return SimpleNamespace(isError=lambda: False)
 
 
@@ -64,6 +79,16 @@ class FakeCoreHub:
         if self._responses:
             return self._responses.pop(0)
         return SimpleNamespace(isError=lambda: False)
+
+
+def make_modbus_io_exception(message: str) -> ModbusIOException:
+    """Create a pymodbus I/O exception despite its untyped constructor."""
+    return ModbusIOException(message)  # type: ignore[no-untyped-call]
+
+
+def make_connection_exception(message: str) -> ConnectionException:
+    """Create a pymodbus connection exception despite its untyped constructor."""
+    return ConnectionException(message)  # type: ignore[no-untyped-call]
 
 
 def make_core_transport(core_hub: FakeCoreHub) -> CoreModbusTransport:
@@ -100,6 +125,18 @@ def make_quarantine_hub(core_hub: FakeCoreHub) -> Any:
     return hub
 
 
+def make_native_hub(client: FakeNativeClient) -> Any:
+    """Build the minimal integration hub state needed by native I/O tests."""
+    hub = cast(Any, object.__new__(SolaXModbusHub))
+    hub._transport = NativeModbusTransport(client)
+    hub._name = "test"
+    hub._stopping = False
+    hub._lock = asyncio.Lock()
+    hub._inflight_tasks = set()
+    hub.plugin = SimpleNamespace(order32="big")
+    return hub
+
+
 @pytest.mark.asyncio
 async def test_native_transport_implements_shared_read_write_contract() -> None:
     client = FakeNativeClient()
@@ -123,6 +160,54 @@ async def test_native_transport_implements_shared_read_write_contract() -> None:
 
     await transport.close()
     assert transport.is_connected() is False
+
+
+@pytest.mark.asyncio
+async def test_read_timeout_leaves_connected_native_transport_open() -> None:
+    client = FakeNativeClient(connected=True, read_error=make_modbus_io_exception("no response"))
+    hub = make_native_hub(client)
+
+    response = await hub.async_read_holding_registers(unit=1, address=9, count=5)
+
+    assert response is None
+    assert client.connected is True
+    assert client.close_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_read_connection_error_resets_native_transport() -> None:
+    client = FakeNativeClient(connected=True, read_error=make_connection_exception("connection lost"))
+    hub = make_native_hub(client)
+
+    response = await hub.async_read_holding_registers(unit=1, address=9, count=5)
+
+    assert response is None
+    assert client.connected is False
+    assert client.close_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_write_timeout_leaves_connected_native_transport_open() -> None:
+    client = FakeNativeClient(connected=True, write_error=make_modbus_io_exception("no response"))
+    hub = make_native_hub(client)
+
+    with pytest.raises(HomeAssistantError, match="single-register write failed"):
+        await hub.async_lowlevel_write_register(unit=1, address=9, payload=1, register_data_type=REGISTER_U16)
+
+    assert client.connected is True
+    assert client.close_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_write_connection_error_resets_native_transport() -> None:
+    client = FakeNativeClient(connected=True, write_error=make_connection_exception("connection lost"))
+    hub = make_native_hub(client)
+
+    with pytest.raises(HomeAssistantError, match="single-register write failed"):
+        await hub.async_lowlevel_write_register(unit=1, address=9, payload=1, register_data_type=REGISTER_U16)
+
+    assert client.connected is False
+    assert client.close_calls == 1
 
 
 @pytest.mark.asyncio

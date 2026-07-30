@@ -1306,6 +1306,21 @@ class SolaXModbusHub:
         _LOGGER.debug(f"{self._name}: trying to connect to inverter through {self._transport.endpoint}")
         return await self._transport.connect()
 
+    async def _handle_transport_exception(self, exception_error: BaseException, operation: str) -> None:
+        """Reset only connections that are known to be unusable."""
+        if getattr(self, "_stopping", False):
+            return
+
+        connection_lost = isinstance(exception_error, ConnectionException) or not self._transport.is_connected()
+        if connection_lost:
+            _LOGGER.debug(f"{self._name}: {operation} lost the connection; resetting transport before the next request")
+            await self._transport.close()
+            return
+
+        _LOGGER.debug(
+            f"{self._name}: {operation} failed while the transport remains connected; leaving retry and reconnect handling to the transport"
+        )
+
     async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers."""
         return await self._async_read_registers("holding", unit, address, count)
@@ -1333,8 +1348,7 @@ class SolaXModbusHub:
                 if getattr(self, "_stopping", False):
                     _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
                     return None
-                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
-                await self._transport.close()
+                await self._handle_transport_exception(exception_error, f"{register_type} read")
                 return None
         return response
 
@@ -1448,6 +1462,7 @@ class SolaXModbusHub:
             try:
                 response = await self._track_task(self._transport.write(unit, address, values, multiple=multiple))
             except (ModbusException, SerialModbusError, AttributeError, TypeError) as ex:
+                await self._handle_transport_exception(ex, operation)
                 raise HomeAssistantError(f"{self._name}: {operation} failed: {ex}") from ex
         return self._validate_write_response(
             response,

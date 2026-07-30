@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from custom_components.solax_modbus import SolaXModbusHub
-from custom_components.solax_modbus.const import PollOutcome
+from custom_components.solax_modbus import PendingWrite, SolaXModbusHub
+from custom_components.solax_modbus.const import REGISTER_U16, PollOutcome
 
 
 def make_hub() -> Any:
@@ -107,6 +107,32 @@ async def test_tolerated_block_failure_commits_rest_of_snapshot() -> None:
     assert hub.data["raw"] == 10
     assert "unavailable" not in hub.data
     assert group.publish_updates is True
+
+
+@pytest.mark.asyncio
+async def test_successful_awake_poll_retries_queued_sleep_write() -> None:
+    hub = make_hub()
+    group = make_group()
+    request = PendingWrite(
+        unit=2,
+        address=36,
+        payload=40000,
+        register_data_type=REGISTER_U16,
+    )
+    hub.writequeue[(request.unit, request.address)] = request
+    hub.async_read_modbus_block = AsyncMock(return_value=True)
+    hub.async_lowlevel_write_register = AsyncMock(return_value=SimpleNamespace(isError=lambda: False))
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SUCCESS
+    hub.async_lowlevel_write_register.assert_awaited_once_with(
+        unit=2,
+        address=36,
+        payload=40000,
+        register_data_type=REGISTER_U16,
+    )
+    assert hub.writequeue == {}
 
 
 @pytest.mark.asyncio
