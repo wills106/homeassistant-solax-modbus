@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from custom_components.solax_modbus import SolaXModbusHub
-from custom_components.solax_modbus.const import PollOutcome
+from custom_components.solax_modbus import BlockReadResult, PendingWrite, SolaXModbusHub
+from custom_components.solax_modbus.const import REGISTER_U16, PollOutcome
 
 
 def make_hub() -> Any:
@@ -57,8 +57,17 @@ def prepare_communication_diagnostics(hub: Any) -> None:
     hub.bad_regs = {"holding": set(), "input": set()}
 
 
+def successful_block(*fresh_keys: str) -> BlockReadResult:
+    """Return a successful block result for polling tests."""
+    return BlockReadResult(
+        data_succeeded=True,
+        communication_succeeded=True,
+        fresh_keys=frozenset(fresh_keys),
+    )
+
+
 @pytest.mark.asyncio
-async def test_failed_group_discards_all_partial_values() -> None:
+async def test_partial_group_commits_successful_values_and_legacy_computed_sensor() -> None:
     hub = make_hub()
     group = make_group()
     computed_sensor = Mock()
@@ -69,21 +78,113 @@ async def test_failed_group_discards_all_partial_values() -> None:
     )
     hub.sensorEntities["computed"] = computed_sensor
 
-    async def read_block(data: dict[str, Any], block: Any, typ: str) -> bool:
-        data["raw"] = block.start * 10
-        return bool(block.start == 1)
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == 1:
+            data["raw"] = 10
+            return successful_block("raw")
+        return BlockReadResult(data_succeeded=False, communication_succeeded=False)
 
     hub.async_read_modbus_block = read_block
     original_data_object = hub.data
 
     result = await hub.async_read_modbus_registers_all(group)
 
-    assert result is PollOutcome.FAILED
+    assert result is PollOutcome.PARTIAL
     assert hub.data is original_data_object
-    assert hub.data["raw"] == 1
-    assert "computed" not in hub.data
-    assert group.publish_updates is False
+    assert hub.data["raw"] == 10
+    assert hub.data["computed"] == 20
+    assert group.publish_updates is True
+    computed_sensor.modbus_data_updated.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_partial_group_keeps_computed_value_when_dependency_is_not_fresh() -> None:
+    hub = make_hub()
+    hub.data.update({"source_a": 1, "source_b": 2, "computed": 3})
+    group = make_group()
+    computed_sensor = Mock()
+    hub.computedSensors["computed"] = SimpleNamespace(
+        key="computed",
+        internal=False,
+        depends_on=["source_a", "source_b"],
+        value_function=lambda initval, descr, data: data["source_a"] + data["source_b"],
+    )
+    hub.sensorEntities["computed"] = computed_sensor
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == 1:
+            data["source_a"] = 10
+            return BlockReadResult(
+                data_succeeded=True,
+                communication_succeeded=True,
+                fresh_keys=frozenset({"source_a"}),
+            )
+        return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.PARTIAL
+    assert hub.data["source_a"] == 10
+    assert hub.data["source_b"] == 2
+    assert hub.data["computed"] == 3
+    assert group.publish_updates is True
     computed_sensor.modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_computed_dependency_chain_uses_fresh_values() -> None:
+    hub = make_hub()
+    group = make_group()
+    hub.computedSensors["second"] = SimpleNamespace(
+        key="second",
+        internal=True,
+        depends_on=["first"],
+        value_function=lambda initval, descr, data: data["first"] + 1,
+    )
+    hub.computedSensors["first"] = SimpleNamespace(
+        key="first",
+        internal=True,
+        depends_on=["raw"],
+        value_function=lambda initval, descr, data: data["raw"] * 2,
+    )
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == 1:
+            data["raw"] = 5
+            return BlockReadResult(
+                data_succeeded=True,
+                communication_succeeded=True,
+                fresh_keys=frozenset({"raw"}),
+            )
+        return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.PARTIAL
+    assert hub.data["first"] == 10
+    assert hub.data["second"] == 11
+
+
+@pytest.mark.asyncio
+async def test_total_communication_failure_still_discards_snapshot() -> None:
+    hub = make_hub()
+    group = make_group()
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        data["raw"] = 99
+        return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.FAILED
+    assert hub.data["raw"] == 1
+    assert group.publish_updates is False
 
 
 @pytest.mark.asyncio
@@ -92,12 +193,12 @@ async def test_tolerated_block_failure_commits_rest_of_snapshot() -> None:
     hub.data["unavailable"] = 5
     group = make_group()
 
-    async def read_block(data: dict[str, Any], block: Any, typ: str) -> bool:
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
         if block.start == 1:
             data["raw"] = 10
         else:
             data.pop("unavailable", None)
-        return True
+        return successful_block("raw" if block.start == 1 else "unavailable")
 
     hub.async_read_modbus_block = read_block
 
@@ -107,6 +208,69 @@ async def test_tolerated_block_failure_commits_rest_of_snapshot() -> None:
     assert hub.data["raw"] == 10
     assert "unavailable" not in hub.data
     assert group.publish_updates is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("ignore_readerror", "tolerated", "value_is_kept"),
+    [
+        (True, True, True),
+        (False, False, False),
+    ],
+)
+async def test_block_error_preserves_ignore_readerror_semantics(
+    ignore_readerror: bool,
+    tolerated: bool,
+    value_is_kept: bool,
+) -> None:
+    hub = make_hub()
+    hub.cyclecount = 20
+    hub._modbus_addr = 1
+    hub._record_block_result = Mock()
+    hub.async_read_holding_registers = AsyncMock(return_value=SimpleNamespace(isError=lambda: True))
+    description = SimpleNamespace(key="vpp_status", ignore_readerror=ignore_readerror)
+    block = SimpleNamespace(
+        start=0x7594,
+        end=0x7595,
+        regs=[0x7594],
+        descriptions={0x7594: description},
+    )
+    data = {"vpp_status": 5}
+
+    result = await hub.async_read_modbus_block(data, block, "holding")
+
+    assert result == BlockReadResult(
+        data_succeeded=False,
+        communication_succeeded=True,
+        tolerated=tolerated,
+    )
+    assert ("vpp_status" in data) is value_is_kept
+
+
+@pytest.mark.asyncio
+async def test_successful_awake_poll_retries_queued_sleep_write() -> None:
+    hub = make_hub()
+    group = make_group()
+    request = PendingWrite(
+        unit=2,
+        address=36,
+        payload=40000,
+        register_data_type=REGISTER_U16,
+    )
+    hub.writequeue[(request.unit, request.address)] = request
+    hub.async_read_modbus_block = AsyncMock(return_value=successful_block())
+    hub.async_lowlevel_write_register = AsyncMock(return_value=SimpleNamespace(isError=lambda: False))
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SUCCESS
+    hub.async_lowlevel_write_register.assert_awaited_once_with(
+        unit=2,
+        address=36,
+        payload=40000,
+        register_data_type=REGISTER_U16,
+    )
+    assert hub.writequeue == {}
 
 
 @pytest.mark.asyncio
@@ -127,9 +291,9 @@ async def test_successful_group_commits_raw_and_computed_values_together() -> No
     )
     hub.sensorEntities["computed"] = computed_sensor
 
-    async def read_block(data: dict[str, Any], block: Any, typ: str) -> bool:
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
         data["raw"] = block.start
-        return True
+        return successful_block("raw")
 
     hub.async_read_modbus_block = read_block
     original_data_object = hub.data
@@ -157,9 +321,9 @@ async def test_failed_follow_up_discards_snapshot_without_publishing() -> None:
     )
     hub.sensorEntities["computed"] = computed_sensor
 
-    async def read_block(data: dict[str, Any], block: Any, typ: str) -> bool:
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
         data["raw"] = 9
-        return True
+        return successful_block("raw")
 
     hub.async_read_modbus_block = read_block
 
@@ -270,6 +434,28 @@ async def test_slowdown_skip_does_not_read_or_change_slowdown() -> None:
     assert updated_sensors == 0
     assert hub.slowdown == 10
     hub.async_read_modbus_data.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_partial_poll_publishes_updates_without_enabling_slowdown() -> None:
+    hub = make_hub()
+    sensor = Mock()
+    group = make_group()
+    group.sensors = [sensor]
+    group.publish_updates = True
+    hub.blocks_changed = False
+    hub.cyclecount = 1
+    hub.sleepnone = []
+    hub.sleepzero = []
+    hub.async_read_modbus_data = AsyncMock(return_value=PollOutcome.PARTIAL)
+    interval_group = SimpleNamespace(device_groups={"test": group})
+
+    outcome, updated_sensors = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.PARTIAL
+    assert updated_sensors == 1
+    assert hub.slowdown == 1
+    sensor.modbus_data_updated.assert_called_once_with()
 
 
 @pytest.mark.asyncio

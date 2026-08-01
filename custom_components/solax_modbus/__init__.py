@@ -495,6 +495,16 @@ class PendingWrite:
     register_data_type: str | None = None
 
 
+@dataclass(frozen=True)
+class BlockReadResult:
+    """Result of reading and decoding one Modbus block."""
+
+    data_succeeded: bool
+    communication_succeeded: bool
+    tolerated: bool = False
+    fresh_keys: frozenset[str] = frozenset()
+
+
 class RegisterEncodingError(HomeAssistantError):
     """Raised when a value cannot be represented by its Modbus register type."""
 
@@ -1100,7 +1110,7 @@ class SolaXModbusHub:
         for group in list(interval_group.device_groups.values()):
             group_outcome = await self.async_read_modbus_data(group)
             outcomes.append(group_outcome)
-            if group_outcome is PollOutcome.SUCCESS and getattr(group, "publish_updates", True):
+            if group_outcome.communication_succeeded and getattr(group, "publish_updates", True):
                 for sensor in group.sensors:
                     sensor.modbus_data_updated()
                 updated_sensors += len(group.sensors)
@@ -1108,6 +1118,8 @@ class SolaXModbusHub:
 
         if PollOutcome.FAILED in outcomes:
             outcome = PollOutcome.FAILED
+        elif PollOutcome.PARTIAL in outcomes:
+            outcome = PollOutcome.PARTIAL
         elif PollOutcome.SUCCESS in outcomes:
             outcome = PollOutcome.SUCCESS
         elif PollOutcome.DISCARDED in outcomes:
@@ -1306,6 +1318,21 @@ class SolaXModbusHub:
         _LOGGER.debug(f"{self._name}: trying to connect to inverter through {self._transport.endpoint}")
         return await self._transport.connect()
 
+    async def _handle_transport_exception(self, exception_error: BaseException, operation: str) -> None:
+        """Reset only connections that are known to be unusable."""
+        if getattr(self, "_stopping", False):
+            return
+
+        connection_lost = isinstance(exception_error, ConnectionException) or not self._transport.is_connected()
+        if connection_lost:
+            _LOGGER.debug(f"{self._name}: {operation} lost the connection; resetting transport before the next request")
+            await self._transport.close()
+            return
+
+        _LOGGER.debug(
+            f"{self._name}: {operation} failed while the transport remains connected; leaving retry and reconnect handling to the transport"
+        )
+
     async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers."""
         return await self._async_read_registers("holding", unit, address, count)
@@ -1333,8 +1360,7 @@ class SolaXModbusHub:
                 if getattr(self, "_stopping", False):
                     _LOGGER.debug(f"{self._name}: ModbusException during shutdown - skipping reconnect")
                     return None
-                _LOGGER.debug(f"{self._name}: ModbusException – closing transport and deferring reconnect")
-                await self._transport.close()
+                await self._handle_transport_exception(exception_error, f"{register_type} read")
                 return None
         return response
 
@@ -1448,6 +1474,7 @@ class SolaXModbusHub:
             try:
                 response = await self._track_task(self._transport.write(unit, address, values, multiple=multiple))
             except (ModbusException, SerialModbusError, AttributeError, TypeError) as ex:
+                await self._handle_transport_exception(ex, operation)
                 raise HomeAssistantError(f"{self._name}: {operation} failed: {ex}") from ex
         return self._validate_write_response(
             response,
@@ -1577,7 +1604,16 @@ class SolaXModbusHub:
             _LOGGER.exception(f"Something went wrong reading from modbus: {ex}")
         return PollOutcome.FAILED
 
-    def treat_address(self, data: dict[str, Any], regs: list[int], idx: int, descr: Any, initval: int = 0, advance: bool = True) -> int:
+    def treat_address(
+        self,
+        data: dict[str, Any],
+        regs: list[int],
+        idx: int,
+        descr: Any,
+        initval: int = 0,
+        advance: bool = True,
+        fresh_keys: set[str] | None = None,
+    ) -> int:
         return_value: int | None = None
         read_scale = descr.read_scale  # read scale might still be wrong the first polling cycle
         order32 = getattr(descr, "order32", None) or self.plugin.order32
@@ -1710,10 +1746,13 @@ class SolaXModbusHub:
             and (self.localsLoaded or not descr.read_scale_exceptions)  # ignore as long as read scale is not adapted; may delay real startup a bit
         ):
             data[descr.key] = return_value  # case prevent_update number
+            if fresh_keys is not None:
+                fresh_keys.add(descr.key)
         return idx + (words_used if advance else 0)
 
-    async def async_read_modbus_block(self, data: dict[str, Any], block: Any, typ: str) -> bool:
+    async def async_read_modbus_block(self, data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
         errmsg = None
+        communication_succeeded = False
         if self.cyclecount < VERBOSE_CYCLES:
             _LOGGER.debug(
                 f"{self._name}: modbus {typ} block start: 0x{block.start:x} end: 0x{block.end:x}  len: {block.end - block.start} regs: {block.regs}"
@@ -1735,11 +1774,16 @@ class SolaXModbusHub:
             errmsg = f"exception {str(ex)} "
             _LOGGER.debug(f"{self._name}: exception reading {typ} {block.start} {errmsg}")
         else:
-            if realtime_data is None or realtime_data.isError():
+            if realtime_data is None:
                 errmsg = "read_error "
+            else:
+                communication_succeeded = True
+                if realtime_data.isError():
+                    errmsg = "read_error "
         if errmsg is None:
             regs = realtime_data.registers
             idx = 0
+            fresh_keys: set[str] = set()
             for reg in block.regs:
                 expected_idx = reg - block.start
                 if idx < expected_idx:
@@ -1752,12 +1796,16 @@ class SolaXModbusHub:
                 if isinstance(descr, dict):
                     base16 = convert_from_registers(regs[idx : idx + 1], DataType.UINT16, self.plugin.order32)  # type: ignore[attr-defined]
                     for k in descr:
-                        self.treat_address(data, regs, idx, descr[k], initval=base16, advance=False)
+                        self.treat_address(data, regs, idx, descr[k], initval=base16, advance=False, fresh_keys=fresh_keys)
                     idx += 1
                 else:
-                    idx = self.treat_address(data, regs, idx, descr, initval=0, advance=True)
+                    idx = self.treat_address(data, regs, idx, descr, initval=0, advance=True, fresh_keys=fresh_keys)
             self._record_block_result(block, typ, True)
-            return True
+            return BlockReadResult(
+                data_succeeded=True,
+                communication_succeeded=True,
+                fresh_keys=frozenset(fresh_keys),
+            )
         else:  # block read failure
             self._record_block_result(block, typ, False, errmsg)
             # Check only the first item in the block for ignore_readerror behavior.
@@ -1766,35 +1814,37 @@ class SolaXModbusHub:
             _LOGGER.debug(
                 f"{self._name}: failed {typ} block {errmsg} start 0x{block.start:x} {firstdescr.key} ignore_readerror: {firstdescr.ignore_readerror}"
             )
-            if firstdescr.ignore_readerror is False:  # dont ignore block read errors and return static data
-                _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
-                for reg in block.regs:
-                    descr = block.descriptions[reg]
-                    if type(descr) is dict:
-                        items = descr.items()  # special case: multiple U8x entities
+            tolerated = firstdescr.ignore_readerror is not False
+            _LOGGER.debug(f"{self._name}: failed block analysis started firstignore: {firstdescr.ignore_readerror}")
+            for reg in block.regs:
+                descr = block.descriptions[reg]
+                if type(descr) is dict:
+                    items = descr.items()  # special case: multiple U8x entities
+                else:
+                    items = {
+                        descr.key: descr,
+                    }.items()  # normal case, one entity
+                for k, d in items:
+                    d_ignore = d.ignore_readerror
+                    if (d_ignore is not True) and (d_ignore is not False):
+                        _LOGGER.debug(f"{self._name}: returning static {k} = {d_ignore}")
+                        data[k] = d_ignore  # return something static
                     else:
-                        items = {
-                            descr.key: descr,
-                        }.items()  # normal case, one entity
-                    for k, d in items:
-                        d_ignore = d.ignore_readerror
-                        if (d_ignore is not True) and (d_ignore is not False):
-                            _LOGGER.debug(f"{self._name}: returning static {k} = {d_ignore}")
-                            data[k] = d_ignore  # return something static
+                        if d_ignore is False:  # remove potentially faulty data
+                            popped = data.pop(k, None)  # added 20250716
+                            _LOGGER.debug(f"{self._name}: popping {k} = {popped}")
                         else:
-                            if d_ignore is False:  # remove potentially faulty data
-                                popped = data.pop(k, None)  # added 20250716
-                                _LOGGER.debug(f"{self._name}: popping {k} = {popped}")
-                            else:
-                                _LOGGER.debug(f"{self._name}: not touching {k} ")
-                return True
-            else:  # ignore readerrors and keep old data
-                if self.slowdown == 1:
-                    _LOGGER.info(
-                        f"{self._name} : {errmsg}: cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
-                        exc_info=True,
-                    )
-                return False
+                            _LOGGER.debug(f"{self._name}: not touching {k} ")
+            if tolerated and self.slowdown == 1:
+                _LOGGER.info(
+                    f"{self._name} : {errmsg}: cannot read {typ} registers at device {self._modbus_addr} position 0x{block.start:x}",
+                    exc_info=True,
+                )
+            return BlockReadResult(
+                data_succeeded=False,
+                communication_succeeded=communication_succeeded,
+                tolerated=tolerated,
+            )
 
     def _commit_poll_snapshot(self, previous_data: dict[str, Any], new_data: dict[str, Any]) -> None:
         """Commit polling changes without replacing the shared data dictionary."""
@@ -1813,6 +1863,43 @@ class SolaXModbusHub:
             if current_value is missing or current_value == previous_value:
                 self.data[key] = value
 
+    def _compute_poll_sensors(self, data: dict[str, Any], fresh_keys: set[str]) -> set[str]:
+        """Compute sensors whose explicitly declared dependencies are fresh."""
+        computed_fresh_keys: set[str] = set()
+        pending = list(self.computedSensors.items())
+
+        while pending:
+            remaining: list[tuple[str, Any]] = []
+            made_progress = False
+
+            for key, descr in pending:
+                dependencies = getattr(descr, "depends_on", None)
+                if isinstance(dependencies, str):
+                    dependencies = [dependencies]
+                if dependencies is not None and not set(dependencies).issubset(fresh_keys):
+                    remaining.append((key, descr))
+                    continue
+
+                try:
+                    data[key] = descr.value_function(0, descr, data)
+                except Exception as ex:
+                    _LOGGER.debug(f"{self._name}: cannot compute value for {key}: {ex}")
+                    continue
+
+                fresh_keys.add(key)
+                computed_fresh_keys.add(key)
+                made_progress = True
+
+            if not made_progress:
+                for key, descr in remaining:
+                    dependencies = getattr(descr, "depends_on", None)
+                    missing = set(dependencies or []) - fresh_keys
+                    _LOGGER.debug(f"{self._name}: keeping previous value for {key}; dependencies not fresh: {sorted(missing)}")
+                break
+            pending = remaining
+
+        return computed_fresh_keys
+
     async def async_read_modbus_registers_all(self, group: Any) -> PollOutcome:
         group.publish_updates = False
         if group.readPreparation is not None:
@@ -1824,17 +1911,36 @@ class SolaXModbusHub:
 
         previous_data = self.data.copy()
         data = previous_data.copy()
-        res = True
+        block_results: list[BlockReadResult] = []
+        fresh_keys: set[str] = set()
         for block in group.holdingBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x} previous res:{res}")
-            block_res = await self.async_read_modbus_block(data, block, "holding")
-            res = res and block_res
-            _LOGGER.debug(f"{self._name}: holding block 0x{block.start:x} read done; new res: {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read holding block 0x{block.start:x}")
+            block_result = await self.async_read_modbus_block(data, block, "holding")
+            block_results.append(block_result)
+            fresh_keys.update(block_result.fresh_keys)
+            _LOGGER.debug(
+                f"{self._name}: holding block 0x{block.start:x} read done; "
+                f"data_succeeded={block_result.data_succeeded}, communication_succeeded={block_result.communication_succeeded}"
+            )
         for block in group.inputBlocks:
-            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x} previous res: {res}")
-            block_res = await self.async_read_modbus_block(data, block, "input")
-            res = res and block_res
-            _LOGGER.debug(f"{self._name}: input block 0x{block.start:x} read done; new res: {res}")
+            _LOGGER.debug(f"{self._name}: ** trying to read input block 0x{block.start:x}")
+            block_result = await self.async_read_modbus_block(data, block, "input")
+            block_results.append(block_result)
+            fresh_keys.update(block_result.fresh_keys)
+            _LOGGER.debug(
+                f"{self._name}: input block 0x{block.start:x} read done; "
+                f"data_succeeded={block_result.data_succeeded}, communication_succeeded={block_result.communication_succeeded}"
+            )
+
+        all_data_succeeded = all(result.data_succeeded for result in block_results)
+        communication_succeeded = not block_results or any(result.communication_succeeded for result in block_results)
+        required_block_failed = any(not result.data_succeeded and not result.tolerated for result in block_results)
+        if all_data_succeeded:
+            poll_outcome = PollOutcome.SUCCESS
+        elif communication_succeeded:
+            poll_outcome = PollOutcome.PARTIAL
+        else:
+            poll_outcome = PollOutcome.FAILED
 
         local_callback_needed = self.localsUpdated
         if self.localsUpdated:
@@ -1849,12 +1955,9 @@ class SolaXModbusHub:
             if key in self.data:
                 data[key] = self.data[key]
 
-        if res:
-            for key, descr in list(self.computedSensors.items()):
-                try:
-                    data[key] = descr.value_function(0, descr, data)
-                except Exception as ex:
-                    _LOGGER.debug(f"{self._name}: cannot compute value for {key}: {ex}")
+        computed_fresh_keys: set[str] = set()
+        if poll_outcome.communication_succeeded:
+            computed_fresh_keys = self._compute_poll_sensors(data, fresh_keys)
 
             if group.readFollowUp is not None:
                 if not await group.readFollowUp(previous_data, data):
@@ -1866,6 +1969,8 @@ class SolaXModbusHub:
                 self.plugin.localDataCallback(self)
 
             for key, descr in list(self.computedSensors.items()):
+                if key not in computed_fresh_keys:
+                    continue
                 sens = self.sensorEntities.get(key)
                 _LOGGER.debug(f"{self._name}: quickly updating state for computed sensor {sens} {key} {self.data.get(descr.key)} ")
                 if sens and (not descr.internal):
@@ -1875,7 +1980,7 @@ class SolaXModbusHub:
                         _LOGGER.debug(f"{self._name}: cannot send update for {key} - probably disabled ")
             group.publish_updates = True
 
-        if res and self.writequeue and self.plugin.isAwake(self.data):  # self.awakeplugin(self.data):
+        if poll_outcome.communication_succeeded and not required_block_failed and self.writequeue and self.plugin.isAwake(self.data):
             # process outstanding write requests
             _LOGGER.info(f"inverter is now awake, processing outstanding write requests {self.writequeue}")
             for queue_key, request in list(self.writequeue.items()):
@@ -1930,7 +2035,7 @@ class SolaXModbusHub:
                                 address=reg,
                                 payload=payload.get("data"),
                             )
-        return PollOutcome.SUCCESS if res else PollOutcome.FAILED
+        return poll_outcome
 
     # --------------------------------------------- Check if sensor is a dependency -----------------------------------------------
 
