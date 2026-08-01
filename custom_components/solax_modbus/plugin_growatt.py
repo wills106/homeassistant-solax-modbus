@@ -118,7 +118,7 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
     except Exception:
         _LOGGER.warning(f"{hub.name}: attempt to read inverter identifier failed at 0x{address:x}", exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading inverter identifier from address 0x{address:x} failed; other address may succeed")
+        _LOGGER.debug(f"{hub.name}: no inverter identifier at 0x{address:x}; other address may succeed")
     _LOGGER.info(f"Read {hub.name} 0x{address:x} inverter identifier before potential swap: {res}")
     return res
 
