@@ -18,6 +18,7 @@ def make_hub() -> Any:
     hub.data = {"_repeatUntil": {}, "raw": 1}
     hub.computedSensors = {}
     hub.computedEntities = {}
+    hub.sensorDescriptions = {}
     hub.sensorEntities = {}
     hub.writeLocals = {}
     hub.writequeue = {}
@@ -101,6 +102,7 @@ async def test_partial_group_commits_successful_values_and_legacy_computed_senso
 async def test_partial_group_keeps_computed_value_when_dependency_is_not_fresh() -> None:
     hub = make_hub()
     hub.data.update({"source_a": 1, "source_b": 2, "computed": 3})
+    hub.sensorDescriptions.update({"source_a": SimpleNamespace(), "source_b": SimpleNamespace()})
     group = make_group()
     computed_sensor = Mock()
     hub.computedSensors["computed"] = SimpleNamespace(
@@ -137,18 +139,20 @@ async def test_partial_group_keeps_computed_value_when_dependency_is_not_fresh()
 async def test_computed_dependency_chain_uses_fresh_values() -> None:
     hub = make_hub()
     group = make_group()
-    hub.computedSensors["second"] = SimpleNamespace(
+    second = SimpleNamespace(
         key="second",
         internal=True,
         depends_on=["first"],
         value_function=lambda initval, descr, data: data["first"] + 1,
     )
-    hub.computedSensors["first"] = SimpleNamespace(
+    first = SimpleNamespace(
         key="first",
         internal=True,
         depends_on=["raw"],
         value_function=lambda initval, descr, data: data["raw"] * 2,
     )
+    hub.computedSensors.update({"second": second, "first": first})
+    hub.sensorDescriptions.update({"raw": SimpleNamespace(), "first": first, "second": second})
 
     async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
         if block.start == 1:
@@ -167,6 +171,36 @@ async def test_computed_dependency_chain_uses_fresh_values() -> None:
     assert result is PollOutcome.PARTIAL
     assert hub.data["first"] == 10
     assert hub.data["second"] == 11
+
+
+@pytest.mark.asyncio
+async def test_partial_group_ignores_dependencies_not_available_for_inverter() -> None:
+    hub = make_hub()
+    hub.data.update({"pv_power_1": 100, "pv_power_2": 200, "pv_power_total": 300})
+    hub.sensorDescriptions.update({"pv_power_1": SimpleNamespace(), "pv_power_2": SimpleNamespace()})
+    group = make_group()
+    computed_sensor = Mock()
+    hub.computedSensors["pv_power_total"] = SimpleNamespace(
+        key="pv_power_total",
+        internal=False,
+        depends_on=[f"pv_power_{index}" for index in range(1, 7)],
+        value_function=lambda initval, descr, data: data["pv_power_1"] + data["pv_power_2"],
+    )
+    hub.sensorEntities["pv_power_total"] = computed_sensor
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == 1:
+            data.update({"pv_power_1": 150, "pv_power_2": 250})
+            return successful_block("pv_power_1", "pv_power_2")
+        return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.PARTIAL
+    assert hub.data["pv_power_total"] == 400
+    computed_sensor.modbus_data_updated.assert_called_once_with()
 
 
 @pytest.mark.asyncio

@@ -271,8 +271,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # The name and key must contain a placeholder {} that is replaced by the preceding number
     min_value: int | None = None
     max_value: int | None = None
-    # Register keys that must be read. On partial polls, computed sensors are only
-    # recalculated when every explicitly declared dependency is fresh.
+    # Possible register keys required by the value function. On partial polls,
+    # computed sensors are only recalculated when every active dependency is fresh.
     depends_on: list[str] | None = None
     _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
     _energy_dashboard_mapping: Any = None  # EnergyDashboardMapping

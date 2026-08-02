@@ -1863,8 +1863,17 @@ class SolaXModbusHub:
             if current_value is missing or current_value == previous_value:
                 self.data[key] = value
 
+    def _active_computed_dependencies(self, descr: Any) -> set[str] | None:
+        """Return declared dependencies that are available for this inverter."""
+        dependencies = getattr(descr, "depends_on", None)
+        if dependencies is None:
+            return None
+        if isinstance(dependencies, str):
+            dependencies = [dependencies]
+        return {dependency for dependency in dependencies if dependency in self.sensorDescriptions}
+
     def _compute_poll_sensors(self, data: dict[str, Any], fresh_keys: set[str]) -> set[str]:
-        """Compute sensors whose explicitly declared dependencies are fresh."""
+        """Compute sensors whose active, explicitly declared dependencies are fresh."""
         computed_fresh_keys: set[str] = set()
         pending = list(self.computedSensors.items())
 
@@ -1873,10 +1882,8 @@ class SolaXModbusHub:
             made_progress = False
 
             for key, descr in pending:
-                dependencies = getattr(descr, "depends_on", None)
-                if isinstance(dependencies, str):
-                    dependencies = [dependencies]
-                if dependencies is not None and not set(dependencies).issubset(fresh_keys):
+                dependencies = self._active_computed_dependencies(descr)
+                if dependencies is not None and not dependencies.issubset(fresh_keys):
                     remaining.append((key, descr))
                     continue
 
@@ -1892,7 +1899,7 @@ class SolaXModbusHub:
 
             if not made_progress:
                 for key, descr in remaining:
-                    dependencies = getattr(descr, "depends_on", None)
+                    dependencies = self._active_computed_dependencies(descr)
                     missing = set(dependencies or []) - fresh_keys
                     _LOGGER.debug(f"{self._name}: keeping previous value for {key}; dependencies not fresh: {sorted(missing)}")
                 break
