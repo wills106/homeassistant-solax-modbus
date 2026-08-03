@@ -580,6 +580,21 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         icon="mdi:import",
     ),
+    SolintegModbusNumberEntityDescription(
+        name="Charge Cutoff SOC",
+        key="charge_cutoff_soc",
+        register=52506,
+        fmt="i",
+        native_min_value=10,
+        native_max_value=98,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        read_scale=0.1,
+        scale=1,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-arrow-up",
+    ),
 ]
 
 # ================================= Select Declarations ============================================================
@@ -1853,6 +1868,13 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         scale=0.1,
         allowedtypes=X3,
         icon="mdi:current-ac",
+    ),
+    SolintegModbusSensorEntityDescription(
+        key="charge_cutoff_soc",
+        register=52506,
+        scale=0.1,
+        internal=True,
+        allowedtypes=HYBRID,
     ),
 ]
 
