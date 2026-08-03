@@ -581,19 +581,19 @@ NUMBER_TYPES = [
         icon="mdi:import",
     ),
     SolintegModbusNumberEntityDescription(
-        name="Charge Cutoff SOC",         
+        name="Charge Cutoff SOC",
         key="charge_cutoff_soc",
         register=52506,
-        fmt="i",  
+        fmt="i",
         native_min_value=10,
         native_max_value=98,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        read_scale=0.1,               
-        scale=1,       
+        read_scale=0.1,
+        scale=1,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.CONFIG,
-        icon="mdi:battery-arrow-up",  
+        icon="mdi:battery-arrow-up",
     ),
 ]
 
@@ -1873,9 +1873,9 @@ SENSOR_TYPES: list[SolintegModbusSensorEntityDescription] = [
         key="charge_cutoff_soc",
         register=52506,
         scale=0.1,
-        internal=True,      
+        internal=True,
         allowedtypes=HYBRID,
-    ),                
+    ),
 ]
 
 
