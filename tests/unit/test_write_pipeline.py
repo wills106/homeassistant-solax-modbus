@@ -9,7 +9,13 @@ import pytest
 from homeassistant.exceptions import HomeAssistantError
 from pymodbus.pdu import ExceptionResponse
 
-from custom_components.solax_modbus import PendingWrite, RegisterEncodingError, SolaXCoreModbusHub, SolaXModbusHub
+from custom_components.solax_modbus import (
+    PendingWrite,
+    RegisterEncodingError,
+    SolaXCoreModbusHub,
+    SolaXModbusHub,
+    plugin_growatt,
+)
 from custom_components.solax_modbus.const import REGISTER_S16, REGISTER_S32, REGISTER_U16, REGISTER_U32
 from custom_components.solax_modbus.modbus_transport import CoreModbusTransport, NativeModbusTransport
 from custom_components.solax_modbus.switch import SolaXModbusSwitch
@@ -126,6 +132,18 @@ def test_legacy_unspecified_single_register_type_remains_signed_16_bit() -> None
     assert hub._encode_write_value(32767, None, single_register=True) == [32767]
     with pytest.raises(RegisterEncodingError, match="outside"):
         hub._encode_write_value(32768, None, single_register=True)
+
+
+def test_growatt_vpp_allow_ac_charging_uses_supported_u16_write() -> None:
+    description = next(
+        description for description in plugin_growatt.SELECT_TYPES if description.key == "vpp_allow_ac_charging"
+    )
+    hub = make_hub()
+
+    assert description.register == 30410
+    assert description.register_data_type == REGISTER_U16
+    assert hub._encode_write_value(0, description.register_data_type, single_register=True) == [0]
+    assert hub._encode_write_value(1, description.register_data_type, single_register=True) == [1]
 
 
 @pytest.mark.asyncio
