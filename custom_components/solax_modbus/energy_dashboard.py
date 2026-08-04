@@ -323,15 +323,11 @@ class EnergyDashboardSensorMapping:
         """Get value from source sensor, applying filter, invert, and custom functions."""
         source_key = self.get_source_key(datadict)  # Handles parallel mode
 
-        # Check if source sensor exists in data. If not warn about the failure and return as unavailable.
-        if source_key not in datadict:
-            _LOGGER.warning(f"Source sensor {source_key} not found, marking unavailable")
-            return None
-
         # Grab the value for the source. If it is unavailable, return None value to propagate unavailable state.
         # This avoids resetting total increasing sensors and unintentionally breaking energy statistics.
-        value = datadict.get(source_key)
+        value = datadict.get(source_key, None)
         if value is None:
+            _LOGGER.debug(f"Source sensor {source_key} not found or has no value, marking unavailable")
             return None
 
         # Apply filter function first (universal - applies to all sensor types)
