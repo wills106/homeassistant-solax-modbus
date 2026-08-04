@@ -319,14 +319,16 @@ class EnergyDashboardSensorMapping:
 
         return self.source_key  # Use regular sensor (single mode or Slave)
 
-    def get_value(self, datadict: dict[str, float]) -> float:
+    def get_value(self, datadict: dict[str, float]) -> float | None:
         """Get value from source sensor, applying filter, invert, and custom functions."""
         source_key = self.get_source_key(datadict)  # Handles parallel mode
-        value = datadict.get(source_key, 0)
 
+        # Grab the value for the source. If it is unavailable, return None value to propagate unavailable state.
+        # This avoids resetting total increasing sensors and unintentionally breaking energy statistics.
+        value = datadict.get(source_key, None)
         if value is None:
-            _LOGGER.warning(f"Source sensor {source_key} not found, using 0")  # type: ignore[unreachable]
-            return 0
+            _LOGGER.debug(f"Source sensor {source_key} not found or has no value, marking unavailable")
+            return None
 
         # Apply filter function first (universal - applies to all sensor types)
         if self.filter_function:
