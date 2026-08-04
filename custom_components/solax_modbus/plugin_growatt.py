@@ -1181,7 +1181,7 @@ SELECT_TYPES = [
         name="VPP Allow AC charging",
         key="vpp_allow_ac_charging",
         register=30410,
-        register_data_type=REGISTER_U8L,
+        register_data_type=REGISTER_U16,
         option_dict={
             0: "Disabled",
             1: "Enabled",
