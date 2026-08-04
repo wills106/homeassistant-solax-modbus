@@ -9662,8 +9662,9 @@ SERIAL_PREFIX_TYPES = {
     "SKL": HYBRID | GEN4 | X1,  # MIN 3600 TL-XH Hybrid, 2 MPPT
     "XVM": HYBRID | GEN4 | X1,  # MIN 5000 TL-XH Hybrid, 2 MPPT
     "SMN": HYBRID | GEN4 | X1 | MPPT4,  # MIN TL-XH-US Hybrid, 4 MPPT
-    "JGQ": HYBRID | GEN4 | X1 | MPPT3,  # MIN 7600 TL-XH-US Hybrid, 3 MPPT
+    "JGQ": HYBRID | GEN4 | X1 | MPPT3,  # MIN 7600 TL-XH-US Hybrid (Split Phase), 3 MPPT
     "HJU": HYBRID | GEN4 | X1,  # MIN 4200TL-XH2 Hybrid, 2 MPPT
+    "VFJ": HYBRID | GEN4 | X1 | MPPT4,  # MIN 10000 TL-XH-US Hybrid (Split Phase), 4 MPPT
     # MOD hybrid
     "XHL": HYBRID | GEN4 | X1,  # MOD 4000 TL3-XH Hybrid, 2 MPPT
     "DPS": HYBRID | GEN4 | X3,  # MOD 5000 TL3-HU Hybrid, 2 MPPT
@@ -9753,6 +9754,7 @@ FIRMWARE_PREFIX_TYPES = {
     "067": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
     "113": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
     "500": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
+    "040": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
 }
 
 
