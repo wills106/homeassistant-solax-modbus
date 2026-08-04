@@ -383,7 +383,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # Get power measurements
     measured_power = datadict.get("measured_power", 0)  # Grid power (positive = import, negative = export)
-    battery_capacity = datadict.get("battery_capacity", 0)
+    battery_capacity = datadict.get("battery_capacity", 0) or 0
     battery_min_soc = datadict.get("selfuse_discharge_min_soc", 10)
 
     # Parallel mode support: Use PM power if in parallel mode and we're the Master
@@ -734,7 +734,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     min_discharge_soc = max(datadict.get("remotecontrol_minimum_soc_8_9", 10), datadict.get("selfuse_discharge_min_soc", 10))
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
-    battery_capacity = datadict.get("battery_capacity", 0)
+    battery_capacity = datadict.get("battery_capacity", 0) or 0
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
     pv = datadict.get("pv_power_total", 0)
@@ -1328,23 +1328,38 @@ def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[
     return int(pv_current_1 + pv_current_2)
 
 
-def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    # Check if total capacity has a sane value, if so return that
-    total_charge: int | float = datadict.get("battery_total_capacity_charge", 0)
-    if total_charge > 0:
-        return int(total_charge)
+def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | None:
+    # This will attempt to select between multiple sensors based on which have a
+    # value. This assumes that real batteries will never report a value of 0% SoC,
+    # which is considered reasonable as the batteries have a lower usable limit.
+    # Check if total SoC has a sane value, if so return that
+    total_soc: int | float = datadict.get("battery_total_capacity_charge", 0)
+    if total_soc > 0:
+        return int(total_soc)
     # Otherwise try to use the correct battery capacity field
-    bat1_charge: int | float = datadict.get("battery_1_capacity_charge", 0)
-    bat2_charge: int | float = datadict.get("battery_2_capacity_charge", 0)
-    # Use the lesser if both available
-    if (bat1_charge > 0) and (bat2_charge > 0):
-        return int(min(bat2_charge, bat1_charge))
-    # Otherwise use whichever is available
-    if bat1_charge > 0:
-        return int(bat1_charge)  # batt 1 available, use that
-    if bat2_charge > 0:
-        return int(bat2_charge)  # batt 2 available, use that
-    return 0
+    bat1_soc: int | float = datadict.get("battery_1_capacity_charge", 0)
+    bat2_soc: int | float = datadict.get("battery_2_capacity_charge", 0)
+    # If both available, try to work out combined SoC based on capacity
+    if bat1_soc > 0 and bat2_soc > 0:
+        # Check if we know the total capacity of each battery
+        bat1_capacity = datadict.get("bms_battery_capacity", 0)
+        bat2_capacity = datadict.get("bms_2_battery_capacity", 0)
+        try:
+            # If capacity is known, sum SoC %ages relative to their fraction of
+            # the total capacity
+            total_capacity = bat1_capacity + bat2_capacity
+            return int((bat1_soc * bat1_capacity + bat2_soc * bat2_capacity) / total_capacity)
+        except (TypeError, ValueError, ZeroDivisionError):
+            # One or both capacities are unknown, so just use min of available as
+            # we don't know have sufficient information to compare the two SoCs
+            return int(min(bat1_soc, bat2_soc))
+    # Otherwise try to use whichever individual battery is available
+    if bat1_soc > 0:
+        return int(bat1_soc)  # batt 1 available, use that
+    if bat2_soc > 0:
+        return int(bat2_soc)  # batt 2 available, use that
+    # Neither available, so value is unknown.
+    return None
 
 
 def value_function_remaining_battery_capacity(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
