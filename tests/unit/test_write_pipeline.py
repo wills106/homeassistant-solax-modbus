@@ -135,9 +135,7 @@ def test_legacy_unspecified_single_register_type_remains_signed_16_bit() -> None
 
 
 def test_growatt_vpp_allow_ac_charging_uses_supported_u16_write() -> None:
-    description = next(
-        description for description in plugin_growatt.SELECT_TYPES if description.key == "vpp_allow_ac_charging"
-    )
+    description = next(description for description in plugin_growatt.SELECT_TYPES if description.key == "vpp_allow_ac_charging")
     hub = make_hub()
 
     assert description.register == 30410
