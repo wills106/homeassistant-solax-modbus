@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from homeassistant.components.number import NumberDeviceClass
@@ -93,6 +93,12 @@ MPPT6 = 0x100000
 MPPT8 = 0x200000
 MPPT10 = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
+
+# DLP MID 30KTL3-XH units expose BMS1 module 1 through the APX input-register block.
+APX_BMS_INPUT = 0x800000
+ALL_APX_BMS_REGISTER_GROUP = APX_BMS_INPUT
+
+APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP"]
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -6695,6 +6701,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=value_function_module_status,
         allowedtypes=HYBRID | GEN4,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6716,10 +6723,11 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         register=5882,
-        register_type=REG_HOLDING,  ### HOLDING!!!
+        register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         allowedtypes=HYBRID | GEN4,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery-heart",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6729,11 +6737,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         register=5883,
-        register_type=REG_HOLDING,  ### HOLDING!!!
+        register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=0.1,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6743,11 +6752,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         register=5884,
-        register_type=REG_HOLDING,  ### HOLDING!!!
+        register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale=value_function_bms_module_combined_current,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6762,6 +6772,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         entity_registry_enabled_default=True,
         allowedtypes=GEN4 | HYBRID,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6771,11 +6782,12 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=5887,  # maybe 5886 and U32
-        register_type=REG_HOLDING,  ### HOLDING!!!
+        register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,  # maybe U32 but then change register to 5886
         scale=0.1,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6790,6 +6802,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6804,6 +6817,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6815,6 +6829,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=value_function_module_warning_text,
         allowedtypes=HYBRID | GEN4,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -6825,6 +6840,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         allowedtypes=GEN4 | HYBRID,
         entity_registry_enabled_default=False,
+        blacklist=APX_BMS_INPUT_SERIAL_PREFIXES,
         icon="mdi:battery",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9174,6 +9190,33 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
 ]
 
+APX_BMS1_MODULE1_INPUT_REGISTERS = {
+    "bms_1_module_1_status": 5080,
+    "bms_1_module_1_soh": 5082,
+    "bms_1_module_1_volt": 5083,
+    "bms_1_module_1_combined_current": 5084,
+    "bms_1_module_1_combined_power": 5085,
+    "bms_1_module_1_toe": 5087,
+    "bms_1_module_1_max_cell_temp": 5090,
+    "bms_1_module_1_min_cell_temp": 5091,
+    "bms_1_module_1_warning_text": 5098,
+    "bms_1_module_1_charge_cycles": 5108,
+}
+
+# Keep the established 588x holding-register descriptions for other Growatt models,
+# and create a DLP-only 508x input-register variant from the same metadata.
+SENSOR_TYPES.extend(
+    replace(
+        description,
+        register=APX_BMS1_MODULE1_INPUT_REGISTERS[description.key],
+        register_type=REG_INPUT,
+        allowedtypes=description.allowedtypes | APX_BMS_INPUT,
+        blacklist=None,
+    )
+    for description in tuple(SENSOR_TYPES)
+    if description.key in APX_BMS1_MODULE1_INPUT_REGISTERS
+)
+
 
 TIME_TYPES = [
     GrowattModbusTimeEntityDescription(
@@ -9684,7 +9727,7 @@ SERIAL_PREFIX_TYPES = {
     "KMN": HYBRID | GEN4 | X3,  # MID 17000 TL3-XH Hybrid, 2 MPPT
     "KNN": HYBRID | GEN4 | X3 | MPPT3,  # MID 25000 TL3-XH Hybrid, 3 MPPT
     "RKM": HYBRID | GEN4 | X3 | MPPT3,  # MID 30000 TL3-XH Hybrid, 3 MPPT
-    "DLP": HYBRID | GEN4 | X3 | MPPT3,  # MID 30000 TL3-XH Hybrid, 3 MPPT
+    "DLP": HYBRID | GEN4 | X3 | MPPT3 | APX_BMS_INPUT,  # MID 30000 TL3-XH Hybrid, 3 MPPT
     # MOD BP hybrid
     "FMP": HYBRID | GEN4 | X3,  # MOD 5000 TL3-XH (BP) Hybrid, 2 MPPT
     "FPP": HYBRID | GEN4 | X3,  # MOD 7000 TL3-XH (BP) Hybrid, 2 MPPT
@@ -9825,12 +9868,15 @@ class growatt_plugin(plugin_base):
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP) != 0) or (entitymask & ALL_EPS_GROUP == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP) != 0) or (entitymask & ALL_MPPT_GROUP == 0)
+        apx_bms_register_match = ((inverterspec & entitymask & ALL_APX_BMS_REGISTER_GROUP) != 0) or (
+            entitymask & ALL_APX_BMS_REGISTER_GROUP == 0
+        )
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and apx_bms_register_match) and not blacklisted
 
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
