@@ -9716,6 +9716,7 @@ SERIAL_PREFIX_TYPES = {
     "RDH": PV | GEN2 | X3,  # MOD 4000 TL3-X, 2 MPPT
     "QEH": PV | GEN2 | X3,  # MOD 8000 TL3-X, 2 MPPT
     "RPH": PV | GEN2 | X3,  # MOD 15000 TL3-X, 2 MPPT
+    "SZG": PV | GEN2 | X3,  # 3-phase PV, 2 MPPT (serial SZGDCL505K)
     "GXF": PV | GEN4 | X3,  # MID 12000 TL3-XL, 2 MPPT
     "NAH": PV | GEN4 | X3 | MPPT6,  # MAX 60000 TL3 LV, 6 MPPT
     # SPH PV
@@ -9738,6 +9739,7 @@ FIRMWARE_PREFIX_TYPES = {
     "dha": PV | GEN | X3,  # PV TL3-SL 10-22kW #1067
     "DL1": PV | GEN2 | X3,  # PV TL3-X 15kW 3Phase (MOD)
     "DM1": PV | GEN2 | X3 | MPPT4,  # PV TL3-X 35kW 3Phase (MID)
+    "TJ1": PV | GEN2 | X3,  # 3-phase PV, 2 MPPT (SZG serials, firmware TJ1.0)
     "AH1": PV | GEN3 | X1,  # Hybrid SPH 4kW - 10kW
     "AJ1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)
     "GH1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)
