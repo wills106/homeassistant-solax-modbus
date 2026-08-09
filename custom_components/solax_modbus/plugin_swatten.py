@@ -100,10 +100,10 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read firmware failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read firmware failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading firmware number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} firmware number before potential swap: {res}")
+        _LOGGER.warning("%s: reading firmware number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x firmware number before potential swap: %s", hub.name, address, res)
     return res
 
 
@@ -622,10 +622,10 @@ SENSOR_TYPES: list[SwattenModbusSensorEntityDescription] = [
 @dataclass(kw_only=True)
 class swatten_plugin(plugin_base):
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         seriesnumber = await async_read_serialnr(hub, 5809)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find equipment model")
+            _LOGGER.error("%s: cannot find equipment model", hub.name)
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
@@ -648,7 +648,7 @@ class swatten_plugin(plugin_base):
 
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} model type : {seriesnumber}")
+            _LOGGER.error("unrecognized %s model type : %s", hub.name, seriesnumber)
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
