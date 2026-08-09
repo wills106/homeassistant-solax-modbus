@@ -219,7 +219,7 @@ BATTERY_SCHEMA = vol.Schema(
 
 
 async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any]:
-    _LOGGER.info(f"validating base: {user_input}")
+    _LOGGER.info("validating base: %s", user_input)
     """Validate config."""
     user_input[CONF_INTERFACE]
     user_input[CONF_MODBUS_ADDR]
@@ -229,15 +229,15 @@ async def _validate_base(handler: SchemaCommonFlowHandler, user_input: dict[str,
     # convert old style to new style plugin name here - Remove later after a breaking upgrade
     if pluginconf_name.startswith("custom_components") or pluginconf_name.startswith("/config") or pluginconf_name.startswith("plugin_"):
         newpluginname = pluginconf_name.split("plugin_", 1)[1][:-3]  # getPluginName(pluginconf_name)
-        _LOGGER.warning(f"converting old style plugin name {pluginconf_name} to new style: {newpluginname} ")
+        _LOGGER.warning("converting old style plugin name %s to new style: %s ", pluginconf_name, newpluginname)
         user_input[CONF_PLUGIN] = newpluginname
         pluginconf_name = newpluginname
     # end of conversion
 
-    _LOGGER.info(f"validating base config for {name}: pre: {user_input}")
+    _LOGGER.info("validating base config for %s: pre: %s", name, user_input)
     # if getPlugin(name) or ((name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN)):
     if (name == DEFAULT_NAME) and (pluginconf_name != DEFAULT_PLUGIN):
-        _LOGGER.warning(f"instance name {name} already defined or default name for non-default inverter")
+        _LOGGER.warning("instance name %s already defined or default name for non-default inverter", name)
         user_input[CONF_NAME] = user_input[CONF_PLUGIN]  # getPluginName(user_input[CONF_PLUGIN])
         raise SchemaFlowError("name_already_used")
 
@@ -261,7 +261,7 @@ async def _validate_host(handler: SchemaCommonFlowHandler, user_input: Any) -> A
         res = all(x and not disallowed.search(x) for x in host.split("."))
         if not res:
             raise SchemaFlowError("invalid_host") from e
-    _LOGGER.info(f"validating host: returning data: {user_input}")
+    _LOGGER.info("validating host: returning data: %s", user_input)
 
     pluginconf_name = handler.options[CONF_PLUGIN]
     plugin = await handler.parent_handler.hass.async_add_executor_job(_load_plugin, pluginconf_name)
@@ -287,7 +287,7 @@ async def _next_step_modbus(user_input: Any) -> str:
 
 
 async def _next_step_battery(user_input: Any) -> str | None:
-    _LOGGER.debug(f"_next_step_battery: returning data: {user_input}")
+    _LOGGER.debug("_next_step_battery: returning data: %s", user_input)
     if user_input.get("support-battery", False):
         return "battery"
     return "duplicate_inverter"
@@ -329,7 +329,7 @@ def _load_plugin(plugin_name: str) -> ModuleType:
 
 
 if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)):  # type: ignore[comparison-overlap]  # backward compat
-    _LOGGER.info(f"detected HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    _LOGGER.info("detected HA core version %s %s", MAJOR_VERSION, MINOR_VERSION)
     CONFIG_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
         "user": SchemaFlowFormStep(CONFIG_SCHEMA, validate_user_input=_validate_base, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
@@ -348,7 +348,7 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
     }
 
 else:  # for older versions - REMOVE SOON
-    _LOGGER.error(f"detected old HA core version {MAJOR_VERSION} {MINOR_VERSION}")
+    _LOGGER.error("detected old HA core version %s %s", MAJOR_VERSION, MINOR_VERSION)
 
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
@@ -358,11 +358,11 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         return await super().async_step_user(user_input)
 
-    _LOGGER.info(f"starting configflow - domain = {DOMAIN}")
+    _LOGGER.info("starting configflow - domain = %s", DOMAIN)
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
 
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
-        _LOGGER.info(f"title configflow {DOMAIN} {CONF_NAME}: {options}")
+        _LOGGER.info("title configflow %s %s: %s", DOMAIN, CONF_NAME, options)
         # Return config entry title
         return cast(str, options[CONF_NAME]) if CONF_NAME in options else ""

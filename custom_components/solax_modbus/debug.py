@@ -52,7 +52,7 @@ def load_debug_settings(config: dict[str, Any] | None, hass: Any = None) -> dict
                     list(yaml_debug_settings.keys()),
                 )
         except Exception as e:
-            _LOGGER.debug(f"Error reading debug settings from YAML configuration: {e}")
+            _LOGGER.debug("Error reading debug settings from YAML configuration: %s", e)
 
     return debug_settings
 
@@ -115,7 +115,7 @@ def get_debug_setting(
         for key, settings in debug_settings.items():
             if key.lower() == inverter_name.lower():
                 inverter_settings = settings
-                _LOGGER.debug(f"get_debug_setting: Matched '{inverter_name}' to '{key}' (case-insensitive)")
+                _LOGGER.debug("get_debug_setting: Matched '%s' to '%s' (case-insensitive)", inverter_name, key)
                 break
 
     if inverter_settings and setting_name in inverter_settings:

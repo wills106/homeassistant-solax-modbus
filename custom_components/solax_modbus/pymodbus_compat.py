@@ -234,7 +234,7 @@ if _convert_to and _convert_from:
             global _STARTING
             if _STARTING > 0:
                 _STARTING -= 1
-                _LOGGER.debug(f"not most recent pymodbus version {_PM_VER} - not using fasttrack - using datatype and wordorder adaption")
+                _LOGGER.debug("not most recent pymodbus version %s - not using fasttrack - using datatype and wordorder adaption", _PM_VER)
             # Fast-path: exact enum + correct word_order string → call directly
             if _DT_TARGET is not None and isinstance(dt, _DT_TARGET) and isinstance(wordorder, str) and wordorder in ("big", "little"):
                 try:
@@ -299,7 +299,7 @@ else:
     def convert_from_registers(regs: list[int], dt: Any, wordorder: Any) -> Any:
         """Convert Modbus registers to value using legacy BinaryPayloadDecoder."""
         if _STARTING > 0:
-            _LOGGER.warning(f"using fallback pymodbus BinaryPayloadBuilder - pymodbus {_PM_VER}")
+            _LOGGER.warning("using fallback pymodbus BinaryPayloadBuilder - pymodbus %s", _PM_VER)
         d = BinaryPayloadDecoder.fromRegisters(
             list(regs),
             byteorder=_OldEndian.BIG,  # all our plugins use this
@@ -318,4 +318,4 @@ else:
         elif dt == DataType.STRING:  # type: ignore[attr-defined]
             return d.decode_string(len(regs) * 2)
         else:
-            raise ValueError(f"Unsupported data_type: {dt}")
+            raise ValueError("Unsupported data_type: %s", dt)
