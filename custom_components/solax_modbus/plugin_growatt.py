@@ -116,10 +116,10 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
                 raw_bytes.extend(int(register).to_bytes(2, byteorder="big", signed=False))
             res = raw_bytes.decode("ascii", errors="ignore").rstrip("\x00").strip() or None
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read inverter identifier failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read inverter identifier failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.debug(f"{hub.name}: no inverter identifier at 0x{address:x}; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} inverter identifier before potential swap: {res}")
+        _LOGGER.debug("%s: no inverter identifier at 0x%x; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x inverter identifier before potential swap: %s", hub.name, address, res)
     return res
 
 
@@ -180,7 +180,7 @@ def value_function_time_1_update(initval: Any, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_1_enabled", "Disabled")
     mode = datadict.get("time_1_mode", "Load First")
 
-    _LOGGER.debug(f"time_1: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_1: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 1 End cannot be smaller than Time 1 Begin")
@@ -195,7 +195,7 @@ def value_function_time_2_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_2_enabled", "Disabled")
     mode = datadict.get("time_2_mode", "Load First")
 
-    _LOGGER.debug(f"time_2: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_2: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 2 End cannot be smaller than Time 2 Begin")
@@ -210,7 +210,7 @@ def value_function_time_3_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_3_enabled", "Disabled")
     mode = datadict.get("time_3_mode", "Load First")
 
-    _LOGGER.debug(f"time_3: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_3: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 3 End cannot be smaller than Time 3 Begin")
@@ -225,7 +225,7 @@ def value_function_time_4_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_4_enabled", "Disabled")
     mode = datadict.get("time_4_mode", "Load First")
 
-    _LOGGER.debug(f"time_4: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_4: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 4 End cannot be smaller than Time 4 Begin")
@@ -240,7 +240,7 @@ def value_function_time_5_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_5_enabled", "Disabled")
     mode = datadict.get("time_5_mode", "Load First")
 
-    _LOGGER.debug(f"time_5: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_5: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 5 End cannot be smaller than Time 5 Begin")
@@ -255,7 +255,7 @@ def value_function_time_6_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_6_enabled", "Disabled")
     mode = datadict.get("time_6_mode", "Load First")
 
-    _LOGGER.debug(f"time_6: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_6: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 6 End cannot be smaller than Time 6 Begin")
@@ -270,7 +270,7 @@ def value_function_time_7_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_7_enabled", "Disabled")
     mode = datadict.get("time_7_mode", "Load First")
 
-    _LOGGER.debug(f"time_7: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_7: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 7 End cannot be smaller than Time 7 Begin")
@@ -285,7 +285,7 @@ def value_function_time_8_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_8_enabled", "Disabled")
     mode = datadict.get("time_8_mode", "Load First")
 
-    _LOGGER.debug(f"time_8: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_8: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 8 End cannot be smaller than Time 8 Begin")
@@ -300,7 +300,7 @@ def value_function_time_9_update(initval: int, descr: Any, datadict: dict[str, A
     enabled = datadict.get("time_9_enabled", "Disabled")
     mode = datadict.get("time_9_mode", "Load First")
 
-    _LOGGER.debug(f"time_9: begin={time_begin}, end={time_end}, enabled={enabled}, mode={mode}")
+    _LOGGER.debug("time_9: begin=%s, end=%s, enabled=%s, mode=%s", time_begin, time_end, enabled, mode)
 
     if time_to_int(time_end) < time_to_int(time_begin):
         _LOGGER.error("Growatt: Time 9 End cannot be smaller than Time 9 Begin")
@@ -9770,7 +9770,7 @@ def _inverter_type_from_prefix(identifier: str | None, prefix_types: dict[str, i
 @dataclass(kw_only=True)
 class growatt_plugin(plugin_base):
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         invertertype = 0
         identifier: str | None = None
 
@@ -9782,8 +9782,8 @@ class growatt_plugin(plugin_base):
                 invertertype = candidate_type
                 break
             if candidate:
-                _LOGGER.info(f"{hub.name}: unrecognized serial number at 0x{address:x}: {candidate}")
-            _LOGGER.info(f"{hub.name}: trying alternative serial number location")
+                _LOGGER.info("%s: unrecognized serial number at 0x%x: %s", hub.name, address, candidate)
+            _LOGGER.info("%s: trying alternative serial number location", hub.name)
 
         if not invertertype:
             firmware = await async_read_serialnr(hub, 9)
@@ -9795,7 +9795,7 @@ class growatt_plugin(plugin_base):
                 identifier = firmware
             else:
                 displayed_firmware = firmware or "unknown"
-                _LOGGER.error(f"unrecognized {hub.name} inverter type - firmware version : {displayed_firmware}")
+                _LOGGER.error("unrecognized %s inverter type - firmware version : %s", hub.name, displayed_firmware)
                 identifier = firmware
 
         if identifier:
