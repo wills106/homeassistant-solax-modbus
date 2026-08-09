@@ -63,7 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     tuple,
                 ),
             ):
-                _LOGGER.debug(f"{hub.name}: {select_info.key} depends on entities {deplist}")
+                _LOGGER.debug("%s: %s depends on entities %s", hub.name, select_info.key, deplist)
                 for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
                     if dep_on != select_info.key:
                         hub.entity_dependencies.setdefault(dep_on, []).append(select_info.key)  # can be more than one
@@ -182,7 +182,7 @@ class SolaXModbusSelect(SelectEntity):
         reverse_dict = self.entity_description.reverse_option_dict
         payload: Any = reverse_dict.get(option, None) if reverse_dict else None
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
+            _LOGGER.info("writing %s select register %s value %s with method %s", self._platform_name, self._register, payload, self._write_method)
             await self._hub.async_write_registers_single(
                 unit=self._modbus_addr,
                 address=self._register,
@@ -190,7 +190,7 @@ class SolaXModbusSelect(SelectEntity):
                 register_data_type=getattr(self.entity_description, "register_data_type", None),
             )
         elif self._write_method == WRITE_SINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} select register {self._register} value {payload} with method {self._write_method}")
+            _LOGGER.info("writing %s select register %s value %s with method %s", self._platform_name, self._register, payload, self._write_method)
             await self._hub.async_write_register(
                 unit=self._modbus_addr,
                 address=self._register,
@@ -198,7 +198,7 @@ class SolaXModbusSelect(SelectEntity):
                 register_data_type=getattr(self.entity_description, "register_data_type", None),
             )
         elif self._write_method == WRITE_DATA_LOCAL:
-            _LOGGER.info(f"*** local data written {self._key}: {payload}")
+            _LOGGER.info("*** local data written %s: %s", self._key, payload)
             self._hub.localsUpdated = True  # mark to save permanently
         self._hub.data[self._key] = option
 

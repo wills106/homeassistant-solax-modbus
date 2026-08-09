@@ -60,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     tuple,
                 ),
             ):
-                _LOGGER.debug(f"{hub.name}: {switch_info.key} depends on entities {deplist}")
+                _LOGGER.debug("%s: %s depends on entities %s", hub.name, switch_info.key, deplist)
                 for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
                     if dep_on != switch_info.key:
                         hub.entity_dependencies.setdefault(dep_on, []).append(switch_info.key)  # can be more than one
@@ -73,7 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         try:
             device_info, platform_name, switch_descriptions = provider(hub, hass, entry)
         except Exception as ex:
-            _LOGGER.error(f"{hub_name}: switch provider failed: {ex}")
+            _LOGGER.error("%s: switch provider failed: %s", hub_name, ex)
             continue
         if not switch_descriptions:
             continue
@@ -190,14 +190,16 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
                     },
                 )
             except Exception as ex:
-                _LOGGER.debug(f"{self._hub.name}: local switch event failed: {ex}")
+                _LOGGER.debug("%s: local switch event failed: %s", self._hub.name, ex)
             return
         if self._value_function is None:
-            _LOGGER.debug(f"No value function for switch {self._key}")
+            _LOGGER.debug("No value function for switch %s", self._key)
             return
 
         payload: int = self._value_function(self._bit, is_on, self._sensor_key, self._hub.data)
-        _LOGGER.debug(f"Writing {self._platform_name} {self._key} to register {self._register} with value {payload} method {self._write_method}")
+        _LOGGER.debug(
+            "Writing %s %s to register %s with value %s method %s", self._platform_name, self._key, self._register, payload, self._write_method
+        )
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             await self._hub.async_write_registers_single(
                 unit=self._modbus_addr,
@@ -226,13 +228,17 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
             if sensvalue is None:
                 # Readback register temporarily unreadable (failed or quarantined read);
                 # report unknown instead of a fabricated off state, like selects do.
-                _LOGGER.debug(f"{self._hub.name}: Sensor {self._sensor_key} for switch {self._key} has no value yet, state unknown")
+                _LOGGER.debug("%s: Sensor %s for switch %s has no value yet, state unknown", self._hub.name, self._sensor_key, self._key)
                 return None
             try:
                 sensor_value = int(sensvalue)
             except (TypeError, ValueError):
                 _LOGGER.debug(
-                    f"{self._hub.name}: Sensor {self._sensor_key} for switch {self._key} has non-integer value {sensvalue!r}, state unknown"
+                    "%s: Sensor %s for switch %s has non-integer value %r, state unknown",
+                    self._hub.name,
+                    self._sensor_key,
+                    self._key,
+                    sensvalue,
                 )
                 return None
             return bool(sensor_value & (1 << self._bit))
