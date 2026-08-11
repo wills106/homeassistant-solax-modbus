@@ -945,7 +945,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     # ---- 0x0004–0x0006  Phase currents L1 (A) / L2 (B) / L3 (C), 0.01A ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current",
-        key="charge_current",
+        key="charge_current_measured",
         register=0x4,
         register_type=REG_INPUT,
         scale=0.01,
