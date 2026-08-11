@@ -39,4 +39,4 @@ def test_manifest_loads_usb_and_serialx_backend() -> None:
     manifest = json.loads(manifest_path.read_text())
 
     assert "usb" in manifest["dependencies"]
-    assert "tmodbus[async-serial,smart]==0.4.1" in manifest["requirements"]
+    assert "tmodbus[async-serial]>=0.5.0" in manifest["requirements"]
