@@ -1,20 +1,23 @@
 from custom_components.solax_modbus.const import REG_HOLDING, REG_INPUT
 from custom_components.solax_modbus.plugin_growatt import (
-    GrowattModbusSensorEntityDescription,
     SENSOR_TYPES,
     SERIAL_PREFIX_TYPES,
+    GrowattModbusSensorEntityDescription,
     plugin_instance,
 )
 
 
 def _matching_module1_descriptions(serial_number: str) -> dict[str, GrowattModbusSensorEntityDescription]:
     inverter_type = SERIAL_PREFIX_TYPES[serial_number[:3]]
-    return {
-        description.key: description
-        for description in SENSOR_TYPES
-        if description.key.startswith("bms_1_module_1_")
-        and plugin_instance.matchInverterWithMask(inverter_type, description.allowedtypes, serial_number, description.blacklist)
-    }
+    descriptions: dict[str, GrowattModbusSensorEntityDescription] = {}
+    for description in SENSOR_TYPES:
+        if not description.key.startswith("bms_1_module_1_") or not plugin_instance.matchInverterWithMask(
+            inverter_type, description.allowedtypes, serial_number, description.blacklist
+        ):
+            continue
+        assert description.key not in descriptions, f"duplicate matching description for {serial_number}: {description.key}"
+        descriptions[description.key] = description
+    return descriptions
 
 
 def test_dlp_bms1_module1_uses_apx_input_registers() -> None:

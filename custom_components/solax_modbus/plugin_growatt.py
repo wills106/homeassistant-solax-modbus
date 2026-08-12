@@ -9868,9 +9868,7 @@ class growatt_plugin(plugin_base):
         epsmatch = ((inverterspec & entitymask & ALL_EPS_GROUP) != 0) or (entitymask & ALL_EPS_GROUP == 0)
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP) != 0) or (entitymask & ALL_MPPT_GROUP == 0)
-        apx_bms_register_match = ((inverterspec & entitymask & ALL_APX_BMS_REGISTER_GROUP) != 0) or (
-            entitymask & ALL_APX_BMS_REGISTER_GROUP == 0
-        )
+        apx_bms_register_match = ((inverterspec & entitymask & ALL_APX_BMS_REGISTER_GROUP) != 0) or (entitymask & ALL_APX_BMS_REGISTER_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
