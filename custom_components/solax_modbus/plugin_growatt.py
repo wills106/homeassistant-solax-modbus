@@ -568,6 +568,7 @@ def value_function_inverter_fault_text(initval: int, descr: Any, datadict: dict[
         (408, 0): "Over-temperature",
         (409, 0): "Bus voltage abnormal",
         (411, 0): "Internal communication failure",
+        (411, 1): "Communication fault",    # from event mail from growatt for a MOD 10000 TL3-HU Hybrid
         (412, 0): "Temperature sensor disconnected",
         (416, 0): "DC/AC overcurrent protection",
         (420, 0): "GFCI module abnormal",
