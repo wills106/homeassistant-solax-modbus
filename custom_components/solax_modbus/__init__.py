@@ -106,6 +106,9 @@ from .const import (
     CONF_READ_EPS as CONF_READ_EPS,
 )
 from .const import (
+    CONF_READ_GEN as CONF_READ_GEN,
+)
+from .const import (
     CONF_READ_PM as CONF_READ_PM,
 )
 from .const import (
@@ -128,6 +131,9 @@ from .const import (
 )
 from .const import (
     DEFAULT_READ_EPS as DEFAULT_READ_EPS,
+)
+from .const import (
+    DEFAULT_READ_GEN as DEFAULT_READ_GEN,
 )
 from .const import (
     DEFAULT_READ_PM as DEFAULT_READ_PM,
@@ -447,11 +453,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 # Device groups that a config option can switch off, and the option controlling each.
 # Display names for sub-devices, where a plain title-case of the group key would read badly.
 DEVICE_GROUP_NAMES: dict[str, str] = {
+    "external_generator": "External Generator",
     "eps": "EPS",
     "pm": "Parallel",
 }
 
 GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
+    "external_generator": (CONF_READ_GEN, DEFAULT_READ_GEN),
     "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
     "ENERGY_DASHBOARD": (CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE),
