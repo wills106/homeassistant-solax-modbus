@@ -2035,7 +2035,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 8/9)",
+        name="Remotecontrol Target SoC (mode 8/9)",
         key="remotecontrol_target_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         native_min_value=10,
@@ -2050,7 +2050,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Minimum SOC (mode 8/9)",
+        name="Remotecontrol Minimum SoC (mode 8/9)",
         key="remotecontrol_minimum_soc_8_9",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         native_min_value=10,
@@ -2135,7 +2135,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     #
     ###
     SolaxModbusNumberEntityDescription(
-        name="Backup Discharge Min SOC",
+        name="Backup Min SoC",
         key="backup_discharge_min_soc",
         register=0x67,
         fmt="i",
@@ -2147,7 +2147,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Backup Nightcharge Upper SOC",
+        name="Backup Charge Battery to",
         key="backup_nightcharge_upper_soc",
         register=0x66,
         fmt="i",
@@ -2303,7 +2303,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:home-export-outline",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Min SOC",
+        name="Min SoC",
         key="eps_min_soc",
         device_group="eps",
         register=0x44,
@@ -2317,7 +2317,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Restart SOC",
+        name="Restart SoC",
         key="eps_restart_soc",
         device_group="eps",
         register=0x8E,
@@ -2373,7 +2373,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Feedin Nightcharge Upper SOC",
+        name="Feed-In Priority Charge Battery to",
         key="feedin_nightcharge_upper_soc",
         register=0x64,
         fmt="i",
@@ -2516,7 +2516,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Selfuse Backup SOC",
+        name="Selfuse Backup SoC",
         key="selfuse_backup_soc",
         register=0xC5,
         fmt="i",
@@ -2529,7 +2529,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-sync",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Selfuse Discharge Min SOC",
+        name="Self Use Min SoC",
         key="selfuse_discharge_min_soc",
         register=0x61,
         fmt="i",
@@ -2542,9 +2542,10 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-charging-low",
     ),
     SolaxModbusNumberEntityDescription(
-        name="Selfuse Nightcharge Upper SOC",
+        name="Self Use Charge Battery to",
         key="selfuse_nightcharge_upper_soc",
         register=0x63,
+        active_when={"selfuse_night_charge_enable": (1,)},
         fmt="i",
         native_min_value=10,
         native_max_value=100,
@@ -2567,7 +2568,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Switch On SOC",
+        name="Switch On SoC",
         key="switch_on_soc",
         register=0xB8,
         fmt="i",
@@ -2578,7 +2579,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Battery Charge Upper SOC",
+        name="Battery Charge Upper SoC",
         key="battery_charge_upper_soc",
         register=0xE0,
         fmt="i",
@@ -2758,7 +2759,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         allowedtypes=HYBRID | GEN4 | GEN5 | GEN6 | X3,
     ),
     SolaxModbusNumberEntityDescription(
-        name="PeakShaving Max SOC",
+        name="PeakShaving Max SoC",
         key="peakshaving_max_soc",
         register=0xF2,
         fmt="i",
@@ -2770,7 +2771,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         icon="mdi:battery-charging-high",
     ),
     SolaxModbusNumberEntityDescription(
-        name="PeakShaving Reserved SOC",
+        name="PeakShaving Reserved SoC",
         key="peakshaving_reserved_soc",
         register=0xF3,
         fmt="i",
@@ -2905,7 +2906,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 3; direct)",
+        name="Remotecontrol Target SoC (mode 3; direct)",
         key="remotecontrol_target_soc_direct",
         register=0x83,
         register_data_type=REGISTER_U16,
@@ -3031,7 +3032,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 9; direct)",
+        name="Remotecontrol Target SoC (mode 9; direct)",
         key="remotecontrol_target_soc_9_direct",
         register=0xA6,
         register_data_type=REGISTER_U16,
@@ -3145,7 +3146,7 @@ SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaXModbusSwitchEntityDescription(
-        name="Charge and Discharge Period2",
+        name="Charge/Discharge Period 2",
         key="charge_and_discharge_period2_enable",
         register=0x6C,
         sensor_key="charge_and_discharge_period2_enable",
@@ -3208,6 +3209,7 @@ SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = [
         register=0xCF,
         sensor_key="battery_heating",
         value_function=value_function_enable_disable,
+        entity_category=EntityCategory.CONFIG,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:heating-coil",
     ),
@@ -3386,7 +3388,7 @@ SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = [
         icon="mdi:dip-switch",
     ),
     SolaXModbusSwitchEntityDescription(
-        name="Selfuse Night Charge",
+        name="Self Use Charge from Grid",
         key="selfuse_night_charge_enable",
         register=0x62,
         sensor_key="selfuse_night_charge_enable",
@@ -4460,7 +4462,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Restart SOC",
+        name="Restart SoC",
         key="eps_restart_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_group="eps",
@@ -4633,7 +4635,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Min SOC",
+        name="Min SoC",
         key="eps_min_soc",
         native_unit_of_measurement=PERCENTAGE,
         device_group="eps",
@@ -5689,7 +5691,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     # V001.00 dual-battery parameter readbacks. Write controls are intentionally
     # not created here; these disabled diagnostics only expose the inverter state.
     SolaXModbusSensorEntityDescription(
-        name="Dual Battery 1 Charge Upper SOC Readback",
+        name="Dual Battery 1 Charge Upper SoC Readback",
         key="dual_battery_1_charge_upper_soc_readback",
         native_unit_of_measurement=PERCENTAGE,
         register=0x400,
@@ -5700,7 +5702,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Dual Battery 2 Charge Upper SOC Readback",
+        name="Dual Battery 2 Charge Upper SoC Readback",
         key="dual_battery_2_charge_upper_soc_readback",
         native_unit_of_measurement=PERCENTAGE,
         register=0x401,
@@ -8504,7 +8506,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN3 | EPS,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Min Esc SOC",
+        name="Min Esc SoC",
         key="eps_min_esc_soc",
         device_group="eps",
         register=0x10E,
@@ -11125,7 +11127,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 
 TIME_TYPES = [
     SolaXModbusTimeEntityDescription(
-        name="Charge Start 1",
+        name="Force Charge P1 Start",
         key="charge_start_1",
         register=0x26,
         option_dict=TIME_OPTIONS,
@@ -11134,7 +11136,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge End 1",
+        name="Force Charge P1 End",
         key="charge_end_1",
         register=0x27,
         option_dict=TIME_OPTIONS,
@@ -11143,7 +11145,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge Start 2",
+        name="Force Charge P2 Start",
         key="charge_start_2",
         register=0x2A,
         option_dict=TIME_OPTIONS,
@@ -11152,7 +11154,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge End 2",
+        name="Force Charge P2 End",
         key="charge_end_2",
         register=0x2B,
         option_dict=TIME_OPTIONS,
@@ -11183,7 +11185,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge Start 1",
+        name="Allowed Discharge P1 Start",
         key="discharge_start_1",
         register=0x28,
         option_dict=TIME_OPTIONS,
@@ -11192,7 +11194,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge End 1",
+        name="Allowed Discharge P1 End",
         key="discharge_end_1",
         register=0x29,
         option_dict=TIME_OPTIONS,
@@ -11201,7 +11203,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge Start 2",
+        name="Allowed Discharge P2 Start",
         key="discharge_start_2",
         register=0x2C,
         option_dict=TIME_OPTIONS,
@@ -11210,7 +11212,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge End 2",
+        name="Allowed Discharge P2 End",
         key="discharge_end_2",
         register=0x2D,
         option_dict=TIME_OPTIONS,
@@ -11219,7 +11221,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge End 1",
+        name="Force Charge P1 End",
         key="charge_end_1",
         register=0x69,
         option_dict=TIME_OPTIONS_GEN4,
@@ -11228,16 +11230,17 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge End 2",
+        name="Force Charge P2 End",
         key="charge_end_2",
         register=0x6E,
+        active_when={"charge_and_discharge_period2_enable": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge Start 1",
+        name="Force Charge P1 Start",
         key="charge_start_1",
         register=0x68,
         option_dict=TIME_OPTIONS_GEN4,
@@ -11246,16 +11249,17 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge Start 2",
+        name="Force Charge P2 Start",
         key="charge_start_2",
         register=0x6D,
+        active_when={"charge_and_discharge_period2_enable": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge End 1",
+        name="Allowed Discharge P1 End",
         key="discharge_end_1",
         register=0x6B,
         option_dict=TIME_OPTIONS_GEN4,
@@ -11264,16 +11268,17 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge End 2",
+        name="Allowed Discharge P2 End",
         key="discharge_end_2",
         register=0x70,
+        active_when={"charge_and_discharge_period2_enable": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge Start 1",
+        name="Allowed Discharge P1 Start",
         key="discharge_start_1",
         register=0x6A,
         option_dict=TIME_OPTIONS_GEN4,
@@ -11282,45 +11287,50 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge Start 2",
+        name="Allowed Discharge P2 Start",
         key="discharge_start_2",
         register=0x6F,
+        active_when={"charge_and_discharge_period2_enable": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Battery Heating Start Time 1",
+        name="Battery Heating P1 Start",
         key="battery_heating_start_time_1",
         register=0xD0,
+        active_when={"battery_heating": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Battery Heating End Time 1",
+        name="Battery Heating P1 End",
         key="battery_heating_end_time_1",
         register=0xD1,
+        active_when={"battery_heating": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Battery Heating Start Time 2",
+        name="Battery Heating P2 Start",
         key="battery_heating_start_time_2",
         register=0xD2,
+        active_when={"battery_heating": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Battery Heating End Time 2",
+        name="Battery Heating P2 End",
         key="battery_heating_end_time_2",
         register=0xD3,
+        active_when={"battery_heating": (1,)},
         option_dict=TIME_OPTIONS_GEN4,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.CONFIG,
