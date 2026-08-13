@@ -34,6 +34,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
@@ -96,10 +97,19 @@ from .const import (
     PollOutcome,
 )
 from .const import (
+    CONF_ENERGY_DASHBOARD_DEVICE as CONF_ENERGY_DASHBOARD_DEVICE,
+)
+from .const import (
     CONF_READ_DCB as CONF_READ_DCB,
 )
 from .const import (
     CONF_READ_EPS as CONF_READ_EPS,
+)
+from .const import (
+    CONF_READ_PM as CONF_READ_PM,
+)
+from .const import (
+    DEFAULT_ENERGY_DASHBOARD_DEVICE as DEFAULT_ENERGY_DASHBOARD_DEVICE,
 )
 from .const import (
     DEFAULT_INTERFACE as DEFAULT_INTERFACE,
@@ -120,6 +130,9 @@ from .const import (
     DEFAULT_READ_EPS as DEFAULT_READ_EPS,
 )
 from .const import (
+    DEFAULT_READ_PM as DEFAULT_READ_PM,
+)
+from .const import (
     DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
 )
 from .const import (
@@ -127,6 +140,9 @@ from .const import (
 )
 from .const import (
     WRITE_MULTISINGLE_MODBUS as WRITE_MULTISINGLE_MODBUS,
+)
+from .const import (
+    matches_active_when as matches_active_when,
 )
 from .modbus_transport import CoreModbusTransport, ModbusTransport, NativeModbusTransport, UnavailableModbusTransport
 from .pymodbus_compat import DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
@@ -423,7 +439,51 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hub.async_init()
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
+
+    await async_cleanup_disabled_devices(hass, entry, hub)
     return True
+
+
+# Device groups that a config option can switch off, and the option controlling each.
+# Display names for sub-devices, where a plain title-case of the group key would read badly.
+DEVICE_GROUP_NAMES: dict[str, str] = {
+    "eps": "EPS",
+    "pm": "Parallel",
+}
+
+GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
+    "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
+    "pm": (CONF_READ_PM, DEFAULT_READ_PM),
+    "ENERGY_DASHBOARD": (CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE),
+}
+
+
+def device_group_of(device_entry: Any) -> str | None:
+    """Return the group name encoded in a device's solax identifiers, if any."""
+    for identifier in device_entry.identifiers:
+        parts = tuple(identifier)
+        if parts and parts[0] == DOMAIN and len(parts) > 2:
+            return str(parts[2])
+    return None
+
+
+async def async_cleanup_disabled_devices(hass: HomeAssistant, entry: ConfigEntry, hub: Any) -> None:
+    """Remove devices (and their entities) for device groups switched off in the options.
+
+    Home Assistant never removes devices on its own, so a device group that is no
+    longer created would otherwise linger in the registry with stale entities.
+    """
+    configdict = entry.options if entry.options else entry.data
+    dev_registry = dr.async_get(hass)
+    for device_entry in dr.async_entries_for_config_entry(dev_registry, entry.entry_id):
+        group = device_group_of(device_entry)
+        gate = GATED_DEVICE_GROUPS.get(group) if group else None
+        if gate is None:
+            continue
+        option, default = gate
+        if not configdict.get(option, default):
+            _LOGGER.info("%s: removing device %s - option %s is disabled", hub.name, device_entry.name, option)
+            dev_registry.async_remove_device(device_entry.id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -604,6 +664,7 @@ class SolaXModbusHub:
         self.selectEntities: dict[Any, Any] = {}
         self.switchEntities: dict[Any, Any] = {}
         self.timeEntities: dict[Any, Any] = {}
+        self.gatedEntities: list[dict[str, Any]] = []  # descriptions with active_when, added/removed as their branch activates
         self.entity_dependencies: dict[str, list[str]] = {}  # Maps a sensor key to a list of data control keys that use the sensor as data source
         # self.preventSensors = {} # sensors with prevent_update = True
         self.writeLocals: dict[Any, Any] = {}  # key to description lookup dict for write_method = WRITE_DATA_LOCAL entities
@@ -923,6 +984,75 @@ class SolaXModbusHub:
             describe_modbus_connection(identity),
         )
 
+    def device_group_enabled(self, group: str | None) -> bool:
+        """Return whether a named device group is enabled in this entry's options."""
+        if not group:
+            return True
+        configdict = self.entry.options if self.entry.options else self.entry.data
+        gate = GATED_DEVICE_GROUPS.get(group)
+        if gate is None:
+            return True
+        option, default = gate
+        return bool(configdict.get(option, default))
+
+    def device_group_display_name(self, group: str) -> str:
+        """Return the human readable name of a device group."""
+        return DEVICE_GROUP_NAMES.get(group, group.replace("_", " ").title())
+
+    def group_device_info(self, group: str) -> DeviceInfo:
+        """Return the DeviceInfo for a named sub-device (e.g. "dry_contact")."""
+        return DeviceInfo(
+            identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, group)}),
+            name=f"{self._name} {DEVICE_GROUP_NAMES.get(group, group.replace('_', ' ').title())}",
+            manufacturer=self.plugin.plugin_manufacturer,
+            via_device=cast(tuple[str, str], (DOMAIN, self._name, INVERTER_IDENT)),
+        )
+
+    def register_gated_entity(self, descr: Any, factory: Any, add_entities: Any, holder: dict[Any, Any], platform: str, entity: Any = None) -> None:
+        """Track a description whose entity only exists while its active_when conditions hold."""
+        self.gatedEntities.append({"descr": descr, "factory": factory, "add": add_entities, "holder": holder, "platform": platform, "entity": entity})
+        if entity is None:
+            self._purge_registry_entry(platform, descr.key)
+
+    def _purge_registry_entry(self, platform: str, key: Any) -> None:
+        """Drop a stale registry entry so a gated-out entity disappears instead of showing as unavailable."""
+        try:
+            ent_registry = er.async_get(self._hass)
+            entity_id = ent_registry.async_get_entity_id(platform, DOMAIN, f"{self._name}_{key}")
+            if entity_id:
+                ent_registry.async_remove(entity_id)
+        except Exception as ex:
+            _LOGGER.debug("%s: cannot purge registry entry for %s: %s", self._name, key, ex)
+
+    async def async_refresh_gated_entities(self) -> None:
+        """Create entities whose conditions became true and remove those that became false."""
+        for gated in self.gatedEntities:
+            descr = gated["descr"]
+            wanted = matches_active_when(self, descr)
+            entity = gated.get("entity")
+            if wanted:
+                gated["misses"] = 0
+            if wanted and entity is None:
+                entity = gated["factory"]()
+                gated["entity"] = entity
+                gated["holder"][descr.key] = entity
+                gated["add"]([entity])
+                _LOGGER.debug("%s: added %s (conditions met)", self._name, descr.key)
+            elif not wanted and entity is not None:
+                # a single stale readback right after a write must not make entities flicker
+                gated["misses"] = gated.get("misses", 0) + 1
+                if gated["misses"] < 2:
+                    continue
+                gated["entity"] = None
+                if gated["holder"].get(descr.key) is entity:
+                    gated["holder"].pop(descr.key, None)
+                try:
+                    await entity.async_remove(force_remove=True)
+                except Exception as ex:
+                    _LOGGER.debug("%s: cannot remove %s: %s", self._name, descr.key, ex)
+                self._purge_registry_entry(gated["platform"], descr.key)
+                _LOGGER.debug("%s: removed %s (conditions no longer met)", self._name, descr.key)
+
     def device_group_key(self, device_info: DeviceInfo) -> str:
         """Extract device group key from device_info identifiers.
 
@@ -1133,6 +1263,8 @@ class SolaXModbusHub:
                 for sensor in group.sensors:
                     sensor.modbus_data_updated()
                 updated_sensors += len(group.sensors)
+                if getattr(self, "gatedEntities", None):
+                    await self.async_refresh_gated_entities()
             _LOGGER.debug("%s: device group read done with outcome=%s", self._name, group_outcome.value)
 
         if PollOutcome.FAILED in outcomes:

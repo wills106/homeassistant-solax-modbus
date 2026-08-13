@@ -18,6 +18,7 @@ from .const import (
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     BaseModbusTimeEntityDescription,
+    matches_active_when,
     matches_modbus_protocol,
 )
 
@@ -36,16 +37,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     plugin = hub.plugin  # getPlugin(hub_name)
     entities = []
     for time_info in plugin.TIME_TYPES:
-        if plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist) and matches_modbus_protocol(
-            hub, time_info
+        if (
+            plugin.matchInverterWithMask(hub._invertertype, time_info.allowedtypes, hub.seriesnumber, time_info.blacklist)
+            and matches_modbus_protocol(hub, time_info)
+            and hub.device_group_enabled(time_info.device_group)
         ):
-            time_entity = SolaXModbusTimeEntity(hub_name, hub, modbus_addr, hub.device_info, time_info)
+            device_info = hub.group_device_info(time_info.device_group) if time_info.device_group else hub.device_info
+
+            def factory(di: Any = device_info, ti: Any = time_info) -> SolaXModbusTimeEntity:
+                return SolaXModbusTimeEntity(hub_name, hub, modbus_addr, di, ti)
+
+            time_entity = factory()
             if time_info.write_method == WRITE_DATA_LOCAL:
                 if time_info.initvalue is not None:
                     hub.data[time_info.key] = time_info.initvalue
                 hub.writeLocals[time_info.key] = time_info
-            hub.timeEntities[time_info.key] = time_entity
-            entities.append(time_entity)
+            active = matches_active_when(hub, time_info)
+            if time_info.active_when is not None:
+                hub.register_gated_entity(time_info, factory, async_add_entities, hub.timeEntities, "time", time_entity if active else None)
+            if active:
+                hub.timeEntities[time_info.key] = time_entity
+                entities.append(time_entity)
+            else:
+                hub.timeEntities.pop(time_info.key, None)
 
     async_add_entities(entities)
 

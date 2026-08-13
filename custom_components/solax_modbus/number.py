@@ -21,6 +21,7 @@ from .const import (
     WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     BaseModbusNumberEntityDescription,
+    matches_active_when,
     matches_modbus_protocol,
 )
 
@@ -52,10 +53,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             ) in number_info.read_scale_exceptions:
                 if hub.seriesnumber.startswith(prefix):
                     newdescr = replace(number_info, read_scale=value)
-        if plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist) and matches_modbus_protocol(
-            hub, newdescr
+        if (
+            plugin.matchInverterWithMask(hub._invertertype, newdescr.allowedtypes, hub.seriesnumber, newdescr.blacklist)
+            and matches_modbus_protocol(hub, newdescr)
+            and hub.device_group_enabled(newdescr.device_group)
         ):
-            number = SolaXModbusNumber(hub_name, hub, modbus_addr, hub.device_info, newdescr)
+            device_info = hub.group_device_info(newdescr.device_group) if newdescr.device_group else hub.device_info
+
+            def factory(di: Any = device_info, nd: Any = newdescr) -> SolaXModbusNumber:
+                return SolaXModbusNumber(hub_name, hub, modbus_addr, di, nd)
+
+            number = factory()
             if newdescr.write_method == WRITE_DATA_LOCAL:
                 hub.writeLocals[newdescr.key] = newdescr
             # Use the explicit sensor_key if provided, otherwise fall back to the number's own key.
@@ -79,8 +87,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     if dep_on != newdescr.key:
                         hub.entity_dependencies.setdefault(dep_on, []).append(newdescr.key)  # can be more than one
 
-            hub.numberEntities[newdescr.key] = number
-            entities.append(number)
+            active = matches_active_when(hub, newdescr)
+            if newdescr.active_when is not None:
+                hub.register_gated_entity(newdescr, factory, async_add_entities, hub.numberEntities, "number", number if active else None)
+            if active:
+                hub.numberEntities[newdescr.key] = number
+                entities.append(number)
+            else:
+                hub.numberEntities.pop(newdescr.key, None)
     async_add_entities(entities)
     return True
 
@@ -190,6 +204,15 @@ class SolaXModbusNumber(NumberEntity):
     @property
     def unique_id(self) -> str | None:
         return f"{self._platform_name}_{self._key}"
+
+    @property
+    def native_max_value(self) -> float:
+        max_key = self.entity_description.max_key
+        if max_key:
+            value = self._hub.data.get(max_key)
+            if value:
+                return float(value)
+        return self._attr_native_max_value
 
     @property
     def native_value(self) -> float | None:

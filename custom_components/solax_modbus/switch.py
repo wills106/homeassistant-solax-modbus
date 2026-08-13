@@ -18,6 +18,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     WRITE_MULTISINGLE_MODBUS,
     BaseModbusSwitchEntityDescription,
+    matches_active_when,
     matches_modbus_protocol,
 )
 
@@ -37,10 +38,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities = []
 
     for switch_info in plugin.SWITCH_TYPES:
-        if plugin.matchInverterWithMask(
-            hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist
-        ) and matches_modbus_protocol(hub, switch_info):
-            switch = SolaXModbusSwitch(hub_name, hub, modbus_addr, hub.device_info, switch_info)
+        if (
+            plugin.matchInverterWithMask(hub._invertertype, switch_info.allowedtypes, hub.seriesnumber, switch_info.blacklist)
+            and matches_modbus_protocol(hub, switch_info)
+            and hub.device_group_enabled(switch_info.device_group)
+        ):
+            device_info = hub.group_device_info(switch_info.device_group) if switch_info.device_group else hub.device_info
+
+            def factory(di: Any = device_info, si: Any = switch_info) -> SolaXModbusSwitch:
+                return SolaXModbusSwitch(hub_name, hub, modbus_addr, di, si)
+
+            switch = factory()
             if switch_info.value_function:
                 hub.computedSwitches[switch_info.key] = switch_info
             if switch_info.write_method == WRITE_DATA_LOCAL and switch_info.sensor_key is not None:
@@ -65,8 +73,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     if dep_on != switch_info.key:
                         hub.entity_dependencies.setdefault(dep_on, []).append(switch_info.key)  # can be more than one
 
-            hub.switchEntities[switch_info.key] = switch  # Store the switch entity
-            entities.append(switch)
+            active = matches_active_when(hub, switch_info)
+            if switch_info.active_when is not None:
+                hub.register_gated_entity(switch_info, factory, async_add_entities, hub.switchEntities, "switch", switch if active else None)
+            if active:
+                hub.switchEntities[switch_info.key] = switch
+                entities.append(switch)
+            else:
+                hub.switchEntities.pop(switch_info.key, None)
 
     providers = hass.data.get(DOMAIN, {}).get("_switch_entity_providers", [])
     for provider in providers:
@@ -144,6 +158,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = is_on
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
+        await self._hub.async_refresh_gated_entities()
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
