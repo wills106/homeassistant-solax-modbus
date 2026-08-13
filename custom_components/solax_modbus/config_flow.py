@@ -380,8 +380,9 @@ async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
     """Options schema without the feature switches the selected plugin does not implement."""
     plugin_name = handler.options.get(CONF_PLUGIN)
     hidden: set[str] = set()
-    if not _plugin_supports_device_group(plugin_name, "external_generator"):
-        hidden.add(CONF_READ_GEN)
+    for option, group in ((CONF_READ_DCB, "dry_contact"), (CONF_READ_GEN, "external_generator")):
+        if not _plugin_supports_device_group(plugin_name, group):
+            hidden.add(option)
     if not _plugin_supports_energy_dashboard(plugin_name):
         hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
     for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
