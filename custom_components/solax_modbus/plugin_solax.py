@@ -1907,6 +1907,10 @@ CHARGE_SCALE_EXCEPTIONS = [
     #    ('H1E', 1 ), # more specific entry comes last and wins
 ]
 
+MIN_SOC: list[tuple[str, int | float]] = [
+    ("10M", 0),  # Gen6 X1-VAST allow discharge to 0% per #2187
+]
+
 NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     ###
     #
@@ -2041,6 +2045,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
+        min_exceptions=MIN_SOC,
         initvalue=95,
         register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -2055,6 +2060,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
+        min_exceptions=MIN_SOC,
         initvalue=10,
         register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
@@ -2306,6 +2312,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=25,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
+        min_exceptions=MIN_SOC,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | EPS,
         icon="mdi:battery-charging-low",
     ),
@@ -2357,6 +2364,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
+        min_exceptions=MIN_SOC,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:battery-charging-low",
     ),
@@ -2519,6 +2527,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
+        min_exceptions=MIN_SOC,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
         icon="mdi:battery-charging-low",
     ),

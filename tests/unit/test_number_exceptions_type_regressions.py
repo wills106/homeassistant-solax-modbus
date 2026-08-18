@@ -137,6 +137,30 @@ def test_exception_value_used_as_native_max_value() -> None:
     assert isinstance(native_max_value, float)
 
 
+def test_exception_value_used_as_native_min_value() -> None:
+    """Test that exception values are used as native_min_value (float).
+
+    This documents why the exception values need to support float: they are
+    directly assigned to native_min_value which is typed as float in number.py.
+    """
+    max_exceptions: list[tuple[str, int | float]] = [
+        ("L30E", 15.0),
+        ("10M", 1.0),
+    ]
+
+    serial_number = "10M123456"
+    native_min_value: float = 10.0  # Default
+
+    # Simulate exception lookup and assignment
+    for prefix, value in max_exceptions:
+        if serial_number.startswith(prefix):
+            native_min_value = float(value)  # Must be float
+            break
+
+    assert native_min_value == 1.0
+    assert isinstance(native_min_value, float)
+
+
 def test_list_invariance_with_mixed_types() -> None:
     """Test that list invariance is satisfied with int | float union type.
 

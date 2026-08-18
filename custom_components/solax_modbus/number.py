@@ -122,6 +122,13 @@ class SolaXModbusNumber(NumberEntity):
             ) in number_info.max_exceptions:
                 if hub.seriesnumber.startswith(prefix):
                     self._attr_native_max_value = native_value
+        if number_info.min_exceptions:
+            for (
+                prefix,
+                native_value,
+            ) in number_info.min_exceptions:
+                if hub.seriesnumber.startswith(prefix):
+                    self._attr_native_min_value = native_value
         if number_info.min_exceptions_minus:
             for (
                 prefix,
