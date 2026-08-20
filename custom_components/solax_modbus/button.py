@@ -66,7 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                         hub.entity_dependencies.setdefault(dep_on, []).append(button_info.key)  # can be more than one
 
     async_add_entities(entities)
-    _LOGGER.info("hub.wakeuButton: %s", {hub.wakeupButton})
+    _LOGGER.info("hub.wakeuButton: %s", hub.wakeupButton)
     return True
 
 

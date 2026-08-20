@@ -455,14 +455,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         hass.data.get(DOMAIN, {}).pop(name, None)
     except Exception as ex:
-        _LOGGER.warning(": error removing from hass.data: ", name, ex)
+        _LOGGER.warning("%s: error removing from hass.data: %s", name, ex)
 
     try:
         from .energy_dashboard import get_energy_dashboard_coordinator
 
         get_energy_dashboard_coordinator(hass).unregister_hub(entry.entry_id)
     except Exception as ex:
-        _LOGGER.debug(": Energy Dashboard coordinator cleanup failed: ", name, ex)
+        _LOGGER.debug("%s: Energy Dashboard coordinator cleanup failed: %s", name, ex)
 
     return unload_ok
 
