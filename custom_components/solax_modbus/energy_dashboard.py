@@ -328,7 +328,7 @@ class EnergyDashboardSensorMapping:
         value = datadict.get(source_key, None)
         if value is None:
             _LOGGER.debug("Source sensor %s not found or has no value, marking unavailable", source_key)
-            return 0
+            return None
 
         # Apply filter function first (universal - applies to all sensor types)
         if self.filter_function:
