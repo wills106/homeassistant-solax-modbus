@@ -133,7 +133,7 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
             last_value = soc_last_known_values.get(descr.key)
             if last_value is not None and last_value > 5:
                 # Only treat zero as invalid when a real SoC was seen before.
-                _LOGGER.warning(f"SoC zero reading for {descr.key} -> using last: {last_value}%")
+                _LOGGER.warning("SoC zero reading for %s -> using last: %s%%", descr.key, last_value)
                 return last_value
             return value
 
@@ -145,13 +145,13 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
         # Handle None from core errors
         if value is None:
             last_value = pm_last_known_values.get(descr.key, 0)
-            _LOGGER.warning(f"PM sensor {descr.key} received None -> using last: {last_value}W")
+            _LOGGER.warning("PM sensor %s received None -> using last: %sW", descr.key, last_value)
             return last_value
 
         # Handle U32 overflow pattern
         if value >= 0xFFFFFF00:
             last_value = pm_last_known_values.get(descr.key, 0)
-            _LOGGER.warning(f"PM U32 overflow {descr.key}: 0x{value:08X} -> using last: {last_value}W")
+            _LOGGER.warning("PM U32 overflow %s: 0x%08X -> using last: %sW", descr.key, value, last_value)
             return last_value
 
         # Store valid values for future use
@@ -188,10 +188,10 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x} data: {inverter_data}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read serialnumber failed at 0x%x data: %s", hub.name, address, inverter_data, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}")
+        _LOGGER.warning("%s: reading serial number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x serial number: %s", hub.name, address, res)
     return res
 
 
@@ -214,17 +214,17 @@ async def async_read_modbus_protocol_version(hub: Any) -> int:
         if inverter_data is not None and not inverter_data.isError():
             version = int(inverter_data.registers[0])
     except Exception:
-        _LOGGER.debug(f"{hub.name}: attempt to read Modbus protocol version failed data: {inverter_data}", exc_info=True)
+        _LOGGER.debug("%s: attempt to read Modbus protocol version failed data: %s", hub.name, inverter_data, exc_info=True)
 
     if 0 < version < 1000:
         hub.modbus_protocol_version = version
         data["modbus_protocol_version"] = version
-        _LOGGER.info(f"{hub.name}: Modbus protocol document version detected: {version}")
+        _LOGGER.info("%s: Modbus protocol document version detected: %s", hub.name, version)
         return version
 
     hub.modbus_protocol_version = None
     data.pop("modbus_protocol_version", None)
-    _LOGGER.debug(f"{hub.name}: Modbus protocol document version unavailable")
+    _LOGGER.debug("%s: Modbus protocol document version unavailable", hub.name)
     return 0
 
 
@@ -247,18 +247,18 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
             data["firmware_arm"] = int(registers[6])
             data["bootloader_version"] = int(registers[7])
     except Exception:
-        _LOGGER.debug(f"{hub.name}: attempt to read inverter firmware info failed data: {inverter_data}", exc_info=True)
+        _LOGGER.debug("%s: attempt to read inverter firmware info failed data: %s", hub.name, inverter_data, exc_info=True)
 
     if 0 < version < 1000:
         hub.modbus_protocol_version = version
         data["modbus_protocol_version"] = version
-        _LOGGER.info(f"{hub.name}: Modbus protocol document version detected: {version}")
+        _LOGGER.info("%s: Modbus protocol document version detected: %s", hub.name, version)
     else:
         hub.modbus_protocol_version = None
         data.pop("modbus_protocol_version", None)
         data.pop("firmware_version_dsp", None)
         data.pop("firmware_version_arm", None)
-        _LOGGER.debug(f"{hub.name}: Modbus protocol document version unavailable")
+        _LOGGER.debug("%s: Modbus protocol document version unavailable", hub.name)
         return 0
 
     if version >= 100:
@@ -269,7 +269,7 @@ async def async_read_inverter_firmware_info(hub: Any) -> int:
                 data["firmware_version_dsp"] = int(full_version_data.registers[0])
                 data["firmware_version_arm"] = int(full_version_data.registers[1])
         except Exception:
-            _LOGGER.debug(f"{hub.name}: attempt to read full firmware version failed data: {full_version_data}", exc_info=True)
+            _LOGGER.debug("%s: attempt to read full firmware version failed data: %s", hub.name, full_version_data, exc_info=True)
     else:
         data.pop("firmware_version_dsp", None)
         data.pop("firmware_version_arm", None)
@@ -366,9 +366,11 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load
 
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Parallel mode detected (Master): "
-            f"PM total inverter={inverter_power}W, PM total PV={pv_power}W, "
-            f"PM battery={battery_power_charge}W, PM house_load={house_load}W"
+            "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house_load=%sW",
+            inverter_power,
+            pv_power,
+            battery_power_charge,
+            house_load,
         )
     elif parallel_setting == "Slave":
         # Slaves should not execute remote control
@@ -382,18 +384,24 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         house_load = inverter_power - measured_power  # Single inverter house load calculation
 
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Single inverter mode: "
-            f"inverter_power={inverter_power}W, pv_power={pv_power}W, "
-            f"battery_power_charge={battery_power_charge}W, house_load={house_load}W"
+            "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
+            inverter_power,
+            pv_power,
+            battery_power_charge,
+            house_load,
         )
 
     # Debug logging: Input state
     _LOGGER.debug(
-        "[REMOTE_CONTROL] Input state: "
-        f"power_control={power_control} target={target}W "
-        f"import_limit={import_limit}W export_limit={export_limit}W "
-        f"measured_power={measured_power}W pv_power={pv_power}W "
-        f"house_load={house_load}W battery_capacity={battery_capacity}%"
+        "[REMOTE_CONTROL] Input state: power_control=%s target=%sW import_limit=%sW export_limit=%sW measured_power=%sW pv_power=%sW house_load=%sW battery_capacity=%s%%",
+        power_control,
+        target,
+        import_limit,
+        export_limit,
+        measured_power,
+        pv_power,
+        house_load,
+        battery_capacity,
     )
 
     # Calculate ap_target based on control mode
@@ -453,7 +461,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         ap_target = target
 
     # Debug logging: Target calculation
-    _LOGGER.debug(f"[REMOTE_CONTROL] Target calculation: mode={power_control} ap_target={ap_target}W")
+    _LOGGER.debug("[REMOTE_CONTROL] Target calculation: mode=%s ap_target=%sW", power_control, ap_target)
 
     # Phase envelope protection: Calculate safe ap_target based on phase limits
     # Get phase-specific data
@@ -503,9 +511,14 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3][worst_phase_idx]
 
         _LOGGER.debug(
-            f"[REMOTE_CONTROL] Phase currents - Measured: L1={measured_current_l1:.2f}A L2={measured_current_l2:.2f}A L3={measured_current_l3:.2f}A | "
-            f"House: L1={house_current_l1:.2f}A L2={house_current_l2:.2f}A L3={house_current_l3:.2f}A | "
-            f"worst=L{worst_phase_idx + 1}"
+            "[REMOTE_CONTROL] Phase currents - Measured: L1=%.2fA L2=%.2fA L3=%.2fA | House: L1=%.2fA L2=%.2fA L3=%.2fA | worst=L%s",
+            measured_current_l1,
+            measured_current_l2,
+            measured_current_l3,
+            house_current_l1,
+            house_current_l2,
+            house_current_l3,
+            worst_phase_idx + 1,
         )
 
         # Calculate safe ap_target for IMPORTS to keep worst phase below 59.85A
@@ -519,15 +532,20 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
             safe_ap_target_from_phase = remaining_current_A * 3 * avg_voltage
 
             _LOGGER.debug(
-                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx + 1} house={worst_phase_house_current:.2f}A "
-                f"limit={max_phase_current_limit:.2f}A remaining={remaining_current_A:.2f}A "
-                f"safe_ap_target={safe_ap_target_from_phase:.1f}W"
+                "[REMOTE_CONTROL] Phase protection (import): L%s house=%.2fA limit=%.2fA remaining=%.2fA safe_ap_target=%.1fW",
+                worst_phase_idx + 1,
+                worst_phase_house_current,
+                max_phase_current_limit,
+                remaining_current_A,
+                safe_ap_target_from_phase,
             )
         else:
             safe_ap_target_from_phase = 0
             _LOGGER.warning(
-                f"[REMOTE_CONTROL] Phase protection (import): L{worst_phase_idx + 1} house={worst_phase_house_current:.2f}A "
-                f"at or above limit {max_phase_current_limit:.2f}A - blocking imports"
+                "[REMOTE_CONTROL] Phase protection (import): L%d house=%.2fA at or above limit %.2fA - blocking imports",
+                worst_phase_idx + 1,
+                worst_phase_house_current,
+                max_phase_current_limit,
             )
 
         # Calculate safe ap_target for EXPORTS to keep best phase below 59.85A
@@ -544,9 +562,11 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         safe_ap_target_export_from_phase = -(safe_export_total_current * avg_voltage)
 
         _LOGGER.debug(
-            f"[REMOTE_CONTROL] Phase protection (export): L{best_phase_idx + 1} house={min_phase_house_current:.2f}A "
-            f"(lowest) limit={max_phase_current_limit:.2f}A "
-            f"safe_ap_target={safe_ap_target_export_from_phase:.1f}W (negative)"
+            "[REMOTE_CONTROL] Phase protection (export): L%s house=%.2fA (lowest) limit=%.2fA safe_ap_target=%.1fW (negative)",
+            best_phase_idx + 1,
+            min_phase_house_current,
+            max_phase_current_limit,
+            safe_ap_target_export_from_phase,
         )
 
     # Apply bounds checking based on ap_target sign
@@ -562,8 +582,12 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = min(ap_target, import_bound)
         _LOGGER.debug(
-            f"[REMOTE_CONTROL] Import bounds: ap_target={ap_target}W import_bound={import_bound}W "
-            f"import_limit={import_limit}W house_load={house_load}W total_import={ap_target + house_load}W"
+            "[REMOTE_CONTROL] Import bounds: ap_target=%sW import_bound=%sW import_limit=%sW house_load=%sW total_import=%sW",
+            ap_target,
+            import_bound,
+            import_limit,
+            house_load,
+            ap_target + house_load,
         )
     elif ap_target < 0:
         # Exporting (negative = export).
@@ -576,17 +600,21 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = max(ap_target, export_bound)
         _LOGGER.debug(
-            f"[REMOTE_CONTROL] Export bounds: ap_target={ap_target}W export_bound={export_bound}W "
-            f"export_limit={export_limit}W house_load={house_load}W"
+            "[REMOTE_CONTROL] Export bounds: ap_target=%sW export_bound=%sW export_limit=%sW house_load=%sW",
+            ap_target,
+            export_bound,
+            export_limit,
+            house_load,
         )
     # If ap_target = 0, no bounds checking needed
 
     # Debug logging: Bounds checking
     if old_ap_target != ap_target:
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Bounds checking: "
-            f"initial_ap_target={old_ap_target}W final_ap_target={ap_target}W "
-            f"adjusted_by={old_ap_target - ap_target}W"
+            "[REMOTE_CONTROL] Bounds checking: initial_ap_target=%sW final_ap_target=%sW adjusted_by=%sW",
+            old_ap_target,
+            ap_target,
+            old_ap_target - ap_target,
         )
 
     # Prepare result data
@@ -605,7 +633,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     if power_control == "Disabled":
         autorepeat_stop(datadict, "remotecontrol_trigger")
 
-    _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
+    _LOGGER.debug("Evaluated remotecontrol_trigger: corrected/clamped values: %s", res)
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
@@ -734,14 +762,22 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Debug inputs
         _LOGGER.debug(
-            f"[Mode8 Negative Injection] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) imp_lim={import_limit}W "
-            f"soc={battery_capacity}% min_soc={min_discharge_soc}% max_soc={max_charge_soc}% cur_pvlimit={cur_pvlimit}W "
-            f"last_push={cur_push}W battery_charge={battery_charge}W"
+            "[Mode8 Negative Injection] inputs pv=%sW hl=%sW hl_alt=%sW (using hl) imp_lim=%sW soc=%s%% min_soc=%s%% max_soc=%s%% cur_pvlimit=%sW last_push=%sW battery_charge=%sW",
+            pv,
+            houseload,
+            houseload_alt,
+            import_limit,
+            battery_capacity,
+            min_discharge_soc,
+            max_charge_soc,
+            cur_pvlimit,
+            cur_push,
+            battery_charge,
         )
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
-        _LOGGER.debug(f"[Mode8 Negative Injection] probes: measured_power={measured_power if measured_power is not None else 'n/a'} ")
+        _LOGGER.debug("[Mode8 Negative Injection] probes: measured_power=%s", measured_power if measured_power is not None else "n/a")
 
         if pv >= hl or cur_pvlimit < min(setpvlimit, pv_threshold):
             # Surplus or limited pv path: battery is requested to charge at up to the rate
@@ -793,10 +829,20 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit)
 
             _LOGGER.debug(
-                f"[Mode8 Negative Injection] {control_state}: surplus={surplus}W measured_power={measured_power}W "
-                f"export_target={export_target}W error={error}W pvtarget={target_pvlimit}W reason={control_reason} "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W desired_charge={desired_charge}W -> charge={selected_charge}W "
-                f"pvlimit={pvlimit}W hl={hl}W"
+                "[Mode8 Negative Injection] %s: surplus=%sW measured_power=%sW export_target=%sW error=%sW pvtarget=%sW reason=%s bms_cap≈%sW pct_cap=%sW desired_charge=%sW -> charge=%sW pvlimit=%sW hl=%sW",
+                control_state,
+                surplus,
+                measured_power,
+                export_target,
+                error,
+                target_pvlimit,
+                control_reason,
+                bms_cap_w,
+                pct_cap_w,
+                desired_charge,
+                selected_charge,
+                pvlimit,
+                hl,
             )
 
         else:
@@ -812,8 +858,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 desired_charge = 0
                 pushmode_power = 0
             _LOGGER.debug(
-                f"[Mode8 Negative Injection] deficit: deficit={deficit}W export_target={export_target}W "
-                f"soc={battery_capacity}% desired_charge={desired_charge}W -> chosen_push={pushmode_power}W"
+                "[Mode8 Negative Injection] deficit: deficit=%sW export_target=%sW soc=%s%% desired_charge=%sW -> chosen_push=%sW",
+                deficit,
+                export_target,
+                battery_capacity,
+                desired_charge,
+                pushmode_power,
             )
     elif power_control == "Negative Injection and Consumption Price":
         # Disables PV and charges as fast as possible from the grid
@@ -826,8 +876,14 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         current_charge = -cur_push
         # Debug inputs
         _LOGGER.debug(
-            f"[Mode8 Negative Injection and Consumption Price] inputs hl={houseload}W hl_alt={houseload_alt}W (using hl) imp_lim={import_limit}W "
-            f"soc={battery_capacity}% max_soc={max_charge_soc}% last_push={current_charge}W battery_charge={battery_charge}W"
+            "[Mode8 Negative Injection and Consumption Price] inputs hl=%sW hl_alt=%sW (using hl) imp_lim=%sW soc=%s%% max_soc=%s%% last_push=%sW battery_charge=%sW",
+            houseload,
+            houseload_alt,
+            import_limit,
+            battery_capacity,
+            max_charge_soc,
+            current_charge,
+            battery_charge,
         )
         # Use the alternative house load for house load measurement, clamping to strict positive values,
         # to determine maximum available power from the grid
@@ -840,8 +896,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pushmode_power = -selected_charge
 
         _LOGGER.debug(
-            f"[Mode8 Negative Injection and Consumption Price] charge: available={available}W within_bms={max_charge}W "
-            f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
+            "[Mode8 Negative Injection and Consumption Price] charge: available=%sW within_bms=%sW bms_cap≈%sW pct_cap=%sW -> charge=%sW",
+            available,
+            max_charge,
+            bms_cap_w,
+            pct_cap_w,
+            desired_charge,
         )
     elif power_control == "Enabled Feedin Priority":
         pvlimit = setpvlimit
@@ -862,7 +922,14 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pushmode_power = 0  # + = discharge, - = charge
 
         # Debug inputs
-        _LOGGER.debug(f"[Mode8 No-Discharge] inputs pv={pv}W hl={houseload}W soc={battery_capacity}% max_soc={max_charge_soc}% pvlimit={pvlimit}W")
+        _LOGGER.debug(
+            "[Mode8 No-Discharge] inputs pv=%sW hl=%sW soc=%s%% max_soc=%s%% pvlimit=%sW",
+            pv,
+            houseload,
+            battery_capacity,
+            max_charge_soc,
+            pvlimit,
+        )
 
         # Surplus path: charge battery (within BMS and user cap), exporting any excess.
         if pv >= houseload:
@@ -881,9 +948,15 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 surplus_export = export_limit
 
             _LOGGER.debug(
-                f"[Mode8 No-Discharge] charge-first: surplus={surplus}W within_bms={max_charge}W "
-                f"surplus_export={surplus_export}W within_cap={export_within_cap}W pvlimit={pvlimit}W "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W"
+                "[Mode8 No-Discharge] charge-first: surplus=%sW within_bms=%sW surplus_export=%sW within_cap=%sW pvlimit=%sW bms_cap≈%sW pct_cap=%sW -> charge=%sW",
+                surplus,
+                max_charge,
+                surplus_export,
+                export_within_cap,
+                pvlimit,
+                bms_cap_w,
+                pct_cap_w,
+                desired_charge,
             )
 
         else:
@@ -891,11 +964,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             deficit = houseload - pv
 
             pushmode_power = 0
-            _LOGGER.debug(f"[Mode8 No-Discharge] deficit: deficit={deficit}W hold-soc={battery_capacity}% chosen_push={pushmode_power}W")
+            _LOGGER.debug("[Mode8 No-Discharge] deficit: deficit=%sW hold-soc=%s%% chosen_push=%sW", deficit, battery_capacity, pushmode_power)
 
         # Final debug and state
         net_flow = min(pvlimit, pv) - houseload + pushmode_power
-        _LOGGER.debug(f"[Mode8 No-Discharge] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
+        _LOGGER.debug("[Mode8 No-Discharge] result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow)
 
     elif power_control == "Export-First Battery Limit":
         # --- Export-First Battery Limit (Mode 8 custom) ---
@@ -938,10 +1011,20 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Debug inputs
         _LOGGER.debug(
-            f"[Mode8 Export-First] inputs pv={pv}W hl={houseload}W hl_alt={houseload_alt}W (using hl) exp_lim={export_limit}W "
-            f"exp_avail={export_available}W exp_target={export_target}W imp_lim={import_limit}W soc={battery_capacity}% "
-            f"min_soc={min_discharge_soc}% max_soc={max_charge_soc}% pvlimit={pvlimit}W last_push={last_push}W "
-            f"battery_charge={battery_charge}W"
+            "[Mode8 Export-First] inputs pv=%sW hl=%sW hl_alt=%sW (using hl) exp_lim=%sW exp_avail=%sW exp_target=%sW imp_lim=%sW soc=%s%% min_soc=%s%% max_soc=%s%% pvlimit=%sW last_push=%sW battery_charge=%sW",
+            pv,
+            houseload,
+            houseload_alt,
+            export_limit,
+            export_available,
+            export_target,
+            import_limit,
+            battery_capacity,
+            min_discharge_soc,
+            max_charge_soc,
+            pvlimit,
+            last_push,
+            battery_charge,
         )
 
         # Optional probes (if available)
@@ -949,10 +1032,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         grid_export_s = datadict.get("grid_export", None)
         grid_import_s = datadict.get("grid_import", None)
         _LOGGER.debug(
-            "[Mode8 Export-First] probes: "
-            f"measured_power={measured_power if measured_power is not None else 'n/a'} "
-            f"grid_export={grid_export_s if grid_export_s is not None else 'n/a'} "
-            f"grid_import={grid_import_s if grid_import_s is not None else 'n/a'}"
+            "[Mode8 Export-First] probes: measured_power=%s grid_export=%s grid_import=%s",
+            measured_power if measured_power is not None else "n/a",
+            grid_export_s if grid_export_s is not None else "n/a",
+            grid_import_s if grid_import_s is not None else "n/a",
         )
 
         if pv >= hl:
@@ -991,9 +1074,18 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             pv_clamp_target = pvlimit
 
             _LOGGER.debug(
-                f"[Mode8 Export-First] export-first: surplus={surplus}W measured_export={measured_export}W "
-                f"target={export_target}W error={error}W step={step_w}W reason={control_reason} "
-                f"bms_cap≈{bms_cap_w}W pct_cap={pct_cap_w}W -> charge={desired_charge}W pv_clamp_target={pv_clamp_target}W hl={hl}W"
+                "[Mode8 Export-First] export-first: surplus=%sW measured_export=%sW target=%sW error=%sW step=%sW reason=%s bms_cap≈%sW pct_cap=%sW -> charge=%sW pv_clamp_target=%sW hl=%sW",
+                surplus,
+                measured_export,
+                export_target,
+                error,
+                step_w,
+                control_reason,
+                bms_cap_w,
+                pct_cap_w,
+                desired_charge,
+                pv_clamp_target,
+                hl,
             )
 
         else:
@@ -1003,7 +1095,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 pushmode_power = min(deficit, 30000)
             else:
                 pushmode_power = 0
-            _LOGGER.debug(f"[Mode8 Export-First] deficit: deficit={deficit}W soc={battery_capacity}% chosen_push={pushmode_power}W")
+            _LOGGER.debug("[Mode8 Export-First] deficit: deficit=%sW soc=%s%% chosen_push=%sW", deficit, battery_capacity, pushmode_power)
 
         # If we still see export while discharging, trim discharge a bit.
         if pv < hl and pushmode_power > 0:
@@ -1015,19 +1107,21 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 nudge = min(measured_export, max_step_w)
                 pushmode_power = max(0, pushmode_power - nudge)
                 _LOGGER.debug(
-                    f"[Mode8 Export-First] discharge feedback: -{nudge}W (measured_export={measured_export}W) to reduce grid export while discharging"
+                    "[Mode8 Export-First] discharge feedback: -%sW (measured_export=%sW) to reduce grid export while discharging",
+                    nudge,
+                    measured_export,
                 )
 
         # Safety: do not discharge above the instantaneous deficit.
         if pv < hl:
             deficit_now = hl - pv
             if pushmode_power > deficit_now:
-                _LOGGER.debug(f"[Mode8 Export-First] clamp discharge to deficit: push={pushmode_power}W -> {deficit_now}W (pv={pv} hl={hl})")
+                _LOGGER.debug("[Mode8 Export-First] clamp discharge to deficit: push=%sW -> %sW (pv=%s hl=%s)", pushmode_power, deficit_now, pv, hl)
                 pushmode_power = deficit_now
 
         # Final debug and state
         net_flow = pv - hl + pushmode_power
-        _LOGGER.debug(f"[Mode8 Export-First] result: push={pushmode_power}W pvlimit={pvlimit}W net_flow={net_flow}W (>0 export, <0 import)")
+        _LOGGER.debug("[Mode8 Export-First] result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow)
         datadict["_mode8_last_push"] = pushmode_power
     elif power_control == "Enabled Grid Control":
         pushmode_power = pushmode_power + houseload - pv
@@ -1043,7 +1137,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pushmode_power = pushmode_power + excess_import  # reduce import
 
     if old_pushmode_power != pushmode_power:
-        _LOGGER.debug(f"import shaving: old_pushmode_power:{old_pushmode_power} new pushmode_power:{pushmode_power}")
+        _LOGGER.debug("import shaving: old_pushmode_power:%s new pushmode_power:%s", old_pushmode_power, pushmode_power)
     # res sequence only valid for mode 8 and  submodes of mode 8
     res = [
         (
@@ -1078,7 +1172,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     datadict["remotecontrol_current_pushmode_power"] = pushmode_power
     datadict["remotecontrol_current_pv_power_limit"] = pvlimit
     if initval != BUTTONREPEAT_FIRST and curmode != "Individual Setting - Duration Mode":
-        _LOGGER.warning(f"autorepeat mode 8 changed curmode: {curmode}; battery: {battery_capacity}; mode: {power_control}")
+        _LOGGER.warning("autorepeat mode 8 changed curmode: %s; battery: %s; mode: %s", curmode, battery_capacity, power_control)
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
         _LOGGER.info("Stopping mode 8 loop by disabling mode 8")
@@ -1094,7 +1188,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         }  # was 0x7C
         # datadict["remotecontrol_power_control"] = "Disabled" # disable the remotecontrol Mode 1 loop
         # autorepeat_stop_with_postaction(datadict,"remotecontrol_trigger") # trigger the remotecontrol mode 1 button for a single BUTTONREPEAT_POST action
-    _LOGGER.debug(f"Evaluated remotecontrol_mode8_trigger: corrected/clamped values: {res}")
+    _LOGGER.debug("Evaluated remotecontrol_mode8_trigger: corrected/clamped values: %s", res)
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
 
@@ -1167,12 +1261,12 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
     result = inverter_power - measured_power + meter_2_power
 
     _LOGGER.debug(
-        "[HOUSE_LOAD] Calculation: "
-        f"inverter_power={inverter_power}W "
-        f"measured_power={measured_power}W "
-        f"meter_2_power={meter_2_power}W "
-        f"result={result}W "
-        f"meter_1_direction={datadict.get('meter_1_direction', 'unknown')}"
+        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW meter_2_power=%sW result=%sW meter_1_direction=%s",
+        inverter_power,
+        measured_power,
+        meter_2_power,
+        result,
+        datadict.get("meter_1_direction", "unknown"),
     )
 
     return result
@@ -2142,11 +2236,11 @@ class solax_lv_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         self.inverter_model = None
         seriesnumber = await async_read_serialnr(hub, 0x32)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find any serial number(s)")
+            _LOGGER.error("%s: cannot find any serial number(s)", hub.name)
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
@@ -2158,7 +2252,7 @@ class solax_lv_plugin(plugin_base):
             self.inverter_model = f"X1-Lite-LV {seriesnumber[4:5]}.{seriesnumber[5:6]}kW"
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+            _LOGGER.error("unrecognized inverter type - serial number : %s", seriesnumber)
 
         hub.inverter_model = self.inverter_model if invertertype > 0 else None
         hub._has_local_inverter_model = True
@@ -2222,7 +2316,7 @@ class solax_lv_plugin(plugin_base):
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
             if new_read_scale is not None:
-                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
+                _LOGGER.info("local data update callback for read_scale: %s enabled: %s", new_read_scale, config_scale_entity.enabled)
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -2254,7 +2348,7 @@ class solax_lv_plugin(plugin_base):
                             native_min_value=0,
                             native_max_value=system_limit_w,
                         )
-                        _LOGGER.info(f"Parallel Master: Set {key} limits to 0-{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+                        _LOGGER.info("Parallel Master: Set %s limits to 0-%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
                     else:
                         number_entity._attr_native_min_value = -system_limit_w
                         number_entity._attr_native_max_value = system_limit_w
@@ -2263,7 +2357,7 @@ class solax_lv_plugin(plugin_base):
                             native_min_value=-system_limit_w,
                             native_max_value=system_limit_w,
                         )
-                        _LOGGER.info(f"Parallel Master: Set {key} limits to ±{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+                        _LOGGER.info("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
 
         # For single inverters or if config_max_export is enabled, use config_max_export.
         # Parallel Master remote-control limits are handled above using total system power,
@@ -2293,7 +2387,7 @@ class solax_lv_plugin(plugin_base):
                         number_entity.entity_description,
                         native_max_value=new_max_export,
                     )
-                    _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+                    _LOGGER.info("local data update callback for entity: %s new limit: %s", key, new_max_export)
 
         return False
 

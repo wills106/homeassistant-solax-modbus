@@ -936,25 +936,25 @@ class sunway_plugin(plugin_base):
         return run_mode in ("On Grid", "Off Grid")
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine SunWay inverter type")
+        _LOGGER.info("%s: trying to determine SunWay inverter type", hub.name)
 
         inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=10000, count=4)
 
         if inverter_data is None or inverter_data.isError():
-            _LOGGER.error(f"{hub.name}: could not read serial number from address 10000. Please check connection and Modbus address.")
+            _LOGGER.error("%s: could not read serial number from address 10000. Please check connection and Modbus address.", hub.name)
             return 0
 
         raw = convert_from_registers(inverter_data.registers[:4], DataType.STRING, "big")  # type: ignore[attr-defined]  # Dynamic enum aliasing
         seriesnumber = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
         seriesnumber = seriesnumber.strip()
         hub.seriesnumber = seriesnumber
-        _LOGGER.info(f"{hub.name}: Inverter serial number: {seriesnumber}")
+        _LOGGER.info("%s: Inverter serial number: %s", hub.name, seriesnumber)
 
         if seriesnumber:
             self.inverter_model = "STT-10KTL"
             return SUNWAY_STT_10KTL
         else:
-            _LOGGER.error(f"{hub.name}: could not determine inverter type, serial number is empty.")
+            _LOGGER.error("%s: could not determine inverter type, serial number is empty.", hub.name)
             return 0
 
     def matchInverterWithMask(

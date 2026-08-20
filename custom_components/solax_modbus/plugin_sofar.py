@@ -126,10 +126,10 @@ async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | 
                 res = str(ba, "ascii")  # convert back to string
             hub.seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read serialnumber failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+        _LOGGER.warning("%s: reading serial number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x serial number: %s, swapped: %s", hub.name, address, res, swapbytes)
     # return 'SP1ES2'
     return res
 
@@ -170,7 +170,7 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
     """Normalize known Sofar sentinel values before entities consume them."""
     if value == 0xFFFF and descr.key in _UNINITIALIZED_SELECT_DEFAULTS:
         normalized = _UNINITIALIZED_SELECT_DEFAULTS[descr.key]
-        _LOGGER.debug(f"Sofar: normalizing uninitialized register value for {descr.key} from 65535 to {normalized}")
+        _LOGGER.debug("Sofar: normalizing uninitialized register value for %s from 65535 to %s", descr.key, normalized)
         return normalized
     return value
 
@@ -4127,7 +4127,7 @@ class battery_config(base_battery_config):
     async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> bool:
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        _LOGGER.debug(f"select batt-nr: {batt_nr} batt-pack: {batt_pack_nr} {hex(payload)}")
+        _LOGGER.debug("select batt-nr: %s batt-pack: %s 0x%x", batt_nr, batt_pack_nr, payload)
         await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
         await asyncio.sleep(0.3)
         self.selected_batt_nr = batt_nr
@@ -4158,7 +4158,7 @@ class battery_config(base_battery_config):
     async def get_batt_pack_sw_version(self, hub: Any, new_data: dict[str, Any], key_prefix: str) -> str | None:
         sw_version_key = key_prefix + "bms_version"
         if not new_data.__contains__(sw_version_key):
-            _LOGGER.info(f"batt pack software version not received {sw_version_key}")
+            _LOGGER.info("batt pack software version not received %s", sw_version_key)
             return None
         return f"BMS: V{new_data[sw_version_key]}"
 
@@ -4199,14 +4199,14 @@ class battery_config(base_battery_config):
         if not inverter_data.isError():
             if inverter_data is not None and not inverter_data.isError():
                 new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
-                _LOGGER.debug(f"check_battery_on_end: {hex(new_value)} {hex(compare_value)}")
+                _LOGGER.debug("check_battery_on_end: 0x%x 0x%x", new_value, compare_value)
             if new_value == compare_value:
                 serial_key = key_prefix + "pack_serial_number"
                 if not new_data.__contains__(serial_key):
-                    _LOGGER.info(f"batt pack serial not received {serial_key}")
+                    _LOGGER.info("batt pack serial not received %s", serial_key)
                     return False
                 serial = new_data[serial_key]
-                _LOGGER.debug(f"batt pack serial: {serial}")
+                _LOGGER.debug("batt pack serial: %s", serial)
                 return bool(serial == self.batt_pack_serials[batt_nr][batt_pack_nr])
             else:
                 return False
@@ -4221,7 +4221,7 @@ class battery_config(base_battery_config):
                 self.number_cels_in_parallel = (val >> 8) & 0xFF  # high byte
                 self.number_strings = val & 0xFF  # low byte
         except Exception:
-            _LOGGER.warning(f"{hub.name}: attempt to read BaPack number failed at 0x{self.bapack_number_address:x}", exc_info=True)
+            _LOGGER.warning("%s: attempt to read BaPack number failed at 0x%x", hub.name, self.bapack_number_address, exc_info=True)
 
     async def init_batt_pack_serials(self, hub: Any) -> None:
         retry = 0
@@ -4242,7 +4242,7 @@ class battery_config(base_battery_config):
                     # type narrowing: serial is str | None, dict expects str
                     self.batt_pack_serials[batt_nr][batt_pack_nr] = serial  # type: ignore[assignment]  # serial can be None
 
-        _LOGGER.info(f"serials {self.batt_pack_serials}")
+        _LOGGER.info("serials %s", self.batt_pack_serials)
 
     async def _determinate_batt_pack_serial(self, hub: Any) -> str | None:
         inverter_data = await hub.async_read_holding_registers(
@@ -4269,10 +4269,10 @@ class sofar_plugin(plugin_base):
     """
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         seriesnumber = await async_read_serialnr(hub, 0x445, swapbytes=False)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            _LOGGER.error("%s: cannot find serial number, even not for other Inverter", hub.name)
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
@@ -4333,7 +4333,7 @@ class sofar_plugin(plugin_base):
 
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+            _LOGGER.error("unrecognized %s inverter type - serial number : %s", hub.name, seriesnumber)
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -4383,7 +4383,7 @@ class sofar_plugin(plugin_base):
                     native_min_value=0,
                     native_max_value=system_limit_w,
                 )
-                _LOGGER.info(f"Parallel Master: Set feedin_max_power limit to 0-{system_limit_w}W (inverter_power_kw={hub.inverterPowerKw}kW)")
+                _LOGGER.info("Parallel Master: Set feedin_max_power limit to 0-%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
         return True
 
 

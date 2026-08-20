@@ -114,10 +114,10 @@ async def _read_serialnr(hub: Any, address: int = 10000, count: int = 8, swapbyt
                 res = str(ba, "ascii")  # convert back to string
             hub._seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read serialnumber failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+        _LOGGER.warning("%s: reading serial number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x serial number: %s, swapped: %s", hub.name, address, res, swapbytes)
     return res
 
 
@@ -129,8 +129,8 @@ async def _read_model(hub: Any, address: int = 10008) -> int | None:
             res = convert_from_registers(inverter_data.registers[0:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
             hub._invertertype = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read model failed at 0x{address:x}", exc_info=True)
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} model: {res}")
+        _LOGGER.warning("%s: attempt to read model failed at 0x%x", hub.name, address, exc_info=True)
+    _LOGGER.info("Read %s 0x%x model: %s", hub.name, address, res)
     return res
 
 
@@ -1891,14 +1891,14 @@ class solinteg_plugin(plugin_base):
     """
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         seriesnumber = await _read_serialnr(hub)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            _LOGGER.error("%s: cannot find serial number, even not for other Inverter", hub.name)
 
         model = await _read_model(hub)
         if model is None or model == 0:
-            _LOGGER.error(f"{hub.name}: could not read inverter model")
+            _LOGGER.error("%s: could not read inverter model", hub.name)
             return 0
         else:
             self.inverter_model = _model_str(model)  # as string
@@ -1942,7 +1942,7 @@ class solinteg_plugin(plugin_base):
                     self.SENSOR_TYPES[i] = replace(ssensor, scale=lambda v, descr, dd: _fn_mppt_mask_ex(v, _mppt_mask))  # type: ignore
                     break
         except Exception:
-            _LOGGER.error(f"{hub.name}: unexpected error", exc_info=True)
+            _LOGGER.error("%s: unexpected error", hub.name, exc_info=True)
 
         read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
         read_dcb = configdict.get(CONF_READ_DCB, DEFAULT_READ_DCB)
@@ -1950,7 +1950,7 @@ class solinteg_plugin(plugin_base):
             invertertype = invertertype | EPS
         if read_dcb:
             invertertype = invertertype | DCB
-        _LOGGER.info(f"{hub.name}: inverter type: x{invertertype:x}, mppt count={mppt}")
+        _LOGGER.info("%s: inverter type: x%x, mppt count=%s", hub.name, invertertype, mppt)
 
         return invertertype
 

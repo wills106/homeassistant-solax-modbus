@@ -313,7 +313,7 @@ class EnergyDashboardSensorMapping:
             # Prefer PM totals on Primary when available.
             # Validate PM sensor exists before using it
             if self.source_key_pm not in datadict:
-                _LOGGER.warning(f"Parallel Master detected but PM sensor {self.source_key_pm} not found, falling back to {self.source_key}")
+                _LOGGER.warning("Parallel Master detected but PM sensor %s not found, falling back to %s", self.source_key_pm, self.source_key)
                 return self.source_key
             return self.source_key_pm  # Use PM sensor on Master
 
@@ -327,7 +327,7 @@ class EnergyDashboardSensorMapping:
         # This avoids resetting total increasing sensors and unintentionally breaking energy statistics.
         value = datadict.get(source_key, None)
         if value is None:
-            _LOGGER.debug(f"Source sensor {source_key} not found or has no value, marking unavailable")
+            _LOGGER.debug("Source sensor %s not found or has no value, marking unavailable", source_key)
             return None
 
         # Apply filter function first (universal - applies to all sensor types)
@@ -708,7 +708,7 @@ def _create_sensor_from_mapping(
         source_hub: Optional hub to read data from (if different from hub, e.g., for Slave sensors)
         name_prefix: Optional prefix to add to sensor name (e.g., "All ", "Solax 1 ")
     """
-    _LOGGER.debug(f"_create_sensor_from_mapping: name_prefix='{name_prefix}', target_key={sensor_mapping.target_key}")
+    _LOGGER.debug("_create_sensor_from_mapping: name_prefix='%s', target_key=%s", name_prefix, sensor_mapping.target_key)
     sensors = []
 
     # Use source_hub if provided, otherwise use hub
@@ -728,7 +728,7 @@ def _create_sensor_from_mapping(
                 return sensor_mapping.get_value(hub_data)
             except Exception as e:
                 hub_name = getattr(captured_hub, "_name", "Unknown")
-                _LOGGER.error(f"Error getting value for {sensor_mapping.target_key} from hub {hub_name}: {e}")
+                _LOGGER.error("Error getting value for %s from hub %s: %s", sensor_mapping.target_key, hub_name, e)
                 return None
 
         return value_function
@@ -862,7 +862,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
             master_value = sensor_mapping.get_value(master_data)
             total = master_value if master_value is not None else 0
         except Exception as e:
-            _LOGGER.debug(f"{master_name}: Error getting Master value for aggregation: {e}")
+            _LOGGER.debug("%s: Error getting Master value for aggregation: %s", master_name, e)
             total = 0
 
         # Sum all Slave values
@@ -870,7 +870,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
             try:
                 slave_data = getattr(slave_hub, "data", None) or getattr(slave_hub, "datadict", {})
                 if not slave_data:
-                    _LOGGER.debug(f"{master_name}: Slave hub '{slave_name}' has no data, using 0 for aggregation")
+                    _LOGGER.debug("%s: Slave hub '%s' has no data, using 0 for aggregation", master_name, slave_name)
                     continue
 
                 slave_value = sensor_mapping.get_value(slave_data)
@@ -878,7 +878,7 @@ def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMappi
                     total += slave_value
                 # If slave_value is None, treat as 0 (already handled by not adding)
             except Exception as e:
-                _LOGGER.debug(f"{master_name}: Error getting Slave '{slave_name}' value for aggregation: {e}, using 0")
+                _LOGGER.debug("%s: Error getting Slave '%s' value for aggregation: %s, using 0", master_name, slave_name, e)
                 # Continue with other Slaves (treat this Slave as 0)
 
         return total
@@ -929,14 +929,14 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
         default=False,
     )
     ed_is_master = is_master and not debug_standalone
-    _LOGGER.info(f"{hub_name}: Energy Dashboard sensor creation - parallel_setting={parallel_setting}, is_master={is_master}")
+    _LOGGER.info("%s: Energy Dashboard sensor creation - parallel_setting=%s, is_master=%s", hub_name, parallel_setting, is_master)
 
     # Find Slave hubs if this is a Master
     slave_hubs = []
     if ed_is_master and hass:
         slave_hubs = _find_slave_hubs(hass, hub)
         if slave_hubs:
-            _LOGGER.info(f"Found {len(slave_hubs)} registered Slave hub(s) for Energy Dashboard")
+            _LOGGER.info("Found %s registered Slave hub(s) for Energy Dashboard", len(slave_hubs))
         else:
             _LOGGER.debug("No Slave hubs found for Energy Dashboard (Master mode but no Slaves)")
     elif ed_is_master and not hass:
@@ -1147,7 +1147,7 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
             # Create "Solax 1" sensor (Master individual)
             # Check if individual sensors should be skipped
             _LOGGER.debug(
-                f"Master individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}"
+                "Master individual check: target_key=%s, skip_pm_individuals=%s", sensor_mapping.target_key, sensor_mapping.skip_pm_individuals
             )
             if not sensor_mapping.skip_pm_individuals:
                 # For Master individual, force use of non-PM sensor by setting source_key_pm=None
@@ -1176,7 +1176,9 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
 
             # Create "Solax 2/3" sensors from Slave hubs
             # Check if individual sensors should be skipped
-            _LOGGER.debug(f"Slave individual check: target_key={sensor_mapping.target_key}, skip_pm_individuals={sensor_mapping.skip_pm_individuals}")
+            _LOGGER.debug(
+                "Slave individual check: target_key=%s, skip_pm_individuals=%s", sensor_mapping.target_key, sensor_mapping.skip_pm_individuals
+            )
             if not sensor_mapping.skip_pm_individuals:
                 for slave_name, slave_hub in slave_hubs:
                     sensors.extend(
@@ -1254,12 +1256,12 @@ def validate_mapping(mapping: EnergyDashboardMapping) -> bool:
         bool: True if mapping is valid, False otherwise
     """
     if not mapping.mappings:
-        _LOGGER.error(f"Plugin {mapping.plugin_name}: No mappings defined")
+        _LOGGER.error("Plugin %s: No mappings defined", mapping.plugin_name)
         return False
 
     for sensor_mapping in mapping.mappings:
         if not sensor_mapping.source_key or not sensor_mapping.target_key:
-            _LOGGER.error(f"Invalid mapping: missing source_key or target_key for {mapping.plugin_name}")
+            _LOGGER.error("Invalid mapping: missing source_key or target_key for %s", mapping.plugin_name)
             return False
 
     return True

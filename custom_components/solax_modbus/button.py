@@ -47,7 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             if button_info.value_function:
                 hub.computedEntities[button_info.key] = button_info
             elif button_info.command is None:
-                _LOGGER.warning(f"button without command and without value_function found: {button_info.key}")
+                _LOGGER.warning("button without command and without value_function found: %s", button_info.key)
 
             # register dependency chain
             deplist = button_info.depends_on
@@ -60,13 +60,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     tuple,
                 ),
             ):
-                _LOGGER.debug(f"{hub.name}: {button_info.key} depends on entities {deplist}")
+                _LOGGER.debug("%s: %s depends on entities %s", hub.name, button_info.key, deplist)
                 for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
                     if dep_on != button_info.key:
                         hub.entity_dependencies.setdefault(dep_on, []).append(button_info.key)  # can be more than one
 
     async_add_entities(entities)
-    _LOGGER.info(f"hub.wakeuButton: {hub.wakeupButton}")
+    _LOGGER.info("hub.wakeuButton: %s", hub.wakeupButton)
     return True
 
 
@@ -110,7 +110,7 @@ class SolaXModbusButton(ButtonEntity):
     async def async_press(self) -> None:
         """Write the button value."""
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
+            _LOGGER.info("writing %s button register %s value %s", self._platform_name, self._register, self._command)
             await self._hub.async_write_registers_single(
                 unit=self._modbus_addr,
                 address=self._register,
@@ -118,7 +118,7 @@ class SolaXModbusButton(ButtonEntity):
                 register_data_type=getattr(self.button_info, "register_data_type", None),
             )
         elif self._write_method == WRITE_SINGLE_MODBUS:
-            _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {self._command}")
+            _LOGGER.info("writing %s button register %s value %s", self._platform_name, self._register, self._command)
             await self._hub.async_write_register(
                 unit=self._modbus_addr,
                 address=self._register,
@@ -137,8 +137,8 @@ class SolaXModbusButton(ButtonEntity):
                         data = res.get("data", None)
                         action = res.get("action")
                         if not action:
-                            _LOGGER.error(f"autorepeat value function for {self._key} must return dict containing action")
-                        _LOGGER.info(f"writing {self._platform_name} button register {self._register} value {res}")
+                            _LOGGER.error("autorepeat value function for %s must return dict containing action", self._key)
+                        _LOGGER.info("writing %s button register %s value %s", self._platform_name, self._register, res)
                         if action == WRITE_MULTI_MODBUS:
                             await self._hub.async_write_registers_multi(unit=self._modbus_addr, address=reg, payload=data)
                     else:

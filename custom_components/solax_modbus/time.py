@@ -113,18 +113,18 @@ class SolaXModbusTimeEntity(TimeEntity):
         """Parse common time string formats into a datetime.time object."""
         time_val = time_val.strip()
         if not time_val:
-            _LOGGER.debug(f"{self._platform_name}: empty time string for {self._key}")
+            _LOGGER.debug("%s: empty time string for %s", self._platform_name, self._key)
             return None
 
         for fmt in ["%H:%M", "%H:%M:%S", "%H:%M:%S.%f"]:
             try:
-                parsed = datetime.strptime(time_val, fmt)
-                _LOGGER.debug(f"{self._platform_name}: parsed {self._key} as {fmt}: {parsed.time()}")
-                return parsed.time()
+                parsed = datetime.strptime(time_val, fmt).time()
+                _LOGGER.debug("%s: parsed %s as %s: %s", self._platform_name, self._key, fmt, parsed)
+                return parsed
             except ValueError:
                 continue
 
-        _LOGGER.debug(f"{self._platform_name}: unrecognized time format for {self._key}: {time_val}")
+        _LOGGER.debug("%s: unrecognized time format for %s: %s", self._platform_name, self._key, time_val)
         return None
 
     def _parse_time_value(self) -> datetime_time | None:
@@ -136,11 +136,11 @@ class SolaXModbusTimeEntity(TimeEntity):
         # Use self._key directly for data lookup, consistent with select.py behavior
         # The sensor_key attribute is only used for dependency tracking, not data lookup
         if self._key not in self._hub.data:
-            _LOGGER.debug(f"{self._platform_name}: key {self._key} not in data")
+            _LOGGER.debug("%s: key %s not in data", self._platform_name, self._key)
             return None
 
         time_val = self._hub.data[self._key]
-        _LOGGER.debug(f"{self._platform_name}: parsing value for {self._key}, value={time_val}, type={type(time_val).__name__}")
+        _LOGGER.debug("%s: parsing value for %s, value=%s, type=%s", self._platform_name, self._key, time_val, type(time_val).__name__)
 
         # Handle datetime objects directly - extract the time component
         if isinstance(time_val, datetime):
@@ -157,10 +157,10 @@ class SolaXModbusTimeEntity(TimeEntity):
                 mapped_value = self._option_dict.get(payload)
                 if mapped_value is not None:
                     return self._parse_time_string(mapped_value)
-            _LOGGER.debug(f"{self._platform_name}: no time option mapping for {self._key} payload {payload}")
+            _LOGGER.debug("%s: no time option mapping for %s payload %s", self._platform_name, self._key, payload)
             return None
 
-        _LOGGER.debug(f"{self._platform_name}: time value for {self._key} is not a string or datetime: {type(time_val)}")
+        _LOGGER.debug("%s: time value for %s is not a string or datetime: %s", self._platform_name, self._key, type(time_val))
         return None
 
     @property
@@ -203,10 +203,10 @@ class SolaXModbusTimeEntity(TimeEntity):
                 break
 
         if payload is None:
-            _LOGGER.warning(f"{self._platform_name}: could not find payload for time {time_str}")
+            _LOGGER.warning("%s: could not find payload for time %s", self._platform_name, time_str)
             return
 
-        _LOGGER.info(f"writing {self._platform_name} time register {self._register} value {payload} with method {self._write_method}")
+        _LOGGER.info("writing %s time register %s value %s with method %s", self._platform_name, self._register, payload, self._write_method)
 
         if self._write_method == WRITE_MULTISINGLE_MODBUS:
             await self._hub.async_write_registers_single(unit=self._modbus_addr, address=self._register, payload=payload)
@@ -218,8 +218,12 @@ class SolaXModbusTimeEntity(TimeEntity):
                 hours = payload // 100
                 minutes = payload % 100
                 _LOGGER.info(
-                    f"{self._platform_name}: writing separate registers - hours={hours} to reg {self._register}, "
-                    f"minutes={minutes} to reg {self._register + 1}"
+                    "%s: writing separate registers - hours=%s to reg %s, minutes=%s to reg %s",
+                    self._platform_name,
+                    hours,
+                    self._register,
+                    minutes,
+                    self._register + 1,
                 )
                 # Write hours to first register
                 await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=hours)
@@ -229,7 +233,7 @@ class SolaXModbusTimeEntity(TimeEntity):
                 # Standard single register write
                 await self._hub.async_write_register(unit=self._modbus_addr, address=self._register, payload=payload)
         elif self._write_method == WRITE_DATA_LOCAL:
-            _LOGGER.info(f"*** local data written {self._key}: {time_str}")
+            _LOGGER.info("*** local data written %s: %s", self._key, time_str)
             self._hub.localsUpdated = True  # mark to save permanently
 
         self._hub.data[self._key] = time_str

@@ -110,10 +110,10 @@ async def async_read_serialnr(hub: Any, address: int, swapbytes: bool) -> str | 
             res = remove_special_chars(res)
             hub.seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read serialnumber failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number: {res}, swapped: {swapbytes}")
+        _LOGGER.warning("%s: reading serial number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x serial number: %s, swapped: %s", hub.name, address, res, swapbytes)
     return res
 
 
@@ -1128,10 +1128,10 @@ class sofar_old_plugin(plugin_base):
         return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch) and not blacklisted
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         seriesnumber = await async_read_serialnr(hub, 0x2002, swapbytes=False)
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for other Inverter")
+            _LOGGER.error("%s: cannot find serial number, even not for other Inverter", hub.name)
             seriesnumber = "unknown"
 
         # derive invertertype from seriiesnumber
@@ -1169,7 +1169,7 @@ class sofar_old_plugin(plugin_base):
 
         else:
             invertertype = 0
-            _LOGGER.error(f"unrecognized {hub.name} inverter type - serial number : {seriesnumber}")
+            _LOGGER.error("unrecognized %s inverter type - serial number : %s", hub.name, seriesnumber)
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)

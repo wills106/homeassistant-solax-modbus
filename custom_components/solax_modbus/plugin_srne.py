@@ -93,10 +93,10 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
             res = raw.decode("ascii", errors="ignore") if isinstance(raw, (bytes, bytearray)) else str(raw)
             hub.seriesnumber = res
     except Exception:
-        _LOGGER.warning(f"{hub.name}: attempt to read serialnumber failed at 0x{address:x}", exc_info=True)
+        _LOGGER.warning("%s: attempt to read serialnumber failed at 0x%x", hub.name, address, exc_info=True)
     if not res:
-        _LOGGER.warning(f"{hub.name}: reading serial number from address 0x{address:x} failed; other address may succeed")
-    _LOGGER.info(f"Read {hub.name} 0x{address:x} serial number before potential swap: {res}")
+        _LOGGER.warning("%s: reading serial number from address 0x%x failed; other address may succeed", hub.name, address)
+    _LOGGER.info("Read %s 0x%x serial number before potential swap: %s", hub.name, address, res)
     return res
 
 
@@ -177,7 +177,7 @@ def value_function_remotecontrol_recompute(initval: int, descr: Any, datadict: d
     ap_target = min(ap_target, import_limit - houseload_brut)
     # _LOGGER.warning(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit-houseload} min:{-export_limit-houseload}")
     if old_ap_target != ap_target:
-        _LOGGER.debug(f"peak shaving: old_ap_target:{old_ap_target} new ap_target:{ap_target} max: {import_limit - houseload_brut}")
+        _LOGGER.debug("peak shaving: old_ap_target:%s new ap_target:%s max: %s", old_ap_target, ap_target, import_limit - houseload_brut)
     res = [
         (
             "remotecontrol_power_control",
@@ -202,7 +202,7 @@ def value_function_remotecontrol_recompute(initval: int, descr: Any, datadict: d
     ]
     if power_control == "Disabled":
         autorepeat_stop(datadict, descr.key)
-    _LOGGER.debug(f"Evaluated remotecontrol_trigger: corrected/clamped values: {res}")
+    _LOGGER.debug("Evaluated remotecontrol_trigger: corrected/clamped values: %s", res)
     return res
 
 
@@ -501,7 +501,7 @@ class srne_plugin(plugin_base):
 
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
         # global SENSOR_TYPES
-        _LOGGER.info(f"{hub.name}: trying to determine inverter type")
+        _LOGGER.info("%s: trying to determine inverter type", hub.name)
         seriesnumber = await async_read_serialnr(hub, 0x35)
         if not seriesnumber:
             seriesnumber = await async_read_serialnr(hub, 0x300)  # bug in Endian.LITTLE decoding?
@@ -511,7 +511,7 @@ class srne_plugin(plugin_base):
                 res = str(ba, "ascii")  # convert back to string
                 seriesnumber = res
         if not seriesnumber:
-            _LOGGER.error(f"{hub.name}: cannot find serial number, even not for MIC")
+            _LOGGER.error("%s: cannot find serial number, even not for MIC", hub.name)
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
@@ -520,7 +520,7 @@ class srne_plugin(plugin_base):
         # add cases here
         else:
             invertertype = GEN
-            _LOGGER.error(f"unrecognized inverter type - serial number : {seriesnumber}")
+            _LOGGER.error("unrecognized inverter type - serial number : %s", seriesnumber)
 
         if invertertype > 0:
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
@@ -565,7 +565,7 @@ class srne_plugin(plugin_base):
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
             if new_read_scale is not None:
-                _LOGGER.info(f"local data update callback for read_scale: {new_read_scale} enabled: {config_scale_entity.enabled}")
+                _LOGGER.info("local data update callback for read_scale: %s enabled: %s", new_read_scale, config_scale_entity.enabled)
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -597,7 +597,7 @@ class srne_plugin(plugin_base):
                             number_entity.entity_description,
                             native_max_value=new_max_export,
                         )
-                        _LOGGER.info(f"local data update callback for entity: {key} new limit: {new_max_export}")
+                        _LOGGER.info("local data update callback for entity: %s new limit: %s", key, new_max_export)
         return True
 
 
