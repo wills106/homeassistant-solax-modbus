@@ -825,9 +825,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
-        _LOGGER.debug("[Mode8 Negative Injection] probes: measured_power=%sW",
-                      measured_power if measured_power is not None else 'n/a'
-        )
+        _LOGGER.debug("[Mode8 Negative Injection] probes: measured_power=%sW", measured_power if measured_power is not None else "n/a")
 
         if pv >= hl or cur_pvlimit < min(setpvlimit, pv_threshold):
             # Surplus or limited pv path: battery is requested to charge at up to the rate
@@ -1064,9 +1062,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
         grid_export = datadict.get("grid_export", None)
-        _LOGGER.debug("[Mode8 Export-First] probes: measured_power=%sW grid_export=%sW",
-                      measured_power if measured_power is not None else 'n/a',
-                      grid_export if grid_export is not None else 'n/a'
+        _LOGGER.debug(
+            "[Mode8 Export-First] probes: measured_power=%sW grid_export=%sW",
+            measured_power if measured_power is not None else "n/a",
+            grid_export if grid_export is not None else "n/a",
         )
 
         if pv >= hl:
