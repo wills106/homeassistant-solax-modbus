@@ -320,6 +320,72 @@ async def _duplicate_inverter_schema(handler: SchemaCommonFlowHandler) -> vol.Sc
     return vol.Schema({})
 
 
+ENTITY_TYPE_ATTRIBUTES = ("SENSOR_TYPES", "NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES")
+
+
+def _plugin_uses_feature_flag(plugin_name: str | None, flag_name: str) -> bool:
+    """Return whether a plugin declares any entity gated by the named allowedtypes flag."""
+    if not plugin_name:
+        return True
+    try:
+        plugin = _load_plugin(plugin_name)
+    except Exception:
+        return True
+    flag = getattr(plugin, flag_name, None)
+    if not isinstance(flag, int) or not flag:
+        return False
+    instance = getattr(plugin, "plugin_instance", plugin)
+    for attribute in ENTITY_TYPE_ATTRIBUTES:
+        for source in (instance, plugin):
+            for description in getattr(source, attribute, None) or []:
+                if getattr(description, "allowedtypes", 0) & flag:
+                    return True
+    return False
+
+
+def _plugin_supports_energy_dashboard(plugin_name: str | None) -> bool:
+    """Return whether a plugin provides Energy Dashboard mappings."""
+    if not plugin_name:
+        return True
+    try:
+        plugin = _load_plugin(plugin_name)
+    except Exception:
+        return True
+    instance = getattr(plugin, "plugin_instance", plugin)
+    return getattr(instance, "ENERGY_DASHBOARD_MAPPING", None) is not None or getattr(plugin, "ENERGY_DASHBOARD_MAPPING", None) is not None
+
+
+def _plugin_supports_device_group(plugin_name: str | None, group: str) -> bool:
+    """Return whether a plugin declares any entity belonging to a named device group."""
+    if not plugin_name:
+        return True
+    try:
+        plugin = _load_plugin(plugin_name)
+    except Exception:
+        return True
+    instance = getattr(plugin, "plugin_instance", plugin)
+    for attribute in ("NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES"):
+        for source in (instance, plugin):
+            for description in getattr(source, attribute, None) or []:
+                if getattr(description, "device_group", None) == group:
+                    return True
+    return False
+
+
+async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
+    """Options schema without the feature switches the selected plugin does not implement."""
+    plugin_name = handler.options.get(CONF_PLUGIN)
+    hidden: set[str] = set()
+    if not _plugin_supports_energy_dashboard(plugin_name):
+        hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
+    for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
+        if not _plugin_uses_feature_flag(plugin_name, flag_name):
+            hidden.add(option)
+    if not hidden:
+        return OPTION_SCHEMA
+    return vol.Schema({marker: value for marker, value in OPTION_SCHEMA.schema.items() if getattr(marker, "schema", None) not in hidden})
+
+
 def _load_plugin(plugin_name: str) -> ModuleType:
     _LOGGER.info("trying to load plugin - plugin_name: %s", plugin_name)
     plugin = importlib.import_module(f".plugin_{plugin_name}", "custom_components.solax_modbus")
@@ -339,7 +405,7 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
-        "init": SchemaFlowFormStep(OPTION_SCHEMA, next_step=_next_step_modbus),
+        "init": SchemaFlowFormStep(_option_schema, next_step=_next_step_modbus),
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),

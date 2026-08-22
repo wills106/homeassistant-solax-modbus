@@ -322,11 +322,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     )
                     desired = {description.key: description for description in descriptions}
 
-                    for key in dashboard_keys - desired.keys():
+                    for key in list(dashboard_keys - desired.keys()):
                         sensor = dashboard_entities.get(key) or hub.sensorEntities.get(key)
                         if sensor is not None and hasattr(sensor, "set_energy_dashboard_active"):
                             sensor.set_energy_dashboard_active(False)
                         hub.computedSensors.pop(key, None)
+                        # Drop the entity and its registry entry: a sensor that is no longer
+                        # part of the dashboard would otherwise stay behind as unavailable.
+                        dashboard_entities.pop(key, None)
+                        dashboard_keys.discard(key)
+                        hub.sensorEntities.pop(key, None)
+                        hub.sensorDescriptions.pop(key, None)
+                        if sensor is not None:
+                            try:
+                                await sensor.async_remove(force_remove=True)
+                            except Exception as ex:
+                                _LOGGER.debug("%s: cannot remove dashboard entity %s: %s", hub_name, key, ex)
+                        try:
+                            ent_registry = er.async_get(hass)
+                            entity_id = ent_registry.async_get_entity_id("sensor", DOMAIN, f"{energy_dashboard_platform_name}_{key}")
+                            if entity_id:
+                                ent_registry.async_remove(entity_id)
+                        except Exception as ex:
+                            _LOGGER.debug("%s: cannot purge dashboard registry entry %s: %s", hub_name, key, ex)
 
                     new_entities: list[SensorEntity] = []
                     for key, description in desired.items():
@@ -873,6 +891,8 @@ def entityToListSingle(
     # Check if this sensor has custom Energy Dashboard device info
     if hasattr(newdescr, "_energy_dashboard_device_info") and newdescr._energy_dashboard_device_info is not None:
         device_info = newdescr._energy_dashboard_device_info
+    elif getattr(newdescr, "device_group", None):
+        device_info = hub.group_device_info(newdescr.device_group)
 
     # Check if this is a Riemann sum sensor
     sensor: SensorEntity
