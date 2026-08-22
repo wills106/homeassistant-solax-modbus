@@ -69,7 +69,7 @@ class AsyncSerialModbusClient:
 
     def _new_client(self) -> AsyncModbusClient:
         """Create a Modbus RTU client whose byte transport is SerialX."""
-        # tmodbus 0.4.1 forwards timeout at runtime but omits it from SerialXOptions.
+        # tmodbus forwards timeout at runtime but omits it from SerialXOptions.
         return create_async_rtu_client(  # type: ignore[call-arg]
             self._port,
             unit_id=_PLACEHOLDER_UNIT_ID,
