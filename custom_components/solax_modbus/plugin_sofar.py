@@ -109,6 +109,8 @@ BAT_BTS = 0x1000000
 HYD_EP = 0x2000000
 ALL_MODEL_GROUP = HYD_EP
 
+HYD_EP_CURRENT_SCALE_EXCEPTIONS = [("SM2ES4", 0.1)]
+
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
@@ -3932,6 +3934,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x9010,
         register_data_type=REGISTER_S16,
         scale=0.1,
+        read_scale_exceptions=HYD_EP_CURRENT_SCALE_EXCEPTIONS,
         allowedtypes=BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(
@@ -4054,6 +4057,7 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         register=0x9071,
         register_data_type=REGISTER_S16,
         scale=0.1,
+        read_scale_exceptions=HYD_EP_CURRENT_SCALE_EXCEPTIONS,
         allowedtypes=BAT_BTS,
     ),
     SofarModbusSensorEntityDescription(

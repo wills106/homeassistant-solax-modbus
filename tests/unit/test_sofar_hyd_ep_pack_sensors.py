@@ -21,3 +21,13 @@ def test_hyd_ep_pack_sensors_are_model_specific() -> None:
 
     assert plugin_instance.matchInverterWithMask(hyd_ep_type, pack_soc.allowedtypes, "SM2ES4") is True
     assert plugin_instance.matchInverterWithMask(other_sofar_type, pack_soc.allowedtypes, "SP1") is False
+
+
+def test_hyd_ep_current_sensors_apply_model_specific_scale() -> None:
+    """HYD-EP current values use 0.01 A without changing other models."""
+    descriptions = {description.key: description for description in BATTERY_SENSOR_TYPES}
+
+    for key in ("total_current", "pack_current"):
+        description = descriptions[key]
+        assert description.scale == 0.1
+        assert description.read_scale_exceptions == [("SM2ES4", 0.1)]
