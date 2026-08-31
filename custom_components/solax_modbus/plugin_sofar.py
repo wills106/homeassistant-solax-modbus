@@ -4136,7 +4136,7 @@ class battery_config(base_battery_config):
                 _LOGGER.warning("Cannot read BMS selection register 0x%x", self.bms_check_address)
                 return None
 
-            return convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
+            return int(convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big"))  # type: ignore[attr-defined]  # DataType enum dynamic
         except Exception:
             _LOGGER.warning("Cannot read BMS selection register 0x%x", self.bms_check_address, exc_info=True)
             return None
