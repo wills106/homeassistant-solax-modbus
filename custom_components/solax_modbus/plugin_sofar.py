@@ -4124,12 +4124,51 @@ class battery_config(base_battery_config):
             await self._determine_bat_quantitys(hub)
         return self.number_strings
 
+    async def _read_selected_battery(self, hub: Any) -> int | None:
+        """Return the battery selection reported by the inverter."""
+        try:
+            inverter_data = await hub.async_read_holding_registers(
+                unit=hub._modbus_addr,
+                address=self.bms_check_address,
+                count=1,
+            )
+            if inverter_data is None or inverter_data.isError():
+                _LOGGER.warning("Cannot read BMS selection register 0x%x", self.bms_check_address)
+                return None
+
+            return convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
+        except Exception:
+            _LOGGER.warning("Cannot read BMS selection register 0x%x", self.bms_check_address, exc_info=True)
+            return None
+
     async def select_battery(self, hub: Any, batt_nr: int, batt_pack_nr: int) -> bool:
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         _LOGGER.debug("select batt-nr: %s batt-pack: %s 0x%x", batt_nr, batt_pack_nr, payload)
-        await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+
+        selected_battery = await self._read_selected_battery(hub)
+        if selected_battery == payload:
+            self.selected_batt_nr = batt_nr
+            self.selected_batt_pack_nr = batt_pack_nr
+            return True
+
+        try:
+            await hub.async_write_registers_single(unit=hub._modbus_addr, address=self.bms_inquire_address, payload=payload)
+        except Exception:
+            _LOGGER.warning(
+                "Cannot select batt_nr: %s, batt_pack_nr: %s via register 0x%x",
+                batt_nr,
+                batt_pack_nr,
+                self.bms_inquire_address,
+                exc_info=True,
+            )
+            return False
+
         await asyncio.sleep(0.3)
+        if await self._read_selected_battery(hub) != payload:
+            _LOGGER.warning("Inverter did not select batt_nr: %s, batt_pack_nr: %s", batt_nr, batt_pack_nr)
+            return False
+
         self.selected_batt_nr = batt_nr
         self.selected_batt_pack_nr = batt_pack_nr
         return True
@@ -4234,7 +4273,8 @@ class battery_config(base_battery_config):
                     self.batt_pack_serials[batt_nr] = {}
 
                 for batt_pack_nr in range(self.number_cels_in_parallel):
-                    await self.select_battery(hub, batt_nr, batt_pack_nr)
+                    if not await self.select_battery(hub, batt_nr, batt_pack_nr):
+                        continue
                     serial = await self._determinate_batt_pack_serial(hub)
                     if self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
                         if self.batt_pack_serials[batt_nr][batt_pack_nr] != serial:
