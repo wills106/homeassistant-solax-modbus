@@ -1,6 +1,6 @@
 """Tests for SOFAR HYD-EP pack-specific sensors."""
 
-from custom_components.solax_modbus.plugin_sofar import BATTERY_SENSOR_TYPES, GEN, HYBRID, HYD_EP, X1, plugin_instance
+from custom_components.solax_modbus.plugin_sofar import BATTERY_SENSOR_TYPES, GEN, HYBRID, HYD_EP, X1, battery_config, plugin_instance
 
 
 def test_hyd_ep_pack_sensors_use_pack_specific_registers() -> None:
@@ -31,3 +31,13 @@ def test_hyd_ep_current_sensors_apply_model_specific_scale() -> None:
         description = descriptions[key]
         assert description.scale == 0.1
         assert description.read_scale_exceptions == [("SM2ES4", 0.1)]
+
+
+def test_hyd_ep_battery_query_dimensions_use_parallel_pack_count() -> None:
+    """HYD-EP exposes four selectable packs for its reported 0x0410."""
+    assert battery_config._decode_battery_query_dimensions("SM2ES4", 0x0410) == (1, 4)
+
+
+def test_other_sofar_battery_query_dimensions_remain_unchanged() -> None:
+    """Keep the established two-dimensional battery selection for other models."""
+    assert battery_config._decode_battery_query_dimensions("SP1ES110", 0x0410) == (4, 16)

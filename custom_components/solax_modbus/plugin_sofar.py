@@ -4278,10 +4278,22 @@ class battery_config(base_battery_config):
             inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bapack_number_address, count=1)
             if inverter_data is not None and not inverter_data.isError():
                 val = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
-                self.number_cels_in_parallel = (val >> 8) & 0xFF  # high byte
-                self.number_strings = val & 0xFF  # low byte
+                self.number_cels_in_parallel, self.number_strings = self._decode_battery_query_dimensions(hub.seriesnumber, int(val))
         except Exception:
             _LOGGER.warning("%s: attempt to read BaPack number failed at 0x%x", hub.name, self.bapack_number_address, exc_info=True)
+
+    @staticmethod
+    def _decode_battery_query_dimensions(seriesnumber: str, value: int) -> tuple[int, int]:
+        """Return the pack and battery counts used for BMS_Inquire queries."""
+        parallel_pack_count = (value >> 8) & 0xFF
+        string_count = value & 0xFF
+
+        if seriesnumber.startswith("SM2ES4"):
+            # HYD-EP reports 0x0410 for four parallel packs with 16 cells
+            # each. Its low byte is not another selectable BMS dimension.
+            return 1, parallel_pack_count
+
+        return parallel_pack_count, string_count
 
     async def init_batt_pack_serials(self, hub: Any) -> None:
         retry = 0
