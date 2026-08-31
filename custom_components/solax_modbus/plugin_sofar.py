@@ -106,6 +106,9 @@ ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
 BAT_BTS = 0x1000000
 
+HYD_EP = 0x2000000
+ALL_MODEL_GROUP = HYD_EP
+
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
@@ -4076,14 +4079,28 @@ BATTERY_SENSOR_TYPES: list[SofarModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         allowedtypes=BAT_BTS,
     ),
-    # SofarModbusSensorEntityDescription(
-    #     name = "Pack SOC",
-    #     key = "pack_soc",
-    #     native_unit_of_measurement = PERCENTAGE,
-    #     device_class = SensorDeviceClass.BATTERY,
-    #     register = 0x907A,
-    #     allowedtypes = BAT_BTS,
-    # ),
+    SofarModbusSensorEntityDescription(
+        name="Pack Total Voltage",
+        key="pack_total_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x9079,
+        scale=0.1,
+        suggested_display_precision=1,
+        allowedtypes=BAT_BTS | HYD_EP,
+    ),
+    SofarModbusSensorEntityDescription(
+        name="Pack SOC",
+        key="pack_soc",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x907A,
+        scale=0.1,
+        suggested_display_precision=1,
+        allowedtypes=BAT_BTS | HYD_EP,
+    ),
 ]
 
 
@@ -4334,6 +4351,9 @@ class sofar_plugin(plugin_base):
         elif seriesnumber.startswith("SM2E"):
             invertertype = HYBRID | X1 | GEN  # HYDxxxxES, Not actually X3, needs changing
             self.inverter_model = "HYDxxxxES"
+            if seriesnumber.startswith("SM2ES4"):
+                invertertype |= HYD_EP
+                self.inverter_model = "HYD 3-6K-EP"
         elif seriesnumber.startswith("ZM2E"):
             invertertype = HYBRID | X1 | GEN  # HYDxxxxKTL ZCS HP, Single Phase
             self.inverter_model = "HYDxxxxKTL ZCS HP"
@@ -4397,12 +4417,13 @@ class sofar_plugin(plugin_base):
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP) != 0) or (entitymask & ALL_PM_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP) != 0) or (entitymask & ALL_MPPT_GROUP == 0)
+        modelmatch = ((inverterspec & entitymask & ALL_MODEL_GROUP) != 0) or (entitymask & ALL_MODEL_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and pmmatch and mpptmatch and modelmatch) and not blacklisted
 
     def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
