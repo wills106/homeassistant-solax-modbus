@@ -12,6 +12,8 @@ SolaX products (TODO - find out which, maybe only gen4?) provide a "firmware ver
 
 If you can read values, but unable to adjust select / number you need to change the select "Lock State" from "Locked" to "Unlocked". Might need performing again following a full Power Cycle.
 
+X3-MIC Gen1 does not expose a readable lock-state register. Use the "Unlock Advanced Settings" button before changing settings. This writes the required advanced unlock value (`6868`) without attempting to read back a lock state. Use "Lock Settings" to lock the settings again.
+
 ![Image of SolaX Lock State](images/solax-lock-state.png)
 
 ## How to connect PocketWiFi 3.0 to my Wi-Fi network?
@@ -59,5 +61,4 @@ Some inverters behave differently compared to the other inverters of same model.
 When finishing remote control (setting mode to Disabled) when the battery SoC is around 98% or higher, some inverters will oscillate between import and export, and keep doing so until the SoC drops to 97% or a large (>>1kW) load is applied. The cause of this behaviour is currently unknown. Refer to [issue #1658](https://github.com/wills106/homeassistant-solax-modbus/issues/1658).
 
 As a workaround, the "Battery Charge Upper SOC" entity (`number.solax_battery_charge_upper_soc`) can be used to limit the SoC of the battery. Setting this to 97% prevents the undesirable behaviour at the expense of stopping the battery reaching full charge outside the remote control session.
-
 
