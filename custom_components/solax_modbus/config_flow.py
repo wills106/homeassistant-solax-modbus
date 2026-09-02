@@ -46,6 +46,7 @@ from .const import (
     CONF_READ_BATTERY,
     CONF_READ_DCB,
     CONF_READ_EPS,
+    CONF_READ_GEN,
     CONF_READ_PM,
     CONF_SCAN_INTERVAL_FAST,
     CONF_SCAN_INTERVAL_MEDIUM,
@@ -64,6 +65,7 @@ from .const import (
     DEFAULT_READ_BATTERY,
     DEFAULT_READ_DCB,
     DEFAULT_READ_EPS,
+    DEFAULT_READ_GEN,
     DEFAULT_READ_PM,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
@@ -155,6 +157,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE): bool,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
+        vol.Optional(CONF_READ_GEN, default=DEFAULT_READ_GEN): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
@@ -177,6 +180,7 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_ENERGY_DASHBOARD_DEVICE, default=DEFAULT_ENERGY_DASHBOARD_DEVICE): bool,
         vol.Optional(CONF_READ_EPS, default=DEFAULT_READ_EPS): bool,
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
+        vol.Optional(CONF_READ_GEN, default=DEFAULT_READ_GEN): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
@@ -376,6 +380,8 @@ async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
     """Options schema without the feature switches the selected plugin does not implement."""
     plugin_name = handler.options.get(CONF_PLUGIN)
     hidden: set[str] = set()
+    if not _plugin_supports_device_group(plugin_name, "external_generator"):
+        hidden.add(CONF_READ_GEN)
     if not _plugin_supports_energy_dashboard(plugin_name):
         hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
     for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
