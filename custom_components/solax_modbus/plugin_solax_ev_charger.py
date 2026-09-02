@@ -20,9 +20,17 @@ from homeassistant.helpers.entity import (  # type: ignore[attr-defined]
 )
 
 from custom_components.solax_modbus.const import (
+    CONF_READ_DATAHUB,
+    CONF_READ_EMS,
+    CONF_READ_PM,
+    DEFAULT_READ_DATAHUB,
+    DEFAULT_READ_EMS,
+    DEFAULT_READ_PM,
     REG_HOLDING,
     REG_INPUT,
     REGISTER_S16,
+    REGISTER_S32,
+    REGISTER_STR,
     REGISTER_U16,
     REGISTER_U32,
     REGISTER_WORDS,
@@ -35,6 +43,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSwitchEntityDescription,
     BaseModbusTimeEntityDescription,
     plugin_base,
+    value_function_disable_enable,
     value_function_enable_disable,
     value_function_firmware_decimal_hundredths,
     value_function_separate_registers_time,
@@ -51,14 +60,14 @@ these bitmasks are used in entitydeclarations to determine to which inverters th
 within a group, the bits in an entitydeclaration will be interpreted as OR
 between groups, an AND condition is applied, so all gruoups must match.
 An empty group (group without active flags) evaluates to True.
-example: GEN3 | GEN4 | X1 | X3 | EPS
-means:  any inverter of type (GEN3 or GEN4) and (X1 or X3) and (EPS)
+example: GEN1 | X1 | X3 | EPS
+means:  any charger of type (GEN1 or GEN2) and (X1 or X3)
 An entity can be declared multiple times (with different bitmasks) if the parameters are different for each inverter type
 """
 
 GEN = 0x0001  # base generation for MIC, PV, AC
-GEN1 = 0x0001
-GEN2 = 0x0002
+GEN1 = 0x0001  # = EVC in SolaX naming
+GEN2 = 0x0002  # = HAC in SolaX naming
 GEN3 = 0x0004
 GEN4 = 0x0008
 ALL_GEN_GROUP = GEN1 | GEN2 | GEN3 | GEN4 | GEN
@@ -74,10 +83,14 @@ POW22 = 0x0040
 ALL_POW_GROUP = POW4 | POW7 | POW11 | POW22
 
 # Feature flags — set dynamically in async_determineInverterType based on device registers
-OCPP_TYPE = 0x0800  # device reports TypeCharger (0x0023) == 1 (OCPP variant)
-ALL_FEATURE_GROUP = OCPP_TYPE
+PARALLEL_TYPE = 0x1000  # device reports Is_support_parallel (0x0107) == 0xAA55 and the Parallel Mode option is on
+PM_OPTION_TYPE = 0x2000  # the Parallel Mode option is on, regardless of what 0x0107 reports
+EMS_TYPE = 0x4000  # the EMS / V2G option is on
+DATAHUB_TYPE = 0x8000  # the Datahub option is on
+PM = PARALLEL_TYPE
+ALL_FEATURE_GROUP = PARALLEL_TYPE | PM_OPTION_TYPE | EMS_TYPE | DATAHUB_TYPE
 
-ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN2 | GEN3 | GEN4 | X1 | X3
+ALLDEFAULT = 0  # should be equivalent to GEN1 | GEN2 | X1 | X3
 
 # ======================= end of bitmask handling code =============================================
 
@@ -174,8 +187,118 @@ class SolaXEVChargerModbusTimeEntityDescription(BaseModbusTimeEntityDescription)
 # ====================================== Computed value functions  =================================================
 
 
+def value_function_closed_is_on(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | None:
+    """0x0664 stores 0 = Closed / 1 = Open; the switch shows Closed as on."""
+    if initval in (0, 1):
+        return 1 - int(initval)
+    return None
+
+
+def value_function_rated_current(initval: Any, descr: Any, datadict: dict[str, Any]) -> float | None:
+    """Rated charging current of the charger, derived from its power and phase type.
+
+    Used as the ceiling for the current settings: unlike register 0x64F it never
+    moves, whereas 0x64F only holds the rated value while no vehicle is connected
+    (SolaX support, ticket 703158) and follows Modbus writes during a session.
+
+    Known model ratings map to their nameplate currents (e.g. the 7.2 kW X1 is a
+    32 A unit, which watts/(phases*230) would truncate to 31 A); combinations
+    without an established nameplate fall back to the derived value.
+    """
+    phases = 3 if datadict.get("phase_type") == "Three Phase" else 1
+    documented: dict[tuple[str, int], int] = {
+        ("4.6 kW", 1): 20,
+        ("7 kW", 1): 32,
+        ("7.6 kW", 1): 32,
+        ("9.6 kW", 1): 40,
+        ("11.5 kW", 1): 48,
+        ("11 kW", 3): 16,
+        ("22 kW", 3): 32,
+    }
+    amps = documented.get((str(datadict.get("power_rating")), phases))
+    if amps is not None:
+        return float(amps)
+    ratings: dict[str, int] = {
+        "4.6 kW": 4600,
+        "6 kW": 6000,
+        "7 kW": 7200,
+        "7.6 kW": 7600,
+        "9.6 kW": 9600,
+        "11 kW": 11000,
+        "11.5 kW": 11500,
+        "22 kW": 22000,
+    }
+    watts = ratings.get(str(datadict.get("power_rating")))
+    if watts is None:
+        return None
+    return round(watts / (phases * 230), 0)
+
+
+FAULT_BITS: dict[int, str] = {
+    0: "Emergency stop",
+    1: "Overcurrent",
+    2: "Over temperature",
+    3: "PE grounding fault",
+    4: "Leakage current",
+    5: "PE leakage current",
+    6: "Overload protection",
+    8: "L1 overvoltage",
+    9: "L1 undervoltage",
+    10: "L2 overvoltage",
+    11: "L2 undervoltage",
+    12: "L3 overvoltage",
+    13: "L3 undervoltage",
+    14: "Energy measurement IC fault",
+    15: "Meter communication fault",
+    16: "Incorrect power rating",
+    17: "Control Pilot voltage anomaly",
+    18: "Electronic lock fault",
+    19: "Meter selection failure",
+    20: "Cover opened",
+    21: "PEN relay fault",
+    22: "Parallel communication failure",
+    23: "L1N relay contact sticking",
+    24: "L1N relay failure",
+    25: "L2L3 relay contact sticking",
+    26: "L2L3 relay failure",
+    28: "Abnormal metering",
+}
+
+
+def value_function_fault_description(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """Human readable view of the fault bitfield (HAC V1.00 Appendix B)."""
+    raw = datadict.get("fault_code")
+    if raw is None:
+        return None
+    raw = int(raw)
+    if raw == 0:
+        return "OK"
+    names = [name for bit, name in FAULT_BITS.items() if raw >> bit & 1]
+    if not names:
+        return f"Unknown fault 0x{raw:08X}"
+    if len(names) > 5:
+        return ", ".join(names[:5]) + f" (+{len(names) - 5} more)"
+    return ", ".join(names)
+
+
+def value_function_ems_fault_description(initval: Any, descr: Any, datadict: dict[str, Any]) -> str | None:
+    """Human readable view of the EMS fault bitfield (same bit map as 0x1E)."""
+    raw = datadict.get("ems_fault_code")
+    if raw is None:
+        return None
+    raw = int(raw)
+    if raw == 0:
+        return "OK"
+    names = [name for bit, name in FAULT_BITS.items() if raw >> bit & 1]
+    if not names:
+        return f"Unknown fault 0x{raw:08X}"
+    if len(names) > 5:
+        return ", ".join(names[:5]) + f" (+{len(names) - 5} more)"
+    return ", ".join(names)
+
+
 def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
-    """Parse EVC RTC block (7 words from 0x61D).
+    """Parse GEN1 RTC block (7 words from 0x61D).
 
     word[0] = timezone offset in MINUTES (device uses minutes; e.g. UTC+3 → 180,
               negatives as uint16 two's-complement).
@@ -195,27 +318,41 @@ def value_function_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -
         return None
 
 
-def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
-    """Write timezone (0x61D) then RTC time (0x61E–0x623) in one multi-register write.
+def value_function_charge_start_time(initval: Any, descr: Any, datadict: dict[str, Any]) -> datetime | None:
+    """Parse the GEN2 charging-session start timestamp (6 words from 0x31).
 
-    The device displays stored_UTC_time + tz_offset as local time, so we write:
-      - 0x61D: the real UTC offset in minutes (e.g. 180 for UTC+3) so the device
-               can show correct local time on its own display / app.
-      - 0x61E–0x623: current UTC time so the stored instant is always correct.
+    words = seconds, minutes, hours, day, month, year (2-digit), stamped from
+    the charger's local clock when the session starts.  All zeros = no session
+    recorded yet.
+    """
+
+    try:
+        sec, minute, hour, day, month, year = initval
+        if not any(initval):
+            return None
+        return datetime(2000 + year % 100, month, day, hour, minute, sec).astimezone()
+    except Exception:
+        return None
+
+
+def value_function_sync_rtc_evc(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, int]]:
+    """Write current UTC into the RTC base clock (0x61E–0x623).
+
+    Verified on hardware (C311 fw 1.18): the six time words hold a UTC base
+    clock and the device itself renders display time = base + 0x61D offset.
+    Writing anything but UTC skews the clock by the offset. 0x61D is owned by
+    the cloud — it re-asserts the account timezone from the SolaX app within
+    a minute — so the sync deliberately leaves it untouched.
     """
 
     utc_now = datetime.now(UTC)
-    local_offset = datetime.now().astimezone().utcoffset()
-    tz_minutes = int(local_offset.total_seconds() / 60) if local_offset is not None else 0
-    tz_u16 = tz_minutes & 0xFFFF  # e.g. UTC+3 → 180; UTC-5 → 65531
     return [
-        (REGISTER_U16, tz_u16),  # 0x61D: timezone offset in minutes
-        (REGISTER_U16, utc_now.second),  # 0x61E: seconds  (UTC)
-        (REGISTER_U16, utc_now.minute),  # 0x61F: minutes  (UTC)
-        (REGISTER_U16, utc_now.hour),  # 0x620: hours    (UTC)
-        (REGISTER_U16, utc_now.day),  # 0x621: day      (UTC)
-        (REGISTER_U16, utc_now.month),  # 0x622: month    (UTC)
-        (REGISTER_U16, utc_now.year % 100),  # 0x623: year     (UTC)
+        (REGISTER_U16, utc_now.second),
+        (REGISTER_U16, utc_now.minute),
+        (REGISTER_U16, utc_now.hour),
+        (REGISTER_U16, utc_now.day),
+        (REGISTER_U16, utc_now.month),
+        (REGISTER_U16, utc_now.year % 100),
     ]
 
 
@@ -225,7 +362,7 @@ BUTTON_TYPES = [
     SolaXEVChargerModbusButtonEntityDescription(
         name="Sync RTC",
         key="sync_rtc",
-        register=0x61D,
+        register=0x61E,
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_evc,
@@ -247,7 +384,7 @@ NUMBER_TYPES = [
     #
     ###
     SolaXEVChargerModbusNumberEntityDescription(
-        name="Overload Limit",
+        name="Overvoltage Limit",
         key="overload_limit",
         register=0x611,
         fmt="i",
@@ -283,14 +420,16 @@ NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
-        name="Datahub Charge Current",
-        key="datahub_charge_current",
-        register=0x624,
-        allowedtypes=GEN1,  # GEN1 only - not available on GEN2
+        name="Charge Current",
+        key="charge_current",
+        register=0x628,
+        modbus_min=109,
+        allowedtypes=GEN1,
         fmt="f",
         native_min_value=6,
         native_max_value=32,
-        native_step=0.1,
+        max_key="rated_current",
+        native_step=1,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
@@ -299,13 +438,42 @@ NUMBER_TYPES = [
         name="Charge Current",
         key="charge_current",
         register=0x628,
+        allowedtypes=GEN2,
         fmt="f",
         native_min_value=6,
         native_max_value=32,
-        native_step=0.1,
+        max_key="rated_current",
+        native_step=1,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Unbalanced Power",
+        key="unbalanced_power",
+        register=0x63C,
+        modbus_min=111,
+        allowedtypes=GEN1 | X1,
+        fmt="i",
+        native_min_value=1300,
+        native_max_value=7200,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Unbalanced Power",
+        key="unbalanced_power",
+        register=0x63C,
+        allowedtypes=GEN2 | X1,
+        fmt="i",
+        native_min_value=1300,
+        native_max_value=7200,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Max Charge Current",
@@ -314,15 +482,62 @@ NUMBER_TYPES = [
         fmt="f",
         native_min_value=6,
         native_max_value=32,
-        native_step=0.1,
+        max_key="rated_current",
+        native_step=1,
         scale=0.01,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=NumberDeviceClass.CURRENT,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Min Charge Current",
+        key="min_charge_current",
+        register=0x63F,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        fmt="f",
+        native_min_value=0,
+        native_max_value=32,
+        max_key="rated_current",
+        native_step=1,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Min Charge Current",
+        key="min_charge_current",
+        register=0x63F,
+        allowedtypes=GEN2,
+        fmt="f",
+        native_min_value=0,
+        native_max_value=32,
+        max_key="rated_current",
+        native_step=1,
+        scale=0.01,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
+        entity_category=EntityCategory.CONFIG,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
         name="Modbus Address",
         key="modbus_address",
         register=0x640,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        fmt="i",
+        native_min_value=1,
+        native_max_value=247,
+        native_step=1,
+        icon="mdi:identifier",
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Modbus Address",
+        key="modbus_address",
+        register=0x640,
+        allowedtypes=GEN2,
         fmt="i",
         native_min_value=1,
         native_max_value=247,
@@ -334,6 +549,8 @@ NUMBER_TYPES = [
         name="Smart Boost Energy",
         key="smart_boost_energy",
         register=0x63A,
+        modbus_min=111,
+        allowedtypes=GEN1,
         fmt="i",
         native_min_value=0,
         native_max_value=200,
@@ -343,17 +560,84 @@ NUMBER_TYPES = [
         entity_category=EntityCategory.CONFIG,
     ),
     SolaXEVChargerModbusNumberEntityDescription(
-        name="OCPP Charge Current",
-        key="ocpp_charge_current",
-        register=0x61B,
-        allowedtypes=OCPP_TYPE,
-        fmt="f",
-        native_min_value=6,
-        native_max_value=32,
-        native_step=0.001,
-        scale=0.001,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=NumberDeviceClass.CURRENT,
+        name="Smart Boost Energy",
+        key="smart_boost_energy",
+        register=0x63A,
+        allowedtypes=GEN2,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=200,
+        native_step=1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=NumberDeviceClass.ENERGY,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Max Charge Power",
+        key="ems_max_charge_power",
+        device_group="ems",
+        register=0xA100,
+        allowedtypes=GEN2 | EMS_TYPE,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Max Discharge Power",
+        key="ems_max_discharge_power",
+        device_group="ems",
+        register=0xA101,
+        allowedtypes=GEN2 | EMS_TYPE,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Failsafe Charge Power",
+        key="ems_failsafe_charge_power",
+        device_group="ems",
+        register=0xA102,
+        allowedtypes=GEN2 | EMS_TYPE,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Failsafe Discharge Power",
+        key="ems_failsafe_discharge_power",
+        device_group="ems",
+        register=0xA103,
+        allowedtypes=GEN2 | EMS_TYPE,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SolaXEVChargerModbusNumberEntityDescription(
+        name="Failsafe Timeout",
+        key="ems_failsafe_timeout",
+        device_group="ems",
+        register=0xA104,
+        allowedtypes=GEN2 | EMS_TYPE,
+        fmt="i",
+        native_min_value=1,
+        native_max_value=600,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        entity_category=EntityCategory.CONFIG,
     ),
 ]
 
@@ -456,29 +740,20 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Charging Mode",
-        key="evse_scene",
-        register=0x61C,
-        allowedtypes=GEN1,
+        name="Charge Phase",
+        key="charge_phase",
+        register=0x625,
+        modbus_min=109,
+        modbus_max=110,
         option_dict={
-            0: "Private",
-            1: "OCPP",
+            0: "Three Phase",
+            1: "L1 Phase",
+            2: "L2 Phase",
+            3: "L3 Phase",
         },
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
-    ),
-    SolaXEVChargerModbusSelectEntityDescription(
-        name="Charging Mode",
-        key="evse_scene",
-        register=0x61C,
-        allowedtypes=GEN2,
-        option_dict={
-            0: "PV Mode",
-            1: "Standard Mode",
-            2: "OCPP Mode",
-        },
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:dip-switch",
+        allowedtypes=GEN1 | X1,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
         name="Charge Phase",
@@ -492,12 +767,13 @@ SELECT_TYPES = [
         },
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
-        allowedtypes=X3,
+        allowedtypes=GEN2 | X1,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="Charge Phase Alt",
-        key="charge_phase_alt",
+        name="Charge Phase",
+        key="charge_phase",
         register=0x63B,
+        modbus_min=111,
         option_dict={
             0: "Three Phase",
             1: "L1 Phase",
@@ -506,13 +782,14 @@ SELECT_TYPES = [
         },
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
-        allowedtypes=X3,
-        entity_registry_enabled_default=False,
+        allowedtypes=GEN1 | X1,
     ),
     SolaXEVChargerModbusSelectEntityDescription(
         name="Control Command",
         key="control_command",
         register=0x627,
+        modbus_min=109,
+        allowedtypes=GEN1,
         option_dict={
             0: "No Command",
             1: "Available",
@@ -525,9 +802,133 @@ SELECT_TYPES = [
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSelectEntityDescription(
-        name="EVSE Mode",
-        key="evse_mode",
+        name="Control Command",
+        key="control_command",
+        register=0x627,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "No Command",
+            1: "Available",
+            2: "Unavailable",
+            3: "Stop Charging",
+            4: "Start Charging",
+            5: "Reserve",
+            6: "Cancel the Reservation",
+        },
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Mode Button",
+        key="mode_button",
+        register=0x63E,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        option_dict={
+            0: "None",
+            1: "Short Press",
+            2: "Long Press",
+        },
+        icon="mdi:gesture-tap-button",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Mode Button",
+        key="mode_button",
+        register=0x63E,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "None",
+            1: "Short Press",
+            2: "Long Press",
+        },
+        icon="mdi:gesture-tap-button",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Phase Switching",
+        key="ems_phase_switching",
+        device_group="ems",
+        register=0xA105,
+        allowedtypes=GEN2 | EMS_TYPE,
+        option_dict={
+            0: "Disabled",
+            1: "Single-Phase Manual",
+            2: "Three-Phase Manual",
+            3: "Power-Following Auto",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:sine-wave",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Charge Control",
+        key="ems_charge_control",
+        device_group="ems",
+        register=0xA106,
+        allowedtypes=GEN2 | EMS_TYPE,
+        option_dict={
+            1: "Start Charging",
+            2: "Pause Charging",
+            3: "Stop Charging",
+        },
+        icon="mdi:play-pause",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Parallel Charge Mode",
+        key="parallel_charge_mode",
+        device_group="pm",
         register=0x669,
+        allowedtypes=PARALLEL_TYPE,
+        option_dict={
+            0: "Fast",
+            1: "ECO",
+            2: "Green",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Auth Priority",
+        key="auth_priority",
+        register=0x650,
+        modbus_min=114,
+        allowedtypes=GEN1,
+        option_dict={
+            0: "Network Priority",
+            1: "Local Priority",
+            2: "Local Only",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:shield-key",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Auth Priority",
+        key="auth_priority",
+        register=0x650,
+        allowedtypes=GEN2,
+        option_dict={
+            0: "Network Priority",
+            1: "Local Priority",
+            2: "Local Only",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:shield-key",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Charge Mode",
+        key="charge_mode",
+        register=0x641,
+        allowedtypes=GEN1,
+        modbus_min=114,
+        option_dict={
+            0: "Fast",
+            1: "ECO",
+            2: "Green",
+        },
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:dip-switch",
+    ),
+    SolaXEVChargerModbusSelectEntityDescription(
+        name="Charge Mode",
+        key="charge_mode",
+        register=0x641,
         allowedtypes=GEN2,
         option_dict={
             0: "Fast",
@@ -546,6 +947,18 @@ TIME_TYPES = [
         name="Timer Boost Start Time",
         key="timer_boost_start_time",
         register=0x634,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-start",
+    ),
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Timer Boost Start Time",
+        key="timer_boost_start_time",
+        register=0x634,
+        allowedtypes=GEN2,
         option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
         wordcount=2,
         entity_category=EntityCategory.CONFIG,
@@ -555,6 +968,18 @@ TIME_TYPES = [
         name="Timer Boost End Time",
         key="timer_boost_end_time",
         register=0x636,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Timer Boost End Time",
+        key="timer_boost_end_time",
+        register=0x636,
+        allowedtypes=GEN2,
         option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
         wordcount=2,
         entity_category=EntityCategory.CONFIG,
@@ -564,6 +989,18 @@ TIME_TYPES = [
         name="Smart Boost End Time",
         key="smart_boost_end_time",
         register=0x638,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
+        wordcount=2,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:clock-end",
+    ),
+    SolaXEVChargerModbusTimeEntityDescription(
+        name="Smart Boost End Time",
+        key="smart_boost_end_time",
+        register=0x638,
+        allowedtypes=GEN2,
         option_dict=TIME_OPTIONS_SEPARATE_REGISTERS,
         wordcount=2,
         entity_category=EntityCategory.CONFIG,
@@ -575,6 +1012,49 @@ TIME_TYPES = [
 
 
 SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Serial Number",
+        key="serial_number",
+        register=0x600,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=7,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:barcode",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="WiFi S/N",
+        key="wifi_sn",
+        register=0x607,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=5,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:wifi",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Customized S/N",
+        key="customized_sn",
+        register=0x629,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=11,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:identifier",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Customized S/N",
+        key="customized_sn",
+        register=0x629,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=11,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:identifier",
+    ),
     ###
     #
     # Holding — internal backing sensors (poll registers for SELECT/NUMBER readback;
@@ -617,7 +1097,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Overload Limit",
+        name="Overvoltage Limit",
         key="overload_limit",
         register=0x611,
         internal=True,
@@ -654,22 +1134,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charging Mode",
-        key="evse_scene",
-        register=0x61C,
-        allowedtypes=GEN1,
-        scale={0: "Private", 1: "OCPP"},
-        internal=True,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Charging Mode",
-        key="evse_scene",
-        register=0x61C,
-        allowedtypes=GEN2,
-        scale={0: "PV Mode", 1: "Standard Mode", 2: "OCPP Mode"},
-        internal=True,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
         name="RTC",
         key="rtc",
         register=0x61D,
@@ -677,17 +1141,42 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         wordcount=7,
         scale=value_function_rtc_evc,
         device_class=SensorDeviceClass.TIMESTAMP,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:clock",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Datahub Charge Current",
         key="datahub_charge_current",
+        device_group="datahub",
         register=0x624,
-        allowedtypes=GEN1,
+        allowedtypes=GEN1 | DATAHUB_TYPE,
+        modbus_min=109,
         scale=0.01,
-        rounding=1,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Datahub Charge Current",
+        key="datahub_charge_current",
+        device_group="datahub",
+        register=0x624,
+        allowedtypes=GEN2 | DATAHUB_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Phase",
+        key="charge_phase",
+        register=0x625,
+        modbus_min=109,
+        modbus_max=110,
+        scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
+        allowedtypes=GEN1 | X1,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -695,29 +1184,43 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charge_phase",
         register=0x625,
         scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
-        allowedtypes=X3,
+        allowedtypes=GEN2 | X1,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Phase Alt",
-        key="charge_phase_alt",
+        name="Charge Phase",
+        key="charge_phase",
         register=0x63B,
+        modbus_min=111,
         scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
-        allowedtypes=X3,
+        allowedtypes=GEN1 | X1,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current",
         key="charge_current",
         register=0x628,
+        modbus_min=109,
+        allowedtypes=GEN1,
         scale=0.01,
-        rounding=1,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current",
+        key="charge_current",
+        register=0x628,
+        allowedtypes=GEN2,
+        scale=0.01,
+        rounding=2,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Control Command",
         key="control_command",
         register=0x627,
+        modbus_min=109,
+        allowedtypes=GEN1,
         scale={
             0: "No Command",
             1: "Available",
@@ -730,31 +1233,211 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Max Charge Current",
-        key="max_charge_current",
-        register=0x668,
-        scale=0.01,
-        rounding=1,
+        name="Control Command",
+        key="control_command",
+        register=0x627,
+        allowedtypes=GEN2,
+        scale={
+            0: "No Command",
+            1: "Available",
+            2: "Unavailable",
+            3: "Stop Charging",
+            4: "Start Charging",
+            5: "Reserve",
+            6: "Cancel the Reservation",
+        },
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="EVSE Mode",
-        key="evse_mode",
-        register=0x669,
+        name="Max Charge Current Limit",
+        key="max_charge_current_limit",
+        register=0x64F,
+        modbus_min=114,
+        allowedtypes=GEN1,
+        scale=0.01,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Charge Current Limit",
+        key="max_charge_current_limit",
+        register=0x64F,
         allowedtypes=GEN2,
-        scale={0: "Fast", 1: "ECO", 2: "Green"},
+        scale=0.01,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Rated Current",
+        key="rated_current",
+        register=-1,
+        value_function=value_function_rated_current,
+        depends_on=["power_rating", "phase_type"],
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Modbus Address",
         key="modbus_address",
         register=0x640,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Modbus Address",
+        key="modbus_address",
+        register=0x640,
+        allowedtypes=GEN2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Unbalanced Power",
+        key="unbalanced_power",
+        register=0x63C,
+        modbus_min=111,
+        allowedtypes=GEN1 | X1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Unbalanced Power",
+        key="unbalanced_power",
+        register=0x63C,
+        allowedtypes=GEN2 | X1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Unbalanced Switch",
+        key="unbalanced_switch",
+        register=0x63D,
+        modbus_min=111,
+        allowedtypes=GEN1 | X1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Unbalanced Switch",
+        key="unbalanced_switch",
+        register=0x63D,
+        allowedtypes=GEN2 | X1,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Mode Button",
+        key="mode_button",
+        register=0x63E,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        scale={0: "None", 1: "Short Press", 2: "Long Press"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Mode Button",
+        key="mode_button",
+        register=0x63E,
+        allowedtypes=GEN2,
+        scale={0: "None", 1: "Short Press", 2: "Long Press"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Min Charge Current",
+        key="min_charge_current",
+        register=0x63F,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        scale=0.01,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Min Charge Current",
+        key="min_charge_current",
+        register=0x63F,
+        allowedtypes=GEN2,
+        scale=0.01,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Mode",
+        key="charge_mode",
+        register=0x641,
+        allowedtypes=GEN1,
+        modbus_min=114,
+        scale={0: "Fast", 1: "ECO", 2: "Green"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Mode",
+        key="charge_mode",
+        register=0x641,
+        allowedtypes=GEN2,
+        scale={0: "Fast", 1: "ECO", 2: "Green"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Datahub Charge Power",
+        key="datahub_charge_power",
+        device_group="datahub",
+        register=0x643,
+        newblock=True,
+        allowedtypes=GEN1 | DATAHUB_TYPE,
+        modbus_min=114,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Datahub Charge Power",
+        key="datahub_charge_power",
+        device_group="datahub",
+        register=0x643,
+        newblock=True,
+        allowedtypes=GEN2 | DATAHUB_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Green 30s Delay",
+        key="green_30s_delay",
+        register=0x644,
+        allowedtypes=GEN1,
+        modbus_min=114,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Green 30s Delay",
+        key="green_30s_delay",
+        register=0x644,
+        allowedtypes=GEN2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Main Breaker Limit Switch",
+        key="main_breaker_limit_switch",
+        register=0x664,
+        newblock=True,
+        allowedtypes=GEN2,
+        value_function=value_function_closed_is_on,
         internal=True,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Timer Boost Start Time",
         key="timer_boost_start_time",
         register=0x634,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Timer Boost Start Time",
+        key="timer_boost_start_time",
+        register=0x634,
+        allowedtypes=GEN2,
         register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_separate_registers_time,
@@ -764,6 +1447,18 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Timer Boost End Time",
         key="timer_boost_end_time",
         register=0x636,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Timer Boost End Time",
+        key="timer_boost_end_time",
+        register=0x636,
+        allowedtypes=GEN2,
         register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_separate_registers_time,
@@ -773,6 +1468,18 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Smart Boost End Time",
         key="smart_boost_end_time",
         register=0x638,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        register_data_type=REGISTER_WORDS,
+        wordcount=2,
+        scale=value_function_separate_registers_time,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Smart Boost End Time",
+        key="smart_boost_end_time",
+        register=0x638,
+        allowedtypes=GEN2,
         register_data_type=REGISTER_WORDS,
         wordcount=2,
         scale=value_function_separate_registers_time,
@@ -782,70 +1489,56 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         name="Smart Boost Energy",
         key="smart_boost_energy",
         register=0x63A,
+        modbus_min=111,
+        allowedtypes=GEN1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Smart Boost Energy",
+        key="smart_boost_energy",
+        register=0x63A,
+        allowedtypes=GEN2,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         internal=True,
     ),
     ###
     #
     # Input — 0x0100+
-    # 0x0100-0x0102: ChargePower L1 (A) / L2 (B) / L3 (C) also available at 0x08-0x0A; exposed here with Alt suffix
+    # 0x0100-0x0102: ChargePower L1 (A) / L2 (B) / L3 (C), replacing 0x08-0x0A from firmware V1.12 (protocol V2.8)
     #
     ###
-    # ---- 0x0100–0x0102  Phase powers alt for L1 (A) / L2 (B) / L3 (C), disabled by default ----
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power L1 Alt",
-        key="charge_power_l1_alt",
-        register=0x100,
-        register_type=REG_INPUT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power L2 Alt",
-        key="charge_power_l2_alt",
-        register=0x101,
-        register_type=REG_INPUT,
-        allowedtypes=X3,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
-    SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Power L3 Alt",
-        key="charge_power_l3_alt",
-        register=0x102,
-        register_type=REG_INPUT,
-        allowedtypes=X3,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
-    ),
+    # ---- 0x0100-0x0102  Phase powers (protocol V2.8+, firmware >= V1.12) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Max Power Charging",
         key="max_power_charging",
         register=0x103,
         register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1,
         scale={0: "No", 1: "Yes"},
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lightning-bolt",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charge Mode Active",
-        key="charge_mode_active",
+        name="Charge Mode",
+        key="charge_mode",
         register=0x104,
+        allowedtypes=GEN1,
         register_type=REG_INPUT,
+        modbus_min=112,
         scale={0: "Fast", 1: "ECO", 2: "Green"},
         icon="mdi:dip-switch",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Green Mode Start Power",
         key="green_mode_start_power",
         register=0x105,
         register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -853,10 +1546,299 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         icon="mdi:solar-power",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Run Mode Alt",
-        key="charger_status",
-        register=0x106,
+        name="Auth Priority",
+        key="auth_priority",
+        register=0x650,
+        modbus_min=114,
+        allowedtypes=GEN1,
+        scale={0: "Network Priority", 1: "Local Priority", 2: "Local Only"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Auth Priority",
+        key="auth_priority",
+        register=0x650,
+        allowedtypes=GEN2,
+        scale={0: "Network Priority", 1: "Local Priority", 2: "Local Only"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Role",
+        key="parallel_role",
+        device_group="pm",
+        register=0x642,
+        modbus_min=114,
+        allowedtypes=GEN1 | PARALLEL_TYPE,
+        scale={0: "Master", 1: "Slave", 2: "Parallel with Gen2"},
+        icon="mdi:transit-connection-variant",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Role",
+        key="parallel_role",
+        device_group="pm",
+        register=0x642,
+        allowedtypes=GEN2 | PARALLEL_TYPE,
+        scale={0: "Master", 1: "Slave", 2: "Parallel with Gen2"},
+        icon="mdi:transit-connection-variant",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Support",
+        key="parallel_support",
+        device_group="pm",
+        register=0x107,
         register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=PM_OPTION_TYPE,
+        scale={0: "No", 0xAA55: "Yes"},
+        icon="mdi:transit-connection-variant",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Allow Charge",
+        key="slave_allow_charge",
+        device_group="pm",
+        register=0x666,
+        newblock=True,
+        allowedtypes=PARALLEL_TYPE,
+        scale={0: "No", 1: "Yes"},
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:ev-station",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Available Current",
+        key="slave_available_current",
+        device_group="pm",
+        register=0x667,
+        allowedtypes=PARALLEL_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:current-ac",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Charge Current",
+        key="max_charge_current",
+        register=0x668,
+        newblock=True,
+        scale=0.01,
+        rounding=2,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Parallel Charge Mode",
+        key="parallel_charge_mode",
+        register=0x669,
+        allowedtypes=PARALLEL_TYPE,
+        scale={0: "Fast", 1: "ECO", 2: "Green"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Error Mask",
+        key="parallel_error_mask",
+        device_group="pm",
+        register=0x66A,
+        register_data_type=REGISTER_U32,
+        allowedtypes=PARALLEL_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:alert-decagram-outline",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Count",
+        key="slave_count",
+        device_group="pm",
+        register=0x66C,
+        allowedtypes=PARALLEL_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:counter",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Power Allocation Ratio",
+        key="power_allocation_ratio",
+        device_group="pm",
+        register=0x66D,
+        allowedtypes=PARALLEL_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:scale-balance",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Allocation Master State",
+        key="allocation_master_state",
+        device_group="pm",
+        register=0x66E,
+        allowedtypes=PARALLEL_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:sitemap",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Request Slave Address",
+        key="request_slave_address",
+        device_group="pm",
+        register=0x66F,
+        allowedtypes=PARALLEL_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:map-marker-question-outline",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Reference Power",
+        key="datahub_reference_power",
+        device_group="datahub",
+        register=0x700,
+        newblock=True,
+        register_data_type=REGISTER_S16,
+        allowedtypes=DATAHUB_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Power To EV",
+        key="datahub_power_to_ev",
+        device_group="datahub",
+        register=0x701,
+        register_data_type=REGISTER_S32,
+        allowedtypes=DATAHUB_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="PV Reference",
+        key="datahub_pv_reference",
+        device_group="datahub",
+        register=0x703,
+        allowedtypes=DATAHUB_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:solar-power",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Feedin Power",
+        key="datahub_feedin_power_l1",
+        device_group="datahub",
+        register=0x704,
+        register_data_type=REGISTER_S32,
+        allowedtypes=DATAHUB_TYPE | X1,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Feedin Power L1",
+        key="datahub_feedin_power_l1",
+        device_group="datahub",
+        register=0x704,
+        register_data_type=REGISTER_S32,
+        allowedtypes=DATAHUB_TYPE | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Feedin Power L2",
+        key="datahub_feedin_power_l2",
+        device_group="datahub",
+        register=0x706,
+        register_data_type=REGISTER_S32,
+        allowedtypes=DATAHUB_TYPE | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Feedin Power L3",
+        key="datahub_feedin_power_l3",
+        device_group="datahub",
+        register=0x708,
+        register_data_type=REGISTER_S32,
+        allowedtypes=DATAHUB_TYPE | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Off-Grid Charging",
+        key="datahub_off_grid",
+        device_group="datahub",
+        register=0x70A,
+        allowedtypes=DATAHUB_TYPE,
+        scale={
+            0: "Not Off-Grid",
+            1: "Off-Grid",
+        },
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:transmission-tower-off",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Main Breaker Limit",
+        key="datahub_main_breaker_limit",
+        device_group="datahub",
+        register=0x70B,
+        allowedtypes=DATAHUB_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:fuse",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Green Mode 30s Delay",
+        key="datahub_green_30s_delay",
+        device_group="datahub",
+        register=0x70C,
+        allowedtypes=DATAHUB_TYPE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:timer-outline",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power Limit",
+        key="datahub_charge_power_limit",
+        device_group="datahub",
+        register=0x70D,
+        allowedtypes=DATAHUB_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:speedometer",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Start Time",
+        key="charge_start_time",
+        register=0x31,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_WORDS,
+        wordcount=6,
+        scale=value_function_charge_start_time,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:clock-start",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Request Charge",
+        key="slave_request_charge",
+        device_group="pm",
+        register=0x38,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=PARALLEL_TYPE,
+        scale={0: "No", 1: "Yes"},
+        icon="mdi:ev-plug-type2",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Run Mode",
+        key="slave_run_mode",
+        device_group="pm",
+        register=0x39,
+        register_type=REG_INPUT,
+        allowedtypes=PARALLEL_TYPE,
         scale={
             0: "Available",
             1: "Preparing",
@@ -872,9 +1854,215 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             11: "Start Delay",
             12: "Charge Paused",
             13: "Stopping",
+            14: "Occupied",
+            15: "Waiting for Response",
+            16: "Discharging",
+            17: "Phase Switching",
         },
-        entity_registry_enabled_default=False,
-        icon="mdi:ev-station",
+        icon="mdi:run",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Current",
+        key="slave_current",
+        device_group="pm",
+        register=0x3A,
+        register_type=REG_INPUT,
+        allowedtypes=X1 | PARALLEL_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Current L1",
+        key="slave_current_l1",
+        device_group="pm",
+        register=0x3A,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Current L2",
+        key="slave_current_l2",
+        device_group="pm",
+        register=0x3B,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Current L3",
+        key="slave_current_l3",
+        device_group="pm",
+        register=0x3C,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Power",
+        key="slave_power",
+        device_group="pm",
+        register=0x3D,
+        register_type=REG_INPUT,
+        allowedtypes=X1 | PARALLEL_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Power L1",
+        key="slave_power_l1",
+        device_group="pm",
+        register=0x3D,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Power L2",
+        key="slave_power_l2",
+        device_group="pm",
+        register=0x3E,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Power L3",
+        key="slave_power_l3",
+        device_group="pm",
+        register=0x3F,
+        register_type=REG_INPUT,
+        allowedtypes=X3 | PARALLEL_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Power Total",
+        key="slave_power_total",
+        device_group="pm",
+        register=0x40,
+        register_type=REG_INPUT,
+        allowedtypes=PARALLEL_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Phase Type",
+        key="slave_phase_type",
+        device_group="pm",
+        register=0x41,
+        register_type=REG_INPUT,
+        allowedtypes=PARALLEL_TYPE,
+        scale={0: "Single Phase", 1: "Three Phase"},
+        icon="mdi:sine-wave",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Slave Charge Phase",
+        key="slave_charge_phase",
+        device_group="pm",
+        register=0x42,
+        register_type=REG_INPUT,
+        allowedtypes=PARALLEL_TYPE,
+        scale={0: "Three Phase", 1: "L1 Phase", 2: "L2 Phase", 3: "L3 Phase"},
+        icon="mdi:cable-data",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Auto Allocation Result",
+        key="auto_allocation_result",
+        device_group="pm",
+        register=0x64,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=PARALLEL_TYPE,
+        icon="mdi:sitemap-outline",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Request Slave SN",
+        key="request_slave_sn",
+        device_group="pm",
+        register=0x65,
+        register_type=REG_INPUT,
+        allowedtypes=PARALLEL_TYPE,
+        icon="mdi:identifier",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Charge Power",
+        key="ems_max_charge_power",
+        register=0xA100,
+        newblock=True,
+        allowedtypes=GEN2 | EMS_TYPE,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Discharge Power",
+        key="ems_max_discharge_power",
+        register=0xA101,
+        allowedtypes=GEN2 | EMS_TYPE,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Failsafe Charge Power",
+        key="ems_failsafe_charge_power",
+        register=0xA102,
+        allowedtypes=GEN2 | EMS_TYPE,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Failsafe Discharge Power",
+        key="ems_failsafe_discharge_power",
+        register=0xA103,
+        allowedtypes=GEN2 | EMS_TYPE,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Failsafe Timeout",
+        key="ems_failsafe_timeout",
+        register=0xA104,
+        allowedtypes=GEN2 | EMS_TYPE,
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Phase Switching",
+        key="ems_phase_switching",
+        register=0xA105,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale={0: "Disabled", 1: "Single-Phase Manual", 2: "Three-Phase Manual", 3: "Power-Following Auto"},
+        internal=True,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Control",
+        key="ems_charge_control",
+        register=0xA106,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale={0: "Invalid", 1: "Start Charging", 2: "Pause Charging", 3: "Stop Charging"},
+        internal=True,
     ),
     ###
     #
@@ -888,8 +2076,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x0,
         register_type=REG_INPUT,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=X1,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -899,8 +2089,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage L2",
@@ -909,8 +2101,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Voltage L3",
@@ -919,8 +2113,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     # ---- 0x0003  PE voltage (GEN2 doc: VoltagePE, 0.01V) ----
     SolaXEVChargerModbusSensorEntityDescription(
@@ -929,22 +2125,37 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x3,
         register_type=REG_INPUT,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x0004–0x0006  Phase currents L1 (A) / L2 (B) / L3 (C), 0.01A ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current",
-        key="charge_current",
+        key="charge_current_measured",
         register=0x4,
         register_type=REG_INPUT,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
-        allowedtypes=X1,
-        entity_registry_enabled_default=False,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=GEN1 | X1,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current",
+        key="charge_current_measured",
+        register=0x4,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=GEN2 | X1,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -952,30 +2163,75 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charge_current_l1",
         register=0x4,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        allowedtypes=GEN1 | X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current L1",
+        key="charge_current_l1",
+        register=0x4,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current L2",
         key="charge_current_l2",
         register=0x5,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        allowedtypes=GEN1 | X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current L2",
+        key="charge_current_l2",
+        register=0x5,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Current L3",
         key="charge_current_l3",
         register=0x6,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        allowedtypes=GEN1 | X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Current L3",
+        key="charge_current_l3",
+        register=0x6,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     # ---- 0x0007  PE current (GEN2 doc: CurrentPE, 0.001A) ----
     SolaXEVChargerModbusSensorEntityDescription(
@@ -983,9 +2239,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charge_pe_current",
         register=0x7,
         register_type=REG_INPUT,
+        rounding=0,
         native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
         device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x0008–0x000A  Phase powers L1 (A) / L2 (B) / L3 (C), 1W ----
@@ -994,51 +2250,165 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charge_power",
         register=0x8,
         register_type=REG_INPUT,
+        modbus_max=111,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=X1,
-        entity_registry_enabled_default=False,
+        allowedtypes=GEN1 | X1,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power",
+        key="charge_power",
+        register=0x100,
+        register_type=REG_INPUT,
+        modbus_min=112,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=GEN1 | X1,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power",
+        key="charge_power",
+        register=0x8,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=GEN2 | X1,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power L1",
         key="charge_power_l1",
         register=0x8,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        modbus_max=111,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L1",
+        key="charge_power_l1",
+        register=0x100,
+        register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L1",
+        key="charge_power_l1",
+        register=0x8,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power L2",
         key="charge_power_l2",
         register=0x9,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        modbus_max=111,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L2",
+        key="charge_power_l2",
+        register=0x101,
+        register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L2",
+        key="charge_power_l2",
+        register=0x9,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power L3",
         key="charge_power_l3",
         register=0xA,
         register_type=REG_INPUT,
-        allowedtypes=X3,
+        modbus_max=111,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L3",
+        key="charge_power_l3",
+        register=0x102,
+        register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power L3",
+        key="charge_power_l3",
+        register=0xA,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        allowedtypes=GEN2 | X3,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     # ---- 0x000B  Total charge power (GEN2 doc: TotalChargePower, 1W) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Power Total",
         key="charge_power_total",
         register=0xB,
+        allowedtypes=GEN1,
         register_type=REG_INPUT,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charge Power Total",
+        key="charge_power_total",
+        register=0xB,
+        allowedtypes=GEN2,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S16,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1050,9 +2420,11 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0xC,
         register_type=REG_INPUT,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=X1,
-        entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Charge Frequency L1",
@@ -1061,8 +2433,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1072,8 +2446,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1083,8 +2459,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
-        entity_registry_enabled_default=False,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x000F  Session energy (GEN2 doc: EQ_Single, 0.1kWh) ----
@@ -1118,7 +2496,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x10,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
-        allowedtypes=GEN2 | GEN3 | GEN4,
+        allowedtypes=GEN2,
         scale=0.1,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -1143,10 +2521,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         allowedtypes=X1,
-        entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Current L1",
@@ -1156,9 +2534,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1169,9 +2547,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1182,9 +2560,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x0015–0x0017  Grid powers L1 (A) / L2 (B) / L3 (C), S16, 1W ----
@@ -1194,11 +2572,11 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x15,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=X1,
-        entity_registry_enabled_default=False,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
         name="Grid Power L1",
@@ -1207,10 +2585,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1220,10 +2598,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1233,10 +2611,10 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=X3,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x0018  Total grid power S16 (GEN2 doc: ExternTotalPower, 1W) ----
@@ -1246,6 +2624,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x18,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1259,7 +2638,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         scale=0.1,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:sine-wave",
     ),
@@ -1269,9 +2647,9 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register=0x1A,
         register_type=REG_INPUT,
         scale=0.01,
+        rounding=2,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:sine-wave",
     ),
@@ -1282,7 +2660,6 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         native_unit_of_measurement=PERCENTAGE,
-        entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:pulse",
     ),
@@ -1291,6 +2668,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="charger_temperature",
         register=0x1C,
         register_type=REG_INPUT,
+        rounding=0,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1302,6 +2680,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="run_mode",
         register=0x1D,
         register_type=REG_INPUT,
+        modbus_max=111,
+        allowedtypes=GEN1,
         scale={
             0: "Available",
             1: "Preparing",
@@ -1317,8 +2697,69 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             11: "Start Delay",
             12: "Charge Paused",
             13: "Stopping",
+            14: "Occupied",
+            15: "Waiting for Response",
+            16: "Discharging",
+            17: "Phase Switching",
         },
-        icon="mdi:ev-station",
+        icon="mdi:run",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Run Mode",
+        key="run_mode",
+        register=0x106,
+        register_type=REG_INPUT,
+        modbus_min=112,
+        allowedtypes=GEN1,
+        scale={
+            0: "Available",
+            1: "Preparing",
+            2: "Charging",
+            3: "Finishing",
+            4: "Faulted",
+            5: "Unavailable",
+            6: "Reserved",
+            7: "Suspended EV",
+            8: "Suspended EVSE",
+            9: "Update",
+            10: "Card Activation",
+            11: "Start Delay",
+            12: "Charge Paused",
+            13: "Stopping",
+            14: "Occupied",
+            15: "Waiting for Response",
+            16: "Discharging",
+            17: "Phase Switching",
+        },
+        icon="mdi:run",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Run Mode",
+        key="run_mode",
+        register=0x1D,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2,
+        scale={
+            0: "Available",
+            1: "Preparing",
+            2: "Charging",
+            3: "Finishing",
+            4: "Faulted",
+            5: "Unavailable",
+            6: "Reserved",
+            7: "Suspended EV",
+            8: "Suspended EVSE",
+            9: "Update",
+            10: "Card Activation",
+            11: "Start Delay",
+            12: "Charge Paused",
+            13: "Stopping",
+            14: "Occupied",
+            15: "Waiting for Response",
+            16: "Discharging",
+            17: "Phase Switching",
+        },
+        icon="mdi:run",
     ),
     # ---- 0x001E  Fault code u32 (GEN2 doc: FaultCode) ----
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1329,6 +2770,403 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:alert",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Fault Description",
+        key="fault_description",
+        register=-1,
+        value_function=value_function_fault_description,
+        depends_on=["fault_code"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:alert",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Serial Number",
+        key="ems_serial_number",
+        device_group="ems",
+        register=0xA000,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=7,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:barcode",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Model ID",
+        key="ems_model_id",
+        device_group="ems",
+        register=0xA007,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=8,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:identifier",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Firmware Version",
+        key="ems_firmware_version",
+        device_group="ems",
+        register=0xA00F,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_U16,
+        scale=value_function_firmware_decimal_hundredths,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:numeric",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Active Power",
+        key="ems_active_power",
+        device_group="ems",
+        register=0xA010,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X1 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Active Power L1",
+        key="ems_active_power_l1",
+        device_group="ems",
+        register=0xA010,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Active Power L2",
+        key="ems_active_power_l2",
+        device_group="ems",
+        register=0xA011,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Active Power L3",
+        key="ems_active_power_l3",
+        device_group="ems",
+        register=0xA012,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Active Power Total",
+        key="ems_active_power_total",
+        device_group="ems",
+        register=0xA013,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Allowed Charge Power",
+        key="ems_max_allowed_charge_power",
+        device_group="ems",
+        register=0xA014,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Max Allowed Discharge Power",
+        key="ems_max_allowed_discharge_power",
+        device_group="ems",
+        register=0xA015,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Run Mode",
+        key="ems_run_mode",
+        device_group="ems",
+        register=0xA016,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale={
+            0: "Available",
+            1: "Preparing",
+            2: "Charging",
+            3: "Finishing",
+            4: "Faulted",
+            5: "Unavailable",
+            6: "Reserved",
+            7: "Suspended EV",
+            8: "Suspended EVSE",
+            9: "Update",
+            10: "Card Activation",
+            11: "Start Delay",
+            12: "Charge Paused",
+            13: "Stopping",
+            14: "Occupied",
+            15: "Waiting for Response",
+            16: "Discharging",
+            17: "Phase Switching",
+        },
+        icon="mdi:run",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Plug State",
+        key="ems_plug_state",
+        device_group="ems",
+        register=0xA017,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale={
+            0: "Not Plugged In",
+            1: "Plugged In",
+            2: "Charging",
+            3: "Invalid Voltage",
+            4: "Ventilation Required",
+        },
+        icon="mdi:ev-plug-type2",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Manufacturer ID",
+        key="ems_manufacturer_id",
+        device_group="ems",
+        register=0xA018,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:factory",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Voltage",
+        key="ems_voltage",
+        device_group="ems",
+        register=0xA01C,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X1 | EMS_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Voltage L1",
+        key="ems_voltage_l1",
+        device_group="ems",
+        register=0xA01C,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Voltage L2",
+        key="ems_voltage_l2",
+        device_group="ems",
+        register=0xA01D,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Voltage L3",
+        key="ems_voltage_l3",
+        device_group="ems",
+        register=0xA01E,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Current",
+        key="ems_current",
+        device_group="ems",
+        register=0xA01F,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X1 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Current L1",
+        key="ems_current_l1",
+        device_group="ems",
+        register=0xA01F,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Current L2",
+        key="ems_current_l2",
+        device_group="ems",
+        register=0xA020,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Current L3",
+        key="ems_current_l3",
+        device_group="ems",
+        register=0xA021,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | X3 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        scale=0.01,
+        rounding=2,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Min Allowed Charge Power",
+        key="ems_min_allowed_charge_power",
+        device_group="ems",
+        register=0xA022,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        rounding=0,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Battery Capacity",
+        key="ems_battery_capacity",
+        device_group="ems",
+        register=0xA023,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale=0.1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY_STORAGE,
+        icon="mdi:battery-high",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Battery SoC",
+        key="ems_battery_soc",
+        device_group="ems",
+        register=0xA024,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        rounding=0,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charged Energy Total",
+        key="ems_charged_energy_total",
+        device_group="ems",
+        register=0xA025,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_U32,
+        scale=0.1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Temperature",
+        key="ems_temperature",
+        device_group="ems",
+        register=0xA027,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_S16,
+        rounding=0,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Fault Code",
+        key="ems_fault_code",
+        device_group="ems",
+        register=0xA028,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        register_data_type=REGISTER_U32,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:alert",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Fault Description",
+        key="ems_fault_description",
+        device_group="ems",
+        register=-1,
+        allowedtypes=GEN2 | EMS_TYPE,
+        value_function=value_function_ems_fault_description,
+        depends_on=["ems_fault_code"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:alert",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Charging Phase",
+        key="ems_charging_phase",
+        device_group="ems",
+        register=0xA02A,
+        register_type=REG_INPUT,
+        allowedtypes=GEN2 | EMS_TYPE,
+        scale={0: "Idle", 1: "Single-Phase", 2: "Three-Phase"},
+        icon="mdi:sine-wave",
     ),
     # ---- 0x0020  Cable type (GEN2 doc: TypeCase, 0=CaseB, 1=CaseC) ----
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1344,17 +3182,21 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:ev-plug-type2",
     ),
-    # ---- 0x0021  Power rating ----
+    # ---- 0x0021  Power rating (GEN2 V1.00 mapping, a superset of the GEN1 values) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Power Rating",
         key="power_rating",
         register=0x21,
         register_type=REG_INPUT,
         scale={
-            0: "7.2 kW",
+            0: "7 kW",
             1: "11 kW",
             2: "22 kW",
-            3: "4.6 kW",
+            3: "6 kW",
+            4: "4.6 kW",
+            5: "7.6 kW",
+            6: "9.6 kW",
+            7: "11.5 kW",
         },
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -1382,22 +3224,23 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         allowedtypes=GEN1,
         scale={
-            0: "Home",
-            1: "OCPP",
+            0: "Home Edition",
+            1: "Commercial Edition",
+            2: "Integrated Edition",
         },
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
     ),
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Charging Scene",
+        name="Application Scene",
         key="model_type",
         register=0x23,
         register_type=REG_INPUT,
         allowedtypes=GEN2,
         scale={
-            0: "PV Mode",
-            1: "Standard Mode",
-            2: "OCPP Mode",
+            0: "Solar Scene",
+            1: "Standard Scene",
+            2: "OCPP Scene",
         },
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:dip-switch",
@@ -1427,13 +3270,50 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:numeric",
     ),
-    # ---- 0x0026  OCPP Network (0=Not Connected, 1=Connected) ----
     SolaXEVChargerModbusSensorEntityDescription(
-        name="OCPP Network",
+        name="Module Version",
+        key="module_version",
+        register=0x71,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_U16,
+        scale=value_function_firmware_decimal_hundredths,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:numeric",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="LCD Version",
+        key="lcd_version",
+        register=0x73,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_U16,
+        scale=value_function_firmware_decimal_hundredths,
+        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:numeric",
+    ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Modbus Version",
+        key="modbus_version",
+        register=0x78,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_U16,
+        scale=value_function_firmware_decimal_hundredths,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:numeric",
+    ),
+    # ---- 0x0026  Network status (0=Offline, 1=Online) ----
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Network Status",
         key="net_connected",
         register=0x26,
         register_type=REG_INPUT,
-        allowedtypes=OCPP_TYPE,
         scale={
             0: "Not Connected",
             1: "Connected",
@@ -1443,10 +3323,11 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0027  Signal strength (GEN2 doc: RSSI, 1%) ----
     SolaXEVChargerModbusSensorEntityDescription(
-        name="RSSI",
+        name="WiFi RSSI",
         key="rssi",
         register=0x27,
         register_type=REG_INPUT,
+        rounding=0,
         native_unit_of_measurement=PERCENTAGE,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -1454,7 +3335,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
     ),
     # ---- 0x0028  Active charge phase (GEN2 doc: ChargePhase) ----
     SolaXEVChargerModbusSensorEntityDescription(
-        name="Active Charge Phase",
+        name="Wiring Phase",
         key="active_charge_phase",
         register=0x28,
         register_type=REG_INPUT,
@@ -1465,6 +3346,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
             3: "L3 Phase",
         },
         icon="mdi:cable-data",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     # ---- 0x0029  Unbalanced power (GEN2 doc: UnbalancedPower, 1W) ----
     SolaXEVChargerModbusSensorEntityDescription(
@@ -1472,6 +3354,8 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="unbalanced_power_limit",
         register=0x29,
         register_type=REG_INPUT,
+        allowedtypes=X1,
+        rounding=0,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False,
@@ -1484,6 +3368,7 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         key="phase_unbalance",
         register=0x2A,
         register_type=REG_INPUT,
+        allowedtypes=X1,
         scale={
             0: "Off",
             1: "On",
@@ -1501,28 +3386,31 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL,
+        rounding=0,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         suggested_display_precision=0,
         icon="mdi:timer",
     ),
-    # ---- 0x002D  Lock status (GEN2 doc: Lock_Status, 0=Unlocked, 1=Locked) ----
+    # ---- 0x002D-0x0030 are second-generation-only: SolaX support confirmed they do
+    # not exist on Gen1 chargers and will be removed from the Gen1 protocol document.
     SolaXEVChargerModbusSensorEntityDescription(
         name="Lock State",
         key="lock_state",
         register=0x2D,
         register_type=REG_INPUT,
+        allowedtypes=GEN2,
         scale={
             0: "Unlocked",
             1: "Locked",
         },
         icon="mdi:lock",
     ),
-    # ---- 0x002E  Main breaker limit (GEN2 doc: MainBreakerLimitState) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Main Breaker Limit State",
         key="mainbrk_limit",
         register=0x2E,
         register_type=REG_INPUT,
+        allowedtypes=GEN2,
         scale={
             0: "Not Limited",
             1: "Limited, Charging",
@@ -1530,12 +3418,12 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         },
         icon="mdi:car-speed-limiter",
     ),
-    # ---- 0x002F  Delay state (GEN2 doc: delay_state, 0=Not in Delay, 1=In Delay) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Random Delay State",
         key="delay_state",
         register=0x2F,
         register_type=REG_INPUT,
+        allowedtypes=GEN2,
         scale={
             0: "Not in Delay",
             1: "In Random Delay",
@@ -1544,12 +3432,12 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:progress-clock",
     ),
-    # ---- 0x0030  Ban state (GEN2 doc: ban_state, 0=None, 1=Prohibited) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Ban State",
         key="ban_state",
         register=0x30,
         register_type=REG_INPUT,
+        allowedtypes=GEN2,
         scale={
             0: "Okay",
             1: "Charge Prohibited",
@@ -1582,16 +3470,22 @@ class solax_ev_charger_plugin(plugin_base):
             _LOGGER.error("%s: cannot find serial number for EV Charger", hub.name)
             seriesnumber = "unknown"
 
+        fw_version = await async_read_firmware(hub, 0x25)
+        # Version source for modbus_min/modbus_max gating:
+        #   GEN1 - firmware version (0x25), the key of the V3.6 version-matching table.
+        #   GEN2 - Modbus protocol version (0x78), replaced below once the generation is known.
+        hub.modbus_protocol_version = int(round(fw_version * 100)) if fw_version is not None else None
+
         # derive invertertupe from seriesnumber
         _LOGGER.debug("%s: Determining inverter type from serial number prefix", hub.name)
         invertertype = 0
         self.inverter_model = None
         if seriesnumber.startswith("C107"):
-            invertertype = X1 | POW7 | GEN1  # 7kW EV Single Phase Gen1 (X1-EVC-7kW*)
+            invertertype = X1 | POW7 | GEN1  # 7kW EV Single Phase Gen1 (X1-GEN1-7kW*)
             self.inverter_model = "X1-EVC-7kW"
             self.hardware_version = "Gen1"
             _LOGGER.debug(
-                "%s: Matched C107 - X1 | POW7 | GEN1 (7kW EV Single Phase Gen1), type=0x%x, model=%s, hw=%s",
+                "%s: Matched C107 - X1 | POW7 | EVC (7kW EV Single Phase Gen1), type=0x%x, model=%s, hw=%s",
                 hub.name,
                 invertertype,
                 self.inverter_model,
@@ -1600,18 +3494,16 @@ class solax_ev_charger_plugin(plugin_base):
         elif seriesnumber.startswith("C311"):
             # Default to GEN1 for backward compatibility
             _LOGGER.debug("%s: C311 series number detected: %s", hub.name, seriesnumber)
-            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase Gen1 (X3-EVC-11kW*)
+            invertertype = X3 | POW11 | GEN1  # 11kW EV Three Phase Gen1 (X3-GEN1-11kW*)
             self.inverter_model = "X3-EVC-11kW"
             _LOGGER.debug("%s: C311 model set to: %s", hub.name, self.inverter_model)
             self.hardware_version = "Gen1"
 
-            # Try to detect GEN2 firmware for hybrid hardware
-            fw_version = await async_read_firmware(hub, 0x25)
             if fw_version is not None and fw_version >= 7.0:
                 # Upgrade to GEN2 - has GEN2 firmware
                 invertertype = X3 | POW11 | GEN2
-                self.hardware_version = "Gen1 (GEN2 FW)"
-                _LOGGER.info("%s: C311 detected with GEN2 firmware v%.2f, enabling GEN2 features", hub.name, fw_version)
+                self.hardware_version = "Gen1 (Gen2 FW)"
+                _LOGGER.info("%s: C311 detected with HAC firmware v%.2f, enabling HAC features", hub.name, fw_version)
 
             _LOGGER.debug(
                 "%s: Matched C311 - X3 | POW11 | type=0x%x, model=%s, hw=%s", hub.name, invertertype, self.inverter_model, self.hardware_version
@@ -1619,18 +3511,16 @@ class solax_ev_charger_plugin(plugin_base):
         elif seriesnumber.startswith("C322"):
             # Default to GEN1 for backward compatibility
             _LOGGER.debug("%s: C322 series number detected: %s", hub.name, seriesnumber)
-            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase Gen1 (X3-EVC-22kW*)
+            invertertype = X3 | POW22 | GEN1  # 22kW EV Three Phase Gen1 (X3-GEN1-22kW*)
             self.inverter_model = "X3-EVC-22kW"
             _LOGGER.debug("%s: C322 model set to: %s", hub.name, self.inverter_model)
             self.hardware_version = "Gen1"
 
-            # Try to detect GEN2 firmware for hybrid hardware
-            fw_version = await async_read_firmware(hub, 0x25)
             if fw_version is not None and fw_version >= 7.0:
                 # Upgrade to GEN2 - has GEN2 firmware
                 invertertype = X3 | POW22 | GEN2
-                self.hardware_version = "Gen1 (GEN2 FW)"
-                _LOGGER.info("%s: C322 detected with GEN2 firmware v%.2f, enabling GEN2 features", hub.name, fw_version)
+                self.hardware_version = "Gen1 (Gen2 FW)"
+                _LOGGER.info("%s: C322 detected with HAC firmware v%.2f, enabling HAC features", hub.name, fw_version)
 
             _LOGGER.debug(
                 "%s: Matched C322 - X3 | POW22 | type=0x%x, model=%s, hw=%s", hub.name, invertertype, self.inverter_model, self.hardware_version
@@ -1680,27 +3570,42 @@ class solax_ev_charger_plugin(plugin_base):
             _LOGGER.error("unrecognized inverter type - serial number : %s", seriesnumber)
             _LOGGER.debug("%s: No match found for serial number prefix, returning type=0", hub.name)
 
-        # Detect OCPP via 0x0023 — meaning differs by generation:
-        # GEN1: TypeCharger (static hardware type); value 1 = OCPP variant.
-        # GEN2: EVSE_Scene (current mode); value 2 = OCPP Mode.
-        # Note: on GEN2 this reflects the mode at HA startup. OCPP entities appear
-        # only when the device is in OCPP mode when HA starts; a restart is required
-        # if the mode is changed. This is intentional — consistent with how all
-        # allowedtypes flags work in this integration.
-        try:
-            type_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x0023, count=1)
-            if not type_data.isError():
-                val = type_data.registers[0]
-                ocpp_detected = (invertertype & GEN1 and val == 1) or (invertertype & GEN2 and val == 2)
-                if ocpp_detected:
-                    invertertype |= OCPP_TYPE
-                    _LOGGER.info("%s: OCPP detected (0x0023=%s)", hub.name, val)
+        # Parallel capability via 0x0107 (Is_support_parallel): 0xAA55 = supported.
+        # The parallel entities need both the capability and the Parallel Mode option,
+        # the same option that gates the parallel group on the inverter plugins.
+        if invertertype & GEN2:
+            try:
+                version_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x0078, count=1)
+                if not version_data.isError() and version_data.registers[0] > 0:
+                    hub.modbus_protocol_version = version_data.registers[0]
+                    _LOGGER.info("%s: HAC Modbus protocol version %.2f (0x0078) used for version gating", hub.name, version_data.registers[0] / 100)
                 else:
-                    _LOGGER.debug("%s: OCPP not active (0x0023=%s)", hub.name, val)
+                    _LOGGER.info("%s: 0x0078 unavailable, version gating falls back to the firmware version", hub.name)
+            except Exception:
+                _LOGGER.debug("%s: Could not read 0x0078", hub.name, exc_info=True)
+
+        read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+        if read_pm:
+            invertertype |= PM_OPTION_TYPE
+        if configdict.get(CONF_READ_EMS, DEFAULT_READ_EMS):
+            invertertype |= EMS_TYPE
+        if configdict.get(CONF_READ_DATAHUB, DEFAULT_READ_DATAHUB):
+            invertertype |= DATAHUB_TYPE
+        try:
+            parallel_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=0x0107, count=1)
+            if not parallel_data.isError():
+                val = parallel_data.registers[0]
+                if val == 0xAA55 and read_pm:
+                    invertertype |= PARALLEL_TYPE
+                    _LOGGER.info("%s: parallel operation supported (0x0107=0x%04X) and Parallel Mode option enabled", hub.name, val)
+                elif val == 0xAA55:
+                    _LOGGER.info("%s: parallel operation supported (0x0107=0x%04X) but the Parallel Mode option is off", hub.name, val)
+                else:
+                    _LOGGER.debug("%s: parallel operation not supported (0x0107=0x%04X)", hub.name, val)
             else:
-                _LOGGER.debug("%s: Could not read 0x0023 for OCPP probe (Modbus error)", hub.name)
+                _LOGGER.debug("%s: Could not read 0x0107 for parallel probe (Modbus error)", hub.name)
         except Exception:
-            _LOGGER.debug("%s: Could not read charger type register 0x0023", hub.name, exc_info=True)
+            _LOGGER.debug("%s: Could not read parallel support register 0x0107", hub.name, exc_info=True)
 
         _LOGGER.debug("%s: Final inverter type determination: 0x%x, model=%s", hub.name, invertertype, self.inverter_model)
         return invertertype
@@ -1759,6 +3664,62 @@ plugin_instance = solax_ev_charger_plugin(
             icon="mdi:lock",
         ),
         BaseModbusSwitchEntityDescription(
+            name="Unbalanced Switch",
+            key="unbalanced_switch",
+            register=0x63D,
+            modbus_min=111,
+            allowedtypes=GEN1 | X1,
+            sensor_key="unbalanced_switch",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=False,
+            icon="mdi:scale-unbalanced",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="Unbalanced Switch",
+            key="unbalanced_switch",
+            register=0x63D,
+            allowedtypes=GEN2 | X1,
+            sensor_key="unbalanced_switch",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=False,
+            icon="mdi:scale-unbalanced",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="Green 30s Delay",
+            key="green_30s_delay",
+            register=0x644,
+            allowedtypes=GEN1,
+            modbus_min=114,
+            sensor_key="green_30s_delay",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=False,
+            icon="mdi:timer-sand",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="Green 30s Delay",
+            key="green_30s_delay",
+            register=0x644,
+            allowedtypes=GEN2,
+            sensor_key="green_30s_delay",
+            value_function=value_function_enable_disable,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=False,
+            icon="mdi:timer-sand",
+        ),
+        BaseModbusSwitchEntityDescription(
+            name="Main Breaker Limit Switch",
+            key="main_breaker_limit_switch",
+            register=0x664,
+            allowedtypes=GEN2,
+            sensor_key="main_breaker_limit_switch",
+            value_function=value_function_disable_enable,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:electric-switch",
+        ),
+        BaseModbusSwitchEntityDescription(
             name="RFID Card Activation",
             key="rfid_card_activation",
             register=0x616,
@@ -1769,7 +3730,7 @@ plugin_instance = solax_ev_charger_plugin(
         ),
     ],
     TIME_TYPES=TIME_TYPES,
-    block_size=32,
+    block_size=100,
     # order16=Endian.BIG,
     order32="little",
 )

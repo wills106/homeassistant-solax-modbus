@@ -44,7 +44,9 @@ from .const import (
     CONF_MODBUS_ADDR,
     CONF_PLUGIN,
     CONF_READ_BATTERY,
+    CONF_READ_DATAHUB,
     CONF_READ_DCB,
+    CONF_READ_EMS,
     CONF_READ_EPS,
     CONF_READ_GEN,
     CONF_READ_PM,
@@ -63,7 +65,9 @@ from .const import (
     DEFAULT_PLUGIN,
     DEFAULT_PORT,
     DEFAULT_READ_BATTERY,
+    DEFAULT_READ_DATAHUB,
     DEFAULT_READ_DCB,
+    DEFAULT_READ_EMS,
     DEFAULT_READ_EPS,
     DEFAULT_READ_GEN,
     DEFAULT_READ_PM,
@@ -159,6 +163,8 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_GEN, default=DEFAULT_READ_GEN): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
+        vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
+        vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
 )
@@ -182,6 +188,8 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_DCB, default=DEFAULT_READ_DCB): bool,
         vol.Optional(CONF_READ_GEN, default=DEFAULT_READ_GEN): bool,
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
+        vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
+        vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
 )
@@ -368,7 +376,7 @@ def _plugin_supports_device_group(plugin_name: str | None, group: str) -> bool:
     except Exception:
         return True
     instance = getattr(plugin, "plugin_instance", plugin)
-    for attribute in ("NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES"):
+    for attribute in ("NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES", "SENSOR_TYPES"):
         for source in (instance, plugin):
             for description in getattr(source, attribute, None) or []:
                 if getattr(description, "device_group", None) == group:
@@ -387,6 +395,10 @@ async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
     for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
         if not _plugin_uses_feature_flag(plugin_name, flag_name):
             hidden.add(option)
+    if not _plugin_supports_device_group(plugin_name, "ems"):
+        hidden.add(CONF_READ_EMS)
+    if not _plugin_supports_device_group(plugin_name, "datahub"):
+        hidden.add(CONF_READ_DATAHUB)
     if not hidden:
         return OPTION_SCHEMA
     return vol.Schema({marker: value for marker, value in OPTION_SCHEMA.schema.items() if getattr(marker, "schema", None) not in hidden})

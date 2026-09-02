@@ -157,6 +157,10 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
         await self._write_switch_to_modbus(is_on)
         self._attr_is_on = is_on
         self._last_command_time = datetime.now()  # Record user action time
+        if self.entity_description.write_method != WRITE_DATA_LOCAL:
+            # Publish the accepted value locally: the readback register only catches up
+            # on a later poll, and entities depending on this key must not see the old value.
+            self._hub.data[self._sensor_key or self._key] = 1 if is_on else 0
         self.async_write_ha_state()
         await self._hub.async_refresh_gated_entities()
 

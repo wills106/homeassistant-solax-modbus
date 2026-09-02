@@ -100,7 +100,13 @@ from .const import (
     CONF_ENERGY_DASHBOARD_DEVICE as CONF_ENERGY_DASHBOARD_DEVICE,
 )
 from .const import (
+    CONF_READ_DATAHUB as CONF_READ_DATAHUB,
+)
+from .const import (
     CONF_READ_DCB as CONF_READ_DCB,
+)
+from .const import (
+    CONF_READ_EMS as CONF_READ_EMS,
 )
 from .const import (
     CONF_READ_EPS as CONF_READ_EPS,
@@ -127,7 +133,13 @@ from .const import (
     DEFAULT_PLUGIN as DEFAULT_PLUGIN,
 )
 from .const import (
+    DEFAULT_READ_DATAHUB as DEFAULT_READ_DATAHUB,
+)
+from .const import (
     DEFAULT_READ_DCB as DEFAULT_READ_DCB,
+)
+from .const import (
+    DEFAULT_READ_EMS as DEFAULT_READ_EMS,
 )
 from .const import (
     DEFAULT_READ_EPS as DEFAULT_READ_EPS,
@@ -456,12 +468,16 @@ DEVICE_GROUP_NAMES: dict[str, str] = {
     "external_generator": "External Generator",
     "eps": "EPS",
     "pm": "Parallel",
+    "ems": "EMS∕V2G",
+    "datahub": "Datahub",
 }
 
 GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
     "external_generator": (CONF_READ_GEN, DEFAULT_READ_GEN),
     "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
+    "ems": (CONF_READ_EMS, DEFAULT_READ_EMS),
+    "datahub": (CONF_READ_DATAHUB, DEFAULT_READ_DATAHUB),
     "ENERGY_DASHBOARD": (CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE),
 }
 
@@ -1876,6 +1892,8 @@ class SolaXModbusHub:
         else:  # apply simple numeric scaling and rounding if not a list of words
             try:
                 return_value = round(val * descr.scale * read_scale, descr.rounding)
+                if descr.rounding == 0:
+                    return_value = int(return_value)
             except Exception:
                 return_value = val  # probably a REGISTER_WORDS instance
             native_unit = getattr(descr, "native_unit_of_measurement", None)

@@ -318,6 +318,10 @@ class SolaXModbusNumber(NumberEntity):
                 self._write_method,
             )
             await self._hub.async_write_registers_multi(unit=self._modbus_addr, address=self._register, payload=pl)
+        if self._write_method in (WRITE_MULTISINGLE_MODBUS, WRITE_SINGLE_MODBUS, WRITE_MULTI_MODBUS):
+            # Publish the written value locally: the readback register only catches up on a
+            # later poll, so the entity would otherwise keep reporting the previous value.
+            self._hub.data[self._key] = value
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info("*** local data written %s: %s", self._key, payload)
             # corresponding_sensor = self._hub.preventSensors.get(self.entity_description.key, None)
