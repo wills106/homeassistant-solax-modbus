@@ -246,7 +246,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 async def readPreparation(
                     old_data: Any, key_prefix: str = key_prefix, batt_nr: int = batt_nr, batt_pack_nr: int = batt_pack_nr
                 ) -> Any:
-                    await battery_config.select_battery(hub, batt_nr, batt_pack_nr)
+                    if not await battery_config.select_battery(hub, batt_nr, batt_pack_nr):
+                        return False
                     return await battery_config.check_battery_on_start(hub, old_data, key_prefix, batt_nr, batt_pack_nr)
 
                 async def readFollowUpBattery(
