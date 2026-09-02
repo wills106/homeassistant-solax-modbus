@@ -8,3 +8,7 @@ mypy-txt-report/
 # Local tools and credentials — never push to GitHub
 tools/
 ha_credentials.env
+
+# Diff reports and local diff helper
+*_diff.txt
+ghdiff.bat
