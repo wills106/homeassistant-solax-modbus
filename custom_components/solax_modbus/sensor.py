@@ -154,7 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     async def readFollowUp(old_data: Any, new_data: Any) -> bool:
         dev_registry = dr.async_get(hass)
-        device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, INVERTER_IDENT)}))
+        device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)), entry.entry_id)
         if device is not None:
             sw_version = plugin.getSoftwareVersion(new_data)
             hw_version = plugin.getHardwareVersion(new_data)
@@ -217,7 +217,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
                 batt_pack_id = f"battery_{batt_nr + 1}_{batt_pack_nr + 1}"
                 dev_registry = dr.async_get(hass)
-                device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
+                device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
                 if device is not None:
                     _LOGGER.debug("batt pack serial: %s", device.serial_number)
                     await battery_config.init_batt_pack(hub, device.serial_number)
@@ -261,7 +261,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     batt_pack_nr: int = batt_pack_nr,
                 ) -> bool:
                     dev_registry = dr.async_get(hass)
-                    device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
+                    device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
                     if device is not None:
                         batt_pack_model = await battery_config.get_batt_pack_model(hub)
                         batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
