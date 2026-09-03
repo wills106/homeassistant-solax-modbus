@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import date
 from types import SimpleNamespace
@@ -61,6 +62,22 @@ COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
 ]
 
 COMMUNICATION_SENSOR_KEYS = {description.key for description in COMMUNICATION_SENSOR_TYPES}
+
+
+def _get_device_by_identifier(
+    registry: dr.DeviceRegistry,
+    identifier: tuple[str, ...],
+    config_entry_id: str,
+) -> dr.DeviceEntry | None:
+    """Look up a device within its config entry on supported HA versions."""
+    typed_identifier = cast(tuple[str, str], identifier)
+    scoped_lookup = getattr(registry, "async_get_device_by_identifier", None)
+    if scoped_lookup is not None:
+        lookup = cast(Callable[[tuple[str, str], str], dr.DeviceEntry | None], scoped_lookup)
+        return lookup(typed_identifier, config_entry_id)
+
+    # Home Assistant versions before 2026.8 do not provide the scoped lookup.
+    return registry.async_get_device(identifiers={typed_identifier})
 
 
 def _energy_dashboard_mapping_attrs(description: Any, hub: Any) -> dict[str, Any]:
@@ -154,7 +171,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     async def readFollowUp(old_data: Any, new_data: Any) -> bool:
         dev_registry = dr.async_get(hass)
-        device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)), entry.entry_id)
+        device = _get_device_by_identifier(dev_registry, (DOMAIN, hub_name, INVERTER_IDENT), entry.entry_id)
         if device is not None:
             sw_version = plugin.getSoftwareVersion(new_data)
             hw_version = plugin.getHardwareVersion(new_data)
@@ -217,7 +234,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
                 batt_pack_id = f"battery_{batt_nr + 1}_{batt_pack_nr + 1}"
                 dev_registry = dr.async_get(hass)
-                device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
+                device = _get_device_by_identifier(dev_registry, (DOMAIN, hub_name, batt_pack_id), entry.entry_id)
                 if device is not None:
                     _LOGGER.debug("batt pack serial: %s", device.serial_number)
                     await battery_config.init_batt_pack(hub, device.serial_number)
@@ -261,7 +278,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     batt_pack_nr: int = batt_pack_nr,
                 ) -> bool:
                     dev_registry = dr.async_get(hass)
-                    device = dev_registry.async_get_device_by_identifier(cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
+                    device = _get_device_by_identifier(dev_registry, (DOMAIN, hub_name, batt_pack_id), entry.entry_id)
                     if device is not None:
                         batt_pack_model = await battery_config.get_batt_pack_model(hub)
                         batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)
