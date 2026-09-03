@@ -48,6 +48,7 @@ from custom_components.solax_modbus.const import (
     autorepeat_stop,
     plugin_base,
     value_function_gen4time,
+    value_function_pv_power_total,
     value_str_default,
 )
 
@@ -181,7 +182,7 @@ async def async_read_serialnr(hub: Any, address: int) -> str | None:
     res = None
     inverter_data = None
     try:
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=address, count=7)
+        inverter_data = await hub.async_read_input_registers(unit=hub._modbus_addr, address=address, count=7)
         if inverter_data is not None and not inverter_data.isError():
             # Decode 7 registers (14 bytes) as string using clientless compat helper
             raw = convert_from_registers(inverter_data.registers[0:7], DataType.STRING, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
@@ -1669,7 +1670,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x2,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Inverter Power",
+        key="inverter_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x183,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        order32="big",
+        allowedtypes=AC | HYBRID | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
         name="PowerFactor",
@@ -1685,10 +1698,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="PowerFactor",
         key="powerfactor",
+        native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
         register=0x18F,
-        scale=0.01,
+        scale=0.1,
+        rounding=1,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN2,
@@ -1796,7 +1811,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x28D,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | GEN,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power 1",
+        key="pv_power_1",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x28D,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        order32="big",
+        allowedtypes=HYBRID | GEN2,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -1830,7 +1858,67 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x294,
         register_type=REG_INPUT,
-        allowedtypes=HYBRID,
+        allowedtypes=HYBRID | GEN,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power 2",
+        key="pv_power_2",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x294,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        order32="big",
+        allowedtypes=HYBRID | GEN2,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Voltage 3",
+        key="pv_voltage_3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=0x299,
+        scale=0.1,
+        register_type=REG_INPUT,
+        rounding=1,
+        allowedtypes=HYBRID | GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Current 3",
+        key="pv_current_3",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        register=0x29A,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=HYBRID | GEN2,
+        icon="mdi:current-dc",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power 3",
+        key="pv_power_3",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x29B,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        order32="big",
+        allowedtypes=HYBRID | GEN2,
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        value_function=value_function_pv_power_total,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        depends_on=["pv_power_1", "pv_power_2", "pv_power_3"],
+        allowedtypes=HYBRID | GEN2,
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -1953,7 +2041,22 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN,
+        icon="mdi:battery-charging",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Battery Power Charge",
+        key="battery_power_charge",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x482,
+        scale=0.1,
+        rounding=1,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        order32="big",
+        allowedtypes=AC | HYBRID | GEN2,
         icon="mdi:battery-charging",
     ),
     SolaXModbusSensorEntityDescription(
@@ -2002,6 +2105,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         register_data_type=REGISTER_U32,
+        order32="big",
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID,
     ),
@@ -2028,6 +2132,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         register_data_type=REGISTER_U32,
+        order32="big",
         entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID,
     ),
@@ -2228,7 +2333,8 @@ TIME_TYPES = [
 class solax_lv_plugin(plugin_base):
     def isAwake(self, datadict: dict[str, Any]) -> bool:
         """determine if inverter is awake based on polled datadict"""
-        return datadict.get("run_mode", None) == "Normal Mode"
+        # "Run" is the X1-Lite-LV (GEN2) wording, "Normal Mode" the X1-Hybrid-LV (GEN) one
+        return datadict.get("run_mode", None) in ("Run", "Normal Mode")
 
     def wakeupButton(self) -> str:
         """in order to wake up  the inverter , press this button"""
