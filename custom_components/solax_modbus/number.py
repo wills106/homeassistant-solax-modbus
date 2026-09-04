@@ -1,10 +1,11 @@
 import logging
 from dataclasses import replace
+from decimal import Decimal
 from time import time
 from typing import Any
 
 # from .const import GEN2, GEN3, GEN4, X1, X3, HYBRID, AC, EPS
-from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.components.number import DEFAULT_MAX_VALUE, DEFAULT_MIN_VALUE, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
@@ -15,6 +16,7 @@ from .const import (
     CONF_MODBUS_ADDR,
     DEFAULT_MODBUS_ADDR,
     DOMAIN,
+    REGISTER_INT_RANGES,
     TMPDATA_EXPIRY,
     WRITE_DATA_LOCAL,
     WRITE_MULTI_MODBUS,
@@ -31,6 +33,25 @@ _LOGGER = logging.getLogger(__name__)
 def _scale_native_value_to_register(value: float, scale: float, read_scale: float) -> int:
     """Convert a native number value to its integer register representation."""
     return int(round(value / (scale * read_scale)))
+
+
+def _native_value_bounds(number_info: BaseModbusNumberEntityDescription) -> tuple[float, float]:
+    """Return explicit limits or derive them from the register representation."""
+    register_data_type = number_info.register_data_type
+    register_bounds = REGISTER_INT_RANGES.get(register_data_type) if register_data_type is not None else None
+    if register_bounds is None:
+        derived_min, derived_max = DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE
+    else:
+        native_scale = Decimal(str(number_info.scale)) * Decimal(str(number_info.read_scale))
+        scaled_bounds = (
+            float(Decimal(str(register_bounds[0])) * native_scale),
+            float(Decimal(str(register_bounds[1])) * native_scale),
+        )
+        derived_min, derived_max = min(scaled_bounds), max(scaled_bounds)
+
+    native_min = number_info.native_min_value if number_info.native_min_value is not None else derived_min
+    native_max = number_info.native_max_value if number_info.native_max_value is not None else derived_max
+    return float(native_min), float(native_max)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> bool:
@@ -125,8 +146,7 @@ class SolaXModbusNumber(NumberEntity):
         self._register = number_info.register
         self._fmt = number_info.fmt
         self._unit = number_info.register_data_type
-        self._attr_native_min_value: float = number_info.native_min_value  # type: ignore[assignment]
-        self._attr_native_max_value: float = number_info.native_max_value  # type: ignore[assignment]
+        self._attr_native_min_value, self._attr_native_max_value = _native_value_bounds(number_info)
         self._attr_scale = number_info.scale
         self.entity_description = number_info
         if number_info.max_exceptions:
