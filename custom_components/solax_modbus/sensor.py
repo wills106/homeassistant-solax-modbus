@@ -244,7 +244,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                 parent_identifier = (DOMAIN, hub_name, INVERTER_IDENT)
                 parent_device = get_device_by_identifier(dev_registry, parent_identifier, entry.entry_id)
                 if parent_device is not None:
-                    cast(dict[str, Any], device_info_battery)["via_device_id"] = parent_device.id  # type: ignore[typeddict-item]
+                    cast(dict[str, Any], device_info_battery)["via_device_id"] = parent_device.id
                 else:
                     device_info_battery["via_device"] = parent_identifier  # type: ignore[typeddict-item]
 

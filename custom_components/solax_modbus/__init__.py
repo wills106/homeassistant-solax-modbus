@@ -1036,7 +1036,7 @@ class SolaXModbusHub:
         parent_identifier = (DOMAIN, self._name, INVERTER_IDENT)
         parent_device = get_device_by_identifier(dr.async_get(self._hass), parent_identifier, self.entry.entry_id)
         if parent_device is not None:
-            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id  # type: ignore[typeddict-item]
+            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
         else:
             device_info["via_device"] = parent_identifier  # type: ignore[typeddict-item]
         return device_info

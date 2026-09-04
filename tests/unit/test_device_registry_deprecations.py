@@ -20,6 +20,9 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+from typing import Any, cast
+
+from homeassistant.helpers.device_registry import DeviceRegistry
 
 SRC = Path("custom_components/solax_modbus")
 
@@ -64,16 +67,16 @@ def test_helper_prefers_scoped_lookup() -> None:
 
     class _FakeRegistry:
         def __init__(self) -> None:
-            self.calls: list[tuple[str, tuple, str]] = []
+            self.calls: list[tuple[str, tuple[str, str, str], str]] = []
 
-        def async_get_device_by_identifier(self, identifier, config_entry_id):  # noqa: ANN001
+        def async_get_device_by_identifier(self, identifier: tuple[str, str, str], config_entry_id: str) -> Any:
             self.calls.append(("scoped", identifier, config_entry_id))
             return "SCOPED_DEVICE"
 
     registry = _FakeRegistry()
-    result = get_device_by_identifier(registry, ("solax_modbus", "hub", "inverter"), "entry-1")
+    result = get_device_by_identifier(cast(DeviceRegistry, registry), ("solax_modbus", "hub", "inverter"), "entry-1")
 
-    assert result == "SCOPED_DEVICE"
+    assert cast(Any, result) == "SCOPED_DEVICE"
     assert registry.calls == [("scoped", ("solax_modbus", "hub", "inverter"), "entry-1")]
 
 
@@ -83,16 +86,16 @@ def test_helper_falls_back_to_legacy() -> None:
 
     class _FakeRegistry:
         def __init__(self) -> None:
-            self.calls: list[dict] = []
+            self.calls: list[dict[str, Any]] = []
 
-        def async_get_device(self, identifiers=None):  # noqa: ANN001
+        def async_get_device(self, identifiers: Any = None) -> Any:
             self.calls.append({"identifiers": identifiers})
             return "LEGACY_DEVICE"
 
     registry = _FakeRegistry()
-    result = get_device_by_identifier(registry, ("solax_modbus", "hub", "inverter"), "entry-1")
+    result = get_device_by_identifier(cast(DeviceRegistry, registry), ("solax_modbus", "hub", "inverter"), "entry-1")
 
-    assert result == "LEGACY_DEVICE"
+    assert cast(Any, result) == "LEGACY_DEVICE"
     assert registry.calls == [{"identifiers": {("solax_modbus", "hub", "inverter")}}]
 
 
@@ -104,10 +107,7 @@ def test_no_legacy_via_device_keyword() -> None:
             continue
         tree = ast.parse(path.read_text())
         via_device_calls = [
-            c
-            for c in _iter_call_nodes(tree)
-            if isinstance(c.func, ast.Name) and c.func.id == "DeviceInfo"
-            and _is_via_device_kwarg(c)
+            c for c in _iter_call_nodes(tree) if isinstance(c.func, ast.Name) and c.func.id == "DeviceInfo" and _is_via_device_kwarg(c)
         ]
         assert not via_device_calls, f"{filename} still passes via_device= to DeviceInfo"
 
@@ -116,15 +116,15 @@ def test_via_device_fallback_uses_via_device_id_first() -> None:
     """The fallback path must set ``via_device_id`` when the parent device resolves."""
     from custom_components.solax_modbus.device_registry_lookup import get_device_by_identifier
 
-    class _FakeRegistry:
-        def async_get_device_by_identifier(self, identifier, config_entry_id):  # noqa: ANN001
-            return _FakeDevice("parent-id")
-
     class _FakeDevice:
         def __init__(self, device_id: str) -> None:
             self.id = device_id
 
+    class _FakeRegistry:
+        def async_get_device_by_identifier(self, identifier: tuple[str, str, str], config_entry_id: str) -> Any:
+            return _FakeDevice("parent-id")
+
     registry = _FakeRegistry()
-    device = get_device_by_identifier(registry, ("solax_modbus", "hub", "inverter"), "entry-1")
+    device = get_device_by_identifier(cast(DeviceRegistry, registry), ("solax_modbus", "hub", "inverter"), "entry-1")
     assert device is not None
     assert device.id == "parent-id"

@@ -38,7 +38,7 @@ def _scoped_lookup(registry: DeviceRegistry) -> Callable[[DeviceIdentifier, str]
     def _fallback(identifier: DeviceIdentifier, _config_entry_id: str) -> DeviceEntry | None:
         # The legacy API expects a set of identifier tuples.
         identifiers = {cast(tuple[str, str], identifier)}
-        return legacy(identifiers=cast(set[tuple[str, str]], identifiers))
+        return legacy(identifiers=identifiers)
 
     return _fallback
 
@@ -54,4 +54,4 @@ def get_device_by_identifier(
     falls back to the legacy ``async_get_device`` lookup on older versions.
     """
     scoped_lookup = _scoped_lookup(registry)
-    return scoped_lookup(cast(DeviceIdentifier, identifier), config_entry_id)
+    return scoped_lookup(identifier, config_entry_id)

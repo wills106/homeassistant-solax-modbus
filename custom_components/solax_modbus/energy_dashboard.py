@@ -379,7 +379,7 @@ def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInf
     if hass is not None:
         parent_device = get_device_by_identifier(dr.async_get(hass), parent_identifier, hub.entry.entry_id)
         if parent_device is not None:
-            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id  # type: ignore[typeddict-item]
+            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
         else:
             device_info["via_device"] = parent_identifier  # type: ignore[typeddict-item]
     else:
