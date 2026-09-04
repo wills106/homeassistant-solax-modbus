@@ -130,16 +130,23 @@ def test_via_device_fallback_uses_via_device_id_first() -> None:
     assert device.id == "parent-id"
 
 
-def test_via_device_key_returns_via_device_id_on_current_ha() -> None:
-    """On the installed HA (2026.8+) the via-device key must be ``via_device_id``."""
-    from custom_components.solax_modbus.device_registry_lookup import VIA_DEVICE_ID_MIN_VERSION, via_device_key
+def test_via_device_key_matches_installed_ha_version() -> None:
+    """The via-device key must match whatever the installed HA version is.
+
+    CI runs against the real installed HA, which may be older than 2026.8, so
+    we assert the key is consistent with ``_ha_version()`` rather than
+    hard-coding a specific version.
+    """
+    from custom_components.solax_modbus.device_registry_lookup import (
+        VIA_DEVICE_ID_MIN_VERSION,
+        _ha_version,
+        via_device_key,
+    )
 
     key = via_device_key()
-    assert key == "via_device_id"
-    # Sanity check: the installed version really is at or above the minimum.
-    from custom_components.solax_modbus.device_registry_lookup import _ha_version
-
-    assert _ha_version() >= VIA_DEVICE_ID_MIN_VERSION
+    version = _ha_version()
+    expected = "via_device_id" if version >= VIA_DEVICE_ID_MIN_VERSION else "via_device"
+    assert key == expected
 
 
 def test_via_device_key_falls_back_to_via_device_on_old_ha() -> None:
