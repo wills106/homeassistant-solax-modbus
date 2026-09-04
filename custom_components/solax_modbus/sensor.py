@@ -35,6 +35,13 @@ from .debug import get_debug_setting
 _LOGGER = logging.getLogger(__name__)
 
 
+def _get_device_by_identifier(dev_registry: Any, identifier: tuple[str, str], entry_id: str) -> Any:
+    """Return a device by identifier, scoped by config entry when HA supports it."""
+    if hasattr(dev_registry, "async_get_device_by_identifier"):
+        return dev_registry.async_get_device_by_identifier(identifier, entry_id)
+    return dev_registry.async_get_device(identifiers={identifier})
+
+
 COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
     BaseModbusSensorEntityDescription(
         name="Communication Health",
@@ -154,7 +161,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     async def readFollowUp(old_data: Any, new_data: Any) -> bool:
         dev_registry = dr.async_get(hass)
-        device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, INVERTER_IDENT)}))
+        device = _get_device_by_identifier(dev_registry, cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)), entry.entry_id)
         if device is not None:
             sw_version = plugin.getSoftwareVersion(new_data)
             hw_version = plugin.getHardwareVersion(new_data)
@@ -217,7 +224,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
                 batt_pack_id = f"battery_{batt_nr + 1}_{batt_pack_nr + 1}"
                 dev_registry = dr.async_get(hass)
-                device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
+                device = _get_device_by_identifier(dev_registry, cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
                 if device is not None:
                     _LOGGER.debug("batt pack serial: %s", device.serial_number)
                     await battery_config.init_batt_pack(hub, device.serial_number)
@@ -232,13 +239,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
                 # Battery pack device name = hub name + pack identity (unique per config entry);
                 # entity names never repeat it, HA composes the friendly name.
+                parent_identifier = cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT))
+                inverter_device = (
+                    _get_device_by_identifier(dev_registry, parent_identifier, entry.entry_id)
+                    if hasattr(dev_registry, "async_get_device_by_identifier")
+                    else None
+                )
                 device_info_battery = DeviceInfo(
                     identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}),
                     name=f"{hub_name} Battery {batt_nr + 1}/{batt_pack_nr + 1}",
                     manufacturer=hub.plugin.plugin_manufacturer,
                     serial_number=batt_pack_serial,
-                    via_device=cast(tuple[str, str], (DOMAIN, hub_name, INVERTER_IDENT)),
                 )
+                if inverter_device is not None:
+                    cast(dict[str, Any], device_info_battery)["via_device_id"] = inverter_device.id
+                else:
+                    device_info_battery["via_device"] = parent_identifier
 
                 key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
                     "{pack-nr}", str(batt_pack_nr + 1)
@@ -261,7 +277,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     batt_pack_nr: int = batt_pack_nr,
                 ) -> bool:
                     dev_registry = dr.async_get(hass)
-                    device = dev_registry.async_get_device(identifiers=cast(set[tuple[str, str]], {(DOMAIN, hub_name, batt_pack_id)}))
+                    device = _get_device_by_identifier(dev_registry, cast(tuple[str, str], (DOMAIN, hub_name, batt_pack_id)), entry.entry_id)
                     if device is not None:
                         batt_pack_model = await battery_config.get_batt_pack_model(hub)
                         batt_pack_sw_version = await battery_config.get_batt_pack_sw_version(hub, new_data, key_prefix)

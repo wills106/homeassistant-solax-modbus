@@ -15,7 +15,7 @@ handle:
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field, replace
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
@@ -25,6 +25,7 @@ from homeassistant.const import (
     UnitOfPower,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import (
@@ -40,6 +41,14 @@ from .const import (
 from .debug import get_debug_setting
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _get_device_by_identifier(dev_registry: Any, identifier: tuple[str, str], entry_id: str) -> Any:
+    """Return a device by identifier, scoped by config entry when HA supports it."""
+    if hasattr(dev_registry, "async_get_device_by_identifier"):
+        return dev_registry.async_get_device_by_identifier(identifier, entry_id)
+    return dev_registry.async_get_device(identifiers={identifier})
+
 
 # Central Riemann sum configuration (applies to all Riemann sensors)
 RIEMANN_METHOD = "trapezoidal"  # Integration method: "trapezoidal", "left", "right"
@@ -357,21 +366,35 @@ class EnergyDashboardMapping:
 
 
 def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInfo:
-    """Create DeviceInfo for Energy Dashboard virtual device."""
-    # Normalize hub name to lowercase with underscores for consistent identifier
+    """Create DeviceInfo for the Energy Dashboard virtual device."""
+    # Normalize hub name for unique identifier
     normalized_hub_name = hub._name.lower().replace(" ", "_")
 
     # Use documentation URL for configuration_url
     config_url = "https://homeassistant-solax-modbus.readthedocs.io/en/latest/"
 
-    return DeviceInfo(
+    device_info = DeviceInfo(
         identifiers={(DOMAIN, f"{normalized_hub_name}_energy_dashboard", "ENERGY_DASHBOARD")},  # type: ignore[arg-type]  # Runtime requires 3-element tuple
         manufacturer="providing curated Grid, Solar, Battery power & energy sensors with parallel mode aggregation support for Home Assistant Energy Dashboard integration",
         model="Energy Dashboard Metrics",
         name=f"{hub._name} Energy Dashboard",
-        via_device=(DOMAIN, hub._name, INVERTER_IDENT),  # type: ignore[typeddict-item]  # Runtime requires 3-element tuple
         configuration_url=config_url,
     )
+    parent_identifier = cast(tuple[str, str], (DOMAIN, hub._name, INVERTER_IDENT))
+    if hass is not None:
+        dev_registry = dr.async_get(hass)
+        parent_device = (
+            _get_device_by_identifier(dev_registry, parent_identifier, hub.entry.entry_id)
+            if hasattr(dev_registry, "async_get_device_by_identifier")
+            else None
+        )
+        if parent_device is not None:
+            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
+        else:
+            device_info["via_device"] = parent_identifier
+    else:
+        device_info["via_device"] = parent_identifier
+    return device_info
 
 
 ED_SWITCH_PV_VARIANTS = "energy_dashboard_pv_variants_enabled"

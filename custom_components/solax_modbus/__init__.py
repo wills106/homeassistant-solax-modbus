@@ -179,6 +179,14 @@ INFLIGHT_CANCEL_TIMEOUT = 2.0
 
 _LOGGER = logging.getLogger(__name__)
 
+
+def _get_device_by_identifier(dev_registry: Any, identifier: tuple[str, str], entry_id: str) -> Any:
+    """Return a device by identifier, scoped by config entry when HA supports it."""
+    if hasattr(dev_registry, "async_get_device_by_identifier"):
+        return dev_registry.async_get_device_by_identifier(identifier, entry_id)
+    return dev_registry.async_get_device(identifiers={identifier})
+
+
 PLATFORMS = [Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH, Platform.TIME]
 
 # CONFIG_SCHEMA allows YAML configuration ONLY for debug_settings (DEVELOPMENT/TESTING/DEBUGGING ONLY)
@@ -1025,12 +1033,23 @@ class SolaXModbusHub:
 
     def group_device_info(self, group: str) -> DeviceInfo:
         """Return the DeviceInfo for a named sub-device (e.g. "dry_contact")."""
-        return DeviceInfo(
+        dev_registry = dr.async_get(self._hass)
+        parent_identifier = cast(tuple[str, str], (DOMAIN, self._name, INVERTER_IDENT))
+        parent_device = (
+            _get_device_by_identifier(dev_registry, parent_identifier, self.entry.entry_id)
+            if hasattr(dev_registry, "async_get_device_by_identifier")
+            else None
+        )
+        device_info = DeviceInfo(
             identifiers=cast(set[tuple[str, str]], {(DOMAIN, self._name, group)}),
             name=f"{self._name} {DEVICE_GROUP_NAMES.get(group, group.replace('_', ' ').title())}",
             manufacturer=self.plugin.plugin_manufacturer,
-            via_device=cast(tuple[str, str], (DOMAIN, self._name, INVERTER_IDENT)),
         )
+        if parent_device is not None:
+            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
+        else:
+            device_info["via_device"] = parent_identifier
+        return device_info
 
     def register_gated_entity(self, descr: Any, factory: Any, add_entities: Any, holder: dict[Any, Any], platform: str, entity: Any = None) -> None:
         """Track a description whose entity only exists while its active_when conditions hold."""
