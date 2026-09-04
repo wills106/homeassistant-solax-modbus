@@ -149,13 +149,13 @@ def test_via_device_key_falls_back_to_via_device_on_old_ha() -> None:
     original = mod._ha_version
 
     try:
-        mod._ha_version = lambda: (2025, 4)  # type: ignore[assignment]
+        mod._ha_version = lambda: (2025, 4)
         assert mod.via_device_key() == "via_device"
 
-        mod._ha_version = lambda: (2026, 7)  # type: ignore[assignment]
+        mod._ha_version = lambda: (2026, 7)
         assert mod.via_device_key() == "via_device"
     finally:
-        mod._ha_version = original  # type: ignore[assignment]
+        mod._ha_version = original
 
 
 def test_via_device_key_switches_at_2026_8() -> None:
@@ -165,13 +165,13 @@ def test_via_device_key_switches_at_2026_8() -> None:
     original = mod._ha_version
 
     try:
-        mod._ha_version = lambda: (2026, 8)  # type: ignore[assignment]
+        mod._ha_version = lambda: (2026, 8)
         assert mod.via_device_key() == "via_device_id"
 
-        mod._ha_version = lambda: (2027, 1)  # type: ignore[assignment]
+        mod._ha_version = lambda: (2027, 1)
         assert mod.via_device_key() == "via_device_id"
     finally:
-        mod._ha_version = original  # type: ignore[assignment]
+        mod._ha_version = original
 
 
 def test_via_device_key_is_version_aware_across_all_callers() -> None:
@@ -190,10 +190,6 @@ def test_via_device_key_is_version_aware_across_all_callers() -> None:
         # ``via_device_id`` key directly; both must go through ``via_device_key()``.
         for node in ast.walk(tree):
             if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Constant) and node.value.value == "via_device":
-                raise AssertionError(
-                    f"{filename} sets via_device directly; use via_device_key() instead"
-                )
+                raise AssertionError(f"{filename} sets via_device directly; use via_device_key() instead")
             if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Constant) and node.value.value == "via_device_id":
-                raise AssertionError(
-                    f"{filename} sets via_device_id directly; use via_device_key() instead"
-                )
+                raise AssertionError(f"{filename} sets via_device_id directly; use via_device_key() instead")
