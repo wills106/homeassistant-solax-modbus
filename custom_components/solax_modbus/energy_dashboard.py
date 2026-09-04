@@ -39,7 +39,7 @@ from .const import (
     BaseModbusSwitchEntityDescription,
 )
 from .debug import get_debug_setting
-from .device_registry_lookup import get_device_by_identifier
+from .device_registry_lookup import get_device_by_identifier, via_device_key
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -373,13 +373,15 @@ def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInf
         name=f"{hub._name} Energy Dashboard",
         configuration_url=config_url,
     )
-    # Link to the parent inverter via via_device_id (scoped to this config entry)
-    # on HA 2026.8+, falling back to the deprecated via_device tuple.
+    # Link to the parent inverter via the version-aware via-device key.
+    # On HA 2026.8+ this is via_device_id (a device id, config-entry scoped);
+    # on older versions it is the deprecated via_device identifier tuple.
     parent_identifier = (DOMAIN, hub._name, INVERTER_IDENT)
+    key = via_device_key()
     if hass is not None:
         parent_device = get_device_by_identifier(dr.async_get(hass), parent_identifier, hub.entry.entry_id)
         if parent_device is not None:
-            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
+            cast(dict[str, Any], device_info)[key] = parent_device.id
         else:
             device_info["via_device"] = parent_identifier  # type: ignore[typeddict-item]
     else:

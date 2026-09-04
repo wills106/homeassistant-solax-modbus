@@ -128,3 +128,72 @@ def test_via_device_fallback_uses_via_device_id_first() -> None:
     device = get_device_by_identifier(cast(DeviceRegistry, registry), ("solax_modbus", "hub", "inverter"), "entry-1")
     assert device is not None
     assert device.id == "parent-id"
+
+
+def test_via_device_key_returns_via_device_id_on_current_ha() -> None:
+    """On the installed HA (2026.8+) the via-device key must be ``via_device_id``."""
+    from custom_components.solax_modbus.device_registry_lookup import VIA_DEVICE_ID_MIN_VERSION, via_device_key
+
+    key = via_device_key()
+    assert key == "via_device_id"
+    # Sanity check: the installed version really is at or above the minimum.
+    from custom_components.solax_modbus.device_registry_lookup import _ha_version
+
+    assert _ha_version() >= VIA_DEVICE_ID_MIN_VERSION
+
+
+def test_via_device_key_falls_back_to_via_device_on_old_ha() -> None:
+    """On HA < 2026.8 the via-device key must be the deprecated ``via_device`` tuple."""
+    import custom_components.solax_modbus.device_registry_lookup as mod
+
+    original = mod._ha_version
+
+    try:
+        mod._ha_version = lambda: (2025, 4)  # type: ignore[assignment]
+        assert mod.via_device_key() == "via_device"
+
+        mod._ha_version = lambda: (2026, 7)  # type: ignore[assignment]
+        assert mod.via_device_key() == "via_device"
+    finally:
+        mod._ha_version = original  # type: ignore[assignment]
+
+
+def test_via_device_key_switches_at_2026_8() -> None:
+    """The via-device key must switch to ``via_device_id`` at exactly 2026.8."""
+    import custom_components.solax_modbus.device_registry_lookup as mod
+
+    original = mod._ha_version
+
+    try:
+        mod._ha_version = lambda: (2026, 8)  # type: ignore[assignment]
+        assert mod.via_device_key() == "via_device_id"
+
+        mod._ha_version = lambda: (2027, 1)  # type: ignore[assignment]
+        assert mod.via_device_key() == "via_device_id"
+    finally:
+        mod._ha_version = original  # type: ignore[assignment]
+
+
+def test_via_device_key_is_version_aware_across_all_callers() -> None:
+    """Every caller must route the via-device key through the shared helper.
+
+    This guards against a caller setting ``via_device_id`` directly on a version
+    of HA that only understands ``via_device`` (which would break sub-device
+    registration on HA < 2026.8).
+    """
+    for filename in ("sensor.py", "__init__.py", "energy_dashboard.py"):
+        path = SRC / filename
+        if not path.exists():
+            continue
+        tree = ast.parse(path.read_text())
+        # No caller may set the deprecated ``via_device`` key *or* the new
+        # ``via_device_id`` key directly; both must go through ``via_device_key()``.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Constant) and node.value.value == "via_device":
+                raise AssertionError(
+                    f"{filename} sets via_device directly; use via_device_key() instead"
+                )
+            if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Constant) and node.value.value == "via_device_id":
+                raise AssertionError(
+                    f"{filename} sets via_device_id directly; use via_device_key() instead"
+                )
