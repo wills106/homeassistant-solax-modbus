@@ -9769,6 +9769,7 @@ SERIAL_PREFIX_TYPES = {
     "QYL": PV | GEN4 | X1,  # MIN 2500 TL-X, 2 MPPT
     "XTD": PV | GEN4 | X1,  # MIN 5000 TL-X, 2 MPPT
     "BDK": PV | GEN4 | X1,  # MIN 4200 TL-XE, 2 MPPT
+    "DCF": PV | GEN4 | X1,  # MIN 3000 TL-XE, 2 MPPT
     "WVN": PV | GEN4 | X1 | MPPT3,  # MIN 8000 TL-X2, 3 MPPT
     # MOD, MID and MAX PV
     "RDH": PV | GEN2 | X3,  # MOD 4000 TL3-X, 2 MPPT
@@ -9807,6 +9808,9 @@ FIRMWARE_PREFIX_TYPES = {
     "SPH": HYBRID | GEN3 | X3,  # Hybrid SPH 4kW - 10kW
     "YA1": HYBRID | GEN3 | X3,  # Hybrid SPH 4kW - 10kW 3P TL UP
     "RH1": AC | GEN3 | X1,  # SPA 3000TL BL AC, no PV MPPT
+    # The PV MIN TL-XE reports this firmware prefix too, despite having no
+    # battery; it is caught by its serial prefix above. An unlisted TL-XE
+    # serial falls through to here and is mislabelled HYBRID.
     "AL1": HYBRID | GEN4 | X1,  # Hybrid TL-XH 2.5kW - 6kW (MIN)
     "DN1": HYBRID | GEN4 | X3,  # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)
     "V": HYBRID | GEN4 | X3,  # Hybrid TL3-XH 3kW - 10kW (MOD)
