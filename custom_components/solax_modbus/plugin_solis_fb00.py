@@ -175,7 +175,64 @@ def value_function_battery_control_override(initval: int, descr: Any, datadict: 
     return None
 
 
+# ====================================== Remote Dispatch (protocol Ver3.4, 44100-44199) =========================
+# Real-time dispatch block present on dispatch-capable firmware (input 34502 reads
+# 0xAA55). RAM-only with an inverter-side failsafe (register 44101): if no fresh
+# dispatch write arrives within the failsafe window the inverter reverts to its
+# normal storage-mode logic on its own. The realtime block must be written as
+# contiguous FC16 writes (scattered single-register writes are re-initialised),
+# and the global block must be written first so the function field sticks.
+# Live-verified on S5-EH1P6K-L fw 4F0052 (issue #2179): dispatch mode 2
+# (battery discharge, signed S32 power) runs freely below the timed-slot
+# discharge-SOC floor that this firmware otherwise enforces, making this the
+# only full-depth export path on affected firmware. Credit: write order and
+# mode mapping documented by Pho3niX90/solis_modbus (DISPATCH_* constants).
+
+
+def value_function_dispatch_apply(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Block-write the realtime dispatch block (44105-44112) from the local dispatch entities."""
+    mode = DISPATCH_MODE_OPTIONS_INV.get(datadict.get("dispatch_mode", "Battery Hold"), 1)
+    return [
+        ("_uint16", mode),
+        ("dispatch_power", int(datadict.get("dispatch_power", 0))),
+        ("_uint16", 0),
+        ("dispatch_soc_min", int(datadict.get("dispatch_soc_min", 0))),
+        ("dispatch_soc_max", int(datadict.get("dispatch_soc_max", 100))),
+        ("_uint16", 0),
+        ("_uint16", 0),
+    ]
+
+
+def value_function_dispatch_master_off(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Live-verified single-block stop: master off + failsafe back to default leaves the
+    dispatch block at the clean state (status 34504 -> 0) without touching the realtime block."""
+    return [
+        ("_uint16", 0),
+        ("_uint16", 5),
+        ("_uint16", 0),
+        ("_uint16", 0xFFFF),
+        ("_uint16", 0xFFFF),
+    ]
+
+
+DISPATCH_MODE_OPTIONS = {
+    1: "Battery Hold",
+    2: "Battery Charge",
+    3: "Grid Import",
+    4: "Grid Port Import",
+    5: "Self Consumption",
+    6: "Feed-in Priority",
+}
+# Modes 2/3/4 encode battery charge/discharge and grid import/export as register
+# values 2/3/4; direction comes from the sign of the S32 power value (negative =
+# battery discharge / grid export). The select exposes merged names.
+DISPATCH_MODE_OPTIONS_INV = {v: k for k, v in DISPATCH_MODE_OPTIONS.items()}
+
+
 # ============================================= Charging ===========================================================
+
+
+
 # This value function converts the bits to the number
 def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
     assert bit is not None and descr is not None
@@ -184,6 +241,11 @@ def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str
     _LOGGER.debug(">>> Old value of %s: %s", descr, value)
     new_value = (value & ~(1 << bit)) | (state_int << bit)
     return new_value
+
+
+def value_function_direct_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
+    """Write the switch state directly as the whole register value (e.g. dispatch master 44100)."""
+    return 1 if state else 0
 
 
 def value_function_timingmode_charge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -468,6 +530,24 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_ymd,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Apply Remote Dispatch",
+        key="dispatch_apply",
+        register=44105,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:transmit",
+        value_function=value_function_dispatch_apply,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Disable Remote Dispatch",
+        key="dispatch_disable",
+        register=44100,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:close-circle-outline",
+        value_function=value_function_dispatch_master_off,
     ),
     SolisModbusButtonEntityDescription(
         name="Update Charge Times",
@@ -1520,6 +1600,73 @@ NUMBER_TYPES = [
         allowedtypes=HYBRID,
         entity_category=EntityCategory.CONFIG,
     ),
+    # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
+    # Locally-staged numbers (WRITE_DATA_LOCAL) + Apply button (block write), mirroring the
+    # timed charge/discharge "Update Times" pattern: the realtime block must land as one
+    # contiguous FC16 write, with the global block already on (master switch below).
+    SolisModbusNumberEntityDescription(
+        name="Dispatch Power",
+        key="dispatch_power",
+        register=-1,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        fmt="i",
+        register_data_type=REGISTER_S32,
+        scale=0.1,
+        native_min_value=-24000,
+        native_max_value=24000,
+        native_step=100,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:transmit",
+    ),
+    SolisModbusNumberEntityDescription(
+        name="Dispatch Failsafe Interval",
+        key="dispatch_failsafe",
+        register=44101,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        fmt="i",
+        native_min_value=1,
+        native_max_value=1440,
+        native_step=1,
+        allowedtypes=HYBRID,
+        write_method=WRITE_SINGLE_MODBUS,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:timer-outline",
+    ),
+    SolisModbusNumberEntityDescription(
+        name="Dispatch SOC Minimum",
+        key="dispatch_soc_min",
+        register=-1,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=NumberDeviceClass.BATTERY,
+        fmt="i",
+        register_data_type=REGISTER_U16,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-low",
+    ),
+    SolisModbusNumberEntityDescription(
+        name="Dispatch SOC Maximum",
+        key="dispatch_soc_max",
+        register=-1,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=NumberDeviceClass.BATTERY,
+        fmt="i",
+        register_data_type=REGISTER_U16,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-full",
+    ),
     # ============================ TimeSlot 1 ==============================
     SolisModbusNumberEntityDescription(
         name="Timed Charge SOC",
@@ -2058,6 +2205,16 @@ NUMBER_TYPES = [
 
 # ================================= Select Declarations ============================================================
 SWITCH_TYPES = [
+    # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
+    SolisModbusSwitchEntityDescription(
+        name="Dispatch Master",
+        key="dispatch_master",
+        register=44100,
+        allowedtypes=HYBRID,
+        value_function=value_function_direct_on_off,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:power",
+    ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 1 Enable",
         key="timed_charge_slot_1_enable",
@@ -2169,6 +2326,17 @@ SWITCH_TYPES = [
 ]
 
 SELECT_TYPES = [
+    # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
+    SolisModbusSelectEntityDescription(
+        name="Dispatch Control Mode",
+        key="dispatch_mode",
+        register=-1,
+        option_dict=DISPATCH_MODE_OPTIONS,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:dip-switch",
+    ),
     SolisModbusSelectEntityDescription(
         name="Backflow Power Switch",
         key="backflow_power_switch",
@@ -4452,6 +4620,77 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
+    SolisModbusSensorEntityDescription(
+        name="Remote Dispatch Capability",
+        key="remote_dispatch_capability",
+        register=34502,
+        ignore_readerror=True,
+        register_type=REG_INPUT,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:check-network",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Remote Dispatch Running Status",
+        key="remote_dispatch_status",
+        register=34504,
+        ignore_readerror=True,
+        register_type=REG_INPUT,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:play-circle-outline",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch Master",
+        key="dispatch_master_sensor",
+        register=44100,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:power",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch Control Mode",
+        key="dispatch_mode_sensor",
+        register=44105,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:dip-switch",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch Power",
+        key="dispatch_power_sensor",
+        register=44106,
+        register_data_type=REGISTER_S32,
+        ignore_readerror=True,
+        scale=10,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:transmit",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch SOC Window Min",
+        key="dispatch_soc_min_sensor",
+        register=44109,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery-low",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch SOC Window Max",
+        key="dispatch_soc_max_sensor",
+        register=44110,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery-full",
     ),
 ]
 
