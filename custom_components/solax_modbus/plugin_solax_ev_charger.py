@@ -944,7 +944,7 @@ SELECT_TYPES = [
 
 TIME_TYPES = [
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Timer Boost Start Time",
+        name="Timer Boost Start",
         key="timer_boost_start_time",
         register=0x634,
         modbus_min=111,
@@ -955,7 +955,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Timer Boost Start Time",
+        name="Timer Boost Start",
         key="timer_boost_start_time",
         register=0x634,
         allowedtypes=GEN2,
@@ -965,7 +965,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Timer Boost End Time",
+        name="Timer Boost Stop",
         key="timer_boost_end_time",
         register=0x636,
         modbus_min=111,
@@ -976,7 +976,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Timer Boost End Time",
+        name="Timer Boost Stop",
         key="timer_boost_end_time",
         register=0x636,
         allowedtypes=GEN2,
@@ -986,7 +986,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Smart Boost End Time",
+        name="Smart Boost Stop",
         key="smart_boost_end_time",
         register=0x638,
         modbus_min=111,
@@ -997,7 +997,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXEVChargerModbusTimeEntityDescription(
-        name="Smart Boost End Time",
+        name="Smart Boost Stop",
         key="smart_boost_end_time",
         register=0x638,
         allowedtypes=GEN2,
