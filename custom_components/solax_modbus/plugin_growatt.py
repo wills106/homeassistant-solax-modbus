@@ -8694,7 +8694,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
-        name="PV Current 1",
+        # SPF protocol: input 7 is Buck1Curr, not the PV input current.
+        name="PV Charger Current 1",
         key="pv_current_1",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -8706,7 +8707,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
-        name="PV Current 2",
+        # SPF protocol: input 8 is Buck2Curr; retain the key for existing entities.
+        name="PV Charger Current 2",
         key="pv_current_2",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
