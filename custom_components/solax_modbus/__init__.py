@@ -1291,8 +1291,11 @@ class SolaXModbusHub:
 
         outcomes: list[PollOutcome] = []
         updated_sensors = 0
+        # Dependencies may span device groups (e.g. inverter settings and PM data).
+        # Keep freshness local to this interval refresh, never to the hub or device.
+        cycle_fresh_keys: set[str] = set()
         for group in list(interval_group.device_groups.values()):
-            group_outcome = await self.async_read_modbus_data(group)
+            group_outcome = await self.async_read_modbus_data(group, cycle_fresh_keys)
             outcomes.append(group_outcome)
             if group_outcome.communication_succeeded and getattr(group, "publish_updates", True):
                 for sensor in group.sensors:
@@ -1781,11 +1784,11 @@ class SolaXModbusHub:
             operation="multi-register write",
         )
 
-    async def async_read_modbus_data(self, group: Any) -> PollOutcome:
+    async def async_read_modbus_data(self, group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         group.publish_updates = False
         try:
             async with self._poll_data_lock:
-                return await self.async_read_modbus_registers_all(group)
+                return await self.async_read_modbus_registers_all(group, cycle_fresh_keys)
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline. %s", ex)
         except ModbusIOException as ex:
@@ -2119,7 +2122,7 @@ class SolaXModbusHub:
 
         return computed_fresh_keys
 
-    async def async_read_modbus_registers_all(self, group: Any) -> PollOutcome:
+    async def async_read_modbus_registers_all(self, group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         group.publish_updates = False
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
@@ -2182,6 +2185,10 @@ class SolaXModbusHub:
 
         computed_fresh_keys: set[str] = set()
         if poll_outcome.communication_succeeded:
+            # Use a copy: a rejected group must not contribute raw or computed
+            # freshness to subsequent groups in this polling cycle.
+            if cycle_fresh_keys is not None:
+                fresh_keys.update(cycle_fresh_keys)
             computed_fresh_keys = self._compute_poll_sensors(data, fresh_keys)
 
             if group.readFollowUp is not None:
@@ -2190,6 +2197,8 @@ class SolaXModbusHub:
                     return PollOutcome.DISCARDED
 
             self._commit_poll_snapshot(previous_data, data)
+            if cycle_fresh_keys is not None:
+                cycle_fresh_keys.update(fresh_keys)
             if local_callback_needed:
                 self.plugin.localDataCallback(self)
 

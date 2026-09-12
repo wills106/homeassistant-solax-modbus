@@ -10,6 +10,7 @@ import pytest
 from custom_components.solax_modbus import BlockReadResult, PendingWrite, SolaXModbusHub
 from custom_components.solax_modbus.const import REGISTER_U16, PollOutcome
 from custom_components.solax_modbus.plugin_sofar import battery_config
+from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
 
 
 def make_hub() -> Any:
@@ -66,6 +67,191 @@ def successful_block(*fresh_keys: str) -> BlockReadResult:
         communication_succeeded=True,
         fresh_keys=frozenset(fresh_keys),
     )
+
+
+def make_pm_poll(*, reverse: bool = False) -> tuple[Any, Any]:
+    """Use the real SolaX totals with separate inverter and Parallel groups."""
+    hub = make_hub()
+    hub.blocks_changed = False
+    hub.cyclecount = 1
+    hub.sleepnone = []
+    hub.sleepzero = []
+    hub.sensorDescriptions = {description.key: description for description in SENSOR_TYPES_MAIN}
+    hub.computedSensors = {key: description for key, description in hub.sensorDescriptions.items() if key.startswith("pm_total_")}
+    hub.sensorEntities = {key: Mock() for key in hub.computedSensors}
+    hub.data.update(dict.fromkeys(hub.computedSensors, 0))
+    groups = {}
+    for name in ("inverter", "pm"):
+        group = make_group()
+        group.holdingBlocks = [SimpleNamespace(start=name)]
+        groups[name] = group
+    if reverse:
+        groups = dict(reversed(list(groups.items())))
+    return hub, SimpleNamespace(device_groups=groups)
+
+
+PM_POLL_VALUES: dict[str, dict[str, Any]] = {
+    "inverter": {"parallel_setting": "Master", "measured_power": 200},
+    "pm": {
+        "pm_activepower_l1": 400,
+        "pm_activepower_l2": 500,
+        "pm_activepower_l3": 300,
+        "pm_pv_power_1": 1500,
+        "pm_pv_power_2": 2000,
+        "pm_reactive_or_apparentpower_l1": 10,
+        "pm_reactive_or_apparentpower_l2": 20,
+        "pm_reactive_or_apparentpower_l3": 30,
+        "pm__current_l1": 1,
+        "pm__current_l2": 2,
+        "pm__current_l3": 3,
+        "pm_pv_current_1": 4,
+        "pm_pv_current_2": 5,
+    },
+}
+
+
+async def read_pm_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+    values = PM_POLL_VALUES[block.start]
+    data.update(values)
+    return successful_block(*values)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reverse", [False, True])
+async def test_pm_totals_compute_across_device_groups(reverse: bool) -> None:
+    hub, interval_group = make_pm_poll(reverse=reverse)
+    hub.async_read_modbus_block = read_pm_block
+
+    outcome, _ = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.SUCCESS
+    expected = {
+        "pm_total_inverter_power": 1200,
+        "pm_total_pv_power": 3500,
+        "pm_total_house_load": 1000,
+        "pm_total_reactive_or_apparentpower": 60,
+        "pm_total_inverter_current": 6,
+        "pm_total_pv_current": 9,
+    }
+    for key, value in expected.items():
+        assert hub.data[key] == value
+        hub.sensorEntities[key].modbus_data_updated.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cross_group_computed_dependency_chain() -> None:
+    hub, interval_group = make_pm_poll(reverse=True)
+    hub.async_read_modbus_block = read_pm_block
+    downstream = SimpleNamespace(
+        key="downstream",
+        depends_on=["pm_total_pv_power"],
+        value_function=lambda initval, descr, data: data["pm_total_pv_power"] / 1000,
+        internal=True,
+    )
+    # Put the dependent first to exercise topological retries across groups.
+    hub.computedSensors = {"downstream": downstream, **hub.computedSensors}
+    hub.sensorDescriptions["downstream"] = downstream
+
+    await hub._refresh_interval_group_once(interval_group)
+
+    assert hub.data["downstream"] == 3.5
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("bad_group", ["inverter", "pm"])
+@pytest.mark.parametrize("failure", ["failed", "partial", "discarded", "skipped"])
+async def test_cross_group_totals_require_accepted_fresh_sources(reverse: bool, bad_group: str, failure: str) -> None:
+    hub, interval_group = make_pm_poll(reverse=reverse)
+    # Cached inputs must not release a calculation when this cycle's read fails.
+    for values in PM_POLL_VALUES.values():
+        hub.data.update(values)
+    group = interval_group.device_groups[bad_group]
+    if failure == "discarded":
+        group.readFollowUp = AsyncMock(return_value=False)
+    elif failure == "skipped":
+        group.readPreparation = AsyncMock(return_value=False)
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == bad_group and failure in ("failed", "partial"):
+            return BlockReadResult(data_succeeded=False, communication_succeeded=failure == "partial")
+        return await read_pm_block(data, block, typ)
+
+    hub.async_read_modbus_block = read_block
+    await hub._refresh_interval_group_once(interval_group)
+
+    assert hub.data["pm_total_pv_power"] == 0
+    hub.sensorEntities["pm_total_pv_power"].modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cross_group_freshness_resets_each_cycle() -> None:
+    hub, interval_group = make_pm_poll()
+    hub.async_read_modbus_block = read_pm_block
+    await hub._refresh_interval_group_once(interval_group)
+    assert hub.data["pm_total_pv_power"] == 3500
+    hub.sensorEntities["pm_total_pv_power"].reset_mock()
+
+    async def read_without_setting(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == "inverter":
+            return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+        result = await read_pm_block(data, block, typ)
+        data["pm_pv_power_1"] = 2500
+        return result
+
+    hub.async_read_modbus_block = read_without_setting
+    outcome, _ = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.FAILED
+    assert hub.slowdown == 10
+    assert hub.data["pm_pv_power_1"] == 2500
+    assert hub.data["pm_total_pv_power"] == 3500
+    hub.sensorEntities["pm_total_pv_power"].modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cross_group_freshness_does_not_leak_between_scan_intervals() -> None:
+    hub, interval_group = make_pm_poll()
+    hub.async_read_modbus_block = read_pm_block
+    for name, group in interval_group.device_groups.items():
+        await hub._refresh_interval_group_once(SimpleNamespace(device_groups={name: group}))
+
+    assert hub.data["pm_total_pv_power"] == 0
+
+
+@pytest.mark.asyncio
+async def test_partial_group_contributes_successful_sources_across_groups() -> None:
+    hub, interval_group = make_pm_poll()
+    interval_group.device_groups["inverter"].holdingBlocks.append(SimpleNamespace(start="unrelated"))
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == "unrelated":
+            return BlockReadResult(data_succeeded=False, communication_succeeded=False)
+        return await read_pm_block(data, block, typ)
+
+    hub.async_read_modbus_block = read_block
+    outcome, _ = await hub._refresh_interval_group_once(interval_group)
+
+    assert outcome is PollOutcome.PARTIAL
+    assert hub.slowdown == 1
+    assert hub.data["pm_total_pv_power"] == 3500
+
+
+@pytest.mark.asyncio
+async def test_rejected_snapshot_does_not_leak_computed_freshness() -> None:
+    hub, interval_group = make_pm_poll()
+    hub.async_read_modbus_block = read_pm_block
+    cycle_fresh_keys: set[str] = set()
+    await hub.async_read_modbus_data(interval_group.device_groups["inverter"], cycle_fresh_keys)
+    before_rejection = cycle_fresh_keys.copy()
+    group = interval_group.device_groups["pm"]
+    group.readFollowUp = AsyncMock(return_value=False)
+
+    outcome = await hub.async_read_modbus_data(group, cycle_fresh_keys)
+
+    assert outcome is PollOutcome.DISCARDED
+    assert cycle_fresh_keys == before_rejection
+    assert hub.data["pm_total_pv_power"] == 0
 
 
 @pytest.mark.asyncio
@@ -450,7 +636,7 @@ async def test_group_reads_are_serialized() -> None:
     active_reads = 0
     maximum_active_reads = 0
 
-    async def read_group(group: Any) -> PollOutcome:
+    async def read_group(group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         nonlocal active_reads, maximum_active_reads
         active_reads += 1
         maximum_active_reads = max(maximum_active_reads, active_reads)
@@ -485,7 +671,7 @@ async def test_successful_but_discarded_snapshot_does_not_publish_group() -> Non
     hub.sleepnone = []
     hub.sleepzero = []
 
-    async def read_group(current_group: Any) -> PollOutcome:
+    async def read_group(current_group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         current_group.publish_updates = False
         return PollOutcome.DISCARDED
 
