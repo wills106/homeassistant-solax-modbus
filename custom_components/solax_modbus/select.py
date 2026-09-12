@@ -196,7 +196,9 @@ class SolaXModbusSelect(SelectEntity):
         """Change the select option."""
         reverse_dict = self.entity_description.reverse_option_dict
         payload: Any = reverse_dict.get(option, None) if reverse_dict else None
-        if self._write_method == WRITE_MULTISINGLE_MODBUS:
+        if self.entity_description.async_write_function is not None:
+            await self.entity_description.async_write_function(self._hub, self._modbus_addr, self.entity_description, payload)
+        elif self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info("writing %s select register %s value %s with method %s", self._platform_name, self._register, payload, self._write_method)
             await self._hub.async_write_registers_single(
                 unit=self._modbus_addr,
@@ -214,6 +216,7 @@ class SolaXModbusSelect(SelectEntity):
             )
         elif self._write_method == WRITE_DATA_LOCAL:
             _LOGGER.info("*** local data written %s: %s", self._key, payload)
+        if self._write_method == WRITE_DATA_LOCAL:
             self._hub.localsUpdated = True  # mark to save permanently
         self._hub.data[self._key] = option
         await self._hub.async_refresh_gated_entities()

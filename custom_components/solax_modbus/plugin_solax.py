@@ -17,6 +17,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
 from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
@@ -46,7 +47,6 @@ from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]
     TIME_OPTIONS_SEPARATE_REGISTERS,
     WRITE_DATA_LOCAL,
     WRITE_MULTI_MODBUS,
-    WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     BaseModbusButtonEntityDescription,
     BaseModbusNumberEntityDescription,
@@ -344,6 +344,147 @@ class SolaXModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
+
+
+DIRECT_VPP_PARAMETER_MODES: dict[str, tuple[int, ...]] = {
+    "remote_control_target_set_type_direct": (1, 2, 3, 4, 5, 6, 7),
+    "remotecontrol_active_power_direct": (1,),
+    "remotecontrol_reactive_power_direct": (1,),
+    "remotecontrol_duration_direct": (1,),
+    "remotecontrol_target_soc_direct": (3,),
+    "remotecontrol_target_energy_direct": (2,),
+    "remotecontrol_charge_discharge_power_direct": (2, 3),
+    "remotecontrol_timeout_direct": (1, 2, 3, 4, 5, 6, 7),
+    "remotecontrol_push_mode_power_direct": (4,),
+    "power_control_mode_target_set_type_direct": (8, 9),
+    "remotecontrol_pv_power_limit_direct": (8, 9),
+    "remotecontrol_push_mode_power_8_9_direct": (8, 9),
+    "remotecontrol_duration_8_direct": (8,),
+    "remotecontrol_target_soc_9_direct": (9,),
+    "remotecontrol_timeout_8_9_direct": (8, 9),
+}
+
+
+def _direct_vpp_descriptions() -> dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription]:
+    descriptions: dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription] = {
+        description.key: description for description in NUMBER_TYPES if description.key in DIRECT_VPP_PARAMETER_MODES
+    }
+    descriptions.update((description.key, description) for description in SELECT_TYPES if description.key in DIRECT_VPP_PARAMETER_MODES)
+    return descriptions
+
+
+def build_direct_vpp_command(mode: int, data: dict[str, Any], *, allow_defaults: bool = True) -> tuple[int, list[tuple[str, int]]]:
+    """Build one complete direct VPP command, without starting an autorepeat loop.
+
+    SolaX requires FC16 over 0x7C..0x88 for modes 1..3 and 0x7C..0x8A
+    for modes 4..7, with unused fields zeroed. Modes 8/9 use 0xA0..0xA7.
+    https://kb.solaxpower.com/fr/solution/detail/828080819a0a88fa019a0a941afc01e7
+    """
+    if mode not in range(10):
+        raise HomeAssistantError(f"Unsupported direct VPP mode: {mode}")
+    if mode == 0:
+        # Disable through ModbusPowerControl, including when exiting mode 8/9.
+        # Do not require configured targets just to stop remote control.
+        return 0x7C, [(REGISTER_U16, 0)] * 13
+
+    descriptions = _direct_vpp_descriptions()
+
+    def value(key: str) -> int:
+        if mode not in DIRECT_VPP_PARAMETER_MODES[key]:
+            return 0
+        description = descriptions[key]
+        parameter = data.get(key)
+        if parameter is None and allow_defaults:
+            parameter = description.initvalue
+        if parameter is None:
+            if not allow_defaults:
+                raise HomeAssistantError(
+                    f"Direct VPP parameter '{description.name}' is unknown. "
+                    "Configure the direct VPP targets and select the mode before updating an already active command."
+                )
+            raise HomeAssistantError(f"Set '{description.name}' before enabling direct VPP mode {mode}")
+        if isinstance(description, BaseModbusSelectEntityDescription) and description.option_dict and isinstance(parameter, str):
+            raw_option = {label: raw for raw, label in description.option_dict.items()}.get(parameter)
+            if raw_option is not None:
+                parameter = raw_option
+        try:
+            return int(parameter)
+        except (TypeError, ValueError, OverflowError) as ex:
+            raise HomeAssistantError(f"Invalid direct VPP parameter '{description.name}': {parameter!r}") from ex
+
+    if mode in (8, 9):
+        return 0xA0, [
+            (REGISTER_U16, mode),
+            (REGISTER_U16, value("power_control_mode_target_set_type_direct")),
+            (REGISTER_U32, value("remotecontrol_pv_power_limit_direct")),
+            (REGISTER_S32, value("remotecontrol_push_mode_power_8_9_direct")),
+            (REGISTER_U16, value("remotecontrol_duration_8_direct" if mode == 8 else "remotecontrol_target_soc_9_direct")),
+            (REGISTER_U16, value("remotecontrol_timeout_8_9_direct")),
+        ]
+
+    payload = [
+        (REGISTER_U16, mode),
+        (REGISTER_U16, value("remote_control_target_set_type_direct")),
+        (REGISTER_S32, value("remotecontrol_active_power_direct")),
+        (REGISTER_S32, value("remotecontrol_reactive_power_direct")),
+        (REGISTER_U16, value("remotecontrol_duration_direct")),
+        (REGISTER_U16, value("remotecontrol_target_soc_direct")),
+        (REGISTER_U32, value("remotecontrol_target_energy_direct")),
+        (REGISTER_S32, value("remotecontrol_charge_discharge_power_direct")),
+        (REGISTER_U16, value("remotecontrol_timeout_direct")),
+    ]
+    if mode >= 4:
+        payload.append((REGISTER_S32, value("remotecontrol_push_mode_power_direct")))
+    return 0x7C, payload
+
+
+async def async_write_direct_vpp(
+    hub: Any,
+    unit: int,
+    description: BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription,
+    parameter: int | float,
+) -> None:
+    """Apply parameter edits immediately, but never activate a mode implicitly."""
+    is_parameter = description.key in DIRECT_VPP_PARAMETER_MODES
+    # Serialize the complete read/build/write transaction with other direct VPP
+    # changes and polling (including the existing autorepeat controllers).
+    async with hub._poll_data_lock:
+        if not hub.localsLoaded and (is_parameter or parameter != 0):
+            await hub._hass.async_add_executor_job(hub.loadLocalData)
+
+        if is_parameter:
+            hub._encode_write_value(parameter, description.register_data_type or REGISTER_U16, single_register=False)
+            # A select's optimistic state can outlive VPP's timeout. Ask the
+            # inverter instead, using the existing Modbus Power Control readback.
+            response = await hub.async_read_input_registers(unit=unit, address=0x100, count=1)
+            try:
+                valid_mode = response is not None and not response.isError() and len(response.registers) == 1 and response.registers[0] in range(10)
+            except (AttributeError, TypeError):
+                valid_mode = False
+            if not valid_mode:
+                raise HomeAssistantError("Cannot read the active SolaX VPP mode (input register 0x100); no VPP command was sent")
+            mode = int(response.registers[0])
+        else:
+            mode = int(parameter)
+
+        data = hub.data | {description.key: parameter}
+        if not is_parameter or mode in DIRECT_VPP_PARAMETER_MODES[description.key]:
+            address, payload = build_direct_vpp_command(mode, data, allow_defaults=not is_parameter)
+            await hub.async_write_registers_multi(unit=unit, address=address, payload=payload)
+            # Remember the complete successful command, including defaults from
+            # explicit activation, for later edits and Home Assistant restarts.
+            for key, field in _direct_vpp_descriptions().items():
+                if mode in DIRECT_VPP_PARAMETER_MODES[key]:
+                    hub.data[key] = data[key] if data.get(key) is not None else field.initvalue
+                    entity = hub.numberEntities.get(key) or hub.selectEntities.get(key)
+                    if entity is not None and entity.hass is not None and entity.enabled:
+                        entity.modbus_data_updated()
+            if mode != 0:
+                hub.localsUpdated = True
+
+        # Inactive-mode parameters are only prepared for the next explicit mode
+        # selection. A rejected write/read must not replace the accepted values.
+        hub.data[description.key] = parameter
 
 
 def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
@@ -2886,7 +3027,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
         # min_exceptions_minus=MAX_EXPORT,  # negative
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2902,7 +3044,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
         device_class=NumberDeviceClass.REACTIVE_POWER,
         initvalue=0,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2918,7 +3061,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=28800,
         native_step=60,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        write_method=WRITE_SINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2932,14 +3076,15 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        write_method=WRITE_SINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Target Energy (mode 2; direct)",
         key="remotecontrol_target_energy_direct",
-        register_data_type=REGISTER_S32,
+        register_data_type=REGISTER_U32,
         fmt="i",
         register=0x84,
         native_min_value=0,
@@ -2948,7 +3093,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=NumberDeviceClass.ENERGY,
         initvalue=0,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2964,7 +3110,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2980,7 +3127,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=28800,
         native_step=60,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -2996,7 +3144,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
         suggested_display_precision=0,
     ),
@@ -3012,7 +3161,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=15000,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=HYBRID | GEN4,
         suggested_display_precision=0,
     ),
@@ -3028,7 +3178,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
         initvalue=0,
-        write_method=WRITE_MULTI_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=HYBRID | GEN4,
         suggested_display_precision=0,
     ),
@@ -3044,7 +3195,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=28800,
         native_step=60,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=HYBRID | GEN4,
         suggested_display_precision=0,
     ),
@@ -3059,7 +3211,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=HYBRID | GEN4,
         suggested_display_precision=0,
     ),
@@ -3075,7 +3228,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=28800,
         native_step=60,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         allowedtypes=HYBRID | GEN4,
         suggested_display_precision=0,
     ),
@@ -3775,7 +3929,8 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         name="Modbus Power Control (direct)",
         key="modbus_power_control_direct",
         register=0x7C,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_MULTI_MODBUS,
+        async_write_function=async_write_direct_vpp,
         option_dict={
             0: "Disabled",
             1: "Enable Power Control Mode",
@@ -3793,10 +3948,11 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="RemoteControl Target Set Type (mode 8/9; direct)",
+        name="RemoteControl Target Set Type (mode 1-7; direct)",
         key="remote_control_target_set_type_direct",
         register=0x7D,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         option_dict={
             1: "Set",
             2: "Update",
@@ -3809,7 +3965,8 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         name="RemoteControl Power Control Mode (mode 8/9; direct)",
         key="remote_control_power_control_mode_direct",
         register=0xA0,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_MULTI_MODBUS,
+        async_write_function=async_write_direct_vpp,
         option_dict={
             0: "Disabled",
             8: "Individual Setting - Duration Mode",
@@ -3823,7 +3980,8 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         name="Power Control Mode Target Set Type (mode 8/9; direct)",
         key="power_control_mode_target_set_type_direct",
         register=0xA1,
-        write_method=WRITE_MULTISINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
         option_dict={
             1: "Set",
             2: "Update",
