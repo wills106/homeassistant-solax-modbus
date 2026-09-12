@@ -50,6 +50,7 @@ from .const import (
     CONF_READ_EPS,
     CONF_READ_GEN,
     CONF_READ_PM,
+    CONF_READ_SETTINGS,
     CONF_SCAN_INTERVAL_FAST,
     CONF_SCAN_INTERVAL_MEDIUM,
     CONF_SERIAL_PORT,
@@ -71,6 +72,7 @@ from .const import (
     DEFAULT_READ_EPS,
     DEFAULT_READ_GEN,
     DEFAULT_READ_PM,
+    DEFAULT_READ_SETTINGS,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
@@ -165,6 +167,7 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
         vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
         vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
+        vol.Optional(CONF_READ_SETTINGS, default=DEFAULT_READ_SETTINGS): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
 )
@@ -190,6 +193,7 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_PM, default=DEFAULT_READ_PM): bool,
         vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
         vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
+        vol.Optional(CONF_READ_SETTINGS, default=DEFAULT_READ_SETTINGS): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
     }
 )
@@ -400,6 +404,8 @@ async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
         hidden.add(CONF_READ_EMS)
     if not _plugin_supports_device_group(plugin_name, "datahub"):
         hidden.add(CONF_READ_DATAHUB)
+    if not _plugin_supports_device_group(plugin_name, "settings"):
+        hidden.add(CONF_READ_SETTINGS)
     if not hidden:
         return OPTION_SCHEMA
     return vol.Schema({marker: value for marker, value in OPTION_SCHEMA.schema.items() if getattr(marker, "schema", None) not in hidden})
