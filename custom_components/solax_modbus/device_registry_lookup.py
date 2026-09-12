@@ -10,8 +10,9 @@ This module centralises a single, typed helper that prefers the scoped
 older HA versions that only expose the legacy ``async_get_device`` lookup.
 """
 
+import inspect
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 from homeassistant.helpers.device_registry import DeviceEntry, DeviceRegistry
 
@@ -55,3 +56,39 @@ def get_device_by_identifier(
     """
     scoped_lookup = _scoped_lookup(registry)
     return scoped_lookup(identifier, config_entry_id)
+
+
+_SUPPORTS_VIA_DEVICE_ID: bool | None = None
+
+
+def supports_via_device_id() -> bool:
+    """True when ``async_get_or_create`` accepts ``via_device_id`` (HA 2026.8+).
+
+    Detected once via signature inspection so older Home Assistant versions,
+    where the keyword does not exist, keep using the deprecated-but-working
+    ``via_device`` tuple instead of raising ``TypeError``.
+    """
+    global _SUPPORTS_VIA_DEVICE_ID  # noqa: PLW0603
+    if _SUPPORTS_VIA_DEVICE_ID is None:
+        params = inspect.signature(DeviceRegistry.async_get_or_create).parameters
+        _SUPPORTS_VIA_DEVICE_ID = "via_device_id" in params
+    return _SUPPORTS_VIA_DEVICE_ID
+
+
+def link_parent_device(
+    device_info: dict[str, Any],
+    registry: DeviceRegistry,
+    parent_identifier: DeviceIdentifier,
+    config_entry_id: str,
+) -> None:
+    """Set ``via_device_id`` when supported (HA 2026.8+), else ``via_device``.
+
+    On HA >= 2026.8 the parent device id (scoped to the config entry) is used.
+    On older versions the deprecated ``via_device`` tuple is kept so entities
+    keep registering correctly.
+    """
+    parent_device = get_device_by_identifier(registry, parent_identifier, config_entry_id)
+    if parent_device is not None and supports_via_device_id():
+        device_info["via_device_id"] = parent_device.id
+    else:
+        device_info["via_device"] = cast("tuple[str, str]", parent_identifier)

@@ -162,7 +162,7 @@ from .const import (
 from .const import (
     matches_active_when as matches_active_when,
 )
-from .device_registry_lookup import get_device_by_identifier
+from .device_registry_lookup import link_parent_device
 from .modbus_transport import CoreModbusTransport, ModbusTransport, NativeModbusTransport, UnavailableModbusTransport
 from .pymodbus_compat import DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 from .sensor import SolaXModbusSensor
@@ -1033,14 +1033,14 @@ class SolaXModbusHub:
             name=f"{self._name} {DEVICE_GROUP_NAMES.get(group, group.replace('_', ' ').title())}",
             manufacturer=self.plugin.plugin_manufacturer,
         )
-        # Link to the parent inverter via via_device_id (scoped to this config
-        # entry) on HA 2026.8+, falling back to the deprecated via_device tuple.
-        parent_identifier = (DOMAIN, self._name, INVERTER_IDENT)
-        parent_device = get_device_by_identifier(dr.async_get(self._hass), parent_identifier, self.entry.entry_id)
-        if parent_device is not None:
-            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
-        else:
-            device_info["via_device"] = parent_identifier  # type: ignore[typeddict-item]
+        # Link to the parent inverter (via_device_id on HA 2026.8+, legacy
+        # via_device tuple otherwise — decided by API support, not lookup success).
+        link_parent_device(
+            cast(dict[str, Any], device_info),
+            dr.async_get(self._hass),
+            (DOMAIN, self._name, INVERTER_IDENT),
+            self.entry.entry_id,
+        )
         return device_info
 
     def register_gated_entity(self, descr: Any, factory: Any, add_entities: Any, holder: dict[Any, Any], platform: str, entity: Any = None) -> None:

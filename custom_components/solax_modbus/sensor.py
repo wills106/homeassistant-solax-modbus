@@ -31,7 +31,7 @@ from .const import (
     matches_modbus_protocol,
 )
 from .debug import get_debug_setting
-from .device_registry_lookup import get_device_by_identifier
+from .device_registry_lookup import get_device_by_identifier, link_parent_device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -239,14 +239,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     manufacturer=hub.plugin.plugin_manufacturer,
                     serial_number=batt_pack_serial,
                 )
-                # Link to the parent inverter via via_device_id (scoped to this config
-                # entry) on HA 2026.8+, falling back to the deprecated via_device tuple.
-                parent_identifier = (DOMAIN, hub_name, INVERTER_IDENT)
-                parent_device = get_device_by_identifier(dev_registry, parent_identifier, entry.entry_id)
-                if parent_device is not None:
-                    cast(dict[str, Any], device_info_battery)["via_device_id"] = parent_device.id
-                else:
-                    device_info_battery["via_device"] = parent_identifier  # type: ignore[typeddict-item]
+                # Link to the parent inverter (via_device_id on HA 2026.8+, legacy
+                # via_device tuple otherwise — decided by API support, not lookup success).
+                link_parent_device(
+                    cast(dict[str, Any], device_info_battery),
+                    dev_registry,
+                    (DOMAIN, hub_name, INVERTER_IDENT),
+                    entry.entry_id,
+                )
 
                 key_prefix = battery_config.battery_sensor_key_prefix.replace("{batt-nr}", str(batt_nr + 1)).replace(
                     "{pack-nr}", str(batt_pack_nr + 1)

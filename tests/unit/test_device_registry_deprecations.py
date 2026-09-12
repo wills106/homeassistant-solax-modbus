@@ -128,3 +128,10 @@ def test_via_device_fallback_uses_via_device_id_first() -> None:
     device = get_device_by_identifier(cast(DeviceRegistry, registry), ("solax_modbus", "hub", "inverter"), "entry-1")
     assert device is not None
     assert device.id == "parent-id"
+
+
+def test_supports_via_device_id_detection() -> None:
+    """The capability probe must return a plain bool on any HA version."""
+    from custom_components.solax_modbus.device_registry_lookup import supports_via_device_id
+
+    assert isinstance(supports_via_device_id(), bool)
