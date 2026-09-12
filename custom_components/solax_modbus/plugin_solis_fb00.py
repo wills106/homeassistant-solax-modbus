@@ -232,7 +232,6 @@ DISPATCH_MODE_OPTIONS_INV = {v: k for k, v in DISPATCH_MODE_OPTIONS.items()}
 # ============================================= Charging ===========================================================
 
 
-
 # This value function converts the bits to the number
 def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
     assert bit is not None and descr is not None
