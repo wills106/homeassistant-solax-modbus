@@ -394,6 +394,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         scale=0.001,
+        rounding=3,
         allowedtypes=MAX | GEN2,
     ),
     SolaXModbusSensorEntityDescription(

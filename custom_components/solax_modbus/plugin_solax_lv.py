@@ -1685,18 +1685,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN2,
     ),
     SolaXModbusSensorEntityDescription(
-        name="PowerFactor",
+        name="Power Factor",
         key="powerfactor",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER_FACTOR,
         register=0x12D,
         scale=0.001,
+        rounding=3,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S16,
         allowedtypes=AC | HYBRID | GEN,
     ),
     SolaXModbusSensorEntityDescription(
-        name="PowerFactor",
+        name="Power Factor",
         key="powerfactor",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -2217,7 +2218,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
 
 TIME_TYPES = [
     SolaXModbusTimeEntityDescription(
-        name="Charge 1 Start",
+        name="Charge P1 Start",
         key="charge_1_start",
         register=0x2580,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2226,7 +2227,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge 1 Stop",
+        name="Charge P1 Stop",
         key="charge_1_stop",
         register=0x2581,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2235,7 +2236,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 1 Start",
+        name="Discharge P1 Start",
         key="discharge_1_start",
         register=0x2582,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2244,7 +2245,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 1 Stop",
+        name="Discharge P1 Stop",
         key="discharge_1_stop",
         register=0x2583,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2253,7 +2254,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge 2 Start",
+        name="Charge P2 Start",
         key="charge_2_start",
         register=0x2584,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2262,7 +2263,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge 2 Stop",
+        name="Charge P2 Stop",
         key="charge_2_stop",
         register=0x2585,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2271,7 +2272,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 2 Start",
+        name="Discharge P2 Start",
         key="discharge_2_start",
         register=0x2586,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2280,7 +2281,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 2 Stop",
+        name="Discharge P2 Stop",
         key="discharge_2_stop",
         register=0x2587,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2289,7 +2290,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge 3 Start",
+        name="Charge P3 Start",
         key="charge_3_start",
         register=0x2580,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2298,7 +2299,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Charge 3 Stop",
+        name="Charge P3 Stop",
         key="charge_3_stop",
         register=0x2581,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2307,7 +2308,7 @@ TIME_TYPES = [
         icon="mdi:clock-end",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 3 Start",
+        name="Discharge P3 Start",
         key="discharge_3_start",
         register=0x2582,
         option_dict=TIME_OPTIONS_GEN4,
@@ -2316,7 +2317,7 @@ TIME_TYPES = [
         icon="mdi:clock-start",
     ),
     SolaXModbusTimeEntityDescription(
-        name="Discharge 3 Stop",
+        name="Discharge P3 Stop",
         key="discharge_3_stop",
         register=0x2583,
         option_dict=TIME_OPTIONS_GEN4,
