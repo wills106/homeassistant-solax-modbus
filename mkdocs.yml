@@ -27,6 +27,7 @@ nav:
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
 - Developer Guide: developer_guide.md
+- Computed Sensor Readiness: developer/computed-sensor-readiness.md
 - CI/CD Pipeline: developer/cicd-pipeline.md
 - Growatt:
   - FAQ: growatt-faq.md

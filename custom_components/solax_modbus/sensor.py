@@ -15,6 +15,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
@@ -41,6 +42,8 @@ COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
         name="Communication Health",
         key="communication_health",
         value_function=lambda initval, descr, datadict: datadict.get("communication_health", "Unknown"),
+        depends_on=[],
+        recompute_each_poll=True,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:heart-pulse",
     ),
@@ -48,6 +51,9 @@ COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
         name="Communication Success Rate",
         key="communication_success_rate",
         value_function=lambda initval, descr, datadict: datadict.get("communication_success_rate"),
+        depends_on=[],
+        recompute_each_poll=True,
+        allow_none=True,
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:percent-circle-outline",
@@ -56,6 +62,8 @@ COMMUNICATION_SENSOR_TYPES: list[BaseModbusSensorEntityDescription] = [
         name="Communication Quarantined Registers",
         key="communication_quarantined_registers",
         value_function=lambda initval, descr, datadict: datadict.get("communication_quarantined_registers", 0),
+        depends_on=[],
+        recompute_each_poll=True,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:shield-alert-outline",
     ),
@@ -419,20 +427,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
                     for key, description in desired.items():
                         sensor = dashboard_entities.get(key) or hub.sensorEntities.get(key)
-                        if (
-                            description.register < 0
-                            and description.value_function
-                            and not getattr(
-                                description,
-                                "_is_riemann_sum_sensor",
-                                False,
-                            )
-                        ):
-                            try:
-                                hub.data[key] = description.value_function(0, description, hub.data)
-                            except Exception as ex:
-                                _LOGGER.debug("%s: ED refresh value_function failed for %s: %s", hub_name, key, ex)
-                                continue
+                        if description.register < 0 and description.value_function and not getattr(description, "_is_riemann_sum_sensor", False):
+                            hub.evaluate_computed_sensor(description, hub.data, force=True)
                         if sensor is not None and getattr(sensor, "hass", None) is not None:
                             sensor.modbus_data_updated()
 
@@ -471,6 +467,8 @@ class SolaXModbusSensor(SensorEntity):
         # self.entity_id = "sensor." + platform_name + "_" + description.key
         self.entity_description: BaseModbusSensorEntityDescription = description
         self._energy_dashboard_active = True
+        self._computed_available = True
+        self._cancel_computed_expiry: Any = None
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         scale = description.scale
         if description.native_unit_of_measurement is not None and isinstance(scale, (int, float)) and not isinstance(scale, bool) and scale > 0:
@@ -512,19 +510,13 @@ class SolaXModbusSensor(SensorEntity):
         if self.entity_description.register < 0:
             if self.entity_description.value_function and self._energy_dashboard_active:
                 self._hub.computedSensors[self.entity_description.key] = self.entity_description
-                try:
-                    self._hub.data[self.entity_description.key] = self.entity_description.value_function(
-                        0,
-                        self.entity_description,
-                        self._hub.data,
-                    )
-                    self.modbus_data_updated()
-                except Exception as e:
-                    _LOGGER.debug("%s: value_function failed for %s: %s", self._platform_name, self.entity_description.key, e)
             return
         await self._hub.async_add_solax_modbus_sensor(self)
 
     async def async_will_remove_from_hass(self) -> None:
+        if self._cancel_computed_expiry is not None:
+            self._cancel_computed_expiry()
+            self._cancel_computed_expiry = None
         if self.entity_description.register >= 0 or getattr(self.entity_description, "_is_riemann_sum_sensor", False):
             await self._hub.async_remove_solax_modbus_sensor(self)
         if self.entity_description.register < 0 and not getattr(self.entity_description, "_is_riemann_sum_sensor", False):
@@ -535,7 +527,21 @@ class SolaXModbusSensor(SensorEntity):
     def modbus_data_updated(self) -> None:
         if not self._energy_dashboard_active:
             return
+        description = self.entity_description
+        if description.register < 0 and description.value_function and not getattr(description, "_is_riemann_sum_sensor", False):
+            self._computed_available = True
+            if self._cancel_computed_expiry is not None:
+                self._cancel_computed_expiry()
+            # Only accepted computations publish this callback. A failed poll
+            # cannot renew the lease; a timer also handles complete poll silence.
+            self._cancel_computed_expiry = async_call_later(self.hass, self._hub.computed_sensor_max_age(description), self._expire_computed)
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
+        self.async_write_ha_state()
+
+    @callback
+    def _expire_computed(self, _now: Any) -> None:
+        self._cancel_computed_expiry = None
+        self._computed_available = False
         self.async_write_ha_state()
 
     @callback
@@ -566,7 +572,7 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def available(self) -> bool:
         """Return whether the dashboard currently exposes this entity."""
-        return self._energy_dashboard_active and super().available
+        return self._energy_dashboard_active and self._computed_available and super().available
 
     @property
     def should_poll(self) -> bool:
@@ -954,8 +960,10 @@ def entityToListSingle(
 
     hub.sensorDescriptions[newdescr.key] = newdescr
     # register dependency chain
-    deplist = newdescr.depends_on
-    if deplist is not None:
+    dependency_groups: list[Any] = [newdescr.depends_on or [], newdescr.optional_depends_on or []]
+    dependency_groups.extend(newdescr.depends_on_any or [])
+    deplist = list(dict.fromkeys(dep_on for group in dependency_groups for dep_on in ([group] if isinstance(group, str) else group)))
+    if deplist:
         _LOGGER.debug("%s: %s depends on entities %s", hub.name, newdescr.key, deplist)
         for dep_on in deplist:  # register inter-sensor dependencies (e.g. for value functions)
             if dep_on != newdescr.key:

@@ -279,12 +279,22 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # The name and key must contain a placeholder {} that is replaced by the preceding number
     min_value: int | None = None
     max_value: int | None = None
-    # Possible register keys required by the value function. On partial polls,
-    # computed sensors are only recalculated when every active dependency is fresh.
+    # Input contract for register-less computed sensors. ``depends_on`` contains
+    # mandatory inputs, ``depends_on_any`` contains alternative groups where at
+    # least one input must be available, and ``optional_depends_on`` contains
+    # inputs used only when valid and fresh, otherwise omitted. An explicit empty
+    # ``depends_on`` declares a calculation with no readiness inputs. ``None``
+    # means that the contract was not declared and the calculation is rejected.
     depends_on: list[str] | None = None
+    depends_on_any: list[tuple[str, ...]] | None = None
+    optional_depends_on: list[str] | None = None
+    readiness_validator: Callable[[dict[str, Any]], bool] | None = None
+    recompute_each_poll: bool = False
+    allow_none: bool = False  # Explicit unknown output, never a numeric zero.
     _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
     _energy_dashboard_mapping: Any = None  # EnergyDashboardMapping
     _energy_dashboard_source_hub: Any = None  # Source hub reference
+    _energy_dashboard_source_hubs: tuple[Any, ...] | None = None  # All contributors to an aggregate
     _is_riemann_sum_sensor: bool = False  # Whether this is a Riemann sum sensor
     _riemann_mapping: Any = None  # Riemann mapping configuration
     _riemann_data_hub: Any = None  # Riemann data hub reference

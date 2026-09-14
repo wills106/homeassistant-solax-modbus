@@ -185,3 +185,27 @@ async def test_inactive_dashboard_entity_stays_out_of_computed_pipeline() -> Non
 
     assert description.key in hub.sensorEntities
     assert description.key not in hub.computedSensors
+
+
+@pytest.mark.asyncio
+async def test_computed_entity_stays_unknown_until_shared_evaluator_runs() -> None:
+    description = BaseModbusSensorEntityDescription(
+        key="computed_test",
+        name="Test",
+        register=-1,
+        value_function=lambda _init, _description, data: data.get("source", 0),
+        depends_on=["source"],
+    )
+    hub = SimpleNamespace(data={}, sensorEntities={}, sensorDescriptions={}, computedSensors={})
+    sensor = SolaXModbusSensor(
+        "Computed",
+        hub,
+        DeviceInfo(identifiers={(DOMAIN, "computed-test")}),
+        description,
+    )
+
+    await sensor.async_added_to_hass()
+
+    assert description.key in hub.computedSensors
+    assert description.key not in hub.data
+    assert sensor.native_value is None
