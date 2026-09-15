@@ -255,13 +255,14 @@ async def test_rejected_snapshot_does_not_leak_computed_freshness() -> None:
 
 
 @pytest.mark.asyncio
-async def test_partial_group_commits_successful_values_and_legacy_computed_sensor() -> None:
+async def test_partial_group_commits_successful_values_and_computed_sensor() -> None:
     hub = make_hub()
     group = make_group()
     computed_sensor = Mock()
     hub.computedSensors["computed"] = SimpleNamespace(
         key="computed",
         internal=False,
+        depends_on=["raw"],
         value_function=lambda initval, descr, data: data["raw"] * 2,
     )
     hub.sensorEntities["computed"] = computed_sensor
@@ -286,7 +287,7 @@ async def test_partial_group_commits_successful_values_and_legacy_computed_senso
 
 
 @pytest.mark.asyncio
-async def test_partial_group_keeps_computed_value_when_dependency_is_not_fresh() -> None:
+async def test_partial_group_keeps_computed_value_when_other_dependency_is_not_fresh() -> None:
     hub = make_hub()
     hub.data.update({"source_a": 1, "source_b": 2, "computed": 3})
     hub.sensorDescriptions.update({"source_a": SimpleNamespace(), "source_b": SimpleNamespace()})
@@ -320,6 +321,229 @@ async def test_partial_group_keeps_computed_value_when_dependency_is_not_fresh()
     assert hub.data["computed"] == 3
     assert group.publish_updates is True
     computed_sensor.modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_partial_group_keeps_computed_value_when_required_input_is_missing() -> None:
+    hub = make_hub()
+    hub.data.update({"source_a": 1, "source_b": 2, "computed": 3})
+    hub.sensorDescriptions.update({"source_a": SimpleNamespace(), "source_b": SimpleNamespace()})
+    group = make_group()
+    computed_sensor = Mock()
+    hub.computedSensors["computed"] = SimpleNamespace(
+        key="computed",
+        internal=False,
+        depends_on=["source_a", "source_b"],
+        value_function=lambda initval, descr, data: data["source_a"] + data["source_b"],
+    )
+    hub.sensorEntities["computed"] = computed_sensor
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        if block.start == 1:
+            data["source_a"] = 10
+            return successful_block("source_a")
+        data.pop("source_b", None)
+        return BlockReadResult(data_succeeded=False, communication_succeeded=True)
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.PARTIAL
+    assert "source_b" not in hub.data
+    assert hub.data["computed"] == 3
+    computed_sensor.modbus_data_updated.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_legitimate_zero_input_publishes_zero_computed_value() -> None:
+    hub = make_hub()
+    hub.data.update({"source": 5, "computed": 10})
+    hub.sensorDescriptions["source"] = SimpleNamespace()
+    group = make_group()
+    computed_sensor = Mock()
+    hub.computedSensors["computed"] = SimpleNamespace(
+        key="computed",
+        internal=False,
+        depends_on=["source"],
+        value_function=lambda initval, descr, data: data["source"] * 2,
+    )
+    hub.sensorEntities["computed"] = computed_sensor
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        data["source"] = 0
+        return successful_block("source")
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SUCCESS
+    assert hub.data["computed"] == 0
+    computed_sensor.modbus_data_updated.assert_called_once_with()
+
+
+def test_alternative_and_optional_inputs_use_explicit_readiness_contract() -> None:
+    hub = make_hub()
+    hub.sensorDescriptions.update(
+        {
+            "primary": SimpleNamespace(),
+            "fallback": SimpleNamespace(),
+            "optional": SimpleNamespace(),
+        }
+    )
+    description = SimpleNamespace(
+        key="computed",
+        depends_on=[],
+        depends_on_any=[("primary", "fallback")],
+        optional_depends_on=["optional"],
+        value_function=lambda initval, descr, data: data.get("primary", data["fallback"]) * 2,
+    )
+    data = {"fallback": 4}
+
+    assert hub.evaluate_computed_sensor(description, data, {"fallback"}) is True
+    assert data["computed"] == 8
+
+
+def test_computed_sensor_without_input_contract_is_rejected() -> None:
+    hub = make_hub()
+    description = SimpleNamespace(
+        key="computed",
+        value_function=lambda initval, descr, data: 0,
+    )
+    data: dict[str, Any] = {}
+
+    assert hub.evaluate_computed_sensor(description, data, force=True) is False
+    assert "computed" not in data
+
+
+def test_readiness_validator_can_reject_domain_invalid_inputs() -> None:
+    hub = make_hub()
+    hub.sensorDescriptions["source"] = SimpleNamespace()
+    description = SimpleNamespace(
+        key="computed",
+        depends_on=["source"],
+        readiness_validator=lambda data: data["source"] >= 0,
+        value_function=lambda initval, descr, data: data["source"],
+    )
+    data = {"source": -1}
+
+    assert hub.evaluate_computed_sensor(description, data, {"source"}) is False
+    assert "computed" not in data
+
+
+def test_invalid_computed_result_preserves_previous_value() -> None:
+    hub = make_hub()
+    hub.sensorDescriptions["source"] = SimpleNamespace()
+    description = SimpleNamespace(
+        key="computed",
+        depends_on=["source"],
+        value_function=lambda initval, descr, data: None,
+    )
+    data = {"source": 1, "computed": 7}
+
+    assert hub.evaluate_computed_sensor(description, data, {"source"}) is False
+    assert data["computed"] == 7
+
+
+def test_time_dependent_computed_sensor_can_recompute_every_poll() -> None:
+    hub = make_hub()
+    hub.sensorDescriptions["clock"] = SimpleNamespace()
+    description = SimpleNamespace(
+        key="countdown",
+        depends_on=["clock"],
+        recompute_each_poll=True,
+        value_function=lambda initval, descr, data: data["clock"],
+    )
+    data = {"clock": 10, "countdown": 11}
+
+    assert hub.evaluate_computed_sensor(description, data, set()) is True
+    assert data["countdown"] == 10
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "key",
+    [
+        "remotecontrol_current_pv_power_limit",
+        "remotecontrol_current_pushmode_power",
+    ],
+)
+async def test_locally_managed_remotecontrol_sensor_publishes_without_modbus_freshness(key: str) -> None:
+    hub = make_hub()
+    description = next(description for description in SENSOR_TYPES_MAIN if description.key == key)
+    hub.data[key] = 123
+    hub.computedSensors[key] = description
+    hub.sensorDescriptions[key] = description
+    sensor = Mock()
+    hub.sensorEntities[key] = sensor
+    group = make_group()
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        data["raw"] = 2
+        return successful_block("raw")
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SUCCESS
+    assert hub.data[key] == 123
+    sensor.modbus_data_updated.assert_called_once_with()
+
+
+def test_invalid_computed_intermediate_blocks_downstream_consumer() -> None:
+    hub = make_hub()
+    hub.data.update(
+        {
+            "inverter_power_l1": 1000,
+            "inverter_power_l2": 1000,
+            "inverter_power": 3000,
+            "measured_power": 600,
+            "house_load": 2500,
+        }
+    )
+    inverter_power = next(
+        description for description in SENSOR_TYPES_MAIN if description.key == "inverter_power" and description.value_function is not None
+    )
+    house_load = next(description for description in SENSOR_TYPES_MAIN if description.key == "house_load")
+    hub.computedSensors = {
+        "inverter_power": inverter_power,
+        "house_load": house_load,
+    }
+    hub.sensorDescriptions.update(
+        {
+            "inverter_power_l1": SimpleNamespace(),
+            "inverter_power_l2": SimpleNamespace(),
+            "inverter_power_l3": SimpleNamespace(),
+            "measured_power": SimpleNamespace(),
+            **hub.computedSensors,
+        }
+    )
+
+    computed = hub._compute_poll_sensors(
+        hub.data,
+        {"inverter_power_l1", "inverter_power_l2", "measured_power"},
+    )
+
+    assert computed == set()
+    assert hub.data["inverter_power"] == 3000
+    assert hub.data["house_load"] == 2500
+
+
+@pytest.mark.parametrize("invalid_value", [None, float("nan"), float("inf")])
+def test_invalid_required_input_keeps_computed_sensor_unknown(invalid_value: Any) -> None:
+    hub = make_hub()
+    hub.sensorDescriptions["source"] = SimpleNamespace()
+    description = SimpleNamespace(
+        key="computed",
+        depends_on=["source"],
+        value_function=lambda initval, descr, data: data["source"],
+    )
+    data = {"source": invalid_value}
+
+    assert hub.evaluate_computed_sensor(description, data, {"source"}) is False
+    assert "computed" not in data
 
 
 @pytest.mark.asyncio
@@ -358,6 +582,44 @@ async def test_computed_dependency_chain_uses_fresh_values() -> None:
     assert result is PollOutcome.PARTIAL
     assert hub.data["first"] == 10
     assert hub.data["second"] == 11
+
+
+@pytest.mark.asyncio
+async def test_computed_dependency_chain_is_ordered_before_mixed_input_consumer() -> None:
+    hub = make_hub()
+    hub.data.update({"source_a": 1, "source_b": 10, "first": 2, "second": 12})
+    hub.sensorDescriptions.update({"source_a": SimpleNamespace(), "source_b": SimpleNamespace()})
+    group = make_group()
+    first_sensor = Mock()
+    second_sensor = Mock()
+    hub.computedSensors["second"] = SimpleNamespace(
+        key="second",
+        internal=False,
+        depends_on=["first", "source_b"],
+        value_function=lambda initval, descr, data: data["first"] + data["source_b"],
+    )
+    hub.computedSensors["first"] = SimpleNamespace(
+        key="first",
+        internal=False,
+        depends_on=["source_a"],
+        value_function=lambda initval, descr, data: data["source_a"] * 2,
+    )
+    hub.sensorDescriptions.update(hub.computedSensors)
+    hub.sensorEntities.update({"first": first_sensor, "second": second_sensor})
+
+    async def read_block(data: dict[str, Any], block: Any, typ: str) -> BlockReadResult:
+        data.update({"source_a": 3, "source_b": 20})
+        return successful_block("source_a", "source_b")
+
+    hub.async_read_modbus_block = read_block
+
+    result = await hub.async_read_modbus_registers_all(group)
+
+    assert result is PollOutcome.SUCCESS
+    assert hub.data["first"] == 6
+    assert hub.data["second"] == 26
+    first_sensor.modbus_data_updated.assert_called_once_with()
+    second_sensor.modbus_data_updated.assert_called_once_with()
 
 
 @pytest.mark.asyncio
@@ -508,6 +770,7 @@ async def test_successful_group_commits_raw_and_computed_values_together() -> No
     hub.computedSensors["computed"] = SimpleNamespace(
         key="computed",
         internal=False,
+        depends_on=["raw"],
         value_function=lambda initval, descr, data: data["raw"] * 2,
     )
     hub.sensorEntities["computed"] = computed_sensor
@@ -538,6 +801,7 @@ async def test_failed_follow_up_discards_snapshot_without_publishing() -> None:
     hub.computedSensors["computed"] = SimpleNamespace(
         key="computed",
         internal=False,
+        depends_on=["raw"],
         value_function=lambda initval, descr, data: data["raw"] * 2,
     )
     hub.sensorEntities["computed"] = computed_sensor

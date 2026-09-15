@@ -6,6 +6,7 @@ import asyncio
 import importlib
 import json
 import logging
+import math
 import struct
 import time as _mtime
 from dataclasses import dataclass, replace
@@ -1295,6 +1296,7 @@ class SolaXModbusHub:
         # Keep freshness local to this interval refresh, never to the hub or device.
         cycle_fresh_keys: set[str] = set()
         for group in list(interval_group.device_groups.values()):
+            group.computed_interval = getattr(interval_group, "interval", None)
             group_outcome = await self.async_read_modbus_data(group, cycle_fresh_keys)
             outcomes.append(group_outcome)
             if group_outcome.communication_succeeded and getattr(group, "publish_updates", True):
@@ -1304,6 +1306,13 @@ class SolaXModbusHub:
                 if getattr(self, "gatedEntities", None):
                     await self.async_refresh_gated_entities()
             _LOGGER.debug("%s: device group read done with outcome=%s", self._name, group_outcome.value)
+
+        # Cross-hub consumers use a completed, accepted interval snapshot, never
+        # another hub's matching key names or an unvalidated in-flight read.
+        snapshots = getattr(self, "_computed_source_snapshots", {})
+        snapshot_key = getattr(interval_group, "interval", None) or id(interval_group)
+        snapshots[snapshot_key] = (_mtime.monotonic(), self.data.copy(), cycle_fresh_keys.copy())
+        self._computed_source_snapshots = snapshots
 
         if PollOutcome.FAILED in outcomes:
             outcome = PollOutcome.FAILED
@@ -2078,34 +2087,259 @@ class SolaXModbusHub:
             if current_value is missing or current_value == previous_value:
                 self.data[key] = value
 
-    def _active_computed_dependencies(self, descr: Any) -> set[str] | None:
-        """Return declared dependencies that are available for this inverter."""
-        dependencies = getattr(descr, "depends_on", None)
+    @staticmethod
+    def _dependency_values(dependencies: Any) -> tuple[str, ...]:
+        """Normalize a dependency declaration without treating strings as iterables."""
         if dependencies is None:
-            return None
+            return ()
         if isinstance(dependencies, str):
-            dependencies = [dependencies]
-        return {dependency for dependency in dependencies if dependency in self.sensorDescriptions}
+            return (dependencies,)
+        return tuple(dependencies)
 
-    def _compute_poll_sensors(self, data: dict[str, Any], fresh_keys: set[str]) -> set[str]:
+    @staticmethod
+    def _computed_input_available(data: dict[str, Any], key: str) -> bool:
+        """Return whether an input is present and usable by a computed sensor."""
+        if key not in data or data[key] is None:
+            return False
+        value = data[key]
+        return not isinstance(value, float) or math.isfinite(value)
+
+    def _active_dependency_keys(self, dependencies: Any, data: dict[str, Any], descriptions: dict[Any, Any]) -> set[str]:
+        """Return dependency keys applicable to the active inverter description set."""
+        return {dependency for dependency in self._dependency_values(dependencies) if dependency in descriptions or dependency in data}
+
+    def _computed_sensor_ready(
+        self,
+        descr: Any,
+        data: dict[str, Any],
+        descriptions: dict[Any, Any],
+    ) -> tuple[bool, set[str], tuple[set[str], ...], set[str]]:
+        """Validate a computed sensor's complete input contract."""
+        declared_required = getattr(descr, "depends_on", None)
+        if declared_required is None:
+            _LOGGER.error("%s: computed sensor %s has no input contract", self._name, descr.key)
+            return False, set(), (), set()
+
+        required = self._active_dependency_keys(declared_required, data, descriptions)
+        if self._dependency_values(declared_required) and not required:
+            return False, set(), (), set()
+        if any(not self._computed_input_available(data, dependency) for dependency in required):
+            return False, required, (), set()
+
+        alternative_groups: list[set[str]] = []
+        for alternatives in getattr(descr, "depends_on_any", None) or []:
+            active_alternatives = self._active_dependency_keys(alternatives, data, descriptions)
+            available_alternatives = {dependency for dependency in active_alternatives if self._computed_input_available(data, dependency)}
+            if not available_alternatives:
+                return False, required, tuple(alternative_groups), set()
+            alternative_groups.append(available_alternatives)
+
+        optional = self._active_dependency_keys(getattr(descr, "optional_depends_on", None), data, descriptions)
+
+        validator = getattr(descr, "readiness_validator", None)
+        if validator is not None:
+            try:
+                if not validator(data):
+                    return False, required, tuple(alternative_groups), optional
+            except Exception as ex:
+                _LOGGER.debug("%s: readiness validator failed for %s: %s", self._name, descr.key, ex)
+                return False, required, tuple(alternative_groups), optional
+        return True, required, tuple(alternative_groups), optional
+
+    def evaluate_computed_sensor(
+        self,
+        descr: Any,
+        data: dict[str, Any],
+        fresh_keys: set[str] | None = None,
+        *,
+        force: bool = False,
+        interval: float | None = None,
+    ) -> bool:
+        """Evaluate one computed sensor through the shared readiness gate."""
+        if getattr(descr, "_energy_dashboard_mapping", None) is not None:
+            return self._evaluate_dashboard_sensor(descr, data, fresh_keys or set(), interval)
+        descriptions = self.sensorDescriptions
+        dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
+        dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        for alternatives in getattr(descr, "depends_on_any", None) or []:
+            dependencies.update(alternatives)
+        source_data, accepted = self._computed_inputs(data, fresh_keys or set(), dependencies, interval)
+        # Alternatives must not let a stale preferred value shadow a fresh
+        # fallback. Optional inputs must not leak stale/invalid values either.
+        filtered = set(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        for alternatives in getattr(descr, "depends_on_any", None) or []:
+            filtered.update(alternatives)
+        for key in filtered:
+            if not self._computed_input_available(source_data, key) or (
+                not force and not getattr(descr, "recompute_each_poll", False) and key not in accepted
+            ):
+                source_data.pop(key, None)
+        ready, required, alternative_groups, optional = self._computed_sensor_ready(descr, source_data, descriptions)
+        if not ready:
+            return False
+
+        if not force and not getattr(descr, "recompute_each_poll", False):
+            current_fresh_keys = accepted
+            if dependencies and not dependencies.intersection(fresh_keys or set()):
+                return False
+            if not required.issubset(current_fresh_keys):
+                return False
+            if any(not alternatives.intersection(current_fresh_keys) for alternatives in alternative_groups):
+                return False
+            if not required and not alternative_groups and optional and not optional.intersection(current_fresh_keys):
+                return False
+
+        try:
+            value = descr.value_function(0, descr, source_data)
+        except Exception as ex:
+            _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, descr.key, ex)
+            return False
+
+        if (value is None and not getattr(descr, "allow_none", False)) or (isinstance(value, float) and not math.isfinite(value)):
+            _LOGGER.debug("%s: refusing invalid computed value for %s", self._name, descr.key)
+            return False
+        data[descr.key] = value
+        return True
+
+    def _computed_inputs(
+        self, data: dict[str, Any], fresh_keys: set[str], dependencies: set[str], interval: float | None
+    ) -> tuple[dict[str, Any], set[str]]:
+        """Add bounded raw inputs from other intervals without widening freshness."""
+        source_data, accepted = data.copy(), fresh_keys.copy()
+        if interval is not None and hasattr(self, "config"):
+            for key in dependencies - accepted:
+                source = self.sensorDescriptions.get(key)
+                if source is None or getattr(source, "register", -1) < 0:
+                    continue
+                source_interval = self.scan_group(SimpleNamespace(entity_description=source))
+                if source_interval == interval:
+                    continue
+                sample = getattr(self, "_computed_source_snapshots", {}).get(source_interval)
+                if sample is not None:
+                    timestamp, snapshot, snapshot_keys = sample
+                    if key in snapshot_keys and _mtime.monotonic() - timestamp <= 3 * source_interval:
+                        source_data[key] = snapshot[key]
+                        accepted.add(key)
+        return source_data, accepted
+
+    def computed_sensor_max_age(self, descr: Any) -> float:
+        """Allow three configured input intervals, independent of poll slowdown."""
+        pending = [descr]
+        seen: set[str] = set()
+        intervals: list[float] = []
+        while pending:
+            description = pending.pop()
+            if description.key in seen:
+                continue
+            seen.add(description.key)
+            if getattr(description, "register", -1) >= 0 and hasattr(self, "config"):
+                intervals.append(float(self.scan_group(SimpleNamespace(entity_description=description))))
+            dependencies = list(self._dependency_values(getattr(description, "depends_on", None)))
+            dependencies.extend(self._dependency_values(getattr(description, "optional_depends_on", None)))
+            for alternatives in getattr(description, "depends_on_any", None) or []:
+                dependencies.extend(alternatives)
+            pending.extend(self.sensorDescriptions[key] for key in dependencies if key in self.sensorDescriptions)
+        fallback = float(getattr(self, "config", {}).get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+        return 3 * max(intervals, default=fallback)
+
+    def _dashboard_source_data(
+        self, mapping: Any, data: dict[str, Any], fresh_keys: set[str], interval: float | None = None
+    ) -> dict[str, Any] | None:
+        """Resolve a mapping against a coherent, bounded-age source-hub snapshot."""
+        candidates = [(interval, (_mtime.monotonic(), data, fresh_keys))]
+        if not data:
+            candidates.extend(sorted(getattr(self, "_computed_source_snapshots", {}).items(), key=lambda sample: sample[1][0], reverse=True))
+        dependencies = {mapping.source_key}
+        if mapping.source_key_pm:
+            dependencies.update((mapping.source_key_pm, "parallel_setting"))
+        for source_interval, (timestamp, snapshot, accepted) in candidates:
+            snapshot, accepted = self._computed_inputs(snapshot, accepted, dependencies, source_interval)
+            source_key = mapping.get_source_key(snapshot)
+            required = {source_key}
+            if mapping.source_key_pm and ("parallel_setting" in self.sensorDescriptions or "parallel_setting" in snapshot):
+                required.add("parallel_setting")
+            description = SimpleNamespace(key=source_key, depends_on=list(required))
+            if _mtime.monotonic() - timestamp > self.computed_sensor_max_age(description):
+                continue
+            if required.issubset(accepted) and all(self._computed_input_available(snapshot, key) for key in required):
+                return snapshot
+        return None
+
+    def _evaluate_dashboard_sensor(self, descr: Any, data: dict[str, Any], fresh_keys: set[str], interval: float | None = None) -> bool:
+        """Keep ED source resolution and multi-hub validity in the shared gate."""
+        mapping = descr._energy_dashboard_mapping
+        hubs = getattr(descr, "_energy_dashboard_source_hubs", None) or (descr._energy_dashboard_source_hub or self,)
+        sources = []
+        for hub in hubs:
+            if hub is self:
+                selected = mapping.get_source_key(data)
+                relevant = {selected}
+                if mapping.source_key_pm:
+                    relevant.add("parallel_setting")
+                if self._computed_input_available(data, selected) and not relevant.intersection(fresh_keys):
+                    # Another scan group (or a topology refresh) is not a new
+                    # source sample and must not renew the entity's lease.
+                    return False
+            snapshot = hub._dashboard_source_data(
+                mapping, data if hub is self else {}, fresh_keys if hub is self else set(), interval if hub is self else None
+            )
+            if snapshot is None:
+                # ED counters explicitly propagate unknown; never partially sum
+                # an unavailable inverter into a total_increasing counter.
+                data[descr.key] = None
+                return True
+            sources.append(snapshot)
+        source_data = sources[0].copy()
+        source_data["_energy_dashboard_source_data"] = sources
+        try:
+            value = descr.value_function(0, descr, source_data)
+        except Exception as ex:
+            _LOGGER.debug("%s: cannot compute dashboard sensor %s: %s", self._name, descr.key, ex)
+            value = None
+        if isinstance(value, float) and not math.isfinite(value):
+            value = None
+        data[descr.key] = value
+        return True
+
+    def _ordered_computed_sensors(self) -> list[tuple[str, Any]]:
+        """Return computed sensors with computed dependencies before consumers."""
+        pending = list(self.computedSensors.items())
+        pending_keys = {key for key, _descr in pending}
+        ordered: list[tuple[str, Any]] = []
+
+        while pending:
+            ready: list[tuple[str, Any]] = []
+            for key, descr in pending:
+                declared_dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
+                declared_dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+                for alternatives in getattr(descr, "depends_on_any", None) or []:
+                    declared_dependencies.update(self._dependency_values(alternatives))
+                if not ((declared_dependencies - {key}) & pending_keys):
+                    ready.append((key, descr))
+
+            if not ready:
+                ordered.extend(pending)
+                break
+
+            ready_keys = {key for key, _descr in ready}
+            ordered.extend(ready)
+            pending = [(key, descr) for key, descr in pending if key not in ready_keys]
+            pending_keys.difference_update(ready_keys)
+
+        return ordered
+
+    def _compute_poll_sensors(self, data: dict[str, Any], fresh_keys: set[str], interval: float | None = None) -> set[str]:
         """Compute sensors whose active, explicitly declared dependencies are fresh."""
         computed_fresh_keys: set[str] = set()
-        pending = list(self.computedSensors.items())
+        pending = self._ordered_computed_sensors()
 
         while pending:
             remaining: list[tuple[str, Any]] = []
             made_progress = False
 
             for key, descr in pending:
-                dependencies = self._active_computed_dependencies(descr)
-                if dependencies is not None and not dependencies.issubset(fresh_keys):
+                if not self.evaluate_computed_sensor(descr, data, fresh_keys, interval=interval):
                     remaining.append((key, descr))
-                    continue
-
-                try:
-                    data[key] = descr.value_function(0, descr, data)
-                except Exception as ex:
-                    _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, key, ex)
                     continue
 
                 fresh_keys.add(key)
@@ -2113,10 +2347,8 @@ class SolaXModbusHub:
                 made_progress = True
 
             if not made_progress:
-                for key, descr in remaining:
-                    dependencies = self._active_computed_dependencies(descr)
-                    missing = set(dependencies or []) - fresh_keys
-                    _LOGGER.debug("%s: keeping previous value for %s; dependencies not fresh: %s", self._name, key, sorted(missing))
+                for key, _descr in remaining:
+                    _LOGGER.debug("%s: keeping previous value for %s; input contract is not ready or unchanged", self._name, key)
                 break
             pending = remaining
 
@@ -2189,7 +2421,7 @@ class SolaXModbusHub:
             # freshness to subsequent groups in this polling cycle.
             if cycle_fresh_keys is not None:
                 fresh_keys.update(cycle_fresh_keys)
-            computed_fresh_keys = self._compute_poll_sensors(data, fresh_keys)
+            computed_fresh_keys = self._compute_poll_sensors(data, fresh_keys, getattr(group, "computed_interval", None))
 
             if group.readFollowUp is not None:
                 if not await group.readFollowUp(previous_data, data):
@@ -2423,6 +2655,7 @@ class SolaXModbusHub:
         return blocks
 
     def rebuild_blocks(self, initial_groups: dict[Any, Any]) -> None:  # , computedRegs):
+        self._computed_source_snapshots = {}
         _LOGGER.debug("%s: rebuilding groups and blocks - pre: %s", self._name, initial_groups.keys())
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():

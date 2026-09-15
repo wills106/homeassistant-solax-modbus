@@ -605,6 +605,7 @@ def _create_energy_dashboard_diagnostic_sensors(
             name="Mode",
             register=-1,
             value_function=_mode_value,
+            depends_on=[],
             allowedtypes=hub._invertertype,
             icon="mdi:swap-horizontal",
             entity_category=EntityCategory.DIAGNOSTIC,
@@ -615,6 +616,7 @@ def _create_energy_dashboard_diagnostic_sensors(
             name="Inverter Count",
             register=-1,
             value_function=_inverter_count_value,
+            depends_on=[],
             allowedtypes=hub._invertertype,
             icon="mdi:counter",
             entity_category=EntityCategory.DIAGNOSTIC,
@@ -628,6 +630,7 @@ def _create_energy_dashboard_diagnostic_sensors(
             name="Last Total Inverter Count",
             register=-1,
             value_function=_last_total_inverter_count_value,
+            depends_on=[],
             allowedtypes=hub._invertertype,
             icon="mdi:counter",
             entity_category=EntityCategory.DIAGNOSTIC,
@@ -641,6 +644,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                 name="Debug Override",
                 register=-1,
                 value_function=_debug_override_value,
+                depends_on=[],
                 allowedtypes=hub._invertertype,
                 icon="mdi:bug-check",
                 entity_category=EntityCategory.DIAGNOSTIC,
@@ -653,6 +657,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                 name="Parallel Setting",
                 register=-1,
                 value_function=_parallel_setting_value,
+                depends_on=[],
                 allowedtypes=hub._invertertype,
                 icon="mdi:shuffle-variant",
                 entity_category=EntityCategory.DIAGNOSTIC,
@@ -667,6 +672,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                 name="Secondary Inverters",
                 register=-1,
                 value_function=_secondary_names_value,
+                depends_on=[],
                 allowedtypes=hub._invertertype,
                 icon="mdi:solar-power-variant",
                 entity_category=EntityCategory.DIAGNOSTIC,
@@ -680,6 +686,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                     name="PM Inverter Count",
                     register=-1,
                     value_function=_pm_inverter_count_value,
+                    depends_on=[],
                     allowedtypes=hub._invertertype,
                     icon="mdi:counter",
                     entity_category=EntityCategory.DIAGNOSTIC,
@@ -693,6 +700,7 @@ def _create_energy_dashboard_diagnostic_sensors(
                 name="Mapping Summary",
                 register=-1,
                 value_function=_mapping_summary_value,
+                depends_on=[],
                 allowedtypes=hub._invertertype,
                 icon="mdi:clipboard-text",
                 entity_category=EntityCategory.DIAGNOSTIC,
@@ -733,9 +741,8 @@ def _create_sensor_from_mapping(
         captured_hub = data_hub  # Capture in closure
 
         def value_function(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
-            # Use captured_hub's data dictionary instead of the passed datadict
-            # This allows reading from Slave hubs
-            hub_data = getattr(captured_hub, "data", None) or getattr(captured_hub, "datadict", datadict)
+            # The shared evaluator supplies this source hub's accepted snapshot.
+            hub_data = datadict
             try:
                 return sensor_mapping.get_value(hub_data)
             except Exception as e:
@@ -796,7 +803,9 @@ def _create_sensor_from_mapping(
     else:
         sensor_key = sensor_mapping.target_key
 
-    # Create sensor entity description
+    # The evaluator resolves parallel-mode mappings against the same fresh
+    # snapshot as their values (including each contributor of an aggregate).
+    alternative_source_keys = tuple(dict.fromkeys(key for key in (sensor_mapping.source_key, sensor_mapping.source_key_pm) if key))
     sensor_desc = BaseModbusSensorEntityDescription(
         name=sensor_name,
         key=sensor_key,
@@ -804,6 +813,10 @@ def _create_sensor_from_mapping(
         device_class=device_class,
         state_class=state_class,
         value_function=make_value_function(sensor_mapping),
+        allow_none=True,
+        depends_on=[source_key] if len(alternative_source_keys) == 1 else [],
+        depends_on_any=[alternative_source_keys] if len(alternative_source_keys) > 1 else None,
+        optional_depends_on=["parallel_setting"] if sensor_mapping.source_key_pm else None,
         allowedtypes=hub._invertertype,  # Use same types as source sensor
         icon=(sensor_mapping.icon or default_icon) if default_icon else None,
         register=-1,  # No modbus register (computed sensor)
@@ -857,43 +870,17 @@ def _needs_aggregation(target_key: str) -> Any:
     )
 
 
-def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMapping, master_hub: Any, slave_hubs: list[Any]) -> Any:
-    """Create a value function that sums Master + all Slaves for aggregation.
-
-    Handles edge cases:
-    - No Slaves: Returns Master value only
-    - Slave hub offline: Treats missing values as 0, logs debug message
-    - Missing keys: Treats as 0, continues with other Slaves
-    """
-    master_name = getattr(master_hub, "_name", "Unknown")
+def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMapping) -> Any:
+    """Sum only complete source snapshots supplied by the shared evaluator."""
 
     def value_function(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
-        # Get Master value (individual inverter value)
-        master_data = getattr(master_hub, "data", None) or getattr(master_hub, "datadict", datadict)
-        try:
-            master_value = sensor_mapping.get_value(master_data)
-            total = master_value if master_value is not None else 0
-        except Exception as e:
-            _LOGGER.debug("%s: Error getting Master value for aggregation: %s", master_name, e)
-            total = 0
-
-        # Sum all Slave values
-        for slave_name, slave_hub in slave_hubs:
-            try:
-                slave_data = getattr(slave_hub, "data", None) or getattr(slave_hub, "datadict", {})
-                if not slave_data:
-                    _LOGGER.debug("%s: Slave hub '%s' has no data, using 0 for aggregation", master_name, slave_name)
-                    continue
-
-                slave_value = sensor_mapping.get_value(slave_data)
-                if slave_value is not None:
-                    total += slave_value
-                # If slave_value is None, treat as 0 (already handled by not adding)
-            except Exception as e:
-                _LOGGER.debug("%s: Error getting Slave '%s' value for aggregation: %s, using 0", master_name, slave_name, e)
-                # Continue with other Slaves (treat this Slave as 0)
-
-        return total
+        sources = datadict.get("_energy_dashboard_source_data", [])
+        if not sources:
+            return None
+        values = [sensor_mapping.get_value(source) for source in sources]
+        if any(value is None for value in values):
+            return None
+        return sum(values)
 
     return value_function
 
@@ -1136,7 +1123,8 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
                         # Replace value function with aggregated version
                         aggregated_sensor[0] = replace(
                             aggregated_sensor[0],
-                            value_function=_create_aggregated_value_function(all_mapping, hub, slave_hubs),
+                            value_function=_create_aggregated_value_function(all_mapping),
+                            _energy_dashboard_source_hubs=(hub, *(slave_hub for _name, slave_hub in slave_hubs)),
                         )
                         sensors.extend(aggregated_sensor)
             else:
