@@ -2,13 +2,17 @@
 
 import importlib
 import time
+from collections.abc import AsyncGenerator
 from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
+import pytest_asyncio
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from pytest_homeassistant_custom_component.common import async_test_home_assistant
 
 from custom_components.solax_modbus.const import DOMAIN, BaseModbusSensorEntityDescription
 from custom_components.solax_modbus.energy_dashboard import (
@@ -20,6 +24,16 @@ from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
 from custom_components.solax_modbus.sensor import COMMUNICATION_SENSOR_TYPES, SolaXModbusSensor
 
 from .test_poll_snapshot import make_group, make_hub, make_pm_poll, read_pm_block, successful_block
+
+
+@pytest_asyncio.fixture
+async def publication_hass() -> AsyncGenerator[HomeAssistant]:
+    """Provide real HA state publication with explicit strict-mode ownership."""
+    async with async_test_home_assistant() as hass:
+        try:
+            yield hass
+        finally:
+            await hass.async_stop(force=True)
 
 
 def description(key: str) -> Any:
@@ -37,7 +51,8 @@ def source_snapshot(hub: Any, fresh: set[str], *, age: float = 0) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("key", ["remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit"])
-async def test_remote_control_number_to_none_is_published_to_ha(hass: Any, key: str) -> None:
+async def test_remote_control_number_to_none_is_published_to_ha(publication_hass: HomeAssistant, key: str) -> None:
+    hass = publication_hass
     hub = make_hub()
     descr = description(key)
     entity = SolaXModbusSensor("test", hub, DeviceInfo(identifiers={(DOMAIN, "test")}), descr)
@@ -51,16 +66,17 @@ async def test_remote_control_number_to_none_is_published_to_ha(hass: Any, key: 
     hub.async_read_modbus_block = read
     hub.data[key] = 2500
     await hub.async_read_modbus_registers_all(make_group())
-    assert hass.states.get(entity.entity_id).state == "2500"
+    assert hass.states.is_state(entity.entity_id, "2500")
     hub.data[key] = None
     await hub.async_read_modbus_registers_all(make_group())
-    assert hass.states.get(entity.entity_id).state == "unknown"
+    assert hass.states.is_state(entity.entity_id, "unknown")
     assert entity.native_value is None
     await entity.async_will_remove_from_hass()
 
 
 @pytest.mark.asyncio
-async def test_computed_lease_expires_without_poll_and_recovers(hass: Any) -> None:
+async def test_computed_lease_expires_without_poll_and_recovers(publication_hass: HomeAssistant) -> None:
+    hass = publication_hass
     hub = make_hub()
     sources(hub, {"a": 1000, "b": 2000})
     descr = BaseModbusSensorEntityDescription(key="sum", depends_on=["a", "b"], value_function=lambda _i, _d, data: data["a"] + data["b"])
@@ -71,7 +87,7 @@ async def test_computed_lease_expires_without_poll_and_recovers(hass: Any) -> No
     with patch("custom_components.solax_modbus.sensor.async_call_later") as later:
         assert hub._compute_poll_sensors(hub.data, {"a", "b"}) == {"sum"}
         entity.modbus_data_updated()
-        assert hass.states.get(entity.entity_id).state == "3000"
+        assert hass.states.is_state(entity.entity_id, "3000")
         assert later.call_args.args[1] == hub.computed_sensor_max_age(descr)
         expiry = later.call_args.args[2]
         for _ in range(5):
@@ -80,13 +96,13 @@ async def test_computed_lease_expires_without_poll_and_recovers(hass: Any) -> No
         assert bool(entity.available)
         expiry(None)
         assert not bool(entity.available)
-        assert hass.states.get(entity.entity_id).state == "unavailable"
+        assert hass.states.is_state(entity.entity_id, "unavailable")
         assert hub.data["sum"] == 3000
         hub.data["a"] = 0
         hub.data["b"] = 0
         assert hub._compute_poll_sensors(hub.data, {"a", "b"}) == {"sum"}
         entity.modbus_data_updated()
-        assert hass.states.get(entity.entity_id).state == "0"
+        assert hass.states.is_state(entity.entity_id, "0")
         assert bool(entity.available)
         await entity.async_will_remove_from_hass()
         later.return_value.assert_called()
