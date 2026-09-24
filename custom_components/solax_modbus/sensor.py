@@ -478,6 +478,10 @@ class SolaXModbusSensor(SensorEntity):
             # precision, hiding real decimals or padding integers with a fake ".0".
             expressible = 0 if scale >= 1 else math.ceil(-math.log10(scale))
             self._attr_suggested_display_precision = min(expressible, description.rounding)
+        elif isinstance(scale, dict) and all(isinstance(opt, str) for opt in scale.values()):
+            # If the sensor has a set of distinct string options as reported by its value
+            # function being a dict, then inform HA of the available options
+            self._attr_options = list(scale.values())
 
     @callback
     def set_energy_dashboard_active(self, active: bool) -> None:
