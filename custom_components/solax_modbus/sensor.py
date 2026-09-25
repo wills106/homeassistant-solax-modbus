@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import homeassistant.util.dt as dt_util
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, PERCENTAGE, STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
 from homeassistant.core import HomeAssistant, callback
@@ -482,6 +482,7 @@ class SolaXModbusSensor(SensorEntity):
             # If the sensor has a set of distinct string options as reported by its value
             # function being a dict, then inform HA of the available options
             self._attr_options = list(scale.values())
+            self._attr_device_class = SensorDeviceClass.ENUM
 
     @callback
     def set_energy_dashboard_active(self, active: bool) -> None:
