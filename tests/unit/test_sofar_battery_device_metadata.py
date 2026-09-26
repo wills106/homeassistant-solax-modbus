@@ -32,7 +32,10 @@ async def test_pack_metadata_updated_only_after_validation(
         for key, value in changes.items():
             setattr(device, key, value)
 
-    registry = SimpleNamespace(async_update_device=Mock(side_effect=update_device))
+    def get_device(identifier: tuple[str, str, str], _config_entry_id: str) -> Any:
+        return devices.get(identifier[2])
+
+    registry = SimpleNamespace(async_update_device=Mock(side_effect=update_device), async_get_device_by_identifier=get_device)
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
     monkeypatch.setattr(sensor, "get_device_by_identifier", lambda registry, identifier, entry_id: devices.get(identifier[2]))
     callbacks: list[Any] = []
