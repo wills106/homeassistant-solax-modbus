@@ -527,19 +527,23 @@ def value_function_battery_input(initval: Any, descr: Any, datadict: dict[str, A
     return 0
 
 
-def value_function_battery_output_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+def value_function_battery_output_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     """Calculate battery output power for Solis inverters."""
-    inout: int = datadict.get("battery_charge_direction", 0)
-    val: int | float = datadict.get("battery_power", 0)
+    inout = datadict.get("battery_charge_direction")
+    val: int | float | None = datadict.get("battery_power")
+    if inout not in (0, 1) or val is None:
+        return None
     if inout == 1:
         return abs(val)
     return 0
 
 
-def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float | None:
     """Calculate battery input power for Solis inverters."""
-    inout: int = datadict.get("battery_charge_direction", 0)
-    val: int | float = datadict.get("battery_power", 0)
+    inout = datadict.get("battery_charge_direction")
+    val: int | float | None = datadict.get("battery_power")
+    if inout not in (0, 1) or val is None:
+        return None
     if inout == 0:
         return val
     return 0
