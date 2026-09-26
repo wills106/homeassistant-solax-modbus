@@ -15,10 +15,10 @@ from custom_components.solax_modbus.plugin_sofar import battery_config
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("modern_registry", [True, False], ids=["scoped-registry", "legacy-registry"])
+@pytest.mark.parametrize("scoped_registry", [False, True], ids=["legacy-registry", "scoped-registry"])
 @pytest.mark.parametrize("selection", [0, 0x0100, None], ids=["valid-pack", "wrong-pack", "unreadable-selection"])
 async def test_pack_metadata_updated_only_after_validation(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, selection: int | None, modern_registry: bool
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, selection: int | None, scoped_registry: bool
 ) -> None:
     """Keep device IDs, repair stale serials once, and preserve failed snapshots' metadata."""
     config = battery_config(
@@ -43,13 +43,28 @@ async def test_pack_metadata_updated_only_after_validation(
         for key, value in changes.items():
             setattr(device, key, value)
 
-    registry = SimpleNamespace(async_update_device=Mock(side_effect=update_device))
-    if modern_registry:
-        registry.async_get_device_by_identifier = Mock(side_effect=get_device_by_identifier)
+    if scoped_registry:
+        # HA 2026.8+: scoped API available; legacy API must not be used.
+        registry = SimpleNamespace(
+            async_update_device=Mock(side_effect=update_device),
+            async_get_device_by_identifier=Mock(side_effect=lambda identifier, entry_id: devices.get(identifier[2])),
+            async_get_device=Mock(return_value=None),
+        )
     else:
-        registry.async_get_device = Mock(side_effect=get_device)
+        # HA < 2026.8: only the legacy ``async_get_device`` lookup exists,
+        # so ``_scoped_lookup`` must fall through to it (no scoped lookup present).
+        def legacy_lookup(identifiers: Any = None) -> Any:
+            for ident in identifiers:
+                if ident[2] in devices:
+                    return devices[ident[2]]
+            return None
+
+        registry = SimpleNamespace(
+            async_update_device=Mock(side_effect=update_device),
+            async_get_device_by_identifier=None,
+            async_get_device=Mock(side_effect=legacy_lookup),
+        )
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
-    monkeypatch.setattr(device_registry_lookup, "supports_via_device_id", lambda: modern_registry)
     callbacks: list[Any] = []
     entity_to_list = Mock(side_effect=lambda *args: callbacks.append(args[-1]))
     monkeypatch.setattr(sensor, "entityToList", entity_to_list)
@@ -76,14 +91,12 @@ async def test_pack_metadata_updated_only_after_validation(
     entry = cast(ConfigEntry, SimpleNamespace(data={}, options={"name": "Sofar", CONF_READ_BATTERY: True}, entry_id="entry"))
     assert await sensor.async_setup_entry(hass, entry, Mock())
     assert config.batt_pack_serials == {0: {0: "OLD-1", 1: "OLD-2"}}
-    for call in entity_to_list.call_args_list[1:]:
-        device_info = call.args[5]
-        if modern_registry:
-            assert device_info["via_device_id"] == "inverter-device"
-            assert "via_device" not in device_info
-        else:
-            assert device_info["via_device"] == (DOMAIN, "Sofar", INVERTER_IDENT)
-            assert "via_device_id" not in device_info
+    if scoped_registry:
+        registry.async_get_device.assert_not_called()
+        assert registry.async_get_device_by_identifier.called
+        assert all(call.args[1] == entry.entry_id for call in registry.async_get_device_by_identifier.call_args_list)
+    else:
+        assert registry.async_get_device.called
 
     follow_up = callbacks[1]
     for _ in range(2):
