@@ -286,7 +286,9 @@ class SolaXModbusNumber(NumberEntity):
         payload: int | float = value
         if self._fmt in ("i", "f"):
             payload = _scale_native_value_to_register(value, self._attr_scale, self.entity_description.read_scale)
-        if self._write_method == WRITE_MULTISINGLE_MODBUS:
+        if self.entity_description.async_write_function is not None:
+            await self.entity_description.async_write_function(self._hub, self._modbus_addr, self.entity_description, payload)
+        elif self._write_method == WRITE_MULTISINGLE_MODBUS:
             _LOGGER.info(
                 "writing %s %s number register %s value %s after div by readscale %s scale %s with mode %s",
                 self._platform_name,

@@ -928,6 +928,10 @@ class SolaXModbusHub:
                     val = loaded.get(desc)
                     if val is not None:
                         self.data[desc] = val
+                    elif getattr(self.writeLocals[desc], "async_write_function", None) is not None:
+                        # Transactional controls must distinguish an unknown device
+                        # parameter from a default used for an explicit new command.
+                        self.data.setdefault(desc, None)
                     else:
                         self.data[desc] = self.writeLocals[desc].initvalue  # first time initialisation
             else:
