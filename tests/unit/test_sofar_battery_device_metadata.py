@@ -35,10 +35,11 @@ async def test_pack_metadata_updated_only_after_validation(
 
     registry = SimpleNamespace(
         async_update_device=Mock(side_effect=update_device),
-        async_get_device=Mock(side_effect=lambda *, identifiers: devices.get(next(iter(identifiers))[2])),
+        # Emulate HA < 2026.8: only the legacy ``async_get_device`` lookup exists,
+        # so ``_scoped_lookup`` must fall through to it (no scoped lookup present).
+        async_get_device_by_identifier=None,
+        async_get_device=Mock(return_value=None),
     )
-    if scoped_registry:
-        registry.async_get_device_by_identifier = Mock(side_effect=lambda identifier, entry_id: devices.get(identifier[2]))
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
     callbacks: list[Any] = []
     monkeypatch.setattr(sensor, "entityToList", lambda *args: callbacks.append(args[-1]))
