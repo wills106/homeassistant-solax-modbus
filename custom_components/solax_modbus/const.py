@@ -1,6 +1,6 @@
 import logging
 import pathlib
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -328,6 +328,8 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
+    # Optional transactional writer: (hub, unit, description, raw value). Must raise on failure.
+    async_write_function: Callable[[Any, int, Any, int | float], Awaitable[None]] | None = None
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -411,6 +413,8 @@ class BaseModbusNumberEntityDescription(NumberEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     display_as_box: bool = True  # display numbers as an input box (default); set False for a slider.
     suggested_display_precision: int | None = None
+    # Optional transactional writer: (hub, unit, description, raw value). Must raise on failure.
+    async_write_function: Callable[[Any, int, Any, int | float], Awaitable[None]] | None = None
 
 
 def modbus_protocol_version(hub: Any) -> int:
