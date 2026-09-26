@@ -15,9 +15,10 @@ from custom_components.solax_modbus.plugin_sofar import battery_config
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("scoped_registry", [False, True], ids=["legacy-registry", "scoped-registry"])
 @pytest.mark.parametrize("selection", [0, 0x0100, None], ids=["valid-pack", "wrong-pack", "unreadable-selection"])
 async def test_pack_metadata_updated_only_after_validation(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, selection: int | None
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, selection: int | None, scoped_registry: bool
 ) -> None:
     """Keep device IDs, repair stale serials once, and preserve failed snapshots' metadata."""
     config = battery_config(
@@ -40,7 +41,6 @@ async def test_pack_metadata_updated_only_after_validation(
         async_get_device=Mock(return_value=None),
     )
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
-    monkeypatch.setattr(sensor, "get_device_by_identifier", lambda registry, identifier, entry_id: devices.get(identifier[2]))
     callbacks: list[Any] = []
     monkeypatch.setattr(sensor, "entityToList", lambda *args: callbacks.append(args[-1]))
     monkeypatch.setattr(sensor, "entityToListSingle", Mock())
@@ -66,6 +66,12 @@ async def test_pack_metadata_updated_only_after_validation(
     entry = cast(ConfigEntry, SimpleNamespace(data={}, options={"name": "Sofar", CONF_READ_BATTERY: True}, entry_id="entry"))
     assert await sensor.async_setup_entry(hass, entry, Mock())
     assert config.batt_pack_serials == {0: {0: "OLD-1", 1: "OLD-2"}}
+    if scoped_registry:
+        registry.async_get_device.assert_not_called()
+        assert registry.async_get_device_by_identifier.called
+        assert all(call.args[1] == entry.entry_id for call in registry.async_get_device_by_identifier.call_args_list)
+    else:
+        assert registry.async_get_device.called
 
     follow_up = callbacks[1]
     for _ in range(2):

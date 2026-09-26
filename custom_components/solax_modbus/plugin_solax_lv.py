@@ -2206,6 +2206,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Battery Voltage Cell Difference",
         key="battery_voltage_cell_difference",
         value_function=value_function_battery_voltage_cell_difference,
+        depends_on=["cell_voltage_high", "cell_voltage_low"],
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
