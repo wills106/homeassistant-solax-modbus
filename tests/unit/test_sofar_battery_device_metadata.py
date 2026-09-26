@@ -43,7 +43,7 @@ async def test_pack_metadata_updated_only_after_validation(
     else:
         # HA < 2026.8: only the legacy ``async_get_device`` lookup exists,
         # so ``_scoped_lookup`` must fall through to it (no scoped lookup present).
-        def legacy_lookup(identifiers=None):
+        def legacy_lookup(identifiers: Any = None) -> Any:
             for ident in identifiers:
                 if ident[2] in devices:
                     return devices[ident[2]]
