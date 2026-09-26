@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
 from custom_components.solax_modbus import sensor
-from custom_components.solax_modbus.const import CONF_READ_BATTERY, DOMAIN
+from custom_components.solax_modbus.const import CONF_READ_BATTERY, DOMAIN, INVERTER_IDENT
 from custom_components.solax_modbus.plugin_sofar import battery_config
 
 
@@ -27,6 +27,16 @@ async def test_pack_metadata_updated_only_after_validation(
         battery_sensor_key_prefix="battery_{batt-nr}_{pack-nr}_",
     )
     devices = {f"battery_1_{i}": SimpleNamespace(id=f"pack-device-{i}", serial_number=f"OLD-{i}") for i in (1, 2)}
+    devices[INVERTER_IDENT] = SimpleNamespace(id="inverter-device")
+
+    def get_device_by_identifier(identifier: tuple[str, str, str], config_entry_id: str) -> SimpleNamespace | None:
+        assert config_entry_id == "entry"
+        assert identifier[:2] == (DOMAIN, "Sofar")
+        return devices.get(identifier[2])
+
+    def get_device(*, identifiers: set[tuple[str, str, str]]) -> SimpleNamespace | None:
+        assert len(identifiers) == 1
+        return get_device_by_identifier(next(iter(identifiers)), "entry")
 
     def update_device(device_id: str, **changes: Any) -> None:
         device = next(device for device in devices.values() if device.id == device_id)
@@ -56,7 +66,8 @@ async def test_pack_metadata_updated_only_after_validation(
         )
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
     callbacks: list[Any] = []
-    monkeypatch.setattr(sensor, "entityToList", lambda *args: callbacks.append(args[-1]))
+    entity_to_list = Mock(side_effect=lambda *args: callbacks.append(args[-1]))
+    monkeypatch.setattr(sensor, "entityToList", entity_to_list)
     monkeypatch.setattr(sensor, "entityToListSingle", Mock())
 
     async def select(hub: Any, batt_nr: int, pack_nr: int) -> bool:
