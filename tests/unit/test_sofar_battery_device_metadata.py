@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from custom_components.solax_modbus import device_registry_lookup, sensor
+from custom_components.solax_modbus import sensor
 from custom_components.solax_modbus.const import CONF_READ_BATTERY, DOMAIN, INVERTER_IDENT
 from custom_components.solax_modbus.plugin_sofar import battery_config
 
