@@ -4151,8 +4151,11 @@ class battery_config(base_battery_config):
                 address=self.bms_check_address,
                 count=1,
             )
-            if inverter_data is None or inverter_data.isError():
-                _LOGGER.warning("Cannot read BMS selection register 0x%x", self.bms_check_address)
+            if inverter_data is None:
+                _LOGGER.warning("No response from BMS selection register 0x%x", self.bms_check_address)
+                return None
+            if inverter_data.isError():
+                _LOGGER.warning("Modbus error reading BMS selection register 0x%x: %s", self.bms_check_address, inverter_data)
                 return None
 
             return int(convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big"))  # type: ignore[attr-defined]  # DataType enum dynamic
@@ -4221,55 +4224,53 @@ class battery_config(base_battery_config):
         return f"BMS: V{new_data[sw_version_key]}"
 
     async def check_battery_on_start(self, hub: Any, old_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int) -> bool:
-        if not self.batt_pack_serials.__contains__(batt_nr):
-            return False
-        if not self.batt_pack_serials[batt_nr].__contains__(batt_pack_nr):
-            return False
-
         faulty_nr = 0
         payload = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
         for _retry in range(0, 10):
-            inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
-            if inverter_data is not None and not inverter_data.isError():
-                read = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
-                ok = read == payload
-                if not ok:
-                    await asyncio.sleep(0.3)
-                else:
-                    return True
-
-            else:
-                _LOGGER.error("can't read batt check register")
+            selected_battery = await self._read_selected_battery(hub)
+            if selected_battery == payload:
+                return True
+            if selected_battery is not None:
+                await asyncio.sleep(0.3)
+        _LOGGER.warning(
+            "BMS validation before reading failed for battery %s pack %s: register 0x%x expected 0x%04x, last selection %s",
+            batt_nr,
+            batt_pack_nr,
+            self.bms_check_address,
+            payload,
+            f"0x{selected_battery:04x}" if selected_battery is not None else "unavailable",
+        )
         return False
 
     async def check_battery_on_end(
         self, hub: Any, old_data: dict[str, Any], new_data: dict[str, Any], key_prefix: str, batt_nr: int, batt_pack_nr: int
     ) -> bool:
-        # inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=0x9045, count=2)
-        # if not inverter_data.isError():
-        #     decoder = BinaryPayloadDecoder.fromRegisters(inverter_data.registers, byteorder=Endian.BIG)
-        #     batt_time = value_function_2byte_timestamp(decoder.decode_32bit_uint(), None, None)
-        #     _LOGGER.info(f"batt time: {batt_time}")
-
+        """Reject unverified pack data without turning a validation failure into a poll exception."""
         faulty_nr = 0
         compare_value = faulty_nr << 12 | batt_pack_nr << 8 | batt_nr
-        inverter_data = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=self.bms_check_address, count=1)
-        if not inverter_data.isError():
-            if inverter_data is not None and not inverter_data.isError():
-                new_value = convert_from_registers(inverter_data.registers[:1], DataType.UINT16, "big")  # type: ignore[attr-defined]  # DataType enum dynamic
-                _LOGGER.debug("check_battery_on_end: 0x%x 0x%x", new_value, compare_value)
-            if new_value == compare_value:
-                serial_key = key_prefix + "pack_serial_number"
-                if not new_data.__contains__(serial_key):
-                    _LOGGER.info("batt pack serial not received %s", serial_key)
-                    return False
-                serial = new_data[serial_key]
-                _LOGGER.debug("batt pack serial: %s", serial)
-                return bool(serial == self.batt_pack_serials[batt_nr][batt_pack_nr])
-            else:
-                return False
+        selected_battery = await self._read_selected_battery(hub)
+        if selected_battery != compare_value:
+            _LOGGER.warning(
+                "BMS validation after reading failed for battery %s pack %s: register 0x%x expected 0x%04x, actual selection %s",
+                batt_nr,
+                batt_pack_nr,
+                self.bms_check_address,
+                compare_value,
+                f"0x{selected_battery:04x}" if selected_battery is not None else "unavailable",
+            )
+            return False
 
-        return False
+        serial_key = key_prefix + "pack_serial_number"
+        serial = new_data.get(serial_key)
+        if not serial:
+            _LOGGER.warning(
+                "BMS validation after reading failed for battery %s pack %s: missing serial number (%s)", batt_nr, batt_pack_nr, serial_key
+            )
+            return False
+        # Selection identifies the requested pack. A stored serial is device metadata,
+        # not a permanent validation constraint (packs can be replaced or reordered).
+        self.batt_pack_serials.setdefault(batt_nr, {})[batt_pack_nr] = serial
+        return True
 
     async def _determine_bat_quantitys(self, hub: Any) -> None:
         try:

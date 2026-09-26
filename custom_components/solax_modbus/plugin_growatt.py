@@ -94,11 +94,13 @@ MPPT8 = 0x200000
 MPPT10 = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-# DLP MID 30KTL3-XH units expose BMS1 module 1 through the APX input-register block.
+# Select the APX input-register block for BMS1 module 1 on DLP and TSS units.
 APX_BMS_INPUT = 0x800000
-ALL_APX_BMS_REGISTER_GROUP = APX_BMS_INPUT
+# TSS units use the BDC1 input block for the aggregate battery sensors.
+TSS_BMS_INPUT = 0x1000000
+ALL_APX_BMS_REGISTER_GROUP = APX_BMS_INPUT | TSS_BMS_INPUT
 
-APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP"]
+APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP", "TSS"]
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -6452,6 +6454,42 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     GrowattModbusSensorEntityDescription(
+        name="Backup Grid Voltage L1",
+        key="backup_grid_voltage_l1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=3287,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=GEN4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Backup Grid Voltage L2",
+        key="backup_grid_voltage_l2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=3317,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=GEN4 | X3,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Backup Grid Voltage L3",
+        key="backup_grid_voltage_l3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=3318,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=GEN4 | X3,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    GrowattModbusSensorEntityDescription(
         key="peak_shaving_enable",
         register=3306,
         register_type=REG_HOLDING,
@@ -6673,6 +6711,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         register=5769,  # maybe 5768 and U32
+        blacklist=["TSS"],
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,  ## maybe U32 if reg is 5768
         scale=0.1,
@@ -6687,6 +6726,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         register=5777,
+        blacklist=["TSS"],
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
         allowedtypes=GEN4 | HYBRID,
@@ -6700,6 +6740,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         register=5778,
+        blacklist=["TSS"],
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
         allowedtypes=GEN4 | HYBRID,
@@ -8653,7 +8694,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
-        name="PV Current 1",
+        # SPF protocol: input 7 is Buck1Curr, not the PV input current.
+        name="PV Charger Current 1",
         key="pv_current_1",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -8665,7 +8707,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
-        name="PV Current 2",
+        # SPF protocol: input 8 is Buck2Curr; retain the key for existing entities.
+        name="PV Charger Current 2",
         key="pv_current_2",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
@@ -9205,6 +9248,28 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
 ]
 
+# Protocol II V1.39: BDC1 input 4008-4076 mirrors input 3165-3233.
+# BMS_SOC (3215) -> 4058; BMS_SOH (3222) -> 4065;
+# Edischr_total H/L (3182/3183) -> 4025/4026, unsigned 32-bit, 0.1 kWh.
+# Keep this mapping scoped to TSS while it is being verified on MOD KTL3-HU.
+TSS_BMS1_INPUT_REGISTERS = {
+    "bms_1_soc": (4058, REGISTER_U16),
+    "bms_1_soh": (4065, REGISTER_U16),
+    "bms_1_toe": (4025, REGISTER_U32),
+}
+
+SENSOR_TYPES.extend(
+    replace(
+        description,
+        register=TSS_BMS1_INPUT_REGISTERS[description.key][0],
+        register_data_type=TSS_BMS1_INPUT_REGISTERS[description.key][1],
+        allowedtypes=description.allowedtypes | TSS_BMS_INPUT,
+        blacklist=None,
+    )
+    for description in tuple(SENSOR_TYPES)
+    if description.key in TSS_BMS1_INPUT_REGISTERS
+)
+
 APX_BMS1_MODULE1_INPUT_REGISTERS = {
     "bms_1_module_1_status": 5080,
     "bms_1_module_1_soh": 5082,
@@ -9219,7 +9284,7 @@ APX_BMS1_MODULE1_INPUT_REGISTERS = {
 }
 
 # Keep the established 588x holding-register descriptions for other Growatt models,
-# and create a DLP-only 508x input-register variant from the same metadata.
+# and create a 508x input-register variant for APX_BMS_INPUT models from the same metadata.
 SENSOR_TYPES.extend(
     replace(
         description,
@@ -9730,7 +9795,7 @@ SERIAL_PREFIX_TYPES = {
     "DKS": HYBRID | GEN4 | X3 | MPPT3,  # MOD 10000 TL3-HU Hybrid, 3 MPPT
     "DO1": HYBRID | GEN4 | X3 | MPPT3,  # MOD 12000 TL3-HU Hybrid, 3 MPPT
     "TTS": HYBRID | GEN4 | X3 | MPPT3,  # Hybrid KTL3-HU 12kW
-    "TSS": HYBRID | GEN4 | X3 | MPPT3,  # Hybrid KTL3-HU 12kW
+    "TSS": HYBRID | GEN4 | X3 | MPPT3 | APX_BMS_INPUT | TSS_BMS_INPUT,  # Hybrid KTL3-HU 12kW
     "PYL": HYBRID | GEN4 | X3,  # MOD 5000 TL3-XH Hybrid, 2 MPPT
     "JCM": HYBRID | GEN4 | X3,  # MOD 6000 TL3-XH Hybrid, 2 MPPT
     "MEK": HYBRID | GEN4 | X3,  # MOD 7000 TL3-XH Hybrid, 2 MPPT

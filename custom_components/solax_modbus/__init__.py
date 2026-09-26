@@ -162,7 +162,7 @@ from .const import (
 from .const import (
     matches_active_when as matches_active_when,
 )
-from .device_registry_lookup import get_device_by_identifier
+from .device_registry_lookup import link_parent_device
 from .modbus_transport import CoreModbusTransport, ModbusTransport, NativeModbusTransport, UnavailableModbusTransport
 from .pymodbus_compat import DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 from .sensor import SolaXModbusSensor
@@ -466,6 +466,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 # Device groups that a config option can switch off, and the option controlling each.
 # Display names for sub-devices, where a plain title-case of the group key would read badly.
 DEVICE_GROUP_NAMES: dict[str, str] = {
+    "dry_contact": "Dry Contact",
     "external_generator": "External Generator",
     "eps": "EPS",
     "pm": "Parallel",
@@ -474,6 +475,7 @@ DEVICE_GROUP_NAMES: dict[str, str] = {
 }
 
 GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
+    "dry_contact": (CONF_READ_DCB, DEFAULT_READ_DCB),
     "external_generator": (CONF_READ_GEN, DEFAULT_READ_GEN),
     "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
@@ -1031,14 +1033,14 @@ class SolaXModbusHub:
             name=f"{self._name} {DEVICE_GROUP_NAMES.get(group, group.replace('_', ' ').title())}",
             manufacturer=self.plugin.plugin_manufacturer,
         )
-        # Link to the parent inverter via via_device_id (scoped to this config
-        # entry) on HA 2026.8+, falling back to the deprecated via_device tuple.
-        parent_identifier = (DOMAIN, self._name, INVERTER_IDENT)
-        parent_device = get_device_by_identifier(dr.async_get(self._hass), parent_identifier, self.entry.entry_id)
-        if parent_device is not None:
-            cast(dict[str, Any], device_info)["via_device_id"] = parent_device.id
-        else:
-            device_info["via_device"] = parent_identifier  # type: ignore[typeddict-item]
+        # Link to the parent inverter (via_device_id on HA 2026.8+, legacy
+        # via_device tuple otherwise — decided by API support, not lookup success).
+        link_parent_device(
+            cast(dict[str, Any], device_info),
+            dr.async_get(self._hass),
+            (DOMAIN, self._name, INVERTER_IDENT),
+            self.entry.entry_id,
+        )
         return device_info
 
     def register_gated_entity(self, descr: Any, factory: Any, add_entities: Any, holder: dict[Any, Any], platform: str, entity: Any = None) -> None:
@@ -1289,8 +1291,11 @@ class SolaXModbusHub:
 
         outcomes: list[PollOutcome] = []
         updated_sensors = 0
+        # Dependencies may span device groups (e.g. inverter settings and PM data).
+        # Keep freshness local to this interval refresh, never to the hub or device.
+        cycle_fresh_keys: set[str] = set()
         for group in list(interval_group.device_groups.values()):
-            group_outcome = await self.async_read_modbus_data(group)
+            group_outcome = await self.async_read_modbus_data(group, cycle_fresh_keys)
             outcomes.append(group_outcome)
             if group_outcome.communication_succeeded and getattr(group, "publish_updates", True):
                 for sensor in group.sensors:
@@ -1779,11 +1784,11 @@ class SolaXModbusHub:
             operation="multi-register write",
         )
 
-    async def async_read_modbus_data(self, group: Any) -> PollOutcome:
+    async def async_read_modbus_data(self, group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         group.publish_updates = False
         try:
             async with self._poll_data_lock:
-                return await self.async_read_modbus_registers_all(group)
+                return await self.async_read_modbus_registers_all(group, cycle_fresh_keys)
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline. %s", ex)
         except ModbusIOException as ex:
@@ -2117,7 +2122,7 @@ class SolaXModbusHub:
 
         return computed_fresh_keys
 
-    async def async_read_modbus_registers_all(self, group: Any) -> PollOutcome:
+    async def async_read_modbus_registers_all(self, group: Any, cycle_fresh_keys: set[str] | None = None) -> PollOutcome:
         group.publish_updates = False
         if group.readPreparation is not None:
             if not await group.readPreparation(self.data):
@@ -2180,14 +2185,20 @@ class SolaXModbusHub:
 
         computed_fresh_keys: set[str] = set()
         if poll_outcome.communication_succeeded:
+            # Use a copy: a rejected group must not contribute raw or computed
+            # freshness to subsequent groups in this polling cycle.
+            if cycle_fresh_keys is not None:
+                fresh_keys.update(cycle_fresh_keys)
             computed_fresh_keys = self._compute_poll_sensors(data, fresh_keys)
 
             if group.readFollowUp is not None:
                 if not await group.readFollowUp(previous_data, data):
-                    _LOGGER.warning("%s: device group validation failed; discarding polling snapshot", self._name)
+                    _LOGGER.warning("%s: device group validation failed; discarding this device group's snapshot", self._name)
                     return PollOutcome.DISCARDED
 
             self._commit_poll_snapshot(previous_data, data)
+            if cycle_fresh_keys is not None:
+                cycle_fresh_keys.update(fresh_keys)
             if local_callback_needed:
                 self.plugin.localDataCallback(self)
 
