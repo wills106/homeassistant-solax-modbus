@@ -33,13 +33,27 @@ async def test_pack_metadata_updated_only_after_validation(
         for key, value in changes.items():
             setattr(device, key, value)
 
-    registry = SimpleNamespace(
-        async_update_device=Mock(side_effect=update_device),
-        # Emulate HA < 2026.8: only the legacy ``async_get_device`` lookup exists,
+    if scoped_registry:
+        # HA 2026.8+: scoped API available; legacy API must not be used.
+        registry = SimpleNamespace(
+            async_update_device=Mock(side_effect=update_device),
+            async_get_device_by_identifier=Mock(side_effect=lambda identifier, entry_id: devices.get(identifier[2])),
+            async_get_device=Mock(return_value=None),
+        )
+    else:
+        # HA < 2026.8: only the legacy ``async_get_device`` lookup exists,
         # so ``_scoped_lookup`` must fall through to it (no scoped lookup present).
-        async_get_device_by_identifier=None,
-        async_get_device=Mock(return_value=None),
-    )
+        def legacy_lookup(identifiers=None):
+            for ident in identifiers:
+                if ident[2] in devices:
+                    return devices[ident[2]]
+            return None
+
+        registry = SimpleNamespace(
+            async_update_device=Mock(side_effect=update_device),
+            async_get_device_by_identifier=None,
+            async_get_device=Mock(side_effect=legacy_lookup),
+        )
     monkeypatch.setattr(dr, "async_get", lambda hass: registry)
     callbacks: list[Any] = []
     monkeypatch.setattr(sensor, "entityToList", lambda *args: callbacks.append(args[-1]))
