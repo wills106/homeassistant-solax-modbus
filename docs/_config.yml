@@ -1,3 +1,5 @@
-# Disable Liquid processing — these docs contain Home Assistant template
-# syntax ({{states(...)}}) that Jekyll/Liquid would otherwise try to parse.
-liquid: false
+# Treat Liquid syntax errors as warnings instead of fatal exceptions.
+# The docs contain Home Assistant template syntax ({{states(...)}}) that
+# Jekyll/Liquid tries to parse — this prevents those from breaking the build.
+liquid:
+  error_mode: warn
