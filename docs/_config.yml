@@ -1,0 +1,3 @@
+# Disable Liquid processing — these docs contain Home Assistant template
+# syntax ({{states(...)}}) that Jekyll/Liquid would otherwise try to parse.
+liquid: false
