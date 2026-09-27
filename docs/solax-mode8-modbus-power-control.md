@@ -92,6 +92,7 @@ You will need to ensure the following entities are enabled:
 
 Please note that the entities might have slightly different names depending on how and when the SolaX integration was set up. For example, they might have a prefix such as `number.solax_inverter_remotecontrol_duration`. If your entities have different names, make sure to update the script to match.
 
+{% raw %}
 ```yaml
 alias: SolaX Remote Control (Mode 8)
 description: ""
@@ -185,6 +186,7 @@ sequence:
 mode: queued
 max: 10
 ```
+{% endraw %}
 
 
 ## Example automation: Negative injection prices
