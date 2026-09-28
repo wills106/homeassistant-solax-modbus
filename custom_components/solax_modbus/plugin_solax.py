@@ -1903,7 +1903,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H58", 50),  # Gen5 X1-IES
     ("10M", 50),  # Gen6 X1-VAST
     ("F34", 30),  # Gen4 X3 RetroFit
-    ("631", 30),  # Gen4 X3 TIGO
+    ("63110", 30),  # Gen4 X3 TIGO
     ("H31", 30),  # Gen4 X3 TIGO
     ("H34A", 30),  # Gen4 X3 A
     ("H34B", 30),  # Gen4 X3 B
@@ -1912,6 +1912,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H35A", 50),  # Gen5 X3-IES A
     ("P35A", 50),  # Gen5 X3-IES P
     ("H35F", 50),  # Gen5 X3-IES F
+    ("P35G", 50),  # Gen5 X3-IES G
     ("H3BC", 60),  # Gen5 X3 Ultra C
     ("H3BD", 60),  # Gen5 X3 Ultra D
     ("H3BF", 60),  # Gen5 X3 Ultra F
@@ -1976,7 +1977,7 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H3UE06", 12000),  # Gen3 X3
     ("H3UE08", 14000),  # Gen3 X3
     ("H3UE10", 15000),  # Gen3 X3
-    ("H310", 10000),  # Gen4 X3 TIGO
+    ("63110", 10000),  # Gen4 X3 TIGO
     ("H310", 15000),  # Gen4 X3 TIGO
     ("H312", 15000),  # Gen4 X3 TIGO
     ("H315", 16500),  # Gen4 X3 TIGO
@@ -2032,6 +2033,13 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H35F10", 10000),  # Gen5 X3-IES F
     ("H35F12", 12000),  # Gen5 X3-IES F
     ("H35F15", 15000),  # Gen5 X3-IES F
+    ("P35G04", 4000),  # Gen5 X3-IES G
+    ("P35G05", 5000),  # Gen5 X3-IES G
+    ("P35G06", 6000),  # Gen5 X3-IES G
+    ("P35G08", 8000),  # Gen5 X3-IES G
+    ("P35G10", 10000),  # Gen5 X3-IES G
+    ("P35G12", 12000),  # Gen5 X3-IES G
+    ("P35G15", 15000),  # Gen5 X3-IES G
     ("H3BC15", 15000),  # Gen5 X3 Ultra C
     ("H3BC19", 19999),  # Gen5 X3 Ultra C
     ("H3BC20", 20000),  # Gen5 X3 Ultra C
