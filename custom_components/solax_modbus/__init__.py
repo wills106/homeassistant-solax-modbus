@@ -1308,7 +1308,9 @@ class SolaXModbusHub:
                     try:
                         sensor.modbus_data_updated()
                     except Exception:
-                        _LOGGER.exception("%s: failed to update sensor %s", self._name, getattr(sensor, "entity_id", getattr(sensor, "name", "unknown")))
+                        _LOGGER.exception(
+                            "%s: failed to update sensor %s", self._name, getattr(sensor, "entity_id", getattr(sensor, "name", "unknown"))
+                        )
                 updated_sensors += len(group.sensors)
                 if getattr(self, "gatedEntities", None):
                     await self.async_refresh_gated_entities()
