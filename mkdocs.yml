@@ -31,6 +31,7 @@ nav:
 - CI/CD Pipeline: developer/cicd-pipeline.md
 - Growatt:
   - FAQ: growatt-faq.md
+  - MID TL3-X telemetry: growatt-mid-tl3-x.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md
 - Sofar:
   - FAQ: sofar-faq.md
