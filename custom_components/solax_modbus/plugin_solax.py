@@ -1903,6 +1903,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H58", 50),  # Gen5 X1-IES
     ("10M", 50),  # Gen6 X1-VAST
     ("F34", 30),  # Gen4 X3 RetroFit
+    ("63110", 30),  # Gen4 X3 TIGO
     ("H31", 30),  # Gen4 X3 TIGO
     ("H34A", 30),  # Gen4 X3 A
     ("H34B", 30),  # Gen4 X3 B
@@ -1911,6 +1912,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H35A", 50),  # Gen5 X3-IES A
     ("P35A", 50),  # Gen5 X3-IES P
     ("H35F", 50),  # Gen5 X3-IES F
+    ("P35G", 50),  # Gen5 X3-IES G
     ("H3BC", 60),  # Gen5 X3 Ultra C
     ("H3BD", 60),  # Gen5 X3 Ultra D
     ("H3BF", 60),  # Gen5 X3 Ultra F
@@ -1975,6 +1977,7 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H3UE06", 12000),  # Gen3 X3
     ("H3UE08", 14000),  # Gen3 X3
     ("H3UE10", 15000),  # Gen3 X3
+    ("63110", 10000),  # Gen4 X3 TIGO
     ("H310", 15000),  # Gen4 X3 TIGO
     ("H312", 15000),  # Gen4 X3 TIGO
     ("H315", 16500),  # Gen4 X3 TIGO
@@ -2030,6 +2033,13 @@ MAX_EXPORT: list[tuple[str, int | float]] = [
     ("H35F10", 10000),  # Gen5 X3-IES F
     ("H35F12", 12000),  # Gen5 X3-IES F
     ("H35F15", 15000),  # Gen5 X3-IES F
+    ("P35G04", 4000),  # Gen5 X3-IES G
+    ("P35G05", 5000),  # Gen5 X3-IES G
+    ("P35G06", 6000),  # Gen5 X3-IES G
+    ("P35G08", 8000),  # Gen5 X3-IES G
+    ("P35G10", 10000),  # Gen5 X3-IES G
+    ("P35G12", 12000),  # Gen5 X3-IES G
+    ("P35G15", 15000),  # Gen5 X3-IES G
     ("H3BC15", 15000),  # Gen5 X3 Ultra C
     ("H3BC19", 19999),  # Gen5 X3 Ultra C
     ("H3BC20", 20000),  # Gen5 X3 Ultra C
@@ -12030,6 +12040,9 @@ class solax_plugin(plugin_base):
             else:
                 invertertype |= MPPT4
             self.inverter_model = f"X1-VAST-{kw_value}kW"  # datasheet name X1-VAST-6K
+        elif seriesnumber.startswith("63110"):
+            invertertype = HYBRID | GEN4 | X3  # TIGO TSI X3
+            self.inverter_model = "X3-TIGO TSI"
         elif seriesnumber.startswith("H31"):
             invertertype = HYBRID | GEN4 | X3  # TIGO TSI X3
             self.inverter_model = "X3-TIGO TSI"
@@ -12059,6 +12072,9 @@ class solax_plugin(plugin_base):
             self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
         elif seriesnumber.startswith("H35F1"):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW F
+            self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
+        elif seriesnumber.startswith("P35G1"):
+            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW G
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("H3BC15L"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra 15KP C #1668
