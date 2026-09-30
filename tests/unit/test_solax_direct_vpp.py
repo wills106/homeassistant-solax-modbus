@@ -86,7 +86,7 @@ def test_disable_needs_no_target_values() -> None:
 
 
 def test_soc_mode_requires_explicit_target() -> None:
-    with pytest.raises(HomeAssistantError, match="Target SOC.*before enabling"):
+    with pytest.raises(HomeAssistantError, match="Target SoC.*before enabling"):
         build_direct_vpp_command(3, {})
 
 
@@ -116,7 +116,7 @@ def test_irrelevant_invalid_parameter_does_not_block_other_modes() -> None:
 
 
 def test_relevant_invalid_parameter_is_rejected() -> None:
-    with pytest.raises(HomeAssistantError, match="Invalid direct VPP parameter.*Target SOC"):
+    with pytest.raises(HomeAssistantError, match="Invalid direct VPP parameter.*Target SoC"):
         build_direct_vpp_command(3, {"remotecontrol_target_soc_direct": "unavailable"})
 
 
@@ -199,7 +199,7 @@ async def test_failed_command_does_not_publish_selected_mode(parameters: dict[st
 async def test_missing_required_parameter_prevents_any_write() -> None:
     entity, hub = make_mode_select("modbus_power_control_direct", {})
 
-    with pytest.raises(HomeAssistantError, match="Target SOC.*before enabling"):
+    with pytest.raises(HomeAssistantError, match="Target SoC.*before enabling"):
         await entity.async_select_option("Enable SOC Target Control Mode")
 
     hub.async_write_registers_multi.assert_not_awaited()
