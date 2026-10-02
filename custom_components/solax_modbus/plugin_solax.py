@@ -3301,7 +3301,18 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=MIC | X3,
+        allowedtypes=MIC | GEN | X3,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="PV Limit",
+        key="pv_limit",
+        register=0x669,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=MIC | GEN2 | X3,
     ),
     SolaxModbusNumberEntityDescription(
         name="Active Power Limit",
@@ -10069,6 +10080,13 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
+        key="pv_limit",
+        register=0x34F,
+        register_data_type=REGISTER_U8H,
+        allowedtypes=MIC | GEN2 | X3,
+        internal=True,
+    ),
+    SolaXModbusSensorEntityDescription(
         key="active_power_limit",
         register=0x351,
         allowedtypes=MIC | GEN2 | X3,
@@ -12223,9 +12241,6 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("MP153T"):
             invertertype = MIC | GEN | X3  # MIC X3
             self.inverter_model = "X3-MIC"
-        elif seriesnumber.startswith("MC203T"):
-            invertertype = MIC | GEN | X3  # MIC X3
-            self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC402T"):
             invertertype = MIC | GEN | X3  # MIC X3 #1339
             self.inverter_model = "X3-MIC"
@@ -12272,6 +12287,9 @@ class solax_plugin(plugin_base):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC106T"):
+            invertertype = MIC | GEN2 | X3  # MIC X3
+            self.inverter_model = "X3-MIC"
+        elif seriesnumber.startswith("MC203T"):
             invertertype = MIC | GEN2 | X3  # MIC X3
             self.inverter_model = "X3-MIC"
         elif seriesnumber.startswith("MC204T"):
