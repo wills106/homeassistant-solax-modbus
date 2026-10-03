@@ -316,6 +316,10 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  #  value = function(initval, descr, datadict)
     autorepeat: str | None = None  # if not None: name of entity that contains autorepeat duration in seconds
+    autorepeat_dependencies: tuple[str, ...] | None = None  # All installed inputs, regardless of control sub-mode
+    autorepeat_control: str | None = None  # Local mode request; explicit Disabled bypasses the input gate
+    autorepeat_parallel_dependencies: dict[str, tuple[str, ...]] | None = None  # Fixed inputs for each supported topology
+    autorepeat_cadence: tuple[str, ...] = ()
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 

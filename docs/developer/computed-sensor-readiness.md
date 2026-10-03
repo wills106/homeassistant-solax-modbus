@@ -170,7 +170,7 @@ The observations alone carry freshness, selected dependencies and deduplication
 state; there are no separate generation/signature/dependency registries to
 commit. A group's observations are staged together until validation accepts
 them. A rejected group publishes none of them and invalidates its attempted
-inputs. Rebuild clears observations, so retained
+inputs. Rebuild clears observations and cached controller payloads, so retained
 numbers cannot authorize a new calculation.
 
 A computed sensor is evaluated again when its selected input observations
@@ -188,6 +188,84 @@ continue to consume the completed source snapshot, including invalid outcomes.
 Known Master topology requires the declared PM source, including before its
 first successful read. Unknown topology is unavailable; models without a
 topology input retain their default Free source selection.
+
+## SolaX VPP lifecycle and cadence
+
+Autorepeat runs after the interval's device groups, rather than once per device
+group. The two SolaX control buttons declare fixed inputs across all their
+sub-modes. `depends_on` contains mandatory sources; `autorepeat_dependencies`
+contains model-specific sources that are required when installed.
+`autorepeat_parallel_dependencies` declares the fixed Free/Master input groups;
+Free never requires PM data. `autorepeat_control` identifies the local mode
+request so an explicit Disabled request can stop without measurement readiness.
+An unsupported topology reaches the existing controller's disable/no-op path.
+The cadence owner is the shortest configured raw polling
+interval reachable through the required power keys in `autorepeat_cadence`.
+Settings, topology and BMS limits are validity dependencies, not
+independent clock owners. For power at 5 s and settings at 15 s the owner is
+5 s; for 6/15 it is 6 s. No fixed interval or additional global throttle is
+applied. Other plugins retain one autorepeat call per interval refresh.
+
+`FIRST` uses the same accepted-input gate as `LOOP`. A control computation
+advances the filters once on the owner's completed poll when a required input
+observation or local control request changed. A slower poll may update inputs,
+but those changes are consumed at the next owner poll. Explicit disable and
+unsupported Mode 8 topology are processed without waiting for new power data.
+Local filter outputs are state, so publication cannot replace them with an
+older observed value or make them look like new control requests.
+
+On an owner poll with no new relevant observation/request, the last validated
+payload is sent as a keepalive, without invoking the controller or advancing
+its filters. The configured command duration, device timeout and timeout
+action remain in the payload. A keepalive does not renew input leases. Timer
+expiry calls `POST` once; skipped/failed polls still maintain expiry and input
+validity. A failed cleanup write remains pending and is retried on subsequent
+polls until the transport confirms the write, without rerunning the filter.
+Transport acknowledgement is not a physical readback of the resulting mode.
+
+Input selection, validity and cadence are checked once in
+`compute_autorepeat_payload`, shared by FIRST and LOOP. The interval runner
+handles lifecycle and transport; it does not prepare the same inputs again.
+
+VPP consumes accepted, unexpired observations rather than HA entity
+availability or retained numbers in `hub.data`. Numeric power/control inputs
+and their computed leaves must be finite numbers; booleans and numeric strings
+are rejected. Zero is a valid measurement. Installed number/select readbacks
+participate in this gate; local requests remain separate. The shared cache is
+not globally cleared.
+
+Gen5 total SoC is authoritative when valid and positive; unused per-battery
+fallbacks and capacity metadata cannot block it or shorten its deadline. A
+fallback requires every applicable battery SoC. Two valid positive capacities
+permit weighting; incomplete capacity metadata uses the conservative minimum.
+BMS functions use `battery_voltage_charge` for Gen4 and earlier, and
+`battery_1_voltage_charge`/`battery_2_voltage_charge` for Gen5 and later, following
+[PR #2359](https://github.com/wills106/homeassistant-solax-modbus/pull/2359).
+There is no voltage alias selection across generations. The current selector
+retains the dedicated BMS current or shared-current fallback and requires the
+installed peer voltage when splitting the fallback. An unused fallback does
+not shorten a dedicated-current lease. Phase sums keep all applicable phases
+mandatory.
+
+Every installed control input, including charge limits, must be valid in every
+sub-mode. A valid total charge limit does not excuse an invalid installed
+individual estimate. This conservative gate may stop a loop because of an
+input that its current sub-mode does not use. It does not inspect PV surplus,
+SoC, clipping or other regulator decisions to select dependencies. Both control
+loop bodies and their charge/filter/house-load helpers remain identical to
+upstream main; input validation does not change their equations or defaults.
+Slave modes 1-7 that produce an empty
+multi-write remain a no-op; explicit disable/expiry cleanup still writes its
+non-empty payload.
+
+On a missing, invalid, failed, discarded or expired required control input,
+the loop is stopped and its existing `POST` disable payload is written
+immediately, including on a slower or skipped poll. Mode 8 also clears its
+local current setpoints to `None`, preserving their legitimate inactive
+publication. An unconfirmed disable remains pending; the device's configured
+timeout is the fallback if communication is unavailable. Regulation requires
+a new trigger after valid accepted inputs return. No zero measurement is
+invented, and a healthy bounded reuse does not reset filters.
 
 ## Contributor checks
 

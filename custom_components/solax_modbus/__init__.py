@@ -1304,6 +1304,7 @@ class SolaXModbusHub:
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
         if not bypass_slowdown and (self.cyclecount % self.slowdown) != 0:
+            self._publish_computed_sensors(await self._async_run_autorepeats(None))
             return PollOutcome.SKIPPED, 0
 
         outcomes: list[PollOutcome] = []
@@ -1353,6 +1354,7 @@ class SolaXModbusHub:
             finally:
                 self._pending_input_observations = None
 
+        cycle_computed_keys.update(await self._async_run_autorepeats(getattr(interval_group, "interval", None)))
         self._publish_computed_sensors(cycle_computed_keys)
 
         # Cross-hub consumers use a completed, accepted interval snapshot, never
@@ -2720,45 +2722,6 @@ class SolaXModbusHub:
                 else:
                     self.writequeue.pop(queue_key, None)
 
-        # execute autorepeat entities (buttons and selects)
-        self.last_ts = _mtime.time()
-        for (
-            k,
-            v,
-        ) in list(self.data["_repeatUntil"].items()):  # use a list copy because dict may change during iteration
-            descr = self.computedEntities.get(k)
-            if descr and self.last_ts < v:
-                payload = descr.value_function(BUTTONREPEAT_LOOP, descr, self.data)  # initval = 1 means autorepeat run
-                if payload:
-                    reg = payload.get("register", descr.register)
-                    action = payload.get("action")
-                    if not action:
-                        _LOGGER.error("autorepeat value function for %s must return dict containing action", k)
-                    elif action == WRITE_MULTI_MODBUS:
-                        _LOGGER.debug("**debug** ready to repeat %s data: %s", k, payload)
-                        await self.async_write_registers_multi(
-                            unit=self._modbus_addr,
-                            address=reg,
-                            payload=payload.get("data"),
-                        )
-                    elif action == WRITE_SINGLE_MODBUS:
-                        _LOGGER.debug("Repeating %s register %s value %s", k, reg, payload.get("payload"))
-                        await self.async_write_register(unit=self._modbus_addr, address=reg, payload=payload.get("payload"))
-            elif descr:  # expired autorepeats
-                if self.data["_repeatUntil"][k] > 0:  # expired recently
-                    self.data["_repeatUntil"][k] = 0  # mark as finally expired, no further buttonrepeat post after this one
-                    _LOGGER.info("calling final value function POST for %s with initval %s", k, BUTTONREPEAT_POST)
-                    payload = descr.value_function(BUTTONREPEAT_POST, descr, self.data)  # None means no final call after expiration
-                    if payload:
-                        reg = payload.get("register", descr.register)
-                        action = payload.get("action")
-                        if action == WRITE_MULTI_MODBUS:
-                            _LOGGER.info("terminating loop %s - ready to send final payload data: %s", k, payload)
-                            await self.async_write_registers_multi(
-                                unit=self._modbus_addr,
-                                address=reg,
-                                payload=payload.get("data"),
-                            )
         return poll_outcome
 
     def _publish_computed_sensors(self, keys: set[str]) -> None:
@@ -2771,6 +2734,163 @@ class SolaXModbusHub:
                     sensor.modbus_data_updated()
                 except Exception:
                     _LOGGER.exception("%s: cannot publish computed sensor %s", self._name, key)
+
+    async def _async_run_autorepeats(self, interval: float | None) -> set[str]:
+        """Run lifecycle maintenance once per interval, with one measurement owner."""
+        local_outputs = ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit")
+        previous = {key: self.data.get(key) for key in local_outputs}
+        self.last_ts = _mtime.time()
+        pending_stops = getattr(self, "_autorepeat_pending_stops", {})
+        repeats = self.data["_repeatUntil"].copy()
+        for k in set(repeats) | set(pending_stops):
+            v = repeats.get(k, 0)
+            descr = self.computedEntities.get(k)
+            if descr is None:
+                continue
+            if k in pending_stops:
+                payload = pending_stops[k]
+            elif self.last_ts < v:
+                payload = self.compute_autorepeat_payload(BUTTONREPEAT_LOOP, descr, interval=interval)
+            elif v > 0:
+                self.data["_repeatUntil"][k] = 0
+                payload = self.compute_autorepeat_payload(BUTTONREPEAT_POST, descr)
+            else:
+                continue
+            if not payload:
+                continue
+            reg = payload.get("register", descr.register)
+            action = payload.get("action")
+            try:
+                if action == WRITE_MULTI_MODBUS:
+                    await self.async_write_registers_multi(unit=self._modbus_addr, address=reg, payload=payload.get("data"))
+                elif action == WRITE_SINGLE_MODBUS:
+                    await self.async_write_register(unit=self._modbus_addr, address=reg, payload=payload.get("payload"))
+                else:
+                    _LOGGER.error("autorepeat value function for %s must return a supported action", k)
+                    continue
+            except HomeAssistantError as ex:
+                # A stop remains pending until the transport acknowledges it.
+                _LOGGER.warning("%s: autorepeat write for %s is not confirmed: %s", self._name, k, ex)
+            else:
+                self.autorepeat_write_succeeded(k)
+        changed = {key for key in local_outputs if self.data.get(key) != previous[key] and key in self.computedSensors}
+        # These are local controller states, not new power measurements. Their
+        # explicit inactive None must publish even when the Modbus poll failed.
+        observations = getattr(self, "_computed_input_observations", {})
+        now = _mtime.monotonic()
+        for key in changed:
+            observations[key] = InputObservation(now, self.data.get(key), now + self.computed_sensor_max_age(self.computedSensors[key]))
+        self._computed_input_observations = observations
+        return changed
+
+    def autorepeat_write_succeeded(self, key: str) -> None:
+        """A confirmed write supersedes any pending cleanup for this controller."""
+        getattr(self, "_autorepeat_pending_stops", {}).pop(key, None)
+
+    def _autorepeat_input_data(self, active: set[str]) -> dict[str, Any]:
+        """Filter measured data without changing the shared cache or local controls."""
+        data = self.data.copy()
+        for key in active:
+            if key in getattr(self, "writeLocals", {}) or key.startswith("remotecontrol_current_"):
+                continue
+            sample = self._accepted_input_sample(key, include_pending=False)
+            if sample is None:
+                data.pop(key, None)
+            else:
+                data[key] = sample.value
+        return data
+
+    def _autorepeat_active_keys(self) -> set[str]:
+        """Include polled number/select readbacks, keeping local requests separate."""
+        keys = set(self.sensorDescriptions) | set(self._input_observations(include_pending=False))
+        for entities in (getattr(self, "numberEntities", {}), getattr(self, "selectEntities", {})):
+            keys.update(key for key, entity in entities.items() if getattr(entity.entity_description, "register", -1) >= 0)
+        return keys - set(getattr(self, "writeLocals", {}))
+
+    def _control_input_valid(self, key: str, seen: frozenset[tuple[int, str]] = frozenset()) -> bool:
+        """Also reject invalid numeric leaves hidden by a computed conversion."""
+        sample = self._accepted_input_sample(key, include_pending=False)
+        identity = (id(self), key)
+        if sample is None or identity in seen:
+            return False
+        value = sample.value
+        if key == "parallel_setting":
+            return value in ("Free", "Master", "Slave")
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            return False
+        return all(hub._control_input_valid(source, seen | {identity}) for hub, source, _sample in sample.inputs)
+
+    def _autorepeat_interval(self, descr: Any, required: set[str]) -> float:
+        intervals = [
+            value
+            for key in descr.autorepeat_cadence
+            if key in self.sensorDescriptions and key in required
+            for value in self._computed_source_intervals(self.sensorDescriptions[key])
+        ]
+        return min(intervals) if intervals else float(getattr(self, "config", {}).get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+
+    def compute_autorepeat_payload(self, phase: int, descr: Any, *, interval: float | None = None) -> Any:
+        """Validate before mutating filters; replay a keepalive without recomputing."""
+        if getattr(descr, "autorepeat_dependencies", None) is None:
+            return None if phase == BUTTONREPEAT_LOOP and interval is None else descr.value_function(phase, descr, self.data)
+        if phase == BUTTONREPEAT_POST:
+            getattr(self, "_autorepeat_payloads", {}).pop(descr.key, None)
+            payload = descr.value_function(phase, descr, self.data)
+            if payload:
+                pending = getattr(self, "_autorepeat_pending_stops", {})
+                pending[descr.key] = payload
+                self._autorepeat_pending_stops = pending
+            return payload
+        active = self._autorepeat_active_keys()
+        source = self._autorepeat_input_data(active)
+        disabled = source.get(descr.autorepeat_control, "Disabled") == "Disabled"
+        parallel = source.get("parallel_setting", "Free")
+        topologies = descr.autorepeat_parallel_dependencies
+        # Unsupported topology is handled by the unchanged controller (disable
+        # for Mode 8, no-op for a modes 1-7 Slave). No sub-mode math is evaluated.
+        stopping = disabled or (topologies is not None and (not isinstance(parallel, str) or parallel not in topologies))
+        required = set() if stopping else set(descr.depends_on or ()) | active.intersection(descr.autorepeat_dependencies)
+        if not stopping and topologies is not None:
+            required.update(topologies[parallel])
+        ready = all(self._control_input_valid(key) for key in required)
+        if not disabled and "parallel_setting" in active:
+            ready = ready and self._control_input_valid("parallel_setting")
+        if not ready:
+            self.data["_repeatUntil"][descr.key] = 0
+            _LOGGER.warning("%s: stopping %s because a required control input is invalid", self._name, descr.key)
+            return self.compute_autorepeat_payload(BUTTONREPEAT_POST, descr)
+        # Explicit disable and unsupported topology need no measurement owner.
+        if phase == BUTTONREPEAT_LOOP and required and (interval is None or interval != self._autorepeat_interval(descr, required)):
+            return None
+        # Controller outputs must not appear as new requests on the next poll.
+        local = {
+            key: value
+            for key, value in self.data.items()
+            if (key.startswith("remotecontrol_") or key in getattr(self, "writeLocals", {}))
+            and not key.startswith("remotecontrol_current_")
+            and key != "remotecontrol_autorepeat_remaining"
+        }
+        signature = (self._observed_inputs(required, include_pending=False), local)
+        cached = getattr(self, "_autorepeat_payloads", {})
+        previous = cached.get(descr.key)
+        if phase == BUTTONREPEAT_LOOP and previous is not None and previous[0] == signature:
+            return previous[1]
+        source["_repeatUntil"] = self.data["_repeatUntil"]
+        payload = descr.value_function(phase, descr, source)
+        for key in ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit"):
+            if key in source:
+                self.data[key] = source[key]
+        # A Slave deliberately returns no command; neither FIRST nor LOOP may
+        # send an empty multi-register payload. Keep the no-op cached as well.
+        if payload and payload.get("action") == WRITE_MULTI_MODBUS and payload.get("data") == []:
+            payload = None
+        cached[descr.key] = (signature, payload)
+        self._autorepeat_payloads = cached
+        if self.data["_repeatUntil"].get(descr.key) == 0 and payload:
+            pending = getattr(self, "_autorepeat_pending_stops", {})
+            pending[descr.key] = payload
+            self._autorepeat_pending_stops = pending
+        return payload
 
     # --------------------------------------------- Check if sensor is a dependency -----------------------------------------------
 
@@ -2926,6 +3046,7 @@ class SolaXModbusHub:
     def rebuild_blocks(self, initial_groups: dict[Any, Any]) -> None:  # , computedRegs):
         self._computed_source_snapshots = {}
         self._computed_input_observations = {}
+        self._autorepeat_payloads = {}
         _LOGGER.debug("%s: rebuilding groups and blocks - pre: %s", self._name, initial_groups.keys())
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():
