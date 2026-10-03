@@ -57,12 +57,10 @@ The available fields are:
   applicable optional input must be fresh to trigger recalculation.
 - `readiness_validator`: optional domain-specific validation after the generic
   checks. It receives the source data dictionary and must return a boolean.
-- `dependency_selector`: optional selection of `(required, optional)` key sets
-  from the filtered input dictionary and applicable keys. Static declarations
-  still list every possible input for ordering and polling. A selected branch
-  replaces the static required/alternative gate, and unused inputs are removed
-  before the value function runs. The accepted computation records the inputs
-  it used, including optional inputs, for subsequent invalidation and expiry.
+- `dependency_selector`: select `(required, optional)` sets from filtered data
+  and applicable keys, replacing the static required/alternative gate. Static
+  declarations still list every possible input for ordering and polling;
+  unused inputs are removed before calculation.
 - `recompute_each_poll`: use only for time-dependent calculations or values
   maintained by local control code, whose result can change without a Modbus
   dependency becoming fresh.
@@ -77,198 +75,101 @@ documented base calculation, not zero-filled partial correction terms.
 ## Age and interval boundaries
 
 The availability timer uses the absolute deadline inherited from accepted
-inputs, not the time of publication. Invalid or discarded groups cannot renew it. Expiry
+inputs. Publication, invalid or discarded groups cannot renew it. Expiry
 preserves the last numeric value internally but exposes `unavailable`; a later
 accepted zero or nonzero measurement restores availability. The timer is
-cancelled on entity removal. Its limit is three times the slowest configured
-raw dependency interval (the default interval for local/no-input descriptions),
+cancelled on entity removal. A result inherits the earliest deadline of its
+accepted inputs, each bounded by three configured polling intervals,
 not the communication-failure slowdown interval.
 
-The three communication diagnostics are an explicit exception: they describe
-the local poll outcome, not a measured input. The hub publishes them after
-recording each completed poll, outside the computed evaluator and its expiry
-timer. They therefore remain available during slowdown/polling silence rather
-than hiding `Degraded` or `Offline`. This exception does not disable expiry for
-other time-dependent or dependency-free computed sensors.
+An explicit empty input contract with no additional readiness or source mapping
+has no measured-input expiry; see `is_inputless_computed_sensor`. Communication
+diagnostics are published separately after poll accounting and remain available
+during slowdown or polling silence.
 
-Per-key observations distinguish a key not read by a device group from an
-attempted but failed, rejected or invalid read. A computed result inherits the
-earliest deadline of the accepted inputs used in its calculation; required
-dependencies are also checked individually on reuse. A slow input cannot keep
-an expired fast input valid. At least one declared input must be freshly
-observed for an ordinary calculation. Reading an unchanged numeric value is a
-new observation; reading another group is not. Staged observations become
-visible to other hubs only after group validation. Rebuilding polling blocks
-clears all snapshots and observation records. Inputs
+Cross-interval input reuse is deliberately narrower than arbitrary cache use:
+only accepted, unexpired raw or computed dependencies qualify; invalid inputs
+or failed intermediates still block the calculation. At least one
+declared input must be freshly observed for an ordinary calculation. The
+latest completed snapshot replaces the previous snapshot even on partial or
+discarded reads, and rebuilding polling blocks clears all snapshots. Inputs
 from independently scheduled groups/hubs are bounded in age, not simultaneous
 physical measurements. No data dictionary or freshness set is modified by the
 input overlay. `force=True` is not used to accept cross-hub cache data.
-
-For Energy Dashboard mappings, validate topology before selecting Free/Master/
-Slave input. Topology changes switch the source; unchanged topology may reuse
-an accepted computed power without changing its timestamp or deadline. Every
-contributing hub must supply valid data. `None` publishes HA `unknown`, while
-expiry publishes `unavailable`; repeated unknown publications do not extend the
-last valid lease. Mapping/filter functions and entity IDs remain unchanged.
 
 Dependencies not present in the active inverter's description set or data are
 ignored. This lets one description cover model variants while still requiring
 every input that is applicable to the detected inverter.
 
-## Riemann energy integrals
-
-Riemann energy sensors consume completed, accepted source-hub snapshots rather
-than `hub.data` or a cached dashboard mirror. Their callbacks run after the
-interval snapshot is published, including failed and discarded intervals.
-They validate finite numeric power before and after filtering; zero remains
-valid, while booleans and numeric strings are not power measurements.
-
-Integration uses the monotonic observation time of the selected source, not
-callback time. Duplicate callbacks or overlays from unrelated scan intervals
-cannot re-date a sample, accumulate energy or renew its availability lease.
-A newer invalid source interval cannot fall back to an older computed result
-from another interval. Source selection and age limits use the actual source
-hub, including slave PV variants and parallel-mode mappings.
-
-Invalid/missing/stale power makes the integral unavailable while preserving its
-total and breaking the integration interval. The first valid sample after a gap
-only establishes a new baseline; the next valid sample resumes integration.
-An expiry timer handles complete polling silence, and a sample-time gap check
-also protects against delayed timer delivery. Source hub/key changes and
-dashboard reactivation likewise break the interval. Missing energy is not
-estimated or backfilled: the integral is incomplete across the outage.
-
-Integral expiry and the gap check use the selected source's inherited absolute
-deadline, so a mixed-interval computed power cannot bridge expiry of its faster
-required input while a slower dependency remains valid.
-Mappings with a topology input also inherit that input's deadline. A valid
-refresh of unchanged topology renews only the topology component; it never
-re-dates power. After topology expiry, a source change or reactivation, cached
-power from before that boundary cannot anchor a new integration interval.
-
-The accumulated total and its local reset date are saved through HA's
-`RestoreEntity.extra_restore_state_data`, independently of visible availability.
-HA omits ordinary extra attributes when an entity is unavailable, so those
-attributes alone cannot preserve the total through a restart during an outage.
-Legacy numeric restored states remain supported. Cold startup without a saved
-total stays unknown until a valid power sample; restart never integrates its
-downtime, and the existing local-midnight reset remains in effect.
-The accumulator and extra restore data keep the unrounded total. Published
-energy uses three decimal places, including the restored-value fallback before
-the first accepted power sample. Publication never rounds the stored total.
-
 ## Observation identity and final publication
 
-`InputObservation` is an immutable sample containing its measurement timestamp,
-value, absolute deadline and references to the inputs used in its calculation.
-Each input reference identifies its hub, key and observation. Every raw read
-creates a distinct object, including a read with the same numeric value and
-timestamp. Equality is by identity, so neither numeric equality nor clock
-resolution can collapse a real measurement into a repeated publication.
+`InputObservation` records monotonic measurement time, value, absolute deadline
+and input references. Each raw read creates a distinct observation, including an
+unchanged value. Reusing the same selected observations avoids duplicate
+calculations. Group observations are staged until validation; rejected groups
+invalidate attempted inputs. Block rebuilds also clear observation records and
+cached controller payloads.
 
-The observations alone carry freshness, selected dependencies and deduplication
-state; there are no separate generation/signature/dependency registries to
-commit. A group's observations are staged together until validation accepts
-them. A rejected group publishes none of them and invalidates its attempted
-inputs. Rebuild clears observations and cached controller payloads, so retained
-numbers cannot authorize a new calculation.
+Internal computations remain available before `readFollowUp`. Final computed
+callbacks publish once per key after all interval groups finish. Reconciliation
+checks committed inputs so a trailing failed group cannot publish an obsolete
+result or renew its lease. Unchanged topology may reuse accepted ED power
+without changing its timestamp or deadline; Master topology requires PM data.
 
-A computed sensor is evaluated again when its selected input observations
-change. Reusing the same input objects performs no duplicate calculation.
-Time-dependent/local descriptions retain `recompute_each_poll`.
-Internal computations remain available before `readFollowUp`, and a new input
-in another device group can require another internal computation. Final
-computed callbacks run once per key at the end of the interval refresh, after
-accepted group commits. A final reconciliation under the poll-data lock
-checks the latest committed inputs: a trailing failed or discarded group
-cannot publish an earlier ED result or renew an ordinary computed lease.
-ED also deduplicates unchanged selected source
-observations, including each contributing hub and topology. Riemann callbacks
-continue to consume the completed source snapshot, including invalid outcomes.
-Known Master topology requires the declared PM source, including before its
-first successful read. Unknown topology is unavailable; models without a
-topology input retain their default Free source selection.
+## Riemann energy integrals
+
+Integrals consume completed source-hub snapshots, including failed/discarded
+intervals. Power must be finite numeric data before and after filtering; zero
+is valid, while booleans and numeric strings are rejected. Integration uses the
+selected source's monotonic observation time. Duplicate callbacks and unrelated
+intervals cannot add energy or renew availability.
+
+Invalid, missing or expired power preserves the total but breaks the integration
+interval. The first valid sample after a gap establishes a baseline; the next
+resumes integration. A timer and sample-time gap check cover polling silence and
+delayed callbacks. Source/topology changes and dashboard reactivation also break
+the interval; cached power from before that boundary cannot establish a baseline.
+Power and topology deadlines are both enforced. Missing energy is not backfilled,
+and restarting never integrates downtime.
+
+Persist the unrounded total and local reset date through
+`RestoreEntity.extra_restore_state_data`: ordinary attributes are omitted when
+HA publishes an unavailable entity. Legacy numeric restored states remain
+supported. Cold startup without a saved total stays unknown until valid power;
+the existing local-midnight reset remains. Round only published energy to three
+decimal places, including restored values before the first accepted sample.
 
 ## SolaX VPP lifecycle and cadence
 
-Autorepeat runs after the interval's device groups, rather than once per device
-group. The two SolaX control buttons declare fixed inputs across all their
-sub-modes. `depends_on` contains mandatory sources; `autorepeat_dependencies`
-contains model-specific sources that are required when installed.
-`autorepeat_parallel_dependencies` declares the fixed Free/Master input groups;
-Free never requires PM data. `autorepeat_control` identifies the local mode
-request so an explicit Disabled request can stop without measurement readiness.
-An unsupported topology reaches the existing controller's disable/no-op path.
-The cadence owner is the shortest configured raw polling
-interval reachable through the required power keys in `autorepeat_cadence`.
-Settings, topology and BMS limits are validity dependencies, not
-independent clock owners. For power at 5 s and settings at 15 s the owner is
-5 s; for 6/15 it is 6 s. No fixed interval or additional global throttle is
-applied. Other plugins retain one autorepeat call per interval refresh.
+Autorepeat runs after all interval device groups. For SolaX, `autorepeat_cadence`
+selects the shortest configured raw power interval; settings, topology and BMS
+limits affect validity. `FIRST` and `LOOP` share `compute_autorepeat_payload`.
+Filters advance once on an owner poll when relevant observations or requests
+change. Slower polls supply inputs for the next owner poll; otherwise send the
+validated keepalive payload without advancing filters or renewing input deadlines.
+Other plugins retain one autorepeat call per interval refresh.
 
-`FIRST` uses the same accepted-input gate as `LOOP`. A control computation
-advances the filters once on the owner's completed poll when a required input
-observation or local control request changed. A slower poll may update inputs,
-but those changes are consumed at the next owner poll. Explicit disable and
-unsupported Mode 8 topology are processed without waiting for new power data.
-Local filter outputs are state, so publication cannot replace them with an
-older observed value or make them look like new control requests.
+Both SolaX buttons declare fixed inputs across all sub-modes: `depends_on` is
+mandatory, `autorepeat_dependencies` is required when installed, and
+`autorepeat_parallel_dependencies` defines Free/Master inputs. Free needs no PM
+data. Every installed control input must be valid even when the current regulator
+branch does not use it. Numeric inputs and computed leaves must be finite; zero
+is valid, booleans and strings are rejected. Local requests (`autorepeat_control`)
+and filter state remain separate. Regulator equations are unchanged.
 
-On an owner poll with no new relevant observation/request, the last validated
-payload is sent as a keepalive, without invoking the controller or advancing
-its filters. The configured command duration, device timeout and timeout
-action remain in the payload. A keepalive does not renew input leases. Timer
-expiry calls `POST` once; skipped/failed polls still maintain expiry and input
-validity. A failed cleanup write remains pending and is retried on subsequent
-polls until the transport confirms the write, without rerunning the filter.
-Transport acknowledgement is not a physical readback of the resulting mode.
+Explicit disable, expiry and invalid required inputs invoke `POST`, including on
+slower or skipped/failed polls. Serialize lifecycle writes through transport
+acknowledgement and retry failed cleanup without rerunning filters. Mode 8 clears
+local current setpoints to `None`; recovered inputs require a new trigger.
+Device timeout covers loss of communication. Unsupported topology follows the
+existing disable/no-op path; Slave modes 1-7 with empty writes remain a no-op.
 
-Input selection, validity and cadence are checked once in
-`compute_autorepeat_payload`, shared by FIRST and LOOP. The interval runner
-handles lifecycle and transport; it does not prepare the same inputs again.
-
-VPP consumes accepted, unexpired observations rather than HA entity
-availability or retained numbers in `hub.data`. Numeric power/control inputs
-and their computed leaves must be finite numbers; booleans and numeric strings
-are rejected. Zero is a valid measurement. Installed number/select readbacks
-participate in this gate; local requests remain separate. The shared cache is
-not globally cleared.
-
-Gen5 total SoC is authoritative when valid and positive; unused per-battery
-fallbacks and capacity metadata cannot block it or shorten its deadline. A
-fallback requires every applicable battery SoC. Two valid positive capacities
-permit weighting; incomplete capacity metadata uses the conservative minimum.
-BMS freshness contracts use `battery_voltage_charge` for Gen4 and earlier, and
-`battery_1_voltage_charge`/`battery_2_voltage_charge` for Gen5 and later.
-The existing upstream BMS functions are unchanged by this fix; their
-generation-specific split belongs to the independently compatible
-[PR #2359](https://github.com/wills106/homeassistant-solax-modbus/pull/2359).
-The freshness selector does not select voltage aliases across generations.
-The current selector
-retains the dedicated BMS current or shared-current fallback and requires the
-installed peer voltage when splitting the fallback. An unused fallback does
-not shorten a dedicated-current lease. Phase sums keep all applicable phases
-mandatory.
-
-Every installed control input, including charge limits, must be valid in every
-sub-mode. A valid total charge limit does not excuse an invalid installed
-individual estimate. This conservative gate may stop a loop because of an
-input that its current sub-mode does not use. It does not inspect PV surplus,
-SoC, clipping or other regulator decisions to select dependencies. Both control
-loop bodies and their charge/filter/house-load helpers remain identical to
-upstream main; input validation does not change their equations or defaults.
-Slave modes 1-7 that produce an empty
-multi-write remain a no-op; explicit disable/expiry cleanup still writes its
-non-empty payload.
-
-On a missing, invalid, failed, discarded or expired required control input,
-the loop is stopped and its existing `POST` disable payload is written
-immediately, including on a slower or skipped poll. Mode 8 also clears its
-local current setpoints to `None`, preserving their legitimate inactive
-publication. An unconfirmed disable remains pending; the device's configured
-timeout is the fallback if communication is unavailable. Regulation requires
-a new trigger after valid accepted inputs return. No zero measurement is
-invented, and a healthy bounded reuse does not reset filters.
+Profile selectors use a positive valid Gen5 total SoC or require all applicable
+battery SoCs. Weighting uses metadata only when both SoCs and capacities are
+positive.
+BMS selectors use the model's voltage names and dedicated current, or shared
+current with an installed peer voltage. Unused fallbacks do not shorten deadlines.
+Phase sums require every applicable phase.
 
 ## Contributor checks
 
@@ -282,9 +183,6 @@ When adding or changing a computed sensor:
    polling where relevant.
 4. Keep direct sensor `value_function` calls out of the entity platform. The
    structural tests enforce both the explicit contract and shared startup path.
-5. For energy integrals, test missing data, no-callback expiry, source-hub
-   selection, duplicate callbacks and restart while unavailable. Assert both
-   HA publication and preserved restore data, not just internal arithmetic.
-   Use controlled integer and fractional clock origins. Compare calculated
-   durations with a tight tolerance, but compare saved totals and retained
-   observation timestamps exactly against their original values.
+5. For integrals, also test no-callback expiry, duplicate callbacks, source/topology
+   changes and restart while unavailable. Check HA publication and retained
+   totals as well as arithmetic; use tolerant comparisons for calculated durations.
