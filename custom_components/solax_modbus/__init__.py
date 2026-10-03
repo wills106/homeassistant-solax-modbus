@@ -96,6 +96,7 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
     PollOutcome,
+    is_inputless_computed_sensor,
 )
 from .const import (
     CONF_ENERGY_DASHBOARD_DEVICE as CONF_ENERGY_DASHBOARD_DEVICE,
@@ -1349,6 +1350,7 @@ class SolaXModbusHub:
                     for key in cycle_computed_keys
                     if key not in self._computed_input_observations
                     or getattr(self.computedSensors[key], "allow_none", False)
+                    or is_inputless_computed_sensor(self.computedSensors[key])
                     or getattr(self.computedSensors[key], "_energy_dashboard_mapping", None) is not None
                     or self._accepted_input_sample(key) is not None
                 }
@@ -2221,6 +2223,7 @@ class SolaXModbusHub:
         """Evaluate one computed sensor through the shared readiness gate."""
         if getattr(descr, "_energy_dashboard_mapping", None) is not None:
             return self._evaluate_dashboard_sensor(descr, data, fresh_keys or set(), interval)
+        inputless = is_inputless_computed_sensor(descr)
         descriptions = self.sensorDescriptions
         dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
         dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
@@ -2271,12 +2274,16 @@ class SolaXModbusHub:
         except Exception as ex:
             _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, descr.key, ex)
             self._remember_computed_sample(descr, None, inputs)
-            return False
+            if inputless:
+                data[descr.key] = None
+            return inputless
 
         if (value is None and not getattr(descr, "allow_none", False)) or (isinstance(value, float) and not math.isfinite(value)):
             _LOGGER.debug("%s: refusing invalid computed value for %s", self._name, descr.key)
             self._remember_computed_sample(descr, None, inputs)
-            return False
+            if inputless:
+                data[descr.key] = None
+            return inputless
         data[descr.key] = value
         self._remember_computed_sample(descr, value, inputs)
         return True
@@ -2363,6 +2370,8 @@ class SolaXModbusHub:
 
     def computed_sensor_max_age(self, descr: Any) -> float:
         """Allow three configured input intervals, independent of poll slowdown."""
+        if is_inputless_computed_sensor(descr):
+            return math.inf
         return 3 * max(self._computed_source_intervals(descr))
 
     def _computed_source_intervals(self, descr: Any) -> list[float]:

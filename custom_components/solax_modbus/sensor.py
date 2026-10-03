@@ -29,6 +29,7 @@ from .const import (
     SLEEPMODE_NONE,
     SLEEPMODE_ZERO,
     BaseModbusSensorEntityDescription,
+    is_inputless_computed_sensor,
     matches_modbus_protocol,
 )
 from .debug import get_debug_setting
@@ -546,13 +547,18 @@ class SolaXModbusSensor(SensorEntity):
             and description.key not in COMMUNICATION_SENSOR_KEYS
             and not getattr(description, "_is_riemann_sum_sensor", False)
         ):
-            remaining_age = self._hub.computed_sensor_remaining_age(description)
-            self._computed_available = remaining_age > 0
             if self._cancel_computed_expiry is not None:
                 self._cancel_computed_expiry()
-            # Only accepted computations publish this callback. A failed poll
-            # cannot renew the lease; a timer also handles complete poll silence.
-            self._cancel_computed_expiry = async_call_later(self.hass, remaining_age, self._expire_computed)
+                self._cancel_computed_expiry = None
+            if is_inputless_computed_sensor(description):
+                # Configuration/local context has no measured input to expire.
+                self._computed_available = True
+            else:
+                remaining_age = self._hub.computed_sensor_remaining_age(description)
+                self._computed_available = remaining_age > 0
+                # Only accepted computations publish this callback. A failed poll
+                # cannot renew the lease; a timer also handles complete poll silence.
+                self._cancel_computed_expiry = async_call_later(self.hass, remaining_age, self._expire_computed)
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         self.async_write_ha_state()
 

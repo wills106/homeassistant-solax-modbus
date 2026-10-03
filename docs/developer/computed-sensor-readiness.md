@@ -238,10 +238,13 @@ Gen5 total SoC is authoritative when valid and positive; unused per-battery
 fallbacks and capacity metadata cannot block it or shorten its deadline. A
 fallback requires every applicable battery SoC. Two valid positive capacities
 permit weighting; incomplete capacity metadata uses the conservative minimum.
-BMS functions use `battery_voltage_charge` for Gen4 and earlier, and
-`battery_1_voltage_charge`/`battery_2_voltage_charge` for Gen5 and later, following
+BMS freshness contracts use `battery_voltage_charge` for Gen4 and earlier, and
+`battery_1_voltage_charge`/`battery_2_voltage_charge` for Gen5 and later.
+The existing upstream BMS functions are unchanged by this fix; their
+generation-specific split belongs to the independently compatible
 [PR #2359](https://github.com/wills106/homeassistant-solax-modbus/pull/2359).
-There is no voltage alias selection across generations. The current selector
+The freshness selector does not select voltage aliases across generations.
+The current selector
 retains the dedicated BMS current or shared-current fallback and requires the
 installed peer voltage when splitting the fallback. An unused fallback does
 not shorten a dedicated-current lease. Phase sums keep all applicable phases
