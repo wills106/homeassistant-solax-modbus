@@ -1,4 +1,5 @@
 import logging
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from time import time
@@ -1559,6 +1560,49 @@ def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[
     return int(pv_current_1 + pv_current_2)
 
 
+def _positive_input(data: dict[str, Any], key: str) -> bool:
+    value = data.get(key)
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
+
+
+def battery_capacity_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    """Use the total SoC alone, otherwise require every configured battery."""
+    if _positive_input(data, "battery_total_capacity_charge"):
+        return {"battery_total_capacity_charge"}, set()
+    required = active.intersection({"battery_1_capacity_charge", "battery_2_capacity_charge"})
+    if not required:
+        required = {"battery_total_capacity_charge"}
+    capacities = {"bms_battery_capacity", "bms_2_battery_capacity"}
+    optional = capacities if len(required) == 2 and all(_positive_input(data, key) for key in capacities | required) else set()
+    return required, optional
+
+
+def _bms_charge_dependencies(
+    data: dict[str, Any], active: set[str], voltage: str, current: str, peer_voltage: str | None = None
+) -> tuple[set[str], set[str]]:
+    """Keep the current fallback's peer voltage in the accepted-input lease."""
+    required = {voltage}
+    if data.get(current) is not None:
+        required.add(current)
+    else:
+        required.add("battery_charge_max_current")
+        if peer_voltage is not None and peer_voltage in active:
+            required.add(peer_voltage)
+    return required, set()
+
+
+def bms_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_voltage_charge", "bms_charge_max_current")
+
+
+def bms_1_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_1_voltage_charge", "bms_charge_max_current", "battery_2_voltage_charge")
+
+
+def bms_2_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_2_voltage_charge", "bms_2_charge_max_current", "battery_1_voltage_charge")
+
+
 def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | None:
     # This will attempt to select between multiple sensors based on which have a
     # value. This assumes that real batteries will never report a value of 0% SoC,
@@ -1763,6 +1807,27 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_remotecontrol_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
+        depends_on=["battery_capacity", "measured_power"],
+        autorepeat_control="remotecontrol_power_control",
+        autorepeat_dependencies=(
+            "parallel_setting",
+            "selfuse_discharge_min_soc",
+            "export_control_user_limit",
+            "inverter_power_l1",
+            "inverter_power_l2",
+            "inverter_power_l3",
+            "measured_power_l1",
+            "measured_power_l2",
+            "measured_power_l3",
+            "grid_voltage_l1",
+            "grid_voltage_l2",
+            "grid_voltage_l3",
+        ),
+        autorepeat_parallel_dependencies={
+            "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
+            "Master": ("pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
+        },
+        autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
     ),
     SolaxModbusButtonEntityDescription(
         name="PowerControlMode Trigger (mode 8/9)",
@@ -1773,6 +1838,23 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
+        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge"],
+        autorepeat_control="remotecontrol_power_control_mode",
+        autorepeat_dependencies=(
+            "parallel_setting",
+            "grid_export",
+            "meter_2_measured_power",
+            "selfuse_discharge_min_soc",
+            "battery_charge_upper_soc",
+            "export_control_user_limit",
+            "inverter_power_type",
+            "battery_max_charge_power",
+            "bms_max_charge",
+            "bms_2_max_charge",
+            "battery_charge_max_current",
+        ),
+        autorepeat_parallel_dependencies={"Free": ()},
+        autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
     SolaxModbusButtonEntityDescription(
         name="System On",
@@ -6668,6 +6750,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_capacity_gen5,
+        dependency_selector=battery_capacity_dependencies,
         depends_on=["battery_total_capacity_charge", "battery_1_capacity_charge", "battery_2_capacity_charge"],
         optional_depends_on=["bms_battery_capacity", "bms_2_battery_capacity"],
         modbus_max=99,
@@ -8071,6 +8154,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_DEFAULT,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 1 Max Charge Rate",
@@ -8087,6 +8171,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_DEFAULT,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_1_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 2 Max Charge Rate",
@@ -8101,6 +8186,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=3,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_2_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Meter 2 Measured Power",
