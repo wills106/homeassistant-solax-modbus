@@ -289,6 +289,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     depends_on_any: list[tuple[str, ...]] | None = None
     optional_depends_on: list[str] | None = None
     readiness_validator: Callable[[dict[str, Any]], bool] | None = None
+    dependency_selector: Callable[[dict[str, Any], set[str]], tuple[set[str], set[str]]] | None = None
     recompute_each_poll: bool = False
     allow_none: bool = False  # Explicit unknown output, never a numeric zero.
     _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard

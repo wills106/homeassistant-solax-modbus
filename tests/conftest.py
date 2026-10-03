@@ -1,6 +1,12 @@
 import pytest
 
 
+@pytest.fixture(params=[1000.0, 26.882, 604800.3])
+def clock_start(request: pytest.FixtureRequest) -> float:
+    """Cover an exact origin, a float binade crossing and a week of uptime."""
+    return float(request.param)
+
+
 class MockModbusResponse:
     def __init__(self, registers: list[int] | None = None, error: bool = False) -> None:
         self.registers = registers if registers else []
