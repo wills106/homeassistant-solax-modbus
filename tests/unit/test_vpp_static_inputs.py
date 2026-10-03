@@ -8,12 +8,110 @@ from unittest.mock import Mock
 
 import pytest
 
-from custom_components.solax_modbus.const import BUTTONREPEAT_POST
-from custom_components.solax_modbus.plugin_solax import BUTTON_TYPES, GEN4, GEN5, SENSOR_TYPES_MAIN
+from custom_components.solax_modbus import InputObservation
+from custom_components.solax_modbus.button import SolaXModbusButton
+from custom_components.solax_modbus.const import (
+    BUTTONREPEAT_FIRST,
+    BUTTONREPEAT_POST,
+    WRITE_DATA_LOCAL,
+    BaseModbusNumberEntityDescription,
+    BaseModbusSelectEntityDescription,
+)
+from custom_components.solax_modbus.plugin_solax import BUTTON_TYPES, GEN4, GEN5, NUMBER_TYPES, SELECT_TYPES, SENSOR_TYPES_MAIN
 
 from .test_computed_review_regressions import sources
 from .test_poll_snapshot import make_group, make_hub
 from .test_vpp_poll_cadence import prime, setup_vpp
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("trigger", ["remotecontrol_trigger", "powercontrolmode8_trigger"])
+@pytest.mark.parametrize("disabled", [False, True])
+async def test_real_local_descriptions_allow_first_loop_and_disable(trigger: str, disabled: bool) -> None:
+    hub, power, settings, _values, _function = setup_vpp()
+    # Production registries contain local controls with register=None. Use the
+    # actual plugin descriptions, rather than number/select metadata doubles.
+    hub.numberEntities = {d.key: SimpleNamespace(entity_description=d) for d in NUMBER_TYPES if d.write_method == WRITE_DATA_LOCAL}
+    hub.selectEntities = {d.key: SimpleNamespace(entity_description=d) for d in SELECT_TYPES if d.write_method == WRITE_DATA_LOCAL}
+    hub.writeLocals = {key: entity.entity_description for entities in (hub.numberEntities, hub.selectEntities) for key, entity in entities.items()}
+    assert any(entity.entity_description.register is None for entity in hub.numberEntities.values())
+    assert any(entity.entity_description.register is None for entity in hub.selectEntities.values())
+    descr = next(d for d in BUTTON_TYPES if d.key == trigger)
+    function = Mock(wraps=descr.value_function)
+    descr = replace(descr, value_function=function)
+    hub.computedEntities = {trigger: descr}
+    hub.data[descr.autorepeat_control] = "Disabled" if disabled else "Enabled Feedin Priority"
+    if not disabled:
+        await prime(hub, power, settings)
+    hub.data["_repeatUntil"].clear()
+    button = SolaXModbusButton("solax", hub, 1, {}, descr)
+    await button.async_press()
+    assert function.call_count == hub.async_write_registers_multi.await_count == 1
+    assert function.call_args.args[0] == BUTTONREPEAT_FIRST
+    if disabled:
+        assert hub.data["_repeatUntil"][trigger] == 0
+        assert dict(hub.async_write_registers_multi.call_args.kwargs["payload"])[descr.autorepeat_control] == "Disabled"
+        return
+    # No new measurements: replay the FIRST payload without another filter step.
+    payload = hub.async_write_registers_multi.call_args.kwargs["payload"]
+    await hub._async_run_autorepeats(power.interval)
+    assert function.call_count == 1
+    assert hub.async_write_registers_multi.await_count == 2
+    assert hub.async_write_registers_multi.call_args.kwargs["payload"] == payload
+    hub.data[descr.autorepeat_control] = "Disabled"
+    await hub._async_run_autorepeats(settings.interval)
+    assert hub.data["_repeatUntil"][trigger] == 0
+    assert dict(hub.async_write_registers_multi.call_args.kwargs["payload"])[descr.autorepeat_control] == "Disabled"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("description_type", [BaseModbusNumberEntityDescription, BaseModbusSelectEntityDescription])
+@pytest.mark.parametrize("register", [None, -1, 0, 0x24])
+@pytest.mark.parametrize("sample_state", ["unread", "invalid", "expired", "zero"])
+async def test_declared_readbacks_require_accepted_data(description_type: Any, register: int | None, sample_state: str) -> None:
+    hub, power, settings, _values, function = setup_vpp()
+    await prime(hub, power, settings)
+    hub.data["_repeatUntil"].clear()
+    key = "battery_charge_max_current"
+    description = description_type(key=key, register=register)
+    entities = "numberEntities" if description_type is BaseModbusNumberEntityDescription else "selectEntities"
+    setattr(hub, entities, {key: SimpleNamespace(entity_description=description)})
+    hub.data[key] = 999  # A retained setting is never an accepted readback.
+    if register is not None and register >= 0 and sample_state != "unread":
+        now = time.monotonic()
+        hub._computed_input_observations[key] = InputObservation(
+            now, None if sample_state == "invalid" else 0, now - 1 if sample_state == "expired" else now + 45
+        )
+    descr = hub.computedEntities["powercontrolmode8_trigger"]
+    button = SolaXModbusButton("solax", hub, 1, {}, descr)
+    await button.async_press()
+    rejected = register is not None and register >= 0 and sample_state != "zero"
+    assert function.call_args.args[0] == (BUTTONREPEAT_POST if rejected else BUTTONREPEAT_FIRST)
+    assert (hub.data["_repeatUntil"][descr.key] == 0) == rejected
+    if not rejected and register is not None and register >= 0:
+        assert function.call_args.args[2][key] == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("sample_state", ["unread", "invalid", "expired", "zero"])
+async def test_mode8_validates_its_computed_grid_export_input(sample_state: str) -> None:
+    hub, power, settings, _values, function = setup_vpp()
+    await prime(hub, power, settings)
+    hub.data["_repeatUntil"].clear()
+    key = "grid_export"
+    hub.sensorDescriptions[key] = next(d for d in SENSOR_TYPES_MAIN if d.key == key and d.register < 0)
+    hub.data[key] = 999
+    if sample_state != "unread":
+        now = time.monotonic()
+        hub._computed_input_observations[key] = InputObservation(
+            now, None if sample_state == "invalid" else 0, now - 1 if sample_state == "expired" else now + 45
+        )
+    descr = hub.computedEntities["powercontrolmode8_trigger"]
+    await SolaXModbusButton("solax", hub, 1, {}, descr).async_press()
+    assert function.call_args.args[0] == (BUTTONREPEAT_FIRST if sample_state == "zero" else BUTTONREPEAT_POST)
+    assert hub.data[key] == 999  # Controller views never overwrite shared measurements.
+    if sample_state == "zero":
+        assert function.call_args.args[2][key] == 0
 
 
 @pytest.mark.asyncio

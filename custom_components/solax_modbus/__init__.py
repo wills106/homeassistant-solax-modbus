@@ -675,6 +675,7 @@ class SolaXModbusHub:
             self._transport = UnavailableModbusTransport(interface)
         self._lock = asyncio.Lock()
         self._poll_data_lock = asyncio.Lock()
+        self._autorepeat_lock = asyncio.Lock()
         self._computed_input_observations: dict[str, InputObservation] = {}
         self._pending_input_observations: dict[str, InputObservation] | None = None
         self._name: str = name
@@ -2736,6 +2737,11 @@ class SolaXModbusHub:
                     _LOGGER.exception("%s: cannot publish computed sensor %s", self._name, key)
 
     async def _async_run_autorepeats(self, interval: float | None) -> set[str]:
+        """Serialize lifecycle callbacks until their writes are acknowledged."""
+        async with self._autorepeat_lock:
+            return await self._async_update_autorepeats(interval)
+
+    async def _async_update_autorepeats(self, interval: float | None) -> set[str]:
         """Run lifecycle maintenance once per interval, with one measurement owner."""
         local_outputs = ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit")
         previous = {key: self.data.get(key) for key in local_outputs}
@@ -2787,11 +2793,11 @@ class SolaXModbusHub:
         """A confirmed write supersedes any pending cleanup for this controller."""
         getattr(self, "_autorepeat_pending_stops", {}).pop(key, None)
 
-    def _autorepeat_input_data(self, active: set[str]) -> dict[str, Any]:
-        """Filter measured data without changing the shared cache or local controls."""
+    def _autorepeat_input_data(self, keys: set[str]) -> dict[str, Any]:
+        """Use accepted values for declared inputs, preserving local requests."""
         data = self.data.copy()
-        for key in active:
-            if key in getattr(self, "writeLocals", {}) or key.startswith("remotecontrol_current_"):
+        for key in keys:
+            if key in getattr(self, "writeLocals", {}):
                 continue
             sample = self._accepted_input_sample(key, include_pending=False)
             if sample is None:
@@ -2800,12 +2806,15 @@ class SolaXModbusHub:
                 data[key] = sample.value
         return data
 
-    def _autorepeat_active_keys(self) -> set[str]:
-        """Include polled number/select readbacks, keeping local requests separate."""
-        keys = set(self.sensorDescriptions) | set(self._input_observations(include_pending=False))
-        for entities in (getattr(self, "numberEntities", {}), getattr(self, "selectEntities", {})):
-            keys.update(key for key, entity in entities.items() if getattr(entity.entity_description, "register", -1) >= 0)
-        return keys - set(getattr(self, "writeLocals", {}))
+    def _autorepeat_input_installed(self, key: str) -> bool:
+        """Check one declared measurement; local controls need no readback."""
+        if key in getattr(self, "writeLocals", {}):
+            return False
+        if key in self.sensorDescriptions or key in self._input_observations(include_pending=False):
+            return True
+        entity = getattr(self, "numberEntities", {}).get(key) or getattr(self, "selectEntities", {}).get(key)
+        register = getattr(entity.entity_description, "register", None) if entity is not None else None
+        return isinstance(register, int) and register >= 0
 
     def _control_input_valid(self, key: str, seen: frozenset[tuple[int, str]] = frozenset()) -> bool:
         """Also reject invalid numeric leaves hidden by a computed conversion."""
@@ -2841,19 +2850,27 @@ class SolaXModbusHub:
                 pending[descr.key] = payload
                 self._autorepeat_pending_stops = pending
             return payload
-        active = self._autorepeat_active_keys()
-        source = self._autorepeat_input_data(active)
+        # The descriptions list all inputs across sub-modes. Only topology and
+        # model availability select required measurements, never controller math.
+        dependencies = set(descr.depends_on or ()) | set(descr.autorepeat_dependencies)
+        topologies = descr.autorepeat_parallel_dependencies
+        if topologies is not None:
+            dependencies.update(key for keys in topologies.values() for key in keys)
+        source = self._autorepeat_input_data(dependencies)
         disabled = source.get(descr.autorepeat_control, "Disabled") == "Disabled"
         parallel = source.get("parallel_setting", "Free")
-        topologies = descr.autorepeat_parallel_dependencies
         # Unsupported topology is handled by the unchanged controller (disable
         # for Mode 8, no-op for a modes 1-7 Slave). No sub-mode math is evaluated.
         stopping = disabled or (topologies is not None and (not isinstance(parallel, str) or parallel not in topologies))
-        required = set() if stopping else set(descr.depends_on or ()) | active.intersection(descr.autorepeat_dependencies)
+        required = (
+            set()
+            if stopping
+            else set(descr.depends_on or ()) | {key for key in descr.autorepeat_dependencies if self._autorepeat_input_installed(key)}
+        )
         if not stopping and topologies is not None:
             required.update(topologies[parallel])
         ready = all(self._control_input_valid(key) for key in required)
-        if not disabled and "parallel_setting" in active:
+        if not disabled and self._autorepeat_input_installed("parallel_setting"):
             ready = ready and self._control_input_valid("parallel_setting")
         if not ready:
             self.data["_repeatUntil"][descr.key] = 0

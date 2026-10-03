@@ -392,6 +392,49 @@ async def test_rebuild_uses_new_cadence_and_does_not_accept_old_observations() -
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("cause", ["expired", "invalid"])
+@pytest.mark.parametrize("failed_first_write", [False, True])
+async def test_concurrent_cleanup_waits_for_ack_before_retry(cause: str, failed_first_write: bool) -> None:
+    hub, power, settings, values, function = setup_vpp()
+    await prime(hub, power, settings)
+    if cause == "expired":
+        hub.data["_repeatUntil"]["powercontrolmode8_trigger"] = time.time() - 1
+    else:
+        values["measured_power"] = None
+        # Commit the invalid observation before either lifecycle callback.
+        expiry = hub.data["_repeatUntil"].pop("powercontrolmode8_trigger")
+        await hub._refresh_interval_group_once(power)
+        hub.data["_repeatUntil"]["powercontrolmode8_trigger"] = expiry
+    started, release = asyncio.Event(), asyncio.Event()
+    writes = 0
+
+    async def write(**kwargs: Any) -> None:
+        nonlocal writes
+        writes += 1
+        if writes == 1:
+            started.set()
+            await release.wait()
+            if failed_first_write:
+                raise HomeAssistantError("offline")
+
+    hub.async_write_registers_multi.side_effect = write
+    first = asyncio.create_task(hub._async_run_autorepeats(power.interval))
+    await started.wait()
+    second = asyncio.create_task(hub._async_run_autorepeats(settings.interval))
+    try:
+        await asyncio.sleep(0)
+        assert hub.async_write_registers_multi.await_count == 1
+    finally:
+        release.set()
+        await asyncio.gather(first, second)
+    assert hub.async_write_registers_multi.await_count == (2 if failed_first_write else 1)
+    assert function.call_count == 1
+    assert function.call_args.args[0] == BUTTONREPEAT_POST
+    assert hub._autorepeat_pending_stops == {}
+    assert hub.data["_repeatUntil"]["powercontrolmode8_trigger"] == 0
+
+
+@pytest.mark.asyncio
 async def test_failed_cleanup_is_retried_without_recomputing_filter() -> None:
     hub, power, settings, values, function = setup_vpp()
     await prime(hub, power, settings)
