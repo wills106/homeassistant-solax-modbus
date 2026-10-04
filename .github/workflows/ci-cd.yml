@@ -99,35 +99,79 @@ jobs:
         run: uv run pytest -m "not slow"
 
   test-comprehensive:
-    name: Test Comprehensive (HA ${{ matrix.homeassistant-version }}, Python ${{ matrix.python-version }})
+    name: Test Minimum Supported HA
     needs: [mypy]
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - python-version: "3.12"
-            homeassistant-version: "2025.1.0"
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
 
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: uv sync --locked --all-groups
-
-      - name: Verify Home Assistant version
+      - name: Select minimum Home Assistant and Python
+        id: minimum
         env:
-          EXPECTED_HA: ${{ matrix.homeassistant-version }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          uv run --locked python -c "from importlib.metadata import version; import os; actual = version('homeassistant'); print(f'Home Assistant {actual}'); assert actual == os.environ['EXPECTED_HA']"
+          echo "MINIMUM_ENV=$RUNNER_TEMP/ha-minimum-env" >> "$GITHUB_ENV"
+          echo "MINIMUM_RECORD=$RUNNER_TEMP/ha-minimum-record" >> "$GITHUB_ENV"
+          python3 scripts/resolve_current_ha.py --target minimum --output-dir "$RUNNER_TEMP/ha-minimum-record"
+
+      - name: Resolve and install minimum environment
+        env:
+          MINIMUM_PYTHON: ${{ steps.minimum.outputs.python }}
+        run: |
+          if [[ "$MINIMUM_PYTHON" =~ ^3\.[0-9]+$ ]]; then
+            uv python install --upgrade --no-bin "$MINIMUM_PYTHON"
+          else
+            uv python install --no-bin "$MINIMUM_PYTHON"
+          fi
+          uv venv --managed-python --python "$MINIMUM_PYTHON" "$MINIMUM_ENV"
+          if ! uv pip compile --no-config --python "$MINIMUM_ENV/bin/python" --upgrade "$MINIMUM_RECORD/requirements.in" -o "$MINIMUM_RECORD/requirements.txt"; then
+            echo "::error::Cannot resolve test dependencies for the exact minimum HA declared in hacs.json; no other HA version is substituted."
+            exit 1
+          fi
+          uv pip sync --no-config --python "$MINIMUM_ENV/bin/python" "$MINIMUM_RECORD/requirements.txt"
+
+      - name: Verify and record installed versions
+        env:
+          EXPECTED_HA: ${{ steps.minimum.outputs.homeassistant }}
+          EXPECTED_PYTHON: ${{ steps.minimum.outputs.python }}
+        run: |
+          "$MINIMUM_ENV/bin/python" - <<'PY'
+          import json
+          import os
+          import platform
+          from importlib.metadata import version
+          from pathlib import Path
+
+          versions = {
+              "python": platform.python_version(),
+              "homeassistant": version("homeassistant"),
+              "test_plugin": version("pytest-homeassistant-custom-component"),
+          }
+          Path(os.environ["MINIMUM_RECORD"], "installed.json").write_text(json.dumps(versions, indent=2) + "\n")
+          print(json.dumps(versions, indent=2))
+          assert versions["homeassistant"] == os.environ["EXPECTED_HA"]
+          expected = os.environ["EXPECTED_PYTHON"].split(".")
+          assert versions["python"].split(".")[:len(expected)] == expected
+          PY
+          uv pip freeze --python "$MINIMUM_ENV/bin/python" > "$MINIMUM_RECORD/installed-requirements.txt"
+          uv --version > "$MINIMUM_RECORD/uv-version.txt"
 
       - name: Run Full Tests
-        run: uv run pytest
+        run: '"$MINIMUM_ENV/bin/python" -m pytest'
+
+      - name: Upload minimum environment record
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: minimum-ha-environment
+          path: ${{ runner.temp }}/ha-minimum-record
 
   test-current:
     name: Test Current Stable HA

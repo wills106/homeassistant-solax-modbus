@@ -1,4 +1,4 @@
-"""Select stable HA and its Python without changing the project's lockfile."""
+"""Select current or minimum stable HA without changing the project's lockfile."""
 
 import argparse
 import json
@@ -7,6 +7,7 @@ import re
 import tomllib
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 RELEASE_URL = "https://api.github.com/repos/home-assistant/core/releases/latest"
@@ -38,6 +39,30 @@ def python_version(text: str) -> str:
     return version
 
 
+def legacy_python(text: str) -> str:
+    """Select the lowest supported Python series for older HA release tags."""
+    requirement = tomllib.loads(text)["project"]["requires-python"]
+    match = re.fullmatch(r">=3\.(\d+)\.\d+", requirement)
+    if not match:
+        raise ValueError("Unsupported legacy HA Python requirement")
+    # uv selects the latest patch in this series; record the actual patch in CI.
+    return f"3.{match[1]}"
+
+
+def select_python(tag: str, *, minimum: bool = False) -> tuple[str, str]:
+    """Only an absent legacy file permits using the tagged Python requirement."""
+    base = f"https://raw.githubusercontent.com/home-assistant/core/{tag}"
+    source = f"{base}/.python-version"
+    try:
+        text = read_url(source)
+    except HTTPError as error:
+        if not minimum or error.code != 404:
+            raise
+        source = f"{base}/pyproject.toml"
+        return legacy_python(read_url(source)), source
+    return python_version(text), source
+
+
 def current_requirements(project: dict[str, Any], tag: str) -> list[str]:
     """Keep project requirements but let the plugin select compatible test tools."""
     groups = project["dependency-groups"]
@@ -54,14 +79,25 @@ def current_requirements(project: dict[str, Any], tag: str) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--target", choices=("current", "minimum"), default="current")
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    tag = stable_tag(json.loads(read_url(RELEASE_URL)))
-    source = f"https://raw.githubusercontent.com/home-assistant/core/{tag}/.python-version"
-    selected_python = python_version(read_url(source))
+    minimum = args.target == "minimum"
+    if minimum:
+        metadata = json.loads(Path("hacs.json").read_text(encoding="utf-8"))
+        tag = stable_tag({"tag_name": metadata.get("homeassistant")})
+    else:
+        tag = stable_tag(json.loads(read_url(RELEASE_URL)))
+    selected_python, source = select_python(tag, minimum=minimum)
     project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
-    selection = {"homeassistant": tag, "python": selected_python, "release_url": RELEASE_URL, "python_source": source}
+    selection = {
+        "target": args.target,
+        "homeassistant": tag,
+        "python": selected_python,
+        "version_source": "hacs.json" if minimum else RELEASE_URL,
+        "python_source": source,
+    }
     (args.output_dir / "selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
     (args.output_dir / "requirements.in").write_text("\n".join(current_requirements(project, tag)) + "\n", encoding="utf-8")
     print(json.dumps(selection, indent=2))

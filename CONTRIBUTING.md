@@ -86,23 +86,35 @@ CI runs the full suite against the minimum supported HA and the latest stable HA
 
 | Purpose | Python | Home Assistant | Test plugin |
 | ------- | ------ | -------------- | ----------- |
-| Minimum supported | 3.12 | 2025.1.0 | 0.13.201 |
+| Minimum supported | From that HA tag's metadata | `hacs.json.homeassistant` | Resolved to match that exact HA |
 | Current stable | From that HA release's `.python-version` | Latest published stable Core release | Resolved to match that exact HA |
 | Locked tooling baseline | 3.14 | 2026.9.4 | 0.13.367 |
 
-The HA and test-plugin pins in `pyproject.toml` select the minimum or locked
-tooling baseline by Python version. Quality checks and baseline quick tests use 3.14;
+The HA and test-plugin pins in `pyproject.toml` retain local locked environments;
+CI compatibility jobs resolve their HA independently. Quality checks and baseline quick tests use 3.14;
 Ruff retains a 3.12 source target to preserve minimum-version compatibility.
 Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
 Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
 are handled by pytest-asyncio.
 
-Reproduce the locked baseline and minimum locally:
+Reproduce the locked local environments (the 3.12 environment is a historical
+minimum baseline, not automatically updated from HACS):
 
 ```bash
 make ci-full PYTHON=3.14
 make sync test-all PYTHON=3.12
 ```
+
+`Test Minimum Supported HA` reads the exact `homeassistant` version from
+`hacs.json` using `scripts/resolve_current_ha.py --target minimum`. It uses that
+tag's `.python-version` if present. Older tags without that file use the lowest
+Python series from the tagged `pyproject.toml`'s `requires-python`, with the latest
+available patch selected by uv. Only a 404 for the missing legacy file allows
+this alternative; other metadata errors fail the job. A missing or invalid HACS
+minimum also fails, without silently choosing a different HA version.
+The compatible test plugin and dependencies are resolved into a separate
+environment, without changing `uv.lock`. The existing full-suite triggers remain:
+PRs, `main`, schedules and manual dispatch.
 
 `Test Current Stable HA` resolves the latest non-preview GitHub Core release at
 the start of every run using `scripts/resolve_current_ha.py`. It uses the exact
@@ -113,7 +125,7 @@ A missing compatible plugin or unavailable release/Python metadata fails the job
 explicitly, without substituting an older HA. Branch pushes run non-slow tests;
 PRs, `main`, schedules and manual dispatch run the full suite.
 
-Every current-HA job uploads `current-ha-environment`, including selected and
+The compatibility jobs upload `minimum-ha-environment` or `current-ha-environment`, including selected and
 installed versions, uv version, resolved requirements and installed package pins.
 To reproduce a run, download its artifact, use the Python in `installed.json`,
 and run (from the repository root, using the downloaded requirements path):
@@ -126,7 +138,7 @@ tools/current-ha-env/bin/python -m pytest
 
 The existing daily schedule detects new stable HA releases automatically. The
 locked tooling baseline can be updated separately when desired. Change the minimum
-only when `hacs.json` changes. Early Python 3.14 patches below 3.14.2 remain excluded
+in `hacs.json`; the minimum CI environment follows automatically. Early Python 3.14 patches below 3.14.2 remain excluded
 from project lock resolution because the tooling baseline requires 3.14.2+.
 
 ## Code style
