@@ -442,7 +442,8 @@ async def test_concurrent_cleanup_waits_for_ack_before_retry(cause: str, failed_
 
 
 @pytest.mark.asyncio
-async def test_failed_cleanup_is_retried_without_recomputing_filter() -> None:
+@pytest.mark.parametrize("rebuild", [False, True], ids=["normal", "rebuild"])
+async def test_failed_cleanup_is_retried_without_recomputing_filter(rebuild: bool) -> None:
     hub, power, settings, values, function = setup_vpp()
     await prime(hub, power, settings)
     await hub._refresh_interval_group_once(power)
@@ -453,7 +454,10 @@ async def test_failed_cleanup_is_retried_without_recomputing_filter() -> None:
     assert hub.data["remotecontrol_current_pushmode_power"] is None
     assert "powercontrolmode8_trigger" in hub._autorepeat_pending_stops
     calls = function.call_count
+    if rebuild:
+        hub.rebuild_blocks({})
     await hub._refresh_interval_group_once(settings)
     assert function.call_count == calls
+    assert hub.async_write_registers_multi.await_count == 3
     assert hub._autorepeat_pending_stops == {}
     assert hub.async_write_registers_multi.call_args.kwargs["payload"] == [("remotecontrol_power_control_mode", "Disabled")]

@@ -677,6 +677,8 @@ class SolaXModbusHub:
         self._lock = asyncio.Lock()
         self._poll_data_lock = asyncio.Lock()
         self._autorepeat_lock = asyncio.Lock()
+        self._autorepeat_payloads: dict[str, tuple[Any, Any]] = {}
+        self._autorepeat_pending_stops: dict[str, Any] = {}
         self._computed_input_observations: dict[str, InputObservation] = {}
         self._pending_input_observations: dict[str, InputObservation] | None = None
         self._name: str = name
@@ -3078,6 +3080,7 @@ class SolaXModbusHub:
         self._computed_source_snapshots = {}
         self._computed_input_observations = {}
         self._autorepeat_payloads = {}
+        # Unacknowledged stop writes survive rebuilds until the transport confirms them.
         _LOGGER.debug("%s: rebuilding groups and blocks - pre: %s", self._name, initial_groups.keys())
         self.initial_groups = initial_groups
         for interval, interval_group in initial_groups.items():

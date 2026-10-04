@@ -58,9 +58,10 @@ The available fields are:
 - `readiness_validator`: optional domain-specific validation after the generic
   checks. It receives the source data dictionary and must return a boolean.
 - `dependency_selector`: select `(required, optional)` sets from filtered data
-  and applicable keys, replacing the static required/alternative gate. Static
-  declarations still list every possible input for ordering and polling;
-  unused inputs are removed before calculation.
+  and applicable keys, replacing the static readiness gate. Selected required
+  keys remain mandatory even when absent from the active descriptions or data.
+  Static declarations still list every possible input for ordering, polling and
+  input filtering; unused inputs are removed before calculation.
 - `recompute_each_poll`: use only for time-dependent calculations or values
   maintained by local control code, whose result can change without a Modbus
   dependency becoming fresh.
@@ -97,9 +98,10 @@ from independently scheduled groups/hubs are bounded in age, not simultaneous
 physical measurements. No data dictionary or freshness set is modified by the
 input overlay. `force=True` is not used to accept cross-hub cache data.
 
-Dependencies not present in the active inverter's description set or data are
-ignored. This lets one description cover model variants while still requiring
-every input that is applicable to the detected inverter.
+Static dependencies not present in the active inverter's description set or
+data are ignored. This lets one description cover model variants while still
+requiring every applicable input. A selector may deliberately require an absent
+key to keep the result unknown rather than calculate from incomplete inputs.
 
 ## Observation identity and final publication
 
