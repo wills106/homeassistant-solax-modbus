@@ -1227,7 +1227,9 @@ class SolaXModbusHub:
             )
             return
 
-        device_key = self.device_group_key(sensor.device_info)
+        # Current HA also returns ChildDeviceInfo; this helper only reads identifiers,
+        # shared by both types. Avoid importing ChildDeviceInfo on older supported HA.
+        device_key = self.device_group_key(cast(DeviceInfo, sensor.device_info))
         grp = interval_group.device_groups.setdefault(device_key, empty_hub_device_group_lambda())
         _LOGGER.debug("%s: adding sensor %s available: %s ", self._name, sensor.entity_description.key, sensor._attr_available)
         grp.sensors.append(sensor)

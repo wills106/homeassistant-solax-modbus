@@ -6,18 +6,22 @@
 
 .DEFAULT_GOAL := help
 
+# Run quality checks on current HA's Python; use PYTHON=3.12 for minimum HA tests.
+PYTHON ?= 3.14
+export UV_PYTHON := $(PYTHON)
+
 .PHONY: help
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: setup
 setup: ## Install dependencies (matching CI) and install pre-commit git hooks
-	uv sync --all-groups
+	uv sync --locked --all-groups
 	uv run pre-commit install
 
 .PHONY: sync
 sync: ## Re-sync dependencies to match uv.lock (fixes local/CI drift)
-	uv sync --all-groups
+	uv sync --locked --all-groups
 
 .PHONY: lint
 lint: ## Run pre-commit checks (codespell, mypy, ruff, ruff format) on all files
@@ -48,14 +52,14 @@ check: ## Fast local gate: lint + mypy + quick tests (no dependency re-sync)
 
 .PHONY: ci
 ci: ## Full CI pipeline locally: sync + lint + mypy + quick tests
-	uv sync --all-groups
+	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
 	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest -m "not slow"
 
 .PHONY: ci-full
 ci-full: ## Full CI pipeline locally including the comprehensive test suite
-	uv sync --all-groups
+	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
 	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest

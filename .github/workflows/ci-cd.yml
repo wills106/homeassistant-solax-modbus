@@ -23,9 +23,11 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.14"
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
 
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files --show-diff-on-failure
@@ -41,10 +43,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
 
       - name: Run mypy type checking
         run: |
@@ -80,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.14"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
@@ -91,19 +93,23 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
 
       - name: Run Quick Tests
         run: uv run pytest -m "not slow"
 
   test-comprehensive:
-    name: Test Comprehensive
+    name: Test Comprehensive (HA ${{ matrix.homeassistant-version }}, Python ${{ matrix.python-version }})
     needs: [mypy]
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        include:
+          - python-version: "3.12"
+            homeassistant-version: "2025.1.0"
+          - python-version: "3.14"
+            homeassistant-version: "2026.9.4"
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
@@ -114,7 +120,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
+
+      - name: Verify Home Assistant version
+        env:
+          EXPECTED_HA: ${{ matrix.homeassistant-version }}
+        run: |
+          uv run --locked python -c "from importlib.metadata import version; import os; actual = version('homeassistant'); print(f'Home Assistant {actual}'); assert actual == os.environ['EXPECTED_HA']"
 
       - name: Run Full Tests
         run: uv run pytest

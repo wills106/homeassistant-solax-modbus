@@ -12,7 +12,7 @@ request.
 
 ## Prerequisites
 
-- Python **3.12+**
+- Python **3.14.2+** for current HA checks (Python **3.12** for minimum HA tests)
 - [uv](https://docs.astral.sh/uv/) — the package manager used by this project
 - `make` (for the convenience targets below)
 
@@ -30,7 +30,7 @@ make setup
 `make setup` is equivalent to:
 
 ```bash
-uv sync --all-groups
+UV_PYTHON=3.14 uv sync --locked --all-groups
 uv run pre-commit install
 ```
 
@@ -77,7 +77,36 @@ make sync
 ```
 
 This reinstalls the exact pinned versions from `uv.lock`, which is the single
-source of truth for dependency versions.
+source of truth for dependency versions. `--locked` fails if the lockfile needs
+updating; after an intentional dependency change, run `uv lock` and review the diff.
+
+## Home Assistant compatibility
+
+CI runs the full suite against two explicit environments:
+
+| Purpose | Python | Home Assistant | Test plugin |
+| ------- | ------ | -------------- | ----------- |
+| Minimum supported | 3.12 | 2025.1.0 | 0.13.201 |
+| Current stable | 3.14 | 2026.9.4 | 0.13.367 |
+
+The HA and test-plugin pins in `pyproject.toml` select the corresponding
+environment by Python version. Quality checks and quick branch tests use 3.14;
+Ruff retains a 3.12 source target to preserve minimum-version compatibility.
+Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
+Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
+are handled by pytest-asyncio.
+
+Reproduce both full-suite jobs locally:
+
+```bash
+make ci-full PYTHON=3.14
+make sync test-all PYTHON=3.12
+```
+
+When updating current HA, update its matching test plugin, CI matrix and this
+table together, regenerate `uv.lock`, and run both suites. Change the minimum
+only when the requirement in `hacs.json` changes. Early Python 3.14 patches
+below 3.14.2 are excluded from lock resolution because current HA requires 3.14.2+.
 
 ## Code style
 
@@ -105,8 +134,9 @@ The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
 2. **Type Check** — mypy strict mode
 3. **HACS Validation** — HACS action
 4. **Hassfest Validation** — Home Assistant validation
-5. **Tests** — quick (non-slow) on branch pushes, comprehensive (all tests)
-   on pull requests, `main`, and schedule
+5. **Tests** — quick (non-slow) on current HA for branch pushes, comprehensive
+   (all tests) on minimum and current HA for pull requests, `main`, schedule,
+   and manual dispatch
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).
