@@ -44,8 +44,15 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         "battery_1_capacity_charge": 80,
         "battery_2_capacity_charge": 80,
         "parallel_setting": "Free",
+        "battery_charge_max_current": 20,
     }
-    slow_keys = {"battery_total_capacity_charge", "battery_1_capacity_charge", "battery_2_capacity_charge", "parallel_setting"}
+    slow_keys = {
+        "battery_total_capacity_charge",
+        "battery_1_capacity_charge",
+        "battery_2_capacity_charge",
+        "parallel_setting",
+        "battery_charge_max_current",
+    }
     hub.sensorDescriptions = {
         key: replace(
             next(d for d in SENSOR_TYPES_MAIN if d.key == key and d.register >= 0),

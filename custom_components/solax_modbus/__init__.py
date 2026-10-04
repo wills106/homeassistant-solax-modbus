@@ -2809,7 +2809,7 @@ class SolaXModbusHub:
             if key in getattr(self, "writeLocals", {}):
                 continue
             sample = self._accepted_input_sample(key, include_pending=False)
-            if sample is None:
+            if sample is None or not self._control_input_valid(key):
                 data.pop(key, None)
             else:
                 data[key] = sample.value
@@ -2859,9 +2859,10 @@ class SolaXModbusHub:
                 pending[descr.key] = payload
                 self._autorepeat_pending_stops = pending
             return payload
-        # The descriptions list all inputs across sub-modes. Only topology and
-        # model availability select required measurements, never controller math.
+        # Optional corrections never retain invalid or unaccepted cached values.
         dependencies = set(descr.depends_on or ()) | set(descr.autorepeat_dependencies)
+        optional = set(descr.autorepeat_optional_dependencies)
+        dependencies.update(optional)
         topologies = descr.autorepeat_parallel_dependencies
         if topologies is not None:
             dependencies.update(key for keys in topologies.values() for key in keys)
@@ -2878,12 +2879,15 @@ class SolaXModbusHub:
         )
         if not stopping and topologies is not None:
             required.update(topologies[parallel])
-        ready = all(self._control_input_valid(key) for key in required)
+        ready = all(key in source and self._control_input_valid(key) for key in required)
         if not disabled and self._autorepeat_input_installed("parallel_setting"):
             ready = ready and self._control_input_valid("parallel_setting")
         if not ready:
             self.data["_repeatUntil"][descr.key] = 0
-            _LOGGER.warning("%s: stopping %s because a required control input is invalid", self._name, descr.key)
+            invalid = {key for key in required if key not in source or not self._control_input_valid(key)}
+            if self._autorepeat_input_installed("parallel_setting") and not self._control_input_valid("parallel_setting"):
+                invalid.add("parallel_setting")
+            _LOGGER.warning("%s: stopping %s because a required control input is invalid: %s", self._name, descr.key, sorted(invalid))
             return self.compute_autorepeat_payload(BUTTONREPEAT_POST, descr)
         # Explicit disable and unsupported topology need no measurement owner.
         if phase == BUTTONREPEAT_LOOP and required and (interval is None or interval != self._autorepeat_interval(descr, required)):
@@ -2896,7 +2900,8 @@ class SolaXModbusHub:
             and not key.startswith("remotecontrol_current_")
             and key != "remotecontrol_autorepeat_remaining"
         }
-        signature = (self._observed_inputs(required, include_pending=False), local)
+        used = required | {key for key in optional if key in source}
+        signature = (self._observed_inputs(used, include_pending=False), local)
         cached = getattr(self, "_autorepeat_payloads", {})
         previous = cached.get(descr.key)
         if phase == BUTTONREPEAT_LOOP and previous is not None and previous[0] == signature:

@@ -133,7 +133,7 @@ async def test_bms_fallback_selects_real_current_and_voltage(battery: int, bms_c
     ],
 )
 @pytest.mark.parametrize(("pv", "grid"), [(0, -1000), (40000, 25000)])
-async def test_fixed_inputs_reject_unread_installed_bms_limits_in_every_submode(mode: str, pv: int, grid: int) -> None:
+async def test_missing_required_charge_current_stops_every_submode(mode: str, pv: int, grid: int) -> None:
     hub, power, settings, values, function = setup_vpp()
     hub.data["remotecontrol_power_control_mode"] = mode
     values.update(pv_power_1=pv, measured_power=grid)
@@ -141,13 +141,14 @@ async def test_fixed_inputs_reject_unread_installed_bms_limits_in_every_submode(
         hub.sensorDescriptions[key] = computed(key)
         hub.data[key] = 8000
     await prime(hub, power, settings)
+    hub._computed_input_observations.pop("battery_charge_max_current")
     await hub._refresh_interval_group_once(power)
     assert function.call_args.args[0] == BUTTONREPEAT_POST
     assert hub.data["remotecontrol_current_pushmode_power"] is None
 
 
 @pytest.mark.asyncio
-async def test_fixed_inputs_require_installed_individual_limits_even_with_valid_total() -> None:
+async def test_valid_total_charge_limit_does_not_require_unused_individual_limits() -> None:
     hub, power, settings, values, function = setup_vpp()
     key = "battery_max_charge_power"
     hub.sensorDescriptions[key] = replace(next(d for d in SENSOR_TYPES_MAIN if d.key == key), scan_group="scan_interval")
@@ -161,8 +162,9 @@ async def test_fixed_inputs_require_installed_individual_limits_even_with_valid_
     await prime(hub, power, settings)
     await hub._refresh_interval_group_once(power)
     assert hub.data[key] == 6000
-    assert function.call_args.args[0] == BUTTONREPEAT_POST
-    assert hub.data["remotecontrol_current_pushmode_power"] is None
+    assert function.call_args.args[0] != BUTTONREPEAT_POST
+    assert "bms_max_charge" not in function.call_args.args[2]
+    assert "bms_2_max_charge" not in function.call_args.args[2]
 
 
 @pytest.mark.asyncio

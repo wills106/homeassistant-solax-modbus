@@ -72,7 +72,7 @@ async def test_declared_readbacks_require_accepted_data(description_type: Any, r
     hub, power, settings, _values, function = setup_vpp()
     await prime(hub, power, settings)
     hub.data["_repeatUntil"].clear()
-    key = "battery_charge_max_current"
+    key = "battery_charge_upper_soc"
     description = description_type(key=key, register=register)
     entities = "numberEntities" if description_type is BaseModbusNumberEntityDescription else "selectEntities"
     setattr(hub, entities, {key: SimpleNamespace(entity_description=description)})
@@ -94,7 +94,7 @@ async def test_declared_readbacks_require_accepted_data(description_type: Any, r
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sample_state", ["unread", "invalid", "expired", "zero"])
-async def test_mode8_validates_its_computed_grid_export_input(sample_state: str) -> None:
+async def test_mode8_omits_invalid_optional_grid_export_input(sample_state: str) -> None:
     hub, power, settings, _values, function = setup_vpp()
     await prime(hub, power, settings)
     hub.data["_repeatUntil"].clear()
@@ -108,10 +108,12 @@ async def test_mode8_validates_its_computed_grid_export_input(sample_state: str)
         )
     descr = hub.computedEntities["powercontrolmode8_trigger"]
     await SolaXModbusButton("solax", hub, 1, {}, descr).async_press()
-    assert function.call_args.args[0] == (BUTTONREPEAT_FIRST if sample_state == "zero" else BUTTONREPEAT_POST)
+    assert function.call_args.args[0] == BUTTONREPEAT_FIRST
     assert hub.data[key] == 999  # Controller views never overwrite shared measurements.
     if sample_state == "zero":
         assert function.call_args.args[2][key] == 0
+    else:
+        assert key not in function.call_args.args[2]
 
 
 @pytest.mark.asyncio

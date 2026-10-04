@@ -20,6 +20,7 @@ async def test_zero_clipping_step_cannot_bypass_invalid_charge_limits() -> None:
         hub.sensorDescriptions[key] = computed(key)
         hub.data[key] = 8000  # A cached number has no accepted measurement.
     await prime(hub, power, settings)
+    hub._computed_input_observations.pop("battery_charge_max_current")
     hub.data.update(
         remotecontrol_power_control_mode="Negative Injection Price",
         remotecontrol_current_pushmode_power=-1000,

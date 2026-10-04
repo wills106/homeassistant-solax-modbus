@@ -152,8 +152,19 @@ Other plugins retain one autorepeat call per interval refresh.
 Both SolaX buttons declare fixed inputs across all sub-modes: `depends_on` is
 mandatory, `autorepeat_dependencies` is required when installed, and
 `autorepeat_parallel_dependencies` defines Free/Master inputs. Free needs no PM
-data. Every installed control input must be valid even when the current regulator
-branch does not use it. Numeric inputs and computed leaves must be finite; zero
+data. `autorepeat_optional_dependencies` contains meter/phase corrections and
+total/individual BMS power limits: only valid, unexpired accepted values reach
+the controller. Unread or invalid optional inputs are omitted even when an old
+value remains in the shared cache. Readiness depends on accepted observations,
+without consulting the entity registry or inferring installed battery channels.
+Mode 8 keeps the model's total charge-current readback required, so a missing
+required current cannot reach the charge helper's guessed 20 A default. The
+unchanged helper retains its precedence: positive total power, sum of available
+individual BMS limits, then total current. A partial BMS sum remains supported;
+an omitted expired channel does not stop control or contribute its old value.
+Used optional observations participate in keepalive caching; expiry/removal and
+recovery invalidate an old payload without renewing deadlines.
+Numeric inputs and computed leaves must be finite; zero
 is valid, booleans and strings are rejected. Local requests (`autorepeat_control`)
 and filter state remain separate. Regulator equations are unchanged.
 
