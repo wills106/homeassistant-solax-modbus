@@ -12,7 +12,7 @@ request.
 
 ## Prerequisites
 
-- Python **3.14.2+** for current HA checks (Python **3.12** for minimum HA tests)
+- Python **3.14.2+** for the locked tooling baseline (Python **3.12** for minimum HA tests)
 - [uv](https://docs.astral.sh/uv/) — the package manager used by this project
 - `make` (for the convenience targets below)
 
@@ -82,31 +82,52 @@ updating; after an intentional dependency change, run `uv lock` and review the d
 
 ## Home Assistant compatibility
 
-CI runs the full suite against two explicit environments:
+CI runs the full suite against the minimum supported HA and the latest stable HA:
 
 | Purpose | Python | Home Assistant | Test plugin |
 | ------- | ------ | -------------- | ----------- |
 | Minimum supported | 3.12 | 2025.1.0 | 0.13.201 |
-| Current stable | 3.14 | 2026.9.4 | 0.13.367 |
+| Current stable | From that HA release's `.python-version` | Latest published stable Core release | Resolved to match that exact HA |
+| Locked tooling baseline | 3.14 | 2026.9.4 | 0.13.367 |
 
-The HA and test-plugin pins in `pyproject.toml` select the corresponding
-environment by Python version. Quality checks and quick branch tests use 3.14;
+The HA and test-plugin pins in `pyproject.toml` select the minimum or locked
+tooling baseline by Python version. Quality checks and baseline quick tests use 3.14;
 Ruff retains a 3.12 source target to preserve minimum-version compatibility.
 Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
 Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
 are handled by pytest-asyncio.
 
-Reproduce both full-suite jobs locally:
+Reproduce the locked baseline and minimum locally:
 
 ```bash
 make ci-full PYTHON=3.14
 make sync test-all PYTHON=3.12
 ```
 
-When updating current HA, update its matching test plugin, CI matrix and this
-table together, regenerate `uv.lock`, and run both suites. Change the minimum
-only when the requirement in `hacs.json` changes. Early Python 3.14 patches
-below 3.14.2 are excluded from lock resolution because current HA requires 3.14.2+.
+`Test Current Stable HA` resolves the latest non-preview GitHub Core release at
+the start of every run using `scripts/resolve_current_ha.py`. It uses the exact
+Python from that release's `.python-version`, pins that HA, and lets uv resolve
+a matching test plugin and compatible project/test dependencies from PyPI.
+It uses a separate environment and requirements file; `uv.lock` is not changed.
+A missing compatible plugin or unavailable release/Python metadata fails the job
+explicitly, without substituting an older HA. Branch pushes run non-slow tests;
+PRs, `main`, schedules and manual dispatch run the full suite.
+
+Every current-HA job uploads `current-ha-environment`, including selected and
+installed versions, uv version, resolved requirements and installed package pins.
+To reproduce a run, download its artifact, use the Python in `installed.json`,
+and run (from the repository root, using the downloaded requirements path):
+
+```bash
+uv venv --python <recorded-python-version> tools/current-ha-env
+uv pip sync --python tools/current-ha-env/bin/python <artifact>/requirements.txt
+tools/current-ha-env/bin/python -m pytest
+```
+
+The existing daily schedule detects new stable HA releases automatically. The
+locked tooling baseline can be updated separately when desired. Change the minimum
+only when `hacs.json` changes. Early Python 3.14 patches below 3.14.2 remain excluded
+from project lock resolution because the tooling baseline requires 3.14.2+.
 
 ## Code style
 
@@ -134,9 +155,10 @@ The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
 2. **Type Check** — mypy strict mode
 3. **HACS Validation** — HACS action
 4. **Hassfest Validation** — Home Assistant validation
-5. **Tests** — quick (non-slow) on current HA for branch pushes, comprehensive
-   (all tests) on minimum and current HA for pull requests, `main`, schedule,
-   and manual dispatch
+5. **Tests** — quick (non-slow) on the locked baseline for branch pushes,
+   comprehensive minimum-HA tests for PRs, `main`, schedule and manual dispatch
+6. **Current stable HA** — resolved automatically on every run; non-slow tests
+   on branch pushes, full tests otherwise; required by the final CI gate
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).
