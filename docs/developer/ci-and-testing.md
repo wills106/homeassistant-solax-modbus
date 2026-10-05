@@ -1,6 +1,7 @@
-# CI/CD Pipeline
+# CI and testing
 
-The `solax_modbus_repo` uses a unified GitHub Actions pipeline to ensure code quality, type safety, and functional correctness.
+This page describes the GitHub Actions workflow, job dependencies and test execution.
+For setup, local commands and test environment configuration, see [Contributing](../contributing.md).
 
 ## Pipeline Architecture
 
@@ -57,16 +58,21 @@ The workflow omits the legacy `comment` input: it remains declared in the
 This matches the [official HACS validation example](https://www.hacs.xyz/docs/publish/action/), which needs no write permissions.
 
 ### 3. Testing
-The shared `test-ha` matrix is configured in `.github/ha-test-environments.json`:
+`scripts/plan_ha_tests.py` selects profiles from `.github/ha-test-environments.json`
+and the test suite for each event. All profiles use the same `test-ha` job steps
+for dependency resolution, version verification, pytest and artifacts:
 
-*   **Branch pushes**: Run non-slow tests once against current stable HA.
-*   **PRs, main branch updates, manual and scheduled runs**: Run the full suite against minimum and current stable HA.
+*   **Branch pushes other than `main`**: Run non-slow tests for profiles with `branch_push: true` (current stable HA by default).
+*   **PRs, `main` updates, manual runs and the daily schedule**: Run the full suite for all configured profiles (minimum/current by default).
 
-Minimum HA comes from `hacs.json.homeassistant`; current HA comes from the latest stable Core release.
-Each environment selects Python from that HA tag's metadata and resolves a matching test plugin.
 Only runtime and test requirements are included; dev tools remain in the locked quality environment.
 The uv cache is keyed by the generated requirements, environment name and selected Python; `--upgrade` still resolves dependencies afresh.
-GitHub CI has no separate locked-baseline pytest job. Additional HA versions can be added to the same matrix.
+The daily schedule detects new stable HA releases automatically. For HA/Python selection
+and adding profiles, see [test environment configuration](../contributing.md#home-assistant-compatibility).
+
+GitHub CI has no separate locked-baseline pytest job. There are currently no tests
+marked `slow`, so quick/full select the same cases; the distinction remains available
+for future slow tests.
 
 ### 4. Final Gate (`all-checks-passed`)
 This job acts as the single source of truth for the pipeline status. It will only succeed if:
@@ -76,14 +82,11 @@ This job acts as the single source of truth for the pipeline status. It will onl
 
 Failed, cancelled or skipped required jobs fail the gate.
 
-## Local Development
+## Local checks and GitHub CI
 
-Before pushing changes, run the standard local checks:
+Local `make ci` uses the locked baseline; GitHub runs pytest in dynamically selected
+HA environments and adds HACS/hassfest validation. A successful local run therefore
+does not guarantee the complete online workflow.
 
-```bash
-make ci
-```
-
-This runs locked quality checks and local locked-baseline quick tests. For the full dynamic HA matrix plus quality checks,
-run `make ci-full`; HACS/hassfest validation runs separately on GitHub. See [CONTRIBUTING.md](../../CONTRIBUTING.md)
-for individual commands and environment records.
+Local commands, including the full dynamic matrix, are documented in
+[Contributing](../contributing.md#before-committing-opening-a-pr).

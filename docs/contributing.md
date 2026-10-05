@@ -53,10 +53,8 @@ This synchronizes dependencies from `uv.lock`, runs pre-commit on all files
 on the locked baseline. The installed commit hook runs applicable quality checks
 on staged changes automatically; `make ci` also verifies the baseline tests.
 
-`make ci` runs the locked quality checks used in GitHub CI and adds local
-locked-baseline tests. A successful local run does not guarantee the complete
-online workflow: GitHub runs pytest in dynamically resolved HA environments
-and also runs HACS/hassfest validation.
+See [CI and testing](developer/ci-and-testing.md#local-checks-and-github-ci)
+for the differences between local checks and the complete GitHub workflow.
 
 Add or update tests for changed behaviour where applicable and describe relevant
 testing in the PR. Running the full HA matrix locally with `make ci-full` is
@@ -75,8 +73,7 @@ This synchronizes the locked quality environment, runs pre-commit (including
 mypy), checks baseline freshness, then runs the full suite in every configured
 HA environment. The freshness check is advisory. `ci-full` always selects
 `HA_ENVIRONMENT=all` and `HA_SUITE=full`, even if the caller sets narrower values.
-It does not add a separate locked-baseline pytest run: GitHub CI uses the dynamic
-HA matrix for all tests. Locked-baseline pytest remains available locally.
+This command does not also run locked-baseline pytest; use `make test` or `make test-all` for that.
 
 HACS and hassfest validation run separately in GitHub Actions; `ci-full` covers
 the local Python checks, not those container/GitHub validations.
@@ -118,7 +115,7 @@ updating; after an intentional dependency change, run `uv lock` and review the d
 
 ## Home Assistant compatibility
 
-CI runs the full suite against the minimum supported HA and the latest stable HA:
+The project provides the following Home Assistant test environments:
 
 | Purpose | Python | Home Assistant | Test plugin |
 | ------- | ------ | -------------- | ----------- |
@@ -189,11 +186,9 @@ make sync test-all PYTHON=3.14
 make sync test-all PYTHON=3.12
 ```
 
-The shared `Test HA` matrix is declared in `.github/ha-test-environments.json`.
-`scripts/plan_ha_tests.py` selects its entries and suite for the event. Each entry
-uses the same workflow steps for Python, dependency resolution, verification,
-tests and artifacts. `fail-fast: false` lets every selected environment finish;
-all selected entries must succeed for the final CI gate to pass.
+Configure the shared HA test profiles in `.github/ha-test-environments.json`.
+See [CI test execution](developer/ci-and-testing.md#3-testing) for event rules,
+job dependencies and the final gate.
 
 The `minimum` entry reads the exact `homeassistant` version from
 `hacs.json` using `scripts/resolve_ha_environment.py --target minimum`. It uses that
@@ -203,21 +198,10 @@ available patch selected by uv. Only a 404 for the missing legacy file allows
 this alternative; other metadata errors fail the job. A missing or invalid HACS
 minimum also fails, without silently choosing a different HA version.
 The compatible test plugin and dependencies are resolved into a separate
-environment, without changing `uv.lock`. The existing full-suite triggers remain:
-PRs, `main`, schedules and manual dispatch.
+environment, without changing `uv.lock`.
 
-Dynamic environments include project runtime dependencies and test requirements,
-without the `dev` group. Ruff, mypy, codespell and pre-commit stay in the locked
-quality environment. The same resolver prepares local `make test-ha` environments.
-
-GitHub CI explicitly enables uv dependency caching. Quality and Type Check share
-the locked cache; only Quality saves it to avoid competing uploads. HA matrix
-caches use the generated requirements, environment name and selected Python.
-Dependencies are still resolved with `--upgrade` on
-every run. The CI/CD workflow token has only `contents: read`. HACS validation
-results appear in the job's checks and logs; no PR-comment step is configured.
-See [CI/CD Pipeline](docs/developer/cicd-pipeline.md) for the HACS action's legacy
-`comment` input and permission details.
+Caching, workflow permissions and HACS validation are documented in
+[CI and testing](developer/ci-and-testing.md#stages-and-jobs).
 
 The `current` entry resolves the latest non-preview GitHub Core release at
 the start of every run using `scripts/resolve_ha_environment.py --target current`. It uses the exact
@@ -225,8 +209,7 @@ Python from that release's `.python-version`, pins that HA, and lets uv resolve
 a matching test plugin and compatible project/test dependencies from PyPI.
 It uses a separate environment and requirements file; `uv.lock` is not changed.
 A missing compatible plugin or unavailable release/Python metadata fails the job
-explicitly, without substituting an older HA. Branch pushes run non-slow tests;
-PRs, `main`, schedules and manual dispatch run the full suite.
+explicitly, without substituting an older HA.
 
 Add another version by adding an entry to the JSON list, for example:
 
@@ -256,8 +239,7 @@ uv pip sync --python tools/current-ha-env/bin/python <artifact>/requirements.txt
 tools/current-ha-env/bin/python -m pytest
 ```
 
-The existing daily schedule detects new stable HA releases automatically. The
-locked tooling baseline can be updated separately when desired. Change the minimum
+The locked tooling baseline can be updated separately when desired. Change the minimum
 in `hacs.json`; the minimum CI environment follows automatically. Early Python 3.14 patches below 3.14.2 remain excluded
 from project lock resolution because the tooling baseline requires 3.14.2+.
 
@@ -265,7 +247,7 @@ from project lock resolution because the tooling baseline requires 3.14.2+.
 
 - **mypy strict mode** is enforced — every function needs full type
   annotations (parameters *and* return type). See
-  [`pyproject.toml`](pyproject.toml) for the exact configuration.
+  [`pyproject.toml`](https://github.com/wills106/homeassistant-solax-modbus/blob/main/pyproject.toml) for the exact configuration.
 - **ruff** handles linting and formatting (line length 150, double quotes).
   Run `make format` to auto-fix most issues.
 - Follow the existing patterns in the codebase, especially for typed mocks in
@@ -279,29 +261,10 @@ from project lock resolution because the tooling baseline requires 3.14.2+.
 - [ ] Code follows the existing patterns and style (ruff clean)
 - [ ] Changes are minimal and focused on this single concern
 
-## CI pipeline overview
+## GitHub CI
 
-The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
-
-1. **Code Quality** — pre-commit (codespell, ruff, ruff format) plus the advisory
-   baseline check; mypy is skipped here because the parallel Type Check job runs it
-2. **Type Check** — mypy strict mode, once per workflow run
-3. **HACS Validation** — HACS action
-4. **Hassfest Validation** — Home Assistant validation
-5. **HA test matrix** — the same test job for all selected environments: current
-   non-slow tests on branch pushes; minimum/current full tests for PRs, `main`,
-   schedule and manual dispatch; additional versions configured in the JSON list
-
-Code Quality, Type Check, HACS, hassfest and the matrix planner start independently.
-Tests wait for Code Quality and Type Check; the dynamic HA matrix also waits for
-the planner. The final gate requires quality, types, HACS, hassfest and all selected
-tests to succeed. This keeps failures blocking while avoiding serial duplicate
-type checks. Validation check names and the existing event-to-suite rules are preserved.
-
-Branch pushes run current HA quick tests once through the shared matrix; there
-is no separate locked-baseline pytest job. There are currently no tests marked
-`slow`, so quick/full select the same cases; the distinction remains available
-for future slow tests.
+See [CI and testing](developer/ci-and-testing.md) for the workflow graph, required
+jobs, event rules, caching and final gate.
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).

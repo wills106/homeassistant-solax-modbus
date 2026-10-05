@@ -1,6 +1,8 @@
-# Developer guide
+# Integration internals
 
 This section describes some internal mechanisms of this integration. It is mainly meant for plugin developers, but can also be used by the integration core developers.
+
+For development environment setup, local checks and the PR workflow, see [Contributing](../contributing.md).
 
 Following sections will appear some day:
 ## Attributes for entities
