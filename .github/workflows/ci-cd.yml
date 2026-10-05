@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-groups
 
+      - name: Check quality baseline freshness
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run --locked python -m scripts.check_ha_baseline
+
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files --show-diff-on-failure
 

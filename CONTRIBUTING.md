@@ -101,6 +101,21 @@ Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
 Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
 are handled by pytest-asyncio.
 
+After installing the locked quality environment, CI checks its installed HA and
+Python against the latest stable Core release using the shared metadata resolver.
+The advisory step emits warning annotations and a job summary when a newer HA is
+available, the Python series differs, the runtime patch is older than HA's selected
+patch, or mypy targets a different Python series. A newer runtime patch in the same
+series is accepted. Metadata lookup failures also produce a warning; this step
+does not block CI or update dependencies automatically. Review the HA/test-plugin
+pins, Python settings and `uv.lock` in a separate, validated baseline update.
+
+Run the same advisory check locally after `make sync`:
+
+```bash
+uv run --locked python -m scripts.check_ha_baseline
+```
+
 Run the same dynamically selected environments locally from the repository root
 (Linux or WSL, matching the CI runner), without requiring `make`:
 
