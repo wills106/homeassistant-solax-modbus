@@ -4,30 +4,31 @@ The `solax_modbus_repo` uses a unified GitHub Actions pipeline to ensure code qu
 
 ## Pipeline Architecture
 
-The pipeline is defined in `.github/workflows/ci-cd.yml` and follows a **Fail-Fast** strategy across four stages.
+The pipeline is defined in `.github/workflows/ci-cd.yml`. Quality, static validation and matrix planning run independently.
+Tests wait for quality, type checking and the matrix plan. All selected HA environments finish independently (`fail-fast: false`).
 
 ```mermaid
 graph TD
-    subgraph Stage 1: Quality
+    subgraph Independent validation and planning
     Q[Code Quality]
-    end
-
-    subgraph Stage 2: Static Analysis
-    Q --> M[Type Check - mypy]
-    Q --> H1[HACS Validation]
-    Q --> H2[Hassfest Validation]
+    M[Type Check - mypy]
+    H1[HACS Validation]
+    H2[Hassfest Validation]
+    P[Plan HA Test Environments]
     end
 
     subgraph Stage 3: Testing
-    M --> TQ[Test Quick]
-    M --> TC[Test Comprehensive]
+    Q --> TH[Test HA matrix]
+    M --> TH
+    P --> TH
     end
 
     subgraph Stage 4: Gate
     H1 --> ALL[✅ All Checks Passed]
     H2 --> ALL
-    TQ --> ALL
-    TC --> ALL
+    Q --> ALL
+    M --> ALL
+    TH --> ALL
     end
 ```
 
@@ -37,8 +38,9 @@ graph TD
 Runs `pre-commit` checks including:
 *   **Ruff**: Linting and formatting.
 *   **Codespell**: Spelling checks.
-*   **Yamllint**: YAML syntax validation.
-*   **Gitleaks**: Secret detection.
+
+Strict mypy runs in the parallel Type Check job, so pre-commit skips that hook in CI.
+Both jobs use the quality environment pinned by `uv.lock`. The baseline freshness check is advisory.
 
 ### 2. Static Analysis
 *   **Type Check (`mypy`)**: Runs strict mode type checking on the component and tests.
@@ -46,25 +48,31 @@ Runs `pre-commit` checks including:
 *   **Hassfest Validation (`hassfest`)**: Validates the integration against Home Assistant core standards.
 
 ### 3. Testing
-*   **Test Quick**: Runs non-slow tests on Python 3.12 for every push to feature branches.
-*   **Test Comprehensive**: Runs the full test suite on Python 3.12 and 3.13 for PRs, main branch updates, and scheduled runs.
+The shared `test-ha` matrix is configured in `.github/ha-test-environments.json`:
+
+*   **Branch pushes**: Run non-slow tests once against current stable HA.
+*   **PRs, main branch updates, manual and scheduled runs**: Run the full suite against minimum and current stable HA.
+
+Minimum HA comes from `hacs.json.homeassistant`; current HA comes from the latest stable Core release.
+Each environment selects Python from that HA tag's metadata and resolves a matching test plugin.
+GitHub CI has no separate locked-baseline pytest job. Additional HA versions can be added to the same matrix.
 
 ### 4. Final Gate (`all-checks-passed`)
 This job acts as the single source of truth for the pipeline status. It will only succeed if:
-1.  HACS and Hassfest validations pass.
-2.  The relevant test suite (Quick or Comprehensive) passes.
+1.  Code Quality and Type Check pass.
+2.  HACS and Hassfest validations pass.
+3.  Every selected HA test environment passes.
+
+Failed, cancelled or skipped required jobs fail the gate.
 
 ## Local Development
 
-Before pushing changes, you can run most of these checks locally using `uv`:
+Before pushing changes, run the standard local checks:
 
 ```bash
-# Run linting/formatting
-uv run pre-commit run --all-files
-
-# Run type checking
-uv run mypy custom_components/solax_modbus tests --strict
-
-# Run tests
-uv run pytest
+make ci
 ```
+
+This runs locked quality checks and local locked-baseline quick tests. For the full dynamic HA matrix plus quality checks,
+run `make ci-full`; HACS/hassfest validation runs separately on GitHub. See [CONTRIBUTING.md](../../CONTRIBUTING.md)
+for individual commands and environment records.

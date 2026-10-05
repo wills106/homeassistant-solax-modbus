@@ -53,9 +53,10 @@ This synchronizes dependencies from `uv.lock`, runs pre-commit on all files
 on the locked baseline. The installed commit hook runs applicable quality checks
 on staged changes automatically; `make ci` also verifies the baseline tests.
 
-`make ci` reproduces the locked-baseline checks used in GitHub CI. A successful
-local run does not guarantee the complete online workflow: GitHub also tests
-dynamically resolved HA environments and runs HACS/hassfest validation.
+`make ci` runs the locked quality checks used in GitHub CI and adds local
+locked-baseline tests. A successful local run does not guarantee the complete
+online workflow: GitHub runs pytest in dynamically resolved HA environments
+and also runs HACS/hassfest validation.
 
 Add or update tests for changed behaviour where applicable and describe relevant
 testing in the PR. Running the full HA matrix locally with `make ci-full` is
@@ -74,8 +75,8 @@ This synchronizes the locked quality environment, runs pre-commit (including
 mypy), checks baseline freshness, then runs the full suite in every configured
 HA environment. The freshness check is advisory. `ci-full` always selects
 `HA_ENVIRONMENT=all` and `HA_SUITE=full`, even if the caller sets narrower values.
-It does not add a separate locked-baseline pytest run: full GitHub CI uses the
-dynamic HA matrix for tests, while locked baseline tests are a branch-push check.
+It does not add a separate locked-baseline pytest run: GitHub CI uses the dynamic
+HA matrix for all tests. Locked-baseline pytest remains available locally.
 
 HACS and hassfest validation run separately in GitHub Actions; `ci-full` covers
 the local Python checks, not those container/GitHub validations.
@@ -126,7 +127,7 @@ CI runs the full suite against the minimum supported HA and the latest stable HA
 | Locked tooling baseline | 3.14 | 2026.9.4 | 0.13.367 |
 
 The HA and test-plugin pins in `pyproject.toml` retain local locked environments;
-CI compatibility jobs resolve their HA independently. Quality checks and baseline quick tests use 3.14;
+CI compatibility jobs resolve their HA independently. Quality checks and local locked-baseline tests use 3.14;
 Ruff retains a 3.12 source target to preserve minimum-version compatibility.
 Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
 Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
@@ -274,8 +275,7 @@ The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
 2. **Type Check** — mypy strict mode, once per workflow run
 3. **HACS Validation** — HACS action
 4. **Hassfest Validation** — Home Assistant validation
-5. **Baseline quick tests** — non-slow tests on the locked baseline for branch pushes
-6. **HA test matrix** — the same test job for all selected environments: current
+5. **HA test matrix** — the same test job for all selected environments: current
    non-slow tests on branch pushes; minimum/current full tests for PRs, `main`,
    schedule and manual dispatch; additional versions configured in the JSON list
 
@@ -283,13 +283,12 @@ Code Quality, Type Check, HACS, hassfest and the matrix planner start independen
 Tests wait for Code Quality and Type Check; the dynamic HA matrix also waits for
 the planner. The final gate requires quality, types, HACS, hassfest and all selected
 tests to succeed. This keeps failures blocking while avoiding serial duplicate
-type checks. Job/check names and the existing event-to-suite rules are preserved.
+type checks. Validation check names and the existing event-to-suite rules are preserved.
 
-Branch pushes retain both locked baseline quick tests and dynamic current HA
-quick tests: even when the HA version matches, these exercise locked versus freshly
-resolved dependencies and may use different Python patches. There are currently
-no tests marked `slow`, so quick/full select the same cases; the distinction remains
-available for future slow tests.
+Branch pushes run current HA quick tests once through the shared matrix; there
+is no separate locked-baseline pytest job. There are currently no tests marked
+`slow`, so quick/full select the same cases; the distinction remains available
+for future slow tests.
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).

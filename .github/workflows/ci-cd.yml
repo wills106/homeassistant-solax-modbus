@@ -81,29 +81,6 @@ jobs:
       - name: Hassfest Action
         uses: home-assistant/actions/hassfest@master
 
-  test-quick:
-    name: Test Quick
-    needs: [quality, mypy]
-    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.14"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync --locked --all-groups
-
-      - name: Run Quick Tests
-        run: uv run pytest -m "not slow"
-
   test-plan:
     name: Plan HA Test Environments
     runs-on: ubuntu-latest
@@ -209,7 +186,7 @@ jobs:
   all-checks-passed:
     name: ✅ All Checks Passed
     if: always()
-    needs: [quality, mypy, hacs, hassfest, test-quick, test-ha]
+    needs: [quality, mypy, hacs, hassfest, test-ha]
     runs-on: ubuntu-latest
     steps:
       - name: Check all results
@@ -218,22 +195,15 @@ jobs:
           TYPES: ${{ needs.mypy.result }}
           HACS: ${{ needs.hacs.result }}
           HASSFEST: ${{ needs.hassfest.result }}
-          QUICK: ${{ needs.test-quick.result }}
           HA: ${{ needs.test-ha.result }}
-          EXPECT_QUICK: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         run: |
           echo "Code Quality: $QUALITY"
           echo "Type Check: $TYPES"
           echo "HACS: $HACS"
           echo "Hassfest: $HASSFEST"
-          echo "Baseline Quick Tests: $QUICK"
           echo "HA Test Matrix: $HA"
           if [[ "$QUALITY" != "success" || "$TYPES" != "success" || "$HACS" != "success" || "$HASSFEST" != "success" || "$HA" != "success" ]]; then
             echo "❌ Required validation or HA matrix failed, was cancelled or skipped"
-            exit 1
-          fi
-          if [[ "$EXPECT_QUICK" == "true" && "$QUICK" != "success" ]] || [[ "$EXPECT_QUICK" == "false" && "$QUICK" != "skipped" ]]; then
-            echo "❌ Unexpected baseline quick-test result"
             exit 1
           fi
           echo "✅ All required checks passed"

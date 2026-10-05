@@ -38,7 +38,7 @@ format: ## Auto-fix lint issues and format code (ruff)
 	uv run ruff format custom_components/solax_modbus tests
 
 .PHONY: test
-test: ## Run the quick test suite (non-slow tests, same as CI 'Test Quick')
+test: ## Run non-slow tests on the local locked baseline
 	uv run pytest -m "not slow"
 
 .PHONY: test-all
