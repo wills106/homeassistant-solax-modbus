@@ -57,10 +57,11 @@ ci: ## Locked baseline checks: sync + lint + mypy + quick tests
 	uv run pytest -m "not slow"
 
 .PHONY: ci-full
-ci-full: ## Locked baseline checks including the full test suite
-	uv sync --locked --all-groups
-	uv run pre-commit run --all-files --show-diff-on-failure
-	uv run pytest
+ci-full: ## Full local CI: locked quality checks + all dynamic HA full tests (HACS/hassfest run on GitHub)
+	$(MAKE) sync
+	$(MAKE) lint
+	-uv run --locked python -m scripts.check_ha_baseline
+	$(MAKE) test-ha HA_ENVIRONMENT=all HA_SUITE=full
 
 .PHONY: test-ha
 test-ha: ## Dynamic CI HA matrix (HA_ENVIRONMENT=all/minimum/current, HA_SUITE=full/quick)

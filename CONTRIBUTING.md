@@ -1,9 +1,8 @@
 # Contributing to SolaX Modbus
 
 Thank you for contributing! This document explains how to set up your
-development environment and — most importantly — how to make sure your
-changes pass the same checks that run in CI **before** you open a pull
-request.
+development environment and — most importantly — how to run the project's
+local checks **before** you open a pull request.
 
 > **Why this matters:** the CI pipeline runs mypy in *strict* mode, ruff
 > linting/formatting, codespell, HACS and hassfest validation, and the full
@@ -41,16 +40,45 @@ if any check fails.
 `make check`, `make ci` and `make ci-full` run mypy through pre-commit once;
 `make mypy` remains available for a standalone type check.
 
-## Before pushing / opening a PR
+## Before committing / opening a PR
 
-Run the locked quality/baseline checks and the dynamic HA compatibility matrix:
+Run the standard local quality and test checks required by the PR checklist:
 
 ```bash
 make ci
-make test-ha
 ```
 
-HACS and hassfest validation run separately in GitHub Actions.
+This synchronizes dependencies from `uv.lock`, runs pre-commit on all files
+(codespell, strict mypy, Ruff and formatting), and runs the non-slow pytest suite
+on the locked baseline. The installed commit hook runs applicable quality checks
+on staged changes automatically; `make ci` also verifies the baseline tests.
+
+`make ci` reproduces the locked-baseline checks used in GitHub CI. A successful
+local run does not guarantee the complete online workflow: GitHub also tests
+dynamically resolved HA environments and runs HACS/hassfest validation.
+
+Add or update tests for changed behaviour where applicable and describe relevant
+testing in the PR. Running the full HA matrix locally with `make ci-full` is
+additional verification, not a checklist requirement for every commit or PR.
+
+### Additional local CI verification
+
+For broader verification, run the locked quality checks and the full dynamic HA
+compatibility matrix with one command, matching the Python checks of full GitHub CI:
+
+```bash
+make ci-full
+```
+
+This synchronizes the locked quality environment, runs pre-commit (including
+mypy), checks baseline freshness, then runs the full suite in every configured
+HA environment. The freshness check is advisory. `ci-full` always selects
+`HA_ENVIRONMENT=all` and `HA_SUITE=full`, even if the caller sets narrower values.
+It does not add a separate locked-baseline pytest run: full GitHub CI uses the
+dynamic HA matrix for tests, while locked baseline tests are a branch-push check.
+
+HACS and hassfest validation run separately in GitHub Actions; `ci-full` covers
+the local Python checks, not those container/GitHub validations.
 
 For faster iteration while developing (skips the dependency re-sync):
 
@@ -70,7 +98,7 @@ make check
 | `make test-all`| Run the full test suite                                             |
 | `make check`   | lint + mypy + quick tests (fast local gate)                         |
 | `make ci`      | Locked baseline: sync + lint + mypy + quick tests                    |
-| `make ci-full` | Locked baseline checks including the full test suite                  |
+| `make ci-full` | Locked quality checks, baseline advisory and all dynamic HA full tests |
 | `make test-ha` | Dynamic full HA matrix; select with `HA_ENVIRONMENT=minimum/current` |
 
 ## Keeping your environment in sync with CI
@@ -152,11 +180,11 @@ versions and uv version, like the CI artifacts. The project's `.venv` and
 `uv.lock` are not synchronized by this command. Regular `uv sync`, `uv run pytest`
 and `make ci` retain the pinned baseline.
 
-Reproduce the locked local environments (the 3.12 environment is a historical
+Reproduce the locked local test environments (the 3.12 environment is a historical
 minimum baseline, not automatically updated from HACS):
 
 ```bash
-make ci-full PYTHON=3.14
+make sync test-all PYTHON=3.14
 make sync test-all PYTHON=3.12
 ```
 
@@ -231,12 +259,11 @@ from project lock resolution because the tooling baseline requires 3.14.2+.
 
 ## Pull request checklist
 
-- [ ] `make ci` passes locally
-- [ ] `make test-ha` passes against the selected HA compatibility environments
-- [ ] New/changed behaviour is covered by tests
-- [ ] No new mypy errors (strict mode)
-- [ ] Code follows existing patterns and style
-- [ ] Changes are minimal and focused
+- [ ] I ran `make ci` locally and **all checks pass** (pre-commit, mypy strict, tests)
+- [ ] I added or updated tests covering the new/changed behaviour, where applicable
+- [ ] No new mypy errors under strict mode (full type annotations on all new functions)
+- [ ] Code follows the existing patterns and style (ruff clean)
+- [ ] Changes are minimal and focused on this single concern
 
 ## CI pipeline overview
 
