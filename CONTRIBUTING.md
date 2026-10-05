@@ -206,6 +206,16 @@ The compatible test plugin and dependencies are resolved into a separate
 environment, without changing `uv.lock`. The existing full-suite triggers remain:
 PRs, `main`, schedules and manual dispatch.
 
+Dynamic environments include project runtime dependencies and test requirements,
+without the `dev` group. Ruff, mypy, codespell and pre-commit stay in the locked
+quality environment. The same resolver prepares local `make test-ha` environments.
+
+GitHub CI explicitly enables uv dependency caching. Quality and Type Check share
+the locked cache; HA matrix caches use the generated requirements, environment
+name and selected Python. Dependencies are still resolved with `--upgrade` on
+every run. The workflow token has only `contents: read`; HACS validates without
+posting automatic PR comments.
+
 The `current` entry resolves the latest non-preview GitHub Core release at
 the start of every run using `scripts/resolve_ha_environment.py --target current`. It uses the exact
 Python from that release's `.python-version`, pins that HA, and lets uv resolve

@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -25,6 +28,8 @@ jobs:
         uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.14"
+          enable-cache: true
+          cache-suffix: quality
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
@@ -52,6 +57,8 @@ jobs:
         uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.14"
+          enable-cache: true
+          cache-suffix: quality
 
       - name: Install dependencies
         run: uv sync --locked --all-groups
@@ -71,6 +78,8 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
+          # Validation needs no write access or automatic PR comments.
+          comment: false
 
   hassfest:
     name: Hassfest Validation
@@ -97,17 +106,12 @@ jobs:
     name: Test HA (${{ matrix.name }}, ${{ matrix.suite }})
     needs: [quality, mypy, test-plan]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.test-plan.outputs.matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
 
       - name: Select Home Assistant and Python
         id: selected
@@ -120,6 +124,15 @@ jobs:
           echo "HA_ENV=$RUNNER_TEMP/ha-$TEST_NAME-env" >> "$GITHUB_ENV"
           echo "HA_RECORD=$RUNNER_TEMP/ha-$TEST_NAME-record" >> "$GITHUB_ENV"
           python3 scripts/resolve_ha_environment.py --target "$TARGET" --ha-version "$HA_VERSION" --output-dir "$RUNNER_TEMP/ha-$TEST_NAME-record"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: ${{ steps.selected.outputs.python }}
+          enable-cache: true
+          # Selected HA requirements and Python keep matrix caches separate.
+          cache-dependency-glob: ${{ runner.temp }}/ha-${{ matrix.name }}-record/requirements.in
+          cache-suffix: ha-${{ matrix.name }}-${{ steps.selected.outputs.python }}
 
       - name: Resolve and install HA environment
         env:

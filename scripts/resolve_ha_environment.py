@@ -71,9 +71,9 @@ def select_python(tag: str, *, allow_legacy: bool = False) -> tuple[str, str]:
 
 
 def environment_requirements(project: dict[str, Any], tag: str) -> list[str]:
-    """Keep project requirements but let the plugin select compatible test tools."""
+    """Keep runtime/test requirements; quality tools use the locked baseline."""
     groups = project["dependency-groups"]
-    requirements = list(project["project"]["dependencies"]) + list(groups["dev"])
+    requirements = list(project["project"]["dependencies"])
     replaced = {"homeassistant", "pytest-homeassistant-custom-component", "pytest-asyncio"}
     for requirement in groups["test"]:
         name = re.split(r"[\[<>=!~;\s]", requirement, maxsplit=1)[0].lower().replace("_", "-")

@@ -42,7 +42,7 @@ def test_environment_requirements_preserve_project_dependencies_without_old_test
     project = {
         "project": {"dependencies": ["pymodbus>=3.8.3"]},
         "dependency-groups": {
-            "dev": ["ruff>=0.14.14"],
+            "dev": ["ruff>=0.14.14", "mypy>=1.8.0", "codespell>=2.2.6", "pre-commit>=4.0.0"],
             "test": [
                 "pytest>=8.0.0",
                 "homeassistant==2025.1.0; python_version < '3.14'",
@@ -54,7 +54,7 @@ def test_environment_requirements_preserve_project_dependencies_without_old_test
     }
     requirements = environment_requirements(project, "2026.9.4")
     assert "pymodbus>=3.8.3" in requirements
-    assert "ruff>=0.14.14" in requirements
+    assert set(project["dependency-groups"]["dev"]).isdisjoint(requirements)
     assert "pytest>=8.0.0" in requirements
     assert "pytest-cov>=4.1.0" in requirements
     assert [item for item in requirements if item.startswith("homeassistant")] == ["homeassistant==2026.9.4"]

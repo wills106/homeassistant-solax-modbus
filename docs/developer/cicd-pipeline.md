@@ -41,11 +41,14 @@ Runs `pre-commit` checks including:
 
 Strict mypy runs in the parallel Type Check job, so pre-commit skips that hook in CI.
 Both jobs use the quality environment pinned by `uv.lock`. The baseline freshness check is advisory.
+uv dependency caching is explicitly enabled; these jobs share the locked quality cache.
 
 ### 2. Static Analysis
 *   **Type Check (`mypy`)**: Runs strict mode type checking on the component and tests.
 *   **HACS Validation (`hacs`)**: Ensures the repository structure meets HACS requirements.
 *   **Hassfest Validation (`hassfest`)**: Validates the integration against Home Assistant core standards.
+
+All jobs inherit `contents: read` permissions. HACS runs validation without automatic PR comments, so no job needs write access.
 
 ### 3. Testing
 The shared `test-ha` matrix is configured in `.github/ha-test-environments.json`:
@@ -55,6 +58,8 @@ The shared `test-ha` matrix is configured in `.github/ha-test-environments.json`
 
 Minimum HA comes from `hacs.json.homeassistant`; current HA comes from the latest stable Core release.
 Each environment selects Python from that HA tag's metadata and resolves a matching test plugin.
+Only runtime and test requirements are included; dev tools remain in the locked quality environment.
+The uv cache is keyed by the generated requirements, environment name and selected Python; `--upgrade` still resolves dependencies afresh.
 GitHub CI has no separate locked-baseline pytest job. Additional HA versions can be added to the same matrix.
 
 ### 4. Final Gate (`all-checks-passed`)
