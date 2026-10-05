@@ -38,6 +38,9 @@ The `pre-commit install` step registers a git hook that runs codespell, mypy,
 ruff and ruff-format automatically on every `git commit`, blocking the commit
 if any check fails.
 
+`make check`, `make ci` and `make ci-full` run mypy through pre-commit once;
+`make mypy` remains available for a standalone type check.
+
 ## Before pushing / opening a PR
 
 Run the locked quality/baseline checks and the dynamic HA compatibility matrix:
@@ -239,14 +242,27 @@ from project lock resolution because the tooling baseline requires 3.14.2+.
 
 The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
 
-1. **Code Quality** — pre-commit (codespell, mypy, ruff, ruff format)
-2. **Type Check** — mypy strict mode
+1. **Code Quality** — pre-commit (codespell, ruff, ruff format) plus the advisory
+   baseline check; mypy is skipped here because the parallel Type Check job runs it
+2. **Type Check** — mypy strict mode, once per workflow run
 3. **HACS Validation** — HACS action
 4. **Hassfest Validation** — Home Assistant validation
 5. **Baseline quick tests** — non-slow tests on the locked baseline for branch pushes
 6. **HA test matrix** — the same test job for all selected environments: current
    non-slow tests on branch pushes; minimum/current full tests for PRs, `main`,
    schedule and manual dispatch; additional versions configured in the JSON list
+
+Code Quality, Type Check, HACS, hassfest and the matrix planner start independently.
+Tests wait for Code Quality and Type Check; the dynamic HA matrix also waits for
+the planner. The final gate requires quality, types, HACS, hassfest and all selected
+tests to succeed. This keeps failures blocking while avoiding serial duplicate
+type checks. Job/check names and the existing event-to-suite rules are preserved.
+
+Branch pushes retain both locked baseline quick tests and dynamic current HA
+quick tests: even when the HA version matches, these exercise locked versus freshly
+resolved dependencies and may use different Python patches. There are currently
+no tests marked `slow`, so quick/full select the same cases; the distinction remains
+available for future slow tests.
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).

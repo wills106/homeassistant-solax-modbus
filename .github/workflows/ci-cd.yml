@@ -36,11 +36,13 @@ jobs:
         run: uv run --locked python -m scripts.check_ha_baseline
 
       - name: Run pre-commit checks
+        env:
+          # The parallel Type Check job runs mypy once; local hooks still include it.
+          SKIP: mypy
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
   mypy:
     name: Type Check (mypy)
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -61,7 +63,6 @@ jobs:
 
   hacs:
     name: HACS Validation
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -73,7 +74,6 @@ jobs:
 
   hassfest:
     name: Hassfest Validation
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -83,7 +83,7 @@ jobs:
 
   test-quick:
     name: Test Quick
-    needs: [mypy]
+    needs: [quality, mypy]
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     strategy:
@@ -106,7 +106,6 @@ jobs:
 
   test-plan:
     name: Plan HA Test Environments
-    needs: [mypy]
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -119,7 +118,7 @@ jobs:
 
   test-ha:
     name: Test HA (${{ matrix.name }}, ${{ matrix.suite }})
-    needs: [mypy, test-plan]
+    needs: [quality, mypy, test-plan]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -210,22 +209,26 @@ jobs:
   all-checks-passed:
     name: ✅ All Checks Passed
     if: always()
-    needs: [hacs, hassfest, test-quick, test-ha]
+    needs: [quality, mypy, hacs, hassfest, test-quick, test-ha]
     runs-on: ubuntu-latest
     steps:
       - name: Check all results
         env:
+          QUALITY: ${{ needs.quality.result }}
+          TYPES: ${{ needs.mypy.result }}
           HACS: ${{ needs.hacs.result }}
           HASSFEST: ${{ needs.hassfest.result }}
           QUICK: ${{ needs.test-quick.result }}
           HA: ${{ needs.test-ha.result }}
           EXPECT_QUICK: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         run: |
+          echo "Code Quality: $QUALITY"
+          echo "Type Check: $TYPES"
           echo "HACS: $HACS"
           echo "Hassfest: $HASSFEST"
           echo "Baseline Quick Tests: $QUICK"
           echo "HA Test Matrix: $HA"
-          if [[ "$HACS" != "success" || "$HASSFEST" != "success" || "$HA" != "success" ]]; then
+          if [[ "$QUALITY" != "success" || "$TYPES" != "success" || "$HACS" != "success" || "$HASSFEST" != "success" || "$HA" != "success" ]]; then
             echo "❌ Required validation or HA matrix failed, was cancelled or skipped"
             exit 1
           fi

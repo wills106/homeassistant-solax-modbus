@@ -48,21 +48,18 @@ test-all: ## Run the full test suite on the locked baseline
 .PHONY: check
 check: ## Fast local gate: lint + mypy + quick tests (no dependency re-sync)
 	uv run pre-commit run --all-files --show-diff-on-failure
-	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest -m "not slow"
 
 .PHONY: ci
 ci: ## Locked baseline checks: sync + lint + mypy + quick tests
 	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
-	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest -m "not slow"
 
 .PHONY: ci-full
 ci-full: ## Locked baseline checks including the full test suite
 	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
-	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest
 
 .PHONY: test-ha
