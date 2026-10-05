@@ -98,13 +98,28 @@ jobs:
       - name: Run Quick Tests
         run: uv run pytest -m "not slow"
 
-  test-comprehensive:
-    name: Test Minimum Supported HA
+  test-plan:
+    name: Plan HA Test Environments
     needs: [mypy]
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+      - name: Build test matrix
+        id: plan
+        run: python3 scripts/plan_ha_tests.py
+
+  test-ha:
+    name: Test HA (${{ matrix.name }}, ${{ matrix.suite }})
+    needs: [mypy, test-plan]
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.test-plan.outputs.matrix) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
@@ -112,37 +127,40 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v10.2.0
 
-      - name: Select minimum Home Assistant and Python
-        id: minimum
+      - name: Select Home Assistant and Python
+        id: selected
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TEST_NAME: ${{ matrix.name }}
+          TARGET: ${{ matrix.target }}
+          HA_VERSION: ${{ matrix.ha_version }}
         run: |
-          echo "MINIMUM_ENV=$RUNNER_TEMP/ha-minimum-env" >> "$GITHUB_ENV"
-          echo "MINIMUM_RECORD=$RUNNER_TEMP/ha-minimum-record" >> "$GITHUB_ENV"
-          python3 scripts/resolve_current_ha.py --target minimum --output-dir "$RUNNER_TEMP/ha-minimum-record"
+          echo "HA_ENV=$RUNNER_TEMP/ha-$TEST_NAME-env" >> "$GITHUB_ENV"
+          echo "HA_RECORD=$RUNNER_TEMP/ha-$TEST_NAME-record" >> "$GITHUB_ENV"
+          python3 scripts/resolve_ha_environment.py --target "$TARGET" --ha-version "$HA_VERSION" --output-dir "$RUNNER_TEMP/ha-$TEST_NAME-record"
 
-      - name: Resolve and install minimum environment
+      - name: Resolve and install HA environment
         env:
-          MINIMUM_PYTHON: ${{ steps.minimum.outputs.python }}
+          SELECTED_PYTHON: ${{ steps.selected.outputs.python }}
         run: |
-          if [[ "$MINIMUM_PYTHON" =~ ^3\.[0-9]+$ ]]; then
-            uv python install --upgrade --no-bin "$MINIMUM_PYTHON"
+          if [[ "$SELECTED_PYTHON" =~ ^3\.[0-9]+$ ]]; then
+            uv python install --upgrade --no-bin "$SELECTED_PYTHON"
           else
-            uv python install --no-bin "$MINIMUM_PYTHON"
+            uv python install --no-bin "$SELECTED_PYTHON"
           fi
-          uv venv --managed-python --python "$MINIMUM_PYTHON" "$MINIMUM_ENV"
-          if ! uv pip compile --no-config --python "$MINIMUM_ENV/bin/python" --upgrade "$MINIMUM_RECORD/requirements.in" -o "$MINIMUM_RECORD/requirements.txt"; then
-            echo "::error::Cannot resolve test dependencies for the exact minimum HA declared in hacs.json; no other HA version is substituted."
+          uv venv --managed-python --python "$SELECTED_PYTHON" "$HA_ENV"
+          if ! uv pip compile --no-config --python "$HA_ENV/bin/python" --upgrade "$HA_RECORD/requirements.in" -o "$HA_RECORD/requirements.txt"; then
+            echo "::error::Cannot resolve test dependencies for the exact selected HA. A matching test plugin may not be published yet; no other HA version is substituted."
             exit 1
           fi
-          uv pip sync --no-config --python "$MINIMUM_ENV/bin/python" "$MINIMUM_RECORD/requirements.txt"
+          uv pip sync --no-config --python "$HA_ENV/bin/python" "$HA_RECORD/requirements.txt"
 
       - name: Verify and record installed versions
         env:
-          EXPECTED_HA: ${{ steps.minimum.outputs.homeassistant }}
-          EXPECTED_PYTHON: ${{ steps.minimum.outputs.python }}
+          EXPECTED_HA: ${{ steps.selected.outputs.homeassistant }}
+          EXPECTED_PYTHON: ${{ steps.selected.outputs.python }}
         run: |
-          "$MINIMUM_ENV/bin/python" - <<'PY'
+          "$HA_ENV/bin/python" - <<'PY'
           import json
           import os
           import platform
@@ -154,146 +172,59 @@ jobs:
               "homeassistant": version("homeassistant"),
               "test_plugin": version("pytest-homeassistant-custom-component"),
           }
-          Path(os.environ["MINIMUM_RECORD"], "installed.json").write_text(json.dumps(versions, indent=2) + "\n")
+          Path(os.environ["HA_RECORD"], "installed.json").write_text(json.dumps(versions, indent=2) + "\n")
           print(json.dumps(versions, indent=2))
           assert versions["homeassistant"] == os.environ["EXPECTED_HA"]
           expected = os.environ["EXPECTED_PYTHON"].split(".")
           assert versions["python"].split(".")[:len(expected)] == expected
           PY
-          uv pip freeze --python "$MINIMUM_ENV/bin/python" > "$MINIMUM_RECORD/installed-requirements.txt"
-          uv --version > "$MINIMUM_RECORD/uv-version.txt"
+          uv pip freeze --python "$HA_ENV/bin/python" > "$HA_RECORD/installed-requirements.txt"
+          uv --version > "$HA_RECORD/uv-version.txt"
 
-      - name: Run Full Tests
-        run: '"$MINIMUM_ENV/bin/python" -m pytest'
-
-      - name: Upload minimum environment record
-        if: always()
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: minimum-ha-environment
-          path: ${{ runner.temp }}/ha-minimum-record
-
-  test-current:
-    name: Test Current Stable HA
-    needs: [mypy]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7.0.1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-
-      - name: Select stable Home Assistant and Python
-        id: current
+      - name: Run tests
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          TEST_SUITE: ${{ matrix.suite }}
         run: |
-          echo "CURRENT_ENV=$RUNNER_TEMP/ha-current-env" >> "$GITHUB_ENV"
-          echo "CURRENT_RECORD=$RUNNER_TEMP/ha-current-record" >> "$GITHUB_ENV"
-          python3 scripts/resolve_current_ha.py --output-dir "$RUNNER_TEMP/ha-current-record"
-
-      - name: Resolve and install current environment
-        env:
-          CURRENT_PYTHON: ${{ steps.current.outputs.python }}
-        run: |
-          uv venv --python "$CURRENT_PYTHON" "$CURRENT_ENV"
-          if ! uv pip compile --no-config --python "$CURRENT_ENV/bin/python" --upgrade "$CURRENT_RECORD/requirements.in" -o "$CURRENT_RECORD/requirements.txt"; then
-            echo "::error::Cannot resolve test dependencies for the selected stable HA. A matching test plugin may not be published yet; no older HA fallback is used."
+          if [[ "$TEST_SUITE" == "quick" ]]; then
+            "$HA_ENV/bin/python" -m pytest -m "not slow"
+          elif [[ "$TEST_SUITE" == "full" ]]; then
+            "$HA_ENV/bin/python" -m pytest
+          else
+            echo "::error::Unknown test suite: $TEST_SUITE"
             exit 1
           fi
-          uv pip sync --no-config --python "$CURRENT_ENV/bin/python" "$CURRENT_RECORD/requirements.txt"
 
-      - name: Verify and record installed versions
-        env:
-          EXPECTED_HA: ${{ steps.current.outputs.homeassistant }}
-          EXPECTED_PYTHON: ${{ steps.current.outputs.python }}
-        run: |
-          "$CURRENT_ENV/bin/python" - <<'PY'
-          import json
-          import os
-          import platform
-          from importlib.metadata import version
-          from pathlib import Path
-
-          versions = {
-              "python": platform.python_version(),
-              "homeassistant": version("homeassistant"),
-              "test_plugin": version("pytest-homeassistant-custom-component"),
-          }
-          Path(os.environ["CURRENT_RECORD"], "installed.json").write_text(json.dumps(versions, indent=2) + "\n")
-          print(json.dumps(versions, indent=2))
-          assert versions["homeassistant"] == os.environ["EXPECTED_HA"]
-          assert versions["python"] == os.environ["EXPECTED_PYTHON"]
-          PY
-          uv pip freeze --python "$CURRENT_ENV/bin/python" > "$CURRENT_RECORD/installed-requirements.txt"
-          uv --version > "$CURRENT_RECORD/uv-version.txt"
-
-      - name: Test against current stable HA
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF: ${{ github.ref }}
-        run: |
-          if [[ "$EVENT_NAME" == "push" && "$REF" != "refs/heads/main" ]]; then
-            "$CURRENT_ENV/bin/python" -m pytest -m "not slow"
-          else
-            "$CURRENT_ENV/bin/python" -m pytest
-          fi
-
-      - name: Upload current environment record
+      - name: Upload HA environment record
         if: always()
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: current-ha-environment
-          path: ${{ runner.temp }}/ha-current-record
+          name: ${{ matrix.name }}-ha-environment
+          path: ${{ runner.temp }}/ha-${{ matrix.name }}-record
 
   all-checks-passed:
     name: ✅ All Checks Passed
     if: always()
-    needs: [hacs, hassfest, test-quick, test-comprehensive, test-current]
+    needs: [hacs, hassfest, test-quick, test-ha]
     runs-on: ubuntu-latest
     steps:
       - name: Check all results
+        env:
+          HACS: ${{ needs.hacs.result }}
+          HASSFEST: ${{ needs.hassfest.result }}
+          QUICK: ${{ needs.test-quick.result }}
+          HA: ${{ needs.test-ha.result }}
+          EXPECT_QUICK: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
         run: |
-          HACS="${{ needs.hacs.result }}"
-          HASSFEST="${{ needs.hassfest.result }}"
-          QUICK="${{ needs.test-quick.result }}"
-          COMPREHENSIVE="${{ needs.test-comprehensive.result }}"
-          CURRENT="${{ needs.test-current.result }}"
-          
           echo "HACS: $HACS"
           echo "Hassfest: $HASSFEST"
-          echo "Quick Tests: $QUICK"
-          echo "Comprehensive Tests: $COMPREHENSIVE"
-          echo "Current HA Tests: $CURRENT"
-          
-          # 1. Static Analysis must pass
-          if [[ "$HACS" != "success" ]]; then
-            echo "❌ HACS validation failed"
+          echo "Baseline Quick Tests: $QUICK"
+          echo "HA Test Matrix: $HA"
+          if [[ "$HACS" != "success" || "$HASSFEST" != "success" || "$HA" != "success" ]]; then
+            echo "❌ Required validation or HA matrix failed, was cancelled or skipped"
             exit 1
           fi
-          if [[ "$HASSFEST" != "success" ]]; then
-            echo "❌ Hassfest validation failed"
+          if [[ "$EXPECT_QUICK" == "true" && "$QUICK" != "success" ]] || [[ "$EXPECT_QUICK" == "false" && "$QUICK" != "skipped" ]]; then
+            echo "❌ Unexpected baseline quick-test result"
             exit 1
           fi
-          if [[ "$CURRENT" != "success" ]]; then
-            echo "❌ Current stable HA tests failed or were skipped"
-            exit 1
-          fi
-          
-          # 2. Tests: One path must succeed
-          if [[ "$COMPREHENSIVE" == "success" ]]; then
-            echo "✅ Comprehensive tests passed"
-            exit 0
-          elif [[ "$QUICK" == "success" && "$COMPREHENSIVE" == "skipped" ]]; then
-            echo "✅ Quick tests passed"
-            exit 0
-          elif [[ "$QUICK" == "skipped" && "$COMPREHENSIVE" == "skipped" ]]; then
-            echo "⚠️ No tests ran?"
-            exit 1
-          else
-            echo "❌ Tests failed or cancelled"
-            exit 1
-          fi
+          echo "✅ All required checks passed"

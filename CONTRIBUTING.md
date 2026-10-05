@@ -105,8 +105,14 @@ make ci-full PYTHON=3.14
 make sync test-all PYTHON=3.12
 ```
 
-`Test Minimum Supported HA` reads the exact `homeassistant` version from
-`hacs.json` using `scripts/resolve_current_ha.py --target minimum`. It uses that
+The shared `Test HA` matrix is declared in `.github/ha-test-environments.json`.
+`scripts/plan_ha_tests.py` selects its entries and suite for the event. Each entry
+uses the same workflow steps for Python, dependency resolution, verification,
+tests and artifacts. `fail-fast: false` lets every selected environment finish;
+all selected entries must succeed for the final CI gate to pass.
+
+The `minimum` entry reads the exact `homeassistant` version from
+`hacs.json` using `scripts/resolve_ha_environment.py --target minimum`. It uses that
 tag's `.python-version` if present. Older tags without that file use the lowest
 Python series from the tagged `pyproject.toml`'s `requires-python`, with the latest
 available patch selected by uv. Only a 404 for the missing legacy file allows
@@ -116,14 +122,31 @@ The compatible test plugin and dependencies are resolved into a separate
 environment, without changing `uv.lock`. The existing full-suite triggers remain:
 PRs, `main`, schedules and manual dispatch.
 
-`Test Current Stable HA` resolves the latest non-preview GitHub Core release at
-the start of every run using `scripts/resolve_current_ha.py`. It uses the exact
+The `current` entry resolves the latest non-preview GitHub Core release at
+the start of every run using `scripts/resolve_ha_environment.py --target current`. It uses the exact
 Python from that release's `.python-version`, pins that HA, and lets uv resolve
 a matching test plugin and compatible project/test dependencies from PyPI.
 It uses a separate environment and requirements file; `uv.lock` is not changed.
 A missing compatible plugin or unavailable release/Python metadata fails the job
 explicitly, without substituting an older HA. Branch pushes run non-slow tests;
 PRs, `main`, schedules and manual dispatch run the full suite.
+
+Add another version by adding an entry to the JSON list, for example:
+
+```json
+{
+  "name": "beta",
+  "target": "version",
+  "ha_version": "2026.10.0b0",
+  "branch_push": false
+}
+```
+
+`target: version` accepts an exact stable, beta or release-candidate version and
+never substitutes another release. Python and the matching test plugin are still
+resolved automatically. `branch_push: false` includes it only in full-suite events;
+`true` also includes it in non-slow branch-push tests. The beta entry above is an
+example, not enabled by default. Minimum/current selection continues to reject betas.
 
 The compatibility jobs upload `minimum-ha-environment` or `current-ha-environment`, including selected and
 installed versions, uv version, resolved requirements and installed package pins.
@@ -167,10 +190,10 @@ The GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs:
 2. **Type Check** — mypy strict mode
 3. **HACS Validation** — HACS action
 4. **Hassfest Validation** — Home Assistant validation
-5. **Tests** — quick (non-slow) on the locked baseline for branch pushes,
-   comprehensive minimum-HA tests for PRs, `main`, schedule and manual dispatch
-6. **Current stable HA** — resolved automatically on every run; non-slow tests
-   on branch pushes, full tests otherwise; required by the final CI gate
+5. **Baseline quick tests** — non-slow tests on the locked baseline for branch pushes
+6. **HA test matrix** — the same test job for all selected environments: current
+   non-slow tests on branch pushes; minimum/current full tests for PRs, `main`,
+   schedule and manual dispatch; additional versions configured in the JSON list
 
 All checks must pass before a PR can be merged (enforced by branch protection
 on `main`).

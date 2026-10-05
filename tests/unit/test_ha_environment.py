@@ -8,8 +8,8 @@ from urllib.error import HTTPError
 
 import pytest
 
-from scripts import resolve_current_ha
-from scripts.resolve_current_ha import current_requirements, legacy_python, python_version, select_python, stable_tag
+from scripts import resolve_ha_environment
+from scripts.resolve_ha_environment import environment_requirements, explicit_tag, legacy_python, python_version, select_python, stable_tag
 
 
 @pytest.mark.parametrize(
@@ -38,7 +38,7 @@ def test_reject_invalid_python(text: str) -> None:
         python_version(text)
 
 
-def test_current_requirements_preserve_project_dependencies_without_old_test_pins() -> None:
+def test_environment_requirements_preserve_project_dependencies_without_old_test_pins() -> None:
     project = {
         "project": {"dependencies": ["pymodbus>=3.8.3"]},
         "dependency-groups": {
@@ -52,7 +52,7 @@ def test_current_requirements_preserve_project_dependencies_without_old_test_pin
             ],
         },
     }
-    requirements = current_requirements(project, "2026.9.4")
+    requirements = environment_requirements(project, "2026.9.4")
     assert "pymodbus>=3.8.3" in requirements
     assert "ruff>=0.14.14" in requirements
     assert "pytest>=8.0.0" in requirements
@@ -79,8 +79,8 @@ def test_minimum_with_python_file_uses_exact_version(monkeypatch: pytest.MonkeyP
         assert url.endswith("/2026.9.4/.python-version")
         return "3.14.5\n"
 
-    monkeypatch.setattr(resolve_current_ha, "read_url", read)
-    assert select_python("2026.9.4", minimum=True) == (
+    monkeypatch.setattr(resolve_ha_environment, "read_url", read)
+    assert select_python("2026.9.4", allow_legacy=True) == (
         "3.14.5",
         "https://raw.githubusercontent.com/home-assistant/core/2026.9.4/.python-version",
     )
@@ -91,9 +91,9 @@ def test_python_metadata_errors_are_not_hidden(monkeypatch: pytest.MonkeyPatch, 
     def read(url: str) -> str:
         raise HTTPError(url, status, "metadata error", Message(), None)
 
-    monkeypatch.setattr(resolve_current_ha, "read_url", read)
+    monkeypatch.setattr(resolve_ha_environment, "read_url", read)
     with pytest.raises(HTTPError) as error:
-        select_python("2025.1.0", minimum=minimum)
+        select_python("2025.1.0", allow_legacy=minimum)
     assert error.value.code == status
 
 
@@ -103,7 +103,7 @@ def test_minimum_cli_reads_hacs_and_records_legacy_python(monkeypatch: pytest.Mo
     (tmp_path / "pyproject.toml").write_text("[project]\ndependencies = []\n[dependency-groups]\ndev = []\ntest = []")
     output = tmp_path / "github-output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-    monkeypatch.setattr("sys.argv", ["resolve_current_ha.py", "--target", "minimum", "--output-dir", "record"])
+    monkeypatch.setattr("sys.argv", ["resolve_ha_environment.py", "--target", "minimum", "--output-dir", "record"])
 
     def read(url: str) -> str:
         assert "/2025.2.1/" in url  # The local HACS requirement is authoritative.
@@ -112,8 +112,8 @@ def test_minimum_cli_reads_hacs_and_records_legacy_python(monkeypatch: pytest.Mo
         assert url.endswith("/pyproject.toml")
         return '[project]\nrequires-python = ">=3.13.2"'
 
-    monkeypatch.setattr(resolve_current_ha, "read_url", read)
-    resolve_current_ha.main()
+    monkeypatch.setattr(resolve_ha_environment, "read_url", read)
+    resolve_ha_environment.main()
     selection = json.loads((tmp_path / "record/selection.json").read_text())
     assert selection["homeassistant"] == "2025.2.1"
     assert selection["python"] == "3.13"
@@ -127,11 +127,44 @@ def test_minimum_cli_reads_hacs_and_records_legacy_python(monkeypatch: pytest.Mo
 def test_invalid_hacs_minimum_does_not_select_current(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, minimum: str | None) -> None:
     monkeypatch.chdir(tmp_path)
     (tmp_path / "hacs.json").write_text(json.dumps({"homeassistant": minimum}))
-    monkeypatch.setattr("sys.argv", ["resolve_current_ha.py", "--target", "minimum", "--output-dir", "record"])
+    monkeypatch.setattr("sys.argv", ["resolve_ha_environment.py", "--target", "minimum", "--output-dir", "record"])
 
     def read(url: str) -> str:
         pytest.fail(f"Invalid HACS metadata must fail before requesting {url}")
 
-    monkeypatch.setattr(resolve_current_ha, "read_url", read)
+    monkeypatch.setattr(resolve_ha_environment, "read_url", read)
     with pytest.raises(ValueError, match="stable HA"):
-        resolve_current_ha.main()
+        resolve_ha_environment.main()
+
+
+@pytest.mark.parametrize("tag", ["2026.9.4", "2026.10.0b0", "2026.10.0rc1"])
+def test_explicit_cli_pins_only_requested_version(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, tag: str) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    (tmp_path / "pyproject.toml").write_text("[project]\ndependencies = []\n[dependency-groups]\ndev = []\ntest = []")
+    monkeypatch.setattr("sys.argv", ["resolve_ha_environment.py", "--target", "version", "--ha-version", tag, "--output-dir", "record"])
+
+    def read(url: str) -> str:
+        assert url == f"https://raw.githubusercontent.com/home-assistant/core/{tag}/.python-version"
+        return "3.14.5\n"
+
+    monkeypatch.setattr(resolve_ha_environment, "read_url", read)
+    resolve_ha_environment.main()
+    selection = json.loads((tmp_path / "record/selection.json").read_text())
+    assert selection["homeassistant"] == tag
+    assert selection["version_source"] == "--ha-version"
+    assert f"homeassistant=={tag}" in (tmp_path / "record/requirements.in").read_text().splitlines()
+
+
+@pytest.mark.parametrize("tag", ["latest", "2026.10.0dev1", "2026.10.0b0\npython=3.15", "https://example.com", ""])
+def test_explicit_versions_reject_aliases_and_injection(tag: str) -> None:
+    with pytest.raises(ValueError, match="exact HA release"):
+        explicit_tag(tag)
+
+
+@pytest.mark.parametrize("arguments", [["--target", "version"], ["--target", "current", "--ha-version", "2026.10.0b0"]])
+def test_cli_rejects_ambiguous_version_selection(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, arguments: list[str]) -> None:
+    monkeypatch.setattr("sys.argv", ["resolve_ha_environment.py", *arguments, "--output-dir", str(tmp_path)])
+    with pytest.raises(SystemExit) as error:
+        resolve_ha_environment.main()
+    assert error.value.code == 2
