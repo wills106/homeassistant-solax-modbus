@@ -84,6 +84,33 @@ def environment_requirements(project: dict[str, Any], tag: str) -> list[str]:
     return requirements + [f"homeassistant=={tag}", "pytest-homeassistant-custom-component>=0.13.0", "pytest-asyncio"]
 
 
+def resolve_environment(target: str, ha_version: str, output_dir: Path) -> dict[str, str]:
+    """Select and record the same environment for CI and local uv tests."""
+    if target not in ("minimum", "current", "version") or bool(ha_version) != (target == "version"):
+        raise ValueError("Only target=version requires ha_version")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    minimum = target == "minimum"
+    if target == "version":
+        tag = explicit_tag(ha_version)
+    elif minimum:
+        metadata = json.loads(Path("hacs.json").read_text(encoding="utf-8"))
+        tag = stable_tag({"tag_name": metadata.get("homeassistant")})
+    else:
+        tag = stable_tag(json.loads(read_url(RELEASE_URL)))
+    selected_python, source = select_python(tag, allow_legacy=target != "current")
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    selection = {
+        "target": target,
+        "homeassistant": tag,
+        "python": selected_python,
+        "version_source": "--ha-version" if target == "version" else "hacs.json" if minimum else RELEASE_URL,
+        "python_source": source,
+    }
+    (output_dir / "selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
+    (output_dir / "requirements.in").write_text("\n".join(environment_requirements(project, tag)) + "\n", encoding="utf-8")
+    return selection
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", choices=("current", "minimum", "version"), default="current")
@@ -92,30 +119,11 @@ def main() -> None:
     args = parser.parse_args()
     if bool(args.ha_version) != (args.target == "version"):
         parser.error("Only --target version requires --ha-version")
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    minimum = args.target == "minimum"
-    if args.target == "version":
-        tag = explicit_tag(args.ha_version)
-    elif minimum:
-        metadata = json.loads(Path("hacs.json").read_text(encoding="utf-8"))
-        tag = stable_tag({"tag_name": metadata.get("homeassistant")})
-    else:
-        tag = stable_tag(json.loads(read_url(RELEASE_URL)))
-    selected_python, source = select_python(tag, allow_legacy=args.target != "current")
-    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
-    selection = {
-        "target": args.target,
-        "homeassistant": tag,
-        "python": selected_python,
-        "version_source": "--ha-version" if args.target == "version" else "hacs.json" if minimum else RELEASE_URL,
-        "python_source": source,
-    }
-    (args.output_dir / "selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
-    (args.output_dir / "requirements.in").write_text("\n".join(environment_requirements(project, tag)) + "\n", encoding="utf-8")
+    selection = resolve_environment(args.target, args.ha_version, args.output_dir)
     print(json.dumps(selection, indent=2))
     if output := os.environ.get("GITHUB_OUTPUT"):
         with Path(output).open("a", encoding="utf-8") as stream:
-            stream.write(f"homeassistant={tag}\npython={selected_python}\n")
+            stream.write(f"homeassistant={selection['homeassistant']}\npython={selection['python']}\n")
 
 
 if __name__ == "__main__":

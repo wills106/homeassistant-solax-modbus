@@ -40,11 +40,14 @@ if any check fails.
 
 ## Before pushing / opening a PR
 
-Run the full CI pipeline locally. If this passes, CI will pass:
+Run the locked quality/baseline checks and the dynamic HA compatibility matrix:
 
 ```bash
 make ci
+make test-ha
 ```
+
+HACS and hassfest validation run separately in GitHub Actions.
 
 For faster iteration while developing (skips the dependency re-sync):
 
@@ -63,8 +66,9 @@ make check
 | `make test`    | Run the quick test suite (`pytest -m "not slow"`)                   |
 | `make test-all`| Run the full test suite                                             |
 | `make check`   | lint + mypy + quick tests (fast local gate)                         |
-| `make ci`      | Full CI pipeline: sync + lint + mypy + quick tests                  |
-| `make ci-full` | Full CI pipeline including the comprehensive test suite             |
+| `make ci`      | Locked baseline: sync + lint + mypy + quick tests                    |
+| `make ci-full` | Locked baseline checks including the full test suite                  |
+| `make test-ha` | Dynamic full HA matrix; select with `HA_ENVIRONMENT=minimum/current` |
 
 ## Keeping your environment in sync with CI
 
@@ -77,7 +81,7 @@ make sync
 ```
 
 This reinstalls the exact pinned versions from `uv.lock`, which is the single
-source of truth for dependency versions. `--locked` fails if the lockfile needs
+source of truth for locked baseline dependency versions. `--locked` fails if the lockfile needs
 updating; after an intentional dependency change, run `uv lock` and review the diff.
 
 ## Home Assistant compatibility
@@ -96,6 +100,39 @@ Ruff retains a 3.12 source target to preserve minimum-version compatibility.
 Mypy targets 3.14 because it also parses current HA's Python 3.14 source.
 Pytest uses asyncio auto mode so the current HA plugin's async autouse fixtures
 are handled by pytest-asyncio.
+
+Run the same dynamically selected environments locally from the repository root
+(Linux or WSL, matching the CI runner), without requiring `make`:
+
+```bash
+# Both minimum and current, with the full suite (default)
+uv run --no-project --python 3.12 -m scripts.run_ha_tests
+
+# One environment, or non-slow tests for faster iteration
+uv run --no-project --python 3.12 -m scripts.run_ha_tests --environment minimum
+uv run --no-project --python 3.12 -m scripts.run_ha_tests --environment current --suite quick
+
+# Equivalent make shortcuts
+make test-ha
+make test-ha HA_ENVIRONMENT=minimum
+make test-ha HA_ENVIRONMENT=current HA_SUITE=quick
+```
+
+The launcher uses only the standard library. Its Python 3.12 is just for running
+the resolver; uv installs each selected HA's own Python for the tests. It reads
+the same JSON environment list and calls the same resolver as CI, so changing
+the HACS minimum or adding a named version also changes these local tests.
+All configured environments run by default, even if an earlier one fails; any
+failure produces a nonzero exit status. `--suite quick` selects non-slow tests
+for the requested environments; it does not filter by the CI branch-push rules.
+
+Environments and records are stored under the ignored `tools/ha-tests/<name>/`
+directory. Venvs are separated by exact HA and actual Python version, and reused
+on subsequent runs. Release metadata and dependencies are resolved afresh on
+every run. The `record/` directory contains selection, requirements, installed
+versions and uv version, like the CI artifacts. The project's `.venv` and
+`uv.lock` are not synchronized by this command. Regular `uv sync`, `uv run pytest`
+and `make ci` retain the pinned baseline.
 
 Reproduce the locked local environments (the 3.12 environment is a historical
 minimum baseline, not automatically updated from HACS):
@@ -177,6 +214,7 @@ from project lock resolution because the tooling baseline requires 3.14.2+.
 ## Pull request checklist
 
 - [ ] `make ci` passes locally
+- [ ] `make test-ha` passes against the selected HA compatibility environments
 - [ ] New/changed behaviour is covered by tests
 - [ ] No new mypy errors (strict mode)
 - [ ] Code follows existing patterns and style

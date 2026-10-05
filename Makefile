@@ -1,14 +1,15 @@
 # Makefile — local CI parity for homeassistant-solax-modbus
 #
-# Every target mirrors the exact commands run by the GitHub Actions
-# workflow (.github/workflows/ci-cd.yml). If `make ci` passes locally,
-# the CI pipeline will pass.
+# Locked quality/baseline checks and dynamic HA compatibility tests.
+# HACS and hassfest validation also run in GitHub Actions.
 
 .DEFAULT_GOAL := help
 
-# Run quality checks on current HA's Python; use PYTHON=3.12 for minimum HA tests.
+# Run quality checks on the locked baseline's Python.
 PYTHON ?= 3.14
 export UV_PYTHON := $(PYTHON)
+HA_ENVIRONMENT ?= all
+HA_SUITE ?= full
 
 .PHONY: help
 help: ## Show available targets
@@ -41,7 +42,7 @@ test: ## Run the quick test suite (non-slow tests, same as CI 'Test Quick')
 	uv run pytest -m "not slow"
 
 .PHONY: test-all
-test-all: ## Run the full test suite (same as CI 'Test Comprehensive')
+test-all: ## Run the full test suite on the locked baseline
 	uv run pytest
 
 .PHONY: check
@@ -51,15 +52,19 @@ check: ## Fast local gate: lint + mypy + quick tests (no dependency re-sync)
 	uv run pytest -m "not slow"
 
 .PHONY: ci
-ci: ## Full CI pipeline locally: sync + lint + mypy + quick tests
+ci: ## Locked baseline checks: sync + lint + mypy + quick tests
 	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
 	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest -m "not slow"
 
 .PHONY: ci-full
-ci-full: ## Full CI pipeline locally including the comprehensive test suite
+ci-full: ## Locked baseline checks including the full test suite
 	uv sync --locked --all-groups
 	uv run pre-commit run --all-files --show-diff-on-failure
 	uv run mypy custom_components/solax_modbus tests --strict
 	uv run pytest
+
+.PHONY: test-ha
+test-ha: ## Dynamic CI HA matrix (HA_ENVIRONMENT=all/minimum/current, HA_SUITE=full/quick)
+	uv run --no-project --python 3.12 -m scripts.run_ha_tests --environment $(HA_ENVIRONMENT) --suite $(HA_SUITE)
