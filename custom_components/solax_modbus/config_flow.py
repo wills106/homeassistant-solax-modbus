@@ -78,6 +78,7 @@ from .const import (
     DOMAIN,
     PLUGIN_PATH,
 )
+from .core_modbus import supports_core_units
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -138,7 +139,15 @@ PLUGINS = [selector.SelectOptionDict(value=getPluginName(i), label=getPluginName
 INTERFACES = [
     selector.SelectOptionDict(value="tcp", label="TCP / Ethernet"),
     selector.SelectOptionDict(value="serial", label="Serial"),
-    selector.SelectOptionDict(value="core", label="Hass core Hub"),
+    *(
+        [
+            selector.SelectOptionDict(value="core_tcp", label="Home Assistant Modbus (TCP)"),
+            selector.SelectOptionDict(value="core_serial", label="Home Assistant Modbus (Serial)"),
+        ]
+        if supports_core_units()
+        else []
+    ),
+    selector.SelectOptionDict(value="core", label="Hass core Hub (legacy YAML)"),
 ]
 
 # Removed - using boolean checkbox instead
@@ -147,7 +156,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
         vol.Required(CONF_INTERFACE, default="tcp"): selector.SelectSelector(
-            selector.SelectSelectorConfig(options=INTERFACES),
+            selector.SelectSelectorConfig(options=[item for item in INTERFACES if item["value"] != "core"] if supports_core_units() else INTERFACES),
         ),
         vol.Required(CONF_MODBUS_ADDR, default=DEFAULT_MODBUS_ADDR): int,
         vol.Required(CONF_PLUGIN, default=DEFAULT_PLUGIN): selector.SelectSelector(
@@ -202,6 +211,15 @@ SERIAL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BAUDRATE, default=DEFAULT_BAUDRATE): selector.SelectSelector(
             selector.SelectSelectorConfig(options=BAUDRATES),
         ),
+    }
+)
+
+CORE_SERIAL_SCHEMA = SERIAL_SCHEMA.extend(
+    {
+        vol.Optional("parity", default="N"): selector.SelectSelector(selector.SelectSelectorConfig(options=["N", "E", "O"])),
+        vol.Optional("bytesize", default=8): vol.In((7, 8)),
+        vol.Optional("stopbits", default=1): vol.In((1, 2)),
+        vol.Optional("method", default="rtu"): selector.SelectSelector(selector.SelectSelectorConfig(options=["rtu", "ascii"])),
     }
 )
 
@@ -291,6 +309,13 @@ async def _validate_core_modbus_hub(handler: SchemaCommonFlowHandler, user_input
         raise SchemaFlowError(f"invalid core modbus hub name: '{hub_name}'") from e
     if not res:
         raise SchemaFlowError("core modbus hub name empty")
+    return user_input
+
+
+async def _validate_core_serial(handler: SchemaCommonFlowHandler, user_input: Any) -> Any:
+    """Expose supported per-pack configuration for a new shared serial link."""
+    plugin = await handler.parent_handler.hass.async_add_executor_job(_load_plugin, handler.options[CONF_PLUGIN])
+    user_input["support-battery"] = plugin.plugin_instance.BATTERY_CONFIG is not None
     return user_input
 
 
@@ -420,6 +445,8 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
+        "core_tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
+        "core_serial": SchemaFlowFormStep(CORE_SERIAL_SCHEMA, validate_user_input=_validate_core_serial, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
         "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
@@ -428,6 +455,8 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "serial": SchemaFlowFormStep(SERIAL_SCHEMA, next_step=_next_step_battery),
         "tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
+        "core_tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
+        "core_serial": SchemaFlowFormStep(CORE_SERIAL_SCHEMA, validate_user_input=_validate_core_serial, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
         "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
