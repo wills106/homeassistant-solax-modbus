@@ -42,6 +42,7 @@ Runs `pre-commit` checks including:
 Strict mypy runs in the parallel Type Check job, so pre-commit skips that hook in CI.
 Both jobs use the quality environment pinned by `uv.lock`. The baseline freshness check is advisory.
 uv dependency caching is explicitly enabled; these jobs share the locked quality cache.
+Only Code Quality saves that cache; Type Check restores it without competing uploads.
 
 ### 2. Static Analysis
 *   **Type Check (`mypy`)**: Runs strict mode type checking on the component and tests.

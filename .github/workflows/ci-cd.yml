@@ -59,6 +59,8 @@ jobs:
           python-version: "3.14"
           enable-cache: true
           cache-suffix: quality
+          # Code Quality saves the shared cache; avoid competing uploads.
+          save-cache: false
 
       - name: Install dependencies
         run: uv sync --locked --all-groups

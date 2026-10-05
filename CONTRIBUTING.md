@@ -211,8 +211,9 @@ without the `dev` group. Ruff, mypy, codespell and pre-commit stay in the locked
 quality environment. The same resolver prepares local `make test-ha` environments.
 
 GitHub CI explicitly enables uv dependency caching. Quality and Type Check share
-the locked cache; HA matrix caches use the generated requirements, environment
-name and selected Python. Dependencies are still resolved with `--upgrade` on
+the locked cache; only Quality saves it to avoid competing uploads. HA matrix
+caches use the generated requirements, environment name and selected Python.
+Dependencies are still resolved with `--upgrade` on
 every run. The workflow token has only `contents: read`; HACS validates without
 posting automatic PR comments.
 
