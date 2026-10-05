@@ -49,7 +49,12 @@ Only Code Quality saves that cache; Type Check restores it without competing upl
 *   **HACS Validation (`hacs`)**: Ensures the repository structure meets HACS requirements.
 *   **Hassfest Validation (`hassfest`)**: Validates the integration against Home Assistant core standards.
 
-All jobs inherit `contents: read` permissions. HACS runs validation without automatic PR comments, so no job needs write access.
+All jobs in this pipeline inherit `contents: read` permissions. HACS repository validation does not require write access;
+results appear in the job's checks and logs. No PR-comment step is configured.
+The workflow omits the legacy `comment` input: it remains declared in the
+[action metadata](https://github.com/hacs/action/blob/main/action.yml), but the
+[current implementation](https://github.com/hacs/integration/blob/main/action/action.py) does not use it.
+This matches the [official HACS validation example](https://www.hacs.xyz/docs/publish/action/), which needs no write permissions.
 
 ### 3. Testing
 The shared `test-ha` matrix is configured in `.github/ha-test-environments.json`:

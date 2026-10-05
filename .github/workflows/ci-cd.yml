@@ -80,8 +80,6 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-          # Validation needs no write access or automatic PR comments.
-          comment: false
 
   hassfest:
     name: Hassfest Validation

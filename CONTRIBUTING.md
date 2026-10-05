@@ -214,8 +214,10 @@ GitHub CI explicitly enables uv dependency caching. Quality and Type Check share
 the locked cache; only Quality saves it to avoid competing uploads. HA matrix
 caches use the generated requirements, environment name and selected Python.
 Dependencies are still resolved with `--upgrade` on
-every run. The workflow token has only `contents: read`; HACS validates without
-posting automatic PR comments.
+every run. The CI/CD workflow token has only `contents: read`. HACS validation
+results appear in the job's checks and logs; no PR-comment step is configured.
+See [CI/CD Pipeline](docs/developer/cicd-pipeline.md) for the HACS action's legacy
+`comment` input and permission details.
 
 The `current` entry resolves the latest non-preview GitHub Core release at
 the start of every run using `scripts/resolve_ha_environment.py --target current`. It uses the exact
