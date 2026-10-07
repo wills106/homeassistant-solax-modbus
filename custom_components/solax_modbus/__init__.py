@@ -1917,8 +1917,9 @@ class SolaXModbusHub:
         if val is None:  # E.g. if errors have occurred during readout
             # _LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
-        elif type(descr.scale) is dict:  # translate int to string
-            return_value = descr.scale.get(val, "Unknown")
+        elif type(descr.scale) is dict:  # translate int to string.
+            # Use dictionary value if available, else return None to indicate an unknown value to HA.
+            return_value = descr.scale.get(val, None)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
