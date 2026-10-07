@@ -1917,7 +1917,7 @@ MAX_CURRENTS: list[tuple[str, int | float]] = [
     ("H3BD", 60),  # Gen5 X3 Ultra D
     ("H3BF", 60),  # Gen5 X3 Ultra F
     ("H3BG", 60),  # Gen5 X3 Ultra G
-    ("10K", 25),  # Gen6 X3-Pro-G4
+    ("10K", 50),  # Gen6 X3-Pro-G4
     ("8021", 80),  # X3-Aelio #1555
     ### All known Inverters added
 ]
