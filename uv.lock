@@ -1676,6 +1676,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "codespell" },
+    { name = "modbus-connection" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "ruff" },
@@ -1699,6 +1700,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "codespell", specifier = ">=2.2.6" },
+    { name = "modbus-connection", specifier = "==4.12.3" },
     { name = "mypy", specifier = ">=1.8.0" },
     { name = "pre-commit", specifier = ">=4.0.0" },
     { name = "ruff", specifier = ">=0.14.14" },
@@ -2039,6 +2041,15 @@ name = "mock-open"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/9a/02/cef85a80ff6d3092a458448c46816656d1c532afd45aeeeb8f50a84aed35/mock-open-1.4.0.tar.gz", hash = "sha256:c3ecb6b8c32a5899a4f5bf4495083b598b520c698bba00e1ce2ace6e9c239100", size = 12127, upload-time = "2020-04-15T15:26:51.234Z" }
+
+[[package]]
+name = "modbus-connection"
+version = "4.12.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/13/f7338f692f4ca5c9d5206e47d7ac4fdf358e45fc28445b7d223a08342151/modbus_connection-4.12.3.tar.gz", hash = "sha256:252213d5dac1fc7b2aadcb7fd105cf3657f6432225ae42c9c15eb84d62b9fb6d", size = 278311, upload-time = "2026-09-28T09:07:34.5Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ff/5b/70976163d4b17ac645d3fb576a515ae08170bffc274b3e114178839d45a9/modbus_connection-4.12.3-py3-none-any.whl", hash = "sha256:3389426f0e71867e84cf74300439e268a4aa7bfefe798a608d04994e1483b9e6", size = 86603, upload-time = "2026-09-28T09:07:32.31Z" },
+]
 
 [[package]]
 name = "multidict"

@@ -182,6 +182,52 @@ def test_real_library_connection_parameters(config: dict[str, Any], expected: tu
     assert core.core_connection_params(core.connection_settings(config)).endpoint == expected
 
 
+@pytest.mark.asyncio
+async def test_real_core_pool_opens_lazily_and_releases_only_the_last_consumer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise HA's public getter and real unit backend without opening a socket."""
+    if not core.supports_core_units():
+        pytest.skip("Home Assistant's complete Modbus unit API is not available")
+    from modbus_connection import tmodbus as backend
+
+    unit_client = SimpleNamespace(read_holding_registers=AsyncMock(return_value=[7, 8]))
+    client = SimpleNamespace(connect=AsyncMock(), disconnect=AsyncMock(), for_unit_id=Mock(return_value=unit_client))
+    factory = Mock(return_value=client)
+    monkeypatch.setattr(backend, "create_async_tcp_client", factory)
+    hass = cast(Any, SimpleNamespace(data={}))
+    first_releases: list[Any] = []
+    second_releases: list[Any] = []
+    first_entry = cast(Any, SimpleNamespace(entry_id="first", async_on_unload=Mock(side_effect=first_releases.append)))
+    second_entry = cast(Any, SimpleNamespace(entry_id="second", async_on_unload=Mock(side_effect=second_releases.append)))
+    settings = core.connection_settings(yaml_hub(delay=0, message_wait_milliseconds=0))
+    first = transport.CoreModbusUnitTransport(hass, first_entry, settings, 1)
+    second = transport.CoreModbusUnitTransport(hass, second_entry, settings, 2)
+
+    assert await first.connect() is True
+    assert first.is_connected() is False
+    factory.assert_not_called()
+    first_response = await first.read("holding", 1, 10, 2)
+    assert first_response is not None and first_response.registers == [7, 8]
+    factory.assert_called_once()
+    assert factory.call_args.kwargs["timeout"] == 12
+    client.connect.assert_awaited_once()
+    assert second.is_connected() is True
+
+    # Adapter close and releasing the first entry must not disconnect the bus.
+    await first.close()
+    await first_releases[0]()
+    client.disconnect.assert_not_awaited()
+    second_response = await second.read("holding", 2, 20, 2)
+    assert second_response is not None and second_response.registers == [7, 8]
+    factory.assert_called_once()
+    client.for_unit_id.assert_any_call(1)
+    client.for_unit_id.assert_any_call(2)
+
+    await second.close()
+    await second_releases[0]()
+    client.disconnect.assert_awaited_once()
+    assert second.is_connected() is False
+
+
 @pytest.fixture
 def unit_transport(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Use the unit protocol, without a socket or an HA Core connection."""

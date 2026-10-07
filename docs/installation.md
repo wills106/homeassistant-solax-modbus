@@ -61,7 +61,7 @@ Now it's only needed to add your inverter to Home Assistant.
 
 ![](images/integration-setup-usb.png)
 
-- Draft for a future integration release: where Home Assistant provides the Modbus unit API with timeout and startup-delay controls, select **Home Assistant Modbus (TCP)** or **Home Assistant Modbus (Serial)** to use a connection managed by Home Assistant. Enter the connection settings in the integration setup; no YAML hub is needed. The minimum supported Home Assistant release is still to be confirmed.
+- On **Home Assistant 2026.10 or later**, select **Home Assistant Modbus (TCP)** or **Home Assistant Modbus (Serial)** to use a connection managed by Home Assistant. Enter the connection settings in the integration setup; no YAML hub or dummy sensor is needed. Existing direct **TCP / Ethernet** and **Serial** connections are unchanged.
 - Existing **Hass core Hub** connections continue to work while their YAML hub is configured. Follow the [Core Modbus migration guide](core-modbus-migration.md) to move to the new API without recreating your integration or entities.
 
 ![](images/integration-setup-corehub.png)

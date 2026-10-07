@@ -11,6 +11,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "modbus-connection==4.12.3",
     "pre-commit>=4.0.0",
     "codespell>=2.2.6",
     "ruff>=0.14.14",

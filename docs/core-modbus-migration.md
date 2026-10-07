@@ -1,6 +1,6 @@
 # Move from a YAML Modbus hub to a Home Assistant managed connection
 
-> **Draft — not yet released.** This branch prepares a future migration. Do not remove your YAML hub based on this draft. The minimum supported Home Assistant release will be confirmed once its Modbus API includes both timeout and startup-delay controls; Home Assistant 2026.9.4 does not provide these controls.
+> **Requires Home Assistant 2026.10 or later for the new connection API.** Install an integration release containing this migration before changing your YAML. Older Home Assistant releases continue using the existing YAML hub.
 
 This guide applies if you selected **Hass core Hub** when setting up SolaX Inverter Modbus. Existing **TCP / Ethernet** and **Serial** connections are not affected.
 
@@ -12,9 +12,22 @@ Your inverter continues to use its existing connection while the YAML hub is pre
 
 Your integration name, entity IDs and automations are kept. Do not delete and re-add the integration.
 
+## Connection behavior
+
+| Situation | Behavior |
+| --- | --- |
+| The selected YAML hub is still configured | Copy its connection settings and continue using the existing hub. Show a migration notification; do not open a second connection. |
+| YAML was removed, but the old hub is still running | Keep using the old hub until Home Assistant is restarted. |
+| YAML was removed and Home Assistant was restarted | Use the saved settings through the new Home Assistant Modbus API. Dismiss the migration notification. |
+| Other entities or integrations still need the YAML hub | Keep the YAML hub and continue sharing its existing connection until those users are migrated too. |
+| A new Home Assistant Modbus connection is configured | Use the new API without a YAML hub or dummy sensor. If a YAML hub already occupies the endpoint, do not open a competing connection. |
+| Home Assistant is older than 2026.10 | Keep existing YAML hub connections working; do not offer the new connection options. |
+
+The new connection opens on the first Modbus request, including inverter identification during setup. Home Assistant manages connection sharing and reconnection. Unloading this integration releases its use of the connection; other consumers are not disconnected.
+
 ## Before removing anything
 
-1. Use a Home Assistant release that provides the Modbus unit API **including timeout and startup-delay controls**. The first unit API appeared in 2026.9, but it does not yet provide both controls in 2026.9.4. The minimum release for this migration will be confirmed before it is published.
+1. Use **Home Assistant 2026.10 or later**. The first unit API appeared in 2026.9, but that release does not provide the timeout and startup-delay controls needed to preserve your connection settings.
 2. Install the integration update containing this migration and restart Home Assistant **with your existing YAML hub still configured**. This lets the integration copy the settings first.
 3. Check the notification. It must say that the connection settings have been saved. If it says they could not be saved, keep the YAML hub and follow the instructions in that message.
 4. Back up your Home Assistant configuration.
