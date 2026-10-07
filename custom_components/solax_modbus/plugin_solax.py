@@ -2151,12 +2151,12 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         name="Remotecontrol Import Limit (mode 1-9)",
         key="remotecontrol_import_limit",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # Local mains-connection limit: use the data type's maximum, not the inverter rating.
         native_min_value=0,
-        native_max_value=30000,  # overwritten by MAX_EXPORT
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        initvalue=20000,  # will be reduced to MAX
+        initvalue=20000,
         register_data_type=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
@@ -12405,56 +12405,39 @@ class solax_plugin(plugin_base):
                         read_scale=new_read_scale,
                     )
 
-        # For parallel mode Master inverters, use inverter_power_kw for remote control limits
+        # For parallel mode Master inverters, use inverter_power_kw for active-power limits.
         # This allows proper ±limits for multi-inverter systems (e.g., 3× 15kW = ±45kW)
         parallel_setting = hub.data.get("parallel_setting", "Free")
         if parallel_setting == "Master":
-            # Use inverter_power_kw (total system capacity) for remote control limits
+            # Use inverter_power_kw (total system capacity) for active-power limits.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
-            for key in ["remotecontrol_active_power", "remotecontrol_import_limit"]:
-                number_entity = hub.numberEntities.get(key)
-                if number_entity:
-                    # remotecontrol_active_power uses ±limits, import_limit uses 0 to +limit
-                    if key == "remotecontrol_import_limit":
-                        number_entity._attr_native_min_value = 0
-                        number_entity._attr_native_max_value = system_limit_w
-                        number_entity.entity_description = replace(
-                            number_entity.entity_description,
-                            native_min_value=0,
-                            native_max_value=system_limit_w,
-                        )
-                        _LOGGER.info("Parallel Master: Set %s limits to 0-%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
-                    else:
-                        number_entity._attr_native_min_value = -system_limit_w
-                        number_entity._attr_native_max_value = system_limit_w
-                        number_entity.entity_description = replace(
-                            number_entity.entity_description,
-                            native_min_value=-system_limit_w,
-                            native_max_value=system_limit_w,
-                        )
-                        _LOGGER.info("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
+            number_entity = hub.numberEntities.get("remotecontrol_active_power")
+            if number_entity:
+                number_entity._attr_native_min_value = -system_limit_w
+                number_entity._attr_native_max_value = system_limit_w
+                number_entity.entity_description = replace(
+                    number_entity.entity_description,
+                    native_min_value=-system_limit_w,
+                    native_max_value=system_limit_w,
+                )
+                _LOGGER.info("Parallel Master: Set active power limits to ±%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
 
         # For single inverters or if config_max_export is enabled, use config_max_export.
-        # Parallel Master remote-control limits are handled above using total system power,
+        # Parallel Master active-power limits are handled above using total system power,
         # but export_control_user_limit still needs the configured max export range.
-        parallel_master_remotecontrol_keys = {
-            "remotecontrol_active_power",
-            "remotecontrol_import_limit",
-        }
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
             if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
-                    "remotecontrol_import_limit",
                     "export_control_user_limit",
                     "generator_max_charge",
                 ]:
                     number_entity = hub.numberEntities.get(key)
                     if not number_entity:
                         continue
-                    if parallel_setting == "Master" and key in parallel_master_remotecontrol_keys:
+                    if parallel_setting == "Master" and key == "remotecontrol_active_power":
                         continue
                     number_entity._attr_native_max_value = new_max_export
                     # update description also, not sure whether needed or not
