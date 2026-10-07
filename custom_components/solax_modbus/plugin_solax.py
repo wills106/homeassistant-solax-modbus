@@ -1706,8 +1706,18 @@ def value_function_battery_voltage_cell_difference(initval: int, descr: Any, dat
 
 def value_function_bms_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate maximum charge power for Battery 1 sensors."""
-    # Battery voltage has different sensor names based on version.
-    batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None) or 0
+    batt_v1 = datadict.get("battery_voltage_charge", None) or 0
+    batt_a1 = datadict.get("bms_charge_max_current", None)
+    if batt_a1 is None:
+        # If BMS sensor is unavailable, fail back to total charge current
+        batt_a1 = datadict.get("battery_charge_max_current", 20)
+    # Calculate battery 1 max charge power
+    return int(batt_v1 * batt_a1)
+
+
+def value_function_bms_1_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate maximum charge power for Battery 1 sensors."""
+    batt_v1 = datadict.get("battery_1_voltage_charge", None) or 0
     batt_a1 = datadict.get("bms_charge_max_current", None)
     if batt_a1 is None:
         # If BMS sensor is unavailable, fail back to total charge current
@@ -1725,7 +1735,6 @@ def value_function_bms_max_charge(initval: int, descr: Any, datadict: dict[str, 
 
 def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate maximum charge power for Battery 1 sensors."""
-    # Battery 1 voltage has different sensor names based on version. Set to default of none available.
     batt_v2 = datadict.get("battery_2_voltage_charge", None) or 0
     batt_a2 = datadict.get("bms_2_charge_max_current", None)
     if batt_a2 is None:
@@ -1733,7 +1742,7 @@ def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str
         batt_at = datadict.get("battery_charge_max_current", 20)
         # Note if we have two batteries (battery 1 has voltage) then total
         # is split equally across both batteries.
-        batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None)
+        batt_v1 = datadict.get("battery_1_voltage_charge", None)
         if batt_v1 is None or batt_v1 <= 0:
             batt_a2 = batt_at
         else:
@@ -8071,9 +8080,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Battery Max Charge Rate",
         key="bms_max_charge",
         value_function=value_function_bms_max_charge,
-        depends_on=["battery_voltage_charge", "battery_1_voltage_charge", "battery_2_voltage_charge"],
+        depends_on=["battery_voltage_charge"],
         depends_on_any=[
-            ("battery_voltage_charge", "battery_1_voltage_charge"),
             ("bms_charge_max_current", "battery_charge_max_current"),
         ],
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -8086,12 +8094,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Battery 1 Max Charge Rate",
         key="bms_max_charge",
-        value_function=value_function_bms_max_charge,
-        depends_on=["battery_voltage_charge", "battery_1_voltage_charge", "battery_2_voltage_charge"],
-        depends_on_any=[
-            ("battery_voltage_charge", "battery_1_voltage_charge"),
-            ("bms_charge_max_current", "battery_charge_max_current"),
-        ],
+        value_function=value_function_bms_1_max_charge,
+        depends_on=["battery_1_voltage_charge", "battery_2_voltage_charge"],
+        depends_on_any=[("bms_charge_max_current", "battery_charge_max_current")],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -8103,7 +8108,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Battery 2 Max Charge Rate",
         key="bms_2_max_charge",
         value_function=value_function_bms_2_max_charge,
-        depends_on=["battery_2_voltage_charge", "battery_voltage_charge", "battery_1_voltage_charge"],
+        depends_on=["battery_2_voltage_charge", "battery_1_voltage_charge"],
         depends_on_any=[("bms_2_charge_max_current", "battery_charge_max_current")],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
