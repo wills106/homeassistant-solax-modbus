@@ -61,8 +61,8 @@ Now it's only needed to add your inverter to Home Assistant.
 
 ![](images/integration-setup-usb.png)
 
-- If you use Hass core HUB: This assumes you have declared and configured a modbus hub in your configuration.yaml file as described in [this page](https://www.home-assistant.io/integrations/modbus/). The `configuration.yaml` file then describes the connection method (serial, tcp, ..). You may need to declare one dummy entity for this hub.
-    - Enter the hub name.
+- On **Home Assistant 2026.10 or later**, select **Home Assistant Modbus (TCP)** or **Home Assistant Modbus (Serial)** to use a connection managed by Home Assistant. Enter the connection settings in the integration setup; no YAML hub or dummy sensor is needed. Existing direct **TCP / Ethernet** and **Serial** connections are unchanged.
+- Existing **Hass core Hub** connections continue to work while their YAML hub is configured. Follow the [Core Modbus migration guide](core-modbus-migration.md) to move to the new API without recreating your integration or entities.
 
 ![](images/integration-setup-corehub.png)
 

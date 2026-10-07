@@ -50,6 +50,25 @@
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
       },
+      "core_tcp": {
+        "title": "Home Assistant managed Modbus TCP",
+        "data": {
+          "host": "Inverter or Modbus adapter address",
+          "port": "Port",
+          "tcp_type": "Modbus TCP variant"
+        }
+      },
+      "core_serial": {
+        "title": "Home Assistant managed Modbus serial",
+        "data": {
+          "read_serial_port": "Serial port",
+          "baudrate": "Baud rate",
+          "parity": "Parity",
+          "bytesize": "Data bits",
+          "stopbits": "Stop bits",
+          "method": "Modbus serial framing"
+        }
+      },
       "duplicate_inverter": {
         "title": "Duplicate inverter configuration",
         "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
@@ -113,6 +132,25 @@
         "title": "Core Modbus hub selection",
         "data": {
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        }
+      },
+      "core_tcp": {
+        "title": "Home Assistant managed Modbus TCP",
+        "data": {
+          "host": "Inverter or Modbus adapter address",
+          "port": "Port",
+          "tcp_type": "Modbus TCP variant"
+        }
+      },
+      "core_serial": {
+        "title": "Home Assistant managed Modbus serial",
+        "data": {
+          "read_serial_port": "Serial port",
+          "baudrate": "Baud rate",
+          "parity": "Parity",
+          "bytesize": "Data bits",
+          "stopbits": "Stop bits",
+          "method": "Modbus serial framing"
         }
       },
       "duplicate_inverter": {

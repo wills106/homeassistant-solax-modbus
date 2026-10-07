@@ -9,9 +9,13 @@ from collections.abc import Callable
 from typing import Any, Protocol
 from weakref import ReferenceType, ref
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 
+from .core_modbus import core_connection_params
 from .pymodbus_compat import ADDR_KW
+from .serial_modbus import SerialModbusResponse
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -198,6 +202,101 @@ class CoreModbusTransport:
         call_type = CORE_CALL_TYPE_WRITE_REGISTERS if multiple else CORE_CALL_TYPE_WRITE_REGISTER
         value: int | list[int] = values if multiple else values[0]
         return await hub.async_pb_call(unit, address, value, call_type)
+
+
+class CoreModbusUnitError(Exception):
+    """A failure reported by Home Assistant's shared Modbus unit."""
+
+
+def _get_core_unit(hass: HomeAssistant, entry: ConfigEntry, params: Any, unit: int) -> Any:
+    """Request a unit; Core owns the link and releases it on entry unload."""
+    from homeassistant.components import modbus
+
+    getter = getattr(modbus, "async_get_unit", None)
+    if getter is None:
+        raise HomeAssistantError("Home Assistant's Modbus unit API is not available")
+    return getter(hass, entry, params, unit)
+
+
+class CoreModbusUnitTransport:
+    """Public unit API adapter with lazy connection and Core-owned reconnects."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        settings: dict[str, Any],
+        unit: int,
+        *,
+        unit_getter: Callable[[HomeAssistant, ConfigEntry, Any, int], Any] = _get_core_unit,
+    ) -> None:
+        self._hass = hass
+        self._entry = entry
+        self._params = core_connection_params(settings)
+        self._settings = settings
+        self._default_unit = unit
+        self._unit_getter = unit_getter
+        self._units: dict[int, Any] = {}
+        self._closed = False
+        self._unit(unit)
+
+    def _unit(self, unit_id: int) -> Any:
+        if unit_id not in self._units:
+            unit = self._unit_getter(self._hass, self._entry, self._params, unit_id)
+            unit.require_timeout(self._settings["timeout"])
+            unit.require_connect_delay(self._settings["delay"])
+            unit.set_message_spacing(self._settings["message_wait_milliseconds"] / 1000)
+            self._units[unit_id] = unit
+        return self._units[unit_id]
+
+    @property
+    def endpoint(self) -> str:
+        return ":".join(str(part) for part in self._params.endpoint)
+
+    def is_connected(self) -> bool:
+        return not self._closed and any(unit.connected for unit in self._units.values())
+
+    async def connect(self) -> bool:
+        self._closed = False
+        self._unit(self._default_unit)
+        # Acquiring a unit does not open the link. The next I/O connects it.
+        return True
+
+    async def close(self) -> None:
+        # Never disconnect a link shared with other integrations. A reconnect
+        # retains our unit handles; actual teardown belongs to Core on unload.
+        self._closed = True
+
+    async def read(self, register_type: str, unit: int, address: int, count: int) -> SerialModbusResponse | None:
+        from modbus_connection.exceptions import ModbusError
+
+        if self._closed:
+            return None
+        client = self._unit(unit)
+        try:
+            if register_type == "input":
+                registers = await client.read_input_registers(address, count)
+            else:
+                registers = await client.read_holding_registers(address, count)
+        except (ModbusError, OSError, TimeoutError) as err:
+            raise CoreModbusUnitError(str(err)) from err
+        return SerialModbusResponse(registers)
+
+    async def write(self, unit: int, address: int, values: list[int], *, multiple: bool) -> SerialModbusResponse | None:
+        from modbus_connection.exceptions import ModbusError
+
+        if self._closed:
+            return None
+        client = self._unit(unit)
+        try:
+            if multiple:
+                await client.write_registers(address, values)
+            else:
+                await client.write_register(address, values[0])
+        except (ModbusError, OSError, TimeoutError) as err:
+            raise CoreModbusUnitError(str(err)) from err
+        # The public API confirms successful writes by returning without error.
+        return SerialModbusResponse([])
 
 
 class UnavailableModbusTransport:

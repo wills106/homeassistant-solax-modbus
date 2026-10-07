@@ -163,8 +163,16 @@ from .const import (
 from .const import (
     matches_active_when as matches_active_when,
 )
+from .core_modbus import async_prepare_core_connection, configured_core_connection
 from .device_registry_lookup import link_parent_device
-from .modbus_transport import CoreModbusTransport, ModbusTransport, NativeModbusTransport, UnavailableModbusTransport
+from .modbus_transport import (
+    CoreModbusTransport,
+    CoreModbusUnitError,
+    CoreModbusUnitTransport,
+    ModbusTransport,
+    NativeModbusTransport,
+    UnavailableModbusTransport,
+)
 from .pymodbus_compat import DataType, convert_from_registers, convert_to_registers, pymodbus_version_info
 from .sensor import SolaXModbusSensor
 from .serial_modbus import AsyncSerialModbusClient, SerialModbusError
@@ -422,6 +430,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_update_entry(entry, options=new)
     # end of conversion
 
+    yaml_hub_name = await async_prepare_core_connection(hass, entry)
+    config = entry.options
+
     # ================== dynamically load desired plugin =======================================================
 
     plugin = await hass.async_add_executor_job(_load_plugin, plugin_name)
@@ -434,12 +445,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass,
             plugin,
             entry,
+            yaml_hub_name=yaml_hub_name,
         )
     else:
         hub = SolaXModbusHub(
             hass,
             plugin,
             entry,
+            yaml_hub_name=yaml_hub_name,
         )
     try:
         from .energy_dashboard import (
@@ -607,6 +620,8 @@ class SolaXModbusHub:
         hass: HomeAssistant,
         plugin: ModuleType,
         entry: ConfigEntry,
+        *,
+        yaml_hub_name: str | None = None,
     ) -> None:
         config = entry.options
         name = config[CONF_NAME]
@@ -655,12 +670,12 @@ class SolaXModbusHub:
             else:
                 client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
             self._transport = NativeModbusTransport(client)
-        elif interface == "core":
-            self._transport = CoreModbusTransport(
-                hass,
-                config.get(CONF_CORE_HUB, ""),
-                name,
-            )
+        elif interface in ("core", "core_tcp", "core_serial"):
+            core_settings = configured_core_connection(dict(config))
+            if yaml_hub_name is not None or core_settings is None:
+                self._transport = CoreModbusTransport(hass, yaml_hub_name or config.get(CONF_CORE_HUB, ""), name)
+            else:
+                self._transport = CoreModbusUnitTransport(hass, entry, core_settings, int(modbus_addr))
         else:
             self._transport = UnavailableModbusTransport(interface)
         self._lock = asyncio.Lock()
@@ -1512,8 +1527,8 @@ class SolaXModbusHub:
             return False
         if not self._transport.is_connected():
             _LOGGER.debug("%s: Inverter is not connected, trying to connect", self._name)
-            await self.async_connect()
-        return self._transport.is_connected()
+            return await self.async_connect()
+        return True
 
     async def is_online(self) -> bool:
         return self._transport.is_connected() and (self.slowdown == 1)
@@ -1562,7 +1577,7 @@ class SolaXModbusHub:
             try:
                 _LOGGER.debug("%s: READ %s device=%s addr=0x%x cnt=%s", self._name, register_type.upper(), unit, address, count)
                 response = await self._track_task(self._transport.read(register_type, unit, address, count))
-            except (ModbusException, SerialModbusError, AttributeError, TypeError) as exception_error:
+            except (ModbusException, SerialModbusError, CoreModbusUnitError, AttributeError, TypeError) as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 if self._is_expected_shutdown_modbus_error(exception_error):
                     _LOGGER.debug("%s: ignoring Modbus read cancellation during shutdown: %s", self._name, error)
@@ -1684,7 +1699,7 @@ class SolaXModbusHub:
                 raise HomeAssistantError(f"{self._name}: inverter is not connected")
             try:
                 response = await self._track_task(self._transport.write(unit, address, values, multiple=multiple))
-            except (ModbusException, SerialModbusError, AttributeError, TypeError) as ex:
+            except (ModbusException, SerialModbusError, CoreModbusUnitError, AttributeError, TypeError) as ex:
                 await self._handle_transport_exception(ex, operation)
                 raise HomeAssistantError(f"{self._name}: {operation} failed: {ex}") from ex
         return self._validate_write_response(
