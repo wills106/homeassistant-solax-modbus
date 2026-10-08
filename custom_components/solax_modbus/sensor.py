@@ -485,6 +485,8 @@ class SolaXModbusSensor(SensorEntity):
             # a numeric value and HA rejects the combination of a unit with a
             # non-numeric device class (e.g. Growatt eps_set_voltage in V).
             self._attr_options = list(scale.values())
+            if "Unknown" not in self._attr_options:
+                self._attr_options.append("Unknown")
             self._attr_device_class = SensorDeviceClass.ENUM
 
     @callback
