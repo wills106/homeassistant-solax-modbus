@@ -283,12 +283,14 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     # mandatory inputs, ``depends_on_any`` contains alternative groups where at
     # least one input must be available, and ``optional_depends_on`` contains
     # inputs used only when valid and fresh, otherwise omitted. An explicit empty
-    # ``depends_on`` declares a calculation with no readiness inputs. ``None``
+    # ``depends_on`` declares a calculation with no readiness inputs or expiry,
+    # provided no other input contract or special source mapping exists. ``None``
     # means that the contract was not declared and the calculation is rejected.
     depends_on: list[str] | None = None
     depends_on_any: list[tuple[str, ...]] | None = None
     optional_depends_on: list[str] | None = None
     readiness_validator: Callable[[dict[str, Any]], bool] | None = None
+    dependency_selector: Callable[[dict[str, Any], set[str]], tuple[set[str], set[str]]] | None = None
     recompute_each_poll: bool = False
     allow_none: bool = False  # Explicit unknown output, never a numeric zero.
     _energy_dashboard_device_info: Any = None  # DeviceInfo for energy dashboard
@@ -300,6 +302,22 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     _riemann_data_hub: Any = None  # Riemann data hub reference
     _is_daily_delta_sensor: bool = False  # Whether this is a daily delta sensor calculated from a cumulative total
     _daily_delta_source_key: str | None = None  # Source cumulative total key for daily delta sensors
+
+
+def is_inputless_computed_sensor(description: Any) -> bool:
+    """Only an explicit empty input contract exempts a computation from expiry."""
+    return (
+        getattr(description, "register", -1) < 0
+        and bool(getattr(description, "value_function", None))
+        and getattr(description, "depends_on", None) == []
+        and not getattr(description, "optional_depends_on", None)
+        and not getattr(description, "depends_on_any", None)
+        and getattr(description, "dependency_selector", None) is None
+        and getattr(description, "readiness_validator", None) is None
+        and getattr(description, "_energy_dashboard_mapping", None) is None
+        and not getattr(description, "_is_riemann_sum_sensor", False)
+        and not getattr(description, "_is_daily_delta_sensor", False)
+    )
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -315,6 +333,11 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     write_method: int = WRITE_SINGLE_MODBUS  # WRITE_SINGLE_MOBUS or WRITE_MULTI_MODBUS or WRITE_DATA_LOCAL
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  #  value = function(initval, descr, datadict)
     autorepeat: str | None = None  # if not None: name of entity that contains autorepeat duration in seconds
+    autorepeat_dependencies: tuple[str, ...] | None = None  # Required model inputs, regardless of control sub-mode
+    autorepeat_optional_dependencies: tuple[str, ...] = ()  # Only valid accepted inputs reach the controller
+    autorepeat_control: str | None = None  # Local mode request; explicit Disabled bypasses the input gate
+    autorepeat_parallel_dependencies: dict[str, tuple[str, ...]] | None = None  # Fixed inputs for each supported topology
+    autorepeat_cadence: tuple[str, ...] = ()
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
 
 
