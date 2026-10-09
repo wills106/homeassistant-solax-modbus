@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,32 +22,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: true
+          cache-suffix: quality
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
+
+      - name: Check quality baseline freshness
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: uv run --locked python -m scripts.check_ha_baseline
 
       - name: Run pre-commit checks
+        env:
+          # The parallel Type Check job runs mypy once; local hooks still include it.
+          SKIP: mypy
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
   mypy:
     name: Type Check (mypy)
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.14"
+          enable-cache: true
+          cache-suffix: quality
+          # Code Quality saves the shared cache; avoid competing uploads.
+          save-cache: false
 
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups
 
       - name: Run mypy type checking
         run: |
@@ -53,11 +72,10 @@ jobs:
 
   hacs:
     name: HACS Validation
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
       - name: HACS Action
         uses: hacs/action@main
         with:
@@ -65,99 +83,140 @@ jobs:
 
   hassfest:
     name: Hassfest Validation
-    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
       - name: Hassfest Action
         uses: home-assistant/actions/hassfest@master
 
-  test-quick:
-    name: Test Quick
-    needs: [mypy]
-    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+  test-plan:
+    name: Plan HA Test Environments
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12"]
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
+      - name: Build test matrix
+        id: plan
+        run: python3 scripts/plan_ha_tests.py
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync --all-groups
-
-      - name: Run Quick Tests
-        run: uv run pytest -m "not slow"
-
-  test-comprehensive:
-    name: Test Comprehensive
-    needs: [mypy]
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+  test-ha:
+    name: Test HA (${{ matrix.name }}, ${{ matrix.suite }})
+    needs: [quality, mypy, test-plan]
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.test-plan.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
+
+      - name: Select Home Assistant and Python
+        id: selected
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TEST_NAME: ${{ matrix.name }}
+          TARGET: ${{ matrix.target }}
+          HA_VERSION: ${{ matrix.ha_version }}
+        run: |
+          echo "HA_ENV=$RUNNER_TEMP/ha-$TEST_NAME-env" >> "$GITHUB_ENV"
+          echo "HA_RECORD=$RUNNER_TEMP/ha-$TEST_NAME-record" >> "$GITHUB_ENV"
+          python3 scripts/resolve_ha_environment.py --target "$TARGET" --ha-version "$HA_VERSION" --output-dir "$RUNNER_TEMP/ha-$TEST_NAME-record"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ steps.selected.outputs.python }}
+          enable-cache: true
+          # Selected HA requirements and Python keep matrix caches separate.
+          cache-dependency-glob: ${{ runner.temp }}/ha-${{ matrix.name }}-record/requirements.in
+          cache-suffix: ha-${{ matrix.name }}-${{ steps.selected.outputs.python }}
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Resolve and install HA environment
+        env:
+          SELECTED_PYTHON: ${{ steps.selected.outputs.python }}
+        run: |
+          if [[ "$SELECTED_PYTHON" =~ ^3\.[0-9]+$ ]]; then
+            uv python install --upgrade --no-bin "$SELECTED_PYTHON"
+          else
+            uv python install --no-bin "$SELECTED_PYTHON"
+          fi
+          uv venv --managed-python --python "$SELECTED_PYTHON" "$HA_ENV"
+          if ! uv pip compile --no-config --python "$HA_ENV/bin/python" --upgrade "$HA_RECORD/requirements.in" -o "$HA_RECORD/requirements.txt"; then
+            echo "::error::Cannot resolve test dependencies for the exact selected HA. A matching test plugin may not be published yet; no other HA version is substituted."
+            exit 1
+          fi
+          uv pip sync --no-config --python "$HA_ENV/bin/python" "$HA_RECORD/requirements.txt"
 
-      - name: Run Full Tests
-        run: uv run pytest
+      - name: Verify and record installed versions
+        env:
+          EXPECTED_HA: ${{ steps.selected.outputs.homeassistant }}
+          EXPECTED_PYTHON: ${{ steps.selected.outputs.python }}
+        run: |
+          "$HA_ENV/bin/python" - <<'PY'
+          import json
+          import os
+          import platform
+          from importlib.metadata import version
+          from pathlib import Path
+
+          versions = {
+              "python": platform.python_version(),
+              "homeassistant": version("homeassistant"),
+              "test_plugin": version("pytest-homeassistant-custom-component"),
+          }
+          Path(os.environ["HA_RECORD"], "installed.json").write_text(json.dumps(versions, indent=2) + "\n")
+          print(json.dumps(versions, indent=2))
+          assert versions["homeassistant"] == os.environ["EXPECTED_HA"]
+          expected = os.environ["EXPECTED_PYTHON"].split(".")
+          assert versions["python"].split(".")[:len(expected)] == expected
+          PY
+          uv pip freeze --python "$HA_ENV/bin/python" > "$HA_RECORD/installed-requirements.txt"
+          uv --version > "$HA_RECORD/uv-version.txt"
+
+      - name: Run tests
+        env:
+          TEST_SUITE: ${{ matrix.suite }}
+        run: |
+          if [[ "$TEST_SUITE" == "quick" ]]; then
+            "$HA_ENV/bin/python" -m pytest -m "not slow"
+          elif [[ "$TEST_SUITE" == "full" ]]; then
+            "$HA_ENV/bin/python" -m pytest
+          else
+            echo "::error::Unknown test suite: $TEST_SUITE"
+            exit 1
+          fi
+
+      - name: Upload HA environment record
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: ${{ matrix.name }}-ha-environment
+          path: ${{ runner.temp }}/ha-${{ matrix.name }}-record
 
   all-checks-passed:
     name: ✅ All Checks Passed
     if: always()
-    needs: [hacs, hassfest, test-quick, test-comprehensive]
+    needs: [quality, mypy, hacs, hassfest, test-ha]
     runs-on: ubuntu-latest
     steps:
       - name: Check all results
+        env:
+          QUALITY: ${{ needs.quality.result }}
+          TYPES: ${{ needs.mypy.result }}
+          HACS: ${{ needs.hacs.result }}
+          HASSFEST: ${{ needs.hassfest.result }}
+          HA: ${{ needs.test-ha.result }}
         run: |
-          HACS="${{ needs.hacs.result }}"
-          HASSFEST="${{ needs.hassfest.result }}"
-          QUICK="${{ needs.test-quick.result }}"
-          COMPREHENSIVE="${{ needs.test-comprehensive.result }}"
-          
+          echo "Code Quality: $QUALITY"
+          echo "Type Check: $TYPES"
           echo "HACS: $HACS"
           echo "Hassfest: $HASSFEST"
-          echo "Quick Tests: $QUICK"
-          echo "Comprehensive Tests: $COMPREHENSIVE"
-          
-          # 1. Static Analysis must pass
-          if [[ "$HACS" != "success" ]]; then
-            echo "❌ HACS validation failed"
+          echo "HA Test Matrix: $HA"
+          if [[ "$QUALITY" != "success" || "$TYPES" != "success" || "$HACS" != "success" || "$HASSFEST" != "success" || "$HA" != "success" ]]; then
+            echo "❌ Required validation or HA matrix failed, was cancelled or skipped"
             exit 1
           fi
-          if [[ "$HASSFEST" != "success" ]]; then
-            echo "❌ Hassfest validation failed"
-            exit 1
-          fi
-          
-          # 2. Tests: One path must succeed
-          if [[ "$COMPREHENSIVE" == "success" ]]; then
-            echo "✅ Comprehensive tests passed"
-            exit 0
-          elif [[ "$QUICK" == "success" && "$COMPREHENSIVE" == "skipped" ]]; then
-            echo "✅ Quick tests passed"
-            exit 0
-          elif [[ "$QUICK" == "skipped" && "$COMPREHENSIVE" == "skipped" ]]; then
-            echo "⚠️ No tests ran?"
-            exit 1
-          else
-            echo "❌ Tests failed or cancelled"
-            exit 1
-          fi
+          echo "✅ All required checks passed"

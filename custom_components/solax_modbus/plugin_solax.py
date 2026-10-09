@@ -20,7 +20,7 @@ from homeassistant.const import (
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
+from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,
     BUTTONREPEAT_POST,
     CONF_READ_EPS,

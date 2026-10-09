@@ -379,7 +379,7 @@ automation:
 
 - **Remote Control Details**: [solax-remote-control-redesigned.md](solax-remote-control-redesigned.md)
 - **General FAQ**: [solax-faq.md](solax-faq.md)
-- **Developer Guide**: [developer_guide.md](developer_guide.md)
+- **Integration internals**: [integration-internals.md](developer/integration-internals.md)
 
 ## Community Support
 
