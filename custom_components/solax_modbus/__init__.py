@@ -1106,26 +1106,25 @@ class SolaXModbusHub:
             _LOGGER.error("%s: device_group_key called with None device_info! This is a BUG - device_info should never be None here.", self._name)  # type: ignore[unreachable]
             return ""
 
-        # DEFENSIVE: Check if it's a dict-like object
-        if not isinstance(device_info, dict):
-            _LOGGER.error("%s: device_group_key called with non-dict device_info! type=%s, value=%s", self._name, type(device_info), device_info)  # type: ignore[unreachable]
+        # DEFENSIVE: Carefully access identifiers to ensure the passed device_info
+        # contains the identifiers key. The type for this parameter should be either
+        # a dict-like object (HA <= 2026.10) or a class instance (HA > 2026.10).
+        try:
+            identifiers = device_info.get("identifiers", None)
+        except (AttributeError, TypeError):
+            _LOGGER.error(
+                "%s: device_group_key called with non-class/dict device_info! type=%s, value=%s", self._name, type(device_info), device_info
+            )
             return ""
 
-        # DEFENSIVE: Check if "identifiers" key exists
-        if "identifiers" not in device_info:
+        # DEFENSIVE: Check if "identifiers" key existed and was not None
+        if identifiers is None:
             _LOGGER.error(
-                "%s: device_group_key called with device_info missing 'identifiers' key! keys=%s, device_info=%s",
+                "%s: device_group_key called with device_info with missing or empty 'identifiers' key! keys={%s}, device_info=%s",
                 self._name,
                 list(device_info.keys()),
                 device_info,
             )
-            return ""
-
-        identifiers = device_info["identifiers"]
-
-        # DEFENSIVE: Check if identifiers is None
-        if identifiers is None:
-            _LOGGER.error("%s: device_group_key got None for device_info['identifiers']! device_info=%s", self._name, device_info)  # type: ignore[unreachable]
             return ""
 
         # DEFENSIVE: Check if identifiers is iterable
