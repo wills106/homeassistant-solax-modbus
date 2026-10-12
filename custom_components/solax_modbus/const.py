@@ -14,24 +14,7 @@ from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
 from homeassistant.const import CONF_SCAN_INTERVAL
-
-# TODO: Review if this fallback is still needed.
-# UnitOfReactivePower was added in HA 2023.1 (Jan 2023). This fallback supports
-# HA versions older than 2023.1. Consider adding a minimum HA version to manifest.json
-# and removing this fallback if older versions are no longer supported.
-# See: https://developers.home-assistant.io/blog/2022/12/05/more-unit-enumerators
-try:
-    from homeassistant.const import (
-        UnitOfReactivePower,
-    )
-except ImportError:
-    from homeassistant.const import POWER_VOLT_AMPERE_REACTIVE
-
-    class UnitOfReactivePower(StrEnum):  # type: ignore[no-redef]
-        """Fallback for HA versions <2023.1."""
-
-        VOLT_AMPERE_REACTIVE = POWER_VOLT_AMPERE_REACTIVE
-
+from homeassistant.const import UnitOfReactivePower as UnitOfReactivePower  # Re-export for the inverter plugins.
 
 # ================================= Definitions for config_flow ==========================================================
 

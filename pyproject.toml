@@ -18,10 +18,18 @@ dev = [
 ]
 test = [
     "pytest>=8.0.0",
-    "pytest-homeassistant-custom-component>=0.13.0",
-    "pytest-asyncio>=0.24.0,<1.0.0",
+    "homeassistant==2025.1.0; python_version < '3.14'",
+    "homeassistant==2026.9.4; python_version >= '3.14'",
+    "pytest-homeassistant-custom-component==0.13.201; python_version < '3.14'",
+    "pytest-homeassistant-custom-component==0.13.367; python_version >= '3.14'",
+    "pytest-asyncio>=0.24.0,<1.0.0; python_version < '3.14'",
+    "pytest-asyncio>=1.4.0; python_version >= '3.14'",
     "pytest-cov>=4.1.0",
 ]
+
+[tool.uv]
+# Current HA requires Python 3.14.2 or newer; early 3.14 patches are unsupported.
+environments = ["python_full_version < '3.14' or python_full_version >= '3.14.2'"]
 
 [tool.ruff]
 line-length = 150
@@ -48,15 +56,16 @@ skip = "*.csv,*.json"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 norecursedirs = [".git", "testing_config"]
-asyncio_mode = "strict"
+# The current HA test plugin provides async autouse fixtures.
+asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
 
 [tool.mypy]
-# Python version targeting HA 2024.9.0+ (Python 3.12)
-python_version = "3.12"
+# Current HA imports contain Python 3.14 syntax; Ruff retains the 3.12 source target.
+python_version = "3.14"
 
 # Package resolution
 explicit_package_bases = true
