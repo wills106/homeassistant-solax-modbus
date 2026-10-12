@@ -23,7 +23,7 @@ from custom_components.solax_modbus.energy_dashboard import (
 from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
 from custom_components.solax_modbus.sensor import COMMUNICATION_SENSOR_TYPES, SolaXModbusSensor
 
-from .test_poll_snapshot import make_group, make_hub, make_pm_poll, read_pm_block, successful_block
+from .test_poll_snapshot import make_group, make_hub, make_pm_poll, prepare_communication_diagnostics, read_pm_block, successful_block
 
 
 @pytest_asyncio.fixture
@@ -106,6 +106,74 @@ async def test_computed_lease_expires_without_poll_and_recovers(publication_hass
         assert bool(entity.available)
         await entity.async_will_remove_from_hass()
         later.return_value.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_communication_diagnostics_remain_available_during_slowdown(publication_hass: HomeAssistant) -> None:
+    from custom_components.solax_modbus.const import PollOutcome
+
+    hub = make_hub()
+    prepare_communication_diagnostics(hub)
+    entities = []
+    for descr in COMMUNICATION_SENSOR_TYPES:
+        entity = SolaXModbusSensor("test", hub, DeviceInfo(identifiers={(DOMAIN, "test")}), descr)
+        entity.hass = publication_hass
+        entity.entity_id = f"sensor.{descr.key}"
+        # Health attributes are independently covered by communication tests.
+        hub.communication_health_attributes = Mock(return_value={})
+        hub.communication_quarantine_attributes = Mock(return_value={})
+        await entity.async_added_to_hass()
+        entities.append(entity)
+        assert descr.key not in hub.computedSensors
+    with patch("custom_components.solax_modbus.sensor.async_call_later") as later:
+        hub._record_poll_cycle(PollOutcome.SUCCESS, 1, 15)
+        assert publication_hass.states.is_state("sensor.communication_health", "Healthy")
+        hub._record_poll_cycle(PollOutcome.FAILED, 60, 15)
+        assert publication_hass.states.is_state("sensor.communication_health", "Degraded")
+        for _ in range(10):
+            hub._record_poll_cycle(PollOutcome.SKIPPED, 0, 15)
+        assert publication_hass.states.is_state("sensor.communication_health", "Degraded")
+        for _ in range(4):
+            hub._record_poll_cycle(PollOutcome.FAILED, 10, 15)
+        assert publication_hass.states.is_state("sensor.communication_health", "Offline")
+        assert all(entity.available for entity in entities)
+        later.assert_not_called()
+    for entity in entities:
+        await entity.async_will_remove_from_hass()
+
+
+@pytest.mark.asyncio
+async def test_integral_publishes_unavailable_without_losing_restore_total(
+    publication_hass: HomeAssistant, monkeypatch: pytest.MonkeyPatch, clock_start: float
+) -> None:
+    from .test_riemann_readiness import make_integral, observe
+
+    entity, hub = make_integral()
+    entity.hass = publication_hass
+    entity.entity_id = "sensor.integral_readiness"
+    # Use real HA publication instead of the arithmetic-only fixture's mock.
+    del entity.async_write_ha_state
+    clock = [clock_start]
+    monkeypatch.setattr(time, "monotonic", lambda: clock[0])
+    with patch("custom_components.solax_modbus.sensor.async_call_later") as later:
+        observe(hub, clock, 3600)
+        entity.modbus_data_updated()
+        assert publication_hass.states.is_state(entity.entity_id, "0.0")
+        clock[0] += 15
+        observe(hub, clock, 3600)
+        entity.modbus_data_updated()
+        assert publication_hass.states.is_state(entity.entity_id, "0.015")
+        later.call_args.args[2](None)
+        assert publication_hass.states.is_state(entity.entity_id, "unavailable")
+        state = publication_hass.states.get(entity.entity_id)
+        assert state is not None
+        saved_energy = entity.extra_restore_state_data.as_dict()["energy"]
+        assert saved_energy == pytest.approx(0.015, rel=0, abs=1e-12)
+        clock[0] += 600
+        observe(hub, clock, 0)
+        entity.modbus_data_updated()
+        assert publication_hass.states.is_state(entity.entity_id, "0.015")
+        assert entity.extra_restore_state_data.as_dict()["energy"] == saved_energy
 
 
 @pytest.mark.parametrize("bad", [None, float("nan"), float("inf"), float("-inf")])
