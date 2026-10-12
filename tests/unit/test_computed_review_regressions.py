@@ -165,8 +165,8 @@ def test_gen5_soc_does_not_mix_fresh_and_stale_batteries() -> None:
 def test_bms_charge_fallback_waits_for_active_peer_voltage() -> None:
     hub = make_hub()
     sources(hub, {"battery_1_voltage_charge": 200, "battery_2_voltage_charge": 200, "battery_charge_max_current": 20})
-    descr = description("bms_max_charge")
-    assert not hub.evaluate_computed_sensor(descr, hub.data, {"battery_1_voltage_charge", "battery_charge_max_current"})
+    descr = description("bms_2_max_charge")
+    assert not hub.evaluate_computed_sensor(descr, hub.data, {"battery_2_voltage_charge", "battery_charge_max_current"})
     assert hub.evaluate_computed_sensor(descr, hub.data, set(hub.data))
     assert hub.data[descr.key] == 2000
 
