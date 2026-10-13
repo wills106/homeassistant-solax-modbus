@@ -1,6 +1,7 @@
 """Stable-release selection cannot drift to beta HA or locked older versions."""
 
 import json
+import tomllib
 from email.message import Message
 from pathlib import Path
 from typing import Any
@@ -61,6 +62,12 @@ def test_environment_requirements_preserve_project_dependencies_without_old_test
     assert "pytest-homeassistant-custom-component>=0.13.0" in requirements
     assert "pytest-asyncio" in requirements
     assert not any("0.13.201" in item or "<1.0.0" in item for item in requirements)
+
+
+@pytest.mark.parametrize("tag", ["2025.1.0", "2026.10.0"])
+def test_dynamic_ha_environments_include_core_modbus_test_dependency(tag: str) -> None:
+    project = tomllib.loads((Path(__file__).resolve().parents[2] / "pyproject.toml").read_text())
+    assert "modbus-connection==4.12.3" in environment_requirements(project, tag)
 
 
 @pytest.mark.parametrize("requirement, series", [(">=3.12.0", "3.12"), (">=3.13.2", "3.13")])

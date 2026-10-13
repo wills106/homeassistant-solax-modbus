@@ -501,6 +501,8 @@ async def test_unit_acquisition_conflicts_are_not_hidden(unit_transport: Any) ->
 @pytest.mark.asyncio
 @pytest.mark.parametrize("unit_id", [-1, 256])
 async def test_invalid_unit_ids_fail_before_acquisition(unit_transport: Any, unit_id: int) -> None:
+    # The fixture already acquired its valid default unit; isolate this request.
+    unit_transport.getter.reset_mock()
     with pytest.raises(HomeAssistantError, match="Invalid Modbus unit ID"):
         await unit_transport.transport.read("holding", unit_id, 10, 2)
-    unit_transport.getter.assert_called_once()
+    unit_transport.getter.assert_not_called()

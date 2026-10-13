@@ -2074,7 +2074,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "codespell" },
-    { name = "modbus-connection" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "ruff" },
@@ -2082,6 +2081,7 @@ dev = [
 test = [
     { name = "homeassistant", version = "2025.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },
     { name = "homeassistant", version = "2026.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
+    { name = "modbus-connection" },
     { name = "pytest", version = "8.3.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },
     { name = "pytest", version = "9.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
     { name = "pytest-asyncio", version = "0.24.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },
@@ -2101,7 +2101,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "codespell", specifier = ">=2.2.6" },
-    { name = "modbus-connection", specifier = "==4.12.3" },
     { name = "mypy", specifier = ">=1.8.0" },
     { name = "pre-commit", specifier = ">=4.0.0" },
     { name = "ruff", specifier = ">=0.14.14" },
@@ -2109,6 +2108,7 @@ dev = [
 test = [
     { name = "homeassistant", marker = "python_full_version < '3.14'", specifier = "==2025.1.0" },
     { name = "homeassistant", marker = "python_full_version >= '3.14'", specifier = "==2026.9.4" },
+    { name = "modbus-connection", specifier = "==4.12.3" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", marker = "python_full_version < '3.14'", specifier = ">=0.24.0,<1.0.0" },
     { name = "pytest-asyncio", marker = "python_full_version >= '3.14'", specifier = ">=1.4.0" },
