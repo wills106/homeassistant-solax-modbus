@@ -51,7 +51,13 @@ DO NOT CONNECT THIS COM PORT TO AN ETHERNET SWITCH - your Ethernet switch port w
 
 - In "More Advanced Settings...",
     - **SolaX** set Modbus Gateway Type to "Simple Modbus to TCP/IP mode"
-    - **Sofar Solar & possibly Growatt** set Modbus Gateway Type to "Auto query storage type"
+    - **Sofar Solar** set Modbus Gateway Type to "Multi-host non-storage type"
+      (or "Simple Modbus TCP to RTU" if Home Assistant is the only client).
+      Do **not** use "Auto query storage type" or another storage type when reading battery packs (Sofar `read_battery`):
+      those modes answer from the adaptor's cache. The pack is selected through `0x9020`/`0x9044` and all packs share
+      the same data registers, so a cached answer can confirm the previous selection or return another pack's data.
+      See [Sofar FAQ](sofar-faq.md#log-is-flooded-with-inverter-did-not-select-batt_nr).
+    - **possibly Growatt** set Modbus Gateway Type to "Auto query storage type"
     - all other parameters can be left default
 ![Waveshare More Advanced Settings](images/adaptor-rs485-eth-waveshare-b-settings-advanced.png)
 
