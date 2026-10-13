@@ -5,7 +5,7 @@ import json
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -132,7 +132,8 @@ def make_mode_select(key: str, data: dict[str, Any]) -> tuple[SolaXModbusSelect,
     description = replace(description, reverse_option_dict={label: raw for raw, label in description.option_dict.items()})
     hub = make_direct_hub(data)
     entity = SolaXModbusSelect("solax", hub, 1, {}, description)
-    entity.async_write_ha_state = Mock()  # type: ignore[method-assign]
+    # Current HA marks this method final; bypass that type restriction only for the test mock.
+    cast(Any, entity).async_write_ha_state = Mock()
     return entity, hub
 
 
@@ -156,7 +157,8 @@ def make_direct_hub(data: dict[str, Any], mode: int = 0) -> Any:
 def make_number(key: str, hub: Any) -> SolaXModbusNumber:
     description = next(description for description in NUMBER_TYPES if description.key == key)
     entity = SolaXModbusNumber("solax", hub, 1, {}, description)
-    entity.async_write_ha_state = Mock()  # type: ignore[method-assign]
+    # Current HA marks this method final; bypass that type restriction only for the test mock.
+    cast(Any, entity).async_write_ha_state = Mock()
     return entity
 
 
