@@ -1986,7 +1986,8 @@ class SolaXModbusHub:
             # _LOGGER.warning(f"****tmp*** treating {descr.key} failed")
             return_value = None
         elif type(descr.scale) is dict:  # translate int to string
-            return_value = descr.scale.get(val, "Unknown")
+            # None publishes HA's unknown state without inventing an invalid enum option.
+            return_value = descr.scale.get(val)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
