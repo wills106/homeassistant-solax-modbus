@@ -31,6 +31,7 @@ def make_hub() -> Any:
         localDataCallback=Mock(return_value=True),
     )
     hub._poll_data_lock = asyncio.Lock()
+    hub._autorepeat_lock = asyncio.Lock()
     hub.slowdown = 1
     return hub
 
