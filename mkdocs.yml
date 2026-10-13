@@ -26,9 +26,11 @@ nav:
 - Compatible RS485 Adaptors: compatible-adaptors.md
 - Compatible inverters: compatible-inverters.md
 - Home Assistant "Energy Dashboard": energy-dashboard.md
-- Developer Guide: developer_guide.md
-- Computed Sensor Readiness: developer/computed-sensor-readiness.md
-- CI/CD Pipeline: developer/cicd-pipeline.md
+- Development:
+  - Contributing: contributing.md
+  - Integration internals: developer/integration-internals.md
+  - Computed Sensor Readiness: developer/computed-sensor-readiness.md
+  - CI and testing: developer/ci-and-testing.md
 - Growatt:
   - FAQ: growatt-faq.md
   - Growatt Modes of Operation - WIP: growatt-operation-modes.md

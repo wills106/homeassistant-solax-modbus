@@ -130,7 +130,7 @@ class SolaXModbusButton(ButtonEntity):
                 duration = self._hub.data.get(self.button_info.autorepeat, 0)
                 autorepeat_set(self._hub.data, self.button_info.key, time() + duration - 0.5)
             if self.button_info.value_function:
-                res = self.button_info.value_function(BUTTONREPEAT_FIRST, self.button_info, self._hub.data)  # initval = 0 means first manual run
+                res = self._hub.compute_autorepeat_payload(BUTTONREPEAT_FIRST, self.button_info)
                 if res:
                     if self.button_info.autorepeat:  # different return value structure for autorepeat value function
                         reg = res.get("register", self._register)
@@ -141,5 +141,6 @@ class SolaXModbusButton(ButtonEntity):
                         _LOGGER.info("writing %s button register %s value %s", self._platform_name, self._register, res)
                         if action == WRITE_MULTI_MODBUS:
                             await self._hub.async_write_registers_multi(unit=self._modbus_addr, address=reg, payload=data)
+                            self._hub.autorepeat_write_succeeded(self._key)
                     else:
                         await self._hub.async_write_registers_multi(unit=self._modbus_addr, address=self._register, payload=res)

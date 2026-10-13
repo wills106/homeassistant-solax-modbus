@@ -1,0 +1,14 @@
+[
+  {
+    "name": "minimum",
+    "target": "minimum",
+    "ha_version": "",
+    "branch_push": false
+  },
+  {
+    "name": "current",
+    "target": "current",
+    "ha_version": "",
+    "branch_push": true
+  }
+]
