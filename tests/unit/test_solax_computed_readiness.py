@@ -6,7 +6,7 @@ from typing import Any, cast
 import pytest
 
 from custom_components.solax_modbus import SolaXModbusHub
-from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
+from custom_components.solax_modbus.plugin_solax import AC, GEN5, GEN6, SENSOR_TYPES_MAIN, X1, X3, plugin_instance
 
 
 def _computed_description(key: str) -> Any:
@@ -36,6 +36,23 @@ def test_affected_solax_sensor_stays_unknown_without_inputs(key: str) -> None:
 
     assert hub.evaluate_computed_sensor(description, hub.data, force=True) is False
     assert key not in hub.data
+
+
+@pytest.mark.parametrize("generation", [GEN5, GEN6], ids=["gen5", "gen6"])
+@pytest.mark.parametrize("phases", [X1, X3], ids=["x1", "x3"])
+def test_ac_bms2_stays_unknown_when_selected_voltage_is_not_in_profile(generation: int, phases: int) -> None:
+    hub = _hub_with_data({"bms_2_charge_max_current": 20})
+    hub.sensorDescriptions = {
+        description.key: description
+        for description in SENSOR_TYPES_MAIN
+        if plugin_instance.matchInverterWithMask(AC | generation | phases, description.allowedtypes, blacklist=description.blacklist)
+    }
+    description = hub.sensorDescriptions["bms_2_max_charge"]
+    assert "bms_2_charge_max_current" in hub.sensorDescriptions
+    assert "battery_2_voltage_charge" not in hub.sensorDescriptions
+
+    assert hub.evaluate_computed_sensor(description, hub.data, set(hub.data), force=True) is False
+    assert description.key not in hub.data
 
 
 @pytest.mark.parametrize(

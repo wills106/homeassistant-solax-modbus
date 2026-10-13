@@ -4,6 +4,24 @@
 
 Have you double checked that the termination resistor is installed on both ends? On the adaptor side make sure that it has a termination resistor in the adaptor (check the adaptor's manual or measure it). If this is missing add a 120 Ohm resistor between A and B to properly terminate the adaptor side. On the inverter side Sofar inverters also require a termination on the last connected inverter. Note that on the COM Port the PINs 1 and 2 (A+) and PINs 3 and 4 (B-) are internally connected with each other. So if your signal cable is connected to PINs 1 and 4 you can use the PINs 2 and 3 to connect your termination resistor.
 
+## Log is flooded with "Inverter did not select batt_nr"
+
+With battery pack reading enabled you may see thousands of warnings per day such as
+`Inverter did not select batt_nr: 0, batt_pack_nr: 0`, often together with
+`device group validation failed; discarding this device group's snapshot` or
+`BMS validation after reading failed`. Pack sensors update only occasionally, and
+pack serial numbers may appear to swap between packs.
+
+The integration selects a pack by writing `0x9020` and confirms the selection by reading `0x9044`.
+If your RS485 to Ethernet adaptor runs as a *storage* (caching) Modbus gateway — e.g. Waveshare
+RS485 TO ETH (B) with "Auto query storage type" — the confirmation read is answered from the
+adaptor's cache and still shows the previous selection, although the inverter has already switched.
+
+Set the adaptor to a non-caching mode (Waveshare: "Multi-host non-storage type") and restart it.
+On a HYD-3PH (HYDxxKTL-3P, firmware V110062) with 7 battery modules (BMS V20008) this changed
+~1,700 warnings per hour to none, and all packs update at the same rate again. Measured with a
+read-only poller, the inverter itself switches packs within 0.1–0.3 s.
+
 ## RS485 communication stops after a few hours
 
 There was an issue in recent firmware versions (introduced at around V110000) that cause the firmware communication to fail after a few hours. Install a newer firmware of at least version V110051.

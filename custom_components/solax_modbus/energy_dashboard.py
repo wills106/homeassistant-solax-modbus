@@ -382,7 +382,9 @@ def create_energy_dashboard_device_info(hub: Any, hass: Any = None) -> DeviceInf
             hub.entry.entry_id,
         )
     else:
-        device_info["via_device"] = (DOMAIN, hub._name, INVERTER_IDENT)  # type: ignore[typeddict-item]
+        # Current HA's DeviceInfo no longer declares via_device; retain the legacy
+        # mapping for older HA without checking it against the current TypedDict.
+        cast(dict[str, Any], device_info)["via_device"] = (DOMAIN, hub._name, INVERTER_IDENT)
     return device_info
 
 

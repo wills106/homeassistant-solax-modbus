@@ -1,4 +1,5 @@
 import logging
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from time import time
@@ -20,7 +21,7 @@ from homeassistant.const import (
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
-from custom_components.solax_modbus.const import (  # type: ignore[attr-defined]  # UnitOfReactivePower conditionally exported
+from custom_components.solax_modbus.const import (
     BUTTONREPEAT_FIRST,
     BUTTONREPEAT_POST,
     CONF_READ_EPS,
@@ -1559,6 +1560,49 @@ def value_function_pm_total_pv_current(initval: int, descr: Any, datadict: dict[
     return int(pv_current_1 + pv_current_2)
 
 
+def _positive_input(data: dict[str, Any], key: str) -> bool:
+    value = data.get(key)
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
+
+
+def battery_capacity_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    """Use the total SoC alone, otherwise require every configured battery."""
+    if _positive_input(data, "battery_total_capacity_charge"):
+        return {"battery_total_capacity_charge"}, set()
+    required = active.intersection({"battery_1_capacity_charge", "battery_2_capacity_charge"})
+    if not required:
+        required = {"battery_total_capacity_charge"}
+    capacities = {"bms_battery_capacity", "bms_2_battery_capacity"}
+    optional = capacities if len(required) == 2 and all(_positive_input(data, key) for key in capacities | required) else set()
+    return required, optional
+
+
+def _bms_charge_dependencies(
+    data: dict[str, Any], active: set[str], voltage: str, current: str, peer_voltage: str | None = None
+) -> tuple[set[str], set[str]]:
+    """Keep the current fallback's peer voltage in the accepted-input lease."""
+    required = {voltage}
+    if data.get(current) is not None:
+        required.add(current)
+    else:
+        required.add("battery_charge_max_current")
+        if peer_voltage is not None and peer_voltage in active:
+            required.add(peer_voltage)
+    return required, set()
+
+
+def bms_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_voltage_charge", "bms_charge_max_current")
+
+
+def bms_1_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_1_voltage_charge", "bms_charge_max_current", "battery_2_voltage_charge")
+
+
+def bms_2_charge_dependencies(data: dict[str, Any], active: set[str]) -> tuple[set[str], set[str]]:
+    return _bms_charge_dependencies(data, active, "battery_2_voltage_charge", "bms_2_charge_max_current", "battery_1_voltage_charge")
+
+
 def value_function_battery_capacity_gen5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | None:
     # This will attempt to select between multiple sensors based on which have a
     # value. This assumes that real batteries will never report a value of 0% SoC,
@@ -1706,8 +1750,18 @@ def value_function_battery_voltage_cell_difference(initval: int, descr: Any, dat
 
 def value_function_bms_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate maximum charge power for Battery 1 sensors."""
-    # Battery voltage has different sensor names based on version.
-    batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None) or 0
+    batt_v1 = datadict.get("battery_voltage_charge", None) or 0
+    batt_a1 = datadict.get("bms_charge_max_current", None)
+    if batt_a1 is None:
+        # If BMS sensor is unavailable, fail back to total charge current
+        batt_a1 = datadict.get("battery_charge_max_current", 20)
+    # Calculate battery 1 max charge power
+    return int(batt_v1 * batt_a1)
+
+
+def value_function_bms_1_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Calculate maximum charge power for Battery 1 sensors."""
+    batt_v1 = datadict.get("battery_1_voltage_charge", None) or 0
     batt_a1 = datadict.get("bms_charge_max_current", None)
     if batt_a1 is None:
         # If BMS sensor is unavailable, fail back to total charge current
@@ -1725,7 +1779,6 @@ def value_function_bms_max_charge(initval: int, descr: Any, datadict: dict[str, 
 
 def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate maximum charge power for Battery 1 sensors."""
-    # Battery 1 voltage has different sensor names based on version. Set to default of none available.
     batt_v2 = datadict.get("battery_2_voltage_charge", None) or 0
     batt_a2 = datadict.get("bms_2_charge_max_current", None)
     if batt_a2 is None:
@@ -1733,7 +1786,7 @@ def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str
         batt_at = datadict.get("battery_charge_max_current", 20)
         # Note if we have two batteries (battery 1 has voltage) then total
         # is split equally across both batteries.
-        batt_v1 = datadict.get("battery_voltage_charge", None) or datadict.get("battery_1_voltage_charge", None)
+        batt_v1 = datadict.get("battery_1_voltage_charge", None)
         if batt_v1 is None or batt_v1 <= 0:
             batt_a2 = batt_at
         else:
@@ -1763,6 +1816,29 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_remotecontrol_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
+        depends_on=["battery_capacity", "measured_power"],
+        autorepeat_control="remotecontrol_power_control",
+        autorepeat_dependencies=(
+            "parallel_setting",
+            "selfuse_discharge_min_soc",
+            "export_control_user_limit",
+        ),
+        autorepeat_optional_dependencies=(
+            "inverter_power_l1",
+            "inverter_power_l2",
+            "inverter_power_l3",
+            "measured_power_l1",
+            "measured_power_l2",
+            "measured_power_l3",
+            "grid_voltage_l1",
+            "grid_voltage_l2",
+            "grid_voltage_l3",
+        ),
+        autorepeat_parallel_dependencies={
+            "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
+            "Master": ("pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
+        },
+        autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
     ),
     SolaxModbusButtonEntityDescription(
         name="PowerControlMode Trigger (mode 8/9)",
@@ -1773,6 +1849,19 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
+        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge"],
+        autorepeat_control="remotecontrol_power_control_mode",
+        autorepeat_dependencies=(
+            "parallel_setting",
+            "selfuse_discharge_min_soc",
+            "battery_charge_upper_soc",
+            "battery_charge_max_current",
+            "export_control_user_limit",
+            "inverter_power_type",
+        ),
+        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"),
+        autorepeat_parallel_dependencies={"Free": ()},
+        autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
     SolaxModbusButtonEntityDescription(
         name="System On",
@@ -2151,12 +2240,12 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         name="Remotecontrol Import Limit (mode 1-9)",
         key="remotecontrol_import_limit",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # Local mains-connection limit: use the data type's maximum, not the inverter rating.
         native_min_value=0,
-        native_max_value=30000,  # overwritten by MAX_EXPORT
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
-        initvalue=20000,  # will be reduced to MAX
+        initvalue=20000,
         register_data_type=REGISTER_S32,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
@@ -6679,6 +6768,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_battery_capacity_gen5,
+        dependency_selector=battery_capacity_dependencies,
         depends_on=["battery_total_capacity_charge", "battery_1_capacity_charge", "battery_2_capacity_charge"],
         optional_depends_on=["bms_battery_capacity", "bms_2_battery_capacity"],
         modbus_max=99,
@@ -8071,9 +8161,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         name="Battery Max Charge Rate",
         key="bms_max_charge",
         value_function=value_function_bms_max_charge,
-        depends_on=["battery_voltage_charge", "battery_1_voltage_charge", "battery_2_voltage_charge"],
+        depends_on=["battery_voltage_charge"],
         depends_on_any=[
-            ("battery_voltage_charge", "battery_1_voltage_charge"),
             ("bms_charge_max_current", "battery_charge_max_current"),
         ],
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -8082,28 +8171,27 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_DEFAULT,
         allowedtypes=AC | HYBRID | GEN2 | GEN3 | GEN4,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 1 Max Charge Rate",
         key="bms_max_charge",
-        value_function=value_function_bms_max_charge,
-        depends_on=["battery_voltage_charge", "battery_1_voltage_charge", "battery_2_voltage_charge"],
-        depends_on_any=[
-            ("battery_voltage_charge", "battery_1_voltage_charge"),
-            ("bms_charge_max_current", "battery_charge_max_current"),
-        ],
+        value_function=value_function_bms_1_max_charge,
+        depends_on=["battery_1_voltage_charge", "battery_2_voltage_charge"],
+        depends_on_any=[("bms_charge_max_current", "battery_charge_max_current")],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         scan_group=SCAN_GROUP_DEFAULT,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_1_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Battery 2 Max Charge Rate",
         key="bms_2_max_charge",
         value_function=value_function_bms_2_max_charge,
-        depends_on=["battery_2_voltage_charge", "battery_voltage_charge", "battery_1_voltage_charge"],
+        depends_on=["battery_2_voltage_charge", "battery_1_voltage_charge"],
         depends_on_any=[("bms_2_charge_max_current", "battery_charge_max_current")],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -8112,6 +8200,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=3,
         allowedtypes=AC | HYBRID | GEN5 | GEN6,
         icon="mdi:battery-charging-high",
+        dependency_selector=bms_2_charge_dependencies,
     ),
     SolaXModbusSensorEntityDescription(
         name="Meter 2 Measured Power",
@@ -12092,7 +12181,7 @@ class solax_plugin(plugin_base):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW F
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("P35G1"):
-            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW G
+            invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3-IES-P 10-15kW G
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("H3BC15L"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra 15KP C #1668
@@ -12405,56 +12494,39 @@ class solax_plugin(plugin_base):
                         read_scale=new_read_scale,
                     )
 
-        # For parallel mode Master inverters, use inverter_power_kw for remote control limits
+        # For parallel mode Master inverters, use inverter_power_kw for active-power limits.
         # This allows proper ±limits for multi-inverter systems (e.g., 3× 15kW = ±45kW)
         parallel_setting = hub.data.get("parallel_setting", "Free")
         if parallel_setting == "Master":
-            # Use inverter_power_kw (total system capacity) for remote control limits
+            # Use inverter_power_kw (total system capacity) for active-power limits.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
-            for key in ["remotecontrol_active_power", "remotecontrol_import_limit"]:
-                number_entity = hub.numberEntities.get(key)
-                if number_entity:
-                    # remotecontrol_active_power uses ±limits, import_limit uses 0 to +limit
-                    if key == "remotecontrol_import_limit":
-                        number_entity._attr_native_min_value = 0
-                        number_entity._attr_native_max_value = system_limit_w
-                        number_entity.entity_description = replace(
-                            number_entity.entity_description,
-                            native_min_value=0,
-                            native_max_value=system_limit_w,
-                        )
-                        _LOGGER.info("Parallel Master: Set %s limits to 0-%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
-                    else:
-                        number_entity._attr_native_min_value = -system_limit_w
-                        number_entity._attr_native_max_value = system_limit_w
-                        number_entity.entity_description = replace(
-                            number_entity.entity_description,
-                            native_min_value=-system_limit_w,
-                            native_max_value=system_limit_w,
-                        )
-                        _LOGGER.info("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
+            number_entity = hub.numberEntities.get("remotecontrol_active_power")
+            if number_entity:
+                number_entity._attr_native_min_value = -system_limit_w
+                number_entity._attr_native_max_value = system_limit_w
+                number_entity.entity_description = replace(
+                    number_entity.entity_description,
+                    native_min_value=-system_limit_w,
+                    native_max_value=system_limit_w,
+                )
+                _LOGGER.info("Parallel Master: Set active power limits to ±%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
 
         # For single inverters or if config_max_export is enabled, use config_max_export.
-        # Parallel Master remote-control limits are handled above using total system power,
+        # Parallel Master active-power limits are handled above using total system power,
         # but export_control_user_limit still needs the configured max export range.
-        parallel_master_remotecontrol_keys = {
-            "remotecontrol_active_power",
-            "remotecontrol_import_limit",
-        }
         config_maxexport_entity = hub.numberEntities.get("config_max_export")
         if config_maxexport_entity and config_maxexport_entity.enabled:
             new_max_export = hub.data.get("config_max_export")
             if new_max_export is not None:
                 for key in [
                     "remotecontrol_active_power",
-                    "remotecontrol_import_limit",
                     "export_control_user_limit",
                     "generator_max_charge",
                 ]:
                     number_entity = hub.numberEntities.get(key)
                     if not number_entity:
                         continue
-                    if parallel_setting == "Master" and key in parallel_master_remotecontrol_keys:
+                    if parallel_setting == "Master" and key == "remotecontrol_active_power":
                         continue
                     number_entity._attr_native_max_value = new_max_export
                     # update description also, not sure whether needed or not
