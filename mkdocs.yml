@@ -19,6 +19,7 @@ markdown_extensions:
   - admonition
 nav:
 - Installation: installation.md
+- Core Modbus migration: core-modbus-migration.md
 - FAQ: faq.md
 - Modbus Adaptor Setup: modbus-adaptor-setup.md
 - Automation - Hints and Examples: automation-examples.md

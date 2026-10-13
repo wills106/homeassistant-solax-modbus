@@ -17,6 +17,7 @@ dev = [
     "mypy>=1.8.0",
 ]
 test = [
+    "modbus-connection==4.12.3",
     "pytest>=8.0.0",
     "homeassistant==2025.1.0; python_version < '3.14'",
     "homeassistant==2026.9.4; python_version >= '3.14'",

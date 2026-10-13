@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 
 from .const import (
+    CONF_CORE_CONNECTION,
     CONF_CORE_HUB,
     CONF_INTERFACE,
     CONF_MODBUS_ADDR,
@@ -62,6 +63,16 @@ def _normalized_host(host: Any) -> str:
 def modbus_connection_identity(config: Mapping[str, Any]) -> ModbusConnectionIdentity | None:
     """Build a comparable identity for TCP, serial, or Core Modbus."""
     interface = _configured_interface(config)
+    if interface in ("core_tcp", "core_serial"):
+        interface = "tcp" if interface == "core_tcp" else "serial"
+    elif interface == "core" and isinstance(config.get(CONF_CORE_CONNECTION), dict):
+        saved = config[CONF_CORE_CONNECTION]
+        if saved["type"] == "serial":
+            config = {**config, CONF_SERIAL_PORT: saved["port"]}
+            interface = "serial"
+        elif saved["type"] in ("tcp", "rtuovertcp", "ascii"):
+            config = {**config, CONF_HOST: saved["host"], CONF_PORT: saved["port"]}
+            interface = "tcp"
     configured_addr = config.get(CONF_MODBUS_ADDR, DEFAULT_MODBUS_ADDR)
     if configured_addr is None:
         configured_addr = DEFAULT_MODBUS_ADDR
