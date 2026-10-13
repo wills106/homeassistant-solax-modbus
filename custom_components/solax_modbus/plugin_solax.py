@@ -4717,7 +4717,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
-        key="discharge_time_2",
+        key="discharge_start_2",
         register=0x9E,
         register_data_type=REGISTER_WORDS,
         wordcount=2,
