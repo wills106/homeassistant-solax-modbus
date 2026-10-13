@@ -8,7 +8,9 @@ This guide applies if you selected **Hass core Hub** when setting up SolaX Inver
 
 Home Assistant is replacing the old API used to access Modbus hubs configured in YAML. The old API will be removed in **Home Assistant 2027.10**.
 
-Your inverter continues to use its existing connection while the YAML hub is present. The integration saves a copy of the connection settings so it can use the new API after you remove that hub and restart Home Assistant. It does not open a second connection during this transition.
+Your inverter continues to use its existing connection while the YAML hub is present. On Home Assistant 2026.10 or later, the integration saves a copy of the connection settings so it can use the new API after you remove that hub and restart Home Assistant. Older versions continue using YAML unchanged; they do not copy settings or show the migration notification yet. It does not open a second connection during this transition.
+
+The old API and its Home Assistant deprecation warning remain in use while the YAML hub is configured or still running. This is intentional: switching immediately could open a second connection and interfere with other users of that hub. The warning disappears only after the old hub is removed and Home Assistant is restarted.
 
 Your integration name, entity IDs and automations are kept. Do not delete and re-add the integration.
 
@@ -63,6 +65,8 @@ Some older setups contain a dummy sensor created only to allow the hub to start.
 
 The new connection does not automatically migrate Home Assistant's YAML Modbus entities or other integrations. Two independently opened connections to the same adapter can interfere with each other, especially on a serial bus or an adapter that only supports one client.
 
+Conflict checks compare the configured address and port, ignoring hostname case, a trailing hostname dot and IPv6 formatting differences. TCP, RTU/ASCII-over-TCP and equivalent `socket://host:port` serial URLs are treated as the same TCP endpoint. DNS aliases (including a hostname versus its IP address) and different filesystem paths to the same serial adapter are not resolved. Use the same address or stable serial path in all configurations; an alias must not be used to bypass the check.
+
 ## If the inverter stops updating after the change
 
 Restore the YAML hub from your backup and restart Home Assistant. The integration will use it again. Keep the migration notification and relevant logs when reporting the problem.
@@ -72,5 +76,11 @@ Restore the YAML hub from your backup and restart Home Assistant. The integratio
 Select **Home Assistant Modbus (TCP)** or **Home Assistant Modbus (Serial)** in the integration setup, and enter the connection settings there. No YAML hub or dummy sensor is required.
 
 Home Assistant manages and shares these connections between integrations using the same connection settings. The connection opens on the first request and reconnects as needed.
+
+## Scope and dependencies
+
+Existing direct TCP and serial entries keep their native transports. They are not automatically switched to Home Assistant-managed connections.
+
+The integration declares Home Assistant's `modbus` integration as a dependency so HA installs its version-matched Modbus libraries and loads the public API before setup or config flows use it. This applies to all installations, but loading `modbus` without YAML hubs does not open a Modbus connection. Only a configured YAML hub or a request through the shared unit API opens a link.
 
 See Home Assistant's [Modbus API migration announcement](https://developers.home-assistant.io/blog/2026/09/02/modbus-get-hub-deprecation/) for background.

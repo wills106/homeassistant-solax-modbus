@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.reload import async_integration_yaml_config
 
+from .connection import _normalized_host
 from .const import (
     CONF_BAUDRATE,
     CONF_CORE_CONNECTION,
@@ -132,14 +133,30 @@ def _running_yaml_hubs(hass: HomeAssistant) -> dict[str, Any]:
 
 
 def _physical_endpoint(settings: dict[str, Any]) -> tuple[Any, ...]:
-    """Detect competing links even when their framing differs."""
+    """Detect competing links without DNS lookups or serial-device I/O.
+
+    Hostname/IP aliases and filesystem aliases are deliberately not resolved.
+    Framing is ignored: TCP and RTU/ASCII-over-TCP can occupy the same adapter.
+    """
     if settings["type"] != "serial":
-        return ("udp" if settings["type"] == "udp" else "tcp", settings["host"].casefold(), settings["port"])
+        return ("udp" if settings["type"] == "udp" else "tcp", _normalized_host(settings["host"]), settings["port"])
     device = settings["port"]
-    if device.startswith("socket://"):
-        parsed = urlsplit(device)
-        return ("tcp", (parsed.hostname or "").casefold(), parsed.port)
+    parsed = urlsplit(device)
+    if parsed.scheme == "socket":
+        return ("tcp", _normalized_host(parsed.hostname or ""), parsed.port)
     return ("serial", device)
+
+
+def _running_endpoint(hub: Any) -> tuple[Any, ...] | None:
+    """Apply the same comparison to HA's already-running YAML hub endpoints."""
+    endpoint = getattr(hub, "endpoint", None)
+    if not isinstance(endpoint, tuple):
+        return None
+    if len(endpoint) == 3 and endpoint[0] in ("tcp", "udp"):
+        return _physical_endpoint({"type": endpoint[0], "host": endpoint[1], "port": endpoint[2]})
+    if len(endpoint) == 2 and endpoint[0] == "serial":
+        return _physical_endpoint({"type": "serial", "port": endpoint[1]})
+    return None
 
 
 def _notification_id(entry: ConfigEntry) -> str:
@@ -163,6 +180,8 @@ def _notify_migration(hass: HomeAssistant, entry: ConfigEntry, hub_name: str, *,
         hass,
         f"**{name}** still uses the YAML Modbus hub **{hub_name}**. "
         "The API used to access this hub will be removed in Home Assistant **2027.10**.\n\n"
+        "While this hub remains configured or running, the integration keeps using the old API, "
+        "so its deprecation warning is expected. No second connection is opened.\n\n"
         f"{action}\n\n"
         "If other Modbus entities or integrations use this hub, keep it until they have also been migrated. "
         "Your current connection continues to work.\n\n"
@@ -232,7 +251,7 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
             f"YAML Modbus hub '{other_name}' already uses this endpoint. Follow {MIGRATION_URL} before opening a new connection."
         )
     for other_name, hub in running.items():
-        if getattr(hub, "endpoint", None) == endpoint:
+        if _running_endpoint(hub) == endpoint:
             if interface == "core":
                 _notify_migration(hass, entry, other_name, saved=True)
                 return other_name

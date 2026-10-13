@@ -1,5 +1,7 @@
 """Regression coverage for the staged Core Modbus migration."""
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
@@ -8,6 +10,7 @@ import pytest
 from homeassistant.components import persistent_notification
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 
+from custom_components import solax_modbus as integration
 from custom_components.solax_modbus import SolaXModbusHub
 from custom_components.solax_modbus import core_modbus as core
 from custom_components.solax_modbus import modbus_transport as transport
@@ -68,6 +71,8 @@ async def test_existing_yaml_hub_is_saved_but_keeps_its_connection(migration: An
     assert "settings have been saved automatically" in message
     assert "inverter_bus" in message and core.MIGRATION_URL in message
     assert "2027.10" in message
+    assert "deprecation warning is expected" in message
+    assert "No second connection is opened" in message
 
 
 @pytest.mark.asyncio
@@ -168,6 +173,105 @@ async def test_native_connection_does_not_read_or_change_yaml(migration: Any) ->
     migration.hass.config_entries.async_update_entry.assert_not_called()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stage", ["configured", "still_running", "restarted"])
+async def test_migration_selects_transport_without_opening_a_second_link(migration: Any, monkeypatch: pytest.MonkeyPatch, stage: str) -> None:
+    """Exercise preparation AND the real hub constructor, not just its return value."""
+    legacy = Mock()
+    managed = Mock()
+    monkeypatch.setattr(integration, "CoreModbusTransport", legacy)
+    monkeypatch.setattr(integration, "CoreModbusUnitTransport", managed)
+    plugin = SimpleNamespace(plugin_instance=SimpleNamespace(create_hub_instance=Mock()))
+    migration.entry.options[CONF_CORE_CONNECTION] = core.connection_settings(yaml_hub())
+    if stage == "configured":
+        migration.loader.return_value = {"modbus": [yaml_hub()]}
+    elif stage == "still_running":
+        migration.running["inverter_bus"] = object()
+
+    selected = await core.async_prepare_core_connection(migration.hass, migration.entry)
+    hub = SolaXModbusHub(migration.hass, cast(Any, plugin), migration.entry, yaml_hub_name=selected)
+
+    if stage == "restarted":
+        legacy.assert_not_called()
+        managed.assert_called_once()
+        assert hub._transport is managed.return_value
+    else:
+        managed.assert_not_called()
+        legacy.assert_called_once_with(migration.hass, "inverter_bus", "SolaX")
+        assert hub._transport is legacy.return_value
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("interface", ["tcp", "serial"])
+async def test_modbus_dependency_does_not_migrate_native_connections(migration: Any, monkeypatch: pytest.MonkeyPatch, interface: str) -> None:
+    """Loading HA's API/libraries must not switch existing native transports."""
+    migration.entry.options = {CONF_INTERFACE: interface, "host": "192.0.2.1", "name": "SolaX"}
+    managed = Mock()
+    legacy = Mock()
+    monkeypatch.setattr(integration, "CoreModbusUnitTransport", managed)
+    monkeypatch.setattr(integration, "CoreModbusTransport", legacy)
+    monkeypatch.setattr(integration, "AsyncModbusTcpClient", Mock())
+    monkeypatch.setattr(integration, "AsyncSerialModbusClient", Mock())
+    plugin = SimpleNamespace(plugin_instance=SimpleNamespace(create_hub_instance=Mock()))
+
+    selected = await core.async_prepare_core_connection(migration.hass, migration.entry)
+    hub = SolaXModbusHub(migration.hass, cast(Any, plugin), migration.entry, yaml_hub_name=selected)
+
+    assert isinstance(hub._transport, transport.NativeModbusTransport)
+    managed.assert_not_called()
+    legacy.assert_not_called()
+    migration.loader.assert_not_called()
+    manifest = json.loads((Path(integration.__file__).parent / "manifest.json").read_text())
+    assert "modbus" in manifest["dependencies"]
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        (yaml_hub(host="Inverter.LOCAL."), yaml_hub(host="inverter.local")),
+        (yaml_hub(host="2001:0DB8:0:0:0:0:0:1"), yaml_hub(host="2001:db8::1")),
+        (yaml_hub(), yaml_hub(type="rtuovertcp")),
+        (yaml_hub(type="ascii"), yaml_hub(type="serial", port="socket://192.0.2.1:502")),
+        (yaml_hub(host="inverter.local"), yaml_hub(type="serial", port="socket://INVERTER.local.:502")),
+        (yaml_hub(host="2001:db8::1"), yaml_hub(type="serial", port="socket://[2001:0DB8:0:0:0:0:0:1]:502")),
+    ],
+)
+def test_equivalent_yaml_endpoints_share_conflict_key(first: dict[str, Any], second: dict[str, Any]) -> None:
+    assert core._physical_endpoint(core.connection_settings(first)) == core._physical_endpoint(core.connection_settings(second))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("still_running", [False, True])
+@pytest.mark.parametrize(
+    "other",
+    [
+        yaml_hub(host="INVERTER.local."),
+        yaml_hub(type="serial", port="socket://INVERTER.local.:502"),
+    ],
+)
+async def test_new_connection_rejects_normalized_yaml_conflicts(migration: Any, other: dict[str, Any], still_running: bool) -> None:
+    migration.entry.options = {CONF_INTERFACE: "core_tcp", "host": "inverter.local", "port": 502}
+    if still_running:
+        # Use the endpoint shape published by HA, before our normalization.
+        endpoint = ("serial", other["port"]) if other["type"] == "serial" else ("tcp", other["host"], other["port"])
+        migration.running["inverter_bus"] = SimpleNamespace(endpoint=endpoint)
+    else:
+        migration.loader.return_value = {"modbus": [other]}
+
+    with pytest.raises(ConfigEntryNotReady, match="inverter_bus"):
+        await core.async_prepare_core_connection(migration.hass, migration.entry)
+
+
+def test_endpoint_comparison_does_not_guess_dns_or_serial_aliases() -> None:
+    assert core._physical_endpoint(core.connection_settings(yaml_hub(host="inverter.local"))) != core._physical_endpoint(
+        core.connection_settings(yaml_hub())
+    )
+    assert core._physical_endpoint(core.connection_settings(yaml_hub(type="serial", port="/dev/ttyUSB0"))) != core._physical_endpoint(
+        core.connection_settings(yaml_hub(type="serial", port="/dev/serial/by-id/inverter"))
+    )
+    assert core._physical_endpoint(core.connection_settings(yaml_hub(type="udp"))) != core._physical_endpoint(core.connection_settings(yaml_hub()))
+
+
 @pytest.mark.parametrize(
     ("config", "expected"),
     [
@@ -231,16 +335,9 @@ async def test_real_core_pool_opens_lazily_and_releases_only_the_last_consumer(m
 @pytest.fixture
 def unit_transport(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Use the unit protocol, without a socket or an HA Core connection."""
-    # The API adapter does not depend on a particular library installation in CI.
-    import sys
-    from types import ModuleType
+    # Test the documented exception hierarchy, not an invented backend contract.
+    from modbus_connection.exceptions import ModbusError
 
-    class ModbusError(Exception):
-        pass
-
-    exceptions = ModuleType("modbus_connection.exceptions")
-    exceptions.ModbusError = ModbusError  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "modbus_connection.exceptions", exceptions)
     monkeypatch.setattr(transport, "core_connection_params", lambda settings: SimpleNamespace(endpoint=("tcp", "192.0.2.1", 502)))
     unit = SimpleNamespace(
         connected=False,
@@ -338,3 +435,72 @@ async def test_unit_adapter_timeout_reaches_hub_without_closing_connected_bus(un
     assert await hub.async_read_holding_registers(1, 10, 1) is None
     assert state.transport.is_connected() is True
     state.unit.disconnect.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_unit_adapter_lazy_lifecycle_and_hub_availability(unit_transport: Any) -> None:
+    state = unit_transport
+    hub = cast(Any, object.__new__(SolaXModbusHub))
+    hub._transport = state.transport
+    hub._name = "SolaX"
+    hub._stopping = False
+    hub.slowdown = 1
+    assert await hub.is_online() is False
+    assert await hub._check_connection() is True
+    assert await hub.is_online() is False  # Acquired, but not connected yet.
+    state.unit.connected = True  # Successful first I/O opens the real link.
+    await state.transport.read("holding", 1, 10, 2)
+    assert await hub.is_online() is True
+    state.unit.read_holding_registers.side_effect = state.error("rejected read")
+    with pytest.raises(transport.CoreModbusUnitError):
+        await state.transport.read("holding", 1, 10, 2)
+    assert await hub.is_online() is True  # A rejected request need not lose the link.
+    state.unit.connected = False
+    assert await hub.is_online() is False
+    await state.transport.close()
+    assert await hub.is_online() is False
+    assert await hub._check_connection() is True
+    state.unit.read_holding_registers.side_effect = None
+    state.unit.connected = True
+    await state.transport.read("holding", 1, 10, 2)
+    assert await hub.is_online() is True
+    state.getter.assert_called_once()
+    state.unit.disconnect.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("operation", ["read_holding_registers", "write_register", "write_registers"])
+@pytest.mark.parametrize("error_name", ["ModbusConnectionError", "ModbusTimeoutError", "ModbusProtocolError", "ModbusExceptionError", "OSError"])
+async def test_public_unit_errors_are_translated(unit_transport: Any, operation: str, error_name: str) -> None:
+    from modbus_connection import exceptions
+
+    if error_name == "ModbusExceptionError":
+        error: Exception = exceptions.ModbusExceptionError(2)
+    elif error_name == "OSError":
+        error = ConnectionRefusedError("connection refused")
+    else:
+        error = getattr(exceptions, error_name)("test failure")
+    state = unit_transport
+    getattr(state.unit, operation).side_effect = error
+    with pytest.raises(transport.CoreModbusUnitError) as caught:
+        if operation == "read_holding_registers":
+            await state.transport.read("holding", 1, 10, 2)
+        else:
+            await state.transport.write(1, 10, [7, 8], multiple=operation == "write_registers")
+    assert caught.value.__cause__ is error
+
+
+@pytest.mark.asyncio
+async def test_unit_acquisition_conflicts_are_not_hidden(unit_transport: Any) -> None:
+    state = unit_transport
+    state.getter.side_effect = HomeAssistantError("already in use with different link settings")
+    with pytest.raises(HomeAssistantError, match="different link settings"):
+        await state.transport.read("holding", 2, 10, 2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("unit_id", [-1, 256])
+async def test_invalid_unit_ids_fail_before_acquisition(unit_transport: Any, unit_id: int) -> None:
+    with pytest.raises(HomeAssistantError, match="Invalid Modbus unit ID"):
+        await unit_transport.transport.read("holding", unit_id, 10, 2)
+    unit_transport.getter.assert_called_once()

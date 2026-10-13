@@ -241,6 +241,8 @@ class CoreModbusUnitTransport:
         self._unit(unit)
 
     def _unit(self, unit_id: int) -> Any:
+        if not 0 <= unit_id <= 255:
+            raise HomeAssistantError(f"Invalid Modbus unit ID {unit_id}: expected 0 to 255")
         if unit_id not in self._units:
             unit = self._unit_getter(self._hass, self._entry, self._params, unit_id)
             unit.require_timeout(self._settings["timeout"])
@@ -278,6 +280,8 @@ class CoreModbusUnitTransport:
                 registers = await client.read_input_registers(address, count)
             else:
                 registers = await client.read_holding_registers(address, count)
+        # The public ModbusError base includes connection, timeout, protocol
+        # and device exceptions. Keep configuration/programming errors visible.
         except (ModbusError, OSError, TimeoutError) as err:
             raise CoreModbusUnitError(str(err)) from err
         return SerialModbusResponse(registers)
