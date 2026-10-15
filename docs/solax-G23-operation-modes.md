@@ -30,10 +30,34 @@ Allow Grid Charge has 4 sub-modes:
 - Period 2 Allowed: Charges from Grid during time set. Inverter won't consume from batteries during this time slot if set & Period 1 Allowed.
 - Both Allowed: Charges from Grid during both time slots. Handy if you have more dynamic Grid Pricing.
 
-## Back Up Mode (Labelled Remote Mode on Gen2)
-Prevents battery discharging.
-- Designed for EPS use if you for example of unstable Grid connection during set periods of the day. 
-- Handy for saving battery capacity for expensive Grid Periods.
+### Gen2 compatibility note
+On a tested Gen2 SK-SU3000E (U30E), the Force Time mode, charge window, Allow Grid Charge setting and charge-current limit could all be written and read back correctly, but the configured charge window did not start grid charging. This may be model- or firmware-specific; confirmation from other Gen2 models is welcome.
+
+### Modbus address note (Gen2)
+The tested SK-SU3000E (U30E) shows an unusual but repeatable difference between Modbus address / unit ID `1` and `0`.
+
+With integration address `1`, registers could be read and changes could be written and read back. However, changes to the Gen2 remote battery power register `0x51` were not physically acted upon by the inverter. After changing the integration Modbus address to `0`, the same `0x51` setpoints were executed immediately and reproducibly for both charging and discharging.
+
+This is consistent with earlier testing in [issue #73](https://github.com/wills106/homeassistant-solax-modbus/issues/73), where register reads worked with integration address `1`, while control only started working after changing the integration address to `0`.
+
+At the same time, holding register `0x84` (`MyAddress`) still reports `1`. Since Modbus address `0` is normally the broadcast address, this should not be interpreted as evidence that the inverter itself is configured as address `0`.
+
+The exact reason for this discrepancy is not understood and may be specific to the inverter, gateway, firmware or Modbus transport implementation. Address `0` should therefore not be presented as a general Gen2 requirement. However, if Gen2 remote power setpoints can be written and read back but have no physical effect, trying integration Modbus address `0` is a useful compatibility test.
+
+## Back Up Mode / Remote Control Mode (Gen2)
+The Gen2 Modbus protocol names mode value `2` **Remote control mode**. The integration currently labels this option **Back Up Mode**.
+
+On Gen2, Remote control mode activates the signed battery power setpoint in register `0x51` (`wExt_SetChargerPower` in the Gen2 protocol):
+
+- Positive values: force battery charging
+- `0 W`: neutral / hold battery power around zero
+- Negative values: force battery discharging
+
+The setpoint is not applied while the inverter is in Self Use mode. This means the order in which the mode and power setpoint are changed is not important: the stored setpoint becomes active when Remote control mode is selected, and Self Use continues normal self-consumption operation regardless of the stored setpoint.
+
+No System On/Off toggle is required for normal remote power control. The Gen2 remote switch register `0x1C` is the inverter software start/stop control; writing `0` stops the inverter.
+
+The behavior above has been verified on an SK-SU3000E (U30E). A requested power above the inverter/battery capability was accepted and limited by the inverter to the available hardware power.
 
 ## Feedin Priority (Gen 3 Only)
 In Feedin Priority mode, the home load comes from following sources in the given priority:
@@ -43,20 +67,26 @@ The battery will not discharge.
 
 Excess solar energy will go to the grid. If the grid power has been limited with the "Export Control User Limit" parameter, the remaining surplus power will go to the battery.
 
-## Grid Export (Gen 2 Only)
+## Remote Battery Power (Gen 2 Only)
 
-**Warning, forced discharging may or may not increase the wear on your Inverter / Battery Setup. Use at own risk**
+**Warning, forced charging or discharging may or may not increase the wear on your Inverter / Battery Setup. Use at own risk**
 
-Present from 0.6.0
-### Precursors
-Note, if you use "Back Up Mode" to prevent Battery discharge, remember to set `number.solax_grid_export_limit` back to zero
-- Set `number.solax_grid_export_limit` to desired export level. 0 to -5000
+The existing `number.solax_grid_export_limit` entity maps to Gen2 register `0x51`. Despite the historical entity name, the Gen2 protocol defines this register as `wExt_SetChargerPower`, a signed battery power setpoint.
 
-### Start Discharge
-- Set `select.solax_charger_use_mode` to "Back Up Mode"
+### Set battery power
+- Set `number.solax_grid_export_limit` to the desired battery power setpoint, from `-5000 W` to `+5000 W`.
+- Set `select.solax_charger_use_mode` to "Back Up Mode" (Remote control mode in the Gen2 protocol).
 
-### Stop Discharge
-- Set `select.solax_charger_use_mode` to "Self Use Mode" or Mode normally kept in.
+Examples:
+- `+1000 W`: force charging at approximately 1000 W
+- `0 W`: neutral / hold
+- `-1000 W`: force discharging at approximately 1000 W
+
+The inverter may clamp the requested value to its own battery/inverter power limit.
+
+### Return to normal operation
+- Set `select.solax_charger_use_mode` to "Self Use Mode" or the mode normally used.
+- Setting `number.solax_grid_export_limit` back to `0 W` is optional for Self Use operation, but can be useful to leave a neutral stored setpoint for the next time Remote control mode is selected.
 
 ### Automation Example
 [Gen2 & Gen3 Export Example](https://github.com/wills106/homeassistant-solax-modbus/discussions/110)
