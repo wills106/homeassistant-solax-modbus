@@ -5,10 +5,14 @@ from typing import Any, cast
 
 import pytest
 from homeassistant.const import CONF_NAME
+from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
 
 from custom_components.solax_modbus.config_flow import (
     CONFIG_FLOW,
+    CONFIG_SCHEMA,
+    INTERFACES,
+    TCP_SCHEMA,
     _duplicate_inverter_schema,
     _validate_base,
 )
@@ -19,6 +23,7 @@ from custom_components.solax_modbus.const import (
     DEFAULT_PLUGIN,
     DOMAIN,
 )
+from custom_components.solax_modbus.core_modbus import supports_core_units
 
 
 class _ConfigEntries:
@@ -31,6 +36,9 @@ class _ConfigEntries:
 
 
 class _FlowParent:
+    add_suggested_values_to_schema = FlowHandler.add_suggested_values_to_schema
+    show_advanced_options = False
+
     def __init__(self, entries: list[Any]) -> None:
         self.hass = SimpleNamespace(config_entries=_ConfigEntries(entries))
 
@@ -64,6 +72,25 @@ def _base_input(name: str) -> dict[str, Any]:
         CONF_MODBUS_ADDR: 1,
         CONF_PLUGIN: DEFAULT_PLUGIN,
     }
+
+
+def test_interface_selector_has_one_tcp_choice_and_a_valid_default() -> None:
+    interface = "core_tcp" if supports_core_units() else "tcp"
+    assert [item for item in INTERFACES if item["value"] in ("tcp", "core_tcp")] == [{"value": interface, "label": "TCP / Ethernet"}]
+    marker = next(key for key in CONFIG_SCHEMA.schema if key.schema == CONF_INTERFACE)
+    assert marker.default() == interface
+
+
+@pytest.mark.asyncio
+async def test_tcp_choice_routes_new_setups_to_version_appropriate_backend() -> None:
+    interface = next(item["value"] for item in INTERFACES if item["label"] == "TCP / Ethernet")
+    handler = SchemaCommonFlowHandler(cast(Any, _FlowParent([])), CONFIG_FLOW, {})
+    result = await handler.async_step("user", {**_base_input("SolaX"), CONF_INTERFACE: interface})
+    assert result["type"] == "form"
+    assert result["step_id"] == interface
+    schema = result["data_schema"]
+    assert schema is not None
+    assert set(schema.schema) == set(TCP_SCHEMA.schema)
 
 
 @pytest.mark.asyncio

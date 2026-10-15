@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, MAJOR_VERSION, MINOR_VERSION
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.reload import async_integration_yaml_config
@@ -34,6 +34,8 @@ MIGRATION_URL = "https://github.com/wills106/homeassistant-solax-modbus/blob/mai
 
 def supports_core_units() -> bool:
     """Require the public API needed to preserve timeout and startup delay."""
+    if (MAJOR_VERSION, MINOR_VERSION) < (2026, 10):
+        return False
     try:
         from homeassistant.components import modbus
         from modbus_connection import ModbusUnit
@@ -199,6 +201,13 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     """
     config = dict(entry.options)
     interface = config.get(CONF_INTERFACE)
+    migrate_tcp = interface == "tcp" or (not interface and not config.get("read_serial", False))
+    if migrate_tcp and supports_core_units():
+        # Native TCP used RTU/ASCII only when explicitly selected; all other
+        # values used normal Modbus TCP. Preserve that framing on migration.
+        tcp_type = config.get(CONF_TCP_TYPE, "tcp")
+        config.update({CONF_INTERFACE: "core_tcp", CONF_TCP_TYPE: tcp_type if tcp_type in ("rtu", "ascii") else "tcp"})
+        interface = "core_tcp"
     if interface not in ("core", "core_tcp", "core_serial"):
         persistent_notification.async_dismiss(hass, _notification_id(entry))
         return None
@@ -239,6 +248,8 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     settings = configured_core_connection(config)
     if settings is None:
         raise ConfigEntryNotReady("No saved Core Modbus settings. Restore the YAML hub and restart Home Assistant to copy them first.")
+    if migrate_tcp:
+        core_connection_params(settings)
     endpoint = _physical_endpoint(settings)
     for other in yaml_hubs:
         if _physical_endpoint(connection_settings(other)) != endpoint:
@@ -257,5 +268,9 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
                 return other_name
             raise ConfigEntryNotReady(f"YAML Modbus hub '{other_name}' is still running on this endpoint. Restart Home Assistant after removing it.")
 
+    if migrate_tcp:
+        # Do not persist a partial migration if validation or YAML conflict
+        # checks failed. The existing config entry and entity IDs are kept.
+        hass.config_entries.async_update_entry(entry, options=config)
     persistent_notification.async_dismiss(hass, _notification_id(entry))
     return None
