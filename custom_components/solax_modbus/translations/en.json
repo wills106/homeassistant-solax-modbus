@@ -45,7 +45,8 @@
         }
       },
       "core": {
-        "title": "Core Modbus hub selection",
+        "title": "Legacy YAML Modbus hub",
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the [migration guide](https://github.com/wills106/homeassistant-solax-modbus/blob/main/docs/core-modbus-migration.md) before upgrading. Do not remove a YAML hub still used by other integrations.",
         "data": {
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
@@ -77,7 +78,8 @@
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address"
+      "invalid_host": "Invalid host address",
+      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial."
     },
     "abort": {
       "already_configured": "Device is already configured"
@@ -129,7 +131,8 @@
         }
       },
       "core": {
-        "title": "Core Modbus hub selection",
+        "title": "Legacy YAML Modbus hub",
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the [migration guide](https://github.com/wills106/homeassistant-solax-modbus/blob/main/docs/core-modbus-migration.md) before upgrading. Do not remove a YAML hub still used by other integrations.",
         "data": {
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
@@ -161,7 +164,8 @@
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address"
+      "invalid_host": "Invalid host address",
+      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial."
     },
     "abort": {
       "already_configured": "Device is already configured"

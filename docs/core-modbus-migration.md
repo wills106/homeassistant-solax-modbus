@@ -8,6 +8,8 @@ The YAML instructions in this guide apply if you selected **Hass core Hub** when
 
 Home Assistant is replacing the old API used to access Modbus hubs configured in YAML. The old API will be removed in **Home Assistant 2027.10**.
 
+**Hass core Hub (legacy YAML)** can no longer be selected for a new connection or enabled on a connection using another interface, including on older HA versions. If your entry already uses it, the option remains available to keep that connection unchanged, with a warning about HA 2027.10. Once you save a different interface, legacy access cannot be selected again. This does not disable existing hubs now or remove YAML support from Home Assistant itself; it retires this integration's old hub-access API.
+
 Your inverter continues to use its existing connection while the YAML hub is present. On Home Assistant 2026.10 or later, the integration saves a copy of the connection settings so it can use the new API after you remove that hub and restart Home Assistant. Older versions continue using YAML unchanged; they do not copy settings or show the migration notification yet. It does not open a second connection during this transition.
 
 The old API and its Home Assistant deprecation warning remain in use while the YAML hub is configured or still running. This is intentional: switching immediately could open a second connection and interfere with other users of that hub. The warning disappears only after the old hub is removed and Home Assistant is restarted.
