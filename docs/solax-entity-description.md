@@ -129,11 +129,11 @@ Typical offsets will be +/-50W, and gains 90-110%. If you get values outside thi
 
 ## manual_mode_select
 
-Behavior of the manual mode, enable by `manual_mode_control`.
+Behaviour of the battery while `charger_use_mode` is set to `Manual Mode`: stop, force charge or force discharge. It does not depend on `manual_mode_control`.
 
 ## manual_mode_control
 
-Activates and deactivates manual mode.
+Switches the dry contact output on and off while the dry contact `Load Management` is set to `Manual Mode`. It belongs to the Dry Contact group and is unrelated to the battery's manual mode.
 
 ## peakshaving*
 
