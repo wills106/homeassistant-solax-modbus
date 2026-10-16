@@ -127,7 +127,7 @@ As this Model appears to only gives you a Virtual Com Port it might prove diffic
 
 This adaptor does not provide a Modbus connection
 
-### [SolaX PocketWiFI 2](https://www.solaxpower.com/monitoring-dongles/)
+### [SolaX PocketWiFi 2](https://www.solaxpower.com/monitoring-dongles/)
 
 - This adaptor provides a very unreliable Modbus connection, if any connectivity at all.
 - No support for this adaptor will be provided.

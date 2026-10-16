@@ -49,8 +49,8 @@ In this mode, the home load will come from following sources in the given priori
 Excess solar energy will go to Battery first, till the battery reaches the nearly full level.
 Once the battery is nearly full (95%), excess energy will go to the grid. Once the battery is completely full, all excess energy will go to the grid.
 
-~The power sent to the grid can be limited with the "Export Control User Limit" parameter.
-Battery charge and discharge currents can be limited with the "Battery Charge Max Current" and "Battery Discharge Max Current" parameters.~
+The power sent to the grid can be limited with the "Export Control User Limit" parameter.
+Battery charge and discharge currents can be limited with the "Battery Charge Max Current" and "Battery Discharge Max Current" parameters.
 
 ## Timed Charge/Discharge
 
@@ -73,11 +73,11 @@ Description
 Description
 
 ## Timed Charge / Discharge
-**(At present HA before 2023.6 doe not support time entities, so the time is split into separate number entities)**
+**(Home Assistant versions before 2023.6 do not support time entities, so the time is split into separate number entities)**
 
 There are three charge / discharge blocks available. (The other blocks end with 2 & 3)
 
-Each block consists off:
+Each block consists of:
 * 'timed_charge_start_h'
 * 'timed_charge_start_m'
 * 'timed_charge_end_h'

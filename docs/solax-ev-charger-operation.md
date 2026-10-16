@@ -2,7 +2,7 @@
 
 **Author:** fxstein  
 **Date:** January 11, 2026  
-**GitHub:** https://github.com/fxstein/solax-modbus
+**GitHub:** https://github.com/wills106/homeassistant-solax-modbus
 
 ## Overview
 
@@ -65,7 +65,7 @@ Newer EV chargers use a serial format like `5 03 0B 002060C0P`. The Modbus regis
 
 ### Problem Statement
 
-C311 and C322 EV charger models are labeled as Gen1 hardware but can run either:
+C311 and C322 EV charger models are labelled as Gen1 hardware but can run either:
 - **Legacy:** Original GEN1 firmware
 - **Modern:** GEN2 firmware v7.07+
 
@@ -120,7 +120,7 @@ Same logic applies to C322 (22kW model).
 ✅ **Forward Compatible**  
 - Modern C311/C322 (GEN2 firmware) auto-detect as GEN2
 - Get access to GEN2 registers automatically
-- Labeled correctly based on actual firmware
+- Labelled correctly based on actual firmware
 
 ✅ **Self-Documenting**
 - `hardware_version` field shows hybrid status: "Gen1 (GEN2 FW)"
@@ -195,7 +195,7 @@ When a **Solax Datahub 1000** is connected to Solax EV chargers, it takes contro
 └─────────────────┘       └─────────────┘
 ```
 
-### OCPP Mode Behavior
+### OCPP Mode Behaviour
 
 **Automatic Mode Switching:**
 - **EVSE Scene** (register 0x61C) automatically set to "OCPP mode"
@@ -221,7 +221,7 @@ Initial state:
 
 When battery charging starts (high system load):
 - Datahub reduces EV to: 6A per phase (minimum)
-- Prioritizes: Battery charging over EV charging
+- Prioritises: Battery charging over EV charging
 - Reason: Prevents grid overload
 
 When battery charging stops (capacity available):
@@ -229,11 +229,11 @@ When battery charging stops (capacity available):
 - Returns to: Max Charge Current limit
 ```
 
-### Register Behavior in OCPP Mode
+### Register Behaviour in OCPP Mode
 
 **Registers That Work:**
 
-| Register | Entity | Function | Datahub Behavior |
+| Register | Entity | Function | Datahub Behaviour |
 |----------|--------|----------|------------------|
 | 0x60D | Charger Use Mode | Stop/Fast | ⚠️ **Only FAST mode available in OCPP** |
 | 0x668 | Max Charge Current | Upper limit (6-32A) | ✅ **Enforced as maximum** |
@@ -242,7 +242,7 @@ When battery charging stops (capacity available):
 
 **Critical:** Set `Start Charge Mode` to **"Plug & Charge"** for Datahub control to work.
 
-**OCPP Mode Behavior:**
+**OCPP Mode Behaviour:**
 - In OCPP mode, **only FAST mode is available** - ECO and GREEN modes are not available
 - Only **STOP** and **FAST** modes work in OCPP mode
 - Datahub enforces FAST mode for active charging in OCPP mode
@@ -322,7 +322,7 @@ Set Charger Use Mode = "Stop"
 
 1. **Intelligent Load Balancing**
    - Prevents grid overload
-   - Optimizes across all loads (home, batteries, EV)
+   - Optimises across all loads (home, batteries, EV)
    - Automatic adjustment to changing conditions
 
 2. **Solar Optimization**
@@ -336,7 +336,7 @@ Set Charger Use Mode = "Stop"
    - Manages peak demand
 
 4. **Battery Priority**
-   - Can prioritize battery charging over EV
+   - Can prioritise battery charging over EV
    - Balances long-term storage vs immediate EV needs
 
 **Limitations:**
@@ -361,11 +361,11 @@ Set Charger Use Mode = "Stop"
 
 **EVSE Scene keeps reverting to OCPP mode**
 - **Cause:** Datahub is connected and maintaining control  
-- **Solution:** This is normal behavior—EVSE Scene must be OCPP mode with Datahub
+- **Solution:** This is normal behaviour—EVSE Scene must be OCPP mode with Datahub
 
 **ECO/GREEN modes not available**
 - **Cause:** In OCPP mode, only FAST mode is available  
-- **Behavior:**
+- **Behaviour:**
   - ECO and GREEN modes are not available when Datahub is connected
   - Only STOP and FAST modes work in OCPP mode
 - **Solution:** This is intentional—only STOP and FAST modes work with Datahub. Use Max Charge Current to control speed instead.
@@ -388,15 +388,6 @@ Set Charger Use Mode = "Stop"
   - Datahub configuration
   - Grid connection limits
   - Physical charger capabilities
-
-## Related Documentation
-
-**Note:** The following documentation files are located in the main homeassistant repository and are not part of this integration's documentation:
-
-- EV Charger Hybrid GEN Detection - Detailed design document (see main repo docs/solax/EV_CHARGER_HYBRID_GEN_DETECTION.md)
-- EV Charger Datahub OCPP Mode - Complete OCPP mode reference (see main repo docs/solax/EV_CHARGER_DATAHUB_OCPP_MODE.md)
-- EV Charger Control Reference - Register reference guide (see main repo docs/solax/EV_CHARGER_CONTROL_REFERENCE.md)
-- Start Charge Mode Behavior - Charge mode documentation (see main repo docs/solax/EV_CHARGER_START_CHARGE_MODE.md)
 
 ## Summary
 

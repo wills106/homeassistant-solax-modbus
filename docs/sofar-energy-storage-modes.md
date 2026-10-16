@@ -14,7 +14,7 @@ The modes are controlled through "Energy Storage Mode", where you can choose one
 
 ## Self Use
 
-This is the default mode and most suitable for typical day by day operation and is designed to optimize your own consumption of your home. In this mode the inverter will automatically charge and discharge the battery according to the following rules:
+This is the default mode and most suitable for typical day by day operation and is designed to optimise your own consumption of your home. In this mode the inverter will automatically charge and discharge the battery according to the following rules:
 - If PV generation equals the load consumption (ΔP < 100 W), the inverter won't charge or discharge the battery.
 - If the battery is full or at maximum charging power, the excess power will be exported to the grid.
 - If the PV generation is less than the load consumption, it will discharge the battery to supply power to the load.
@@ -131,7 +131,7 @@ Note: Battery management will override the minimum battery power of course. So w
 
 #### Provide Feed-in Power If Possible
 
-As long as possible you want to prioritize feeding-in at least 1 kW to the grid. Maybe you have the luxury that you get a higher price for feeding in energy than consuming it.
+As long as possible you want to prioritise feeding-in at least 1 kW to the grid. Maybe you have the luxury that you get a higher price for feeding in energy than consuming it.
 
 Values:
 
@@ -152,7 +152,7 @@ When in passive mode the inverter can perform a configurable action after it did
 
 - **Passive: Timeout**: _Default: Disabled_. The timeout after which the configured timeout action will be executed. Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout" for checking the current value, which will be displayed in number of seconds, where 0 means 'Disabled'.
 
-- **Passive: Timeout Action**: _Default: Force Standby". The timeout action that will be executed after which the configured timeout has passed. By default "Force Standby" is selected. "Return to Previous Mode" will set the previously selected "Energy Storage Mode", i.e. if the inverter was switched from "Self Use" into "Passive Mode" the inverter will switch back to "Self Use" after not receiving any communication for the configured "Passive: Timeout". Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout Action" for checking the current value.
+- **Passive: Timeout Action**: _Default: Force Standby_. The timeout action that will be executed after which the configured timeout has passed. By default "Force Standby" is selected. "Return to Previous Mode" will set the previously selected "Energy Storage Mode", i.e. if the inverter was switched from "Self Use" into "Passive Mode" the inverter will switch back to "Self Use" after not receiving any communication for the configured "Passive: Timeout". Note that the displayed value in this field does not necessarily reflect the current value that is set in the inverter. See the entity "RO: Passive: Timeout Action" for checking the current value.
 
 - **Passive: Update Timeout**: _Button_. After changing "Passive: Timeout" or "Passive: Timeout Action" this button must be pressed to commit the values to the system. Please allow the system several minutes to reflect the changes in the corresponding read-only values.
 

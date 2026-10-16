@@ -72,7 +72,7 @@ Maximal power your inverter will send to the grid. It is recommended to have thi
 
 ## extend_bms_setting
 
-This is just my opinion, anyone is free to fix this. Used when you want to install another battery to your existing setup, so your batteries will have the same SOC as the new one.
+Used when you want to install another battery to your existing setup, so your batteries will have the same SOC as the new one.
 
 ## grid_import & grid_export
 
@@ -109,7 +109,7 @@ This entity is used in remote control (VPP) modes to monitor grid power such as 
 
 ### measured_power_offset/measured_power_gain
 
-If your setup uses a CT (current transformer), the measured power may not be accurate - they are typically 3-10% tolerances which can include a zero-offset. As of writing there SolaX does not provide on all inverters a method to calibrate this measurement value (some older generations had such an option). Inaccuracies in this measurement affect the calculated house load, and can cause problems with remote control modes at low power levels.
+If your setup uses a CT (current transformer), the measured power may not be accurate - they are typically 3-10% tolerances which can include a zero-offset. SolaX does not provide a method to calibrate this measurement value on all inverters (some older generations had such an option). Inaccuracies in this measurement affect the calculated house load, and can cause problems with remote control modes at low power levels.
 
 To achieve more accurate results from remote control modes, two additional optional configuration entities, `measured_power_offset` and `measured_power_gain` are provided to allow the sensor values to be calibrated. The values shown in home assistant will be scaled by the chosen values.
 
@@ -129,7 +129,7 @@ Typical offsets will be +/-50W, and gains 90-110%. If you get values outside thi
 
 ## manual_mode_select
 
-Behavior of the manual mode, enable by `manual_mode_control`.
+Behaviour of the manual mode, enable by `manual_mode_control`.
 
 ## manual_mode_control
 
@@ -141,7 +141,7 @@ Activates and deactivates manual mode.
 
 ## pgrid_bias
 
-Changes behavior of your inverter. When `inverter`, your inverter will supply around 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy. 
+Changes behaviour of your inverter. When `inverter`, your inverter will supply around 40 Watts less to your home network, so if your load decreases, there will be much lower overshoot energy to the grid (useful if you have no permission to sell energy to the grid). When `grid` your inverter will supply 40 Watts more than your load, so when load increases, you will less likely use grid energy.
 
 ## phase_power_balance_x3
 
