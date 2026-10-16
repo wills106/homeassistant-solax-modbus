@@ -41,7 +41,7 @@ With these parameters a power control dashboard card can be created:
 
 ### Main trigger button
 * `remotecontrol_trigger` : 
-   button that triggers a new remotecontrol timeslot on the inverter. The behavior during this time slot is determined by a set of non-persistent parameter registers:
+   button that triggers a new remotecontrol timeslot on the inverter. The behaviour during this time slot is determined by a set of non-persistent parameter registers:
 
 ### Parameter entities
 
@@ -66,9 +66,9 @@ With these parameters a power control dashboard card can be created:
 > * When `remotecontrol_power_control` = `Enabled Power Control` is chosen, the target value refers to the battery interface where positive values will cause batteries to charge, negative values will make the batteries discharge. When the target is set to zero, in the presence of PV, the PV will go to the battery, the house load will come from the grid. If in addition to selecting this mode, `remote_control_import_limit` is set to Zero, the house load will come from PV and battery only. `Enabled Power Control` is the basic mode offered by solax, it allows us to specify activepower directly, but the notion activepower may be difficult to understand, so grid control and battery control may be easier to understand.
 > * When `remotecontrol_power_control` = `Enabled Grid Control` is chosen, the target value refers to the grid interface where positive values mean import, negative values mean export. When using this mode, make sure that `remotecontrol_import_limit` is set to a high enough value so that the import target can be reached.
 > * When `remotecontrol_power_control` = `Enabled Battery Control` is chosen, the target value refers to the battery interface where positive values mean charge, negative values mean discharge. If target is set to zero, excess PV power will be sent to the grid.
-> * NEW: When `remotecontrol_power_control` = `Enabled Self Use` is chosen, the target value is ignored and the system will emulate the standard self-use mode for the specified (autorepeat) duration. This mode may not be as accurate/responsive as the builtin self_use mode.
-> * NEW: When `remotecontrol_power_control` = `Enabled Feedin Priority` is chosen, the target value is ignored and the system will emulate the standard feedin-priority mode for the specified (autorepeat) duration. This mode may not be as accurate/responsive as the builtin feedin_priority mode.
-> * NEW: When `remotecontrol_power_control` = `Enabled No Discharge` is chosen, the target value is ignored and the system will make sure that the battery does not discharge. Houseload will be provided by PV, and when PV is insufficient, from Grid.
+> * When `remotecontrol_power_control` = `Enabled Self Use` is chosen, the target value is ignored and the system will emulate the standard self-use mode for the specified (autorepeat) duration. This mode may not be as accurate/responsive as the builtin self_use mode.
+> * When `remotecontrol_power_control` = `Enabled Feedin Priority` is chosen, the target value is ignored and the system will emulate the standard feedin-priority mode for the specified (autorepeat) duration. This mode may not be as accurate/responsive as the builtin feedin_priority mode.
+> * When `remotecontrol_power_control` = `Enabled No Discharge` is chosen, the target value is ignored and the system will make sure that the battery does not discharge. Houseload will be provided by PV, and when PV is insufficient, from Grid.
 
 * `remotecontrol_reactive_power`:
   Only tested with a zero value. Similar to remote_control_active power. We recommend to leave this parameter untouched as we cannot provide any guidance.
@@ -80,10 +80,10 @@ With these parameters a power control dashboard card can be created:
   In `Enabled Power Control` mode and `Enabled Battery Control` mode, the Grid import or export level can vary with the house load and PV power. This parameter makes it possible to perform 'peak shaving', so that the import power can be limited to a defined max value. In `Enabled Grid Control` mode, this parameter has no sense as the import level is fixed. In this case, this parameter must be set to a high value.
 
 * `remotecontrol_export_limit`: (ATTENTION: not working as intended in mode 1 - removed; will be implemented in mode 8)
- In times of negative injection of consumption prices, one may want to limit the export by limiting the PV power feed. We have not been able to achieve this in mode 1; recent firmware versions now support a Mode 8 that can limit the PV power. This mode will be documented in a separate wiki page.
+ In times of negative injection or consumption prices, one may want to limit the export by limiting the PV power feed. We have not been able to achieve this in mode 1; recent firmware versions now support a Mode 8 that can limit the PV power. This mode is documented in the [Mode 8 page](solax-mode8-modbus-power-control.md).
 
 ### Autorepeat function
-* `remotecontrol_aurorepeat_duration`:
+* `remotecontrol_autorepeat_duration`:
  If zero, there will be no autorepeat. A non-zero value determines the time period over which the last remotecontrol_trigger command will be autorepeated. During each polling cycle, the values will be recomputed (e.g. taking house load into account in `Enabled Grid Control` mode). By using autorepeat, an energy management automation can interact with the system at a slow rate, e.g. only once an hour, while the autorepeat can recompute the target every 5 seconds (if polling rate is 5 seconds) without interaction from the automation.
 
 Before issuing a `remotecontrol_trigger` button activation, an automation should make sure that the other remotecontrol_* parameters have the correct values. This also applies to manual interactions with the `remotecontrol_trigger` button.

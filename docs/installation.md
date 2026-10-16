@@ -74,4 +74,3 @@ Now it's only needed to add your inverter to Home Assistant.
 ## Potential known problems:
 
 Sometimes after initial installation, some computed entities are missing. An integration reload (or a HA restart) makes these entities show correct data.
-Should be solved from 2025.8.8 on.

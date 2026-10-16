@@ -129,7 +129,7 @@ Known Serials
 
 #### Single Phase
 
-![Photo of SolaX X3 Hybrid G3](images/solax-x1-hybrid-g3-photo.png)
+![Photo of SolaX X1 Hybrid G3](images/solax-x1-hybrid-g3-photo.png)
 
 > Features built in Ethernet
 
@@ -147,7 +147,7 @@ X3-Hybrid-nn-x-x
 
 X3-Hybrid-n.n-x-x
 
-> Features built in Ethernet (might not be labeled as Ethernet, check this [discussion](https://github.com/wills106/homeassistant-solax-modbus/discussions/303))
+> Features built in Ethernet (might not be labelled as Ethernet, check this [discussion](https://github.com/wills106/homeassistant-solax-modbus/discussions/303))
 
 Known Serial Numbers
 - H3DE

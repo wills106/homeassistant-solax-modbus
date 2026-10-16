@@ -30,7 +30,7 @@ You can use the SolaX cloud app or do it manually:
 
 Pocket WiFi 3.0 with Firmware V3.004.03 and above is only officially supported.
 - **Ensure Firmware is up-to-date (Contact SolaX)**
-- Restart your rooter and then reload the integration in Home Assistant.
+- Restart your router and then reload the integration in Home Assistant.
 - If that doesn't work you can unplug PocketWifi 3.0 for 30 seconds and plug it in again, then reload the integration.
 
 ## I have multiple inverters in parallel mode (master-slave) and need help with configuration
@@ -54,7 +54,7 @@ To adapt this, there is a disabled entity called `config_max_export`. If you ena
 
 ## The export_control_user limit is wrong by a factor 10
 
-Some inverters behave differently compared to the other inverters of same model. To correct this, we have created a normally disabled control entity namded `config_export_control_limit_readscale`. Enablethis entity (please wait 30 seconds to let it appear) and set it to either 0.1, 1.0 or 10.0. The scaling should now be fine with one of these 3 scaling factors.
+Some inverters behave differently compared to the other inverters of same model. To correct this, we have created a normally disabled control entity named `config_export_control_limit_readscale`. Enable this entity (please wait 30 seconds to let it appear) and set it to either 0.1, 1.0 or 10.0. The scaling should now be fine with one of these 3 scaling factors.
 
 ## After remote control, inverter oscillates between import and export with SoC >= 98%
 

@@ -32,7 +32,7 @@ This is the known drawback, when using the working mode 'Transparency'. If you n
 
 ## I am using the LSW-3 Wifi stick logger, but the integration is receiving no values
 
-The LSE-3 Wifi stick logger only works, when the working mode is set to 'Transparency'. See the [Sofar installation](sofar-installation.md) for more details.
+The LSW-3 Wifi stick logger only works, when the working mode is set to 'Transparency'. See the [Sofar installation](sofar-installation.md) for more details.
 
 ## I am using the LSE-3 LAN stick logger, but the port 8899 is not open
 

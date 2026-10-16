@@ -47,7 +47,6 @@ Excess solar energy will go to the grid. If the grid power has been limited with
 
 **Warning, forced discharging may or may not increase the wear on your Inverter / Battery Setup. Use at own risk**
 
-Present from 0.6.0
 ### Precursors
 Note, if you use "Back Up Mode" to prevent Battery discharge, remember to set `number.solax_grid_export_limit` back to zero
 - Set `number.solax_grid_export_limit` to desired export level. 0 to -5000
@@ -65,7 +64,6 @@ Note, if you use "Back Up Mode" to prevent Battery discharge, remember to set `n
 
 **Warning, forced discharging may or may not increase the wear on your Inverter / Battery Setup. Use at own risk**
 
-Present from 0.6.0
 ### Precursors
 - Set `select.solax_export_duration` to the time period of dynamic export pricing. For example if your rate changes every 30 Minutes, set it to that.
 - Set `number.solax_battery_minimum_capacity_grid_tied` to the Minimum SOC you wish to discharge to.

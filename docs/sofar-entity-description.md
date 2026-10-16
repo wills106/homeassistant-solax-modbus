@@ -2,8 +2,6 @@
 
 WARNING: most of the writeable parameters are written to EEPROM of the inverter after each modification. EEPROM has a limited (typically 100000) number of write cycles, so be careful that your automations do not modify these parameters too frequently.
 
-Very likely this document will always be work in progress ;-)
-
 ## Controls
 
 Some of the entities cannot be written alone as Sofar requires several registers to be written together at once. A button that commits the values to the inverter is provided in such cases and needs to be pressed after related values are changed.

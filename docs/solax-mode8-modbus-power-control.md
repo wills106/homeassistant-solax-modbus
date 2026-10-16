@@ -1,6 +1,5 @@
 ## SolaX Mode 8 Modbus Power Control (autorepeat)
 
-This page describes features that will appear in the near future.
 Not to be confused with the `remotecontrol_xxx_direct` approach.
 
 ## Why use Modbus power control?
@@ -20,14 +19,14 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 ### Notes:
 * For people using external tasks to control the power, the `_remotecontrol_xxx_direct_` versions of the entities could be used. This is outside the scope if this wiki page.
 * Although the addition of Mode 8 in new firmwares is a big enhancement, we still feel there is a missing mode that focusses on the grid interface and can limit the PV in case of negative prices. Our Mode 8 autorepeat loop tries to emulate this, but can only adjust every polling cycle, a firmware based solution could react faster.
-* This mechanism will only work on the most recent firmware versions; previous versions do not support mode 8 or 9. I am running Firmware: DSP v1.52 ARM v1.50 at the time of my testing
+* This mechanism will only work on the most recent firmware versions; previous versions do not support mode 8 or 9.
 * If you use Modbus power control autorepeat loops, make sure the polling interval for the fastest scan-group is sufficiently low e.g. 3–5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or Modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
 
 
 ### KNOWN ISSUES: (Work in progress):
 * When the battery gets fully charged (or when the specified duration expires), the systems sometimes seem to automatically change to mode 6 (`Self consume - Charge and Discharge`), this mode does not limit PV any more and may export power when prices are still negative. Further observation is necessary to understand this.
 * The `remotecontrol_duration` parameter (not to be confused with autorepeat duration) seems to be ignored by the SolaX firmware and mode 8 remains active for a longer time. This can be overcome by using an automation that sets the mode 8 operation to be disabled. We are working on an automatic deactivation when the `autorepeat_duration` expires.
-* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button (this issue should be solved now).
+* In case the mode does not terminate, the new modes can be disabled with the Mode 1 Disabled selection followed by a click on the Mode 1 trigger button.
 * The inverter may take some time to reduce the PV power, it can take a minute or more before the target is reached.
 
 ***
@@ -41,7 +40,7 @@ The integration hides this complexity and implements one button to trigger a sin
 * **powercontrolmode8_trigger**: trigger button for activating mode 8 loop
 * **remotecontrol_power_control_mode**: Select the submode:
     * **Disabled**: changing to Disabled also deactivates the loop mechanism
-    * **Mode 8 - PV and BAT control - Duration**: this is the manual mode that uses fixed `remeotecontrol_pv_power_limit` and fixed `remotecontrol_push_mode_8_9` settings. The same behavior can probably be achieved with the _direct version of the entities (without autorepeat loop)
+    * **Mode 8 - PV and BAT control - Duration**: this is the manual mode that uses fixed `remotecontrol_pv_power_limit` and fixed `remotecontrol_push_mode_8_9` settings. The same behaviour can probably be achieved with the _direct version of the entities (without autorepeat loop)
     * **Negative Injection Price**: in this submode, PV will charge the battery and feed the house load, but once the battery is fully charged, PV will be reduced to house load so that no export takes place. The autorepeat mechanism is essential to adapt to the varying PV power or house load. If there is still some remaining export (probably because there is a limit on the possible charging power), reduce the `remotecontrol_pv_power_limit` parameter. In this submode, `remotecontrol_pv_power_limit` will be interpreted as maximum battery charge power, and `remotecontrol_target_soc_8_9` sets the upper SoC limit on charging the battery to allow leaving some spare capacity if desired.
     * **Negative Injection and Consumption Price**: In this submode, PV will be limited to zero and battery will be charged from the grid (house load also from grid)
     * **Export-First Battery Limit**: This submode prioritises feeding excess energy to the grid up to the defined export limit. Surplus power beyond that is used to charge the battery, with charging power adjustable via the Export-First Battery Charge Limit (mode 8/9) parameter. It enables Home Assistant to run logic similar to the SolaX Datahub — using solar forecasts to prioritise grid feed-in when high solar production is expected, while allowing slower charging to protect battery health. The `remotecontrol_target_soc_8_9` parameter sets the upper SoC limit when the battery is being charging with excess solar.

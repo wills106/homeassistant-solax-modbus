@@ -13,14 +13,14 @@
 
 The RS485 interface uses only the pin4 (blue wire) and pin5 (white-blue). Polarity matters, so make sure pin4 (blue wire in typical cables) is connected to the A lead of your adapter and pin5 (white-blue wire) to the B lead of your adapter.
 
-RS485 cables can be fairly long, so 25 meter or more is possible. You can use the blue pair of a standard cat5 or cat6 cable.
+RS485 cables can be fairly long, so 25 metres or more is possible. You can use the blue pair of a standard cat5 or cat6 cable.
 
 Make sure you verify your inverter's baud rate with the [Wiki Page](baudrates.md) and make sure it matches the baud rate of the Ethernet to RS485 adapter
 You can confirm the baud rate on the LCD screen on the front of your Inverter, within the Menu's.
 
 The Modbus address be default is 1. Some people have reported that their Modbus address was 4.
 
-Attention: This work is based on the common protocol documentation for the X1 and X3 devices. The documentation is not always clear which parameters do not apply to the X1 inverter, so some of the entities that appear may not have a meaning on X1. You can report this and they can be removed for X1.
+Attention: This work is based on the common protocol documentation for the X1 and X3 devices. The documentation is not always clear which parameters do not apply to the X1 inverter, so some of the entities that appear may not have a meaning on X1. If you encounter such entities, please report them so they can be removed for X1.
 
 ```{note}
 There is a port marked COM on the G4 inverter, some user manuals by mistake claim that this is an Ethernet port.
@@ -36,7 +36,7 @@ DO NOT CONNECT THIS COM PORT TO AN ETHERNET SWITCH - your Ethernet switch port w
 - use the "vircom" tool (Windows) to set the IP address matching your lan (or to let the device use DHCP, it does not use DHCP by default, however we recommend using a static IP)
 
   ```{tip}
-  By default, this adapter (also tested on its `RS485 TO POE ETH (B)` variation) has a static IP configuration set up as as 192.168.1.210/24.
+  By default, this adapter (also tested on its `RS485 TO POE ETH (B)` variation) has a static IP configuration set up as 192.168.1.210/24.
 
   When you don't have Windows at hand, place both the adapter and your computer on the 192.168.1.0/24 subnet (you might already be using it as home LAN).
   Then, open http://192.168.1.200 in your web browser from said computer (you can of course use a phone for a quick test if it's on the same network).
