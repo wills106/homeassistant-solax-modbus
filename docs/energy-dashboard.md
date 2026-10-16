@@ -19,7 +19,7 @@ The main Energy Dashboard focuses on energy sensors and requires clean, correctl
 
 ## Energy Dashboard Now (Realtime)
 
-The "Now" view focuses on power sensors and requires correct real‑time power entities. This used to be a major pain point, but the Energy Dashboard virtual device provides both energy and power sensors with consistent conventions.
+The "Now" view focuses on power sensors and requires correct real‑time power entities. The Energy Dashboard virtual device provides both energy and power sensors with consistent conventions.
 
 ![Energy dashboard realtime](images/ha-energy-dashboard-now.png)
 

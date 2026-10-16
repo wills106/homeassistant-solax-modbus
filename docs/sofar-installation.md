@@ -15,7 +15,7 @@ Important in this case: Only the Modbus proxy must connect to your inverter dire
 This is a bit more complicated than using the below logger stick configurations, however this is the recommended solution for the following reasons:
 
 - RS-485 is a supported interface from Sofar Solar, while the logger stick alternatives are not supported.
-- The communication with the logger sticks proofed to change with inverter and logger stick firmware updates. It's not guaranteed that it will still work after the next update.
+- The communication with the logger sticks has proven to change with inverter and logger stick firmware updates. It's not guaranteed that it will still work after the next update.
 - As the logger sticks are unofficial interfaces that are not officially supported by Sofar, the protocols may not always follow the Modbus standards.
 - Does not interfere with the communication to the SolarMan or Sofar Cloud portals.
 

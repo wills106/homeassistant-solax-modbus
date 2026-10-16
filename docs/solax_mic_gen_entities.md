@@ -49,5 +49,3 @@ Computed
 - software_version
 - PV Power Total
 - PV Total Power
-
-Calculated 08-Oct-2025
