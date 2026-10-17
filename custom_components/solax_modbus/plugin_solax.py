@@ -1795,6 +1795,16 @@ def value_function_bms_2_max_charge(initval: int, descr: Any, datadict: dict[str
     return int(batt_v2 * batt_a2)
 
 
+def value_function_measured_power_mic_g4(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float | None:
+    """Select correct measured power source based on export measurement device"""
+    export_device = datadict.get("export_device", None)
+    if export_device == "CT":
+        return datadict.get("ct_power")  # Use CT power if export is measured with a current tap
+    if export_device == "Meter":
+        return datadict.get("ac_power")  # Use AC power if using a meter
+    return 0  # Otherwise we have no measurement device, so set to 0 to avoid issues in other calculations.
+
+
 # ================================= Button Declarations ============================================================
 
 BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
@@ -10907,6 +10917,27 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=MIC | GEN4,
     ),
     SolaXModbusSensorEntityDescription(
+        name="AC Power",
+        key="ac_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x409,
+        register_type=REG_INPUT,
+        allowedtypes=MIC | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Measured Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_measured_power_mic_g4,
+        depends_on=["export_device"],
+        optional_depends_on=["ct_power", "ac_power"],
+        allowedtypes=MIC | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Measured Power",
         key="measured_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -10914,7 +10945,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         register=0x409,
         register_type=REG_INPUT,
-        allowedtypes=MIC | GEN4 | GEN5,
+        allowedtypes=MIC | GEN5,
     ),
     SolaXModbusSensorEntityDescription(
         name="PV Voltage 1",
@@ -11113,6 +11144,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=MIC | GEN4,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Export Device",
+        key="export_device",
+        scale={
+            0: "Disabled",
+            1: "Meter",
+            2: "CT",
+        },
+        register=0x66C,
+        allowedtypes=MIC | GEN4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:meter-electric",
     ),
     #####
     #
