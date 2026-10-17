@@ -10830,6 +10830,19 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
+        name="Export Device",
+        key="export_device",
+        scale={
+            0: "Disabled",
+            1: "Meter",
+            2: "CT",
+        },
+        register=0x384,
+        allowedtypes=MIC | GEN4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:meter-electric",
+    ),
+    SolaXModbusSensorEntityDescription(
         key="firmware_arm",
         register=0x390,
         allowedtypes=MIC | GEN4,
@@ -11144,19 +11157,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=MIC | GEN4,
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Export Device",
-        key="export_device",
-        scale={
-            0: "Disabled",
-            1: "Meter",
-            2: "CT",
-        },
-        register=0x66C,
-        allowedtypes=MIC | GEN4,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:meter-electric",
     ),
     #####
     #
