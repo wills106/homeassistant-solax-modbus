@@ -40,7 +40,7 @@
       },
       "core": {
         "title": "Legacy YAML Modbus hub",
-        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the [migration guide](https://github.com/wills106/homeassistant-solax-modbus/blob/main/docs/core-modbus-migration.md) before upgrading. Do not remove a YAML hub still used by other integrations.",
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
         "data": {
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }
@@ -126,7 +126,7 @@
       },
       "core": {
         "title": "Legacy YAML Modbus hub",
-        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the [migration guide](https://github.com/wills106/homeassistant-solax-modbus/blob/main/docs/core-modbus-migration.md) before upgrading. Do not remove a YAML hub still used by other integrations.",
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
         "data": {
           "read_core_hub": "The core Modbus hub used to connect to the inverter"
         }

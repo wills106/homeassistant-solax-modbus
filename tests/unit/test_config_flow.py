@@ -167,7 +167,8 @@ def test_legacy_warning_texts_explain_the_api_deadline() -> None:
         for section in ("config", "options"):
             description = strings[section]["step"]["core"]["description"]
             assert "2027.10" in description and "access API" in description
-            assert "core-modbus-migration.md" in description
+            assert "Core Modbus migration guide" in description
+            assert "http://" not in description and "https://" not in description
             assert "legacy_hub_unavailable" in strings[section]["error"]
 
 
