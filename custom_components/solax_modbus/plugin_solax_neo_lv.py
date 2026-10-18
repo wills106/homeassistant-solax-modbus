@@ -42,7 +42,6 @@ from typing import Any
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
-    UnitOfTime,
     PERCENTAGE,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -50,6 +49,7 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
     UnitOfTemperature,
+    UnitOfTime,
 )
 from homeassistant.helpers.entity import EntityCategory  # type: ignore[attr-defined]  # HA stubs incomplete
 
@@ -57,7 +57,6 @@ from custom_components.solax_modbus.const import (
     REG_HOLDING,
     REG_INPUT,
     REGISTER_S16,
-    REGISTER_S32,
     REGISTER_U16,
     REGISTER_U32,
     SCAN_GROUP_AUTO,
@@ -100,7 +99,7 @@ def _energy_counter_guard(state: dict[str, Any], key: str, raw: int, scale: floa
         state[key] = {"raw": raw, "t": now, "cand": None, "cand_t": now, "cand_n": 0}
         return raw
 
-    last_raw = entry["raw"]
+    last_raw: int = entry["raw"]
     allowed = (_ENERGY_GUARD_SLACK_KWH + _ENERGY_GUARD_MAX_KW * max(now - entry["t"], 0.0) / 3600.0) / scale
     if last_raw <= raw <= last_raw + allowed:
         entry.update(raw=raw, t=now, cand=None, cand_n=0)
@@ -2521,7 +2520,7 @@ NUMBER_TYPES: Sequence["SolaxNeoLVNumberEntityDescription"] = [
         native_min_value=0.80,
         native_max_value=1.00,
         native_step=0.01,
-        initvalue=1.0,
+        initvalue=1,
         entity_category=EntityCategory.CONFIG,
     ),
 ]
@@ -2769,6 +2768,8 @@ def _build_internal_mirror_sensors() -> list[SolaxNeoLVSensorEntityDescription]:
     for n in NUMBER_TYPES:
         if n.key in seen_keys:
             continue
+        if n.register is None:
+            continue
         seen_keys.add(n.key)
         mirrors.append(
             SolaxNeoLVSensorEntityDescription(
@@ -2783,6 +2784,8 @@ def _build_internal_mirror_sensors() -> list[SolaxNeoLVSensorEntityDescription]:
         )
     for s in SELECT_TYPES:
         if s.key in seen_keys:
+            continue
+        if s.register is None:
             continue
         seen_keys.add(s.key)
         mirrors.append(
