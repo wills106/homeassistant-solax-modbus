@@ -60,7 +60,9 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         )
         for key in values
     }
-    hub.computedSensors = {key: computed(key) for key in ("battery_capacity", "inverter_power", "pv_power_total", "battery_power_charge")}
+    hub.computedSensors = {
+        key: computed(key) for key in ("house_load", "house_load_alt", "battery_capacity", "inverter_power", "pv_power_total", "battery_power_charge")
+    }
     hub.sensorDescriptions.update(hub.computedSensors)
     hub.sensorEntities = {key: Mock() for key in hub.computedSensors}
     hub.data.update(
