@@ -907,8 +907,8 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
     pv = datadict.get("pv_power_total", 0)
-    houseload = value_function_house_load(initval, descr, datadict)
-    houseload_alt = value_function_house_load_alt(initval, descr, datadict)
+    houseload = datadict.get("house_load", 0)
+    houseload_alt = datadict.get("house_load_alt", 0)
 
     # Disallow parallel mode for now
     parallel_setting = datadict.get("parallel_setting", "Free")
