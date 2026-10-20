@@ -1006,6 +1006,8 @@ class SolaXModbusHub:
     def apply_external_overrides(self, datadict: dict[str, Any]) -> None:
         """Inject fresh externally measured values for the control loop."""
         overrides = getattr(self, "_override_entities", None) or {}
+        if not overrides:
+            return  # Fast path: nothing configured, do nothing (added to pass test)
         for key, entity_id in overrides.items():
             conf_key = f"external_{key}"
             state = self._hass.states.get(entity_id)
