@@ -705,8 +705,6 @@ class SolaXModbusHub:
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
 
         # external sensors that may override standard (computed) sensors
-        # self._override_states: dict[str, tuple[float | None, float]] = {}
-        # self._override_listeners: dict[str, CALLBACK_TYPE] = {}
         self._external_override_keys: set[str] = set()
         self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
