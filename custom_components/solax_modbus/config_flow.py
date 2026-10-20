@@ -20,6 +20,7 @@ from homeassistant.const import (
 from homeassistant.helpers import (
     config_validation as cv,
 )
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import (
     selector,
 )
@@ -31,8 +32,6 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowMenuStep,
 )
 
-from homeassistant.helpers import entity_registry as er
-
 from .connection import (
     matching_config_entries,
 )
@@ -40,7 +39,7 @@ from .const import (
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_ENERGY_DASHBOARD_DEVICE,
-    CONF_EXTERNAL_PREFIX, 
+    CONF_EXTERNAL_PREFIX,
     CONF_INTERFACE,
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
@@ -117,7 +116,9 @@ def _configured_hub_names(handler: SchemaCommonFlowHandler) -> set[str]:
             names.add(_normalized_hub_name(name))
     return names
 
+
 # ############################## external oveerrides ################################################@
+
 
 async def _get_overridable_sensors(handler: SchemaCommonFlowHandler) -> dict[str, str]:
     """Return the {key: label} map declared by the currently selected plugin."""
@@ -129,27 +130,22 @@ async def _get_overridable_sensors(handler: SchemaCommonFlowHandler) -> dict[str
     return getattr(instance, "OVERRIDABLE_SENSORS", None) or {}
 
 
-
 async def _external_overrides_schema(handler: SchemaCommonFlowHandler) -> vol.Schema | None:
     """Build one entity-selector field per overridable sensor, or None to skip."""
     overridable = await _get_overridable_sensors(handler)
     if not overridable:
-        return None  # plugin zonder declaraties slaat de stap volledig over
+        return None  # plugin without declarations: skip this completely
 
     schema: dict[Any, Any] = {}
     for key in overridable:
         conf_key = f"{CONF_EXTERNAL_PREFIX}{key}"
-        schema[
-            vol.Optional(conf_key, description={"suggested_value": handler.options.get(conf_key)})
-        ] = selector.EntitySelector(
+        schema[vol.Optional(conf_key, description={"suggested_value": handler.options.get(conf_key)})] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain="sensor", device_class="power")
         )
     return vol.Schema(schema)
 
 
-async def _validate_overrides(
-    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
-) -> dict[str, Any]:
+async def _validate_overrides(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any]:
     """Validate entity ids and force explicit clearing of removed selections."""
     overridable = await _get_overridable_sensors(handler)
     if not overridable:
@@ -385,7 +381,7 @@ async def _next_step_battery(user_input: Any) -> str | None:
     _LOGGER.debug("_next_step_battery: returning data: %s", user_input)
     if user_input.get("support-battery", False):
         return "battery"
-    return "overrides" #"duplicate_inverter"
+    return "overrides"  # "duplicate_inverter"
 
 
 def _current_config_entry_id(handler: SchemaCommonFlowHandler) -> str | None:

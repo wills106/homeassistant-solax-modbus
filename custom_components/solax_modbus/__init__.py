@@ -9,6 +9,7 @@ import logging
 import math
 import struct
 import time as _mtime
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from types import ModuleType, SimpleNamespace
@@ -35,16 +36,15 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.core import HomeAssistant, callback, Event
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.event import async_track_time_interval, async_track_state_change_event
+from homeassistant.helpers.event import async_track_time_interval
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
-
 
 from .connection import (
     describe_modbus_connection,
@@ -705,10 +705,10 @@ class SolaXModbusHub:
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
 
         # external sensors that may override standard (computed) sensors
-        #self._override_states: dict[str, tuple[float | None, float]] = {}
-        #self._override_listeners: dict[str, CALLBACK_TYPE] = {}
-        self._external_override_keys: set[str] = set()  
-        self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id      
+        # self._override_states: dict[str, tuple[float | None, float]] = {}
+        # self._override_listeners: dict[str, CALLBACK_TYPE] = {}
+        self._external_override_keys: set[str] = set()
+        self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
@@ -893,7 +893,6 @@ class SolaXModbusHub:
             return self.inverter_model
         return getattr(self.plugin, "inverter_model", None)
 
-
     async def _deferred_setup_loop(self, interval: int = 30) -> None:
         """Keep trying to detect inverter type and forward platforms once online."""
         import asyncio
@@ -936,9 +935,6 @@ class SolaXModbusHub:
                 if getattr(self, "_stopping", False):
                     return
                 await asyncio.sleep(0.1)
-
-
-
 
     # save and load local data entity values to make them persistent
     DATAFORMAT_VERSION = 1
@@ -998,7 +994,6 @@ class SolaXModbusHub:
 
     # ============ external sensors -  override functionality - start
 
-
     async def async_register_external_overrides(self, plugin: ModuleType, options: Mapping[str, Any]) -> None:
         """Store configured external sensor overrides for the control loop."""
         instance = getattr(plugin, "plugin_instance", plugin)
@@ -1030,8 +1025,6 @@ class SolaXModbusHub:
             elif unit not in (UnitOfPower.WATT, None):
                 _LOGGER.warning("%s: external override '%s' has unexpected unit '%s', assuming W", self._name, key, unit)
             datadict[conf_key] = value
-
-
 
     # ========  external sensors -  override functionality - end
 
@@ -2824,7 +2817,10 @@ class SolaXModbusHub:
 
     async def _async_update_autorepeats(self, interval: float | None) -> set[str]:
         """Run lifecycle maintenance once per interval, with one measurement owner."""
-        local_outputs = ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit") # ugly - this is solax dependent - does not belong in init.py
+        local_outputs = (
+            "remotecontrol_current_pushmode_power",
+            "remotecontrol_current_pv_power_limit",
+        )  # ugly - this is solax dependent - does not belong in init.py
         self.apply_external_overrides(self.data)  # inject external overrides for the control loop
         previous = {key: self.data.get(key) for key in local_outputs}
         self.last_ts = _mtime.time()
@@ -2879,8 +2875,8 @@ class SolaXModbusHub:
         """Use accepted values for declared inputs, preserving local requests."""
         data = self.data.copy()
         for key in keys:
-            if key in getattr(self, "writeLocals", {}) or key in  getattr(self, "_external_override_keys", ()):
-                continue # hub-managed value: keep it in self.data
+            if key in getattr(self, "writeLocals", {}) or key in getattr(self, "_external_override_keys", ()):
+                continue  # hub-managed value: keep it in self.data
             sample = self._accepted_input_sample(key, include_pending=False)
             if sample is None or not self._control_input_valid(key):
                 data.pop(key, None)
