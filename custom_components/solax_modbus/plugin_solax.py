@@ -872,7 +872,7 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     return desired_charge, max_charge, bms_cap_w, pct_cap_w
 
 
-def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = 5) -> int:
+def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = 1) -> int:
     # Simple rolling average filter for updating control setpoints to avoid oscillation
     return int((current_value * (steps - 1) + desired_value) / steps)
 
@@ -1417,6 +1417,12 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return external
+
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
     meter_2_power = int(datadict.get("meter_2_measured_power", 0))
@@ -1435,6 +1441,11 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return external
+
     return int(
         datadict.get("pv_power_total", 0)
         - datadict.get("battery_power_charge", 0)
@@ -1859,7 +1870,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "export_control_user_limit",
             "inverter_power_type",
         ),
-        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"),
+        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge", "external_house_load"),
         autorepeat_parallel_dependencies={"Free": ()},
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
@@ -12765,6 +12776,7 @@ plugin_instance = solax_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     TIME_TYPES=TIME_TYPES,
+    OVERRIDABLE_SENSORS = {  "house_load": "House load (direct measurement replaces the PV - battery - grid calculation)", },
     ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,

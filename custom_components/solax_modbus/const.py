@@ -48,6 +48,7 @@ CONF_CORE_HUB = "read_core_hub"
 CONF_CORE_CONNECTION = "core_connection"
 CONF_ENERGY_DASHBOARD_DEVICE = "energy_dashboard_device"
 CONF_DEBUG_SETTINGS = "debug_settings"
+CONF_EXTERNAL_PREFIX = "external_"  # options-key prefix voor extern gemeten sensoren
 ATTR_MANUFACTURER = "SolaX Power"
 DEFAULT_INTERFACE = "tcp"
 DEFAULT_SERIAL_PORT = "/dev/ttyUSB0"
@@ -161,6 +162,7 @@ class plugin_base:
     SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: Sequence[SwitchEntityDescription]
     TIME_TYPES: Sequence[TimeEntityDescription]
+    OVERRIDABLE_SENSORS: dict[str, str] | None = None
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100

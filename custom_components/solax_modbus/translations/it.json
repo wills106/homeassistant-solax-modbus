@@ -44,6 +44,13 @@
           "read_battery": "Abilita lettura"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "core": {
         "title": "Selezione hub Modbus core",
         "data": {
@@ -54,7 +61,8 @@
     "error": {
       "already_configured": "Il dispositivo è già configurato",
       "name_already_used": "Il nome è già stato utilizzato o non è valido",
-      "invalid_host": "Indirizzo host non valido"
+      "invalid_host": "Indirizzo host non valido",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Il dispositivo è già configurato"
@@ -105,6 +113,13 @@
           "read_battery": "Abilita lettura"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "core": {
         "title": "Selezione hub Modbus core",
         "data": {
@@ -115,7 +130,8 @@
     "error": {
       "already_configured": "Il dispositivo è già configurato",
       "name_already_used": "Il nome è già stato utilizzato o non è valido",
-      "invalid_host": "Indirizzo host non valido"
+      "invalid_host": "Indirizzo host non valido",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Il dispositivo è già configurato"

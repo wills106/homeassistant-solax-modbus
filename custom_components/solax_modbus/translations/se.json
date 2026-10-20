@@ -44,6 +44,13 @@
           "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "battery": {
         "title": "Avläs batterimoduler",
         "data": {
@@ -54,7 +61,8 @@
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
       "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
+      "invalid_host": "Ogiltig värdadress",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"
@@ -105,6 +113,13 @@
           "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "battery": {
         "title": "Avläs batterimoduler",
         "data": {
@@ -115,7 +130,8 @@
     "error": {
       "already_configured": "Enheten är redan konfigurerad",
       "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
+      "invalid_host": "Ogiltig värdadress",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Enheten är redan konfigurerad"
