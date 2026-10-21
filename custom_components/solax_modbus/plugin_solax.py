@@ -488,6 +488,15 @@ async def async_write_direct_vpp(
         hub.data[description.key] = parameter
 
 
+DEFAULT_FILTER_SMOOTING_FACTOR = 5
+
+
+def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = DEFAULT_FILTER_SMOOTING_FACTOR) -> int:
+    # Simple rolling average filter for updating control setpoints to avoid oscillation
+    # Time Constant = Fast Poll Interval / (ln(steps) - ln(steps-1)). Settling time is approx 5 time constants.
+    return int((current_value * (steps - 1) + desired_value) / steps)
+
+
 def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     """Remote control power calculations for SolaX inverters - Redesigned Implementation.
 
@@ -872,11 +881,6 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     return desired_charge, max_charge, bms_cap_w, pct_cap_w
 
 
-def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = 5) -> int:
-    # Simple rolling average filter for updating control setpoints to avoid oscillation
-    return int((current_value * (steps - 1) + desired_value) / steps)
-
-
 def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     # initval = BUTTONREPEAT_FIRST means first run;
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
@@ -909,6 +913,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     pv = datadict.get("pv_power_total", 0)
     houseload = datadict.get("house_load", 0)
     houseload_alt = datadict.get("house_load_alt", 0)
+    filter_steps = datadict.get("remotecontrol_smoothing_factor") or DEFAULT_FILTER_SMOOTING_FACTOR
 
     # Disallow parallel mode for now
     parallel_setting = datadict.get("parallel_setting", "Free")
@@ -981,7 +986,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
 
             # Setpoint filter to slow down changes to battery
-            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
+            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge, filter_steps)
             pushmode_power = -selected_charge
 
             # Any surplus not able to feed into the battery needs to be corrected through PV limiting
@@ -1014,7 +1019,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
                 control_reason = "error-increase-pv"
 
             # Filter the setpoint to avoid oscillation
-            pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit)
+            pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit, filter_steps)
 
             _LOGGER.debug(
                 "[Mode8 Negative Injection] %s: surplus=%sW measured_power=%sW export_target=%sW error=%sW pvtarget=%sW reason=%s bms_cap≈%sW pct_cap=%sW desired_charge=%sW -> charge=%sW pvlimit=%sW",
@@ -1039,7 +1044,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             deficit = hl + export_target - pv
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
-                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push)
+                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
             else:
                 desired_push = 0
                 pushmode_power = 0
@@ -1078,7 +1083,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Request maximum allowed charge rate based on current SoC
         desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, available)
         # Setpoint filter to slow down changes to battery
-        selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
+        selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge, filter_steps)
         pushmode_power = -selected_charge
 
         _LOGGER.debug(
@@ -1119,7 +1124,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             deficit = export_deadband_w + hl - pv
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
-                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push)
+                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
                 # Safety: do not discharge above the instantaneous deficit.
                 if pushmode_power > deficit:
                     _LOGGER.debug(
@@ -1274,7 +1279,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             current_charge = -cur_push
 
             # Setpoint filter to slow down changes to battery to limit oscillation
-            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge)
+            selected_charge = autorepeat_setpoint_filter(current_charge, desired_charge, filter_steps)
 
             # If current selected charge is higher than surplus PV (due to filter lag)
             # clamp to PV to avoid grid import. This essentially means the filtering is
@@ -1309,7 +1314,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             deficit = export_deadband_w + hl - pv
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
-                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push)
+                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
                 # Safety: do not discharge above the instantaneous deficit.
                 if pushmode_power > deficit:
                     _LOGGER.debug("[Mode8 Export-First] clamp discharge to deficit: push=%sW -> %sW (pv=%sW hl=%sW)", pushmode_power, deficit, pv, hl)
@@ -1386,7 +1391,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # Request all surplus charge the battery if possible based on current SoC
             desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
             # Setpoint filter to slow down changes to battery
-            selected_charge = autorepeat_setpoint_filter(-cur_push, desired_charge)
+            selected_charge = autorepeat_setpoint_filter(-cur_push, desired_charge, filter_steps)
             pushmode_power = -selected_charge
 
             _LOGGER.debug(
@@ -1403,7 +1408,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             deficit = power_balance
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
-                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push)
+                pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
             else:
                 desired_push = 0
                 pushmode_power = 0
@@ -2456,6 +2461,19 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         native_unit_of_measurement=PERCENTAGE,
         min_exceptions=MIN_SOC,
         initvalue=10,
+        register_data_type=REGISTER_U16,
+        write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Filter Smoothing Factor (mode 8/9)",
+        key="remotecontrol_smoothing_factor",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        native_min_value=1,
+        native_max_value=10,
+        native_step=1,
+        initvalue=DEFAULT_FILTER_SMOOTING_FACTOR,
         register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
         fmt="i",
