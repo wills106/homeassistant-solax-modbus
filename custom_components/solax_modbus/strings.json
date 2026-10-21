@@ -69,6 +69,13 @@
           "read_battery": "Enable readout"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "duplicate_inverter": {
         "title": "Duplicate inverter configuration",
         "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
@@ -77,7 +84,8 @@
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address"
+      "invalid_host": "Invalid host address",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Device is already configured"
@@ -153,6 +161,13 @@
           "read_battery": "Enable readout"
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "duplicate_inverter": {
         "title": "Duplicate inverter configuration",
         "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
@@ -161,7 +176,8 @@
     "error": {
       "already_configured": "Device is already configured",
       "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address"
+      "invalid_host": "Invalid host address",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Device is already configured"

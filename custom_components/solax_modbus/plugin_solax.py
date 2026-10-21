@@ -1125,6 +1125,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
                 pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
+
                 # Safety: do not discharge above the instantaneous deficit.
                 if pushmode_power > deficit:
                     _LOGGER.debug(
@@ -1335,6 +1336,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         net_flow = pv + pushmode_power - hl
         _LOGGER.debug("[Mode8 Export-First] result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow)
     elif power_control == "Enabled Grid Control":
+        pushmode_power = pushmode_power + houseload - pv
         # --- Enabled Grid Control (Mode 8 custom) ---
         # Controller goals:
         # The aim is the balance house load, pv and battery push to achieve a constant power
@@ -1558,6 +1560,10 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
     meter_2_power = int(datadict.get("meter_2_measured_power", 0))
@@ -1576,6 +1582,11 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
+
     return int(
         datadict.get("pv_power_total", 0)
         - datadict.get("battery_power_charge", 0)
@@ -2000,7 +2011,14 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "export_control_user_limit",
             "inverter_power_type",
         ),
-        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"),
+        autorepeat_optional_dependencies=(
+            "grid_export",
+            "meter_2_measured_power",
+            "battery_max_charge_power",
+            "bms_max_charge",
+            "bms_2_max_charge",
+            "external_house_load",
+        ),
         autorepeat_parallel_dependencies={"Free": ()},
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
@@ -12919,6 +12937,9 @@ plugin_instance = solax_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     TIME_TYPES=TIME_TYPES,
+    OVERRIDABLE_SENSORS={
+        "house_load": "House load (direct measurement replaces the PV - battery - grid calculation)",
+    },
     ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,

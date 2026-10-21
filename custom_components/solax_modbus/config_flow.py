@@ -20,6 +20,7 @@ from homeassistant.const import (
 from homeassistant.helpers import (
     config_validation as cv,
 )
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import (
     selector,
 )
@@ -38,6 +39,7 @@ from .const import (
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_ENERGY_DASHBOARD_DEVICE,
+    CONF_EXTERNAL_PREFIX,
     CONF_INTERFACE,
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
@@ -113,6 +115,58 @@ def _configured_hub_names(handler: SchemaCommonFlowHandler) -> set[str]:
         if isinstance(name, str):
             names.add(_normalized_hub_name(name))
     return names
+
+
+# ############################## external oveerrides ################################################@
+
+
+async def _get_overridable_sensors(handler: SchemaCommonFlowHandler) -> dict[str, str]:
+    """Return the {key: label} map declared by the currently selected plugin."""
+    plugin_name = handler.options.get(CONF_PLUGIN)
+    if not plugin_name:
+        return {}
+    plugin = await handler.parent_handler.hass.async_add_executor_job(_load_plugin, plugin_name)
+    instance = getattr(plugin, "plugin_instance", plugin)
+    return getattr(instance, "OVERRIDABLE_SENSORS", None) or {}
+
+
+async def _external_overrides_schema(handler: SchemaCommonFlowHandler) -> vol.Schema | None:
+    """Build one entity-selector field per overridable sensor, or None to skip."""
+    overridable = await _get_overridable_sensors(handler)
+    if not overridable:
+        return None  # plugin without declarations: skip this completely
+
+    schema: dict[Any, Any] = {}
+    for key in overridable:
+        conf_key = f"{CONF_EXTERNAL_PREFIX}{key}"
+        schema[vol.Optional(conf_key, description={"suggested_value": handler.options.get(conf_key)})] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor", device_class="power")
+        )
+    return vol.Schema(schema)
+
+
+async def _validate_overrides(handler: SchemaCommonFlowHandler, user_input: dict[str, Any]) -> dict[str, Any]:
+    """Validate entity ids and force explicit clearing of removed selections."""
+    overridable = await _get_overridable_sensors(handler)
+    if not overridable:
+        return user_input
+
+    hass = handler.parent_handler.hass
+    registry = er.async_get(hass)
+
+    for key in overridable:
+        conf_key = f"{CONF_EXTERNAL_PREFIX}{key}"
+        entity_id = user_input.get(conf_key)
+        if not entity_id:
+            if conf_key in handler.options:
+                user_input[conf_key] = ""
+            else:
+                user_input.pop(conf_key, None)
+            continue
+        if hass.states.get(entity_id) is None and registry.async_get(entity_id) is None:
+            raise SchemaFlowError(f"unknown_entity_{key}")
+
+    return user_input
 
 
 # ####################################################################################################
@@ -327,7 +381,7 @@ async def _next_step_battery(user_input: Any) -> str | None:
     _LOGGER.debug("_next_step_battery: returning data: %s", user_input)
     if user_input.get("support-battery", False):
         return "battery"
-    return "duplicate_inverter"
+    return "overrides"  # "duplicate_inverter"
 
 
 def _current_config_entry_id(handler: SchemaCommonFlowHandler) -> str | None:
@@ -448,6 +502,7 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "core_tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core_serial": SchemaFlowFormStep(CORE_SERIAL_SCHEMA, validate_user_input=_validate_core_serial, next_step=_next_step_battery),
         "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
+        "overrides": SchemaFlowFormStep(_external_overrides_schema, validate_user_input=_validate_overrides, next_step="duplicate_inverter"),
         "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
     OPTIONS_FLOW: dict[str, SchemaFlowFormStep | SchemaFlowMenuStep] = {
@@ -457,7 +512,8 @@ if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)
         "core": SchemaFlowFormStep(CORE_SCHEMA, validate_user_input=_validate_core_modbus_hub, next_step=_next_step_battery),
         "core_tcp": SchemaFlowFormStep(TCP_SCHEMA, validate_user_input=_validate_host, next_step=_next_step_battery),
         "core_serial": SchemaFlowFormStep(CORE_SERIAL_SCHEMA, validate_user_input=_validate_core_serial, next_step=_next_step_battery),
-        "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="duplicate_inverter"),
+        "battery": SchemaFlowFormStep(BATTERY_SCHEMA, next_step="overrides"),
+        "overrides": SchemaFlowFormStep(_external_overrides_schema, validate_user_input=_validate_overrides, next_step="duplicate_inverter"),
         "duplicate_inverter": SchemaFlowFormStep(_duplicate_inverter_schema),
     }
 

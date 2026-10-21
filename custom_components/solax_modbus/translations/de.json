@@ -44,6 +44,13 @@
           "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "battery": {
         "title": "Batteriemodule auslesen",
         "data": {
@@ -54,7 +61,8 @@
     "error": {
       "already_configured": "Gerät ist bereits konfiguriert",
       "name_already_used": "Name war bereits vorhanden oder war ungültig",
-      "invalid_host": "Ungültige Hostadresse"
+      "invalid_host": "Ungültige Hostadresse",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"
@@ -105,6 +113,13 @@
           "read_core_hub": "Core Modbus Hub über den die Verbindung zum Wechselrichter hergestellt wird."
         }
       },
+      "overrides": {
+        "title": "External sensor overrides",
+        "description": "Select a directly measured sensor to replace the internally calculated value. Leave empty to use the calculated value.",
+        "data": {
+          "external_house_load": "House load sensor (W)"
+        }
+      },
       "battery": {
         "title": "Batteriemodule auslesen",
         "data": {
@@ -121,7 +136,8 @@
     "error": {
       "already_configured": "Gerät ist bereits konfiguriert",
       "name_already_used": "Name war bereits vorhanden oder war ungültig",
-      "invalid_host": "Ungültige Hostadresse"
+      "invalid_host": "Ungültige Hostadresse",
+      "unknown_entity_house_load": "That entity does not exist. Check the entity id or leave the field empty."
     },
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"

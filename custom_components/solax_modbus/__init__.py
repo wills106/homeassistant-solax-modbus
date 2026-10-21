@@ -9,6 +9,7 @@ import logging
 import math
 import struct
 import time as _mtime
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from types import ModuleType, SimpleNamespace
@@ -24,6 +25,8 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     EVENT_HOMEASSISTANT_STOP,
     PERCENTAGE,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
     Platform,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -186,7 +189,7 @@ COMM_BLOCK_FAILURE_THRESHOLD = 3
 COMM_BLOCK_FAILURE_WINDOW = 600
 COMM_RECOVERY_INTERVAL = 300
 INFLIGHT_CANCEL_TIMEOUT = 2.0
-
+STALENESS_TIMEOUT = 5.0
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -471,6 +474,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hub.async_init()
+    # Register external sensor overrides (e.g. directly measured house load)
+    await hub.async_register_external_overrides(plugin, entry.options)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
 
@@ -538,7 +543,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await hub.async_stop()
         except Exception as ex:
             _LOGGER.warning("%s: error during hub stop: %s", name, ex)
-
     # Unload platforms - this must succeed for reload to work properly
     # Always try to unload regardless of entry state - during reload, state might not be LOADED
     unload_ok = True
@@ -699,6 +703,10 @@ class SolaXModbusHub:
         self._name: str = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
+
+        # external sensors that may override standard (computed) sensors
+        self._external_override_keys: set[str] = set()
+        self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
@@ -981,6 +989,45 @@ class SolaXModbusHub:
                 _LOGGER.debug("%s: failed to fire local data event: %s", self._name, ex)
 
     # end of save and load section
+
+    # ============ external sensors -  override functionality - start
+
+    async def async_register_external_overrides(self, plugin: ModuleType, options: Mapping[str, Any]) -> None:
+        """Store configured external sensor overrides for the control loop."""
+        instance = getattr(plugin, "plugin_instance", plugin)
+        overridable = getattr(instance, "OVERRIDABLE_SENSORS", None) or {}
+        for key in overridable:
+            entity_id = options.get(f"external_{key}")
+            if not entity_id:
+                continue
+            self._override_entities[key] = entity_id
+            _LOGGER.debug("%s: external override '%s' from %s", self._name, key, entity_id)
+
+    def apply_external_overrides(self, datadict: dict[str, Any]) -> None:
+        """Inject fresh externally measured values for the control loop."""
+        overrides = getattr(self, "_override_entities", None) or {}
+        if not overrides:
+            return  # Fast path: nothing configured, do nothing (added to pass test)
+        for key, entity_id in overrides.items():
+            conf_key = f"external_{key}"
+            state = self._hass.states.get(entity_id)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                datadict.pop(conf_key, None)
+                continue
+            try:
+                value = float(state.state)
+            except (TypeError, ValueError):
+                _LOGGER.warning("%s: external override '%s' has non-numeric state '%s'", self._name, key, state.state)
+                datadict.pop(conf_key, None)
+                continue
+            unit = state.attributes.get("unit_of_measurement")
+            if unit == UnitOfPower.KILO_WATT:
+                value *= 1000.0
+            elif unit not in (UnitOfPower.WATT, None):
+                _LOGGER.warning("%s: external override '%s' has unexpected unit '%s', assuming W", self._name, key, unit)
+            datadict[conf_key] = value
+
+    # ========  external sensors -  override functionality - end
 
     def scan_group(self, sensor: Any) -> int:  # seems to be called for non-sensor entities also - strange
         # scan group
@@ -2771,7 +2818,11 @@ class SolaXModbusHub:
 
     async def _async_update_autorepeats(self, interval: float | None) -> set[str]:
         """Run lifecycle maintenance once per interval, with one measurement owner."""
-        local_outputs = ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit")
+        local_outputs = (
+            "remotecontrol_current_pushmode_power",
+            "remotecontrol_current_pv_power_limit",
+        )  # ugly - this is solax dependent - does not belong in init.py
+        self.apply_external_overrides(self.data)  # inject external overrides for the control loop
         previous = {key: self.data.get(key) for key in local_outputs}
         self.last_ts = _mtime.time()
         pending_stops = getattr(self, "_autorepeat_pending_stops", {})
@@ -2825,8 +2876,8 @@ class SolaXModbusHub:
         """Use accepted values for declared inputs, preserving local requests."""
         data = self.data.copy()
         for key in keys:
-            if key in getattr(self, "writeLocals", {}):
-                continue
+            if key in getattr(self, "writeLocals", {}) or key in getattr(self, "_external_override_keys", ()):
+                continue  # hub-managed value: keep it in self.data
             sample = self._accepted_input_sample(key, include_pending=False)
             if sample is None or not self._control_input_valid(key):
                 data.pop(key, None)
