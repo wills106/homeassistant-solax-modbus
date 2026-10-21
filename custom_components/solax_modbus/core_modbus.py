@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, MAJOR_VERSION, MINOR_VERSION
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers.reload import async_integration_yaml_config
@@ -24,6 +24,7 @@ from .const import (
     CONF_TIME_OUT,
     DEFAULT_BAUDRATE,
     DEFAULT_PORT,
+    DEFAULT_SERIAL_PORT,
     DEFAULT_TIME_OUT,
     DOMAIN,
 )
@@ -34,6 +35,8 @@ MIGRATION_URL = "https://github.com/wills106/homeassistant-solax-modbus/blob/mai
 
 def supports_core_units() -> bool:
     """Require the public API needed to preserve timeout and startup delay."""
+    if (MAJOR_VERSION, MINOR_VERSION) < (2026, 10):
+        return False
     try:
         from homeassistant.components import modbus
         from modbus_connection import ModbusUnit
@@ -96,6 +99,7 @@ def configured_core_connection(config: dict[str, Any]) -> dict[str, Any] | None:
                 "stopbits": config.get("stopbits", 1),
                 "method": config.get("method", "rtu"),
                 "timeout": config.get(CONF_TIME_OUT, DEFAULT_TIME_OUT),
+                "message_wait_milliseconds": config.get("message_wait_milliseconds", 30),
             }
         )
     return None
@@ -199,6 +203,13 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     """
     config = dict(entry.options)
     interface = config.get(CONF_INTERFACE)
+    migrate_serial = interface == "serial" or (not interface and config.get("read_serial", False))
+    if migrate_serial and supports_core_units():
+        # Preserve the native client's actual framing, not stale options left
+        # by an earlier interface selection. Keep the same entry and entities.
+        config.update({CONF_INTERFACE: "core_serial", "parity": "N", "bytesize": 8, "stopbits": 1, "method": "rtu", "message_wait_milliseconds": 0})
+        config.setdefault(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
+        interface = "core_serial"
     if interface not in ("core", "core_tcp", "core_serial"):
         persistent_notification.async_dismiss(hass, _notification_id(entry))
         return None
@@ -239,6 +250,8 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     settings = configured_core_connection(config)
     if settings is None:
         raise ConfigEntryNotReady("No saved Core Modbus settings. Restore the YAML hub and restart Home Assistant to copy them first.")
+    if migrate_serial:
+        core_connection_params(settings)
     endpoint = _physical_endpoint(settings)
     for other in yaml_hubs:
         if _physical_endpoint(connection_settings(other)) != endpoint:
@@ -257,5 +270,9 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
                 return other_name
             raise ConfigEntryNotReady(f"YAML Modbus hub '{other_name}' is still running on this endpoint. Restart Home Assistant after removing it.")
 
+    if migrate_serial:
+        # Save only after validation and conflict checks; a failed preparation
+        # must not leave a half-migrated entry or open a competing connection.
+        hass.config_entries.async_update_entry(entry, options=config)
     persistent_notification.async_dismiss(hass, _notification_id(entry))
     return None
