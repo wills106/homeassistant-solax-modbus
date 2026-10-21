@@ -6,6 +6,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from homeassistant.const import CONF_SCAN_INTERVAL
 
 from custom_components.solax_modbus import BlockReadResult, PendingWrite, SolaXModbusHub
 from custom_components.solax_modbus.const import REGISTER_U16, PollOutcome
@@ -27,8 +28,7 @@ def make_hub() -> Any:
     hub.localsUpdated = False
     hub.localsLoaded = True
     hub.plugin = SimpleNamespace(
-        isAwake=Mock(return_value=True),
-        localDataCallback=Mock(return_value=True),
+        isAwake=Mock(return_value=True), localDataCallback=Mock(return_value=True), default_input_scangroup=CONF_SCAN_INTERVAL
     )
     hub._poll_data_lock = asyncio.Lock()
     hub._autorepeat_lock = asyncio.Lock()
