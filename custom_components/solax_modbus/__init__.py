@@ -475,7 +475,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hub.async_init()
     # Register external sensor overrides (e.g. directly measured house load)
-    await hub.async_register_external_overrides(plugin, entry.options)
+    if hasattr(hub, "async_register_external_overrides"):
+        await hub.async_register_external_overrides(plugin, entry.options)
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
 
