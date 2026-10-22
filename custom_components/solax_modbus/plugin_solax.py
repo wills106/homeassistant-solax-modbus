@@ -1336,7 +1336,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         net_flow = pv + pushmode_power - hl
         _LOGGER.debug("[Mode8 Export-First] result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow)
     elif power_control == "Enabled Grid Control":
-        pushmode_power = pushmode_power + houseload - pv
         # --- Enabled Grid Control (Mode 8 custom) ---
         # Controller goals:
         # The aim is the balance house load, pv and battery push to achieve a constant power
