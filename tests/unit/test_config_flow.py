@@ -5,11 +5,16 @@ from typing import Any, cast
 
 import pytest
 from homeassistant.const import CONF_NAME
+from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
 
 from custom_components.solax_modbus.config_flow import (
     CONFIG_FLOW,
+    CORE_SERIAL_SCHEMA,
+    INTERFACES,
+    SERIAL_SCHEMA,
     _duplicate_inverter_schema,
+    _next_step_modbus,
     _validate_base,
 )
 from custom_components.solax_modbus.const import (
@@ -19,6 +24,7 @@ from custom_components.solax_modbus.const import (
     DEFAULT_PLUGIN,
     DOMAIN,
 )
+from custom_components.solax_modbus.core_modbus import supports_core_units
 
 
 class _ConfigEntries:
@@ -31,6 +37,9 @@ class _ConfigEntries:
 
 
 class _FlowParent:
+    add_suggested_values_to_schema = FlowHandler.add_suggested_values_to_schema
+    show_advanced_options = False
+
     def __init__(self, entries: list[Any]) -> None:
         self.hass = SimpleNamespace(config_entries=_ConfigEntries(entries))
 
@@ -64,6 +73,34 @@ def _base_input(name: str) -> dict[str, Any]:
         CONF_MODBUS_ADDR: 1,
         CONF_PLUGIN: DEFAULT_PLUGIN,
     }
+
+
+def test_interface_selector_has_one_serial_choice_and_unchanged_tcp_choices() -> None:
+    serial = [item for item in INTERFACES if item["value"] in ("serial", "core_serial")]
+    assert serial == [{"value": "core_serial" if supports_core_units() else "serial", "label": "Serial"}]
+    assert {"value": "tcp", "label": "TCP / Ethernet"} in INTERFACES
+    assert ({"value": "core_tcp", "label": "Home Assistant Modbus (TCP)"} in INTERFACES) is supports_core_units()
+
+
+@pytest.mark.asyncio
+async def test_serial_choice_routes_new_setups_to_version_appropriate_backend() -> None:
+    interface = next(item["value"] for item in INTERFACES if item["label"] == "Serial")
+    parent = _FlowParent([])
+    handler = SchemaCommonFlowHandler(cast(Any, parent), CONFIG_FLOW, {})
+    result = await handler.async_step("user", {**_base_input("SolaX"), CONF_INTERFACE: interface})
+
+    assert result["type"] == "form"
+    assert result["step_id"] == interface
+    schema = result["data_schema"]
+    assert schema is not None
+    expected = CORE_SERIAL_SCHEMA if supports_core_units() else SERIAL_SCHEMA
+    assert set(schema.schema) == set(expected.schema)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("interface", ["serial", "core_serial", "tcp", "core_tcp", "core"])
+async def test_saved_interface_values_keep_their_flow_routes(interface: str) -> None:
+    assert await _next_step_modbus({CONF_INTERFACE: interface}) == interface
 
 
 @pytest.mark.asyncio

@@ -192,11 +192,10 @@ PLUGINS = [selector.SelectOptionDict(value=getPluginName(i), label=getPluginName
 
 INTERFACES = [
     selector.SelectOptionDict(value="tcp", label="TCP / Ethernet"),
-    selector.SelectOptionDict(value="serial", label="Serial"),
+    selector.SelectOptionDict(value="core_serial" if supports_core_units() else "serial", label="Serial"),
     *(
         [
             selector.SelectOptionDict(value="core_tcp", label="Home Assistant Modbus (TCP)"),
-            selector.SelectOptionDict(value="core_serial", label="Home Assistant Modbus (Serial)"),
         ]
         if supports_core_units()
         else []
