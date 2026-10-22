@@ -1125,7 +1125,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             if battery_capacity > min_discharge_soc:
                 desired_push = min(deficit, 30000)
                 pushmode_power = autorepeat_setpoint_filter(cur_push, desired_push, filter_steps)
-
                 # Safety: do not discharge above the instantaneous deficit.
                 if pushmode_power > deficit:
                     _LOGGER.debug(
