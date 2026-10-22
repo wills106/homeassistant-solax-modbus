@@ -835,6 +835,44 @@ NUMBER_TYPES = [
     #
     ###
     GrowattModbusNumberEntityDescription(
+    # Persistent value, only used when 30410 is enabled    
+        name="VPP AC Charge Max Power",
+        key="vpp_ac_charge_max_power",
+        register=30215,
+        register_data_type=REGISTER_U16,
+        fmt="i",
+        scale=0.1,
+        native_min_value=0,
+        native_max_value=30,
+        native_step=0.1,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=HYBRID | GEN4,
+        write_method=WRITE_SINGLE_MODBUS,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        icon="mdi:battery-charging-high",
+    ),
+    GrowattModbusNumberEntityDescription(
+    # Non persistent value to limit EEPROM writes, only used when 30410 is enabled. Lowest value of 30215 and 20316 is taken.
+        name="VPP AC Charge Max Power 2",
+        key="vpp_ac_charge_max_power_2",
+        register=30216,
+        register_data_type=REGISTER_U16,
+        fmt="i",
+        scale=0.1,
+        native_min_value=0,
+        native_max_value=30,
+        native_step=0.1,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=NumberDeviceClass.POWER,
+        allowedtypes=HYBRID | GEN4,
+        write_method=WRITE_SINGLE_MODBUS,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        icon="mdi:battery-charging-high",
+    ),    
+    GrowattModbusNumberEntityDescription(
         name="VPP Time",
         key="vpp_time",
         register=30408,
@@ -1899,6 +1937,24 @@ SELECT_TYPES = [
 # ================================= Sensor Declarations ============================================================
 
 SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
+     GrowattModbusSensorEntityDescription(
+        key="vpp_ac_charge_max_power",
+        register=30215,
+        scale=0.1,
+        register_data_type=REGISTER_U16,
+        allowedtypes=GEN4 | HYBRID,
+        icon="mdi:battery-charging-high",
+        internal=True,
+    ),    
+    GrowattModbusSensorEntityDescription(
+        key="vpp_ac_charge_max_power_2",
+        register=30216,
+        scale=0.1,
+        register_data_type=REGISTER_U16,
+        allowedtypes=GEN4 | HYBRID,
+        icon="mdi:battery-charging-high",
+        internal=True,
+    ),
     GrowattModbusSensorEntityDescription(
         key="vpp_status",
         register=30100,
