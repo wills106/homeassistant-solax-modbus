@@ -139,14 +139,7 @@ PLUGINS = [selector.SelectOptionDict(value=getPluginName(i), label=getPluginName
 
 INTERFACES = [
     selector.SelectOptionDict(value="core_tcp" if supports_core_units() else "tcp", label="TCP / Ethernet"),
-    selector.SelectOptionDict(value="serial", label="Serial"),
-    *(
-        [
-            selector.SelectOptionDict(value="core_serial", label="Home Assistant Modbus (Serial)"),
-        ]
-        if supports_core_units()
-        else []
-    ),
+    selector.SelectOptionDict(value="core_serial" if supports_core_units() else "serial", label="Serial"),
 ]
 
 LEGACY_INTERFACE = selector.SelectOptionDict(value="core", label="Hass core Hub (legacy YAML; API removed in HA 2027.10)")

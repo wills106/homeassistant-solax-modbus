@@ -14,7 +14,8 @@ from custom_components import solax_modbus as integration
 from custom_components.solax_modbus import SolaXModbusHub
 from custom_components.solax_modbus import core_modbus as core
 from custom_components.solax_modbus import modbus_transport as transport
-from custom_components.solax_modbus.const import CONF_CORE_CONNECTION, CONF_CORE_HUB, CONF_INTERFACE, REGISTER_U16
+from custom_components.solax_modbus.const import CONF_CORE_CONNECTION, CONF_CORE_HUB, CONF_INTERFACE, CONF_MODBUS_ADDR, DOMAIN, REGISTER_U16
+from custom_components.solax_modbus.core_modbus import core_connection_params
 
 
 @pytest.fixture
@@ -44,6 +45,21 @@ def migration(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 def yaml_hub(**extra: Any) -> dict[str, Any]:
     return {"name": "inverter_bus", "type": "tcp", "host": "192.0.2.1", "port": 502, "timeout": 12, "delay": 1, **extra}
+
+
+@pytest.mark.parametrize(("version", "expected"), [((2025, 1), False), ((2026, 9), False), ((2026, 10), True), ((2027, 1), True)])
+def test_shared_api_requires_ha_2026_10_even_if_newer_library_is_installed(
+    monkeypatch: pytest.MonkeyPatch, version: tuple[int, int], expected: bool
+) -> None:
+    from homeassistant.components import modbus
+    from modbus_connection import ModbusUnit
+
+    monkeypatch.setattr(core, "MAJOR_VERSION", version[0])
+    monkeypatch.setattr(core, "MINOR_VERSION", version[1])
+    monkeypatch.setattr(modbus, "async_get_unit", Mock(), raising=False)
+    monkeypatch.setattr(ModbusUnit, "require_timeout", Mock(), raising=False)
+    monkeypatch.setattr(ModbusUnit, "require_connect_delay", Mock(), raising=False)
+    assert core.supports_core_units() is expected
 
 
 @pytest.mark.asyncio
@@ -225,6 +241,190 @@ async def test_modbus_dependency_does_not_migrate_native_connections(migration: 
     migration.loader.assert_not_called()
     manifest = json.loads((Path(integration.__file__).parent / "manifest.json").read_text())
     assert "modbus" in manifest["dependencies"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("port", ["/dev/serial/by-id/inverter", "esphome-hass://entry/Inverter%20RS485", "socket://192.0.2.1:502"])
+@pytest.mark.parametrize("legacy_flag", [False, True])
+async def test_serial_migrates_in_place_and_uses_only_managed_transport(
+    migration: Any, monkeypatch: pytest.MonkeyPatch, port: str, legacy_flag: bool
+) -> None:
+    """Move native serial settings, including old read_serial entries, without recreating anything."""
+    original: dict[str, Any] = {
+        "name": "SolaX",
+        "read_serial_port": port,
+        "baudrate": "19200",
+        CONF_MODBUS_ADDR: 2,
+        "time_out": 12,
+        "scan_interval": 15,
+        "plugin": "solax",
+        "read_battery": True,
+        # Native serial always used 8N1/RTU, even with stale shared options.
+        "parity": "E",
+        "bytesize": 7,
+        "stopbits": 2,
+        "method": "ascii",
+    }
+    if legacy_flag:
+        original["read_serial"] = True
+    else:
+        original[CONF_INTERFACE] = "serial"
+    migration.entry.options = original.copy()
+    identity = id(migration.entry)
+    managed = Mock()
+    native = Mock()
+    monkeypatch.setattr(integration, "CoreModbusUnitTransport", managed)
+    monkeypatch.setattr(integration, "AsyncSerialModbusClient", native)
+    plugin = SimpleNamespace(plugin_instance=SimpleNamespace(create_hub_instance=Mock()))
+
+    selected = await core.async_prepare_core_connection(migration.hass, migration.entry)
+    hub = SolaXModbusHub(migration.hass, cast(Any, plugin), migration.entry, yaml_hub_name=selected)
+
+    assert id(migration.entry) == identity
+    assert migration.entry.entry_id == "entry"
+    assert migration.entry.options[CONF_INTERFACE] == "core_serial"
+    for key in ("name", "read_serial_port", "baudrate", CONF_MODBUS_ADDR, "time_out", "scan_interval", "plugin", "read_battery"):
+        assert migration.entry.options[key] == original[key]
+    settings = managed.call_args.args[2]
+    assert settings == {
+        "type": "serial",
+        "port": port,
+        "baudrate": 19200,
+        "timeout": 12,
+        "parity": "N",
+        "bytesize": 8,
+        "stopbits": 1,
+        "method": "rtu",
+        "delay": 0,
+        "message_wait_milliseconds": 0,
+    }
+    assert managed.call_args.args[3] == 2
+    assert hub._transport is managed.return_value
+    native.assert_not_called()
+    migration.notify.assert_not_called()
+    migration.hass.config_entries.async_update_entry.assert_called_once()
+
+    # Reloads/startups must not repeat the config update.
+    assert await core.async_prepare_core_connection(migration.hass, migration.entry) is None
+    migration.hass.config_entries.async_update_entry.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_serial_migration_preserves_native_defaults(migration: Any) -> None:
+    from custom_components.solax_modbus.const import DEFAULT_BAUDRATE, DEFAULT_SERIAL_PORT, DEFAULT_TIME_OUT
+
+    migration.entry.options = {CONF_INTERFACE: "serial", "name": "SolaX"}
+    await core.async_prepare_core_connection(migration.hass, migration.entry)
+    settings = core.configured_core_connection(migration.entry.options)
+    assert settings is not None
+    assert settings["port"] == DEFAULT_SERIAL_PORT
+    assert settings["baudrate"] == int(DEFAULT_BAUDRATE)
+    assert settings["timeout"] == DEFAULT_TIME_OUT
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("still_running", [False, True])
+async def test_serial_migration_does_not_commit_or_open_a_link_on_yaml_conflict(migration: Any, still_running: bool) -> None:
+    original = {CONF_INTERFACE: "serial", "read_serial_port": "/dev/ttyUSB0"}
+    migration.entry.options = original.copy()
+    if still_running:
+        migration.running["inverter_bus"] = SimpleNamespace(endpoint=("serial", "/dev/ttyUSB0"))
+    else:
+        migration.loader.return_value = {"modbus": [yaml_hub(type="serial", port="/dev/ttyUSB0")]}
+
+    with pytest.raises(ConfigEntryNotReady, match="inverter_bus"):
+        await core.async_prepare_core_connection(migration.hass, migration.entry)
+
+    assert migration.entry.options == original
+    migration.hass.config_entries.async_update_entry.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_serial_migration_does_not_commit_if_yaml_cannot_be_checked(migration: Any) -> None:
+    original = {CONF_INTERFACE: "serial", "read_serial_port": "/dev/ttyUSB0"}
+    migration.entry.options = original.copy()
+    migration.loader.side_effect = HomeAssistantError("invalid YAML")
+    with pytest.raises(ConfigEntryNotReady, match="Cannot check YAML"):
+        await core.async_prepare_core_connection(migration.hass, migration.entry)
+    assert migration.entry.options == original
+    migration.hass.config_entries.async_update_entry.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_serial_reload_closes_old_connection_before_migrating(migration: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise the real entry setup order, including a previously running native hub."""
+    migration.entry.options = {CONF_INTERFACE: "serial", "name": "SolaX", "plugin": "solax", "read_serial_port": "/dev/ttyUSB0"}
+    migration.entry.data = {}
+    migration.entry.async_on_unload = Mock()
+    migration.entry.add_update_listener = Mock()
+    old = SimpleNamespace(async_stop=AsyncMock(), _platforms_forwarded=False)
+    migration.hass.data[DOMAIN] = {"SolaX": {"hub": old}}
+    migration.hass.async_add_executor_job = AsyncMock(return_value=object())
+    new = SimpleNamespace(_name="SolaX", name="SolaX", async_init=AsyncMock())
+
+    def create_hub(*args: Any, **kwargs: Any) -> Any:
+        old.async_stop.assert_awaited_once()
+        migration.hass.config_entries.async_update_entry.assert_called_once()
+        assert migration.entry.options[CONF_INTERFACE] == "core_serial"
+        return new
+
+    factory = Mock(side_effect=create_hub)
+    monkeypatch.setattr(integration, "SolaXModbusHub", factory)
+    monkeypatch.setattr(integration, "async_cleanup_disabled_devices", AsyncMock())
+    assert await integration.async_setup_entry(migration.hass, migration.entry) is True
+    factory.assert_called_once()
+    new.async_init.assert_awaited_once()
+    assert migration.hass.data[DOMAIN]["SolaX"]["hub"] is new
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("port", ["/dev/serial/by-id/inverter", "esphome-hass://entry/Inverter%20RS485"])
+async def test_migrated_serial_uses_real_ha_pool_and_preserves_io_settings(migration: Any, monkeypatch: pytest.MonkeyPatch, port: str) -> None:
+    """Keep the real HA getter, unit backend and hub; replace only hardware I/O."""
+    from homeassistant.const import MAJOR_VERSION, MINOR_VERSION
+
+    if (MAJOR_VERSION, MINOR_VERSION) < (2026, 10):
+        pytest.skip("Home Assistant's complete Modbus unit API is not available")
+    from modbus_connection import tmodbus as backend
+    from serialx import Parity, StopBits
+
+    monkeypatch.setattr(core, "core_connection_params", core_connection_params)
+    unit_client = SimpleNamespace(read_input_registers=AsyncMock(return_value=[12]), write_single_register=AsyncMock())
+    client = SimpleNamespace(connect=AsyncMock(), disconnect=AsyncMock(), for_unit_id=Mock(return_value=unit_client))
+    factory = Mock(return_value=client)
+    monkeypatch.setattr(backend, "create_async_rtu_client", factory)
+    migration.entry.options = {
+        CONF_INTERFACE: "serial",
+        "name": "SolaX",
+        "read_serial_port": port,
+        "baudrate": "9600",
+        "time_out": 11,
+        CONF_MODBUS_ADDR: 2,
+    }
+    releases: list[Any] = []
+    migration.entry.async_on_unload = Mock(side_effect=releases.append)
+    plugin = SimpleNamespace(plugin_instance=SimpleNamespace(create_hub_instance=Mock()))
+
+    await core.async_prepare_core_connection(migration.hass, migration.entry)
+    hub = SolaXModbusHub(migration.hass, cast(Any, plugin), migration.entry)
+    assert isinstance(hub._transport, transport.CoreModbusUnitTransport)
+    factory.assert_not_called()
+
+    response = await hub.async_read_input_registers(2, 150, 1)
+    assert response.registers == [12]
+    await hub.async_lowlevel_write_register(2, 30, 7, register_data_type=REGISTER_U16)
+    factory.assert_called_once()
+    assert factory.call_args.args == (port,)
+    for key, expected in {"baudrate": 9600, "timeout": 11, "bytesize": 8, "parity": Parity.NONE, "stopbits": StopBits.ONE}.items():
+        assert factory.call_args.kwargs[key] == expected
+    client.for_unit_id.assert_called_once_with(2)
+    unit_client.read_input_registers.assert_awaited_once_with(150, 1)
+    unit_client.write_single_register.assert_awaited_once_with(30, 7)
+
+    await hub._transport.close()
+    client.disconnect.assert_not_awaited()
+    await releases[0]()
+    client.disconnect.assert_awaited_once()
 
 
 @pytest.mark.parametrize(

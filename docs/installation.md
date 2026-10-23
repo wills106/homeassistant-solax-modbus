@@ -62,7 +62,7 @@ Now it's only needed to add your inverter to Home Assistant.
 ![](images/integration-setup-usb.png)
 
 - **TCP / Ethernet** automatically uses Home Assistant-managed connections on **HA 2026.10 or later**. Existing direct TCP connections migrate at startup or reload without recreating entities or entering settings again. Modbus TCP, RTU over TCP and ASCII over TCP remain supported; older HA versions retain the native TCP client. No YAML hub or dummy sensor is needed. See the [TCP migration compatibility note](core-modbus-migration.md#automatic-tcp-migration) for changes to error handling.
-- Serial connection options are unchanged by the TCP migration.
+- **Serial** automatically uses Home Assistant-managed connections on **HA 2026.10 or later**, including ESPHome serial proxies. Existing direct serial connections migrate at startup or reload without recreating entities or entering settings again. Older HA versions keep the native serial client. No YAML hub or dummy sensor is needed.
 - Existing **Hass core Hub** connections continue to work while their YAML hub is configured. Follow the [Core Modbus migration guide](core-modbus-migration.md) to move to the new API without recreating your integration or entities.
 
 ![](images/integration-setup-corehub.png)

@@ -357,6 +357,7 @@ BUTTON_TYPES = [
         key="IV_curve_scan",
         register=0x1027,
         command=1,
+        write_method=WRITE_MULTISINGLE_MODBUS,
         icon="mdi:chart-bell-curve",
         allowedtypes=HYBRID,
     ),

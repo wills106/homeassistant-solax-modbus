@@ -14,10 +14,13 @@ from custom_components.solax_modbus import config_flow
 from custom_components.solax_modbus.config_flow import (
     CONFIG_FLOW,
     CONFIG_SCHEMA,
+    CORE_SERIAL_SCHEMA,
     INTERFACES,
     LEGACY_INTERFACE,
+    SERIAL_SCHEMA,
     TCP_SCHEMA,
     _duplicate_inverter_schema,
+    _next_step_modbus,
     _option_schema,
     _validate_base,
     _validate_interface,
@@ -99,6 +102,25 @@ async def test_tcp_choice_routes_new_setups_to_version_appropriate_backend() -> 
     assert set(schema.schema) == set(TCP_SCHEMA.schema)
 
 
+def test_interface_selector_has_one_serial_choice() -> None:
+    serial = [item for item in INTERFACES if item["value"] in ("serial", "core_serial")]
+    assert serial == [{"value": "core_serial" if supports_core_units() else "serial", "label": "Serial"}]
+
+
+@pytest.mark.asyncio
+async def test_serial_choice_routes_new_setups_to_version_appropriate_backend() -> None:
+    interface = next(item["value"] for item in INTERFACES if item["label"] == "Serial")
+    parent = _FlowParent([])
+    handler = SchemaCommonFlowHandler(cast(Any, parent), CONFIG_FLOW, {})
+    result = await handler.async_step("user", {**_base_input("SolaX"), CONF_INTERFACE: interface})
+    assert result["type"] == "form"
+    assert result["step_id"] == interface
+    schema = result["data_schema"]
+    assert schema is not None
+    expected = CORE_SERIAL_SCHEMA if supports_core_units() else SERIAL_SCHEMA
+    assert set(schema.schema) == set(expected.schema)
+
+
 def test_legacy_interface_is_not_offered_to_new_connections() -> None:
     interface = next(value for key, value in CONFIG_SCHEMA.schema.items() if key.schema == CONF_INTERFACE)
     assert all(item["value"] != "core" for item in interface.config["options"])
@@ -170,6 +192,12 @@ def test_legacy_warning_texts_explain_the_api_deadline() -> None:
             assert "Core Modbus migration guide" in description
             assert "http://" not in description and "https://" not in description
             assert "legacy_hub_unavailable" in strings[section]["error"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("interface", ["serial", "core_serial", "tcp", "core_tcp", "core"])
+async def test_saved_interface_values_keep_their_flow_routes(interface: str) -> None:
+    assert await _next_step_modbus({CONF_INTERFACE: interface}) == interface
 
 
 @pytest.mark.asyncio

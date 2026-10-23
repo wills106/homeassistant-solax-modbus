@@ -2,7 +2,7 @@
 
 > **Requires Home Assistant 2026.10 or later for the new connection API.** Install an integration release containing this migration before changing your YAML. Older Home Assistant releases continue using the existing YAML hub.
 
-The YAML instructions in this guide apply if you selected **Hass core Hub** when setting up SolaX Inverter Modbus. Direct **TCP / Ethernet** connections move automatically to the new API on Home Assistant 2026.10 or later; see [Automatic TCP migration](#automatic-tcp-migration).
+The YAML instructions in this guide apply if you selected **Hass core Hub** when setting up SolaX Inverter Modbus. Direct **TCP / Ethernet** and **Serial** connections move automatically to the new API on Home Assistant 2026.10 or later; see [Automatic TCP migration](#automatic-tcp-migration) and [Automatic serial migration](#automatic-serial-migration).
 
 ## Why you see the notification
 
@@ -75,7 +75,7 @@ Restore the YAML hub from your backup and restart Home Assistant. The integratio
 
 ## New installations
 
-Select **TCP / Ethernet** to use a Home Assistant-managed TCP connection on HA 2026.10 or later. On older HA versions, the same choice uses the integration's direct TCP client. Modbus TCP, RTU over TCP and ASCII over TCP remain available. No YAML hub or dummy sensor is required for a managed connection.
+Select **TCP / Ethernet** to use a Home Assistant-managed TCP connection on HA 2026.10 or later, and **Serial** for a Home Assistant-managed serial connection. On older HA versions, the same choices use the integration's direct TCP and serial clients. Modbus TCP, RTU over TCP and ASCII over TCP remain available. No YAML hub or dummy sensor is required for a managed connection.
 
 Home Assistant manages and shares these connections between integrations using the same connection settings. The connection opens on the first request and reconnects as needed.
 
@@ -91,7 +91,18 @@ On Home Assistant 2026.10 or later, existing direct TCP connections switch to Ho
 
 **Compatibility note:** TCP communication now uses HA's tmodbus backend rather than the integration's Pymodbus client. Timeout, retry, reconnect and protocol-error handling are not identical. Some inverters or TCP bridges may therefore behave differently or encounter communication problems after migration, even though their settings are retained. If this happens, share a debug log and your inverter/bridge details; do not delete and recreate the integration. Shared connections also use the highest timeout required by their consumers.
 
-Serial connections and the staged YAML hub migration are outside the scope of this TCP change.
+## Automatic serial migration
+
+On Home Assistant 2026.10 or later, existing direct serial connections switch to Home Assistant's shared Modbus API at the next startup or integration reload. No manual changes, deletion or reconfiguration are needed.
+
+- The existing config entry, integration name, entity IDs, devices and automations are kept.
+- Port (including ESPHome serial proxy URLs), baud rate, Modbus address, timeout and polling settings are retained.
+- The former native client's 8N1/RTU settings and zero additional message spacing are preserved. Home Assistant now manages connection sharing, retries and reconnection.
+- Reloading closes the old native connection before preparing the managed one. No second serial client is opened by the migration.
+- Migration is saved only after the settings and YAML endpoint conflict checks succeed. A competing YAML hub must be resolved before migration can proceed; its settings are not overwritten.
+- On HA versions older than 2026.10, existing direct serial connections and new serial installations continue using the native client without migration. An entry already migrated to the new API requires HA 2026.10 or later.
+
+Existing **Home Assistant Modbus (Serial)** entries already use this API and are simply shown as **Serial** in the interface selector. The staged YAML hub migration described above is unchanged.
 
 ## Scope and dependencies
 
