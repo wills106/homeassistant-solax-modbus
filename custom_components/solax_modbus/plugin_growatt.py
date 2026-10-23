@@ -9371,7 +9371,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             9: "Bypass",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9387,7 +9387,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             5: "Update Mode",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9400,7 +9400,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             2: "Grid First",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9412,7 +9412,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 1 VPP",
@@ -9423,7 +9423,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9435,7 +9435,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 2 VPP",
@@ -9446,7 +9446,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9458,7 +9458,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 3 VPP",
@@ -9469,7 +9469,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9483,7 +9483,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9497,7 +9497,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
         icon="mdi:solar-power",
     ), 
     GrowattModbusSensorEntityDescription(
@@ -9511,7 +9511,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
+        allowedtypes=ALL_GEN_GROUP, #to be checked
     ), 
     GrowattModbusSensorEntityDescription(
         name="Reactive Power Inverter VPP",
@@ -9524,8 +9524,21 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,
-    ), 
+        allowedtypes=ALL_GEN_GROUP, #to be checked
+    ),
+    GrowattModbusSensorEntityDescription(
+        name="Battery Combined Power VPP",
+        key="battery_combined_power_vpp",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=31200,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        scale=0.1
+        allowedtypes=HYBRID | GEN3 | GEN4, # to be checked
+        icon="mdi:battery",
+    ),
 ]
 
 # Protocol II V1.39: BDC1 input 4008-4076 mirrors input 3165-3233.
