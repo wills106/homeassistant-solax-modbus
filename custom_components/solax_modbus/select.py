@@ -44,11 +44,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             and matches_modbus_protocol(hub, select_info)
             and hub.device_group_enabled(select_info.device_group)
         ):
-            select_info = replace(select_info, reverse_option_dict={v: k for k, v in select_info.option_dict.items()})
+            if select_info.option_dict is not None:  # catch selects that reference other (external) entities
+                select_info = replace(select_info, reverse_option_dict={v: k for k, v in select_info.option_dict.items()})
             device_info = hub.group_device_info(select_info.device_group) if select_info.device_group else hub.device_info
 
-            def factory(di: Any = device_info, si: Any = select_info) -> SolaXModbusSelect:
-                return SolaXModbusSelect(hub_name, hub, modbus_addr, di, si)
+            if getattr(select_info, "dynamic_options", False):
+
+                def factory(di: Any = device_info, si: Any = select_info) -> SolaXModbusSelect:
+                    return SolaXModbusExternalSourceSelect(hub_name, hub, modbus_addr, di, si)
+            else:
+
+                def factory(di: Any = device_info, si: Any = select_info) -> SolaXModbusSelect:
+                    return SolaXModbusSelect(hub_name, hub, modbus_addr, di, si)
 
             select = factory()
             if select_info.write_method == WRITE_DATA_LOCAL:
@@ -225,6 +232,39 @@ class SolaXModbusSelect(SelectEntity):
         if self.entity_description.value_function:
             res: Any = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
             if res:  # Only set autorepeat if value_function returns something (i.e., this value should be repeated)
+                autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
+
+        self.async_write_ha_state()
+
+
+class SolaXModbusExternalSourceSelect(SolaXModbusSelect):
+    """Select with dynamically discovered options: all power sensors in HA."""
+
+    _NO_SOURCE: str | None = None  # internal sentinel stored in hub.data
+    _NO_SOURCE_LABEL = "(none — use calculated value)"
+
+    @property
+    def current_option(self) -> str | None:
+        value = self._hub.data.get(self._key)
+        return self._NO_SOURCE_LABEL if not value else str(value)
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the select option."""
+        # Translate user-friendly label → internal ""
+        if option == self._NO_SOURCE_LABEL:
+            payload = self._NO_SOURCE
+        else:
+            payload = option
+
+        # Same write path as base class
+        self._hub.data[self._key] = payload
+        self._hub.localsUpdated = True
+        await self._hub.async_refresh_gated_entities()
+
+        # Handle autorepeat for selects with value_function
+        if self.entity_description.value_function:
+            res = self.entity_description.value_function(BUTTONREPEAT_FIRST, self.entity_description, self._hub.data)
+            if res:
                 autorepeat_set(self._hub.data, self._key, time() + (10 * 365 * 24 * 60 * 60))
 
         self.async_write_ha_state()
