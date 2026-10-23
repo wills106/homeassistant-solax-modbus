@@ -9404,6 +9404,17 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
+        name="PV Voltage 1 VPP",
+        key="pv_voltage_1_vpp",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=31010,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        allowedtypes=ALL_GEN_GROUP,
+    ),
+    GrowattModbusSensorEntityDescription(
         name="PV Current 1 VPP",
         key="pv_current_1_vpp",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
