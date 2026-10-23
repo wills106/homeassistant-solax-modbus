@@ -4,9 +4,11 @@ from time import time
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -240,13 +242,25 @@ class SolaXModbusSelect(SelectEntity):
 class SolaXModbusExternalSourceSelect(SolaXModbusSelect):
     """Select with dynamically discovered options: all power sensors in HA."""
 
-    _NO_SOURCE: str | None = None  # internal sentinel stored in hub.data
-    _NO_SOURCE_LABEL = "(none — use calculated value)"
+    _NO_SOURCE = ""  # internal sentinel value stored in hub.data
+    _NO_SOURCE_LABEL = "(none — use calculated value)"  # user-visible label in dropdown
+
+    @property
+    def options(self) -> list[str]:
+        registry = er.async_get(self.hass)
+        candidates = [
+            entry.entity_id
+            for entry in registry.entities.values()
+            if entry.domain == "sensor"
+            and (entry.device_class == SensorDeviceClass.POWER or entry.unit_of_measurement in ("W", "kW", "Watt", "kilowatt"))
+        ]
+        return [self._NO_SOURCE_LABEL] + sorted(set(candidates))
 
     @property
     def current_option(self) -> str | None:
         value = self._hub.data.get(self._key)
-        return self._NO_SOURCE_LABEL if not value else str(value)
+        # Translate internal "" → user-friendly label
+        return self._NO_SOURCE_LABEL if value == "" else str(value)
 
     async def async_select_option(self, option: str) -> None:
         """Change the select option."""
