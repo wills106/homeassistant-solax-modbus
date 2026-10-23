@@ -9353,7 +9353,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
 #VPP 2.05 31xxx input registers
         GrowattModbusSensorEntityDescription(
-        name=“PV Voltage 1 VPP”,
+        name="PV Voltage 1 VPP",
         key=“pv_voltage_1_vpp”,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -9365,7 +9365,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name=“PV Current 1 VPP”,
-        key="pv_current_1_”vpp,
+        key="pv_current_1_vpp",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=31011,
@@ -9376,7 +9376,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
-        name=“PV Voltage 2 VPP”,
+        name="PV Voltage 2 VPP",
         key=“pv_voltage_2_vpp”,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -9388,7 +9388,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name=“PV Current 2 VPP”,
-        key="pv_current_2_”vpp,
+        key="pv_current_2_vpp",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=31013,
@@ -9411,7 +9411,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name=“PV Current 3 VPP”,
-        key="pv_current_3_”vpp,
+        key="pv_current_3_vpp",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         register=31015,
