@@ -148,4 +148,81 @@ In its current form, the function should return a dictionary with following stru
 The system will automatically convert the data to the modbus low level format, and compute the length of the write_multiple payload to be written to modbus.
 
 The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's `value_function`'s call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent. Storing data in the `datadict` dictionary may work in future versions, please use a name that cannot conflict with other entities.
-____
+## Overriding inverter sensors
+
+
+Some sensors are computed from other sensors (in most cases through value_functions). Sometimes an external device/sensor can provide a more accurate value.
+There is a mechanism that allows us to override an internal sensor by a sensor entity from another integration.
+This can be declared in the plugin_xxx.py code. The example shows how to override house_load with the value read from an external source.
+
+
+A new type of select entity can be declared that is a reference to anotheer entity:
+example: 
+```
+    SolaxModbusSelectEntityDescription(
+        name="External House Load Source",
+        key="external_house_load_source",
+        write_method=WRITE_DATA_LOCAL,
+        initvalue=None,  # empty = no source, derived value used
+        dynamic_options=True,
+        dynamic_device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # option_dict stays None: options come from the entity registry at runtime
+    ),
+```
+This declaration will create a select box entity with a dropdown that shows all the POWER entities
+Please note the naming convention for the key:   
+The key name of the sensor that will be overeridden is the keyname of this  declaration without the prefix external_ and posfix _source.
+The house_load value function must be been modified slightly to read this external sensor:
+```
+def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
+    inverter_power = int(datadict.get("inverter_power", 0))
+    measured_power = int(datadict.get("measured_power", 0))
+    meter_2_power = int(datadict.get("meter_2_measured_power", 0))
+    result = inverter_power - measured_power + meter_2_power
+
+    _LOGGER.debug(
+        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW meter_2_power=%sW result=%sW meter_1_direction=%s",
+        inverter_power,
+        measured_power,
+        meter_2_power,
+        result,
+        datadict.get("meter_1_direction", "unknown"),
+    )
+
+    return result
+
+```
+
+Declare the extrnal sources in the plugin declaration:
+
+```
+EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | str | None] = {
+    "house_load": UnitOfPower.WATT,
+}
+
+plugin_instance = solax_plugin(
+    plugin_name="SolaX",
+    plugin_manufacturer="SolaX Power",
+    SENSOR_TYPES=SENSOR_TYPES_MAIN,
+    ... 
+    EXTERNAL_SOURCE_TYPES=EXTERNAL_SOURCE_TYPES,
+   ...
+```
+Even though the declaration says WATT, the drowdown will also show sensors that report kW, so this declaration only specifies the terget internal unit.
+
+
+----
+
+
+
+
+
+
+
