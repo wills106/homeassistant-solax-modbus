@@ -76,21 +76,12 @@ def test_match_inverter_with_mask_eps() -> None:
 
 
 @pytest.mark.asyncio
-async def test_determine_inverter_type_solax(mock_hub: Any) -> None:
-    # Test detection logic using MockHub
-
-    # Simulate a Gen4 X3 Hybrid serial number: H34T...
-    # H = 0x48, 3 = 0x33, 4 = 0x34, T = 0x54
-    # Serial is read as 7 registers (14 chars) usually
-    # Let's mock the response for address 0 (or wherever it reads)
-    # Solax plugin reads from 0x0 -> count 7
-
-    # "H34T10H..." ->
-    # Reg 0: 'H3' = 0x4833
-    # Reg 1: '4T' = 0x3454
-    # ...
-
-    mock_registers = [0x4833, 0x3454, 0x3130, 0x4831, 0x3233, 0x3435, 0x3637]
+@pytest.mark.parametrize("serial_number", ["H34T10H1234567", "N34A10K1234567"])
+async def test_determine_inverter_type_solax(mock_hub: Any, serial_number: str) -> None:
+    # Exercise the Gen4 X3 detection path for both SolaX and Nord OEM prefixes.
+    # Modbus exposes the 14-character serial as seven big-endian 16-bit registers.
+    serial_bytes = serial_number.encode("ascii")
+    mock_registers = [int.from_bytes(serial_bytes[index : index + 2], "big") for index in range(0, 14, 2)]
     mock_hub.configure_read(1, 0, 7, type("MockResponse", (), {"registers": mock_registers, "isError": lambda: False}))
 
     # Config dict
@@ -99,14 +90,10 @@ async def test_determine_inverter_type_solax(mock_hub: Any) -> None:
     # Run detection
     inverter_type = await solax_plugin.async_determineInverterType(mock_hub, config)
 
-    # H34T should match: HYBRID | X3 | GEN4
     expected = HYBRID | X3 | GEN4
 
-    # Note: The exact return value depends on the implementation in plugin_solax.py
-    # Let's check what H34T maps to in the code...
-    # It maps to: HYBRID | X3 | GEN4
-
     assert inverter_type == expected
+    assert mock_hub.inverter_model == "X3-Hybrid-10kW"
 
 
 def test_parallel_master_scales_active_power(mock_hub: Any) -> None:
