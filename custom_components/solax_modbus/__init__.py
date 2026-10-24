@@ -706,7 +706,6 @@ class SolaXModbusHub:
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
         # External source overrides for the control loop: datadict key -> optional label
         self._external_sources: dict[str, str | None] = {}
-        self._external_override_keys: set[str] = set()
         self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
