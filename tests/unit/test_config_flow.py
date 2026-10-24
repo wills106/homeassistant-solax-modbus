@@ -1,5 +1,7 @@
 """Tests for the SolaX Modbus config flow."""
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -8,14 +10,20 @@ from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
 
+from custom_components.solax_modbus import config_flow
 from custom_components.solax_modbus.config_flow import (
     CONFIG_FLOW,
+    CONFIG_SCHEMA,
     CORE_SERIAL_SCHEMA,
     INTERFACES,
+    LEGACY_INTERFACE,
     SERIAL_SCHEMA,
+    TCP_SCHEMA,
     _duplicate_inverter_schema,
     _next_step_modbus,
+    _option_schema,
     _validate_base,
+    _validate_interface,
 )
 from custom_components.solax_modbus.const import (
     CONF_INTERFACE,
@@ -75,11 +83,28 @@ def _base_input(name: str) -> dict[str, Any]:
     }
 
 
-def test_interface_selector_has_one_serial_choice_and_unchanged_tcp_choices() -> None:
+def test_interface_selector_has_one_tcp_choice_and_a_valid_default() -> None:
+    interface = "core_tcp" if supports_core_units() else "tcp"
+    assert [item for item in INTERFACES if item["value"] in ("tcp", "core_tcp")] == [{"value": interface, "label": "TCP / Ethernet"}]
+    marker = next(key for key in CONFIG_SCHEMA.schema if key.schema == CONF_INTERFACE)
+    assert marker.default() == interface
+
+
+@pytest.mark.asyncio
+async def test_tcp_choice_routes_new_setups_to_version_appropriate_backend() -> None:
+    interface = next(item["value"] for item in INTERFACES if item["label"] == "TCP / Ethernet")
+    handler = SchemaCommonFlowHandler(cast(Any, _FlowParent([])), CONFIG_FLOW, {})
+    result = await handler.async_step("user", {**_base_input("SolaX"), CONF_INTERFACE: interface})
+    assert result["type"] == "form"
+    assert result["step_id"] == interface
+    schema = result["data_schema"]
+    assert schema is not None
+    assert set(schema.schema) == set(TCP_SCHEMA.schema)
+
+
+def test_interface_selector_has_one_serial_choice() -> None:
     serial = [item for item in INTERFACES if item["value"] in ("serial", "core_serial")]
     assert serial == [{"value": "core_serial" if supports_core_units() else "serial", "label": "Serial"}]
-    assert {"value": "tcp", "label": "TCP / Ethernet"} in INTERFACES
-    assert ({"value": "core_tcp", "label": "Home Assistant Modbus (TCP)"} in INTERFACES) is supports_core_units()
 
 
 @pytest.mark.asyncio
@@ -88,13 +113,85 @@ async def test_serial_choice_routes_new_setups_to_version_appropriate_backend() 
     parent = _FlowParent([])
     handler = SchemaCommonFlowHandler(cast(Any, parent), CONFIG_FLOW, {})
     result = await handler.async_step("user", {**_base_input("SolaX"), CONF_INTERFACE: interface})
-
     assert result["type"] == "form"
     assert result["step_id"] == interface
     schema = result["data_schema"]
     assert schema is not None
     expected = CORE_SERIAL_SCHEMA if supports_core_units() else SERIAL_SCHEMA
     assert set(schema.schema) == set(expected.schema)
+
+
+def test_legacy_interface_is_not_offered_to_new_connections() -> None:
+    interface = next(value for key, value in CONFIG_SCHEMA.schema.items() if key.schema == CONF_INTERFACE)
+    assert all(item["value"] != "core" for item in interface.config["options"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("persisted_interface", ["core", "tcp", "core_tcp", "serial", "core_serial"])
+@pytest.mark.parametrize("legacy_data", [False, True])
+async def test_only_existing_legacy_entries_can_keep_the_legacy_interface(
+    monkeypatch: pytest.MonkeyPatch, persisted_interface: str, legacy_data: bool
+) -> None:
+    monkeypatch.setattr(config_flow, "_plugin_supports_device_group", lambda *args: True)
+    monkeypatch.setattr(config_flow, "_plugin_supports_energy_dashboard", lambda *args: True)
+    monkeypatch.setattr(config_flow, "_plugin_uses_feature_flag", lambda *args: True)
+    saved = {CONF_INTERFACE: persisted_interface}
+    entry = SimpleNamespace(entry_id="existing", options={} if legacy_data else saved, data=saved if legacy_data else {})
+    # An uncommitted candidate value must not grant access to legacy mode.
+    handler = _handler_with_entries([entry], options={CONF_INTERFACE: "core"}, current_entry=entry)
+    schema = await _option_schema(handler)
+    interface = next(value for key, value in schema.schema.items() if key.schema == CONF_INTERFACE)
+    legacy = [item for item in interface.config["options"] if item["value"] == "core"]
+    assert legacy == ([LEGACY_INTERFACE] if persisted_interface == "core" else [])
+    assert "2027.10" in LEGACY_INTERFACE["label"]
+
+    if persisted_interface == "core":
+        assert await _validate_interface(handler, {CONF_INTERFACE: "core"}) == {CONF_INTERFACE: "core"}
+    else:
+        with pytest.raises(SchemaFlowError, match="legacy_hub_unavailable"):
+            await _validate_interface(handler, {CONF_INTERFACE: "core"})
+    assert entry.options == ({} if legacy_data else saved)
+
+
+@pytest.mark.asyncio
+async def test_new_flow_cannot_submit_a_hidden_legacy_interface() -> None:
+    with pytest.raises(SchemaFlowError, match="legacy_hub_unavailable"):
+        await _validate_base(_handler_with_entries([]), {**_base_input("SolaX"), CONF_INTERFACE: "core"})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("persisted_interface", ["core", "tcp"])
+async def test_options_flow_only_retains_already_selected_legacy_interface(persisted_interface: str) -> None:
+    entry = SimpleNamespace(entry_id="existing", options={CONF_INTERFACE: persisted_interface}, data={})
+    parent = SimpleNamespace(
+        hass=SimpleNamespace(config_entries=_ConfigEntries([entry])),
+        config_entry=entry,
+        show_advanced_options=False,
+        async_show_form=lambda **kwargs: {"type": "form", **kwargs},
+        add_suggested_values_to_schema=lambda schema, values: schema,
+    )
+    handler = SchemaCommonFlowHandler(cast(Any, parent), config_flow.OPTIONS_FLOW, {CONF_INTERFACE: persisted_interface})
+    result = await handler.async_step("init", {CONF_INTERFACE: "core"})
+    assert result["type"] == "form"
+    if persisted_interface == "core":
+        assert result["step_id"] == "core"
+        assert handler.options[CONF_INTERFACE] == "core"
+    else:
+        assert result["step_id"] == "init"
+        assert result["errors"] == {"base": "legacy_hub_unavailable"}
+        assert handler.options[CONF_INTERFACE] == "tcp"
+
+
+def test_legacy_warning_texts_explain_the_api_deadline() -> None:
+    root = Path(config_flow.__file__).parent
+    for path in (root / "strings.json", root / "translations" / "en.json"):
+        strings = json.loads(path.read_text())
+        for section in ("config", "options"):
+            description = strings[section]["step"]["core"]["description"]
+            assert "2027.10" in description and "access API" in description
+            assert "Core Modbus migration guide" in description
+            assert "http://" not in description and "https://" not in description
+            assert "legacy_hub_unavailable" in strings[section]["error"]
 
 
 @pytest.mark.asyncio

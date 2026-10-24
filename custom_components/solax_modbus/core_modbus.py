@@ -203,6 +203,7 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     """
     config = dict(entry.options)
     interface = config.get(CONF_INTERFACE)
+    migrate_tcp = interface == "tcp" or (not interface and not config.get("read_serial", False))
     migrate_serial = interface == "serial" or (not interface and config.get("read_serial", False))
     if migrate_serial and supports_core_units():
         # Preserve the native client's actual framing, not stale options left
@@ -210,6 +211,12 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
         config.update({CONF_INTERFACE: "core_serial", "parity": "N", "bytesize": 8, "stopbits": 1, "method": "rtu", "message_wait_milliseconds": 0})
         config.setdefault(CONF_SERIAL_PORT, DEFAULT_SERIAL_PORT)
         interface = "core_serial"
+    elif migrate_tcp and supports_core_units():
+        # Native TCP used RTU/ASCII only when explicitly selected; all other
+        # values used normal Modbus TCP. Preserve that framing on migration.
+        tcp_type = config.get(CONF_TCP_TYPE, "tcp")
+        config.update({CONF_INTERFACE: "core_tcp", CONF_TCP_TYPE: tcp_type if tcp_type in ("rtu", "ascii") else "tcp"})
+        interface = "core_tcp"
     if interface not in ("core", "core_tcp", "core_serial"):
         persistent_notification.async_dismiss(hass, _notification_id(entry))
         return None
@@ -250,7 +257,7 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
     settings = configured_core_connection(config)
     if settings is None:
         raise ConfigEntryNotReady("No saved Core Modbus settings. Restore the YAML hub and restart Home Assistant to copy them first.")
-    if migrate_serial:
+    if migrate_tcp or migrate_serial:
         core_connection_params(settings)
     endpoint = _physical_endpoint(settings)
     for other in yaml_hubs:
@@ -270,7 +277,7 @@ async def async_prepare_core_connection(hass: HomeAssistant, entry: ConfigEntry)
                 return other_name
             raise ConfigEntryNotReady(f"YAML Modbus hub '{other_name}' is still running on this endpoint. Restart Home Assistant after removing it.")
 
-    if migrate_serial:
+    if migrate_tcp or migrate_serial:
         # Save only after validation and conflict checks; a failed preparation
         # must not leave a half-migrated entry or open a competing connection.
         hass.config_entries.async_update_entry(entry, options=config)

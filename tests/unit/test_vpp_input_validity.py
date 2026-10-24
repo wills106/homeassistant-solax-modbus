@@ -203,6 +203,10 @@ async def test_modes_1_to_7_validate_parallel_sources() -> None:
     function = Mock(wraps=descr.value_function)
     hub.computedEntities[descr.key] = replace(descr, value_function=function)
     hub.data["remotecontrol_power_control"] = "Enabled Feedin Priority"
+    # Supported PM sensors remain mandatory even before their first read.
+    assert descr.autorepeat_parallel_dependencies is not None
+    for key in descr.autorepeat_parallel_dependencies["Master"]:
+        hub.sensorDescriptions[key] = next(d for d in SENSOR_TYPES_MAIN if d.key == key)
     values["parallel_setting"] = "Master"
     await hub._refresh_interval_group_once(settings)
     hub.data["_repeatUntil"][descr.key] = time.time() + 300
