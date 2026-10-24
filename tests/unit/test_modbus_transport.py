@@ -1,6 +1,7 @@
 """Tests for shared native and Home Assistant Core Modbus transports."""
 
 import asyncio
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
@@ -10,7 +11,16 @@ from homeassistant.exceptions import HomeAssistantError
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 
 from custom_components.solax_modbus import SolaXModbusHub, block
-from custom_components.solax_modbus.const import REG_HOLDING, REG_INPUT, REGISTER_STR, REGISTER_U16, REGISTER_U32, BaseModbusSensorEntityDescription
+from custom_components.solax_modbus.const import (
+    REG_HOLDING,
+    REG_INPUT,
+    REGISTER_STR,
+    REGISTER_U8H,
+    REGISTER_U8L,
+    REGISTER_U16,
+    REGISTER_U32,
+    BaseModbusSensorEntityDescription,
+)
 from custom_components.solax_modbus.modbus_transport import (
     CORE_CALL_TYPE_REGISTER_HOLDING,
     CORE_CALL_TYPE_REGISTER_INPUT,
@@ -114,7 +124,8 @@ def make_quarantine_hub(core_hub: FakeCoreHub) -> Any:
     hub._time_out = 15
     hub.bisect_max_depth = 10
     hub.bad_regs = {"holding": set(), "input": set()}
-    hub._runtime_block_splits = {"holding": set(), "input": set()}
+    hub._runtime_block_splits = {}
+    hub._runtime_bisect_tasks = {}
     hub._comm_block_failures = {}
     hub.initial_groups = {}
     hub.groups = {}
@@ -267,7 +278,7 @@ async def test_runtime_quarantine_operates_through_core_transport() -> None:
     await hub._runtime_bisect_block(failing_block, "holding", "holding:10-12")
 
     assert hub.bad_regs["holding"] == {10}
-    assert hub._runtime_block_splits["holding"] == set()
+    assert hub._runtime_block_splits == {}
     assert core_hub.calls == [
         (1, 10, 2, CORE_CALL_TYPE_REGISTER_HOLDING),
         (1, 10, 1, CORE_CALL_TYPE_REGISTER_HOLDING),
@@ -305,6 +316,12 @@ def make_block_split_hub(typ: str, registers: list[int]) -> tuple[Any, FakeCoreH
     return hub, core, descriptions
 
 
+def read_blocks(hub: Any, typ: str, interval: int = 30, device_name: str = "inverter") -> list[block]:
+    """Inspect the real rebuild path, including the block's polling-group identity."""
+    group = hub.groups[interval].device_groups[device_name]
+    return cast(list[block], group.holdingBlocks if typ == "holding" else group.inputBlocks)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("typ", ["holding", "input"])
 @pytest.mark.parametrize("reason", ["gap", "read_limit"])
@@ -312,7 +329,7 @@ async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, r
     """A failed parent must not be rebuilt when all entity ranges are readable."""
     registers = [0x347, 0x34F, 0x351, 0x352, 0x353, 0x354, 0x367, 0x371] if reason == "gap" else list(range(8))
     hub, core, descriptions = make_block_split_hub(typ, registers)
-    original = hub.splitInBlocks(descriptions)[0]
+    original = read_blocks(hub, typ)[0]
     key = hub._block_key(original, typ)
     hub._comm_block_failures[key] = [1, 2, 3]
     hub._confirm_bad_register = AsyncMock()
@@ -328,7 +345,7 @@ async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, r
     expected = [(0x347, 0x353), (0x353, 0x355), (0x367, 0x372)] if reason == "gap" else [(0, 4), (4, 8)]
     assert hub.blocks_changed is True
     assert hub.bad_regs == {"holding": set(), "input": set()}
-    assert hub._runtime_block_splits[typ] == {start for start, _end in expected[1:]}
+    assert hub._runtime_block_splits == {(30, "inverter", typ): {start for start, _end in expected[1:]}}
     assert key not in hub._comm_block_failures
     hub._confirm_bad_register.assert_not_awaited()
     hub._ensure_quarantine_recheck_task.assert_not_called()
@@ -338,9 +355,10 @@ async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, r
 
     for _ in range(2):
         hub.rebuild_blocks(hub.initial_groups)
-        blocks = hub.splitInBlocks(descriptions)
+        blocks = read_blocks(hub, typ)
         assert [(item.start, item.end) for item in blocks] == expected
         for item in blocks:
+            assert item.group_key == (30, "inverter")
             assert await hub._probe_block(item, typ) is True
     assert len(core.calls) == 2 * len(expected)
     for _unit, address, count, _call_type in core.calls:
@@ -351,10 +369,75 @@ async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, r
     if reason == "gap":
         descriptions.pop(0x353)
         hub.rebuild_blocks(hub.initial_groups)
-        assert [(item.start, item.end) for item in hub.splitInBlocks(descriptions)] == [(0x347, 0x353), (0x354, 0x355), (0x367, 0x372)]
+        assert [(item.start, item.end) for item in read_blocks(hub, typ)] == [(0x347, 0x353), (0x354, 0x355), (0x367, 0x372)]
 
-    other_type = "input" if typ == "holding" else "holding"
-    assert hub._runtime_block_splits[other_type] == set()
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("typ", ["holding", "input"])
+async def test_bisect_is_scoped_to_the_polling_group(typ: str) -> None:
+    """Identical addresses in another device or interval must not share failures or splits."""
+    hub, core, descriptions = make_block_split_hub(typ, [10, 30])
+    for interval, device_name in ((30, "battery_2"), (60, "inverter")):
+        group = SimpleNamespace(
+            holdingRegs=dict(descriptions) if typ == "holding" else {},
+            inputRegs=dict(descriptions) if typ == "input" else {},
+            readPreparation=None,
+            readFollowUp=None,
+        )
+        hub.initial_groups.setdefault(interval, SimpleNamespace(device_groups={})).device_groups[device_name] = group
+    hub.rebuild_blocks(hub.initial_groups)
+    original = read_blocks(hub, typ)[0]
+    other = read_blocks(hub, typ, device_name="battery_2")[0]
+    slower = read_blocks(hub, typ, interval=60)[0]
+    assert len({hub._block_key(item, typ) for item in (original, other, slower)}) == 3
+
+    hub._hass = SimpleNamespace(loop=asyncio.get_running_loop())
+    hub._comm_recent_outcomes = []
+    core._responses = [None, SimpleNamespace(isError=lambda: False), SimpleNamespace(isError=lambda: False)]
+    # Successful reads of the other group must not erase this group's failures.
+    for _ in range(3):
+        hub._record_block_result(original, typ, False)
+        hub._record_block_result(other, typ, True)
+    assert len(hub._runtime_bisect_tasks) == 1
+    await hub._runtime_bisect_tasks[hub._block_key(original, typ)]
+
+    assert hub._runtime_block_splits == {(30, "inverter", typ): {30}}
+    assert len(core.calls) == 3  # Existing probes only: parent and two readable children.
+    for _ in range(2):
+        hub.rebuild_blocks(hub.initial_groups)
+        assert [(item.start, item.end) for item in read_blocks(hub, typ)] == [(10, 11), (30, 31)]
+        assert [(item.start, item.end) for item in read_blocks(hub, typ, device_name="battery_2")] == [(10, 31)]
+        assert [(item.start, item.end) for item in read_blocks(hub, typ, interval=60)] == [(10, 31)]
+    assert len(core.calls) == 3  # Rebuilding groups never adds revalidation requests.
+
+
+@pytest.mark.parametrize("auto_ignore", [None, False, True])
+@pytest.mark.parametrize("byte_split", [False, True])
+def test_learned_boundary_keeps_ignore_readerror(auto_ignore: bool | None, byte_split: bool) -> None:
+    """A learned boundary must not rewrite normal or byte-split entity failure policies."""
+    hub, _core, descriptions = make_block_split_hub("holding", [10, 30])
+    hub.plugin.auto_block_ignore_readerror = auto_ignore
+    if byte_split:
+        descriptions[30] = {unit: replace(descriptions[30], key=f"value_30_{unit}", register_data_type=unit) for unit in (REGISTER_U8H, REGISTER_U8L)}
+    hub._runtime_block_splits[(30, "inverter", "holding")] = {30}
+    hub.rebuild_blocks(hub.initial_groups)
+    blocks = read_blocks(hub, "holding")
+    assert [(item.start, item.end) for item in blocks] == [(10, 11), (30, 31)]
+    description = blocks[1].descriptions[30]
+    entries = description.values() if byte_split else [description]
+    assert all(entry.ignore_readerror is False for entry in entries)
+
+
+@pytest.mark.parametrize("auto_ignore", [None, False, True])
+def test_size_overflow_keeps_automatic_ignore_readerror(auto_ignore: bool | None) -> None:
+    """The existing policy for size-overflow blocks is unchanged."""
+    hub, _core, _descriptions = make_block_split_hub("holding", [10, 30])
+    hub.plugin.auto_block_ignore_readerror = auto_ignore
+    hub.plugin.block_size = 10
+    hub.rebuild_blocks(hub.initial_groups)
+    blocks = read_blocks(hub, "holding")
+    assert [(item.start, item.end) for item in blocks] == [(10, 11), (30, 31)]
+    assert blocks[1].descriptions[30].ignore_readerror is (auto_ignore is True)
 
 
 @pytest.mark.asyncio
@@ -366,10 +449,12 @@ async def test_learned_partitions_keep_multi_register_entities_whole() -> None:
     descriptions[30] = BaseModbusSensorEntityDescription(
         key="serial", register=30, register_type=REG_HOLDING, internal=True, register_data_type=REGISTER_STR, wordcount=4
     )
-    original = hub.splitInBlocks(descriptions)[0]
+    hub.rebuild_blocks(hub.initial_groups)
+    original = read_blocks(hub, "holding")[0]
     core._responses = [None, SimpleNamespace(isError=lambda: False), SimpleNamespace(isError=lambda: False)]
     await hub._runtime_bisect_block(original, "holding", hub._block_key(original, "holding"))
-    assert [(item.start, item.end) for item in hub.splitInBlocks(descriptions)] == [(10, 12), (30, 34)]
+    hub.rebuild_blocks(hub.initial_groups)
+    assert [(item.start, item.end) for item in read_blocks(hub, "holding")] == [(10, 12), (30, 34)]
     assert [(address, count) for _unit, address, count, _call_type in core.calls] == [(10, 24), (10, 2), (30, 4)]
 
 
@@ -377,7 +462,7 @@ async def test_learned_partitions_keep_multi_register_entities_whole() -> None:
 @pytest.mark.parametrize(("outcome", "probes"), [("disconnect", 2), ("stop", 2), ("unreadable", 3), ("recovered", 1), ("depth_limit", 1)])
 async def test_bisect_does_not_keep_unproven_partitions(outcome: str, probes: int, monkeypatch: pytest.MonkeyPatch) -> None:
     hub, core, descriptions = make_block_split_hub("holding", [10, 30])
-    original = hub.splitInBlocks(descriptions)[0]
+    original = read_blocks(hub, "holding")[0]
     hub._confirm_bad_register = AsyncMock(return_value=False)
     if outcome == "depth_limit":
         hub.bisect_max_depth = 0
@@ -392,7 +477,7 @@ async def test_bisect_does_not_keep_unproven_partitions(outcome: str, probes: in
 
     monkeypatch.setattr(core, "async_pb_call", read)
     await hub._runtime_bisect_block(original, "holding", hub._block_key(original, "holding"))
-    assert hub._runtime_block_splits["holding"] == set()
+    assert hub._runtime_block_splits == {}
     assert hub.bad_regs["holding"] == set()
     assert hub.blocks_changed is False
     assert len(core.calls) == probes

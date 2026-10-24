@@ -588,6 +588,7 @@ class block:
     # order32: int = None # word endian for 32bit registers
     descriptions: Any = None
     regs: Any = None  # sorted list of registers used in this block
+    group_key: tuple[int, str] | None = None  # polling interval and logical device group
 
 
 @dataclass(frozen=True)
@@ -754,7 +755,8 @@ class SolaXModbusHub:
         # Runtime bad register handling. bad_regs are temporarily quarantined
         # entity base-addresses that are excluded from normal polling.
         self.bad_regs: dict[str, set[int]] = {"holding": set(), "input": set()}
-        self._runtime_block_splits: dict[str, set[int]] = {"holding": set(), "input": set()}
+        # Keep proven boundaries for this hub session, scoped to the polling group and register type.
+        self._runtime_block_splits: dict[tuple[int, str, str], set[int]] = {}
         self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
         self._runtime_bisect_tasks: dict[str, asyncio.Task[Any]] = {}
         self._quarantine_recheck_task: asyncio.Task[Any] | None = None
@@ -2977,14 +2979,16 @@ class SolaXModbusHub:
 
     # --------------------------------------------- Sorting and grouping of entities -----------------------------------------------
 
-    def splitInBlocks(self, descriptions: dict[Any, Any]) -> list[Any]:
+    def splitInBlocks(self, descriptions: dict[Any, Any], *, group_key: tuple[int, str] | None = None) -> list[Any]:
         start = INVALID_START
         end = 0
         blocks: list[Any] = []
         block_size = self.plugin.block_size
         auto_block_ignore_readerror = self.plugin.auto_block_ignore_readerror
         curblockregs: list[Any] = []
-        runtime_splits = {typ: sorted(points) for typ, points in getattr(self, "_runtime_block_splits", {}).items()}
+        runtime_splits = (
+            {typ: sorted(self._runtime_block_splits.get((*group_key, typ), set())) for typ in ("holding", "input")} if group_key is not None else {}
+        )
         for reg, descr in descriptions.items():
             d_ignore_readerror = auto_block_ignore_readerror
             if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
@@ -3024,9 +3028,9 @@ class SolaXModbusHub:
                 if d_newblock or split_here or ((reg - start) > block_size):
                     if (end - start) > 0:
                         _LOGGER.debug("%s: Starting new block at 0x%x", self._name, reg)
-                        if (
-                            (auto_block_ignore_readerror is True) or (auto_block_ignore_readerror is False)
-                        ) and not d_newblock:  # automatically created block
+                        # Learning a read boundary must not change the entity's failure policy.
+                        # Only ordinary size-overflow blocks inherit the plugin's automatic policy.
+                        if auto_block_ignore_readerror is not None and not d_newblock and not split_here:
                             if type(descr) is dict:
                                 for _sub, d in descr.items():
                                     if d.ignore_readerror is False:
@@ -3038,7 +3042,7 @@ class SolaXModbusHub:
                                     descriptions[reg] = descr
                                     d_ignore_readerror = descr.ignore_readerror
                         # newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
+                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs, group_key=group_key)
                         blocks.append(newblock)
                         start = INVALID_START
                         end = 0
@@ -3053,7 +3057,7 @@ class SolaXModbusHub:
                 if reg in self.bad_regs[typ_key]:
                     # Close current block if it already has content
                     if (end - start) > 0:
-                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
+                        newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs, group_key=group_key)
                         blocks.append(newblock)
                     # Reset for next block after the bad address
                     start = INVALID_START
@@ -3094,7 +3098,7 @@ class SolaXModbusHub:
 
         if (end - start) > 0:  # close last block
             # newblock = block(start = start, end = end, order16 = descriptions[start].order16, order32 = descriptions[start].order32, descriptions = descriptions, regs = curblockregs)
-            newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs)
+            newblock = block(start=start, end=end, descriptions=descriptions, regs=curblockregs, group_key=group_key)
             blocks.append(newblock)
         return blocks
 
@@ -3115,8 +3119,9 @@ class SolaXModbusHub:
                 hub_device_group = hub_interval_group.device_groups.setdefault(device_name, empty_hub_device_group_lambda())
                 hub_device_group.readPreparation = device_group.readPreparation
                 hub_device_group.readFollowUp = device_group.readFollowUp
-                hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs)
-                hub_device_group.inputBlocks = self.splitInBlocks(inputRegs)
+                group_key = (interval, device_name)
+                hub_device_group.holdingBlocks = self.splitInBlocks(holdingRegs, group_key=group_key)
+                hub_device_group.inputBlocks = self.splitInBlocks(inputRegs, group_key=group_key)
                 # self.computedSensors = computedRegs # moved outside the loops
                 for i in hub_device_group.holdingBlocks:
                     _LOGGER.debug("%s - interval %ss: adding holding block: %s", self._name, interval, ", ".join(f"0x{num:x}" for num in i.regs))
@@ -3128,7 +3133,9 @@ class SolaXModbusHub:
         _LOGGER.debug("%s: done rebuilding groups and blocks - post: %s", self._name, self.initial_groups.keys())
 
     def _block_key(self, block_obj: Any, typ: str) -> str:
-        return f"{typ}:0x{block_obj.start:x}-0x{block_obj.end:x}"
+        key = f"{typ}:0x{block_obj.start:x}-0x{block_obj.end:x}"
+        group_key = getattr(block_obj, "group_key", None)
+        return f"{group_key[0]}s/{group_key[1]}/{key}" if group_key is not None else key
 
     def _format_register(self, typ: str, addr: int) -> str:
         descr = self._find_descriptor_for_reg(typ, addr)
@@ -3191,6 +3198,7 @@ class SolaXModbusHub:
             end=block_obj.end,
             descriptions=block_obj.descriptions,
             regs=list(block_obj.regs or []),
+            group_key=getattr(block_obj, "group_key", None),
         )
         task = self._hass.loop.create_task(self._runtime_bisect_block(probe_block, typ, key))
         self._runtime_bisect_tasks[key] = task
@@ -3208,13 +3216,17 @@ class SolaXModbusHub:
         _LOGGER.warning("%s: repeated failures for %s; probing block to isolate bad registers", self._name, key)
         try:
             readable = await self._find_bad_regs_in_block(block_obj, typ, candidates, split_points=split_points)
-            if readable and split_points and not self._stopping and self._transport.is_connected():
-                new_splits = split_points - self._runtime_block_splits[typ]
+            group_key = getattr(block_obj, "group_key", None)
+            if readable and split_points and group_key is not None and not self._stopping and self._transport.is_connected():
+                learned = self._runtime_block_splits.setdefault((*group_key, typ), set())
+                new_splits = split_points - learned
                 if new_splits:
-                    self._runtime_block_splits[typ].update(new_splits)
+                    learned.update(new_splits)
                     self.blocks_changed = True
                     self._comm_block_failures.pop(key, None)
-                    _LOGGER.info("%s: keeping %s readable sub-blocks for %s", self._name, len(split_points) + 1, key)
+                    _LOGGER.info(
+                        "%s: keeping %s readable sub-blocks for %s (%s new split boundaries)", self._name, len(split_points) + 1, key, len(new_splits)
+                    )
             confirmed: list[int] = []
             for addr in sorted(candidates):
                 if addr in self.bad_regs[typ]:
@@ -3238,7 +3250,12 @@ class SolaXModbusHub:
     async def _find_bad_regs_in_block(
         self, block_obj: Any, typ: str, candidates: set[int], depth: int = 0, *, split_points: set[int] | None = None
     ) -> bool:
-        """Find bad entity bases and successful partitions, using the same probes."""
+        """Find bad entity bases and successful partitions, using the same probes.
+
+        Only a completely readable partition of the parent is retained. If any
+        entity remains unreadable, use the existing confirmation/quarantine path
+        instead of retaining a partially proven layout.
+        """
         if getattr(self, "_stopping", False):
             return False
         if await self._probe_block(block_obj, typ):
@@ -3427,7 +3444,7 @@ class SolaXModbusHub:
         # end must honor the last entity's full span
         last_base = regs[-1]
         end = self._entity_span_end(block_obj.descriptions, last_base)
-        return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs)
+        return block(start=start, end=end, descriptions=block_obj.descriptions, regs=regs, group_key=getattr(block_obj, "group_key", None))
 
     async def _probe_block(self, block_obj: Any, typ: str, timeout: float | None = None) -> bool:
         if getattr(self, "_stopping", False):
