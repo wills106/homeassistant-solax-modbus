@@ -488,6 +488,15 @@ async def async_write_direct_vpp(
         hub.data[description.key] = parameter
 
 
+DEFAULT_FILTER_SMOOTING_FACTOR = 5
+
+
+def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = DEFAULT_FILTER_SMOOTING_FACTOR) -> int:
+    # Simple rolling average filter for updating control setpoints to avoid oscillation
+    # Time Constant = Fast Poll Interval / (ln(steps) - ln(steps-1)). Settling time is approx 5 time constants.
+    return int((current_value * (steps - 1) + desired_value) / steps)
+
+
 def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     """Remote control power calculations for SolaX inverters - Redesigned Implementation.
 
@@ -879,6 +888,7 @@ def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: in
     # Simple rolling average filter for updating control setpoints to avoid oscillation
     # Time Constant = Fast Poll Interval / (ln(steps) - ln(steps-1)). Settling time is approx 5 time constants.
     return int((current_value * (steps - 1) + desired_value) / steps)
+
 
 
 def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
