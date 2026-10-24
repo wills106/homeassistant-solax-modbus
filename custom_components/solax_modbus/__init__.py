@@ -25,6 +25,8 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     EVENT_HOMEASSISTANT_STOP,
     PERCENTAGE,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
     Platform,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -188,6 +190,7 @@ COMM_BLOCK_FAILURE_WINDOW = 600
 COMM_RECOVERY_INTERVAL = 300
 INFLIGHT_CANCEL_TIMEOUT = 2.0
 
+STALENESS_TIMEOUT = 5.0
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -472,6 +475,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hub.async_init()
+    # PLEASE ADAPT flollowing line and scan declarations to find external sources instead
+    hub._external_sources = dict(getattr(plugin, "EXTERNAL_SOURCE_TYPES", {}) or {})
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
 
@@ -701,6 +706,9 @@ class SolaXModbusHub:
         self._name: str = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
+        # External source overrides for the control loop: datadict key -> optional label
+        self._external_sources: dict[str, str | None] = {}
+        self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
@@ -985,6 +993,45 @@ class SolaXModbusHub:
                 _LOGGER.debug("%s: failed to fire local data event: %s", self._name, ex)
 
     # end of save and load section
+
+    # ============ external sensors -  override functionality - start
+
+    # async def async_register_external_overrides(self, plugin: ModuleType, options: Mapping[str, Any]) -> None:
+    #    """Store configured external sensor overrides for the control loop."""
+    #    instance = getattr(plugin, "plugin_instance", plugin)
+    #    overridable = getattr(instance, "OVERRIDABLE_SENSORS", None) or {}
+    #    for key in overridable:
+    #        entity_id = options.get(f"external_{key}")
+    #        if not entity_id:
+    #            continue
+    #        self._override_entities[key] = entity_id
+    #        _LOGGER.debug("%s: external override '%s' from %s", self._name, key, entity_id)
+
+    def apply_external_overrides(self, datadict: dict[str, Any]) -> None:
+        """Inject fresh externally measured values for the control loop."""
+        sources = getattr(self, "_external_sources", None) or {}
+        for key in sources:  # keys only; labels unused for now
+            conf_key = f"external_{key}"
+            source_entity = self.data.get(f"external_{key}_source") or ""
+            if not source_entity:
+                datadict.pop(conf_key, None)
+                continue
+            state = self._hass.states.get(source_entity)
+            if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                datadict.pop(conf_key, None)
+                continue
+            try:
+                value = float(state.state)
+            except (TypeError, ValueError):
+                datadict.pop(conf_key, None)
+                continue
+            # unit-conversie richting de gedeclareerde canonical unit (W)
+            unit = state.attributes.get("unit_of_measurement")
+            if unit == UnitOfPower.KILO_WATT:
+                value *= 1000.0
+            datadict[conf_key] = value
+
+    # ========  external sensors -  override functionality - end
 
     def scan_group(self, sensor: Any) -> int:  # seems to be called for non-sensor entities also - strange
         # scan group
@@ -2775,7 +2822,11 @@ class SolaXModbusHub:
 
     async def _async_update_autorepeats(self, interval: float | None) -> set[str]:
         """Run lifecycle maintenance once per interval, with one measurement owner."""
-        local_outputs = ("remotecontrol_current_pushmode_power", "remotecontrol_current_pv_power_limit")
+        local_outputs = (
+            "remotecontrol_current_pushmode_power",
+            "remotecontrol_current_pv_power_limit",
+        )  # ugly - this is solax-only - does not belong in init.py
+        self.apply_external_overrides(self.data)  # inject external overrides for the control loop
         previous = {key: self.data.get(key) for key in local_outputs}
         self.last_ts = _mtime.time()
         pending_stops = getattr(self, "_autorepeat_pending_stops", {})
@@ -2828,9 +2879,10 @@ class SolaXModbusHub:
     def _autorepeat_input_data(self, keys: set[str]) -> dict[str, Any]:
         """Use accepted values for declared inputs, preserving local requests."""
         data = self.data.copy()
+        injected_external_keys = {f"external_{k}" for k in (getattr(self, "_external_sources", None) or {})}
         for key in keys:
-            if key in getattr(self, "writeLocals", {}):
-                continue
+            if key in getattr(self, "writeLocals", {}) or key in injected_external_keys:
+                continue  # hub-managed value (writeLocal or injected external): keep it in s
             sample = self._accepted_input_sample(key, include_pending=False)
             if sample is None or not self._control_input_valid(key):
                 data.pop(key, None)

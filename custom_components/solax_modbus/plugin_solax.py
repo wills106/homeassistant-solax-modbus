@@ -1558,6 +1558,10 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
     meter_2_power = int(datadict.get("meter_2_measured_power", 0))
@@ -1576,6 +1580,11 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
+
     return int(
         datadict.get("pv_power_total", 0)
         - datadict.get("battery_power_charge", 0)
@@ -1974,6 +1983,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "grid_voltage_l1",
             "grid_voltage_l2",
             "grid_voltage_l3",
+            "external_house_load",
         ),
         autorepeat_parallel_dependencies={
             "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
@@ -2000,7 +2010,14 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "export_control_user_limit",
             "inverter_power_type",
         ),
-        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"),
+        autorepeat_optional_dependencies=(
+            "grid_export",
+            "meter_2_measured_power",
+            "battery_max_charge_power",
+            "bms_max_charge",
+            "bms_2_max_charge",
+            "external_house_load",
+        ),
         autorepeat_parallel_dependencies={"Free": ()},
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
@@ -3985,6 +4002,18 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         initvalue=0xA1,
         register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="External House Load Source",
+        key="external_house_load_source",
+        write_method=WRITE_DATA_LOCAL,
+        initvalue=None,  # empty = no source, derived value used
+        dynamic_options=True,
+        dynamic_device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # option_dict stays None: options come from the entity registry at runtime
     ),
     ###
     #
@@ -13581,6 +13610,10 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     ],
 )
 
+EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | str | None] = {
+    "house_load": UnitOfPower.WATT,
+}
+
 plugin_instance = solax_plugin(
     plugin_name="SolaX",
     plugin_manufacturer="SolaX Power",
@@ -13590,6 +13623,7 @@ plugin_instance = solax_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     TIME_TYPES=TIME_TYPES,
+    EXTERNAL_SOURCE_TYPES=EXTERNAL_SOURCE_TYPES,
     ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,
