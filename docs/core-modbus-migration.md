@@ -2,11 +2,13 @@
 
 > **Requires Home Assistant 2026.10 or later for the new connection API.** Install an integration release containing this migration before changing your YAML. Older Home Assistant releases continue using the existing YAML hub.
 
-This guide applies if you selected **Hass core Hub** when setting up SolaX Inverter Modbus. Existing **TCP / Ethernet** and **Serial** connections are not affected.
+The YAML instructions in this guide apply if you selected **Hass core Hub** when setting up SolaX Inverter Modbus. Direct **TCP / Ethernet** and **Serial** connections move automatically to the new API on Home Assistant 2026.10 or later; see [Automatic TCP migration](#automatic-tcp-migration) and [Automatic serial migration](#automatic-serial-migration).
 
 ## Why you see the notification
 
 Home Assistant is replacing the old API used to access Modbus hubs configured in YAML. The old API will be removed in **Home Assistant 2027.10**.
+
+**Hass core Hub (legacy YAML)** can no longer be selected for a new connection or enabled on a connection using another interface, including on older HA versions. If your entry already uses it, the option remains available to keep that connection unchanged, with a warning about HA 2027.10. Once you save a different interface, legacy access cannot be selected again. This does not disable existing hubs now or remove YAML support from Home Assistant itself; it retires this integration's old hub-access API.
 
 Your inverter continues to use its existing connection while the YAML hub is present. On Home Assistant 2026.10 or later, the integration saves a copy of the connection settings so it can use the new API after you remove that hub and restart Home Assistant. Older versions continue using YAML unchanged; they do not copy settings or show the migration notification yet. It does not open a second connection during this transition.
 
@@ -73,13 +75,36 @@ Restore the YAML hub from your backup and restart Home Assistant. The integratio
 
 ## New installations
 
-Select **Home Assistant Modbus (TCP)** or **Home Assistant Modbus (Serial)** in the integration setup, and enter the connection settings there. No YAML hub or dummy sensor is required.
+Select **TCP / Ethernet** to use a Home Assistant-managed TCP connection on HA 2026.10 or later, and **Serial** for a Home Assistant-managed serial connection. On older HA versions, the same choices use the integration's direct TCP and serial clients. Modbus TCP, RTU over TCP and ASCII over TCP remain available. No YAML hub or dummy sensor is required for a managed connection.
 
 Home Assistant manages and shares these connections between integrations using the same connection settings. The connection opens on the first request and reconnects as needed.
 
-## Scope and dependencies
+## Automatic TCP migration
 
-Existing direct TCP and serial entries keep their native transports. They are not automatically switched to Home Assistant-managed connections.
+On Home Assistant 2026.10 or later, existing direct TCP connections switch to Home Assistant's shared Modbus API at the next startup or integration reload. No manual changes, deletion or reconfiguration are needed for normal TCP setups.
+
+- The same config entry, integration name, devices, entity IDs and automations are kept.
+- Host/IP, port, Modbus address, TCP framing, timeout and polling settings are retained. All three framing options are supported.
+- Reloading closes the old native connection before preparing the managed one. Settings are validated and YAML endpoint conflicts checked before the migration is saved.
+- Older HA versions retain the native TCP client without migration. An entry already migrated to the new API requires HA 2026.10 or later.
+- Existing **Home Assistant Modbus (TCP)** entries already use this API and now appear as **TCP / Ethernet** in the interface selector.
+
+**Compatibility note:** TCP communication now uses HA's tmodbus backend rather than the integration's Pymodbus client. Timeout, retry, reconnect and protocol-error handling are not identical. Some inverters or TCP bridges may therefore behave differently or encounter communication problems after migration, even though their settings are retained. If this happens, share a debug log and your inverter/bridge details; do not delete and recreate the integration. Shared connections also use the highest timeout required by their consumers.
+
+## Automatic serial migration
+
+On Home Assistant 2026.10 or later, existing direct serial connections switch to Home Assistant's shared Modbus API at the next startup or integration reload. No manual changes, deletion or reconfiguration are needed.
+
+- The existing config entry, integration name, entity IDs, devices and automations are kept.
+- Port (including ESPHome serial proxy URLs), baud rate, Modbus address, timeout and polling settings are retained.
+- The former native client's 8N1/RTU settings and zero additional message spacing are preserved. Home Assistant now manages connection sharing, retries and reconnection.
+- Reloading closes the old native connection before preparing the managed one. No second serial client is opened by the migration.
+- Migration is saved only after the settings and YAML endpoint conflict checks succeed. A competing YAML hub must be resolved before migration can proceed; its settings are not overwritten.
+- On HA versions older than 2026.10, existing direct serial connections and new serial installations continue using the native client without migration. An entry already migrated to the new API requires HA 2026.10 or later.
+
+Existing **Home Assistant Modbus (Serial)** entries already use this API and are simply shown as **Serial** in the interface selector. The staged YAML hub migration described above is unchanged.
+
+## Scope and dependencies
 
 The integration declares Home Assistant's `modbus` integration as a dependency so HA installs its version-matched Modbus libraries and loads the public API before setup or config flows use it. This applies to all installations, but loading `modbus` without YAML hubs does not open a Modbus connection. Only a configured YAML hub or a request through the shared unit API opens a link.
 
