@@ -2743,7 +2743,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         register=0x51,
         fmt="i",
         native_min_value=-5000,
-        native_max_value=0,
+        native_max_value=5000,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
@@ -12097,6 +12097,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("63150"):
             invertertype = HYBRID | GEN4 | X1  # Gen4 X1 5.0kW
             self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
+        elif seriesnumber.startswith("63160"):
+            invertertype = HYBRID | GEN4 | X1  # Gen4 X1 6.0kW (TIGO TSI-6K1D)
+            self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
         elif seriesnumber.startswith("H43"):
             invertertype = HYBRID | GEN4 | X1  # Gen4 X1 3kW / 3.7kW
             self.inverter_model = f"X1-Hybrid-{seriesnumber[2:3]}.{seriesnumber[3:4]}kW"
@@ -12153,7 +12156,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("H31"):
             invertertype = HYBRID | GEN4 | X3  # TIGO TSI X3
             self.inverter_model = "X3-TIGO TSI"
-        elif seriesnumber.startswith("H34"):
+        elif seriesnumber.startswith(("H34", "N34")):
             invertertype = HYBRID | GEN4 | X3  # Gen4 X3 5-15kW
             self.inverter_model = f"X3-Hybrid-{int(seriesnumber[4:6])}kW"
         elif seriesnumber.startswith("H3VC83"):
@@ -12172,7 +12175,7 @@ class solax_plugin(plugin_base):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW P
             self.inverter_model = f"X3-IES-{seriesnumber[5:6]}kW"
         elif seriesnumber.startswith("P35A1"):
-            invertertype = HYBRID | GEN5 | X3  # X3-IES 10-15kW P
+            invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3-IES 10-15kW P
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
         elif seriesnumber.startswith("H35F0"):
             invertertype = HYBRID | GEN5 | X3  # X3-IES 4-8kW F
