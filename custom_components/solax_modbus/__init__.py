@@ -475,10 +475,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hub.async_init()
     # PLEASE ADAPT flollowing line and scan declarations to find external sources instead
-    hub._external_sources = {"house_load": None}  # key -> label; prototype: hard-coded via plugin-constante PLEASE ADAPT AND SCAN DECLARATIONS
-    # Register external sensor overrides (e.g. directly measured house load)
-    # if hasattr(hub, "async_register_external_overrides"):
-    #    await hub.async_register_external_overrides(plugin, entry.options)
+    hub._external_sources = dict(getattr(plugin, "EXTERNAL_SOURCE_TYPES", {}) or {})
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
 
@@ -2879,9 +2876,10 @@ class SolaXModbusHub:
     def _autorepeat_input_data(self, keys: set[str]) -> dict[str, Any]:
         """Use accepted values for declared inputs, preserving local requests."""
         data = self.data.copy()
+        injected_external_keys = {f"external_{k}" for k in (getattr(self, "_external_sources", None) or {})}
         for key in keys:
-            if key in getattr(self, "writeLocals", {}) or key in getattr(self, "_external_override_keys", ()):
-                continue  # hub-managed value: keep it in self.data
+            if key in getattr(self, "writeLocals", {}) or key in injected_external_keys:
+                continue  # hub-managed value (writeLocal or injected external): keep it in s
             sample = self._accepted_input_sample(key, include_pending=False)
             if sample is None or not self._control_input_valid(key):
                 data.pop(key, None)
