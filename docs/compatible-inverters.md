@@ -181,6 +181,7 @@ Known Serial Numbers
 - H34A
 - H34B
 - H34T
+- N34A (Nord OEM [Nord Solution](https://nord-solution.com); N34A10 tested)
 
 ### PV Only
 
