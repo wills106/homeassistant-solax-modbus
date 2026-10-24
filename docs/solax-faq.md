@@ -62,3 +62,12 @@ When finishing remote control (setting mode to Disabled) when the battery SoC is
 
 As a workaround, the "Battery Charge Upper SOC" entity (`number.solax_battery_charge_upper_soc`) can be used to limit the SoC of the battery. Setting this to 97% prevents the undesirable behaviour at the expense of stopping the battery reaching full charge outside the remote control session.
 
+## I have a hardware power meter measuring the house_load. Can it replace the builtin house load measurement?
+
+If the external house_load power meter has a sensor entity in HA, you can select it as the source for this integration's houseload and houseload_alt entities.
+House_loud is used in the VPP autorepeat loops to adapt the required power in the submodes.
+To activate your external sensor, use the `External House Load Source` entity (a dropdown menu) and select the appropriate power meter entity (typically W, or kW).
+From now on, house_load and house_load_alt will show the power value measured by this external device.
+The VPP autorepat loop has a configurable smoothing filter to avoid oscillations when load or PV changes. This smoothing filter is by default delaying changes gradually over 5 polling intervals.
+If the external house_load sensor is active, it is much less likely to see oscillations, so the `Remotecontrol Filter Smoothing Factor (mode 8/9)` entity can be set to 1 instead of the default 5. This will make the system responnd faster.
+This has been tested with a low cost Shelly 3EM-63 (W or T) device. This device has the advantage that it does not take any space on the DIN distribution rail. It simply sits under/above a circuit breaker.
