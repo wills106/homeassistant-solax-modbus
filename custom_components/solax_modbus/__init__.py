@@ -2891,13 +2891,12 @@ class SolaXModbusHub:
         # Unsupported topology is handled by the unchanged controller (disable
         # for Mode 8, no-op for a modes 1-7 Slave). No sub-mode math is evaluated.
         stopping = disabled or (topologies is not None and (not isinstance(parallel, str) or parallel not in topologies))
-        required = (
-            set()
-            if stopping
-            else set(descr.depends_on or ()) | {key for key in descr.autorepeat_dependencies if self._autorepeat_input_installed(key)}
-        )
+        required = set() if stopping else set(descr.depends_on or ()) | set(descr.autorepeat_dependencies)
         if not stopping and topologies is not None:
             required.update(topologies[parallel])
+        # Model-filtered descriptions retain disabled entities. Omit unsupported
+        # inputs in every declaration, while still rejecting unread/invalid ones.
+        required = {key for key in required if self._autorepeat_input_installed(key)}
         ready = all(key in source and self._control_input_valid(key) for key in required)
         if not disabled and self._autorepeat_input_installed("parallel_setting"):
             ready = ready and self._control_input_valid("parallel_setting")
