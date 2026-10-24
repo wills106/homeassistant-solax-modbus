@@ -9,6 +9,7 @@ import logging
 import math
 import struct
 import time as _mtime
+from bisect import bisect_right
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from types import ModuleType, SimpleNamespace
@@ -753,6 +754,7 @@ class SolaXModbusHub:
         # Runtime bad register handling. bad_regs are temporarily quarantined
         # entity base-addresses that are excluded from normal polling.
         self.bad_regs: dict[str, set[int]] = {"holding": set(), "input": set()}
+        self._runtime_block_splits: dict[str, set[int]] = {"holding": set(), "input": set()}
         self.bisect_max_depth = 10  # safety cap to avoid pathological recursion
         self._runtime_bisect_tasks: dict[str, asyncio.Task[Any]] = {}
         self._quarantine_recheck_task: asyncio.Task[Any] | None = None
@@ -2983,6 +2985,7 @@ class SolaXModbusHub:
         block_size = self.plugin.block_size
         auto_block_ignore_readerror = self.plugin.auto_block_ignore_readerror
         curblockregs: list[Any] = []
+        runtime_splits = {typ: sorted(points) for typ, points in getattr(self, "_runtime_block_splits", {}).items()}
         for reg, descr in descriptions.items():
             d_ignore_readerror = auto_block_ignore_readerror
             if type(descr) is dict:  # 2 byte  REGISTER_U8L, _U8H values on same modbus 16 bit address
@@ -3015,7 +3018,11 @@ class SolaXModbusHub:
                 d_regtype = descr.register_type  # HOLDING or INPUT
 
             if d_enabled:
-                if d_newblock or ((reg - start) > block_size):
+                typ_key = "holding" if d_regtype == REG_HOLDING else "input"
+                boundaries = runtime_splits.get(typ_key, [])
+                # Keep learned boundaries even if the entity at that address is disabled.
+                split_here = start != INVALID_START and bisect_right(boundaries, start) < bisect_right(boundaries, reg)
+                if d_newblock or split_here or ((reg - start) > block_size):
                     if (end - start) > 0:
                         _LOGGER.debug("%s: Starting new block at 0x%x", self._name, reg)
                         if (
@@ -3044,7 +3051,6 @@ class SolaXModbusHub:
                     start = reg
 
                 # Skip definitively bad entity bases and split blocks at bad boundaries
-                typ_key = "holding" if d_regtype == REG_HOLDING else "input"
                 if reg in self.bad_regs[typ_key]:
                     # Close current block if it already has content
                     if (end - start) > 0:
@@ -3199,9 +3205,17 @@ class SolaXModbusHub:
         if not self._transport.is_connected():
             return
         candidates: set[int] = set()
+        split_points: set[int] = set()
         _LOGGER.warning("%s: repeated failures for %s; probing block to isolate bad registers", self._name, key)
         try:
-            await self._find_bad_regs_in_block(block_obj, typ, candidates)
+            readable = await self._find_bad_regs_in_block(block_obj, typ, candidates, split_points=split_points)
+            if readable and split_points and not self._stopping and self._transport.is_connected():
+                new_splits = split_points - self._runtime_block_splits[typ]
+                if new_splits:
+                    self._runtime_block_splits[typ].update(new_splits)
+                    self.blocks_changed = True
+                    self._comm_block_failures.pop(key, None)
+                    _LOGGER.info("%s: keeping %s readable sub-blocks for %s", self._name, len(split_points) + 1, key)
             confirmed: list[int] = []
             for addr in sorted(candidates):
                 if addr in self.bad_regs[typ]:
@@ -3222,24 +3236,34 @@ class SolaXModbusHub:
         except Exception as ex:
             _LOGGER.debug("%s: runtime bisect for %s failed: %s", self._name, key, ex)
 
-    async def _find_bad_regs_in_block(self, block_obj: Any, typ: str, candidates: set[int], depth: int = 0) -> None:
+    async def _find_bad_regs_in_block(
+        self, block_obj: Any, typ: str, candidates: set[int], depth: int = 0, *, split_points: set[int] | None = None
+    ) -> bool:
+        """Find bad entity bases and successful partitions, using the same probes."""
         if getattr(self, "_stopping", False):
-            return
+            return False
         if await self._probe_block(block_obj, typ):
-            return
+            return True
         if not self._transport.is_connected():
-            return
+            return False
 
         regs = list(block_obj.regs or [])
         if depth >= self.bisect_max_depth or len(regs) <= 1:
             if len(regs) == 1:
                 candidates.add(regs[0])
                 _LOGGER.debug("%s: candidate bad %s entity base 0x%x", self._name, typ, regs[0])
-            return
+            return False
 
         mid = len(regs) // 2
-        await self._find_bad_regs_in_block(self._subblock_entity_span(block_obj, 0, mid), typ, candidates, depth + 1)
-        await self._find_bad_regs_in_block(self._subblock_entity_span(block_obj, mid, len(regs)), typ, candidates, depth + 1)
+        left = self._subblock_entity_span(block_obj, 0, mid)
+        right = self._subblock_entity_span(block_obj, mid, len(regs))
+        left_readable = await self._find_bad_regs_in_block(left, typ, candidates, depth + 1, split_points=split_points)
+        right_readable = await self._find_bad_regs_in_block(right, typ, candidates, depth + 1, split_points=split_points)
+        if left_readable and right_readable:
+            if split_points is not None:
+                split_points.add(right.start)
+            return True
+        return False
 
     async def _confirm_bad_register(self, typ: str, addr: int) -> bool:
         single = self._single_register_block(typ, addr)
