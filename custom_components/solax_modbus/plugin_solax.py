@@ -881,16 +881,6 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
     return desired_charge, max_charge, bms_cap_w, pct_cap_w
 
 
-DEFAULT_FILTER_SMOOTING_FACTOR = 5
-
-
-def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: int = DEFAULT_FILTER_SMOOTING_FACTOR) -> int:
-    # Simple rolling average filter for updating control setpoints to avoid oscillation
-    # Time Constant = Fast Poll Interval / (ln(steps) - ln(steps-1)). Settling time is approx 5 time constants.
-    return int((current_value * (steps - 1) + desired_value) / steps)
-
-
-
 def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
     # initval = BUTTONREPEAT_FIRST means first run;
     # initval = BUTTONREPEAT_LOOP means subsequent runs for button autorepeat value functions
