@@ -4,13 +4,14 @@ from time import time
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, UnitOfPower
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util.unit_conversion import PowerConverter
 
 from .const import (
     BUTTONREPEAT_FIRST,
@@ -240,27 +241,57 @@ class SolaXModbusSelect(SelectEntity):
 
 
 class SolaXModbusExternalSourceSelect(SolaXModbusSelect):
-    """Select with dynamically discovered options: all power sensors in HA."""
+    """Select with dynamically discovered options from the HA entity registry.
+
+    A sensor candidate matches when its (original) device_class equals the declared
+    dynamic_device_class, or when its unit_of_measurement is convertible to the canonical
+    unit declared in the plugin's EXTERNAL_SOURCE_TYPES map. The key convention is:
+    the select external_<source>_source overrides the internal sensor key <source>.
+    """
 
     _NO_SOURCE = ""  # internal sentinel value stored in hub.data
     _NO_SOURCE_LABEL = "(none — use calculated value)"  # user-visible label in dropdown
 
+    def _derived_source_key(self) -> str:
+        """house_load for a select declared as external_house_load_source."""
+        return self._key.removeprefix("external_").removesuffix("_source")
+
     @property
     def options(self) -> list[str]:
+        device_class = getattr(self.entity_description, "dynamic_device_class", None)
+        sources = getattr(self._hub, "_external_sources", None) or {}
+        target_unit = str(sources.get(self._derived_source_key()) or UnitOfPower.WATT)
         registry = er.async_get(self.hass)
         candidates = [
             entry.entity_id
             for entry in registry.entities.values()
-            if entry.domain == "sensor"
-            and (entry.device_class == SensorDeviceClass.POWER or entry.unit_of_measurement in ("W", "kW", "Watt", "kilowatt"))
+            if entry.domain == "sensor" and self._candidate_matches(entry, device_class, target_unit)
         ]
         return [self._NO_SOURCE_LABEL] + sorted(set(candidates))
+
+    @staticmethod
+    def _candidate_matches(entry: Any, device_class: str | None, target_unit: str) -> bool:
+        declared_class: str | None = entry.device_class or entry.original_device_class
+        if device_class is not None:
+            result: bool = declared_class == device_class
+            return result
+        unit = entry.unit_of_measurement
+        if unit is None:
+            return False
+        try:
+            PowerConverter.convert(1.0, unit, target_unit)
+            return True
+        except HomeAssistantError:
+            return False
 
     @property
     def current_option(self) -> str | None:
         value = self._hub.data.get(self._key)
-        # Translate internal "" → user-friendly label
-        return self._NO_SOURCE_LABEL if value == "" else str(value)
+        # An unset (fresh install / loaded initvalue=None) or explicitly deselected source shows
+        # the label, never "None", so the state always remains a member of options.
+        if value is None or value == self._NO_SOURCE:
+            return self._NO_SOURCE_LABEL
+        return str(value)
 
     async def async_select_option(self, option: str) -> None:
         """Change the select option."""

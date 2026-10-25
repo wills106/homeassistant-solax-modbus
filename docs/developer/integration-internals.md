@@ -150,14 +150,12 @@ The system will automatically convert the data to the modbus low level format, a
 The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's `value_function`'s call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent. Storing data in the `datadict` dictionary may work in future versions, please use a name that cannot conflict with other entities.
 ## Overriding inverter sensors
 
-
 Some sensors are computed from other sensors (in most cases through value_functions). Sometimes an external device/sensor can provide a more accurate value.
-There is a mechanism that allows us to override an internal sensor by a sensor entity from another integration.
+There is a mechanism that allows us to override an internal sensor with a sensor entity from another integration.
 This can be declared in the plugin_xxx.py code. The example shows how to override house_load with the value read from an external source.
 
+A new type of select entity can be declared that is a reference to another entity:
 
-A new type of select entity can be declared that is a reference to anotheer entity:
-example: 
 ```
     SolaxModbusSelectEntityDescription(
         name="External House Load Source",
@@ -172,10 +170,14 @@ example:
         # option_dict stays None: options come from the entity registry at runtime
     ),
 ```
-This declaration will create a select box entity with a dropdown that shows all the POWER entities
-Please note the naming convention for the key:   
-The key name of the sensor that will be overeridden is the keyname of this  declaration without the prefix external_ and posfix _source.
-The house_load value function must be been modified slightly to read this external sensor:
+This declaration creates a select entity with a dropdown that lists all candidate sensor entities: sensors whose device class matches `dynamic_device_class`, or (when no device class is declared) sensors whose unit is convertible to the canonical unit declared in `EXTERNAL_SOURCE_TYPES`.
+If `dynamic_device_class` is declared, only sensors with that device class are listed.
+
+Naming convention for the key: the key name of the sensor that will be overridden is the key of this declaration without the `external_` prefix and the `_source` suffix (`external_house_load_source` overrides `house_load`). A startup warning is logged when a declared `EXTERNAL_SOURCE_TYPES` entry has no matching select entity, or vice versa.
+
+The injected value is available to value functions under the key `external_<source>` (e.g. `external_house_load`). It is re-read from the HA state machine on every poll cycle; when the external entity is missing, unavailable, unknown or non-numeric, the key is absent and the calculated value is used automatically (fail-open). The injected value is registered as a fresh accepted input, so dependent computed sensors such as `house_load` use this cycle's measurement.
+
+The house_load value function must be modified slightly to read this external sensor:
 ```
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     external = datadict.get("external_house_load")
@@ -200,7 +202,7 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 ```
 
-Declare the extrnal sources in the plugin declaration:
+Declare the external sources in the plugin declaration:
 
 ```
 EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | str | None] = {
@@ -211,18 +213,9 @@ plugin_instance = solax_plugin(
     plugin_name="SolaX",
     plugin_manufacturer="SolaX Power",
     SENSOR_TYPES=SENSOR_TYPES_MAIN,
-    ... 
+    ...
     EXTERNAL_SOURCE_TYPES=EXTERNAL_SOURCE_TYPES,
-   ...
+    ...
 ```
-Even though the declaration says WATT, the drowdown will also show sensors that report kW, so this declaration only specifies the terget internal unit.
 
-
-----
-
-
-
-
-
-
-
+The declared value is the target internal unit. Measured values are converted to it automatically: a dropdown selection that reports kW is multiplied by 1000 before it reaches the control loop.

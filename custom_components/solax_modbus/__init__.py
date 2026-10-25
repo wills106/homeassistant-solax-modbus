@@ -10,6 +10,7 @@ import math
 import struct
 import time as _mtime
 from bisect import bisect_right
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from types import ModuleType, SimpleNamespace
@@ -42,6 +43,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util.unit_conversion import PowerConverter
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.framer import FramerType
@@ -189,8 +191,6 @@ COMM_BLOCK_FAILURE_THRESHOLD = 3
 COMM_BLOCK_FAILURE_WINDOW = 600
 COMM_RECOVERY_INTERVAL = 300
 INFLIGHT_CANCEL_TIMEOUT = 2.0
-
-STALENESS_TIMEOUT = 5.0
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -475,8 +475,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hub.async_init()
-    # PLEASE ADAPT flollowing line and scan declarations to find external sources instead
-    hub._external_sources = dict(getattr(plugin, "EXTERNAL_SOURCE_TYPES", {}) or {})
 
     entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
 
@@ -706,9 +704,8 @@ class SolaXModbusHub:
         self._name: str = name
         # following call will modify and extend client in case old modbus API needs to be used
         _LOGGER.debug("%s: using pymodbus version %s", name, pymodbus_version_info())
-        # External source overrides for the control loop: datadict key -> optional label
+        # External source overrides for the control loop: datadict key -> canonical unit (or None)
         self._external_sources: dict[str, str | None] = {}
-        self._override_entities: dict[str, str] = {}  # plugin-key -> entity_id
 
         self.inverterNameSuffix = config.get(CONF_INVERTER_NAME_SUFFIX)
         self.inverterPowerKw = config.get(CONF_INVERTER_POWER_KW, DEFAULT_INVERTER_POWER_KW)
@@ -743,6 +740,7 @@ class SolaXModbusHub:
         _LOGGER.debug("%s: ready to call plugin to determine inverter type", self.name)
         self.plugin = plugin.plugin_instance.create_hub_instance()
         self.plugin_module = plugin  # Store plugin module for accessing module-level functions
+        self.register_external_sources()
         self._validate_register_func = getattr(plugin, "validate_register_data", None)  # Cache function reference
         self.wakeupButton: Any = None
         self._invertertype: int | None = None
@@ -994,23 +992,67 @@ class SolaXModbusHub:
 
     # end of save and load section
 
-    # ============ external sensors -  override functionality - start
+    # ============ external sensors - override functionality ============
 
-    # async def async_register_external_overrides(self, plugin: ModuleType, options: Mapping[str, Any]) -> None:
-    #    """Store configured external sensor overrides for the control loop."""
-    #    instance = getattr(plugin, "plugin_instance", plugin)
-    #    overridable = getattr(instance, "OVERRIDABLE_SENSORS", None) or {}
-    #    for key in overridable:
-    #        entity_id = options.get(f"external_{key}")
-    #        if not entity_id:
-    #            continue
-    #        self._override_entities[key] = entity_id
-    #        _LOGGER.debug("%s: external override '%s' from %s", self._name, key, entity_id)
+    def register_external_sources(self) -> None:
+        """Store the plugin-declared external sources and validate the key convention.
 
-    def apply_external_overrides(self, datadict: dict[str, Any]) -> None:
-        """Inject fresh externally measured values for the control loop."""
+        For each declared source key, the plugin must also declare a dynamic select named
+        external_<key>_source so the user can pick the measurement entity. Mismatches are a
+        plugin authoring error (e.g. a typo), so they are surfaced loudly instead of silently
+        disabling the feature.
+        """
+        declared = getattr(self.plugin, "EXTERNAL_SOURCE_TYPES", None)
+        sources = dict(declared) if isinstance(declared, Mapping) else {}
+        self._external_sources = sources
+        if not sources:
+            return
+        declared_selects = getattr(self.plugin, "SELECT_TYPES", None)
+        if not isinstance(declared_selects, Sequence):
+            return
+        select_keys = {str(getattr(descr, "key", "")) for descr in declared_selects}
+        for key in sources:
+            if f"external_{key}_source" not in select_keys:
+                _LOGGER.warning(
+                    "%s: EXTERNAL_SOURCE_TYPES declares '%s' but no select entity 'external_%s_source' is declared",
+                    self._name,
+                    key,
+                    key,
+                )
+        for select_key in sorted(select_keys):
+            if select_key.startswith("external_") and select_key.endswith("_source"):
+                derived = select_key.removeprefix("external_").removesuffix("_source")
+                if derived and derived not in sources:
+                    _LOGGER.warning(
+                        "%s: select entity '%s' has no matching EXTERNAL_SOURCE_TYPES entry; overrides will not be applied",
+                        self._name,
+                        select_key,
+                    )
+
+    def _external_source_lease(self, interval: float | None) -> float:
+        """External sources are re-read every cycle; the lease only covers one missed cycle."""
+        configured = float(getattr(self, "config", {}).get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+        return 2.0 * (interval or configured)
+
+    def apply_external_overrides(self, datadict: dict[str, Any], interval: float | None = None) -> set[str]:
+        """Inject fresh externally measured values for the control loop.
+
+        Returns the set of injected datadict keys so callers can mark them as fresh inputs.
+        Values are always re-read from the HA state machine so stale or unavailable external
+        sensors fall back to the calculated value automatically (fail-open). A matching
+        InputObservation is recorded (into the staged observations when a poll is in progress)
+        so dependent computed sensors (e.g. house_load) treat the injected value as a fresh
+        accepted input instead of a stale cached one.
+        """
         sources = getattr(self, "_external_sources", None) or {}
-        for key in sources:  # keys only; labels unused for now
+        if not sources:
+            return set()
+        injected: set[str] = set()
+        deadline = _mtime.monotonic() + self._external_source_lease(interval)
+        staged = getattr(self, "_pending_input_observations", None)
+        if staged is None:
+            staged = self._computed_input_observations
+        for key, target_unit in sources.items():
             conf_key = f"external_{key}"
             source_entity = self.data.get(f"external_{key}_source") or ""
             if not source_entity:
@@ -1025,13 +1067,25 @@ class SolaXModbusHub:
             except (TypeError, ValueError):
                 datadict.pop(conf_key, None)
                 continue
-            # unit-conversie richting de gedeclareerde canonical unit (W)
+            # Convert the measured unit to the plugin-declared canonical unit (usually W).
             unit = state.attributes.get("unit_of_measurement")
-            if unit == UnitOfPower.KILO_WATT:
-                value *= 1000.0
+            target = str(target_unit or UnitOfPower.WATT)
+            try:
+                value = PowerConverter.convert(value, unit, target)
+            except HomeAssistantError:
+                _LOGGER.debug(
+                    "%s: external source %s reports unit %s which is not convertible to %s; using the raw value",
+                    self._name,
+                    source_entity,
+                    unit,
+                    target,
+                )
             datadict[conf_key] = value
+            staged[conf_key] = InputObservation(_mtime.monotonic(), value, deadline)
+            injected.add(conf_key)
+        return injected
 
-    # ========  external sensors -  override functionality - end
+    # ============ external sensors - override functionality end ============
 
     def scan_group(self, sensor: Any) -> int:  # seems to be called for non-sensor entities also - strange
         # scan group
@@ -1411,6 +1465,9 @@ class SolaXModbusHub:
         # controlling; do not replace another interval's in-flight observations.
         async with self._poll_data_lock:
             self._pending_input_observations = self._input_observations(include_pending=False).copy()
+            # External measurements must be fresh *before* computed sensors like house_load are
+            # evaluated, otherwise the control loop would act on a one-cycle-old measurement.
+            cycle_fresh_keys.update(self.apply_external_overrides(self.data, getattr(interval_group, "interval", None)))
             try:
                 cycle_computed_keys.update(self._compute_poll_sensors(self.data, cycle_fresh_keys, getattr(interval_group, "interval", None)))
                 self._computed_input_observations = self._pending_input_observations
@@ -2822,11 +2879,13 @@ class SolaXModbusHub:
 
     async def _async_update_autorepeats(self, interval: float | None) -> set[str]:
         """Run lifecycle maintenance once per interval, with one measurement owner."""
+        # TODO: local_outputs is SolaX-specific and should move to the plugin (see PR #2421 review).
         local_outputs = (
             "remotecontrol_current_pushmode_power",
             "remotecontrol_current_pv_power_limit",
-        )  # ugly - this is solax-only - does not belong in init.py
-        self.apply_external_overrides(self.data)  # inject external overrides for the control loop
+        )
+        # Refresh external measurements here too: autorepeat also runs on skipped (slowdown) cycles.
+        self.apply_external_overrides(self.data, interval)
         previous = {key: self.data.get(key) for key in local_outputs}
         self.last_ts = _mtime.time()
         pending_stops = getattr(self, "_autorepeat_pending_stops", {})
