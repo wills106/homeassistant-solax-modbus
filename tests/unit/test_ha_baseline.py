@@ -1,13 +1,11 @@
 """Baseline drift is advisory and does not confuse newer patches with incompatibility."""
 
-import json
 from pathlib import Path
 from urllib.error import URLError
 
 import pytest
 
 from scripts import check_ha_baseline
-from scripts.resolve_ha_environment import RELEASE_URL
 
 
 @pytest.mark.parametrize(
@@ -46,14 +44,18 @@ def test_advisory_cli_writes_summary_and_never_exits_on_drift_or_metadata_errors
     monkeypatch.setattr(check_ha_baseline, "version", lambda name: "2026.9.4")
     monkeypatch.setattr("scripts.check_ha_baseline.platform.python_version", lambda: "3.14.7")
 
-    def read(url: str) -> str:
-        assert url == RELEASE_URL
+    def plugin_tag() -> tuple[str, str]:
+        # Mirrors scripts.resolve_ha_environment.plugin_homeassistant_tag: an
+        # offline PyPI lookup raises URLError, and a missing or non-stable pin
+        # raises ValueError rather than selecting a prerelease HA.
         if lookup == "network-error":
             raise URLError("offline\n::error::untrusted detail")
-        tag = {"current": "2026.9.4", "newer": "2026.10.0", "prerelease": "2026.10.0b0"}[lookup]
-        return json.dumps({"tag_name": tag})
+        if lookup == "prerelease":
+            raise ValueError("The newest test plugin must pin exactly one published HA release")
+        tag = {"current": "2026.9.4", "newer": "2026.10.0"}[lookup]
+        return tag, "https://pypi.org/pypi/pytest-homeassistant-custom-component/json"
 
-    monkeypatch.setattr(check_ha_baseline, "read_url", read)
+    monkeypatch.setattr(check_ha_baseline, "plugin_homeassistant_tag", plugin_tag)
     monkeypatch.setattr(check_ha_baseline, "select_python", lambda tag: ("3.14.5", "metadata"))
     check_ha_baseline.main()
     text = summary.read_text()
