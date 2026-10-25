@@ -1607,7 +1607,7 @@ def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, 
     )
 
 
-def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+def value_function_inverter_power_x3(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return int(datadict.get("inverter_power_l1", 0)) + int(datadict.get("inverter_power_l2", 0)) + int(datadict.get("inverter_power_l3", 0))
 
 
@@ -10284,7 +10284,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     SolaXModbusSensorEntityDescription(
         name="Inverter Power",
         key="inverter_power",
-        value_function=value_function_inverter_power_g5,
+        value_function=value_function_inverter_power_x3,
         depends_on=["inverter_power_l1", "inverter_power_l2", "inverter_power_l3"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
