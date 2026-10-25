@@ -1,13 +1,12 @@
 """Warn about an outdated locked quality baseline without changing dependencies."""
 
-import json
 import os
 import platform
 import tomllib
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-from scripts.resolve_ha_environment import RELEASE_URL, python_version, read_url, select_python, stable_tag
+from scripts.resolve_ha_environment import plugin_homeassistant_tag, python_version, select_python, stable_tag
 
 
 def version_parts(value: str) -> tuple[int, ...]:
@@ -59,7 +58,8 @@ def main() -> None:
             "python": python_version(platform.python_version()),
             "mypy_python": str(project["tool"]["mypy"]["python_version"]),
         }
-        tag = stable_tag(json.loads(read_url(RELEASE_URL)))
+        # Match the CI 'current' target: the HA pinned by the newest published test plugin.
+        tag, _ = plugin_homeassistant_tag()
         selected_python, _ = select_python(tag)
         current = {"homeassistant": tag, "python": selected_python}
         warnings = baseline_warnings(baseline, current)
