@@ -10227,7 +10227,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="house_load",
         value_function=value_function_house_load,
         depends_on=["inverter_power", "measured_power"],
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["meter_2_measured_power", "generator_control"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10296,7 +10296,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "battery_power_charge",
             "measured_power",
         ],
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["meter_2_measured_power", "generator_control"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
