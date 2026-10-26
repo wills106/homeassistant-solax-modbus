@@ -561,7 +561,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
-        house_load = house_load = datadict.get("house_load", 0)
+        house_load = datadict.get("house_load", 0)
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
@@ -1970,7 +1970,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_remotecontrol_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power"],
+        depends_on=["battery_capacity", "measured_power", "house_load"],
         autorepeat_control="remotecontrol_power_control",
         autorepeat_dependencies=(
             "parallel_setting",
@@ -1990,7 +1990,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "external_house_load",
         ),
         autorepeat_parallel_dependencies={
-            "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
+            "Free": ("pv_power_total", "inverter_power", "battery_power_charge", "house_load"),
             "Master": ("pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
         },
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
@@ -2004,7 +2004,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge"],
+        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge", "house_load", "house_load_alt"],
         autorepeat_control="remotecontrol_power_control_mode",
         autorepeat_dependencies=(
             "parallel_setting",
