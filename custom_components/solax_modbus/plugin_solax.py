@@ -543,7 +543,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pm_total_pv_power", 0)
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_power_charge = datadict.get("pm_battery_power_charge", 0)
-        house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load
+        house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house_load=%sW",
@@ -561,7 +561,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
-        house_load = inverter_power - measured_power  # Single inverter house load calculation
+        house_load = house_load = datadict.get("house_load", 0)
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
@@ -1650,6 +1650,10 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     During remote control, if the two methods differ by < 25%, split the difference
     to compensate for inverter measurement inflation.
     """
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
     # Get raw sensor values
     pm_inverter_power: int | float = (
         int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
@@ -1983,6 +1987,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "grid_voltage_l1",
             "grid_voltage_l2",
             "grid_voltage_l3",
+            "external_house_load",
         ),
         autorepeat_parallel_dependencies={
             "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
@@ -9474,7 +9479,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "measured_power",
             "parallel_setting",
         ],
-        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
+        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power", "external_house_load"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(

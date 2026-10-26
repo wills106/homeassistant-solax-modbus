@@ -65,10 +65,9 @@ As a workaround, the "Battery Charge Upper SOC" entity (`number.solax_battery_ch
 ## I have a hardware power meter measuring the house_load. Can it replace the built-in house load measurement?
 
 If the external house_load power meter has a sensor entity in HA, you can select it as the source for this integration's house_load and house_load_alt entities.
-House load is used in the VPP autorepeat mode 8 loop to adapt the required power in the submodes.
+House load is used in the VPP autorepeat loops to adapt the required power in the submodes.
 To activate your external sensor, use the `External House Load Source` entity (a dropdown menu) and select the appropriate power meter entity (typically W, or kW).
 From now on, house_load and house_load_alt will show the power value measured by this external device.
 The VPP autorepeat loop has a configurable smoothing filter to avoid oscillations when load or PV changes. This smoothing filter by default delays changes gradually over 5 polling intervals.
 If the external house_load sensor is active, oscillations are much less likely, so the `Remotecontrol Filter Smoothing Factor (mode 8/9)` entity can be set to 1 instead of the default 5. This will make the system respond faster.
 This has been tested with a low-cost Shelly 3EM-63 (W or T) device. This device has the advantage that it does not take any space on the DIN distribution rail. It simply sits under/above a circuit breaker.
-VPP mode 1-7 autorepeat with external_house_load is not (yet) supported.
