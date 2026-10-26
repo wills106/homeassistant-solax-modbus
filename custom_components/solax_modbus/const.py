@@ -161,7 +161,7 @@ class plugin_base:
     SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: Sequence[SwitchEntityDescription]
     TIME_TYPES: Sequence[TimeEntityDescription]
-    EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | str | None] = field(default_factory=dict)
+    EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = field(default_factory=dict)
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100

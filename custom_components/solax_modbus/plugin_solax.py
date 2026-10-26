@@ -10245,7 +10245,10 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="house_load",
         value_function=value_function_house_load,
         depends_on=["inverter_power", "measured_power"],
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["meter_2_measured_power", "external_house_load"],
+        # external_house_load is an optional input: when an external source is selected it
+        # alone must be able to trigger a recompute, otherwise house_load only refreshes when
+        # the polled inverter inputs happen to change.
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10314,7 +10317,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "battery_power_charge",
             "measured_power",
         ],
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["meter_2_measured_power", "external_house_load"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -13610,7 +13613,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     ],
 )
 
-EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | str | None] = {
+EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = {
     "house_load": UnitOfPower.WATT,
 }
 
