@@ -256,22 +256,22 @@ class SolaXModbusExternalSourceSelect(SolaXModbusSelect):
         """house_load for a select declared as external_house_load_source."""
         return self._key.removeprefix("external_").removesuffix("_source")
 
-    @staticmethod
-    def _is_solax_entity(entry: Any) -> bool:
-        """Return True if the entity originates from solax_modbus."""
-        return getattr(entry, "platform", None) == "solax_modbus" or "solax_modbus" in (getattr(entry, "unique_id", "") or "")
-
     @property
     def options(self) -> list[str]:
         device_class = getattr(self.entity_description, "dynamic_device_class", None)
         sources = getattr(self._hub, "_external_sources", None) or {}
         target_unit = str(sources.get(self._derived_source_key()) or UnitOfPower.WATT)
         registry = er.async_get(self.hass)
+
+        # Exclude entities owned by this hub's config entry (incl. all its device
+        # groups). Entities from other hubs or integrations remain selectable.
+        own_entry_id = self.registry_entry.config_entry_id if self.registry_entry else None
+
         candidates = [
             entry.entity_id
             for entry in registry.entities.values()
             if entry.domain == "sensor"
-            and not SolaXModbusExternalSourceSelect._is_solax_entity(entry)  # filter out our own entities
+            and (own_entry_id is None or entry.config_entry_id != own_entry_id)
             and self._candidate_matches(entry, device_class, target_unit)
         ]
         return [self._NO_SOURCE_LABEL] + sorted(set(candidates))
