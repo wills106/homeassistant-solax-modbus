@@ -1067,6 +1067,9 @@ class SolaXModbusHub:
             except (TypeError, ValueError):
                 datadict.pop(conf_key, None)
                 continue
+            if not math.isfinite(value):
+                datadict.pop(conf_key, None)
+                continue
             # Convert the measured unit to the plugin-declared canonical unit (usually W).
             unit = state.attributes.get("unit_of_measurement")
             target = str(target_unit or UnitOfPower.WATT)
