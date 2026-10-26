@@ -225,3 +225,34 @@ def test_current_option_label_is_member_of_options(monkeypatch: pytest.MonkeyPat
     select.hass = Mock()
     hub.data["external_house_load_source"] = None
     assert select.current_option in select.options
+
+
+# --------------------------------------------------------------------------------------
+# Latency behaviour: identical measurements must not re-trigger the control loop, and an
+# external-only change must be able to recompute house_load on its own (PR #2421 review).
+# --------------------------------------------------------------------------------------
+
+
+def test_external_house_load_declared_as_optional_dependency() -> None:
+    """house_load must recompute when only the external measurement changes."""
+    from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
+
+    for key in ("house_load", "house_load_alt"):
+        descr = next(d for d in SENSOR_TYPES_MAIN if d.key == key)
+        assert "external_house_load" in (descr.optional_depends_on or ()), key
+
+
+def _house_load_hub(states: dict[str, State]) -> Any:
+    """Hub with the real SolaX house_load description and accepted polled inputs."""
+    from custom_components.solax_modbus.plugin_solax import SENSOR_TYPES_MAIN
+
+    hub = make_hub(states)
+    hub.data["external_house_load_source"] = "sensor.shelly_load"
+    hub.data.update({"inverter_power": 4000, "measured_power": -1000})
+    house_load = next(d for d in SENSOR_TYPES_MAIN if d.key == "house_load")
+    hub.computedSensors = {"house_load": house_load}
+    hub._ordered_computed_sensors = Mock(return_value=[("house_load", house_load)])
+    hub._publish_computed_sensors = Mock()
+    now = time.monotonic()
+    hub._computed_input_observations = {key: InputObservation(now, hub.data[key], now + 120) for key in ("inverter_power", "measured_power")}
+    return hub
