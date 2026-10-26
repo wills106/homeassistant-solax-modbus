@@ -1983,7 +1983,6 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "grid_voltage_l1",
             "grid_voltage_l2",
             "grid_voltage_l3",
-            "external_house_load",
         ),
         autorepeat_parallel_dependencies={
             "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
