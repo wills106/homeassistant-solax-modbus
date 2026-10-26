@@ -96,13 +96,14 @@ MPPT8 = 0x200000
 MPPT10 = 0x400000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT6 | MPPT8 | MPPT10
 
-# Select the APX input-register block for BMS1 module 1 on DLP and TSS units.
+# Select the BMS1 module 1 input-register layout for confirmed inverter families.
+# AL1 also uses this layout with ARK batteries; it is not specific to APX batteries.
 APX_BMS_INPUT = 0x800000
 # TSS units use the BDC1 input block for the aggregate battery sensors.
 TSS_BMS_INPUT = 0x1000000
 ALL_APX_BMS_REGISTER_GROUP = APX_BMS_INPUT | TSS_BMS_INPUT
 
-APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP", "TSS"]
+APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP", "TSS", "AL1"]
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
 
@@ -10381,7 +10382,7 @@ FIRMWARE_PREFIX_TYPES = {
     # The PV MIN TL-XE reports this firmware prefix too, despite having no
     # battery; it is caught by its serial prefix above. An unlisted TL-XE
     # serial falls through to here and is mislabelled HYBRID.
-    "AL1": HYBRID | GEN4 | X1,  # Hybrid TL-XH 2.5kW - 6kW (MIN)
+    "AL1": HYBRID | GEN4 | X1 | APX_BMS_INPUT,  # Hybrid TL-XH 2.5kW - 6kW (MIN)
     "DN1": HYBRID | GEN4 | X3,  # Hybrid TL3-XH (BP) 3kW - 10kW (MOD), 11kW - 30kW (MID)
     "V": HYBRID | GEN4 | X3,  # Hybrid TL3-XH 3kW - 10kW (MOD)
     "067": HYBRID | SPF | X1,  # Hybrid SPF 5kW / SPF5000ES branch, treated as 1 MPPT
