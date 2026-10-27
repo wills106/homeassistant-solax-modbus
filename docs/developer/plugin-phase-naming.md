@@ -15,6 +15,7 @@ This applies especially to:
 - `plugin_solax_ev_charger.py`
 - `plugin_solax_lv.py`
 - `plugin_solax_mega_forth.py`
+- `plugin_solax_neo_lv.py`
 
 For new SolaX phase entities, prefer keys with `*_l1`, `*_l2`, `*_l3`. Do not rename existing Home Assistant entity keys without an explicit migration plan; entity keys are part of the generated Home Assistant unique ID.
 
@@ -23,6 +24,10 @@ If vendor documentation labels the same SolaX registers as A/B/C, keep the integ
 - `L1 (A)`
 - `L2 (B)`
 - `L3 (C)`
+
+## SolaX X3-NEO-LV
+
+The X3-NEO-LV Modbus document labels phases A/B/C (e.g. `Grid A Voltage`, `EPS A Power`). The plugin exposes them as `L1`/`L2`/`L3` with keys `<group>_<quantity>_l1..l3` (`grid_voltage_l1`, `eps_apparent_power_l1`, `inverter_frequency_l1`, `generator_power_l1`); the vendor label is kept as a comment next to each entity name. Battery SOH uses the SolaX-wide name `Battery State of Health` / key `battery_soh`. Battery port values measured by the inverter (vendor: "Inverter-Sampled Parameters", registers 0x00A3-0x00A5) use the names shared by the SolaX plugins: `Battery Voltage Charge` / `battery_voltage_charge`, `Battery Current Charge` / `battery_current_charge`, `Battery Power Charge` / `battery_power_charge` (positive = charging), so shared value functions such as `value_function_battery_input/output` in `const.py` work unchanged.
 
 ## Known non-SolaX / historical differences
 
