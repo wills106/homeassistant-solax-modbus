@@ -543,7 +543,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pm_total_pv_power", 0)
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_power_charge = datadict.get("pm_battery_power_charge", 0)
-        house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load
+        house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house_load=%sW",
@@ -561,7 +561,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
-        house_load = inverter_power - measured_power  # Single inverter house load calculation
+        house_load = datadict.get("house_load", 0)
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
@@ -1574,12 +1574,16 @@ def _house_load_measured_power(datadict: dict[str, Any]) -> tuple[int, int]:
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    inverter_power = int(datadict.get("inverter_power", 0))
-    [measured_power, external_power] = _house_load_measured_power(datadict)
-    result = inverter_power - measured_power
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
 
+    [measured_power, external_power] = _house_load_measured_power(datadict)
+    inverter_power = int(datadict.get("inverter_power", 0))
+    result = inverter_power - measured_power
     _LOGGER.debug(
-        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW external_power=%sW result=%sW meter_1_direction=%s",
+        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW (external_power=%sW) result=%sW meter_1_direction=%s",
         inverter_power,
         measured_power,
         external_power,
@@ -1591,8 +1595,24 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    [measured_power, _external_power] = _house_load_measured_power(datadict)
-    return int(datadict.get("pv_power_total", 0) - datadict.get("battery_power_charge", 0) - measured_power)
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD_ALT] Using external measurement: %sW", external)
+        return float(external)
+
+    [measured_power, external_power] = _house_load_measured_power(datadict)
+    pv_power_total = int(datadict.get("pv_power_total", 0))
+    battery_power_charge = int(datadict.get("battery_power_charge", 0))
+    result = pv_power_total - battery_power_charge - measured_power
+    _LOGGER.debug(
+        "[HOUSE_LOAD_ALT] Calculation: pv_power_total=%sW battery_power_charge=%sW measured_power=%sW (external_power=%sW) result=%sW",
+        pv_power_total,
+        battery_power_charge,
+        measured_power,
+        external_power,
+        result,
+    )
+    return result
 
 
 def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
@@ -1652,6 +1672,10 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     During remote control, if the two methods differ by < 25%, split the difference
     to compensate for inverter measurement inflation.
     """
+    external = datadict.get("external_house_load")
+    if external is not None:
+        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
+        return float(external)
     # Get raw sensor values
     pm_inverter_power: int | float = (
         int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
@@ -1968,7 +1992,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_remotecontrol_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power"],
+        depends_on=["battery_capacity", "measured_power", "house_load"],
         autorepeat_control="remotecontrol_power_control",
         autorepeat_dependencies=(
             "parallel_setting",
@@ -1987,7 +2011,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "grid_voltage_l3",
         ),
         autorepeat_parallel_dependencies={
-            "Free": ("pv_power_total", "inverter_power", "battery_power_charge"),
+            "Free": ("pv_power_total", "inverter_power", "battery_power_charge", "house_load"),
             "Master": ("pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
         },
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
@@ -2001,7 +2025,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge"],
+        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge", "house_load", "house_load_alt"],
         autorepeat_control="remotecontrol_power_control_mode",
         autorepeat_dependencies=(
             "parallel_setting",
@@ -2011,7 +2035,13 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "export_control_user_limit",
             "inverter_power_type",
         ),
-        autorepeat_optional_dependencies=("grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"),
+        autorepeat_optional_dependencies=(
+            "grid_export",
+            "meter_2_measured_power",
+            "battery_max_charge_power",
+            "bms_max_charge",
+            "bms_2_max_charge",
+        ),
         autorepeat_parallel_dependencies={"Free": ()},
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
@@ -3996,6 +4026,18 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         initvalue=0xA1,
         register_data_type=REGISTER_U16,
         write_method=WRITE_DATA_LOCAL,
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="External House Load Source",
+        key="external_house_load_source",
+        write_method=WRITE_DATA_LOCAL,
+        initvalue=None,  # empty = no source, derived value used
+        dynamic_options=True,
+        dynamic_device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # option_dict stays None: options come from the entity registry at runtime
     ),
     ###
     #
@@ -9457,7 +9499,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "measured_power",
             "parallel_setting",
         ],
-        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
+        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power", "external_house_load"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -10227,7 +10269,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="house_load",
         value_function=value_function_house_load,
         depends_on=["inverter_power", "measured_power"],
-        optional_depends_on=["meter_2_measured_power", "generator_control"],
+        optional_depends_on=["meter_2_measured_power", "generator_control", "external_house_load"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10296,7 +10338,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "battery_power_charge",
             "measured_power",
         ],
-        optional_depends_on=["meter_2_measured_power", "generator_control"],
+        optional_depends_on=["meter_2_measured_power", "generator_control", "external_house_load"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -13039,7 +13081,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("H3BD30"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra D
             self.inverter_model = "X3-Ultra-30kW"
-        elif seriesnumber.startswith("H3BF15L"):
+        elif seriesnumber.startswith(("H3BF15L", "H3BF15K")):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra 15KP F #1668
             self.inverter_model = "X3-Ultra-15kW"
         elif seriesnumber.startswith("H3BF15"):
@@ -13592,6 +13634,10 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     ],
 )
 
+EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = {
+    "house_load": UnitOfPower.WATT,
+}
+
 plugin_instance = solax_plugin(
     plugin_name="SolaX",
     plugin_manufacturer="SolaX Power",
@@ -13601,6 +13647,7 @@ plugin_instance = solax_plugin(
     SELECT_TYPES=SELECT_TYPES,
     SWITCH_TYPES=SWITCH_TYPES,
     TIME_TYPES=TIME_TYPES,
+    EXTERNAL_SOURCE_TYPES=EXTERNAL_SOURCE_TYPES,
     ENERGY_DASHBOARD_MAPPING=ENERGY_DASHBOARD_MAPPING,
     block_size=100,
     # order16=Endian.BIG,
