@@ -4751,6 +4751,8 @@ class solis_fb00_plugin(plugin_base):
             invertertype = HYBRID | X3  # PV Only Gen5 5-20kW
         elif seriesnumber.startswith("2051"):
             invertertype = HYBRID | X1  # Hybrid Gen6 EO1p-48v 5kW
+        elif seriesnumber.startswith("303126"):
+            invertertype = HYBRID | X1  # S6-EH1P8K-L-PLUS, single phase, two MPPTs
         elif seriesnumber.startswith("6031"):
             invertertype = HYBRID | X1  # Hybrid Gen5 3105 / 3122 Model 6kW - 48V
         elif seriesnumber.startswith("6041"):

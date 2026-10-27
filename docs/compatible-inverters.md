@@ -11,6 +11,11 @@ Known Serials
 - 6031
 - 1031
 
+S6-EH1P8K-L-PLUS (8 kW, two MPPTs)
+
+- Use plugin_solis or plugin_solis_fb00
+- Known serial prefix: 303126
+
 ### Three Phase
 
 RHI-3PnK-HVES-5G (lowercase n indicates Inverter size, ie 10kW)

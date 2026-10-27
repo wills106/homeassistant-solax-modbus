@@ -34,9 +34,17 @@ Amount of energy your inverter stored to the battery today (either from PV or ch
 
 Actual current & power the battery is charged with. Negative values mean the battery is discharged.
 
+## battery_rated_capacity & battery_rated_voltage
+
+Rated capacity (Ah) and rated (nominal) voltage of the battery system, as reported by the inverter. Read only. Currently provided by the X3-NEO-LV plugin (holding registers 0x011A/0x011B).
+
 ## battery_state_of_health
 
 Life percentage of your batteries.
+
+## battery_system_installed_capacity
+
+Total installed (rated) energy capacity of the battery system in Wh. On the X3-NEO-LV it is calculated as `battery_rated_capacity` × `battery_rated_voltage`. It does not decrease with battery ageing (SoH).
 
 ## battery_temperature
 
@@ -146,6 +154,10 @@ Changes behavior of your inverter. When `inverter`, your inverter will supply ar
 ## phase_power_balance_x3
 
 If enabled, your inverter will send power to your network based on your load. E.g. your phases are loaded 0 kW, 4 kW and 1 kW, so the inverter power will be 0, 4 and 1 kW on phases. If disabled, your inverter will always have the same power on all phases.
+
+## remaining_battery_capacity
+
+"Remaining Battery Energy" - energy currently stored in the battery, in Wh. Where the inverter has no dedicated register it is approximated as installed capacity × SoC (SoH is not taken into account), so for an aged battery it overestimates the real remaining energy.
 
 ## remotecontrol*
 
