@@ -5,6 +5,15 @@
 **Context:** PR #1690 - U32 Register Overflow Detection  
 **GitHub Discussion:** https://github.com/wills106/homeassistant-solax-modbus/pull/1690
 
+> **Current framework behaviour:** the hub caches the hook with
+> `getattr(plugin_module, "validate_register_data", None)` (see `SolaXModbusHub.__init__`),
+> i.e. it must be a **module-level function** in the plugin file with the signature
+> `validate_register_data(descr, value, datadict)`. A method defined on the plugin class
+> is silently ignored. Per-hub state belongs in `datadict` (e.g. a `_validation_cache`
+> dict, as in `plugin_solax.py` and `plugin_solax_neo_lv.py`), not in module globals,
+> so several hubs do not share it. The `hasattr(self.plugin, ...)` snippet below is the
+> original proposal and is kept for history.
+
 ## Overview
 
 Simple plugin-level validation function to handle U32 overflow in PM sensors. **28 lines total** (26 plugin + 2 framework).
