@@ -2,7 +2,7 @@ import logging
 import pathlib
 from collections.abc import Awaitable, Callable, Sequence
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Any, Self
@@ -10,10 +10,10 @@ from typing import Any, Self
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
-from homeassistant.const import CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_SCAN_INTERVAL, UnitOfPower
 from homeassistant.const import UnitOfReactivePower as UnitOfReactivePower  # Re-export for the inverter plugins.
 
 # ================================= Definitions for config_flow ==========================================================
@@ -161,6 +161,7 @@ class plugin_base:
     SELECT_TYPES: Sequence[SelectEntityDescription]
     SWITCH_TYPES: Sequence[SwitchEntityDescription]
     TIME_TYPES: Sequence[TimeEntityDescription]
+    EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = field(default_factory=dict)
     BATTERY_CONFIG: base_battery_config | None = None
     ENERGY_DASHBOARD_MAPPING: Any = None  # Optional energy dashboard configuration
     block_size: int = 100
@@ -345,6 +346,10 @@ class BaseModbusSelectEntityDescription(SelectEntityDescription):
     depends_on: list[str] | None = None  # list of modbus register keys that must be read
     value_function: Callable[[Any, Any, dict[str, Any]], Any] | None = None  # value function for autorepeat (same pattern as buttons)
     autorepeat: bool = False  # if True: select will use value_function for autorepeat
+    # For external source selects: options are fetched from HA entity registry at runtime
+    dynamic_options: bool = False  # When dynamic_options=True, option_dict should be None
+    # Which device_class to filter for (e.g. POWER); None = no filter (all sensors)
+    dynamic_device_class: SensorDeviceClass | None = None
     # Optional transactional writer: (hub, unit, description, raw value). Must raise on failure.
     async_write_function: Callable[[Any, int, Any, int | float], Awaitable[None]] | None = None
 
