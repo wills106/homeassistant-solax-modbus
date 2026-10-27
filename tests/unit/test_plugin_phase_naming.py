@@ -13,6 +13,7 @@ SOLAX_PLUGIN_FILES = {
     "plugin_solax_ev_charger.py",
     "plugin_solax_lv.py",
     "plugin_solax_mega_forth.py",
+    "plugin_solax_neo_lv.py",
 }
 
 NON_L123_PHASE_NAME_PATTERNS = tuple(
