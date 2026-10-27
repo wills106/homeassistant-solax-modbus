@@ -145,7 +145,7 @@ jobs:
           fi
           uv venv --managed-python --python "$SELECTED_PYTHON" "$HA_ENV"
           if ! uv pip compile --no-config --python "$HA_ENV/bin/python" --upgrade "$HA_RECORD/requirements.in" -o "$HA_RECORD/requirements.txt"; then
-            echo "::error::Cannot resolve test dependencies for the exact selected HA. A matching test plugin may not be published yet; no other HA version is substituted."
+            echo "::error::Cannot resolve test dependencies for the exact selected HA. The latest pytest-homeassistant-custom-component may not be published yet for this HA release; re-run once it is available. No other HA version is substituted."
             exit 1
           fi
           uv pip sync --no-config --python "$HA_ENV/bin/python" "$HA_RECORD/requirements.txt"

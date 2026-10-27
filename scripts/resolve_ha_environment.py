@@ -11,6 +11,8 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 RELEASE_URL = "https://api.github.com/repos/home-assistant/core/releases/latest"
+TEST_PLUGIN_PYPI_URL = "https://pypi.org/pypi/pytest-homeassistant-custom-component/json"
+HA_VERSION_PATTERN = r"\d{4}\.\d{1,2}\.\d+(?:(?:b|rc)\d+)?"
 
 
 def read_url(url: str) -> str:
@@ -33,9 +35,27 @@ def stable_tag(release: dict[str, Any]) -> str:
 
 def explicit_tag(tag: str) -> str:
     """Explicit versions may be stable, beta or release candidates, never URLs."""
-    if not re.fullmatch(r"\d{4}\.\d{1,2}\.\d+(?:(?:b|rc)\d+)?", tag):
+    if not re.fullmatch(HA_VERSION_PATTERN, tag):
         raise ValueError("Expected an exact HA release version")
     return tag
+
+
+def plugin_homeassistant_tag() -> tuple[str, str]:
+    """'Current' is the exact HA pinned by the newest published test plugin.
+
+    The plugin pins one HA release exactly, so the newest plugin defines the
+    newest HA that is actually testable. This avoids an unsatisfiable
+    homeassistant==<latest core> request while its plugin is unpublished.
+    """
+    metadata = cast(dict[str, Any], json.loads(read_url(TEST_PLUGIN_PYPI_URL)))
+    pins = [
+        match[1]
+        for requirement in metadata.get("info", {}).get("requires_dist") or []
+        if (match := re.fullmatch(rf"homeassistant==({HA_VERSION_PATTERN})(?:\[[^\]]*\])?(?:;.*)?", str(requirement).strip()))
+    ]
+    if len(pins) != 1:
+        raise ValueError("The newest test plugin must pin exactly one published HA release")
+    return pins[0], TEST_PLUGIN_PYPI_URL
 
 
 def python_version(text: str) -> str:
@@ -91,19 +111,19 @@ def resolve_environment(target: str, ha_version: str, output_dir: Path) -> dict[
     output_dir.mkdir(parents=True, exist_ok=True)
     minimum = target == "minimum"
     if target == "version":
-        tag = explicit_tag(ha_version)
+        tag, version_source = explicit_tag(ha_version), "--ha-version"
     elif minimum:
         metadata = json.loads(Path("hacs.json").read_text(encoding="utf-8"))
-        tag = stable_tag({"tag_name": metadata.get("homeassistant")})
+        tag, version_source = stable_tag({"tag_name": metadata.get("homeassistant")}), "hacs.json"
     else:
-        tag = stable_tag(json.loads(read_url(RELEASE_URL)))
+        tag, version_source = plugin_homeassistant_tag()
     selected_python, source = select_python(tag, allow_legacy=target != "current")
     project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     selection = {
         "target": target,
         "homeassistant": tag,
         "python": selected_python,
-        "version_source": "--ha-version" if target == "version" else "hacs.json" if minimum else RELEASE_URL,
+        "version_source": version_source,
         "python_source": source,
     }
     (output_dir / "selection.json").write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
