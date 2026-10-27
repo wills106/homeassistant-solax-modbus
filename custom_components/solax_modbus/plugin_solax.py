@@ -1607,55 +1607,62 @@ def value_function_select_generator_power(initval: int, descr: Any, datadict: di
     return total_power - measured_power
 
 
-def _meter_select_grid_energy(source: str, datadict: dict[str, Any]) -> int:
+def _meter_select_grid_energy(export: bool, range: str, datadict: dict[str, Any]) -> int:
     """Determine which meter represents the selected grid energy source"""
     generator_mode = datadict.get("generator_control", "Disabled")
-    # Meter 1 represents grid energy if no generator, otherwise meter 2 is grid energy
-    selected_meter = "meter_1_" if generator_mode == "Disabled" else "meter_2_"
-    return int(datadict.get(selected_meter + source, 0))
+    if generator_mode == "Disabled":
+        # Meter 1 represents grid energy if no generator
+        grid_source = "meter_1_" + ("export" if export else "import") + range
+    else:
+        # Otherwise meter 2 is grid energy, but direction reversed
+        grid_source = "meter_2_" + ("export" if not export else "import") + range
+    return int(datadict.get(grid_source, 0))
 
 
 def value_function_meter_select_grid_export_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_grid_energy("export_today", datadict)
+    return _meter_select_grid_energy(True, "today", datadict)
 
 
 def value_function_meter_select_grid_import_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_grid_energy("import_today", datadict)
+    return _meter_select_grid_energy(False, "today", datadict)
 
 
 def value_function_meter_select_grid_export_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_grid_energy("export_total", datadict)
+    return _meter_select_grid_energy(True, "total", datadict)
 
 
 def value_function_meter_select_grid_import_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_grid_energy("import_total", datadict)
+    return _meter_select_grid_energy(False, "total", datadict)
 
 
-def _meter_select_generator_energy(source: str, datadict: dict[str, Any]) -> int:
+def _meter_select_generator_energy(export: bool, range: str, datadict: dict[str, Any]) -> int:
     """Determine which meter represents the selected generator energy source"""
     generator_mode = datadict.get("generator_control", "Disabled")
     if generator_mode == "Disabled":
         # When there is no external generator mode, Meter 2 represents generator energy
-        return int(datadict.get("meter_2_" + source, 0))
-    # Otherwise meter 1 is combined generator/grid energy, and meter 2 is grid energy, so
-    # generator energy is difference.
-    return int(datadict.get("meter_1_" + source, 0)) - int(datadict.get("meter_2_" + source, 0))
+        meter_source = "meter_2_" + ("export" if export else "import") + range
+        return int(datadict.get(meter_source, 0))
+    # Otherwise meter 1 is combined generator/grid energy, and meter 2 is the grid but
+    # with direction reversed. Generator energy is difference.
+    grid_source = "meter_2_" + ("export" if not export else "import") + range
+    combined_source = "meter_1_" + ("export" if export else "import") + range
+    return int(datadict.get(combined_source, 0)) - int(datadict.get(grid_source, 0))
 
 
 def value_function_meter_select_generator_export_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_generator_energy("export_today", datadict)
+    return _meter_select_generator_energy(True, "today", datadict)
 
 
 def value_function_meter_select_generator_import_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_generator_energy("import_today", datadict)
+    return _meter_select_generator_energy(False, "today", datadict)
 
 
 def value_function_meter_select_generator_export_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_generator_energy("export_total", datadict)
+    return _meter_select_generator_energy(True, "total", datadict)
 
 
 def value_function_meter_select_generator_import_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
-    return _meter_select_generator_energy("import_total", datadict)
+    return _meter_select_generator_energy(False, "total", datadict)
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
