@@ -1670,7 +1670,6 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
     measured_power = int(datadict.get("measured_power", 0))
     generator_power = int(datadict.get("generator_power", 0))
     result = inverter_power - measured_power + generator_power
-
     _LOGGER.debug(
         "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW generator_power=%sW result=%sW meter_1_direction=%s",
         inverter_power,
@@ -1684,12 +1683,20 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(
-        datadict.get("pv_power_total", 0)
-        - datadict.get("battery_power_charge", 0)
-        - datadict.get("measured_power", 0)
-        + datadict.get("generator_power", 0)
+    pv_power_total = int(datadict.get("pv_power_total", 0))
+    battery_power_charge = int(datadict.get("battery_power_charge", 0))
+    measured_power = int(datadict.get("measured_power", 0))
+    generator_power = int(datadict.get("generator_power", 0))
+    result = pv_power_total - battery_power_charge - measured_power + generator_power
+    _LOGGER.debug(
+        "[HOUSE_LOAD_ALT] Calculation: pv_power_total=%sW battery_power_charge=%sW measured_power=%sW (generator_power=%sW) result=%sW",
+        pv_power_total,
+        battery_power_charge,
+        measured_power,
+        generator_power,
+        result,
     )
+    return result
 
 
 def value_function_inverter_power_x3(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
