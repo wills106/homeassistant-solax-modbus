@@ -22,7 +22,9 @@ A similar autorepeat mechanism is available for mode 1; see the dedicated wiki p
 * Although the addition of Mode 8 in new firmwares is a big enhancement, we still feel there is a missing mode that focusses on the grid interface and can limit the PV in case of negative prices. Our Mode 8 autorepeat loop tries to emulate this, but can only adjust every polling cycle, a firmware based solution could react faster.
 * This mechanism will only work on the most recent firmware versions; previous versions do not support mode 8 or 9. I am running Firmware: DSP v1.52 ARM v1.50 at the time of my testing
 * If you use Modbus power control autorepeat loops, make sure the polling interval for the fastest scan-group is sufficiently low e.g. 3–5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or Modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
+* Set-points in the autorepeat loops are filtered using a simple exponential smoothing filter to damp the response of the inverter and reduce oscillations. The time constant of this filter is dependent on the fast scan-group interval and the configured set-point filter steps as shown below. Filter settles in approximately 5 time constants. Number of steps can be changed using `remotecontrol_smoothing_factor` (a value of 1 disables filtering).
 
+![SolaX Filter Time Constant](images/solax-mode8-filter-time.png)
 
 ### KNOWN ISSUES: (Work in progress):
 * When the battery gets fully charged (or when the specified duration expires), the systems sometimes seem to automatically change to mode 6 (`Self consume - Charge and Discharge`), this mode does not limit PV any more and may export power when prices are still negative. Further observation is necessary to understand this.
@@ -56,13 +58,12 @@ The integration hides this complexity and implements one button to trigger a sin
 * **remotecontrol_duration**: we recommend keeping the default value of 20s
 * **remotecontrol_autorepeat_duration**: typically a couple of hours - e.g. duration of the negative price
 * **remotecontrol_timeout**: can be left 0 or set to a few seconds more than the polling interval; unclear how to use this
+* **remotecontrol_smoothing_factor**: configures number of time steps in set-point exponential smoothing filter. 1 = disable filtering, 2-10 = filter step length. See notes above for how the settling time is calculated from step length.
 
 
 With these parameters a power control dashboard card can be created:
 
-<img width="503" height="670" alt="image" src="https://github.com/user-attachments/assets/08555a38-5b42-4155-97c4-7d63b4d3bb9c" />
-
-
+![SolaX Power Control Dashboard](images/solax-mode8-dashboard.png)
 
 Modifying these parameters has no direct effect, the autorepeat loop is only activated when the trigger button is pressed.
 For deactivating these modes, select "Disabled"; clicking the trigger button again is normally not needed for deactivation of the loop.
