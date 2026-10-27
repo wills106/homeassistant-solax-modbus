@@ -1,4 +1,4 @@
-"""Regression coverage for X3-IES-P third-MPPT detection (#2374)."""
+"""Regression coverage for X3 GEN5 third-MPPT detection (#2374, #2420)."""
 
 from dataclasses import replace
 from typing import Any
@@ -12,22 +12,25 @@ from custom_components.solax_modbus.plugin_solax import GEN5, HYBRID, MPPT3, SEN
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("prefix", "has_mppt3"),
+    ("prefix", "has_mppt3", "model"),
     [
-        ("P35G10", True),
-        ("P35G12", True),
-        ("P35G15", True),
-        ("H35A06", False),
-        ("H35A12", False),
-        ("P35A10", True),
-        ("P35A12", True),
-        ("P35A15", True),
-        ("P35A06", False),
-        ("H35F06", False),
-        ("H35F12", False),
+        ("P35G10", True, "X3-IES-10kW"),
+        ("P35G12", True, "X3-IES-12kW"),
+        ("P35G15", True, "X3-IES-15kW"),
+        ("H35A06", False, "X3-IES-6kW"),
+        ("H35A12", False, "X3-IES-12kW"),
+        ("P35A10", True, "X3-IES-10kW"),
+        ("P35A12", True, "X3-IES-12kW"),
+        ("P35A15", True, "X3-IES-15kW"),
+        ("P35A06", False, "X3-IES-6kW"),
+        ("H35F06", False, "X3-IES-6kW"),
+        ("H35F12", False, "X3-IES-12kW"),
+        ("H3BF15KB", True, "X3-Ultra-15kW"),
+        ("H3BF15L", True, "X3-Ultra-15kW"),
+        ("H3BF15", False, "X3-Ultra-15kW"),
     ],
 )
-async def test_x3_ies_mppt_detection(mock_hub: Any, prefix: str, has_mppt3: bool) -> None:
+async def test_x3_gen5_mppt_detection(mock_hub: Any, prefix: str, has_mppt3: bool, model: str) -> None:
     """Enable existing GEN5 PV3 sensors only for the affected model range."""
     plugin = replace(plugin_instance)
     mock_hub.data = {}
@@ -39,7 +42,7 @@ async def test_x3_ies_mppt_detection(mock_hub: Any, prefix: str, has_mppt3: bool
         inverter_type = await plugin.async_determineInverterType(mock_hub, {"read_eps": False, "read_pm": False})
 
     assert inverter_type == HYBRID | GEN5 | X3 | (MPPT3 if has_mppt3 else 0)
-    assert mock_hub.inverter_model == f"X3-IES-{int(prefix[4:6])}kW"
+    assert mock_hub.inverter_model == model
 
     descriptions = {
         description.key: description

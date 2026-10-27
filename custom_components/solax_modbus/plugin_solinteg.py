@@ -142,8 +142,8 @@ def _bytes_str(b_array: list[int]) -> str:
 
 
 def _model_str(val: int) -> str:
-    # Mapping based on Solinteg documentation in issue #2158
-    d = {
+    # Mapping based on Solinteg documentation in issue #2158 and the confirmed model in #2416.
+    d: dict[int, list[str] | dict[int, str]] = {
         30: [
             "MHT-4K-25",
             "MHT-5K-25",
@@ -190,6 +190,7 @@ def _model_str(val: int) -> str:
             "M2HT-40K-150",
             "M2HT-50K-150",
         ],
+        42: {3: "M2HT-10K-30"},
         43: [
             "M2HT-75K-300",
             "M2HT-80K-300",
@@ -2063,10 +2064,10 @@ class solinteg_plugin(plugin_base):
 
         bh, bl = model // 256, model % 256
         invertertype = 0
-        if bh in [30, 31, 32, 40, 41, 43]:
+        if bh in [30, 31, 32, 40, 41, 42, 43]:
             invertertype = invertertype | HYBRID
 
-        if bh in [30, 32, 41, 43]:
+        if bh in [30, 32, 41, 42, 43]:
             invertertype = invertertype | X3
         else:
             invertertype = invertertype | X1

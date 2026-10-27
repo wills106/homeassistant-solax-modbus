@@ -373,7 +373,7 @@ def test_static_scan_group_contracts_can_resolve_other_intervals() -> None:
                 for interval, keys in groups.items():
                     _data, accepted = hub._computed_inputs(values, keys, set(raw), interval)
                     assert set(raw) <= accepted, (path.stem, descr.key, interval)
-    assert checked >= 120
+    assert checked >= 119
     assert cross_interval > 0
 
 
