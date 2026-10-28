@@ -2402,7 +2402,11 @@ class SolaXModbusHub:
                 return False
 
         try:
-            value = descr.value_function(0, descr, source_data)
+            if (descr.external_override is not None) and (external := data.get(descr.external_override) is not None):
+                _LOGGER.debug("Using external sensor: %s = %s", descr.external_override, external)
+                value = float(external)
+            else:
+                value = descr.value_function(0, descr, source_data)
         except Exception as ex:
             _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, descr.key, ex)
             self._remember_computed_sample(descr, None, inputs)
