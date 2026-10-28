@@ -2403,8 +2403,9 @@ class SolaXModbusHub:
             if previous is not None and previous.inputs == inputs:
                 return False
 
+        value: Any | None
         try:
-            if (descr.external_override is not None) and (external := data.get(descr.external_override) is not None):
+            if descr.external_override is not None and (external := data.get(descr.external_override)) is not None:
                 _LOGGER.debug("Using external sensor: %s = %s", descr.external_override, external)
                 value = float(external)
             else:
