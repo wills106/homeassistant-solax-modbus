@@ -1558,10 +1558,6 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    external = datadict.get("external_house_load")
-    if external is not None:
-        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
-        return float(external)
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
     meter_2_power = int(datadict.get("meter_2_measured_power", 0))
@@ -1580,11 +1576,6 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    external = datadict.get("external_house_load")
-    if external is not None:
-        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
-        return float(external)
-
     return int(
         datadict.get("pv_power_total", 0)
         - datadict.get("battery_power_charge", 0)
@@ -1650,10 +1641,6 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     During remote control, if the two methods differ by < 25%, split the difference
     to compensate for inverter measurement inflation.
     """
-    external = datadict.get("external_house_load")
-    if external is not None:
-        _LOGGER.debug("[HOUSE_LOAD] Using external measurement: %sW", external)
-        return float(external)
     # Get raw sensor values
     pm_inverter_power: int | float = (
         int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
@@ -9468,6 +9455,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
+        external_override="external_house_load",
         value_function=value_function_pm_total_house_load,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=[
@@ -9477,7 +9465,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "measured_power",
             "parallel_setting",
         ],
-        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power", "external_house_load"],
+        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -10247,7 +10235,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="house_load",
         value_function=value_function_house_load,
         depends_on=["inverter_power", "measured_power"],
-        optional_depends_on=["meter_2_measured_power", "external_house_load"],
+        external_override="external_house_load",
+        optional_depends_on=["meter_2_measured_power"],
         # external_house_load is an optional input: when an external source is selected it
         # alone must be able to trigger a recompute, otherwise house_load only refreshes when
         # the polled inverter inputs happen to change.
@@ -10319,7 +10308,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "battery_power_charge",
             "measured_power",
         ],
-        optional_depends_on=["meter_2_measured_power", "external_house_load"],
+        external_override="external_house_load",
+        optional_depends_on=["meter_2_measured_power"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
