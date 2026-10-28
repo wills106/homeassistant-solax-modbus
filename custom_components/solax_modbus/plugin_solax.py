@@ -10320,8 +10320,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_measured_power,
         external_override="external_measured_power",
-        allowedtypes=AC | HYBRID | GEN | GEN2,
-        depends_on=["meter_measured_power"],
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_measured_power"],
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
@@ -10332,8 +10332,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_measured_power,
         external_override="external_measured_power",
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
-        depends_on=["meter_1_measured_power"],
+        allowedtypes=AC | HYBRID | GEN | GEN2,
+        depends_on=["meter_measured_power"],
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
