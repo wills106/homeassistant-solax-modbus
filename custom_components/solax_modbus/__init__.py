@@ -685,7 +685,7 @@ class SolaXModbusHub:
                 client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES)
             else:
                 client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
-            self._transport = NativeModbusTransport(client)
+            self._transport = NativeModbusTransport(client, message_spacing=float(config.get("message_wait_milliseconds", 0)) / 1000)
         elif interface in ("core", "core_tcp", "core_serial"):
             core_settings = configured_core_connection(dict(config))
             if yaml_hub_name is not None or core_settings is None:
