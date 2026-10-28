@@ -3751,6 +3751,7 @@ SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = [
         sensor_key="mppt",
         value_function=value_function_enable_disable,
         allowedtypes=HYBRID | GEN4 | GEN5,
+        modbus_max=99,
         icon="mdi:dip-switch",
     ),
     SolaXModbusSwitchEntityDescription(
@@ -5282,6 +5283,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="mppt",
         register=0xBC,
         allowedtypes=HYBRID | GEN4 | GEN5,
+        modbus_max=99,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
