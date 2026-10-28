@@ -13518,85 +13518,27 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             filter_function=lambda v: max(0, v),
             allowedtypes=ALL_GEN_GROUP,
         ),
-        # Grid Import Energy (GEN3-6 today)
-        EnergyDashboardSensorMapping(
-            source_key="today_s_import_energy",
-            target_key="grid_energy_import",
-            name="Grid Import Energy",
-            skip_pm_individuals=True,
-            allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
-        ),
-        # Grid Import Energy (GEN2 total)
-        EnergyDashboardSensorMapping(
-            source_key="grid_import_total",
-            target_key="grid_energy_import",
-            name="Grid Import Energy",
-            skip_pm_individuals=True,
-            allowedtypes=AC | HYBRID | GEN2,
-        ),
-        # Grid Import Energy (GEN1 Riemann sum)
-        # GEN1 lacks native energy counters; integrate power to derive energy.
+        # Grid Import Energy (Riemann sum)
+        # We use integral as the measured power sensor may be overridden
+        # by an external source on devices with no working CT.
         EnergyDashboardSensorMapping(
             source_key="measured_power",
             target_key="grid_energy_import",
             name="Grid Import Energy",
             use_riemann_sum=True,
             filter_function=lambda v: max(0, v),
-            allowedtypes=AC | HYBRID | GEN,
+            allowedtypes=AC | HYBRID | MIC,
         ),
-        # Grid Import Energy (MIC GEN/GEN3 today)
-        EnergyDashboardSensorMapping(
-            source_key="today_s_grid_import",
-            target_key="grid_energy_import",
-            name="Grid Import Energy",
-            allowedtypes=MIC | GEN | GEN3,
-        ),
-        # Grid Import Energy (MIC GEN2/GEN4 total)
-        EnergyDashboardSensorMapping(
-            source_key="total_grid_import",
-            target_key="grid_energy_import",
-            name="Grid Import Energy",
-            allowedtypes=MIC | GEN2 | GEN4,
-        ),
-        # Grid Export Energy (GEN3-6 today)
-        EnergyDashboardSensorMapping(
-            source_key="today_s_export_energy",
-            target_key="grid_energy_export",
-            name="Grid Export Energy",
-            skip_pm_individuals=True,
-            allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
-        ),
-        # Grid Export Energy (GEN2 total)
-        EnergyDashboardSensorMapping(
-            source_key="grid_export_total",
-            target_key="grid_energy_export",
-            name="Grid Export Energy",
-            skip_pm_individuals=True,
-            allowedtypes=AC | HYBRID | GEN2,
-        ),
-        # Grid Export Energy (GEN1 Riemann sum)
-        # GEN1 export is derived from power; filter to export-only portion.
+        # Grid Export Energy (Riemann sum)
+        # We use integral as the measured power sensor may be overridden
+        # by an external source on devices with no working CT.
         EnergyDashboardSensorMapping(
             source_key="measured_power",
             target_key="grid_energy_export",
             name="Grid Export Energy",
             use_riemann_sum=True,
             filter_function=lambda v: abs(min(0, v)),
-            allowedtypes=AC | HYBRID | GEN,
-        ),
-        # Grid Export Energy (MIC GEN/GEN3 today)
-        EnergyDashboardSensorMapping(
-            source_key="today_s_grid_export",
-            target_key="grid_energy_export",
-            name="Grid Export Energy",
-            allowedtypes=MIC | GEN | GEN3,
-        ),
-        # Grid Export Energy (MIC GEN2/GEN4 total)
-        EnergyDashboardSensorMapping(
-            source_key="total_grid_export",
-            target_key="grid_energy_export",
-            name="Grid Export Energy",
-            allowedtypes=MIC | GEN2 | GEN4,
+            allowedtypes=AC | HYBRID | MIC,
         ),
         # Home Consumption Energy (Riemann sum)
         EnergyDashboardSensorMapping(
