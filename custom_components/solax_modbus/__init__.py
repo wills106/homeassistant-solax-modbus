@@ -2100,6 +2100,8 @@ class SolaXModbusHub:
         elif type(descr.scale) is dict:  # translate int to string
             # None publishes HA's unknown state without inventing an invalid enum option.
             return_value = descr.scale.get(val)
+            if return_value is None:
+                _LOGGER.debug("%s: Value %d for key %d could not be mapped to a known state.", self._name, val, descr.key)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words

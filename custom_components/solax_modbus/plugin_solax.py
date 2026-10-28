@@ -1557,6 +1557,18 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
     return "Gen6"
 
 
+def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    # Determine the source sensor, which must be the first entry in depends_on
+    depends_on: list[str] | None = getattr(descr, 'depends_on', None)
+    if depends_on is None:
+        return 0
+    source = depends_on[0]
+
+    # Read the source value and apply optional gain/offset correction to the
+    # raw value to account for CT inaccuracies
+    return value_function_gain_offset(datadict.get(source), descr, datadict)
+
+
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
@@ -2545,7 +2557,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     SolaxModbusNumberEntityDescription(
         name="Config Measured Power Offset",
         key="measured_power_offset",
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | MIC,
         native_min_value=-200,
         native_max_value=200,
         native_step=0.5,
@@ -2558,7 +2570,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     SolaxModbusNumberEntityDescription(
         name="Config Measured Power Gain",
         key="measured_power_gain",
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | MIC,
         native_min_value=90,  # Allow correction up to +/-10%.
         native_max_value=110,
         native_step=0.1,
@@ -4002,6 +4014,18 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-lightning-bolt-outline",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # option_dict stays None: options come from the entity registry at runtime
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="External Measured Power Source",
+        key="external_measured_power_source",
+        write_method=WRITE_DATA_LOCAL,
+        initvalue=None,  # empty = no source, derived value used
+        dynamic_options=True,
+        dynamic_device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        allowedtypes=AC | HYBRID | MIC,
         # option_dict stays None: options come from the entity registry at runtime
     ),
     ###
@@ -5586,7 +5610,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             1: "CT",
         },
         entity_registry_enabled_default=False,
-        allowedtypes=HYBRID | GEN3 | GEN4 | GEN5,
+        allowedtypes=HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:meter-electric",
     ),
@@ -7610,15 +7634,25 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name="Measured Power",
-        key="measured_power",
+        key="meter_measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,  # Earlier generations had only one meter
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=0x46,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_S32,
+        allowedtypes=AC | HYBRID | GEN | GEN2,
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Meter 1 Measured Power",
+        key="meter_1_measured_power",  # Newer generations have two meters
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         register=0x46,
         register_type=REG_INPUT,
-        scale=value_function_gain_offset,
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Export Total",
@@ -10231,22 +10265,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:information",
     ),
     SolaXModbusSensorEntityDescription(
-        name="House Load",
-        key="house_load",
-        value_function=value_function_house_load,
-        depends_on=["inverter_power", "measured_power"],
-        external_override="external_house_load",
-        optional_depends_on=["meter_2_measured_power"],
-        # external_house_load is an optional input: when an external source is selected it
-        # alone must be able to trigger a recompute, otherwise house_load only refreshes when
-        # the polled inverter inputs happen to change.
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=AC | HYBRID | MIC,
-        icon="mdi:home-lightning-bolt",
-    ),
-    SolaXModbusSensorEntityDescription(
         name="Inverter Power",
         key="inverter_power",
         value_function=value_function_inverter_power_g5,
@@ -10293,6 +10311,43 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "pv_power_6",
         ],
         icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Grid Feed-in Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_measured_power,
+        external_override="external_measured_power",
+        allowedtypes=AC | HYBRID | GEN | GEN2,
+        depends_on=["meter_measured_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Grid Feed-in Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_measured_power,
+        external_override="external_measured_power",
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_measured_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="House Load",
+        key="house_load",
+        value_function=value_function_house_load,
+        depends_on=["inverter_power", "measured_power"],
+        external_override="external_house_load",
+        optional_depends_on=["meter_2_measured_power"],
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=AC | HYBRID,
+        icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name="House Load Alt",
@@ -10974,7 +11029,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name="Feed-in Power",
-        key="measured_power",
+        key="ct_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -11047,7 +11102,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name="Feed-in Power",
-        key="measured_power",
+        key="ct_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -11329,7 +11384,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     #####
     SolaXModbusSensorEntityDescription(
         name="Feed-in Power",
-        key="measured_power",
+        key="ct_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -11702,7 +11757,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     ),
     SolaXModbusSensorEntityDescription(
         name="Measured Power",  # Grid connection meter
-        key="measured_power",
+        key="ct_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -12259,6 +12314,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     #
     #####
     SolaXModbusSensorEntityDescription(
+        name="Grid Feed-in Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_measured_power,
+        external_override="external_measured_power",
+        allowedtypes=MIC,
+        depends_on=["ct_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Grid Export",
         key="grid_export",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -12279,6 +12346,18 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=MIC,
         depends_on=["measured_power"],
         icon="mdi:home-import-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="House Load",
+        key="house_load",
+        value_function=value_function_house_load,
+        depends_on=["inverter_power", "measured_power"],
+        external_override="external_house_load",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=MIC,
+        icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
         name="Hardware Version",
@@ -13607,6 +13686,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
 
 EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = {
     "house_load": UnitOfPower.WATT,
+    "measured_power": UnitOfPower.WATT,
 }
 
 plugin_instance = solax_plugin(
