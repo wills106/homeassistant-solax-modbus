@@ -1559,7 +1559,7 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     # Determine the source sensor, which must be the first entry in depends_on
-    depends_on: list[str] | None = getattr(descr, 'depends_on', None)
+    depends_on: list[str] | None = getattr(descr, "depends_on", None)
     if depends_on is None:
         return 0
     source = depends_on[0]

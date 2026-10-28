@@ -2680,7 +2680,7 @@ class SolaXModbusHub:
             ready: list[tuple[str, Any]] = []
             for key, descr in pending:
                 declared_dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-                declared_dependencies.update(self._dependency_values(descriptor_optional_depends(descr),))
+                declared_dependencies.update(self._dependency_values(descriptor_optional_depends(descr)))
                 for alternatives in getattr(descr, "depends_on_any", None) or []:
                     declared_dependencies.update(self._dependency_values(alternatives))
                 if not ((declared_dependencies - {key}) & pending_keys):
