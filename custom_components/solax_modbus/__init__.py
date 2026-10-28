@@ -101,6 +101,7 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
     PollOutcome,
+    descriptor_optional_depends,
     is_inputless_computed_sensor,
 )
 from .const import (
@@ -2327,7 +2328,7 @@ class SolaXModbusHub:
                 return False, required, tuple(alternative_groups), set()
             alternative_groups.append(available_alternatives)
 
-        optional = self._active_dependency_keys(getattr(descr, "optional_depends_on", None), data, descriptions)
+        optional = self._active_dependency_keys(descriptor_optional_depends(descr), data, descriptions)
         if selected_optional is not None:
             optional = selected_optional
 
@@ -2356,13 +2357,14 @@ class SolaXModbusHub:
         inputless = is_inputless_computed_sensor(descr)
         descriptions = self.sensorDescriptions
         dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-        dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        optional_depends = self._dependency_values(descriptor_optional_depends(descr))
+        dependencies.update(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             dependencies.update(alternatives)
         source_data, accepted = self._computed_inputs(data, fresh_keys or set(), dependencies, interval)
         # Alternatives must not let a stale preferred value shadow a fresh
         # fallback. Optional inputs must not leak stale/invalid values either.
-        filtered = set(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        filtered = set(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             filtered.update(alternatives)
         for key in filtered:
@@ -2517,7 +2519,7 @@ class SolaXModbusHub:
             if getattr(description, "register", -1) >= 0 and hasattr(self, "config"):
                 intervals.append(float(self.scan_group(SimpleNamespace(entity_description=description))))
             dependencies = list(self._dependency_values(getattr(description, "depends_on", None)))
-            dependencies.extend(self._dependency_values(getattr(description, "optional_depends_on", None)))
+            dependencies.extend(self._dependency_values(descriptor_optional_depends(description)))
             for alternatives in getattr(description, "depends_on_any", None) or []:
                 dependencies.extend(alternatives)
             pending.extend(self.sensorDescriptions[key] for key in dependencies if key in self.sensorDescriptions)
@@ -2672,7 +2674,7 @@ class SolaXModbusHub:
             ready: list[tuple[str, Any]] = []
             for key, descr in pending:
                 declared_dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-                declared_dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+                declared_dependencies.update(self._dependency_values(descriptor_optional_depends(descr),))
                 for alternatives in getattr(descr, "depends_on_any", None) or []:
                     declared_dependencies.update(self._dependency_values(alternatives))
                 if not ((declared_dependencies - {key}) & pending_keys):
