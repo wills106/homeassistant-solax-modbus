@@ -5,8 +5,9 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from collections.abc import Callable
-from typing import Any, Protocol
+from collections.abc import Awaitable, Callable
+from time import monotonic
+from typing import Any, Protocol, TypeVar
 from weakref import ReferenceType, ref
 
 from homeassistant.config_entries import ConfigEntry
@@ -18,6 +19,8 @@ from .pymodbus_compat import ADDR_KW
 from .serial_modbus import SerialModbusResponse
 
 _LOGGER = logging.getLogger(__name__)
+_T = TypeVar("_T")
+MAX_RECOVERY_BACKOFF = 600.0
 
 CORE_CALL_TYPE_REGISTER_HOLDING = "holding"
 CORE_CALL_TYPE_REGISTER_INPUT = "input"
@@ -208,6 +211,10 @@ class CoreModbusUnitError(Exception):
     """A failure reported by Home Assistant's shared Modbus unit."""
 
 
+class CoreModbusBackoff(CoreModbusUnitError):
+    """A read was deferred, not attempted, while a failed connection recovers."""
+
+
 def _get_core_unit(hass: HomeAssistant, entry: ConfigEntry, params: Any, unit: int) -> Any:
     """Request a unit; Core owns the link and releases it on entry unload."""
     from homeassistant.components import modbus
@@ -238,7 +245,96 @@ class CoreModbusUnitTransport:
         self._unit_getter = unit_getter
         self._units: dict[int, Any] = {}
         self._closed = False
+        self._request_lock = asyncio.Lock()
+        self._backoff_delay = 0.0
+        self._retry_at = 0.0
         self._unit(unit)
+
+    @property
+    def backoff_remaining(self) -> float:
+        """Return the remaining cooldown without sleeping or holding a lock."""
+        return max(0.0, self._retry_at - monotonic())
+
+    @property
+    def recovering(self) -> bool:
+        """Keep recovery probes independent of the hub's sleep slowdown."""
+        return self._backoff_delay > 0
+
+    def _defer_recovery(self) -> None:
+        self._backoff_delay = min(self._backoff_delay + float(self._settings["timeout"]), MAX_RECOVERY_BACKOFF)
+        self._retry_at = monotonic() + self._backoff_delay
+        _LOGGER.warning(
+            "%s: read recovery paused for %.1f seconds (maximum 600 seconds); writes remain available", self.endpoint, self._backoff_delay
+        )
+
+    def _recovery_succeeded(self) -> None:
+        if self.recovering:
+            _LOGGER.warning("%s: Modbus replies restored; clearing read recovery backoff", self.endpoint)
+        self._backoff_delay = 0.0
+        self._retry_at = 0.0
+
+    async def _request(self, client: Any, label: str, operation: Callable[[], Awaitable[_T]], *, read: bool) -> _T:
+        """Retry one transport failure via HA; only reads enter a cooldown."""
+        from modbus_connection.exceptions import ModbusConnectionError, ModbusError, ModbusTimeoutError
+
+        async with self._request_lock:
+            if self._closed:
+                raise CoreModbusBackoff("Modbus transport is closed")
+            if read and (remaining := self.backoff_remaining):
+                raise CoreModbusBackoff(f"Connection recovery deferred for another {remaining:.1f} seconds")
+            try:
+                result = await operation()
+            except (ModbusTimeoutError, ModbusConnectionError) as err:
+                reason = "timed out" if isinstance(err, ModbusTimeoutError) else "lost or failed to establish its connection"
+                _LOGGER.warning(
+                    "%s: %s %s (configured timeout %.1fs); resetting the connection and retrying once: %s",
+                    self.endpoint,
+                    label,
+                    reason,
+                    self._settings["timeout"],
+                    err,
+                )
+                if not read:
+                    _LOGGER.warning(
+                        "%s: %s may already have been applied despite the missing acknowledgement; repeating it once", self.endpoint, label
+                    )
+                try:
+                    await client.disconnect()
+                except (ModbusError, OSError, TimeoutError) as reset_error:
+                    _LOGGER.warning("%s: connection reset for %s failed; no retry was sent: %s", self.endpoint, label, reset_error)
+                    if read:
+                        self._defer_recovery()
+                    uncertainty = " The write may already have been applied." if not read else ""
+                    raise CoreModbusUnitError(f"Connection reset for {label} failed; no retry was sent: {reset_error}.{uncertainty}") from reset_error
+                if self._closed:
+                    raise CoreModbusBackoff("Modbus transport closed during recovery") from err
+                try:
+                    # Unit I/O reconnects lazily and preserves the configured
+                    # timeout, startup delay, spacing and other unit handles.
+                    result = await operation()
+                except (ModbusError, OSError, TimeoutError) as retry_error:
+                    _LOGGER.warning("%s: reconnect or repeated %s failed; giving up this request: %s", self.endpoint, label, retry_error)
+                    if read:
+                        if isinstance(retry_error, (ModbusConnectionError, ModbusTimeoutError, OSError, TimeoutError)):
+                            self._defer_recovery()
+                        else:
+                            # An explicit reply is not a stalled connection. Leave
+                            # register errors available to the existing bisect path.
+                            self._recovery_succeeded()
+                    uncertainty = " The write may already have been applied." if not read else ""
+                    raise CoreModbusUnitError(f"{label} failed after reconnect and one retry: {retry_error}.{uncertainty}") from retry_error
+                _LOGGER.warning("%s: repeated %s succeeded after reconnect", self.endpoint, label)
+            except (ModbusError, OSError, TimeoutError) as err:
+                if isinstance(err, (OSError, TimeoutError)):
+                    _LOGGER.warning("%s: %s could not connect or lost its connection: %s", self.endpoint, label, err)
+                    if read:
+                        self._defer_recovery()
+                elif read:
+                    self._recovery_succeeded()
+                raise CoreModbusUnitError(str(err)) from err
+            if read:
+                self._recovery_succeeded()
+            return result
 
     def _unit(self, unit_id: int) -> Any:
         if not 0 <= unit_id <= 255:
@@ -270,35 +366,28 @@ class CoreModbusUnitTransport:
         self._closed = True
 
     async def read(self, register_type: str, unit: int, address: int, count: int) -> SerialModbusResponse | None:
-        from modbus_connection.exceptions import ModbusError
-
         if self._closed:
             return None
         client = self._unit(unit)
-        try:
-            if register_type == "input":
-                registers = await client.read_input_registers(address, count)
-            else:
-                registers = await client.read_holding_registers(address, count)
-        # The public ModbusError base includes connection, timeout, protocol
-        # and device exceptions. Keep configuration/programming errors visible.
-        except (ModbusError, OSError, TimeoutError) as err:
-            raise CoreModbusUnitError(str(err)) from err
+        operation = client.read_input_registers if register_type == "input" else client.read_holding_registers
+        registers = await self._request(
+            client, f"read {register_type} unit={unit} address=0x{address:x} count={count}", lambda: operation(address, count), read=True
+        )
         return SerialModbusResponse(registers)
 
     async def write(self, unit: int, address: int, values: list[int], *, multiple: bool) -> SerialModbusResponse | None:
-        from modbus_connection.exceptions import ModbusError
-
         if self._closed:
             return None
         client = self._unit(unit)
-        try:
+        values = list(values)  # Preserve the exact payload across a possible retry.
+
+        async def operation() -> None:
             if multiple:
                 await client.write_registers(address, values)
             else:
                 await client.write_register(address, values[0])
-        except (ModbusError, OSError, TimeoutError) as err:
-            raise CoreModbusUnitError(str(err)) from err
+
+        await self._request(client, f"write unit={unit} address=0x{address:x} count={len(values)}", operation, read=False)
         # The public API confirms successful writes by returning without error.
         return SerialModbusResponse([])
 
