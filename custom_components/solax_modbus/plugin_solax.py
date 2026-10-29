@@ -10477,6 +10477,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         },
         allowedtypes=MIC | GEN2 | X3,
         internal=True,
+        newblock=True,  # unreadable on some mics, so isolate block #2422
+        ignore_readerror=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter ID Number",
@@ -10487,6 +10489,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=MIC | GEN2,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
+        newblock=True,
     ),
     SolaXModbusSensorEntityDescription(
         name="Safety code",
