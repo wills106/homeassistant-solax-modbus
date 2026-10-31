@@ -1,4 +1,4 @@
-"""Regression coverage for X3 GEN5 third-MPPT detection (#2374, #2420)."""
+"""Regression coverage for X3 GEN5 third-MPPT detection (#2374, #2420, #2453)."""
 
 from dataclasses import replace
 from typing import Any
@@ -28,6 +28,10 @@ from custom_components.solax_modbus.plugin_solax import GEN5, HYBRID, MPPT3, SEN
         ("H3BF15KB", True, "X3-Ultra-15kW"),
         ("H3BF15L", True, "X3-Ultra-15kW"),
         ("H3BF15", False, "X3-Ultra-15kW"),
+        ("H3BC15M", True, "X3-Ultra-15kW"),
+        ("H3BC15L", True, "X3-Ultra-15kW"),
+        ("H3BC15K", False, "X3-Ultra-15kW"),
+        ("H3BC15", False, "X3-Ultra-15kW"),
     ],
 )
 async def test_x3_gen5_mppt_detection(mock_hub: Any, prefix: str, has_mppt3: bool, model: str) -> None:
