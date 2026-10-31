@@ -101,6 +101,7 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
     PollOutcome,
+    descriptor_optional_depends,
     is_inputless_computed_sensor,
 )
 from .const import (
@@ -172,6 +173,7 @@ from .const import (
 from .core_modbus import async_prepare_core_connection, configured_core_connection
 from .device_registry_lookup import link_parent_device
 from .modbus_transport import (
+    CoreModbusBackoff,
     CoreModbusTransport,
     CoreModbusUnitError,
     CoreModbusUnitTransport,
@@ -685,7 +687,7 @@ class SolaXModbusHub:
                 client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, framer=FramerType.ASCII, retries=RETRIES)
             else:
                 client = AsyncModbusTcpClient(host=host, port=port, timeout=time_out, retries=RETRIES)
-            self._transport = NativeModbusTransport(client)
+            self._transport = NativeModbusTransport(client, message_spacing=float(config.get("message_wait_milliseconds", 0)) / 1000)
         elif interface in ("core", "core_tcp", "core_serial"):
             core_settings = configured_core_connection(dict(config))
             if yaml_hub_name is not None or core_settings is None:
@@ -1431,7 +1433,13 @@ class SolaXModbusHub:
             return PollOutcome.SKIPPED, 0
         if self.blocks_changed:
             self.rebuild_blocks(self.initial_groups)
-        if not bypass_slowdown and (self.cyclecount % self.slowdown) != 0:
+        recovery = self._core_recovery_transport()
+        if recovery is not None and recovery.backoff_remaining:
+            self._publish_computed_sensors(await self._async_run_autorepeats(None))
+            return PollOutcome.SKIPPED, 0
+        # Recovery owns the next probe time; do not multiply its cooldown by
+        # the existing sleep/offline slowdown. Native/legacy polling is unchanged.
+        if not bypass_slowdown and not (recovery is not None and recovery.recovering) and (self.cyclecount % self.slowdown) != 0:
             self._publish_computed_sensors(await self._async_run_autorepeats(None))
             return PollOutcome.SKIPPED, 0
 
@@ -1723,6 +1731,11 @@ class SolaXModbusHub:
             operation,
         )
 
+    def _core_recovery_transport(self) -> CoreModbusUnitTransport | None:
+        """Return the managed transport that owns timeout recovery, if any."""
+        transport = getattr(self, "_transport", None)
+        return transport if isinstance(transport, CoreModbusUnitTransport) else None
+
     async def async_read_holding_registers(self, unit: int, address: int, count: int) -> Any:
         """Read holding registers."""
         return await self._async_read_registers("holding", unit, address, count)
@@ -1741,6 +1754,10 @@ class SolaXModbusHub:
             try:
                 _LOGGER.debug("%s: READ %s device=%s addr=0x%x cnt=%s", self._name, register_type.upper(), unit, address, count)
                 response = await self._track_task(self._transport.read(register_type, unit, address, count))
+            except CoreModbusBackoff:
+                # No request was sent. Callers must not turn this into a bad
+                # register, an additional block failure or another sleep event.
+                raise
             except (ModbusException, SerialModbusError, CoreModbusUnitError, AttributeError, TypeError) as exception_error:
                 error = f"Error: device: {unit} address: 0x{address:x} -> {exception_error!s}"
                 if self._is_expected_shutdown_modbus_error(exception_error):
@@ -1985,7 +2002,12 @@ class SolaXModbusHub:
         group.publish_updates = False
         try:
             async with self._poll_data_lock:
+                recovery = self._core_recovery_transport()
+                if recovery is not None and recovery.backoff_remaining:
+                    return PollOutcome.SKIPPED
                 return await self.async_read_modbus_registers_all(group, cycle_fresh_keys)
+        except CoreModbusBackoff:
+            return PollOutcome.SKIPPED
         except ConnectionException as ex:
             _LOGGER.error("Reading data failed! Inverter is offline. %s", ex)
         except ModbusIOException as ex:
@@ -2099,6 +2121,8 @@ class SolaXModbusHub:
         elif type(descr.scale) is dict:  # translate int to string
             # None publishes HA's unknown state without inventing an invalid enum option.
             return_value = descr.scale.get(val)
+            if return_value is None:
+                _LOGGER.debug("%s: Value %d for key %d could not be mapped to a known state.", self._name, val, descr.key)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
@@ -2172,6 +2196,8 @@ class SolaXModbusHub:
                     address=block.start,
                     count=block.end - block.start,
                 )
+        except CoreModbusBackoff:
+            raise
         except Exception as ex:
             errmsg = f"exception {str(ex)} "
             _LOGGER.debug("%s: exception reading %s %s %s", self._name, typ, block.start, errmsg)
@@ -2327,7 +2353,7 @@ class SolaXModbusHub:
                 return False, required, tuple(alternative_groups), set()
             alternative_groups.append(available_alternatives)
 
-        optional = self._active_dependency_keys(getattr(descr, "optional_depends_on", None), data, descriptions)
+        optional = self._active_dependency_keys(descriptor_optional_depends(descr), data, descriptions)
         if selected_optional is not None:
             optional = selected_optional
 
@@ -2356,13 +2382,14 @@ class SolaXModbusHub:
         inputless = is_inputless_computed_sensor(descr)
         descriptions = self.sensorDescriptions
         dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-        dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        optional_depends = self._dependency_values(descriptor_optional_depends(descr))
+        dependencies.update(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             dependencies.update(alternatives)
         source_data, accepted = self._computed_inputs(data, fresh_keys or set(), dependencies, interval)
         # Alternatives must not let a stale preferred value shadow a fresh
         # fallback. Optional inputs must not leak stale/invalid values either.
-        filtered = set(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        filtered = set(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             filtered.update(alternatives)
         for key in filtered:
@@ -2399,8 +2426,13 @@ class SolaXModbusHub:
             if previous is not None and previous.inputs == inputs:
                 return False
 
+        value: Any | None
         try:
-            value = descr.value_function(0, descr, source_data)
+            if getattr(descr, "external_override", None) is not None and (external := data.get(descr.external_override)) is not None:
+                _LOGGER.debug("Using external sensor: %s = %s", descr.external_override, external)
+                value = float(external)
+            else:
+                value = descr.value_function(0, descr, source_data)
         except Exception as ex:
             _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, descr.key, ex)
             self._remember_computed_sample(descr, None, inputs)
@@ -2517,7 +2549,7 @@ class SolaXModbusHub:
             if getattr(description, "register", -1) >= 0 and hasattr(self, "config"):
                 intervals.append(float(self.scan_group(SimpleNamespace(entity_description=description))))
             dependencies = list(self._dependency_values(getattr(description, "depends_on", None)))
-            dependencies.extend(self._dependency_values(getattr(description, "optional_depends_on", None)))
+            dependencies.extend(self._dependency_values(descriptor_optional_depends(description)))
             for alternatives in getattr(description, "depends_on_any", None) or []:
                 dependencies.extend(alternatives)
             pending.extend(self.sensorDescriptions[key] for key in dependencies if key in self.sensorDescriptions)
@@ -2672,7 +2704,7 @@ class SolaXModbusHub:
             ready: list[tuple[str, Any]] = []
             for key, descr in pending:
                 declared_dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-                declared_dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+                declared_dependencies.update(self._dependency_values(descriptor_optional_depends(descr)))
                 for alternatives in getattr(descr, "depends_on_any", None) or []:
                     declared_dependencies.update(self._dependency_values(alternatives))
                 if not ((declared_dependencies - {key}) & pending_keys):
@@ -2730,6 +2762,9 @@ class SolaXModbusHub:
         block_results: list[BlockReadResult] = []
         fresh_keys: set[str] = set()
         for block in group.holdingBlocks:
+            recovery = self._core_recovery_transport()
+            if recovery is not None and recovery.backoff_remaining:
+                break
             _LOGGER.debug("%s: ** trying to read holding block 0x%x", self._name, block.start)
             block_result = await self.async_read_modbus_block(data, block, "holding")
             block_results.append(block_result)
@@ -2742,6 +2777,9 @@ class SolaXModbusHub:
                 block_result.communication_succeeded,
             )
         for block in group.inputBlocks:
+            recovery = self._core_recovery_transport()
+            if recovery is not None and recovery.backoff_remaining:
+                break
             _LOGGER.debug("%s: ** trying to read input block 0x%x", self._name, block.start)
             block_result = await self.async_read_modbus_block(data, block, "input")
             block_results.append(block_result)
@@ -3286,6 +3324,11 @@ class SolaXModbusHub:
         self._comm_last_block_failure_time = now
         self._comm_last_error = f"{key}: {errmsg or 'read_error'}"
         self._comm_last_error_time = _mtime.strftime("%Y-%m-%d %H:%M:%S")
+        recovery = self._core_recovery_transport()
+        if recovery is not None and recovery.recovering:
+            # The exhausted request still affects health, but a connection
+            # outage is not evidence that a register needs bisect/quarantine.
+            return
         failures = [ts for ts in self._comm_block_failures.get(key, []) if now - ts <= COMM_BLOCK_FAILURE_WINDOW]
         failures.append(now)
         self._comm_block_failures[key] = failures
@@ -3294,6 +3337,9 @@ class SolaXModbusHub:
 
     def _schedule_runtime_bisect(self, block_obj: Any, typ: str) -> None:
         if getattr(self, "_stopping", False):
+            return
+        recovery = self._core_recovery_transport()
+        if recovery is not None and recovery.recovering:
             return
         key = self._block_key(block_obj, typ)
         task = self._runtime_bisect_tasks.get(key)
@@ -3323,6 +3369,9 @@ class SolaXModbusHub:
         task.add_done_callback(_remove_runtime_bisect_task)
 
     async def _runtime_bisect_block(self, block_obj: Any, typ: str, key: str) -> None:
+        recovery = self._core_recovery_transport()
+        if recovery is not None and recovery.recovering:
+            return
         if not self._transport.is_connected():
             return
         candidates: set[int] = set()
@@ -3443,6 +3492,9 @@ class SolaXModbusHub:
             _LOGGER.debug("%s: quarantine recheck loop failed: %s", self._name, ex)
 
     async def _recheck_quarantined_register(self, typ: str, addr: int) -> None:
+        recovery = self._core_recovery_transport()
+        if recovery is not None and recovery.recovering:
+            return
         if not self._transport.is_connected():
             return
         single = self._single_register_block(typ, addr)
@@ -3576,10 +3628,15 @@ class SolaXModbusHub:
             else:
                 read_coro = self.async_read_holding_registers(unit=self._modbus_addr, address=block_obj.start, count=count)
             resp = await asyncio.wait_for(read_coro, timeout=timeout) if timeout is not None else await read_coro
+            recovery = self._core_recovery_transport()
+            if recovery is not None and recovery.recovering:
+                raise CoreModbusBackoff("Deferring register probes until connection recovery succeeds")
             if resp is None:
                 return False
             is_err = getattr(resp, "isError", lambda: False)()
             return not is_err
+        except CoreModbusBackoff:
+            raise
         except TimeoutError:
             timeout_msg = f"{timeout:.1f}s" if timeout is not None else "configured timeout"
             _LOGGER.debug("%s: probe %s 0x%x-0x%x timed out after %s", self._name, typ, block_obj.start, block_obj.end, timeout_msg)
