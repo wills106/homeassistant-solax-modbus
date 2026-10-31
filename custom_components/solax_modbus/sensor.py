@@ -586,6 +586,12 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def native_value(self) -> Any:
         """Return the state of the sensor."""
+        if self.entity_description.fault_bits is not None:
+            value = self._fault_raw_value()
+            if value is None:
+                return None
+            count = value.bit_count()
+            return f"{count} active fault{'s' if count != 1 else ''}" if count else "Normal"
         if self.entity_description.key in self._hub.data:
             return self._hub.data[self.entity_description.key]
             # try:    val = self._hub.data[self.entity_description.key] *self.entity_description.read_scale # a bit ugly as we might multiply strings or other types with 1
@@ -603,9 +609,21 @@ class SolaXModbusSensor(SensorEntity):
         """Data is delivered by the hub."""
         return False
 
+    def _fault_raw_value(self) -> int | None:
+        """Never report a missing or invalid fault word as a healthy inverter."""
+        value = self._hub.data.get(self.entity_description.key)
+        return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         attrs = dict(self._attr_extra_state_attributes)
+        fault_bits = self.entity_description.fault_bits
+        if fault_bits is not None:
+            value = self._fault_raw_value()
+            attrs["raw_value"] = value
+            attrs["active_errors"] = (
+                [fault_bits.get(bit, f"Unknown bit {bit}") for bit in range(value.bit_length()) if value & (1 << bit)] if value is not None else None
+            )
         if self.entity_description.key == "communication_health":
             attrs.update(self._hub.communication_health_attributes())
         elif self.entity_description.key == "communication_quarantined_registers":
