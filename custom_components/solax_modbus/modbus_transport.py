@@ -6,10 +6,10 @@ import asyncio
 import inspect
 import logging
 from asyncio import sleep as _sleep
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from time import monotonic
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeVar
 from weakref import ReferenceType, ref
 
 from homeassistant.config_entries import ConfigEntry
