@@ -29,6 +29,7 @@ from .const import (
     SLEEPMODE_NONE,
     SLEEPMODE_ZERO,
     BaseModbusSensorEntityDescription,
+    descriptor_optional_depends,
     is_inputless_computed_sensor,
     matches_modbus_protocol,
 )
@@ -1083,7 +1084,7 @@ def entityToListSingle(
 
     hub.sensorDescriptions[newdescr.key] = newdescr
     # register dependency chain
-    dependency_groups: list[Any] = [newdescr.depends_on or [], newdescr.optional_depends_on or []]
+    dependency_groups: list[Any] = [newdescr.depends_on or [], descriptor_optional_depends(newdescr) or []]
     dependency_groups.extend(newdescr.depends_on_any or [])
     deplist = list(dict.fromkeys(dep_on for group in dependency_groups for dep_on in ([group] if isinstance(group, str) else group)))
     if deplist:

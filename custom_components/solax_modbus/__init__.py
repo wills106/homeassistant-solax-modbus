@@ -101,6 +101,7 @@ from .const import (
     WRITE_MULTI_MODBUS,
     WRITE_SINGLE_MODBUS,
     PollOutcome,
+    descriptor_optional_depends,
     is_inputless_computed_sensor,
 )
 from .const import (
@@ -2099,6 +2100,8 @@ class SolaXModbusHub:
         elif type(descr.scale) is dict:  # translate int to string
             # None publishes HA's unknown state without inventing an invalid enum option.
             return_value = descr.scale.get(val)
+            if return_value is None:
+                _LOGGER.debug("%s: Value %d for key %d could not be mapped to a known state.", self._name, val, descr.key)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
@@ -2327,7 +2330,7 @@ class SolaXModbusHub:
                 return False, required, tuple(alternative_groups), set()
             alternative_groups.append(available_alternatives)
 
-        optional = self._active_dependency_keys(getattr(descr, "optional_depends_on", None), data, descriptions)
+        optional = self._active_dependency_keys(descriptor_optional_depends(descr), data, descriptions)
         if selected_optional is not None:
             optional = selected_optional
 
@@ -2356,13 +2359,14 @@ class SolaXModbusHub:
         inputless = is_inputless_computed_sensor(descr)
         descriptions = self.sensorDescriptions
         dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-        dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        optional_depends = self._dependency_values(descriptor_optional_depends(descr))
+        dependencies.update(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             dependencies.update(alternatives)
         source_data, accepted = self._computed_inputs(data, fresh_keys or set(), dependencies, interval)
         # Alternatives must not let a stale preferred value shadow a fresh
         # fallback. Optional inputs must not leak stale/invalid values either.
-        filtered = set(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+        filtered = set(optional_depends)
         for alternatives in getattr(descr, "depends_on_any", None) or []:
             filtered.update(alternatives)
         for key in filtered:
@@ -2399,8 +2403,13 @@ class SolaXModbusHub:
             if previous is not None and previous.inputs == inputs:
                 return False
 
+        value: Any | None
         try:
-            value = descr.value_function(0, descr, source_data)
+            if getattr(descr, "external_override", None) is not None and (external := data.get(descr.external_override)) is not None:
+                _LOGGER.debug("Using external sensor: %s = %s", descr.external_override, external)
+                value = float(external)
+            else:
+                value = descr.value_function(0, descr, source_data)
         except Exception as ex:
             _LOGGER.debug("%s: cannot compute value for %s: %s", self._name, descr.key, ex)
             self._remember_computed_sample(descr, None, inputs)
@@ -2517,7 +2526,7 @@ class SolaXModbusHub:
             if getattr(description, "register", -1) >= 0 and hasattr(self, "config"):
                 intervals.append(float(self.scan_group(SimpleNamespace(entity_description=description))))
             dependencies = list(self._dependency_values(getattr(description, "depends_on", None)))
-            dependencies.extend(self._dependency_values(getattr(description, "optional_depends_on", None)))
+            dependencies.extend(self._dependency_values(descriptor_optional_depends(description)))
             for alternatives in getattr(description, "depends_on_any", None) or []:
                 dependencies.extend(alternatives)
             pending.extend(self.sensorDescriptions[key] for key in dependencies if key in self.sensorDescriptions)
@@ -2672,7 +2681,7 @@ class SolaXModbusHub:
             ready: list[tuple[str, Any]] = []
             for key, descr in pending:
                 declared_dependencies = set(self._dependency_values(getattr(descr, "depends_on", None)))
-                declared_dependencies.update(self._dependency_values(getattr(descr, "optional_depends_on", None)))
+                declared_dependencies.update(self._dependency_values(descriptor_optional_depends(descr)))
                 for alternatives in getattr(descr, "depends_on_any", None) or []:
                     declared_dependencies.update(self._dependency_values(alternatives))
                 if not ((declared_dependencies - {key}) & pending_keys):
