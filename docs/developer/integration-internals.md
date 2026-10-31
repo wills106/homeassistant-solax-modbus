@@ -148,6 +148,7 @@ In its current form, the function should return a dictionary with following stru
 The system will automatically convert the data to the modbus low level format, and compute the length of the write_multiple payload to be written to modbus.
 
 The autorepeat value_function is called once for every polling loop, so it is up to the value function to reduce the number of interactions if desired. Currently, the value_function cannot pass data to the next polling cycle's `value_function`'s call. This could be enhanced as using global variables is not considered a best practice (may fail in case of multiple inverters/hubs). Storing this data in the descr._hub object may be better, but it is still not very transparent. Storing data in the `datadict` dictionary may work in future versions, please use a name that cannot conflict with other entities.
+
 ## Overriding inverter sensors
 
 Some sensors are computed from other sensors (in most cases through value_functions). Sometimes an external device/sensor can provide a more accurate value.
@@ -170,6 +171,7 @@ A new type of select entity can be declared that is a reference to another entit
         # option_dict stays None: options come from the entity registry at runtime
     ),
 ```
+
 This declaration creates a select entity with a dropdown that lists all candidate sensor entities: sensors whose device class matches `dynamic_device_class`, or (when no device class is declared) sensors whose unit is convertible to the canonical unit declared in `EXTERNAL_SOURCE_TYPES`.
 If `dynamic_device_class` is declared, only sensors with that device class are listed.
 
@@ -178,6 +180,7 @@ Naming convention for the key: the key name of the sensor that will be overridde
 The injected value is available to value functions under the key `external_<source>` (e.g. `external_house_load`). It is re-read from the HA state machine on every poll cycle; when the external entity is missing, unavailable, unknown or non-numeric, the key is absent and the calculated value is used automatically (fail-open). The injected value is registered as a fresh accepted input, so dependent computed sensors such as `house_load` use this cycle's measurement.
 
 The house_load value function must be modified slightly to read this external sensor:
+
 ```
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     external = datadict.get("external_house_load")
@@ -216,6 +219,7 @@ plugin_instance = solax_plugin(
     ...
     EXTERNAL_SOURCE_TYPES=EXTERNAL_SOURCE_TYPES,
     ...
+)
 ```
 
 The declared value is the target internal unit. Measured values are converted to it automatically: a dropdown selection that reports kW is multiplied by 1000 before it reaches the control loop.
