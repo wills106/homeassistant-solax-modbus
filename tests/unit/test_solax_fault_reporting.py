@@ -36,10 +36,10 @@ from custom_components.solax_modbus.plugin_solax import (
 )
 from custom_components.solax_modbus.sensor import SolaXModbusSensor
 
-PROFILES = [(GEN3, X1, 0), (GEN3, X3, 0), (GEN4, X1, 2), (GEN4, X3, 2), (GEN4, X3, 100)]
+PROFILES: list[tuple[int, int, int | None]] = [(GEN3, X1, 0), (GEN3, X3, 0), (GEN4, X1, 2), (GEN4, X3, 2), (GEN4, X3, 100)]
 # Gen2 X1 is scoped by allowedtypes (HYBRID | GEN2 | X1) with no protocol version bounds;
 # like Gen3, a real Gen2 unit typically reports no protocol version, so 0/None is the realistic state.
-GEN2_PROFILES = [(GEN2, X1, 0), (GEN2, X1, None)]
+GEN2_PROFILES: list[tuple[int, int, int | None]] = [(GEN2, X1, 0), (GEN2, X1, None)]
 
 
 def _descriptions(inverter_type: int, version: int | None) -> list[SolaXModbusSensorEntityDescription]:
@@ -125,7 +125,7 @@ def test_undocumented_profiles_do_not_inherit_fault_tables(inverter_type: int, v
 
 
 @pytest.mark.parametrize(("generation", "phases", "version"), PROFILES + GEN2_PROFILES)
-def test_fault_words_decode_all_bits_and_preserve_numeric_hub_data(generation: int, phases: int, version: int) -> None:
+def test_fault_words_decode_all_bits_and_preserve_numeric_hub_data(generation: int, phases: int, version: int | None) -> None:
     hub = _hub()
     for description in _descriptions(HYBRID | generation | phases, version):
         sensor = _sensor(hub, description)
