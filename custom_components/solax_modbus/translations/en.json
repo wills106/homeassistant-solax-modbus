@@ -35,7 +35,11 @@
         "data": {
           "host": "The address of your inverter or Modbus interface",
           "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant"
+          "tcp_type": "The Modbus TCP variant",
+          "message_wait_milliseconds": "Message spacing (ms)"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
         }
       },
       "battery": {
@@ -56,7 +60,11 @@
         "data": {
           "host": "Inverter or Modbus adapter address",
           "port": "Port",
-          "tcp_type": "Modbus TCP variant"
+          "tcp_type": "Modbus TCP variant",
+          "message_wait_milliseconds": "Message spacing (ms)"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
         }
       },
       "core_serial": {
@@ -121,7 +129,11 @@
         "data": {
           "host": "The address of your inverter or Modbus interface",
           "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant"
+          "tcp_type": "The Modbus TCP variant",
+          "message_wait_milliseconds": "Message spacing (ms)"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
         }
       },
       "battery": {
@@ -142,7 +154,11 @@
         "data": {
           "host": "Inverter or Modbus adapter address",
           "port": "Port",
-          "tcp_type": "Modbus TCP variant"
+          "tcp_type": "Modbus TCP variant",
+          "message_wait_milliseconds": "Message spacing (ms)"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
         }
       },
       "core_serial": {

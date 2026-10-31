@@ -220,6 +220,7 @@ CORE_SERIAL_SCHEMA = SERIAL_SCHEMA.extend(
 TCP_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
+        vol.Optional("message_wait_milliseconds", default=0): vol.All(vol.Coerce(int), vol.Range(min=0, max=1000)),
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_TCP_TYPE, default=DEFAULT_TCP_TYPE): selector.SelectSelector(
             selector.SelectSelectorConfig(options=TCP_TYPES),
