@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from custom_components.solax_modbus.plugin_growatt import AC, GEN3, GEN4, HYBRID, PV, X1
+from custom_components.solax_modbus.plugin_growatt import AC, GEN2, GEN3, GEN4, HYBRID, PV, X1, X3
 from custom_components.solax_modbus.plugin_growatt import plugin_instance as growatt_plugin
 
 
@@ -32,6 +32,17 @@ class GrowattHub:
 
 
 CONFIG: dict[str, Any] = {"read_eps": False, "read_dcb": False}
+
+
+@pytest.mark.asyncio
+async def test_tj1_firmware_selects_existing_three_phase_pv_profile() -> None:
+    hub = GrowattHub({9: "TJ1.0"})
+
+    invertertype = await growatt_plugin.create_hub_instance().async_determineInverterType(hub, CONFIG)
+
+    assert invertertype == PV | GEN2 | X3
+    assert hub.seriesnumber == "TJ1.0"
+    assert hub.read_addresses == [3001, 209, 23, 9]
 
 
 @pytest.mark.asyncio
