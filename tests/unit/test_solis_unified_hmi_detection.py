@@ -11,6 +11,7 @@ Plus parity checks: the unified plugin's embedded maps and its detection must ma
 two legacy plugins exactly.
 """
 
+import types
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -44,7 +45,7 @@ KNOWN_PREFIXES = ["103305", "103306", "133306", "303126", "2051"]
         (plugin_solis_fb00, "FB00"),
     ],
 )
-def test_embedded_maps_match_legacy_plugins(legacy_module, prefix_attr: str) -> None:
+def test_embedded_maps_match_legacy_plugins(legacy_module: types.ModuleType, prefix_attr: str) -> None:
     """The unified file must embed the exact entity collections of each legacy plugin."""
     for coll in ("SENSOR_TYPES", "NUMBER_TYPES", "BUTTON_TYPES", "SELECT_TYPES", "SWITCH_TYPES"):
         merged = getattr(plugin_solis_unified, f"{prefix_attr}_{coll}")
@@ -141,7 +142,14 @@ class TestSelectHmiMap:
         (None, None, False, MAP_LEGACY),  # nothing known -> conservative legacy
     ],
 )
-async def test_map_selection_per_hmi_state(prefix, major, sub, probe_ok, expected_map, mock_hub: MockHub) -> None:
+async def test_map_selection_per_hmi_state(
+    prefix: str,
+    major: int | None,
+    sub: int | None,
+    probe_ok: bool,
+    expected_map: str,
+    mock_hub: MockHub,
+) -> None:
     _configure(mock_hub, prefix, major, sub, probe_ok)
     plugin = plugin_solis_unified.plugin_instance.create_hub_instance()
 
@@ -205,7 +213,7 @@ async def test_unrecognized_serial_skips_hmi_probing(mock_hub: MockHub) -> None:
 
 @pytest.mark.parametrize("prefix", KNOWN_PREFIXES)
 @pytest.mark.parametrize("read_optional", [False, True])
-async def test_detection_parity_with_legacy_plugins(prefix, read_optional, mock_hub: MockHub) -> None:
+async def test_detection_parity_with_legacy_plugins(prefix: str, read_optional: bool, mock_hub: MockHub) -> None:
     """Unified plugin must return exactly the same inverter mask as both legacy plugins."""
     config = {CONF_READ_EPS: read_optional, CONF_READ_DCB: read_optional}
 
