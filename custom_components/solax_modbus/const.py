@@ -244,6 +244,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    fault_bits: dict[int, str] | None = None  # Bit index -> fault label; keep the polled integer as the raw value.
     scan_group: str | None = None  # SCAN_GROUP_MEDIUM, SCAN_GROUP_FAST, SCAN_GROUP_DEFAULT, etc.
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False  # set to True to start a new modbus read block operation - do not use frequently

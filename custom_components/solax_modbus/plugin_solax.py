@@ -43,6 +43,7 @@ from custom_components.solax_modbus.const import (
     SCAN_GROUP_FAST,
     SCAN_GROUP_MEDIUM,
     SLEEPMODE_LASTAWAKE,
+    SLEEPMODE_NONE,
     TIME_OPTIONS,
     TIME_OPTIONS_GEN4,
     TIME_OPTIONS_SEPARATE_REGISTERS,
@@ -74,6 +75,16 @@ from custom_components.solax_modbus.const import (
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
+from .solax_faults import (
+    GEN3_MANAGER_FAULTS,
+    GEN3_X1_INVERTER_FAULTS,
+    GEN3_X3_INVERTER_FAULTS,
+    GEN4_MANAGER_FAULTS,
+    GEN4_X1_INVERTER_FAULTS,
+    GEN4_X3_ESS_INVERTER_FAULTS,
+    GEN4_X3_ESS_MANAGER_FAULTS,
+    GEN4_X3_INVERTER_FAULTS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -3750,6 +3761,7 @@ SWITCH_TYPES: Sequence["SolaXModbusSwitchEntityDescription"] = [
         sensor_key="mppt",
         value_function=value_function_enable_disable,
         allowedtypes=HYBRID | GEN4 | GEN5,
+        modbus_max=99,
         icon="mdi:dip-switch",
     ),
     SolaXModbusSwitchEntityDescription(
@@ -4523,6 +4535,55 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
 # ================================= Sennsor Declarations ============================================================
 
 SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
+    # Fault words remain numeric in hub.data; the entity exposes a short summary
+    # and raw_value/active_errors attributes without additional reads or timers.
+    *[
+        SolaXModbusSensorEntityDescription(
+            name="Inverter Errors",
+            key="inverter_errors",
+            register=0x40,
+            register_type=REG_INPUT,
+            register_data_type=REGISTER_U32,
+            order32="little",
+            rounding=0,
+            fault_bits=fault_bits,
+            allowedtypes=HYBRID | generation | phases,
+            modbus_min=min_version,
+            modbus_max=max_version,
+            sleepmode=SLEEPMODE_NONE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            icon="mdi:alert-circle-outline",
+        )
+        for generation, phases, min_version, max_version, fault_bits in (
+            (GEN3, X1, None, None, GEN3_X1_INVERTER_FAULTS),
+            (GEN3, X3, None, None, GEN3_X3_INVERTER_FAULTS),
+            (GEN4, X1, 1, 99, GEN4_X1_INVERTER_FAULTS),
+            (GEN4, X3, 1, 99, GEN4_X3_INVERTER_FAULTS),
+            (GEN4, X3, 100, None, GEN4_X3_ESS_INVERTER_FAULTS),
+        )
+    ],
+    *[
+        SolaXModbusSensorEntityDescription(
+            name="Manager Errors",
+            key="manager_errors",
+            register=0x43,
+            register_type=REG_INPUT,
+            register_data_type=REGISTER_U16,
+            rounding=0,
+            fault_bits=fault_bits,
+            allowedtypes=HYBRID | generation | phases,
+            modbus_min=min_version,
+            modbus_max=max_version,
+            sleepmode=SLEEPMODE_NONE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            icon="mdi:alert-circle-outline",
+        )
+        for generation, phases, min_version, max_version, fault_bits in (
+            (GEN3, X1 | X3, None, None, GEN3_MANAGER_FAULTS),
+            (GEN4, X1 | X3, 1, 99, GEN4_MANAGER_FAULTS),
+            (GEN4, X3, 100, None, GEN4_X3_ESS_MANAGER_FAULTS),
+        )
+    ],
     #####
     #
     # Holding
@@ -5293,6 +5354,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         key="mppt",
         register=0xBC,
         allowedtypes=HYBRID | GEN4 | GEN5,
+        modbus_max=99,
         internal=True,
     ),
     SolaXModbusSensorEntityDescription(
