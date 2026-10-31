@@ -3,14 +3,15 @@
 Covers the auto-detection mechanism derived from the RS485_MODBUS(ESINV-33000ID)
 Hybrid Inverter protocol (Ver3.5, section 5.1):
 - HMI major/sub version registers 33002 + 33069 (low-order bytes)
-- 0xFB00..0xFFFF -> plugin_solis_fb00 register map
-- 0x0001..0xFAFF -> plugin_solis register map
+- 0xFB00..0xFFFF -> the FB00_* (Gen5/Gen6) register maps held in the unified plugin
+- 0x0001..0xFAFF -> the LEGACY_* (older-generation) register maps in the same file
 - unknown version -> presence probe of 34504 (Remote Dispatch Running Status)
 - explicit hmi_map override
-Plus parity checks: unified detection must match both legacy plugins, and the
-selected entity collections must be identical to the corresponding legacy plugin.
+Plus parity checks: the unified plugin's embedded maps and its detection must match the
+two legacy plugins exactly.
 """
 
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -31,6 +32,32 @@ from tests.conftest import MockHub, MockModbusResponse
 # Serial prefixes that BOTH legacy plugins recognize on main (103303 is only
 # recognized by plugin_solis_fb00 until PR #2457 merges, so it is not parity-safe).
 KNOWN_PREFIXES = ["103305", "103306", "133306", "303126", "2051"]
+
+
+# ============================ embedded map / standalone parity ==============================
+
+
+@pytest.mark.parametrize(
+    ("legacy_module", "prefix_attr"),
+    [
+        (plugin_solis, "LEGACY"),
+        (plugin_solis_fb00, "FB00"),
+    ],
+)
+def test_embedded_maps_match_legacy_plugins(legacy_module, prefix_attr: str) -> None:
+    """The unified file must embed the exact entity collections of each legacy plugin."""
+    for coll in ("SENSOR_TYPES", "NUMBER_TYPES", "BUTTON_TYPES", "SELECT_TYPES", "SWITCH_TYPES"):
+        merged = getattr(plugin_solis_unified, f"{prefix_attr}_{coll}")
+        legacy = getattr(legacy_module, coll)
+        assert [d.key for d in merged] == [d.key for d in legacy], f"{prefix_attr}_{coll} differs from {legacy_module.__name__}"
+
+
+def test_plugin_is_standalone() -> None:
+    """plugin_solis_unified must not import plugin_solis / plugin_solis_fb00."""
+    src = Path(plugin_solis_unified.__file__).read_text()
+    assert "import plugin_solis" not in src
+    assert "from . import plugin_solis" not in src
+    assert "plugin_solis_fb00" not in src
 
 
 def _serial_registers(prefix: str) -> list[int]:
