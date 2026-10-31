@@ -36,7 +36,10 @@ from custom_components.solax_modbus.plugin_solax import (
 )
 from custom_components.solax_modbus.sensor import SolaXModbusSensor
 
-PROFILES = [(GEN3, X1, 0), (GEN3, X3, 0), (GEN4, X1, 2), (GEN4, X3, 2), (GEN4, X3, 100)]
+PROFILES: list[tuple[int, int, int | None]] = [(GEN3, X1, 0), (GEN3, X3, 0), (GEN4, X1, 2), (GEN4, X3, 2), (GEN4, X3, 100)]
+# Gen2 X1 is scoped by allowedtypes (HYBRID | GEN2 | X1) with no protocol version bounds;
+# like Gen3, a real Gen2 unit typically reports no protocol version, so 0/None is the realistic state.
+GEN2_PROFILES: list[tuple[int, int, int | None]] = [(GEN2, X1, 0), (GEN2, X1, None)]
 
 
 def _descriptions(inverter_type: int, version: int | None) -> list[SolaXModbusSensorEntityDescription]:
@@ -72,6 +75,19 @@ def test_supported_profiles_have_exactly_two_diagnostic_sensors(generation: int,
     assert [description.key for description in descriptions] == ["inverter_errors", "manager_errors"]
     assert [description.register for description in descriptions] == [0x40, 0x43]
     assert [description.register_data_type for description in descriptions] == [REGISTER_U32, REGISTER_U16]
+    _assert_fault_metadata(descriptions)
+
+
+@pytest.mark.parametrize(("generation", "phases", "version"), GEN2_PROFILES)
+def test_gen2_x1_has_three_diagnostic_sensors(generation: int, phases: int, version: int | None) -> None:
+    descriptions = _descriptions(HYBRID | generation | phases, version)
+    assert [description.key for description in descriptions] == ["inverter_errors", "charger_errors", "manager_errors"]
+    assert [description.register for description in descriptions] == [0x40, 0x42, 0x43]
+    assert [description.register_data_type for description in descriptions] == [REGISTER_U32, REGISTER_U16, REGISTER_U16]
+    _assert_fault_metadata(descriptions)
+
+
+def _assert_fault_metadata(descriptions: list[SolaXModbusSensorEntityDescription]) -> None:
     for description in descriptions:
         assert description.register_type == REG_INPUT
         assert description.sleepmode == SLEEPMODE_NONE
@@ -86,7 +102,9 @@ def test_supported_profiles_have_exactly_two_diagnostic_sensors(generation: int,
 @pytest.mark.parametrize(
     ("inverter_type", "version"),
     [
-        (HYBRID | GEN2 | X1, 2),
+        (HYBRID | GEN2 | X3, 0),
+        (AC | GEN2 | X1, 0),
+        (MIC | GEN2 | X1, 0),
         (HYBRID | GEN4 | X1, 100),
         (HYBRID | GEN4 | X1, 102),
         (HYBRID | GEN4 | X1, None),
@@ -106,8 +124,8 @@ def test_undocumented_profiles_do_not_inherit_fault_tables(inverter_type: int, v
     assert _descriptions(inverter_type, version) == []
 
 
-@pytest.mark.parametrize(("generation", "phases", "version"), PROFILES)
-def test_fault_words_decode_all_bits_and_preserve_numeric_hub_data(generation: int, phases: int, version: int) -> None:
+@pytest.mark.parametrize(("generation", "phases", "version"), PROFILES + GEN2_PROFILES)
+def test_fault_words_decode_all_bits_and_preserve_numeric_hub_data(generation: int, phases: int, version: int | None) -> None:
     hub = _hub()
     for description in _descriptions(HYBRID | generation | phases, version):
         sensor = _sensor(hub, description)
@@ -137,6 +155,14 @@ def test_fault_words_decode_all_bits_and_preserve_numeric_hub_data(generation: i
 @pytest.mark.parametrize(
     ("generation", "phases", "version", "key", "bit", "expected"),
     [
+        (GEN2, X1, 0, "inverter_errors", 4, "PLL Lost Fault"),
+        (GEN2, X1, 0, "inverter_errors", 23, "RCD Fault"),
+        (GEN2, X1, 0, "inverter_errors", 6, "Unknown bit 6"),
+        (GEN2, X1, 0, "charger_errors", 0, "Boost Over Current"),
+        (GEN2, X1, 0, "charger_errors", 9, "Battery Awaken Failed"),
+        (GEN2, X1, 0, "charger_errors", 15, "Charger CAN Fault"),
+        (GEN2, X1, 0, "manager_errors", 1, "RTC Error"),
+        (GEN2, X1, 0, "manager_errors", 4, "CT-Meter Missing"),
         (GEN3, X1, 0, "inverter_errors", 23, "BMS Lost"),
         (GEN3, X3, 0, "inverter_errors", 23, "Parallel Fault"),
         (GEN3, X1, 0, "inverter_errors", 21, "Unknown bit 21"),
