@@ -10368,6 +10368,7 @@ SERIAL_PREFIX_TYPES = {
 # Firmware/build prefixes used when no supported serial-number prefix is available.
 FIRMWARE_PREFIX_TYPES = {
     "dha": PV | GEN | X3,  # PV TL3-SL 10-22kW #1067
+    "TJ1": PV | GEN2 | X3,  # MID 17KTL3-X, confirmed in discussion #2434
     "DL1": PV | GEN2 | X3,  # PV TL3-X 15kW 3Phase (MOD)
     "DM1": PV | GEN2 | X3 | MPPT4,  # PV TL3-X 35kW 3Phase (MID)
     "AH1": PV | GEN3 | X1,  # Hybrid SPH 4kW - 10kW

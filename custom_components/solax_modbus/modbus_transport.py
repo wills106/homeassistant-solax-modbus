@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
-from collections.abc import Awaitable, Callable
+from asyncio import sleep as _sleep
+from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 from time import monotonic
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol
 from weakref import ReferenceType, ref
 
 from homeassistant.config_entries import ConfigEntry
@@ -66,8 +68,11 @@ class ModbusTransport(Protocol):
 class NativeModbusTransport:
     """Transport backed by a pymodbus client owned by this integration."""
 
-    def __init__(self, client: Any) -> None:
+    def __init__(self, client: Any, *, message_spacing: float = 0) -> None:
         self._client = client
+        self._message_spacing = message_spacing
+        self._last_request_end: float | None = None
+        self._request_lock = asyncio.Lock()
 
     @property
     def endpoint(self) -> str:
@@ -96,17 +101,36 @@ class NativeModbusTransport:
         if inspect.isawaitable(result):
             await result
 
+    @asynccontextmanager
+    async def _paced_request(self) -> AsyncIterator[None]:
+        """Serialize requests and leave a quiet interval after each completion.
+
+        The interval also applies after an error or cancellation, but does not
+        change retries performed internally by the client.
+        """
+        async with self._request_lock:
+            if self._message_spacing and self._last_request_end is not None:
+                while (remaining := self._last_request_end + self._message_spacing - monotonic()) > 0:
+                    await _sleep(remaining)
+            try:
+                yield
+            finally:
+                if self._message_spacing:
+                    self._last_request_end = monotonic()
+
     async def read(self, register_type: str, unit: int, address: int, count: int) -> Any:
         kwargs = {ADDR_KW: unit} if unit is not None else {}
-        if register_type == "input":
-            return await self._client.read_input_registers(address=address, count=count, **kwargs)
-        return await self._client.read_holding_registers(address=address, count=count, **kwargs)
+        async with self._paced_request():
+            if register_type == "input":
+                return await self._client.read_input_registers(address=address, count=count, **kwargs)
+            return await self._client.read_holding_registers(address=address, count=count, **kwargs)
 
     async def write(self, unit: int, address: int, values: list[int], *, multiple: bool) -> Any:
         kwargs = {ADDR_KW: unit} if unit is not None else {}
-        if multiple:
-            return await self._client.write_registers(address=address, values=values, **kwargs)
-        return await self._client.write_register(address=address, value=values[0], **kwargs)
+        async with self._paced_request():
+            if multiple:
+                return await self._client.write_registers(address=address, values=values, **kwargs)
+            return await self._client.write_register(address=address, value=values[0], **kwargs)
 
 
 class CoreModbusTransport:

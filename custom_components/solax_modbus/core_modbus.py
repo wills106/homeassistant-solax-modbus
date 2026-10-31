@@ -86,6 +86,7 @@ def configured_core_connection(config: dict[str, Any]) -> dict[str, Any] | None:
                 "host": config[CONF_HOST],
                 "port": config.get(CONF_PORT, DEFAULT_PORT),
                 "timeout": config.get(CONF_TIME_OUT, DEFAULT_TIME_OUT),
+                "message_wait_milliseconds": config.get("message_wait_milliseconds", 0),
             }
         )
     if interface == "core_serial":
