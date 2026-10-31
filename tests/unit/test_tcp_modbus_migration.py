@@ -224,13 +224,30 @@ async def test_migrated_tcp_real_ha_pool_reads_writes_and_reconnects(
     else:
         assert factory.call_args.args == ("socket://192.0.2.1:1502",)
 
-    # A timeout is reported without us tearing down a shared, connected link.
+    # Recovery timing is checked against one fake clock so backoff math is deterministic.
+    clock = [1000.0]
+    monkeypatch.setattr(transport, "monotonic", lambda: clock[0])
+
+    # A timeout resets the link with one reconnect and one retry; an exhausted read defers further reads.
     unit_client.read_input_registers.side_effect = TimeoutError("no response")
+    attempts_before = unit_client.read_input_registers.await_count
     assert await hub.async_read_input_registers(2, 150, 1) is None
-    client.disconnect.assert_not_awaited()
+    assert unit_client.read_input_registers.await_count == attempts_before + 2  # initial attempt plus one retry
+    client.disconnect.assert_awaited_once()
+    assert hub._transport.backoff_remaining == pytest.approx(11)
+    # bool() keeps mypy from narrowing the member expression across calls.
+    assert bool(hub._transport.recovering)
+    with pytest.raises(transport.CoreModbusBackoff):
+        await hub.async_read_input_registers(2, 150, 1)
+    assert unit_client.read_input_registers.await_count == attempts_before + 2  # deferred reads send nothing
+
     unit_client.read_input_registers.side_effect = None
+    clock[0] += 11  # wait out the read pause
     assert (await hub.async_read_input_registers(2, 150, 1)).registers == [12]
-    factory.assert_called_once()
+    assert hub._transport.recovering is False
+    # The disconnect above made HA rebuild its client lazily; the hub itself
+    # never calls the factory, so any extra client belongs to HA.
+    factory_calls_after_reset = factory.call_count
 
     # Simulate a transport-reported loss; HA opens a new client on the next I/O.
     def lose_link(*args: Any) -> None:
@@ -239,9 +256,12 @@ async def test_migrated_tcp_real_ha_pool_reads_writes_and_reconnects(
 
     unit_client.read_input_registers.side_effect = lose_link
     assert await hub.async_read_input_registers(2, 150, 1) is None
+    assert hub._transport.backoff_remaining == pytest.approx(11)
     unit_client.read_input_registers.side_effect = None
+    clock[0] += 11  # wait out the read pause
     assert (await hub.async_read_input_registers(2, 150, 1)).registers == [12]
-    assert factory.call_count == 2
+    assert factory.call_count > factory_calls_after_reset  # the lost link forced HA to open a fresh client
+    assert hub._transport.recovering is False
 
     await hub._transport.close()
     await releases[0]()
