@@ -2763,6 +2763,8 @@ class solis_plugin(plugin_base):
             invertertype = HYBRID | X1  # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith("160F5"):
             invertertype = HYBRID | X1  # Hybrid Gen5 3.6kW - 48v
+        elif seriesnumber.startswith("103303"):
+            invertertype = HYBRID | X3 | MPPT4  # Hybrid Gen6  5kW - HV
         elif seriesnumber.startswith("103305"):
             invertertype = HYBRID | X3 | MPPT4  # Hybrid Gen6  8kW - HV
         elif seriesnumber.startswith(("103306", "133306")):
