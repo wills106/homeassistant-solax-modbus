@@ -13053,6 +13053,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("F3E"):
             invertertype = AC | GEN3 | X3  # RetroFit
             self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith("63130"):
+            invertertype = HYBRID | GEN4 | X1  # Gen4 X1 3.0kW (TIGO TSI 3kW)
+            self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
         elif seriesnumber.startswith("63150"):
             invertertype = HYBRID | GEN4 | X1  # Gen4 X1 5.0kW
             self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
