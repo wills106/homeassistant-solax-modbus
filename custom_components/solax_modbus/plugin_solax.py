@@ -1569,6 +1569,7 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Load grid measured power from the primary meter source"""
     # Determine the source sensor, which must be the first entry in depends_on
     depends_on: list[str] | None = getattr(descr, "depends_on", None)
     if depends_on is None:
@@ -1580,17 +1581,100 @@ def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, 
     return value_function_gain_offset(datadict.get(source), descr, datadict)
 
 
+def value_function_select_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Determine which meter represents the grid measured power"""
+    # Meter choice depends on whether an external generator is present
+    generator_mode = datadict.get("generator_control", "Disabled")
+    if generator_mode == "Disabled":
+        # Meter 1 represents power to grid if no generator
+        measured_power = datadict.get("meter_1_measured_power", 0)
+    else:
+        # Otherwise meter 2 is power from grid
+        measured_power = 0 - datadict.get("meter_2_measured_power", 0)
+    # Apply any gain/offset scaling to account for CT inaccuracies
+    return value_function_gain_offset(measured_power, descr, datadict)
+
+
+def value_function_select_generator_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+    """Determine which meter represents the generator sources power"""
+    generator_mode = datadict.get("generator_control", "Disabled")
+    if generator_mode == "Disabled":
+        # When there is no external generator mode, Meter 2 represents power from external source.
+        return int(datadict.get("meter_2_measured_power", 0))
+    # Otherwise meter 1 is combined power to external/grid, and meter 2 is power from grid
+    total_power = int(datadict.get("meter_1_measured_power", 0))
+    measured_power = value_function_gain_offset(0 - datadict.get("meter_2_measured_power", 0), descr, datadict)
+    return total_power - measured_power
+
+
+def _meter_select_grid_energy(export: bool, range: str, datadict: dict[str, Any]) -> int:
+    """Determine which meter represents the selected grid energy source"""
+    generator_mode = datadict.get("generator_control", "Disabled")
+    if generator_mode == "Disabled":
+        # Meter 1 represents grid energy if no generator
+        grid_source = "meter_1_" + ("export" if export else "import") + range
+    else:
+        # Otherwise meter 2 is grid energy, but direction reversed
+        grid_source = "meter_2_" + ("export" if not export else "import") + range
+    return int(datadict.get(grid_source, 0))
+
+
+def value_function_meter_select_grid_export_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_grid_energy(True, "today", datadict)
+
+
+def value_function_meter_select_grid_import_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_grid_energy(False, "today", datadict)
+
+
+def value_function_meter_select_grid_export_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_grid_energy(True, "total", datadict)
+
+
+def value_function_meter_select_grid_import_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_grid_energy(False, "total", datadict)
+
+
+def _meter_select_generator_energy(export: bool, range: str, datadict: dict[str, Any]) -> int:
+    """Determine which meter represents the selected generator energy source"""
+    generator_mode = datadict.get("generator_control", "Disabled")
+    if generator_mode == "Disabled":
+        # When there is no external generator mode, Meter 2 represents generator energy
+        meter_source = "meter_2_" + ("export" if export else "import") + range
+        return int(datadict.get(meter_source, 0))
+    # Otherwise meter 1 is combined generator/grid energy, and meter 2 is the grid but
+    # with direction reversed. Generator energy is difference.
+    grid_source = "meter_2_" + ("export" if not export else "import") + range
+    combined_source = "meter_1_" + ("export" if export else "import") + range
+    return int(datadict.get(combined_source, 0)) - int(datadict.get(grid_source, 0))
+
+
+def value_function_meter_select_generator_export_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_generator_energy(True, "today", datadict)
+
+
+def value_function_meter_select_generator_import_today(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_generator_energy(False, "today", datadict)
+
+
+def value_function_meter_select_generator_export_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_generator_energy(True, "total", datadict)
+
+
+def value_function_meter_select_generator_import_total(initval: int, descr: Any, datadict: dict[str, Any]) -> int:
+    return _meter_select_generator_energy(False, "total", datadict)
+
+
 def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     inverter_power = int(datadict.get("inverter_power", 0))
     measured_power = int(datadict.get("measured_power", 0))
-    meter_2_power = int(datadict.get("meter_2_measured_power", 0))
-    result = inverter_power - measured_power + meter_2_power
-
+    generator_power = int(datadict.get("generator_power", 0))
+    result = inverter_power - measured_power + generator_power
     _LOGGER.debug(
-        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW meter_2_power=%sW result=%sW meter_1_direction=%s",
+        "[HOUSE_LOAD] Calculation: inverter_power=%sW measured_power=%sW generator_power=%sW result=%sW meter_1_direction=%s",
         inverter_power,
         measured_power,
-        meter_2_power,
+        generator_power,
         result,
         datadict.get("meter_1_direction", "unknown"),
     )
@@ -1599,15 +1683,23 @@ def value_function_house_load(initval: int, descr: Any, datadict: dict[str, Any]
 
 
 def value_function_house_load_alt(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    return int(
-        datadict.get("pv_power_total", 0)
-        - datadict.get("battery_power_charge", 0)
-        - datadict.get("measured_power", 0)
-        + datadict.get("meter_2_measured_power", 0)
+    pv_power_total = int(datadict.get("pv_power_total", 0))
+    battery_power_charge = int(datadict.get("battery_power_charge", 0))
+    measured_power = int(datadict.get("measured_power", 0))
+    generator_power = int(datadict.get("generator_power", 0))
+    result = pv_power_total - battery_power_charge - measured_power + generator_power
+    _LOGGER.debug(
+        "[HOUSE_LOAD_ALT] Calculation: pv_power_total=%sW battery_power_charge=%sW measured_power=%sW (generator_power=%sW) result=%sW",
+        pv_power_total,
+        battery_power_charge,
+        measured_power,
+        generator_power,
+        result,
     )
+    return result
 
 
-def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
+def value_function_inverter_power_x3(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     return int(datadict.get("inverter_power_l1", 0)) + int(datadict.get("inverter_power_l2", 0)) + int(datadict.get("inverter_power_l3", 0))
 
 
@@ -7728,7 +7820,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         scale=0.01,
         rounding=2,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN | GEN2,
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
@@ -7743,8 +7835,38 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.01,
         rounding=2,
-        allowedtypes=AC | HYBRID,
+        allowedtypes=AC | HYBRID | GEN | GEN2,
         icon="mdi:home-import-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Meter 1 Import Total",
+        key="meter_1_import_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        register=0x4A,
+        register_data_type=REGISTER_U32,
+        register_type=REG_INPUT,
+        scale=0.01,
+        rounding=2,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        icon="mdi:home-import-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Meter 1 Export Total",
+        key="meter_1_export_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_registry_enabled_default=False,
+        register=0x48,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U32,
+        scale=0.01,
+        rounding=2,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
         name="Voltage",
@@ -8457,8 +8579,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Today's Export Energy",
-        key="today_s_export_energy",
+        name="Meter 1 Export Today",
+        key="meter_1_export_today",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -8471,8 +8593,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Today's Import Energy",
-        key="today_s_import_energy",
+        name="Meter 1 Import Today",
+        key="meter_1_import_today",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -8601,7 +8723,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0xA8,
         register_type=REG_INPUT,
         register_data_type=REGISTER_S32,
-        entity_registry_enabled_default=False,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
     ),
     SolaXModbusSensorEntityDescription(
@@ -10260,6 +10381,43 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
     #
     #####
     SolaXModbusSensorEntityDescription(
+        name="Grid Feed-in Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_select_measured_power,
+        external_override="external_measured_power",
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_measured_power"],
+        optional_depends_on=["generator_control", "meter_2_measured_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Grid Feed-in Power",
+        key="measured_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_measured_power,
+        external_override="external_measured_power",
+        allowedtypes=AC | HYBRID | GEN | GEN2,
+        depends_on=["meter_measured_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Generator Power",
+        key="generator_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_function=value_function_select_generator_power,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_measured_power"],
+        optional_depends_on=["generator_control", "meter_2_measured_power"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Grid Export",
         key="grid_export",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -10282,54 +10440,105 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Hardware Version",
-        key="hardware_version",
-        value_function=value_function_hardware_version_g2,
-        allowedtypes=AC | HYBRID | GEN2,
-        depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        name="Grid Export Today",
+        key="today_s_export_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_grid_export_today,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_export_today"],
+        optional_depends_on=["generator_control", "meter_2_export_today"],
+        icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Hardware Version",
-        key="hardware_version",
-        value_function=value_function_hardware_version_g3,
-        allowedtypes=AC | HYBRID | GEN3,
-        depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        name="Grid Import Today",
+        key="today_s_import_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_grid_import_today,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_import_today"],
+        optional_depends_on=["generator_control", "meter_2_import_today"],
+        icon="mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Hardware Version",
-        key="hardware_version",
-        value_function=value_function_hardware_version_g4,
-        allowedtypes=AC | HYBRID | GEN4,
-        depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        name="Grid Export Total",
+        key="grid_export_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_grid_export_total,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_export_total"],
+        optional_depends_on=["generator_control", "meter_2_export_total"],
+        icon="mdi:home-export-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Hardware Version",
-        key="hardware_version",
-        value_function=value_function_hardware_version_g5,
-        allowedtypes=AC | HYBRID | GEN5,
-        depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        name="Grid Import Total",
+        key="grid_import_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_grid_import_total,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_import_total"],
+        optional_depends_on=["generator_control", "meter_2_import_total"],
+        icon="mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Hardware Version",
-        key="hardware_version",
-        value_function=value_function_hardware_version_g6,
-        allowedtypes=AC | HYBRID | GEN6,
-        depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
+        name="Generator Export Today",
+        key="generator_export_today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_generator_export_today,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_export_today"],
+        optional_depends_on=["generator_control", "meter_2_export_today"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Generator Import Today",
+        key="generator_import_today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_generator_import_today,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_import_today"],
+        optional_depends_on=["generator_control", "meter_2_import_today"],
+        icon="mdi:home-import-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Generator Export Total",
+        key="generator_export_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_generator_export_total,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_export_total"],
+        optional_depends_on=["generator_control", "meter_2_export_total"],
+        icon="mdi:home-export-outline",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Generator Import Total",
+        key="generator_import_total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_function=value_function_meter_select_generator_import_total,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
+        depends_on=["meter_1_import_total"],
+        optional_depends_on=["generator_control", "meter_2_import_total"],
+        icon="mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
         name="Inverter Power",
         key="inverter_power",
-        value_function=value_function_inverter_power_g5,
+        value_function=value_function_inverter_power_x3,
         depends_on=["inverter_power_l1", "inverter_power_l2", "inverter_power_l3"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -10375,36 +10584,12 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Grid Feed-in Power",
-        key="measured_power",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_function=value_function_measured_power,
-        external_override="external_measured_power",
-        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
-        depends_on=["meter_1_measured_power"],
-        icon="mdi:home-export-outline",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Grid Feed-in Power",
-        key="measured_power",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_function=value_function_measured_power,
-        external_override="external_measured_power",
-        allowedtypes=AC | HYBRID | GEN | GEN2,
-        depends_on=["meter_measured_power"],
-        icon="mdi:home-export-outline",
-    ),
-    SolaXModbusSensorEntityDescription(
         name="House Load",
         key="house_load",
         value_function=value_function_house_load,
         depends_on=["inverter_power", "measured_power"],
         external_override="external_house_load",
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["generator_power"],
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10426,7 +10611,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             "measured_power",
         ],
         external_override="external_house_load",
-        optional_depends_on=["meter_2_measured_power"],
+        optional_depends_on=["generator_power"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
@@ -10495,6 +10680,51 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         depends_on=["modbus_protocol_version"],
         depends_on_any=[("firmware_dsp", "firmware_dsp_minor"), ("firmware_arm", "firmware_arm_minor")],
         optional_depends_on=["firmware_dsp_major", "firmware_arm_major", "bootloader_version"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Hardware Version",
+        key="hardware_version",
+        value_function=value_function_hardware_version_g2,
+        allowedtypes=AC | HYBRID | GEN2,
+        depends_on=[],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Hardware Version",
+        key="hardware_version",
+        value_function=value_function_hardware_version_g3,
+        allowedtypes=AC | HYBRID | GEN3,
+        depends_on=[],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Hardware Version",
+        key="hardware_version",
+        value_function=value_function_hardware_version_g4,
+        allowedtypes=AC | HYBRID | GEN4,
+        depends_on=[],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Hardware Version",
+        key="hardware_version",
+        value_function=value_function_hardware_version_g5,
+        allowedtypes=AC | HYBRID | GEN5,
+        depends_on=[],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Hardware Version",
+        key="hardware_version",
+        value_function=value_function_hardware_version_g6,
+        allowedtypes=AC | HYBRID | GEN6,
+        depends_on=[],
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -12422,6 +12652,30 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
+        name="PV Power Total",
+        key="pv_power_total",
+        value_function=value_function_pv_power_total,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        allowedtypes=MIC,
+        depends_on=[f"pv_power_{index}" for index in range(1, 11)],
+        icon="mdi:solar-power-variant",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Software Version",
+        key="software_version",
+        value_function=value_function_software_version_mic,
+        allowedtypes=MIC,
+        depends_on=["firmware_dsp", "firmware_arm"],
+        optional_depends_on=["firmware_arm_boot"],
+        blacklist=[
+            "MU802T",
+        ],
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information",
+    ),
+    SolaXModbusSensorEntityDescription(
         name="Hardware Version",
         key="hardware_version",
         value_function=value_function_hardware_version_g1,
@@ -12454,30 +12708,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         value_function=value_function_hardware_version_g4,
         allowedtypes=MIC | GEN4,
         depends_on=[],
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:information",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="PV Power Total",
-        key="pv_power_total",
-        value_function=value_function_pv_power_total,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=MIC,
-        depends_on=[f"pv_power_{index}" for index in range(1, 11)],
-        icon="mdi:solar-power-variant",
-    ),
-    SolaXModbusSensorEntityDescription(
-        name="Software Version",
-        key="software_version",
-        value_function=value_function_software_version_mic,
-        allowedtypes=MIC,
-        depends_on=["firmware_dsp", "firmware_arm"],
-        optional_depends_on=["firmware_arm_boot"],
-        blacklist=[
-            "MU802T",
-        ],
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
