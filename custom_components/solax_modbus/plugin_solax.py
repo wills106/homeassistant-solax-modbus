@@ -76,8 +76,8 @@ from custom_components.solax_modbus.const import (
 
 from .pymodbus_compat import DataType, convert_from_registers
 from .solax_faults import (
-    GEN2_X1_INVERTER_FAULTS,
     GEN2_X1_CHARGER_FAULTS,
+    GEN2_X1_INVERTER_FAULTS,
     GEN2_X1_MANAGER_FAULTS,
     GEN3_MANAGER_FAULTS,
     GEN3_X1_INVERTER_FAULTS,
@@ -4582,9 +4582,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             entity_category=EntityCategory.DIAGNOSTIC,
             icon="mdi:alert-circle-outline",
         )
-        for generation, phases, min_version, max_version, fault_bits in (
-            (GEN2, X1, None, None, GEN2_X1_CHARGER_FAULTS),
-        )
+        for generation, phases, min_version, max_version, fault_bits in ((GEN2, X1, None, None, GEN2_X1_CHARGER_FAULTS),)
     ],
     *[
         SolaXModbusSensorEntityDescription(
