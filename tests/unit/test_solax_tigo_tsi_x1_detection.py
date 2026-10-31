@@ -13,6 +13,7 @@ from custom_components.solax_modbus.plugin_solax import GEN4, HYBRID, X1, plugin
 @pytest.mark.parametrize(
     ("serial_number", "expected_model"),
     [
+        ("63130012345678", "X1-TIGO-TSI-3.0kW"),
         ("63150012345678", "X1-TIGO-TSI-5.0kW"),
         ("63160012345678", "X1-TIGO-TSI-6.0kW"),
     ],
