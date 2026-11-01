@@ -1,14 +1,18 @@
 """Tests for shared native and Home Assistant Core Modbus transports."""
 
 import asyncio
+from collections.abc import AsyncGenerator
 from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+import pytest_asyncio
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from pymodbus.exceptions import ConnectionException, ModbusIOException
+from pytest_homeassistant_custom_component.common import async_test_home_assistant
 
 from custom_components.solax_modbus import SolaXModbusHub, block
 from custom_components.solax_modbus.const import (
@@ -150,6 +154,16 @@ def make_native_hub(client: FakeNativeClient) -> Any:
     return hub
 
 
+@pytest_asyncio.fixture
+async def hass() -> AsyncGenerator[HomeAssistant]:
+    """Provide real HA state publication with explicit strict-mode ownership."""
+    async with async_test_home_assistant() as hass:
+        try:
+            yield hass
+        finally:
+            await hass.async_stop(force=True)
+
+
 @pytest.mark.asyncio
 async def test_native_transport_implements_shared_read_write_contract() -> None:
     client = FakeNativeClient()
@@ -289,10 +303,10 @@ async def test_runtime_quarantine_operates_through_core_transport() -> None:
     hub._publish_communication_diagnostics.assert_called_once_with()
 
 
-def make_block_split_hub(typ: str, registers: list[int]) -> tuple[Any, FakeCoreHub, dict[int, Any]]:
+def make_block_split_hub(hass: HomeAssistant, typ: str, registers: list[int]) -> tuple[Any, FakeCoreHub, dict[int, Any]]:
     core = FakeCoreHub()
     hub = make_quarantine_hub(core)
-    hub._hass = object()
+    hub._hass = hass
     hub.plugin = SimpleNamespace(block_size=100, auto_block_ignore_readerror=None)
     descriptions = {
         address: BaseModbusSensorEntityDescription(
@@ -325,10 +339,12 @@ def read_blocks(hub: Any, typ: str, interval: int = 30, device_name: str = "inve
 @pytest.mark.asyncio
 @pytest.mark.parametrize("typ", ["holding", "input"])
 @pytest.mark.parametrize("reason", ["gap", "read_limit"])
-async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, reason: str, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_bisect_keeps_readable_partitions_without_extra_probes(
+    hass: HomeAssistant, typ: str, reason: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """A failed parent must not be rebuilt when all entity ranges are readable."""
     registers = [0x347, 0x34F, 0x351, 0x352, 0x353, 0x354, 0x367, 0x371] if reason == "gap" else list(range(8))
-    hub, core, descriptions = make_block_split_hub(typ, registers)
+    hub, core, descriptions = make_block_split_hub(hass, typ, registers)
     original = read_blocks(hub, typ)[0]
     key = hub._block_key(original, typ)
     hub._comm_block_failures[key] = [1, 2, 3]
@@ -374,9 +390,9 @@ async def test_bisect_keeps_readable_partitions_without_extra_probes(typ: str, r
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("typ", ["holding", "input"])
-async def test_bisect_is_scoped_to_the_polling_group(typ: str) -> None:
+async def test_bisect_is_scoped_to_the_polling_group(hass: HomeAssistant, typ: str) -> None:
     """Identical addresses in another device or interval must not share failures or splits."""
-    hub, core, descriptions = make_block_split_hub(typ, [10, 30])
+    hub, core, descriptions = make_block_split_hub(hass, typ, [10, 30])
     for interval, device_name in ((30, "battery_2"), (60, "inverter")):
         group = SimpleNamespace(
             holdingRegs=dict(descriptions) if typ == "holding" else {},
@@ -391,7 +407,6 @@ async def test_bisect_is_scoped_to_the_polling_group(typ: str) -> None:
     slower = read_blocks(hub, typ, interval=60)[0]
     assert len({hub._block_key(item, typ) for item in (original, other, slower)}) == 3
 
-    hub._hass = SimpleNamespace(loop=asyncio.get_running_loop())
     hub._comm_recent_outcomes = []
     core._responses = [None, SimpleNamespace(isError=lambda: False), SimpleNamespace(isError=lambda: False)]
     # Successful reads of the other group must not erase this group's failures.
@@ -411,11 +426,12 @@ async def test_bisect_is_scoped_to_the_polling_group(typ: str) -> None:
     assert len(core.calls) == 3  # Rebuilding groups never adds revalidation requests.
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("auto_ignore", [None, False, True])
 @pytest.mark.parametrize("byte_split", [False, True])
-def test_learned_boundary_keeps_ignore_readerror(auto_ignore: bool | None, byte_split: bool) -> None:
+async def test_learned_boundary_keeps_ignore_readerror(hass: HomeAssistant, auto_ignore: bool | None, byte_split: bool) -> None:
     """A learned boundary must not rewrite normal or byte-split entity failure policies."""
-    hub, _core, descriptions = make_block_split_hub("holding", [10, 30])
+    hub, _core, descriptions = make_block_split_hub(hass, "holding", [10, 30])
     hub.plugin.auto_block_ignore_readerror = auto_ignore
     if byte_split:
         descriptions[30] = {unit: replace(descriptions[30], key=f"value_30_{unit}", register_data_type=unit) for unit in (REGISTER_U8H, REGISTER_U8L)}
@@ -428,10 +444,11 @@ def test_learned_boundary_keeps_ignore_readerror(auto_ignore: bool | None, byte_
     assert all(entry.ignore_readerror is False for entry in entries)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("auto_ignore", [None, False, True])
-def test_size_overflow_keeps_automatic_ignore_readerror(auto_ignore: bool | None) -> None:
+async def test_size_overflow_keeps_automatic_ignore_readerror(hass: HomeAssistant, auto_ignore: bool | None) -> None:
     """The existing policy for size-overflow blocks is unchanged."""
-    hub, _core, _descriptions = make_block_split_hub("holding", [10, 30])
+    hub, _core, _descriptions = make_block_split_hub(hass, "holding", [10, 30])
     hub.plugin.auto_block_ignore_readerror = auto_ignore
     hub.plugin.block_size = 10
     hub.rebuild_blocks(hub.initial_groups)
@@ -441,8 +458,8 @@ def test_size_overflow_keeps_automatic_ignore_readerror(auto_ignore: bool | None
 
 
 @pytest.mark.asyncio
-async def test_learned_partitions_keep_multi_register_entities_whole() -> None:
-    hub, core, descriptions = make_block_split_hub("holding", [10, 30])
+async def test_learned_partitions_keep_multi_register_entities_whole(hass: HomeAssistant) -> None:
+    hub, core, descriptions = make_block_split_hub(hass, "holding", [10, 30])
     descriptions[10] = BaseModbusSensorEntityDescription(
         key="power", register=10, register_type=REG_HOLDING, internal=True, register_data_type=REGISTER_U32
     )
@@ -460,8 +477,8 @@ async def test_learned_partitions_keep_multi_register_entities_whole() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("outcome", "probes"), [("disconnect", 2), ("stop", 2), ("unreadable", 3), ("recovered", 1), ("depth_limit", 1)])
-async def test_bisect_does_not_keep_unproven_partitions(outcome: str, probes: int, monkeypatch: pytest.MonkeyPatch) -> None:
-    hub, core, descriptions = make_block_split_hub("holding", [10, 30])
+async def test_bisect_does_not_keep_unproven_partitions(hass: HomeAssistant, outcome: str, probes: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    hub, core, descriptions = make_block_split_hub(hass, "holding", [10, 30])
     original = read_blocks(hub, "holding")[0]
     hub._confirm_bad_register = AsyncMock(return_value=False)
     if outcome == "depth_limit":
