@@ -3,6 +3,7 @@
 Covers #521 regressions:
 - S6-EH3P10K-H-EU four-MPPT prefixes: 103306, 133306 (plus the 133307 control)
 - Gen6 5kW HV prefix: 103303 (plus the established 103305 control)
+- Gen6 HV 10/12/15/20kW four-MPPT prefixes: 103314, 103315, 103316 (#2468 adds 103315)
 - S6-EH1P8K-L-PLUS two-MPPT prefix: 303126 (plus the 2051 control)
 """
 
@@ -19,7 +20,7 @@ MODULES = [plugin_solis, plugin_solis_fb00]
 
 
 @pytest.mark.parametrize("module", MODULES)
-@pytest.mark.parametrize("prefix", ["103303", "103305", "103306", "133306", "133307"])
+@pytest.mark.parametrize("prefix", ["103303", "103305", "103306", "133306", "133307", "103314", "103315", "103316"])
 @pytest.mark.parametrize("read_optional", [False, True])
 async def test_four_mppt_three_phase_detection(module: ModuleType, prefix: str, read_optional: bool, mock_hub: MockHub) -> None:
     """Every supported Gen6 three-phase prefix gets the four-MPPT profile; 133307 stays unsupported."""
