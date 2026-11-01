@@ -30,9 +30,9 @@ from custom_components.solax_modbus.plugin_solis_unified import (
 )
 from tests.conftest import MockHub, MockModbusResponse
 
-# Serial prefixes that BOTH legacy plugins recognize on main (103303 is only
-# recognized by plugin_solis_fb00 until PR #2457 merges, so it is not parity-safe).
-KNOWN_PREFIXES = ["103305", "103306", "133306", "303126", "2051"]
+# Serial prefixes that BOTH legacy plugins recognize (all Gen6 HV prefixes
+# 103303/103314/103315/103316 are now supported by both legacy plugins, #2468).
+KNOWN_PREFIXES = ["103303", "103305", "103306", "133306", "103314", "103315", "103316", "303126", "2051"]
 
 
 # ============================ embedded map / standalone parity ==============================
