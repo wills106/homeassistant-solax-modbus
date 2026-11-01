@@ -123,6 +123,14 @@ class TestSelectHmiMap:
         assert select_hmi_map(None, True) == MAP_FB00
         assert select_hmi_map(None, False) == MAP_LEGACY
 
+    def test_probe_responding_overrides_older_reported_version(self) -> None:
+        # Live-observed S6 unit: reports HMI 0x4F03 yet only implements the post-FB00
+        # map, and 34504 answers -> the probe (post-FB00-only register) wins.
+        assert select_hmi_map(0x4F03, True) == MAP_FB00
+        # An older unit whose 34504 read fails stays on the legacy map.
+        assert select_hmi_map(0x4F03, False) == MAP_LEGACY
+        assert select_hmi_map(0x1C06, False) == MAP_LEGACY
+
     def test_unknown_version_and_unknown_probe_defaults_legacy(self) -> None:
         assert select_hmi_map(None, None) == MAP_LEGACY
 
@@ -134,9 +142,10 @@ class TestSelectHmiMap:
 @pytest.mark.parametrize(
     ("major", "sub", "probe_ok", "expected_map"),
     [
-        (0xFB, 0x00, False, MAP_FB00),  # exact FB00 boundary
-        (0xFB, 0x05, False, MAP_FB00),  # S6-EH3P(3-12)K-H HMI V1905-style modern unit
-        (0x1C, 0x06, True, MAP_LEGACY),  # 1C06 -> legacy map even though probe would respond
+        (0xFB, 0x00, False, MAP_FB00),  # exact FB00 boundary, probe silent
+        (0xFB, 0x05, True, MAP_FB00),  # S6-EH3P(3-12)K-H HMI V1905-style modern unit
+        (0x4F, 0x03, True, MAP_FB00),  # live-observed S6 unit: 0x4F03 but post-FB00 registers respond
+        (0x1C, 0x06, False, MAP_LEGACY),  # PDF 1C06 example, 34504 not implemented -> legacy
         (0x04, 0x0B, False, MAP_LEGACY),  # S6-EH3P(29.9-60)K-H era HMI V040B
         (None, None, True, MAP_FB00),  # version registers silent, modern probe answers
         (None, None, False, MAP_LEGACY),  # nothing known -> conservative legacy
@@ -176,8 +185,8 @@ async def test_fb00_map_exposes_remote_dispatch_entities(mock_hub: MockHub) -> N
 
 
 async def test_legacy_map_exposes_solis_only_entities(mock_hub: MockHub) -> None:
-    """Legacy-HMI units must get the plugin_solis entity set, without Remote Dispatch."""
-    _configure(mock_hub, "103305", 0x1C, 0x06, probe_ok=True)
+    """Legacy-HMI units (no 34504 support) must get the plugin_solis entity set."""
+    _configure(mock_hub, "103305", 0x1C, 0x06, probe_ok=False)
     plugin = plugin_solis_unified.plugin_instance.create_hub_instance()
     await plugin.async_determineInverterType(mock_hub, {})
 

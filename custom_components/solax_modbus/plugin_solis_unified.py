@@ -654,11 +654,13 @@ def value_function_smart_port_mode(initval: int, descr: Any, datadict: dict[str,
 REG_HMI_MAJOR = 33002  # low-order byte = HMI major version (hex)
 REG_HMI_SUB = 33069  # low-order byte = HMI sub version (hex)
 # Remote Dispatch Running Status: defined only in the post-FB00 (Ver3.4+) protocol,
-# used as a presence probe when the version registers do not respond.
+# used as a presence probe of the post-FB00 register map.
 REG_MODERN_PROBE = 34504
 
-# HMI firmware from 0xFB00 onwards identifies the Gen6/S6 generation that the
-# FB00_* register map was written for.
+# HMI firmware from 0xFB00 onwards identifies the Gen5/Gen6 S6 generation that the
+# FB00_* register map was written for. Some S6 units report a lower HMI version
+# (e.g. 0x4F03) while still implementing the post-FB00 map, so the version number
+# alone is not authoritative - see select_hmi_map().
 HMI_FB00_FLOOR = 0xFB00
 
 MAP_LEGACY = "legacy"
@@ -678,17 +680,19 @@ def compute_hmi_version(major_low_byte: int | None, sub_low_byte: int | None) ->
 def select_hmi_map(hmi_version: int | None, modern_probe_ok: bool | None) -> str:
     """Pick which register map to use for this inverter.
 
-    - HMI 0xFB00..0xFFFF -> fb00 map (Gen5/Gen6 S6 generation)
-    - HMI 0x0001..0xFAFF -> legacy map (older Solis generation)
-    - unknown version    -> fall back to the 34504 presence probe; when the probe is
-      unavailable too, stay on the conservative legacy map.
+    The presence probe is authoritative: 34504 (Remote Dispatch Running Status) only
+    exists in the post-FB00 protocol, so an answering probe proves the post-FB00 map,
+    whatever the reported HMI version says. Reported HMI versions are a secondary
+    signal because some S6 units report versions numerically below 0xFB00 (e.g.
+    0x4F03) yet only implement the post-FB00 registers.
+
+    - probe 34504 responds          -> fb00 map
+    - probe silent, HMI >= 0xFB00   -> fb00 map
+    - everything else               -> legacy map
     """
-    if hmi_version is not None:
-        if hmi_version >= HMI_FB00_FLOOR:
-            return MAP_FB00
-        if hmi_version > 0:
-            return MAP_LEGACY
     if modern_probe_ok is True:
+        return MAP_FB00
+    if hmi_version is not None and hmi_version >= HMI_FB00_FLOOR:
         return MAP_FB00
     return MAP_LEGACY
 
@@ -7850,9 +7854,10 @@ class solis_unified_plugin(plugin_base):
         sub = await self._read_low_byte(hub, REG_HMI_SUB)
         hmi_version = compute_hmi_version(major, sub)
 
-        modern_probe_ok: bool | None = None
-        if hmi_version is None:
-            modern_probe_ok = await self._register_responds(hub, REG_MODERN_PROBE)
+        # Always probe the post-FB00-only Remote Dispatch register: several S6 units
+        # report an HMI version below 0xFB00 (e.g. 0x4F03) while only implementing the
+        # post-FB00 register map, so a responding 34504 outranks the version number.
+        modern_probe_ok = await self._register_responds(hub, REG_MODERN_PROBE)
 
         # An explicit override (advanced YAML/options) wins over auto-detection.
         override = str(configdict.get("hmi_map", "") or "").lower()
