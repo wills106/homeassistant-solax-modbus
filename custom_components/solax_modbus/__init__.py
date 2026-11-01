@@ -238,9 +238,6 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
     """
     Check if an entity is enabled in the entity registry, checking across multiple platforms.
     """
-    if getattr(descriptor, "internal", False):
-        _LOGGER.debug("%s: should be loaded: entity with key %s is internal, returning True.", hub.name, descriptor.key)
-        return True
     unique_id = f"{hub._name}_{descriptor.key}"
     unique_id_alt = f"{hub._name}.{descriptor.key}"  # dont knnow why
     platforms = (Platform.SENSOR, Platform.SELECT, Platform.NUMBER, Platform.SWITCH, Platform.BUTTON, Platform.TIME)
@@ -261,10 +258,19 @@ def should_register_be_loaded(hass: HomeAssistant, hub: Any, descriptor: Any) ->
                 _LOGGER.debug("%s: should be loaded: Entity %s is enabled, returning True.", hub.name, entity_id)
                 return True  # Found an enabled entity, no need to check further
     # If we get here, no enabled entity was found across all platforms.
+    entity_is_internal = getattr(descriptor, "internal", False)
     if entity_found:
         # At least one entity exists for this unique_id, but all are disabled. Respect the user's choice.
-        _LOGGER.debug("%s: should be loaded: entity with unique_id %s was found but is disabled across all relevant platforms.", hub.name, unique_id)
+        if not entity_is_internal:
+            # If this is the user-facing entity rather not an internal read-back, inform the user
+            _LOGGER.debug(
+                "%s: should be loaded: entity with unique_id %s was found but is disabled across all relevant platforms.", hub.name, unique_id
+            )
         return False
+    elif entity_is_internal:
+        # If it is an internal-only sensor, it must be enabled
+        _LOGGER.debug("%s: should be loaded: entity with key %s is internal, returning True.", hub.name, descriptor.key)
+        return True
     else:
         # No entity exists for this unique_id on any platform. Treat it as a new entity.
         _LOGGER.debug("%s: should be loaded: entity with unique_id %s not found in entity registry, checking defaults ", hub.name, unique_id)
