@@ -9676,7 +9676,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9690,7 +9690,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9704,7 +9704,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9718,7 +9718,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
     ),
     GrowattModbusSensorEntityDescription(
         name="Reactive Power Inverter VPP",
@@ -9731,7 +9731,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Combined Power VPP",
