@@ -97,14 +97,12 @@ Viessmann HINV6.0-B1
 
 For further Documentation please refer to the [Read the Docs](https://homeassistant-solax-modbus.readthedocs.io/)
 
-For Solis hybrid inverters, see the [Remote Dispatch guide](docs/solis-remote-dispatch.md)
-for staging commands, Prepare/Apply, failsafe refresh and firmware observations.
-
 ## FAQ
 
 [Read the Docs - General FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq/)
  - [Read the Docs - Sofar FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/sofar-faq/)
  - [Read the Docs - SolaX FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solax-faq/)
+ - [Solix remote dispatch](docs/solis-remote-dispatch.md)
 
 ## Multiple Connections
 
