@@ -126,6 +126,9 @@ from .const import (
     CONF_READ_PM as CONF_READ_PM,
 )
 from .const import (
+    CONF_READ_SETTINGS as CONF_READ_SETTINGS,
+)
+from .const import (
     DEFAULT_ENERGY_DASHBOARD_DEVICE as DEFAULT_ENERGY_DASHBOARD_DEVICE,
 )
 from .const import (
@@ -157,6 +160,9 @@ from .const import (
 )
 from .const import (
     DEFAULT_READ_PM as DEFAULT_READ_PM,
+)
+from .const import (
+    DEFAULT_READ_SETTINGS as DEFAULT_READ_SETTINGS,
 )
 from .const import (
     DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
@@ -502,6 +508,7 @@ GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
     "ems": (CONF_READ_EMS, DEFAULT_READ_EMS),
     "datahub": (CONF_READ_DATAHUB, DEFAULT_READ_DATAHUB),
+    "settings": (CONF_READ_SETTINGS, DEFAULT_READ_SETTINGS),
     "ENERGY_DASHBOARD": (CONF_ENERGY_DASHBOARD_DEVICE, DEFAULT_ENERGY_DASHBOARD_DEVICE),
 }
 
