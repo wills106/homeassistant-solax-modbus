@@ -13591,7 +13591,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_import",
             name="Grid Import Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: max(0, v),
+            filter_function=lambda v: abs(min(0, v)),
             allowedtypes=AC | HYBRID | MIC,
         ),
         # Grid Export Energy (Riemann sum)
@@ -13602,7 +13602,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_export",
             name="Grid Export Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: abs(min(0, v)),
+            filter_function=lambda v: max(0, v),
             allowedtypes=AC | HYBRID | MIC,
         ),
         # Home Consumption Energy (Riemann sum)
