@@ -72,3 +72,24 @@ In general we recommend using the working mode 'Transparency' or use a RS-485 Mo
 The Sofar Hybrid inverters have several registers that cannot be written on their own. These need to be written in batch of several registers. The integration for Sofar therefore provides several buttons that trigger the write actions to the inverter. For example after changing "Passive: Desired Grid Power", "Passive: Maximum Battery Power", or "Passive: Minimum Battery Power" you have to press "Passive: Update Battery Charge/Discharge" to commit the changed values to the inverter.
 
 Please see the [entity documentation](sofar-entity-description.md) for more information.
+
+## TCP requests frequently time out, but retries succeed
+
+Some inverter/adapter combinations need a quiet interval between Modbus requests.
+In the integration's configuration options, select **TCP / Ethernet** and set
+**Message spacing (ms)** to **150** as a starting point. The default is **0**;
+leave it unchanged if communication is reliable. This is separate from the
+request timeout and polling interval, and slows both polling and writes.
+
+In one isolated Sofar TCP read-only A/B/A/B comparison, each phase contained six
+reads. Both phases without spacing needed five retries; both phases with a
+150 ms gap completed without retries. This identifies a pacing workaround for
+that connection, not whether the inverter or the TCP/RS485 adapter caused the
+missing responses. It is not a universal Sofar timing requirement.
+
+On older HA versions the native client waits after a request completes, including
+failed requests, before starting the next read or write. Its internal retries are
+unchanged. On HA 2026.10 or later the setting is passed to Home Assistant's shared
+Modbus unit API. Other clients accessing the same inverter or adapter are not
+controlled by this setting. Legacy YAML hub connections retain their existing
+hub configuration.

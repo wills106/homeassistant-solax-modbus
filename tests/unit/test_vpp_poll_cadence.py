@@ -32,7 +32,7 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
     hub.sleepnone = []
     hub.sleepzero = []
     values: dict[str, Any] = {
-        "measured_power": -1000,
+        "meter_1_measured_power": -1000,
         "inverter_power_l1": 0,
         "inverter_power_l2": 0,
         "inverter_power_l3": 0,
@@ -61,7 +61,8 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         for key in values
     }
     hub.computedSensors = {
-        key: computed(key) for key in ("house_load", "house_load_alt", "battery_capacity", "inverter_power", "pv_power_total", "battery_power_charge")
+        key: computed(key)
+        for key in ("house_load", "house_load_alt", "battery_capacity", "inverter_power", "pv_power_total", "battery_power_charge", "measured_power")
     }
     hub.sensorDescriptions.update(hub.computedSensors)
     hub.sensorEntities = {key: Mock() for key in hub.computedSensors}
@@ -162,7 +163,7 @@ async def test_invalid_required_input_stops_previous_nonzero_command(invalid: An
     await prime(hub, power, settings)
     await hub._refresh_interval_group_once(power)
     assert hub.data["remotecontrol_current_pushmode_power"] == 210
-    values["measured_power"] = invalid
+    values["meter_1_measured_power"] = invalid
     await hub._refresh_interval_group_once(power)
     assert function.call_count == 2
     assert function.call_args.args[0] == BUTTONREPEAT_POST
@@ -409,7 +410,7 @@ async def test_concurrent_cleanup_waits_for_ack_before_retry(cause: str, failed_
     if cause == "expired":
         hub.data["_repeatUntil"]["powercontrolmode8_trigger"] = time.time() - 1
     else:
-        values["measured_power"] = None
+        values["meter_1_measured_power"] = None
         # Commit the invalid observation before either lifecycle callback.
         expiry = hub.data["_repeatUntil"].pop("powercontrolmode8_trigger")
         await hub._refresh_interval_group_once(power)
@@ -449,7 +450,7 @@ async def test_failed_cleanup_is_retried_without_recomputing_filter(rebuild: boo
     hub, power, settings, values, function = setup_vpp()
     await prime(hub, power, settings)
     await hub._refresh_interval_group_once(power)
-    values["measured_power"] = None
+    values["meter_1_measured_power"] = None
     hub.async_write_registers_multi.side_effect = [HomeAssistantError("offline"), None]
     await hub._refresh_interval_group_once(power)
     assert function.call_args.args[0] == BUTTONREPEAT_POST

@@ -55,6 +55,8 @@ The available fields are:
   Alternatives are filtered identically, so a stale preferred value cannot
   shadow a fresh fallback. When a sensor has no mandatory or alternative inputs, an
   applicable optional input must be fresh to trigger recalculation.
+- `external_override`: a single external sensor name which can override the
+  computed value. The sensor given here is treated as an optional dependency.
 - `readiness_validator`: optional domain-specific validation after the generic
   checks. It receives the source data dictionary and must return a boolean.
 - `dependency_selector`: select `(required, optional)` sets from filtered data

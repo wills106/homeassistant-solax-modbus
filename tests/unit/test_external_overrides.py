@@ -13,7 +13,7 @@ from homeassistant.core import State
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from custom_components.solax_modbus import InputObservation, SolaXModbusHub
-from custom_components.solax_modbus.const import WRITE_DATA_LOCAL, BaseModbusSelectEntityDescription
+from custom_components.solax_modbus.const import WRITE_DATA_LOCAL, BaseModbusSelectEntityDescription, descriptor_optional_depends
 from custom_components.solax_modbus.select import SolaXModbusExternalSourceSelect
 
 
@@ -239,7 +239,8 @@ def test_external_house_load_declared_as_optional_dependency() -> None:
 
     for key in ("house_load", "house_load_alt"):
         descr = next(d for d in SENSOR_TYPES_MAIN if d.key == key)
-        assert "external_house_load" in (descr.optional_depends_on or ()), key
+        descr_deps = descriptor_optional_depends(descr) or []
+        assert "external_house_load" in descr_deps, key
 
 
 def _house_load_hub(states: dict[str, State]) -> Any:

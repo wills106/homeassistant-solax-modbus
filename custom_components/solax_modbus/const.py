@@ -244,6 +244,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     rounding: int = 1
     register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
+    fault_bits: dict[int, str] | None = None  # Bit index -> fault label; keep the polled integer as the raw value.
     scan_group: str | None = None  # SCAN_GROUP_MEDIUM, SCAN_GROUP_FAST, SCAN_GROUP_DEFAULT, etc.
     internal: bool = False  # internal sensors are used for reading data only; used for computed, selects, etc
     newblock: bool = False  # set to True to start a new modbus read block operation - do not use frequently
@@ -274,6 +275,8 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     depends_on: list[str] | None = None
     depends_on_any: list[tuple[str, ...]] | None = None
     optional_depends_on: list[str] | None = None
+    external_override: str | None = None  # Optional external sensor name (e.g. "external_house_load") which can override value
+    # the computed or modbus register value
     readiness_validator: Callable[[dict[str, Any]], bool] | None = None
     dependency_selector: Callable[[dict[str, Any], set[str]], tuple[set[str], set[str]]] | None = None
     recompute_each_poll: bool = False
@@ -289,6 +292,16 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     _daily_delta_source_key: str | None = None  # Source cumulative total key for daily delta sensors
 
 
+def descriptor_optional_depends(description: Any) -> list[str] | None:
+    descr_deps: list[str] | None = getattr(description, "optional_depends_on", None)
+    external_dep: str | None = getattr(description, "external_override", None)
+    if external_dep is None:
+        return descr_deps
+    if descr_deps is None:
+        return [external_dep]
+    return [*descr_deps, external_dep]
+
+
 def is_inputless_computed_sensor(description: Any) -> bool:
     """Only an explicit empty input contract exempts a computation from expiry."""
     return (
@@ -296,6 +309,7 @@ def is_inputless_computed_sensor(description: Any) -> bool:
         and bool(getattr(description, "value_function", None))
         and getattr(description, "depends_on", None) == []
         and not getattr(description, "optional_depends_on", None)
+        and not getattr(description, "external_override", None)
         and not getattr(description, "depends_on_any", None)
         and getattr(description, "dependency_selector", None) is None
         and getattr(description, "readiness_validator", None) is None

@@ -27,7 +27,7 @@ async def test_zero_clipping_step_cannot_bypass_invalid_charge_limits() -> None:
         remotecontrol_current_pv_power_limit=500,
         pv_unlimited_delta_w=0,
     )
-    values["measured_power"] = -100
+    values["meter_1_measured_power"] = -100
     await hub._refresh_interval_group_once(power)
     assert function.call_args.args[0] == BUTTONREPEAT_POST
     assert hub.data["remotecontrol_current_pushmode_power"] is None
@@ -51,10 +51,10 @@ async def test_clipping_step_defaults_preserve_healthy_regulator_payload(step: A
         remotecontrol_current_pv_power_limit=500,
         pv_unlimited_delta_w=step,
     )
-    values["measured_power"] = -100
+    values["meter_1_measured_power"] = -100
     # Align the reference snapshot with the values returned by the next read.
     expected_data = hub.data.copy()
-    expected_data["measured_power"] = values["measured_power"]
+    expected_data["measured_power"] = values["meter_1_measured_power"]
     descr = hub.computedEntities["powercontrolmode8_trigger"]
     expected = autorepeat_function_powercontrolmode8_recompute(1, descr, expected_data)
     await hub._refresh_interval_group_once(power)
