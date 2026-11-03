@@ -13501,7 +13501,7 @@ class solax_plugin(plugin_base):
         if parallel_setting == "Master":
             # Use inverter_power_kw (total system capacity) for active-power limits.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
-            hub.data.set("remotecontrol_pm_inverter_limit", system_limit_w)
+            hub.data["remotecontrol_pm_inverter_limit"] = system_limit_w
             number_entity = hub.numberEntities.get("remotecontrol_active_power")
             if number_entity:
                 number_entity._attr_native_min_value = -system_limit_w
