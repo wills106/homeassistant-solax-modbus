@@ -863,17 +863,22 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
         # for non-ideal charging curves and reduce battery wear
         f = f * (float(chargeable_soc + 2.0) / 6.0)
 
-    # Determine battery max charge power, first from total sensor
-    bms_cap_w = datadict.get("battery_max_charge_power", None)
-    if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
-        # If not available, try summing individual BMS estimates
-        bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
-        bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
-        bms_cap_w = bms_1_cap_w + bms_2_cap_w
-    if bms_cap_w <= 0:
-        # If still not found, failback guess using default voltage and max charge current
-        bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
-    bms_cap_w = int(bms_cap_w)
+    # Determine battery max charge power
+    if datadict.get("parallel_setting", "Free") != "Free":
+        # For parallel, use the PM charge power limit
+        bms_cap_w = datadict.get("pm_charge_power_limit", 0)
+    else:
+        # Otherwise try first reading limit from total sensor
+        bms_cap_w = datadict.get("battery_max_charge_power", None)
+        if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
+            # If not available, try summing individual BMS estimates
+            bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
+            bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
+            bms_cap_w = bms_1_cap_w + bms_2_cap_w
+        if bms_cap_w <= 0:
+            # If still not found, failback guess using default voltage and max charge current
+            bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
+        bms_cap_w = int(bms_cap_w)
 
     # Cap BMS charge to user defined percentage. f is in range 0-1 so this is always same or lower
     pct_cap_w = int(f * bms_cap_w)
@@ -921,16 +926,48 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     battery_capacity = datadict.get("battery_capacity", 0) or 0
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
-    pv = datadict.get("pv_power_total", 0)
-    houseload = datadict.get("house_load", 0)
-    houseload_alt = datadict.get("house_load_alt", 0)
     filter_steps = datadict.get("remotecontrol_smoothing_factor") or DEFAULT_FILTER_SMOOTING_FACTOR
 
-    # Disallow parallel mode for now
+    # Parallel mode support: Use PM power if in parallel mode and we're the Master
     parallel_setting = datadict.get("parallel_setting", "Free")
-    if parallel_setting != "Free":
-        _LOGGER.warning("Mode 8 autorepeat is not currently supported for inverters where parallel mode != Free. Disabling remote control.")
-        power_control = "Disabled"
+
+    if parallel_setting == "Master":
+        # Use PM (Parallel Mode) total calculated sensors
+        pv = datadict.get("pm_pv_power_total", 0)
+        inverter_power = datadict.get("pm_total_inverter_power", 0)
+        battery_charge = datadict.get("pm_battery_power_charge", 0)
+        houseload = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
+        houseload_alt = houseload
+        inverter_limit = datadict.get("remotecontrol_pm_inverter_limit", 60000)  # Limit set in localDataCallback.
+
+        _LOGGER.debug(
+            "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house load=%sW",
+            inverter_power,
+            pv,
+            battery_charge,
+            houseload,
+        )
+    elif parallel_setting == "Slave":
+        # Slaves should not execute remote control
+        _LOGGER.debug("[REMOTE_CONTROL] Parallel mode detected (Slave): skipping remote control")
+        return {"action": WRITE_MULTI_MODBUS, "data": []}
+    else:
+        # Single inverter mode - use individual values
+        pv = datadict.get("pv_power_total", 0)
+        inverter_power = datadict.get("inverter_power", 0)
+        battery_charge = int(datadict.get("battery_power_charge", 0) or 0)
+        houseload = datadict.get("house_load", 0)
+        houseload_alt = datadict.get("house_load_alt", 0)
+        inverter_limit = datadict.get("inverter_power_type", 30000)
+
+        _LOGGER.debug(
+            "[REMOTE_CONTROL] Single inverter mode: inverter=%sW, total PV=%sW, battery=%sW, house load=%sW (alt: %sW)",
+            inverter_power,
+            pv,
+            battery_charge,
+            houseload,
+            houseload_alt,
+        )
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit  # import capping is done later
@@ -956,7 +993,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pv_unlimited_step = int(datadict.get("pv_unlimited_delta_w", 1000) or 1000)
 
         # Local copies
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
         pv_threshold = pv + pv_unlimited_step  # point at which PV is considered to be not actively limited
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
@@ -1075,7 +1111,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Set maximum charge limit, respecting optional target SoC
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         current_charge = -cur_push
         # Debug inputs
@@ -1111,7 +1146,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Use the alternative house load for house load measurement, clamping to strict positive values
         hl = max(0, int(houseload_alt))
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         # Debug inputs
         _LOGGER.debug(
@@ -1237,11 +1271,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # constantly fight the inverter's internal export limiter.
         export_margin_w = int(datadict.get("export_first_export_margin_w", 150) or 0)
         export_limit = datadict.get("export_control_user_limit", 30000)
-        inverter_limit = datadict.get("inverter_power_type", 30000)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
 
         # Local copies
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
@@ -1266,11 +1298,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
-        grid_export = datadict.get("grid_export", None)
         _LOGGER.debug(
-            "[Mode8 Export-First] probes: measured_power=%sW grid_export=%sW",
+            "[Mode8 Export-First] probes: measured_power=%sW",
             measured_power if measured_power is not None else "n/a",
-            grid_export if grid_export is not None else "n/a",
         )
 
         if pv >= hl:
@@ -1372,7 +1402,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
 
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         # Debug inputs
         _LOGGER.debug(
@@ -2013,24 +2042,31 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge", "house_load", "house_load_alt"],
+        depends_on=["battery_capacity", "measured_power"],
         autorepeat_control="remotecontrol_power_control_mode",
         autorepeat_dependencies=(
             "parallel_setting",
             "selfuse_discharge_min_soc",
             "battery_charge_upper_soc",
-            "battery_charge_max_current",
             "export_control_user_limit",
-            "inverter_power_type",
         ),
         autorepeat_optional_dependencies=(
-            "grid_export",
-            "meter_2_measured_power",
             "battery_max_charge_power",
             "bms_max_charge",
             "bms_2_max_charge",
         ),
-        autorepeat_parallel_dependencies={"Free": ()},
+        autorepeat_parallel_dependencies={
+            "Free": (
+                "inverter_power",
+                "pv_power_total",
+                "battery_power_charge",
+                "house_load",
+                "house_load_alt",
+                "battery_charge_max_current",
+                "inverter_power_type",
+            ),
+            "Master": ("pm_charge_power_limit", "pm_pv_power_total", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
+        },
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
     SolaxModbusButtonEntityDescription(
@@ -13465,6 +13501,7 @@ class solax_plugin(plugin_base):
         if parallel_setting == "Master":
             # Use inverter_power_kw (total system capacity) for active-power limits.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
+            hub.data.set("remotecontrol_pm_inverter_limit", system_limit_w)
             number_entity = hub.numberEntities.get("remotecontrol_active_power")
             if number_entity:
                 number_entity._attr_native_min_value = -system_limit_w
