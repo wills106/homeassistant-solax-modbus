@@ -1,6 +1,7 @@
 {
   "domain": "solax_modbus",
   "name": "SolaX Inverter Modbus",
+  "categories": ["energy.solar_batteries", "energy.ev_charging"],
   "codeowners": ["@wills106"],
   "config_flow": true,
   "dependencies": ["usb", "modbus"],
