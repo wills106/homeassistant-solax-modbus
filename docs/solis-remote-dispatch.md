@@ -10,6 +10,9 @@ These controls are available in the Solis FB00 plugin for hybrid inverters, but
 support depends on the inverter and firmware. Entity availability alone does not
 confirm that a mode is supported.
 
+For a grid-balance test, shared preparation and readback monitoring, see the
+[example scripts](solis-remote-dispatch-example-scripts.md).
+
 ## Stage, prepare and apply
 
 The dispatch numbers and selects stage values locally in Home Assistant. Setting
