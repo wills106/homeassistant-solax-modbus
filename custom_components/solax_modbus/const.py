@@ -424,6 +424,8 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
+    unique_id_key: str | None = None  # optional stable identity when the data key differs
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
     device_group: str | None = None  # assign the entity to a named sub-device instead of the main inverter device
     active_when: dict[str, tuple[Any, ...]] | None = None  # {sensor_key: allowed values}; entity is unavailable unless every polled key matches
