@@ -189,9 +189,7 @@ def value_function_battery_control_override(initval: int, descr: Any, datadict: 
 # mode mapping documented by Pho3niX90/solis_modbus (DISPATCH_* constants).
 
 
-def value_function_dispatch_prepare(
-    initval: Any, descr: Any, datadict: dict[str, Any]
-) -> list[tuple[str, Any]]:
+def value_function_dispatch_prepare(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     """Enable dispatch using the locally staged failsafe number value."""
     failsafe = int(datadict["dispatch_failsafe_setpoint"])
     if not 1 <= failsafe <= 1440:
@@ -213,7 +211,7 @@ def value_function_dispatch_apply(initval: Any, descr: Any, datadict: dict[str, 
     # other modes retain the existing zero function-switch payload.
     grid_charging = 0
     if mode == 2:
-        grid_charging = DISPATCH_GRID_CHARGING_OPTIONS_INV.get(datadict.get("dispatch_grid_charging"), 0)
+        grid_charging = DISPATCH_GRID_CHARGING_OPTIONS_INV.get(datadict.get("dispatch_grid_charging", ""), 0)
     return [
         ("_uint16", mode),
         ("dispatch_power", int(datadict.get("dispatch_power", 0))),
