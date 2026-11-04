@@ -76,6 +76,9 @@ from custom_components.solax_modbus.const import (
 
 from .pymodbus_compat import DataType, convert_from_registers
 from .solax_faults import (
+    GEN2_X1_CHARGER_FAULTS,
+    GEN2_X1_INVERTER_FAULTS,
+    GEN2_X1_MANAGER_FAULTS,
     GEN3_MANAGER_FAULTS,
     GEN3_X1_INVERTER_FAULTS,
     GEN3_X3_INVERTER_FAULTS,
@@ -4555,12 +4558,31 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             icon="mdi:alert-circle-outline",
         )
         for generation, phases, min_version, max_version, fault_bits in (
+            (GEN2, X1, None, None, GEN2_X1_INVERTER_FAULTS),
             (GEN3, X1, None, None, GEN3_X1_INVERTER_FAULTS),
             (GEN3, X3, None, None, GEN3_X3_INVERTER_FAULTS),
             (GEN4, X1, 1, 99, GEN4_X1_INVERTER_FAULTS),
             (GEN4, X3, 1, 99, GEN4_X3_INVERTER_FAULTS),
             (GEN4, X3, 100, None, GEN4_X3_ESS_INVERTER_FAULTS),
         )
+    ],
+    *[
+        SolaXModbusSensorEntityDescription(
+            name="Charger Errors",
+            key="charger_errors",
+            register=0x42,
+            register_type=REG_INPUT,
+            register_data_type=REGISTER_U16,
+            rounding=0,
+            fault_bits=fault_bits,
+            allowedtypes=HYBRID | generation | phases,
+            modbus_min=min_version,
+            modbus_max=max_version,
+            sleepmode=SLEEPMODE_NONE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            icon="mdi:alert-circle-outline",
+        )
+        for generation, phases, min_version, max_version, fault_bits in ((GEN2, X1, None, None, GEN2_X1_CHARGER_FAULTS),)
     ],
     *[
         SolaXModbusSensorEntityDescription(
@@ -4579,6 +4601,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             icon="mdi:alert-circle-outline",
         )
         for generation, phases, min_version, max_version, fault_bits in (
+            (GEN2, X1, None, None, GEN2_X1_MANAGER_FAULTS),
             (GEN3, X1 | X3, None, None, GEN3_MANAGER_FAULTS),
             (GEN4, X1 | X3, 1, 99, GEN4_MANAGER_FAULTS),
             (GEN4, X3, 100, None, GEN4_X3_ESS_MANAGER_FAULTS),
