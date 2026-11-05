@@ -1486,6 +1486,18 @@ NUMBER_TYPES = [
     #
     ###
     SolisModbusNumberEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        fmt="i",
+        native_min_value=10,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
+    ),
+    SolisModbusNumberEntityDescription(
         name="Battery Minimum SOC",
         key="battery_minimum_soc",
         register=43011,
@@ -4151,6 +4163,14 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Minimum SOC",
