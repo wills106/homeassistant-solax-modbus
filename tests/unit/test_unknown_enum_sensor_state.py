@@ -1,5 +1,6 @@
 """Unknown register codes must publish HA's unknown state, not an invalid enum."""
 
+import logging
 from typing import Any, cast
 
 import pytest
@@ -80,3 +81,12 @@ def test_dictionary_scaling_preserves_declared_values(scale: dict[int, Any], raw
     if expected == "Unknown":
         sensor = SolaXModbusSensor("test", hub, DeviceInfo(identifiers={(DOMAIN, "test")}), description)
         assert sensor.state == "Unknown"
+
+
+def test_unmapped_value_debug_log_reports_raw_value(caplog: pytest.LogCaptureFixture) -> None:
+    """The debug line must format: the sensor key is a string, so a numeric placeholder drops the record."""
+    hub = _make_hub()
+    description = BaseModbusSensorEntityDescription(key="run_mode", register=1, register_data_type=REGISTER_U16, scale={0: "Off", 1: "On"})
+    with caplog.at_level(logging.DEBUG, logger="custom_components.solax_modbus"):
+        hub.treat_address(hub.data, [41], 0, description)
+    assert "Value 41 for key run_mode could not be mapped to a known state." in caplog.text
