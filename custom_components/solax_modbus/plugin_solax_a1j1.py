@@ -319,7 +319,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         icon="mdi:dip-switch",
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Charger Start Time 1",
+        name="Charger P1 Start",
         key="charger_start_time_1",
         register=0x2E,
         allowedtypes=J1,
@@ -328,7 +328,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Charger Stop Time 1",
+        name="Charger P1 Stop",
         key="charger_stop_time_1",
         register=0x2F,
         allowedtypes=J1,
@@ -337,7 +337,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Charger Start Time 2",
+        name="Charger P2 Start",
         key="charger_start_time_2",
         register=0x30,
         allowedtypes=J1,
@@ -346,7 +346,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Charger Stop Time 2",
+        name="Charger P2 Stop",
         key="charger_stop_time_2",
         register=0x31,
         allowedtypes=J1,
@@ -355,7 +355,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="ForceCharge SOC - Economic",
+        name="Force Charge SoC - Economic",
         key="forcharge_soc_economic",
         native_unit_of_measurement=PERCENTAGE,
         register=0x33,
@@ -364,7 +364,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Discharger Start Time 1",
+        name="Discharger P1 Start",
         key="discharger_start_time_1",
         register=0x34,
         allowedtypes=J1,
@@ -373,7 +373,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Discharger Stop Time 1",
+        name="Discharger P1 Stop",
         key="discharger_stop_time_1",
         register=0x35,
         allowedtypes=J1,
@@ -382,7 +382,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Discharger Start Time 2",
+        name="Discharger P2 Start",
         key="discharger_start_time_2",
         register=0x36,
         allowedtypes=J1,
@@ -391,7 +391,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="Discharger Stop Time 2",
+        name="Discharger P2 Stop",
         key="discharger_stop_time_2",
         register=0x37,
         allowedtypes=J1,
@@ -400,7 +400,7 @@ SENSOR_TYPES_MAIN: list[SolaXA1J1ModbusSensorEntityDescription] = [
         scale=value_function_gen4time,
     ),
     SolaXA1J1ModbusSensorEntityDescription(
-        name="ForceCharge SOC - Green",
+        name="Force Charge SoC - Green",
         key="forcharge_soc_green",
         native_unit_of_measurement=PERCENTAGE,
         register=0x33,
