@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+import voluptuous as vol
 from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
@@ -17,6 +18,7 @@ from custom_components.solax_modbus.config_flow import (
     CORE_SERIAL_SCHEMA,
     INTERFACES,
     LEGACY_INTERFACE,
+    OPTION_SCHEMA,
     SERIAL_SCHEMA,
     TCP_SCHEMA,
     _duplicate_inverter_schema,
@@ -29,6 +31,7 @@ from custom_components.solax_modbus.const import (
     CONF_INTERFACE,
     CONF_MODBUS_ADDR,
     CONF_PLUGIN,
+    CONF_RETRY_REPORT_INTERVAL,
     DEFAULT_PLUGIN,
     DOMAIN,
 )
@@ -88,6 +91,19 @@ def test_interface_selector_has_one_tcp_choice_and_a_valid_default() -> None:
     assert [item for item in INTERFACES if item["value"] in ("tcp", "core_tcp")] == [{"value": interface, "label": "TCP / Ethernet"}]
     marker = next(key for key in CONFIG_SCHEMA.schema if key.schema == CONF_INTERFACE)
     assert marker.default() == interface
+
+
+@pytest.mark.parametrize("schema", [CONFIG_SCHEMA, OPTION_SCHEMA])
+def test_retry_report_interval_defaults_to_disabled_and_accepts_nonnegative_minutes(schema: vol.Schema) -> None:
+    marker = next(key for key in schema.schema if key.schema == CONF_RETRY_REPORT_INTERVAL)
+    assert marker.default() == 0
+    validator = schema.schema[marker]
+    assert validator(0) == 0
+    assert validator("5") == 5
+    with pytest.raises(vol.Invalid):
+        validator(-1)
+    with pytest.raises(vol.Invalid):
+        validator("invalid")
 
 
 @pytest.mark.asyncio

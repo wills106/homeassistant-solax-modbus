@@ -8,6 +8,7 @@ import logging
 from asyncio import sleep as _sleep
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from math import ceil
 from time import monotonic
 from typing import Any, Protocol, TypeVar
 from weakref import ReferenceType, ref
@@ -16,6 +17,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
+from .const import DEFAULT_RETRY_REPORT_INTERVAL
 from .core_modbus import core_connection_params
 from .pymodbus_compat import ADDR_KW
 from .serial_modbus import SerialModbusResponse
@@ -23,6 +25,52 @@ from .serial_modbus import SerialModbusResponse
 _LOGGER = logging.getLogger(__name__)
 _T = TypeVar("_T")
 MAX_RECOVERY_BACKOFF = 600.0
+
+
+class _RequestSummary:
+    """Count completed logical requests and their individual I/O attempts."""
+
+    def __init__(self) -> None:
+        self.started = monotonic()
+        self.requests = 0
+        self.retry_attempts = 0
+        self.re_retries = 0
+        self.failed = 0
+        self.timings: list[float] = []
+
+    def record(self, attempts: int, timings: list[float], success: bool) -> None:
+        self.requests += 1
+        self.retry_attempts += attempts - 1
+        self.re_retries += attempts > 2
+        self.failed += not success
+        self.timings.extend(timings)
+
+    def log(self, endpoint: str, kind: str) -> None:
+        if not self.retry_attempts:
+            return
+        values = sorted(self.timings)
+        if values:
+            # Nearest-rank percentiles, using successful attempts only.
+            def percentile(fraction: float) -> float:
+                return values[max(0, ceil(len(values) * fraction) - 1)]
+
+            timing = f"min/p50/p95/p99/max={values[0]:.0f}/{percentile(0.50):.0f}/{percentile(0.95):.0f}/{percentile(0.99):.0f}/{values[-1]:.0f}ms"
+        else:
+            timing = "no successful attempt timings"
+        re_retries = f"re-retries={self.re_retries} " if kind == "read" else ""
+        _LOGGER.warning(
+            "%s: %s summary (%.0fmin): requests=%d retries=%d (%.3f%%) %sfailed=%d; %s",
+            endpoint,
+            kind,
+            (monotonic() - self.started) / 60,
+            self.requests,
+            self.retry_attempts,
+            100 * self.retry_attempts / self.requests if self.requests else 0,
+            re_retries,
+            self.failed,
+            timing,
+        )
+
 
 CORE_CALL_TYPE_REGISTER_HOLDING = "holding"
 CORE_CALL_TYPE_REGISTER_INPUT = "input"
@@ -259,6 +307,7 @@ class CoreModbusUnitTransport:
         settings: dict[str, Any],
         unit: int,
         *,
+        retry_report_interval: int = DEFAULT_RETRY_REPORT_INTERVAL,
         unit_getter: Callable[[HomeAssistant, ConfigEntry, Any, int], Any] = _get_core_unit,
     ) -> None:
         self._hass = hass
@@ -273,6 +322,26 @@ class CoreModbusUnitTransport:
         self._backoff_delay = 0.0
         self._retry_at = 0.0
         self._unit(unit)
+        self._summary_interval = max(0, int(retry_report_interval)) * 60
+        self._read_summary = _RequestSummary()
+        self._write_summary = _RequestSummary()
+        self._summary_timer: asyncio.TimerHandle | None = None
+        self._schedule_summary()
+
+    def _schedule_summary(self) -> None:
+        if self._summary_interval and self._summary_timer is None and not self._closed:
+            self._summary_timer = asyncio.get_running_loop().call_later(self._summary_interval, self._log_request_summary)
+
+    def _log_request_summary(self) -> None:
+        self._summary_timer = None
+        if self._closed or not self._summary_interval:
+            return
+        self._read_summary.log(self.endpoint, "read")
+        if self._write_summary.requests:
+            self._write_summary.log(self.endpoint, "write")
+        self._read_summary = _RequestSummary()
+        self._write_summary = _RequestSummary()
+        self._schedule_summary()
 
     @property
     def backoff_remaining(self) -> float:
@@ -297,8 +366,42 @@ class CoreModbusUnitTransport:
         self._backoff_delay = 0.0
         self._retry_at = 0.0
 
-    async def _request(self, client: Any, label: str, operation: Callable[[], Awaitable[_T]], *, read: bool) -> _T:
-        """Retry one transport failure via HA; only reads enter a cooldown."""
+    async def _request(self, client: Any, label: str, operation: Callable[[], Awaitable[_T]], *, read: bool, request_name: str = "") -> _T:
+        """Record completed requests, including retries hidden from the main log."""
+        if not self._summary_interval:
+            return await self._request_with_retries(client, label, operation, read=read, request_name=request_name)
+
+        attempts = 0
+        timings: list[float] = []
+
+        async def measured_operation() -> _T:
+            nonlocal attempts
+            attempts += 1
+            started = monotonic()
+            result = await operation()
+            timings.append((monotonic() - started) * 1000)
+            return result
+
+        def record(success: bool) -> None:
+            if attempts:
+                summary = self._read_summary if read else self._write_summary
+                summary.record(attempts, timings, success)
+
+        try:
+            result = await self._request_with_retries(client, label, measured_operation, read=read, request_name=request_name)
+        except asyncio.CancelledError:
+            # Unload/cancellation is not a failed Modbus request.
+            raise
+        except Exception:
+            record(False)
+            raise
+        record(True)
+        return result
+
+    async def _request_with_retries(
+        self, client: Any, label: str, operation: Callable[[], Awaitable[_T]], *, read: bool, request_name: str = ""
+    ) -> _T:
+        """Retry reads before reconnecting; writes reconnect before their single retry."""
         from modbus_connection.exceptions import ModbusConnectionError, ModbusError, ModbusTimeoutError
 
         async with self._request_lock:
@@ -310,14 +413,54 @@ class CoreModbusUnitTransport:
                 result = await operation()
             except (ModbusTimeoutError, ModbusConnectionError) as err:
                 reason = "timed out" if isinstance(err, ModbusTimeoutError) else "lost or failed to establish its connection"
-                _LOGGER.warning(
-                    "%s: %s %s (configured timeout %.1fs); resetting the connection and retrying once: %s",
-                    self.endpoint,
-                    label,
-                    reason,
-                    self._settings["timeout"],
-                    err,
-                )
+                if read:
+                    # Avoid resetting a shared link for a transient missed response.
+                    for retry_number in (1, 2):
+                        if self._closed:
+                            raise CoreModbusBackoff("Modbus transport closed during recovery") from err
+                        try:
+                            result = await operation()
+                        except (ModbusConnectionError, ModbusTimeoutError, OSError, TimeoutError) as retry_error:
+                            if retry_number == 1:
+                                _LOGGER.warning(
+                                    "%s: %s %s (configured timeout %.1fs); retrying %s",
+                                    self.endpoint,
+                                    label,
+                                    reason,
+                                    self._settings["timeout"],
+                                    request_name,
+                                )
+                                _LOGGER.debug("%s: %s: %s", self.endpoint, label, err)
+                                _LOGGER.warning(
+                                    "%s: %s: first retry without resetting failed; retrying without resetting once more",
+                                    self.endpoint,
+                                    label,
+                                )
+                            else:
+                                _LOGGER.warning("%s: %s: second retry without resetting failed; reconnecting", self.endpoint, label)
+                            _LOGGER.debug("%s: %s: %s", self.endpoint, label, retry_error)
+                        except ModbusError as retry_error:
+                            _LOGGER.warning(
+                                "%s: %s: retry %d without resetting returned a protocol error: %s",
+                                self.endpoint,
+                                label,
+                                retry_number,
+                                retry_error,
+                            )
+                            self._recovery_succeeded()
+                            raise CoreModbusUnitError(str(retry_error)) from retry_error
+                        else:
+                            self._recovery_succeeded()
+                            return result
+                else:
+                    _LOGGER.warning(
+                        "%s: %s %s (configured timeout %.1fs); resetting the connection and retrying once: %s",
+                        self.endpoint,
+                        label,
+                        reason,
+                        self._settings["timeout"],
+                        err,
+                    )
                 if not read:
                     _LOGGER.warning(
                         "%s: %s may already have been applied despite the missing acknowledgement; repeating it once", self.endpoint, label
@@ -346,7 +489,8 @@ class CoreModbusUnitTransport:
                             # register errors available to the existing bisect path.
                             self._recovery_succeeded()
                     uncertainty = " The write may already have been applied." if not read else ""
-                    raise CoreModbusUnitError(f"{label} failed after reconnect and one retry: {retry_error}.{uncertainty}") from retry_error
+                    attempts = "three retries" if read else "one retry"
+                    raise CoreModbusUnitError(f"{label} failed after reconnect and {attempts}: {retry_error}.{uncertainty}") from retry_error
                 _LOGGER.warning("%s: repeated %s succeeded after reconnect", self.endpoint, label)
             except (ModbusError, OSError, TimeoutError) as err:
                 if isinstance(err, (OSError, TimeoutError)):
@@ -381,6 +525,7 @@ class CoreModbusUnitTransport:
     async def connect(self) -> bool:
         self._closed = False
         self._unit(self._default_unit)
+        self._schedule_summary()
         # Acquiring a unit does not open the link. The next I/O connects it.
         return True
 
@@ -388,6 +533,9 @@ class CoreModbusUnitTransport:
         # Never disconnect a link shared with other integrations. A reconnect
         # retains our unit handles; actual teardown belongs to Core on unload.
         self._closed = True
+        if self._summary_timer is not None:
+            self._summary_timer.cancel()
+            self._summary_timer = None
 
     async def read(self, register_type: str, unit: int, address: int, count: int) -> SerialModbusResponse | None:
         if self._closed:
@@ -395,7 +543,11 @@ class CoreModbusUnitTransport:
         client = self._unit(unit)
         operation = client.read_input_registers if register_type == "input" else client.read_holding_registers
         registers = await self._request(
-            client, f"read {register_type} unit={unit} address=0x{address:x} count={count}", lambda: operation(address, count), read=True
+            client,
+            f"read {register_type} unit={unit} address=0x{address:x} count={count}",
+            lambda: operation(address, count),
+            read=True,
+            request_name=f"{'read_input_registers' if register_type == 'input' else 'read_holding_registers'}({address}, {count})",
         )
         return SerialModbusResponse(registers)
 

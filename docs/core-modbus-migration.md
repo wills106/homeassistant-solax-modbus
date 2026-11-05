@@ -83,8 +83,11 @@ Home Assistant manages and shares these connections between integrations using t
 
 Recovery is enabled by default for Home Assistant-managed TCP and serial connections.
 Each request uses the existing configured timeout; no shorter attempt timeout is introduced.
-If a read or write times out or loses its connection, the integration resets the link through the public HA unit
-API and repeats the **same request once**. Home Assistant reopens the connection with
+If a read times out or loses its connection, the integration repeats the **same read
+up to twice without resetting the connection**. If both repeats fail, it resets the
+link through the public HA unit API and repeats the read **once more**: at most four
+attempts in total. A write retains its existing policy: reset the link and repeat the
+**same write once**, with no extra attempts before the reset. Home Assistant reopens the connection with
 the existing timeout, startup delay and message-spacing settings. There is no second
 client and unit handles remain registered. A reset briefly affects any other consumers
 sharing that physical link too. Normal integration unload does not reset a shared link.
@@ -114,11 +117,29 @@ Be aware that a missing acknowledgement does not prove a write was rejected: rep
 a command can execute it twice. The warning log and final error make this uncertainty
 explicit. An acknowledged write does not clear or extend a read pause.
 
-Warning logs identify the endpoint, operation, unit and register, the timeout and reset,
-whether the repeated request succeeded or failed, and any read pause or recovery.
+Successful first read retries do not emit individual warnings. If further recovery
+is needed, warning logs identify the endpoint, operation, unit and register, the timeout
+and reset, whether the repeated request succeeded or failed, and any read pause or recovery.
 Device exceptions and invalid protocol replies do not trigger a timeout retry.
 Native clients on older HA versions and legacy YAML hubs keep their existing policies;
 this recovery is not stacked on top of their client-internal retries.
+
+### Optional retry summaries
+
+Set **Retry report interval (min; 0 disables)** in the initial configuration or
+integration options to enable periodic warning-level summaries for managed connections.
+The default is **0**, so reporting adds no timer or request-timing collection unless
+enabled. Read and write summaries are separate and appear only if that interval
+contained an extra retry attempt. Counters reset after every interval, even if no
+summary is printed; a silent interval does not mean polling stopped.
+
+`requests` counts completed logical requests, while `retries` counts extra I/O attempts.
+The percentage is extra attempts divided by logical requests. For reads, `re-retries`
+counts requests reaching a third or fourth attempt, once per request. `failed` counts
+requests ending in an error. Deferred reads and cancelled requests are not counted.
+The min/p50/p95/p99/max values use nearest-rank percentiles of successful attempt
+durations in milliseconds, excluding timeout durations and total recovery time.
+An in-flight request is counted in the interval in which it completes.
 
 ## Automatic TCP migration
 

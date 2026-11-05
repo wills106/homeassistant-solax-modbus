@@ -20,7 +20,11 @@
           "scan_interval": "Default polling interval (s)",
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
-          "time_out": "Request timeout (s)"
+          "time_out": "Request timeout (s)",
+          "retry_report_interval": "Retry report interval (min; 0 disables)"
+        },
+        "data_description": {
+          "retry_report_interval": "Interval between retry summary reports for Home Assistant managed Modbus connections. Default 0 disables reports. Reports appear only when a retry was attempted during the interval."
         }
       },
       "serial": {
@@ -114,7 +118,11 @@
           "scan_interval": "Default polling interval (s)",
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
-          "time_out": "Request timeout (s)"
+          "time_out": "Request timeout (s)",
+          "retry_report_interval": "Retry report interval (min; 0 disables)"
+        },
+        "data_description": {
+          "retry_report_interval": "Interval between retry summary reports for Home Assistant managed Modbus connections. Default 0 disables reports. Reports appear only when a retry was attempted during the interval."
         }
       },
       "serial": {

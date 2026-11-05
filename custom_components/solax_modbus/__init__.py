@@ -68,6 +68,7 @@ from .const import (
     CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
     CONF_PLUGIN,
+    CONF_RETRY_REPORT_INTERVAL,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
@@ -75,6 +76,7 @@ from .const import (
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
     DEFAULT_PORT,
+    DEFAULT_RETRY_REPORT_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
     DEFAULT_TIME_OUT,
@@ -693,7 +695,13 @@ class SolaXModbusHub:
             if yaml_hub_name is not None or core_settings is None:
                 self._transport = CoreModbusTransport(hass, yaml_hub_name or config.get(CONF_CORE_HUB, ""), name)
             else:
-                self._transport = CoreModbusUnitTransport(hass, entry, core_settings, int(modbus_addr))
+                self._transport = CoreModbusUnitTransport(
+                    hass,
+                    entry,
+                    core_settings,
+                    int(modbus_addr),
+                    retry_report_interval=config.get(CONF_RETRY_REPORT_INTERVAL, DEFAULT_RETRY_REPORT_INTERVAL),
+                )
         else:
             self._transport = UnavailableModbusTransport(interface)
         self._lock = asyncio.Lock()
