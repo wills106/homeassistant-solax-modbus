@@ -10415,7 +10415,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         depends_on=["meter_1_measured_power"],
         optional_depends_on=["generator_control", "meter_2_measured_power"],
-        icon="mdi:home-export-outline",
+        icon="mdi:home-import-outline",
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Export",
