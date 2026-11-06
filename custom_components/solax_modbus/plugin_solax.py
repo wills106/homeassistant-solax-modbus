@@ -6889,6 +6889,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             27: "Waiting Charge Mode",
             28: "Normal Mode SS",
             41: "Normal Mode (R-1)",
+            48: "Normal Mode (R-8)",
         },
         register_type=REG_INPUT,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
