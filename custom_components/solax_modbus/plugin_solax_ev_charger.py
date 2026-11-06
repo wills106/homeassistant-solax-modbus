@@ -3308,6 +3308,19 @@ SENSOR_TYPES_MAIN: list[SolaXEVChargerModbusSensorEntityDescription] = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:numeric",
     ),
+    SolaXEVChargerModbusSensorEntityDescription(
+        name="Start Charge Card Number",
+        key="start_charge_card_number",
+        register=0x80,
+        register_type=REG_INPUT,
+        newblock=True,
+        allowedtypes=GEN2,
+        register_data_type=REGISTER_STR,
+        order32="big",
+        wordcount=10,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:barcode",
+    ),
     # ---- 0x0026  Network status (0=Offline, 1=Online) ----
     SolaXEVChargerModbusSensorEntityDescription(
         name="Network Status",

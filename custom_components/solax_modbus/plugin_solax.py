@@ -11791,7 +11791,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_STR,
         order32="big",
         wordcount=7,
-        allowedtypes=MIC | GEN3,
+        allowedtypes=MIC | GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -11802,7 +11802,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_data_type=REGISTER_STR,
         order32="big",
         wordcount=7,
-        allowedtypes=MIC | GEN3,
+        allowedtypes=MIC | GEN4,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
     ),
@@ -11822,7 +11822,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
             8: "Nederlands",
         },
         entity_registry_enabled_default=False,
-        allowedtypes=MIC | GEN3,
+        allowedtypes=MIC | GEN4,
         icon="mdi:translate-variant",
     ),
     SolaXModbusSensorEntityDescription(
@@ -13283,6 +13283,9 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("F3E"):
             invertertype = AC | GEN3 | X3  # RetroFit
             self.inverter_model = "X3-RetroFit"
+        elif seriesnumber.startswith("63130"):
+            invertertype = HYBRID | GEN4 | X1  # Gen4 X1 3.0kW (TIGO TSI 3kW)
+            self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
         elif seriesnumber.startswith("63150"):
             invertertype = HYBRID | GEN4 | X1  # Gen4 X1 5.0kW
             self.inverter_model = f"X1-TIGO-TSI-{seriesnumber[3:4]}.{seriesnumber[4:5]}kW"
@@ -13375,7 +13378,7 @@ class solax_plugin(plugin_base):
         elif seriesnumber.startswith("P35G1"):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3-IES-P 10-15kW G
             self.inverter_model = f"X3-IES-{seriesnumber[4:6]}kW"
-        elif seriesnumber.startswith("H3BC15L"):
+        elif seriesnumber.startswith(("H3BC15L", "H3BC15M")):
             invertertype = HYBRID | GEN5 | MPPT3 | X3  # X3 Ultra 15KP C #1668
             self.inverter_model = "X3-Ultra-15kW"
         elif seriesnumber.startswith("H3BC15"):
@@ -13818,7 +13821,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_import",
             name="Grid Import Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: max(0, v),
+            filter_function=lambda v: abs(min(0, v)),
             allowedtypes=AC | HYBRID | MIC,
         ),
         # Grid Export Energy (Riemann sum)
@@ -13829,7 +13832,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
             target_key="grid_energy_export",
             name="Grid Export Energy",
             use_riemann_sum=True,
-            filter_function=lambda v: abs(min(0, v)),
+            filter_function=lambda v: max(0, v),
             allowedtypes=AC | HYBRID | MIC,
         ),
         # Home Consumption Energy (Riemann sum)

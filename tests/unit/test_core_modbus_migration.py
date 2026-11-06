@@ -708,3 +708,19 @@ async def test_invalid_unit_ids_fail_before_acquisition(unit_transport: Any, uni
     with pytest.raises(HomeAssistantError, match="Invalid Modbus unit ID"):
         await unit_transport.transport.read("holding", unit_id, 10, 2)
     unit_transport.getter.assert_not_called()
+
+
+@pytest.mark.parametrize("milliseconds", [0, 150])
+async def test_native_tcp_migration_preserves_message_spacing(migration: Any, milliseconds: int) -> None:
+    migration.entry.options = {
+        CONF_INTERFACE: "tcp",
+        "name": "Sofar",
+        "host": "192.0.2.1",
+        "port": 502,
+        "message_wait_milliseconds": milliseconds,
+    }
+    await core.async_prepare_core_connection(migration.hass, migration.entry)
+    assert migration.entry.options[CONF_INTERFACE] == "core_tcp"
+    settings = core.configured_core_connection(migration.entry.options)
+    assert settings is not None
+    assert settings["message_wait_milliseconds"] == milliseconds

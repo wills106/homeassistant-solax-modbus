@@ -79,6 +79,47 @@ Select **TCP / Ethernet** to use a Home Assistant-managed TCP connection on HA 2
 
 Home Assistant manages and shares these connections between integrations using the same connection settings. The connection opens on the first request and reconnects as needed.
 
+## Timeout recovery on managed connections
+
+Recovery is enabled by default for Home Assistant-managed TCP and serial connections.
+Each request uses the existing configured timeout; no shorter attempt timeout is introduced.
+If a read or write times out or loses its connection, the integration resets the link through the public HA unit
+API and repeats the **same request once**. Home Assistant reopens the connection with
+the existing timeout, startup delay and message-spacing settings. There is no second
+client and unit handles remain registered. A reset briefly affects any other consumers
+sharing that physical link too. Normal integration unload does not reset a shared link.
+
+A successful repeated read is treated as one successful read: it does not create a
+failed block, mark its sensor values stale or trigger runtime bisect by itself. Existing
+unrelated communication failures and quarantined registers still affect health.
+
+If read recovery fails because the connection still times out or cannot be established,
+subsequent reads are deferred. Consecutive failures wait **1, 2, 3, ... times the configured
+timeout**, capped at **600 seconds**. For a 5-second timeout, the pauses are 5, 10, 15,
+... seconds. A successful read clears the pause and failure progression. The next read
+runs on the first normal polling tick after the pause expires; the pause does not hold
+an I/O lock or create a new background polling loop. It replaces, rather than multiplies,
+the sleep/offline polling slowdown while recovery is pending.
+
+Deferred reads are skipped, not recorded as new failures or quarantined as bad
+registers. Runtime bisect and quarantine rechecks wait for connection recovery;
+explicit device/register errors retain their existing handling. The first exhausted
+read still reaches normal health, availability and sleep handling.
+
+**Writes remain available during a read pause.** A timed-out write gets one reconnect
+and one repeat, including scan, reset and start commands. If recovery fails, the service
+call raises a clear error; it does not start another retry loop or add a delayed-write
+queue. Existing sleep/wake-up queues and pending control-stop handling are unchanged.
+Be aware that a missing acknowledgement does not prove a write was rejected: repeating
+a command can execute it twice. The warning log and final error make this uncertainty
+explicit. An acknowledged write does not clear or extend a read pause.
+
+Warning logs identify the endpoint, operation, unit and register, the timeout and reset,
+whether the repeated request succeeded or failed, and any read pause or recovery.
+Device exceptions and invalid protocol replies do not trigger a timeout retry.
+Native clients on older HA versions and legacy YAML hubs keep their existing policies;
+this recovery is not stacked on top of their client-internal retries.
+
 ## Automatic TCP migration
 
 On Home Assistant 2026.10 or later, existing direct TCP connections switch to Home Assistant's shared Modbus API at the next startup or integration reload. No manual changes, deletion or reconfiguration are needed for normal TCP setups.
