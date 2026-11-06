@@ -1569,7 +1569,7 @@ def value_function_hardware_version_g6(initval: int, descr: Any, datadict: dict[
 
 
 def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    """Load grid measured power from the primary meter source"""
+    """Load house to grid feed-in power from the primary meter source"""
     # Determine the source sensor, which must be the first entry in depends_on
     depends_on: list[str] | None = getattr(descr, "depends_on", None)
     if depends_on is None:
@@ -1582,7 +1582,7 @@ def value_function_measured_power(initval: int, descr: Any, datadict: dict[str, 
 
 
 def value_function_select_measured_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    """Determine which meter represents the grid measured power"""
+    """Determine which meter represents the house to grid feed-in power"""
     # Meter choice depends on whether an external generator is present
     generator_mode = datadict.get("generator_control", "Disabled")
     if generator_mode == "Disabled":
@@ -1596,15 +1596,15 @@ def value_function_select_measured_power(initval: int, descr: Any, datadict: dic
 
 
 def value_function_select_generator_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
-    """Determine which meter represents the generator sources power"""
+    """Determine which meter represents the generator to house power"""
     generator_mode = datadict.get("generator_control", "Disabled")
     if generator_mode == "Disabled":
         # When there is no external generator mode, Meter 2 represents power from external source.
         return int(datadict.get("meter_2_measured_power", 0))
     # Otherwise meter 1 is combined power to external/grid, and meter 2 is power from grid
-    total_power = int(datadict.get("meter_1_measured_power", 0))
-    measured_power = value_function_gain_offset(0 - datadict.get("meter_2_measured_power", 0), descr, datadict)
-    return total_power - measured_power
+    power_export_total = int(datadict.get("meter_1_measured_power", 0))
+    power_export_grid = value_function_gain_offset(0 - datadict.get("meter_2_measured_power", 0), descr, datadict)
+    return power_export_grid - power_export_total  # = power_import_generator
 
 
 def _meter_select_grid_energy(export: bool, range: str, datadict: dict[str, Any]) -> int:
