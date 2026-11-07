@@ -57,7 +57,7 @@ def test_switch_value_function_signature_matches_base_class() -> None:
         Base: Callable[[int | None, bool | None, str | None, dict[str, Any]], int]
     """
     # Simulate the base class type hint
-    ValueFunction = Callable[[int | None, bool | None, str | None, dict[str, Any]], int]
+    type ValueFunction = Callable[[int | None, bool | None, str | None, dict[str, Any]], int]
 
     # Define a function matching this signature
     def example_value_function(
@@ -138,7 +138,7 @@ def test_switch_value_function_wrong_signature_example() -> None:
     This test shows why the old signature was wrong and would fail at the call site.
     """
     # Old incorrect signature (3 parameters)
-    OldValueFunction = Callable[[Any, Any, dict[str, Any]], Any]
+    type OldValueFunction = Callable[[Any, Any, dict[str, Any]], Any]
 
     def old_signature_function(param1: Any, param2: Any, datadict: dict[str, Any]) -> Any:
         return 1
