@@ -574,7 +574,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
         house_load = datadict.get("house_load", 0)
-        generator_power = datadict.get("generator_power", 0)
+        generator_power = datadict.get("generator_power") or 0
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW, generator_power=%sW",
@@ -938,13 +938,13 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     min_discharge_soc = max(datadict.get("remotecontrol_minimum_soc_8_9", 10), datadict.get("selfuse_discharge_min_soc", 10))
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
-    battery_capacity = datadict.get("battery_capacity", 0) or 0
+    battery_capacity = datadict.get("battery_capacity") or 0
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
     pv = datadict.get("pv_power_total", 0)
     houseload = datadict.get("house_load", 0)
     houseload_alt = datadict.get("house_load_alt", 0)
-    generator_power = datadict.get("generator_power", 0)
+    generator_power = datadict.get("generator_power") or 0
     filter_steps = datadict.get("remotecontrol_smoothing_factor") or DEFAULT_FILTER_SMOOTING_FACTOR
 
     # Grid balance is the amount of power flowing to the grid when the inverter output
