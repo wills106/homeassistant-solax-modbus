@@ -555,6 +555,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_power_charge = datadict.get("pm_battery_power_charge", 0)
         house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
+        generator_power = 0  # Assume no generator/secondary inverter when in parallel mode.
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house_load=%sW",
@@ -573,14 +574,21 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
         house_load = datadict.get("house_load", 0)
+        generator_power = datadict.get("generator_power", 0)
 
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
+            "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW, generator_power=%sW",
             inverter_power,
             pv_power,
             battery_power_charge,
             house_load,
+            generator_power,
         )
+
+    # Grid balance is the amount of power flowing to the grid when the inverter output
+    # is disabled, essentially the amount of power needed to match a grid target to the
+    # inverter power required.
+    grid_balance = generator_power - house_load
 
     # Debug logging: Input state
     _LOGGER.debug(
@@ -597,54 +605,62 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # Calculate ap_target based on control mode
     if power_control == "Enabled Power Control":
-        # Direct power control - set exact grid power
+        # Direct power control - target specifies requested inverter power
         ap_target = target
 
     elif power_control == "Enabled Grid Control":
         # Control grid import/export while accounting for house load
-        if target < 0:  # Export target
-            ap_target = target - house_load  # Export target minus house load
-        else:  # Import target
-            ap_target = target - house_load  # Import target minus house load (house load already supplied by inverter)
+        #  - Export: Require inverter output to be grid export plus house load
+        #            less any already supplied by external generator or inverter.
+        #    ap_target = -(-target + house_load - generator_power)
+        # Import: Require inverter input to be grid import less any house,
+        #         plus absorb any from external source
+        #    ap_target = target - house_load + generator_power
+        # Calculation for both ends up being identical.
+        ap_target = target + grid_balance
         power_control = "Enabled Power Control"
 
     elif power_control == "Enabled Self Use":
-        # Minimize grid usage by using PV and battery to supply house load
-        ap_target = 0 - house_load
+        # Self-use emulation is equivalent to trying to maintain a grid power of
+        # zero - i.e. try to neither import nor export.
+        ap_target = 0 + grid_balance
         power_control = "Enabled Power Control"
 
     elif power_control == "Enabled Battery Control":
-        # Control battery charging/discharging to target
-        ap_target = target - pv_power  # + house_load ... already accounted for by the inverter
+        # Control battery charging/discharging to target by setting inverter
+        # power to be target less any already coming from PV.
+        ap_target = target - pv_power
         power_control = "Enabled Power Control"
 
     elif power_control == "Enabled Feedin Priority":
         # Maximize grid export by using excess PV and battery
-        if pv_power > house_load:
-            # If more power than house load, try to export all excess
-            # power. If this is larger than the inverter/export limit
-            # it will be internally limited and any excess PV will go
-            # to the battery.
+        if pv_power + grid_balance > 0:
+            # If PV power alone is sufficient to push the grid balance into
+            # export, then we can simply push all of the PV towards the grid.
+            # If this is larger than the inverter/export limit it will be
+            # internally limited and any excess PV will go to the battery.
             ap_target = 0 - pv_power
         else:
-            # Insufficient power from PV, so just cover house load. The
-            # battery will discharge to cover any deficit where possible.
+            # Otherwise even with PV we would still be importing, so push
+            # enough power to balance the grid to zero import/export (self-use).
             # If the battery is drained completely, grid will cover deficit.
-            ap_target = 0 - house_load
+            ap_target = 0 + grid_balance
         power_control = "Enabled Power Control"
 
     elif power_control == "Enabled No Discharge":
         # Hold battery level by preventing discharge
-        if battery_capacity < 98:
-            # Use PV to supply house load, import from grid only what's needed
-            # Any excess PV above house load will go to the battery
-            ap_target = 0 - min(house_load, pv_power)
+        if battery_capacity < 98 and pv_power + grid_balance > 0:
+            # If the grid balance including PV would result in an export,
+            # and the battery is not fully charnged, then try to charge the
+            # battery with the excess to minimise any export.
+            ap_target = pv_power + grid_balance
         else:
             # When the battery is fully charged (allowing a tolerance to prevent
-            # older inverters shutting down PV), then we push only the PV power
-            # through to the grid connected port. We add a little headroom so
-            # that PV output can grow after e.g. clouds. This will also trickle
-            # discharge the battery, keeping the SoC close to 98%.
+            # older inverters shutting down PV), or there is insufficient PV to
+            # cover the grid balance, then we push only the PV power through to
+            # the grid connected port. We add a little headroom so that PV output
+            # can grow after e.g. clouds. This will also trickle discharge the
+            # battery, keeping the SoC close to 98%.
             ap_target = 0 - pv_power - 150
         power_control = "Enabled Power Control"
 
@@ -766,8 +782,9 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     old_ap_target = ap_target
     if ap_target > 0:
         # Importing (positive = import)
-        # Inverter input cannot be more than the import limit less any used by the house load
-        import_bound = import_limit - house_load
+        # Inverter input cannot be more than the import limit on top of the
+        # existing generator/home grid balance.
+        import_bound = import_limit + grid_balance
 
         # Apply phase protection limit if available
         if safe_ap_target_from_phase is not None:
@@ -775,17 +792,19 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = min(ap_target, import_bound)
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Import bounds: ap_target=%sW import_bound=%sW import_limit=%sW house_load=%sW total_import=%sW",
+            "[REMOTE_CONTROL] Import bounds: ap_target=%sW import_bound=%sW import_limit=%sW house_load=%sW generator_power=%sW total_import=%sW",
             ap_target,
             import_bound,
             import_limit,
             house_load,
-            ap_target + house_load,
+            generator_power,
+            ap_target - grid_balance,
         )
     elif ap_target < 0:
         # Exporting (negative = export).
-        # Inverter output cannot be more than the export limit plus any used by the house load
-        export_bound = -(export_limit + house_load)
+        # Inverter output cannot be more than the export limit on top of
+        # the existing generator/home grid balance
+        export_bound = grid_balance - export_limit
 
         # Apply phase protection limit if available
         if safe_ap_target_export_from_phase is not None:
@@ -793,11 +812,12 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = max(ap_target, export_bound)
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Export bounds: ap_target=%sW export_bound=%sW export_limit=%sW house_load=%sW",
+            "[REMOTE_CONTROL] Export bounds: ap_target=%sW export_bound=%sW export_limit=%sW house_load=%sW generator_power=%sW",
             ap_target,
             export_bound,
             export_limit,
             house_load,
+            generator_power,
         )
     # If ap_target = 0, no bounds checking needed
 
@@ -2089,6 +2109,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "grid_voltage_l1",
             "grid_voltage_l2",
             "grid_voltage_l3",
+            "generator_power",
         ),
         autorepeat_parallel_dependencies={
             "Free": ("pv_power_total", "inverter_power", "battery_power_charge", "house_load"),
