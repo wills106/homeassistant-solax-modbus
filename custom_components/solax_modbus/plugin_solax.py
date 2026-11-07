@@ -1645,17 +1645,9 @@ def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[st
 
 def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
-    l1_power: int | float | None = datadict.get("pm_activepower_l1", 0)
-    l2_power: int | float | None = datadict.get("pm_activepower_l2", 0)
-    l3_power: int | float | None = datadict.get("pm_activepower_l3", 0)
-
-    # Handle None values from overflow protection
-    if l1_power is None:
-        l1_power = 0
-    if l2_power is None:
-        l2_power = 0
-    if l3_power is None:
-        l3_power = 0
+    l1_power: int | float = datadict.get("pm_activepower_l1") or 0
+    l2_power: int | float = datadict.get("pm_activepower_l2") or 0
+    l3_power: int | float = datadict.get("pm_activepower_l3") or 0
 
     return int(l1_power + l2_power + l3_power)
 
@@ -1695,9 +1687,7 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     to compensate for inverter measurement inflation.
     """
     # Get raw sensor values
-    pm_inverter_power: int | float = (
-        int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
-    )
+    pm_inverter_power: int | float = datadict.get("pm_total_inverter_power", 0)
     grid_power: int | float = datadict.get("measured_power", 0)
     pv_power: int | float = datadict.get("pm_total_pv_power", 0)
     battery_power: int | float = datadict.get("pm_battery_power_charge", 0)
@@ -9595,13 +9585,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         value_function=value_function_pm_total_house_load,
         device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=[
-            "pm_activepower_l1",
-            "pm_activepower_l2",
-            "pm_activepower_l3",
-            "measured_power",
-            "parallel_setting",
-        ],
+        depends_on=["pm_total_inverter_power", "measured_power", "parallel_setting"],
         optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
         icon="mdi:home-lightning-bolt",
     ),
