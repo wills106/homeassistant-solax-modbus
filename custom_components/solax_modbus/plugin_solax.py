@@ -2150,7 +2150,6 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         ),
         autorepeat_optional_dependencies=(
             "generator_power",
-            "meter_2_measured_power",
             "battery_max_charge_power",
             "bms_max_charge",
             "bms_2_max_charge",
