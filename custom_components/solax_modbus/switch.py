@@ -191,7 +191,7 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
     async def _write_switch_to_modbus(self, is_on: bool) -> None:
         # Determine the new switch value either with value function or default
         if self._value_function is not None:
-            payload = self._value_function(self._bit, is_on, self._sensor_key, self._hub.data)
+            payload = self._value_function(self._bit, is_on, self._sensor_key or self._key, self._hub.data)
         else:
             _LOGGER.warning("No value function for switch %s. Will not make changes to modbus registers.", self._key)
             payload = 1 if is_on else 0
