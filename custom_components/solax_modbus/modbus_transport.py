@@ -434,11 +434,17 @@ class CoreModbusUnitTransport:
                 # triggers this exception.
                 # We check to see if the actual response starts with the expected response
                 # and if so accept it anyway. Otherwise rethrow.
-                [value, function] = (0x10, len(values)) if multiple else (0x06, values[0] & 0xFFFF)
+                function, value = (0x10, len(values)) if multiple else (0x06, values[0] & 0xFFFF)
                 expected_response = struct.pack(">BHH", function, address, value)
                 actual_response = _decode_protocol_error(err)
                 if actual_response is None or not actual_response.startswith(expected_response):
                     raise
+                _LOGGER.debug(
+                    "%s: Accepted write response with trailing bytes. Response actual=[%s], expected=[%s]",
+                    self.endpoint,
+                    actual_response,
+                    expected_response,
+                )
 
         await self._request(client, f"write unit={unit} address=0x{address:x} count={len(values)}", operation, read=False)
         # The public API confirms successful writes by returning without error.
