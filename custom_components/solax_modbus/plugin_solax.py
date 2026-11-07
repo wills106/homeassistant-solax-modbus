@@ -936,7 +936,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
     if parallel_setting == "Master":
         # Use PM (Parallel Mode) total calculated sensors
-        pv = datadict.get("pm_pv_power_total", 0)
+        pv = datadict.get("pm_total_pv_power", 0)
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_charge = datadict.get("pm_battery_power_charge", 0)
         houseload = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
@@ -1662,15 +1662,13 @@ def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: d
 
 def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
-    pv_power_1: int | float | None = datadict.get("pm_pv_power_1", 0)
-    pv_power_2: int | float | None = datadict.get("pm_pv_power_2", 0)
-
-    # Handle None values from overflow protection
-    if pv_power_1 is None:
-        pv_power_1 = 0
-    if pv_power_2 is None:
-        pv_power_2 = 0
-
+    # If total power is known, use that
+    pv_power_total: int | float | None = datadict.get("pm_pv_power_total")
+    if pv_power_total is not None:
+        return int(pv_power_total)
+    # Otherwise try to calculate sum from individuals
+    pv_power_1: int | float = datadict.get("pm_pv_power_1") or 0
+    pv_power_2: int | float = datadict.get("pm_pv_power_2") or 0
     return int(pv_power_1 + pv_power_2)
 
 
@@ -2068,7 +2066,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
                 "battery_charge_max_current",
                 "inverter_power_type",
             ),
-            "Master": ("pm_charge_power_limit", "pm_pv_power_total", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
+            "Master": ("pm_charge_power_limit", "pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
         },
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
@@ -9575,7 +9573,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Total PV Power Alt",
+        name="Total PV Power",
         key="pm_total_pv_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -9584,6 +9582,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm_pv_power_1", "pm_pv_power_2", "parallel_setting"],
+        optional_depends_on=["pm_pv_power_total"],
         icon="mdi:solar-power",
     ),
     SolaXModbusSensorEntityDescription(
@@ -9827,7 +9826,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:battery-arrow-down",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PV Power Total",
+        name="PV Power Raw Total",
         key="pm_pv_power_total",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
