@@ -587,6 +587,30 @@ async def test_unit_adapter_preserves_fc03_fc04_fc06_and_fc16(unit_transport: An
 
 
 @pytest.mark.asyncio
+async def test_unit_accepts_write_responses_with_trailing_bytes(unit_transport: Any) -> None:
+    from modbus_connection.exceptions import ModbusProtocolError
+    from tmodbus.exceptions import InvalidResponseError
+
+    def makeDataError(fn: str, data: str) -> ModbusProtocolError:
+        try:
+            raise InvalidResponseError("Expected response to match request", response_bytes=bytes.fromhex(data))
+        except InvalidResponseError as err:
+            try:
+                raise ModbusProtocolError(f"{fn}(...): {err}") from err
+            except ModbusProtocolError as err:
+                return err
+
+    state = unit_transport
+    state.unit.write_register.side_effect = makeDataError("write_register", "06 11 10 00 07 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
+    state.unit.write_registers.side_effect = makeDataError("write_registers", "10 10 01 00 02 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
+    single = await state.transport.write(1, 0x1110, [7], multiple=False)
+    multiple = await state.transport.write(1, 0x1001, [8, 9], multiple=True)
+    assert single.isError() is False and multiple.isError() is False
+    state.unit.write_register.assert_awaited_once_with(0x1110, 7)
+    state.unit.write_registers.assert_awaited_once_with(0x1001, [8, 9])
+
+
+@pytest.mark.asyncio
 async def test_unit_adapter_never_disconnects_shared_link_or_reacquires_on_reconnect(unit_transport: Any) -> None:
     state = unit_transport
     state.unit.connected = True
