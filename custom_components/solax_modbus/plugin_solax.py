@@ -193,8 +193,11 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
 
         # Handle U32 overflow pattern
         if value >= 0xFFFFFF00:
-            last_value = pm_last_known_values.get(descr.key, 0)
-            _LOGGER.warning("PM U32 overflow %s: 0x%08X -> using last: %sW", descr.key, value, last_value)
+            last_value = pm_last_known_values.get(descr.key)
+            if last_value is None:
+                _LOGGER.warning("PM U32 overflow %s: 0x%08X -> no previously known value. Setting to 0.", descr.key, value)
+                return 0
+            _LOGGER.debug("PM U32 overflow %s: 0x%08X -> keeping last value: %s", descr.key, value, last_value)
             return last_value
 
         # Store valid values for future use
@@ -863,17 +866,22 @@ def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max
         # for non-ideal charging curves and reduce battery wear
         f = f * (float(chargeable_soc + 2.0) / 6.0)
 
-    # Determine battery max charge power, first from total sensor
-    bms_cap_w = datadict.get("battery_max_charge_power", None)
-    if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
-        # If not available, try summing individual BMS estimates
-        bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
-        bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
-        bms_cap_w = bms_1_cap_w + bms_2_cap_w
-    if bms_cap_w <= 0:
-        # If still not found, failback guess using default voltage and max charge current
-        bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
-    bms_cap_w = int(bms_cap_w)
+    # Determine battery max charge power
+    if datadict.get("parallel_setting", "Free") != "Free":
+        # For parallel, use the PM charge power limit
+        bms_cap_w = datadict.get("pm_charge_power_limit", 0)
+    else:
+        # Otherwise try first reading limit from total sensor
+        bms_cap_w = datadict.get("battery_max_charge_power", None)
+        if not isinstance(bms_cap_w, (int, float)) or bms_cap_w <= 0:
+            # If not available, try summing individual BMS estimates
+            bms_1_cap_w = datadict.get("bms_max_charge", None) or 0
+            bms_2_cap_w = datadict.get("bms_2_max_charge", None) or 0
+            bms_cap_w = bms_1_cap_w + bms_2_cap_w
+        if bms_cap_w <= 0:
+            # If still not found, failback guess using default voltage and max charge current
+            bms_cap_w = datadict.get("battery_charge_max_current", 20) * 360
+        bms_cap_w = int(bms_cap_w)
 
     # Cap BMS charge to user defined percentage. f is in range 0-1 so this is always same or lower
     pct_cap_w = int(f * bms_cap_w)
@@ -921,16 +929,48 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     battery_capacity = datadict.get("battery_capacity", 0) or 0
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
-    pv = datadict.get("pv_power_total", 0)
-    houseload = datadict.get("house_load", 0)
-    houseload_alt = datadict.get("house_load_alt", 0)
     filter_steps = datadict.get("remotecontrol_smoothing_factor") or DEFAULT_FILTER_SMOOTING_FACTOR
 
-    # Disallow parallel mode for now
+    # Parallel mode support: Use PM power if in parallel mode and we're the Master
     parallel_setting = datadict.get("parallel_setting", "Free")
-    if parallel_setting != "Free":
-        _LOGGER.warning("Mode 8 autorepeat is not currently supported for inverters where parallel mode != Free. Disabling remote control.")
-        power_control = "Disabled"
+
+    if parallel_setting == "Master":
+        # Use PM (Parallel Mode) total calculated sensors
+        pv = datadict.get("pm_total_pv_power", 0)
+        inverter_power = datadict.get("pm_total_inverter_power", 0)
+        battery_charge = datadict.get("pm_battery_power_charge", 0)
+        houseload = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
+        houseload_alt = houseload
+        inverter_limit = datadict.get("remotecontrol_pm_inverter_limit", 60000)  # Limit set in localDataCallback.
+
+        _LOGGER.debug(
+            "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house load=%sW",
+            inverter_power,
+            pv,
+            battery_charge,
+            houseload,
+        )
+    elif parallel_setting == "Slave":
+        # Slaves should not execute remote control
+        _LOGGER.debug("[REMOTE_CONTROL] Parallel mode detected (Slave): skipping remote control")
+        return {"action": WRITE_MULTI_MODBUS, "data": []}
+    else:
+        # Single inverter mode - use individual values
+        pv = datadict.get("pv_power_total", 0)
+        inverter_power = datadict.get("inverter_power", 0)
+        battery_charge = int(datadict.get("battery_power_charge", 0) or 0)
+        houseload = datadict.get("house_load", 0)
+        houseload_alt = datadict.get("house_load_alt", 0)
+        inverter_limit = datadict.get("inverter_power_type", 30000)
+
+        _LOGGER.debug(
+            "[REMOTE_CONTROL] Single inverter mode: inverter=%sW, total PV=%sW, battery=%sW, house load=%sW (alt: %sW)",
+            inverter_power,
+            pv,
+            battery_charge,
+            houseload,
+            houseload_alt,
+        )
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit  # import capping is done later
@@ -956,7 +996,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pv_unlimited_step = int(datadict.get("pv_unlimited_delta_w", 1000) or 1000)
 
         # Local copies
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
         pv_threshold = pv + pv_unlimited_step  # point at which PV is considered to be not actively limited
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
@@ -1075,7 +1114,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Set maximum charge limit, respecting optional target SoC
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         current_charge = -cur_push
         # Debug inputs
@@ -1111,7 +1149,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Use the alternative house load for house load measurement, clamping to strict positive values
         hl = max(0, int(houseload_alt))
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         # Debug inputs
         _LOGGER.debug(
@@ -1237,11 +1274,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # constantly fight the inverter's internal export limiter.
         export_margin_w = int(datadict.get("export_first_export_margin_w", 150) or 0)
         export_limit = datadict.get("export_control_user_limit", 30000)
-        inverter_limit = datadict.get("inverter_power_type", 30000)
         export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
 
         # Local copies
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         pvlimit = setpvlimit
         cur_pvlimit = max(0, setpvlimit if (cur_pvlimit := datadict.get("remotecontrol_current_pv_power_limit", None)) is None else cur_pvlimit)
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
@@ -1266,11 +1301,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Optional probes (if available)
         measured_power = datadict.get("measured_power", None)
-        grid_export = datadict.get("grid_export", None)
         _LOGGER.debug(
-            "[Mode8 Export-First] probes: measured_power=%sW grid_export=%sW",
+            "[Mode8 Export-First] probes: measured_power=%sW",
             measured_power if measured_power is not None else "n/a",
-            grid_export if grid_export is not None else "n/a",
         )
 
         if pv >= hl:
@@ -1372,7 +1405,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         max_charge_soc = min(target_soc, datadict.get("battery_charge_upper_soc", 100))
 
         # Determine currently requested charge rate to allow filtering
-        battery_charge = max(0, int(datadict.get("battery_power_charge", 0) or 0))
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         # Debug inputs
         _LOGGER.debug(
@@ -1613,32 +1645,22 @@ def value_function_inverter_power_g5(initval: int, descr: Any, datadict: dict[st
 
 def value_function_pm_total_inverter_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total inverter power in parallel mode (sum of all phases)."""
-    l1_power: int | float | None = datadict.get("pm_activepower_l1", 0)
-    l2_power: int | float | None = datadict.get("pm_activepower_l2", 0)
-    l3_power: int | float | None = datadict.get("pm_activepower_l3", 0)
-
-    # Handle None values from overflow protection
-    if l1_power is None:
-        l1_power = 0
-    if l2_power is None:
-        l2_power = 0
-    if l3_power is None:
-        l3_power = 0
+    l1_power: int | float = datadict.get("pm_activepower_l1") or 0
+    l2_power: int | float = datadict.get("pm_activepower_l2") or 0
+    l3_power: int | float = datadict.get("pm_activepower_l3") or 0
 
     return int(l1_power + l2_power + l3_power)
 
 
 def value_function_pm_total_pv_power(initval: int, descr: Any, datadict: dict[str, Any]) -> int | float:
     """Calculate total PV power in parallel mode (sum of all inverters)."""
-    pv_power_1: int | float | None = datadict.get("pm_pv_power_1", 0)
-    pv_power_2: int | float | None = datadict.get("pm_pv_power_2", 0)
-
-    # Handle None values from overflow protection
-    if pv_power_1 is None:
-        pv_power_1 = 0
-    if pv_power_2 is None:
-        pv_power_2 = 0
-
+    # If total power is known, use that
+    pv_power_total: int | float | None = datadict.get("pm_pv_power_total")
+    if pv_power_total is not None:
+        return int(pv_power_total)
+    # Otherwise try to calculate sum from individuals
+    pv_power_1: int | float = datadict.get("pm_pv_power_1") or 0
+    pv_power_2: int | float = datadict.get("pm_pv_power_2") or 0
     return int(pv_power_1 + pv_power_2)
 
 
@@ -1665,9 +1687,7 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     to compensate for inverter measurement inflation.
     """
     # Get raw sensor values
-    pm_inverter_power: int | float = (
-        int(datadict.get("pm_activepower_l1", 0)) + int(datadict.get("pm_activepower_l2", 0)) + int(datadict.get("pm_activepower_l3", 0))
-    )
+    pm_inverter_power: int | float = datadict.get("pm_total_inverter_power", 0)
     grid_power: int | float = datadict.get("measured_power", 0)
     pv_power: int | float = datadict.get("pm_total_pv_power", 0)
     battery_power: int | float = datadict.get("pm_battery_power_charge", 0)
@@ -2013,24 +2033,31 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_powercontrolmode8_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power", "inverter_power", "pv_power_total", "battery_power_charge", "house_load", "house_load_alt"],
+        depends_on=["battery_capacity", "measured_power"],
         autorepeat_control="remotecontrol_power_control_mode",
         autorepeat_dependencies=(
             "parallel_setting",
             "selfuse_discharge_min_soc",
             "battery_charge_upper_soc",
-            "battery_charge_max_current",
             "export_control_user_limit",
-            "inverter_power_type",
         ),
         autorepeat_optional_dependencies=(
-            "grid_export",
-            "meter_2_measured_power",
             "battery_max_charge_power",
             "bms_max_charge",
             "bms_2_max_charge",
         ),
-        autorepeat_parallel_dependencies={"Free": ()},
+        autorepeat_parallel_dependencies={
+            "Free": (
+                "inverter_power",
+                "pv_power_total",
+                "battery_power_charge",
+                "house_load",
+                "house_load_alt",
+                "battery_charge_max_current",
+                "inverter_power_type",
+            ),
+            "Master": ("pm_charge_power_limit", "pm_total_pv_power", "pm_total_inverter_power", "pm_battery_power_charge", "pm_total_house_load"),
+        },
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "battery_power_charge"),
     ),
     SolaxModbusButtonEntityDescription(
@@ -9524,53 +9551,52 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total Inverter Power",
+        name="Total Inverter Power",
         key="pm_total_inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_power,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm_activepower_l1", "pm_activepower_l2", "pm_activepower_l3", "parallel_setting"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total PV Power",
+        name="Total PV Power",
         key="pm_total_pv_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_power,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm_pv_power_1", "pm_pv_power_2", "parallel_setting"],
+        optional_depends_on=["pm_pv_power_total"],
         icon="mdi:solar-power",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total House Load",
+        name="Total House Load",
         key="pm_total_house_load",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         external_override="external_house_load",
         value_function=value_function_pm_total_house_load,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
-        depends_on=[
-            "pm_activepower_l1",
-            "pm_activepower_l2",
-            "pm_activepower_l3",
-            "measured_power",
-            "parallel_setting",
-        ],
+        depends_on=["pm_total_inverter_power", "measured_power", "parallel_setting"],
         optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total Reactive or ApparentPower",
+        name="Total Reactive Power",
         key="pm_total_reactive_or_apparentpower",
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_reactive_or_apparentpower,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=[
             "pm_reactive_or_apparentpower_l1",
@@ -9581,29 +9607,31 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:flash",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total Inverter Current",
+        name="Total Inverter Current",
         key="pm_total_inverter_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_inverter_current,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm__current_l1", "pm__current_l2", "pm__current_l3", "parallel_setting"],
         icon="mdi:current-ac",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PM Total PV Current",
+        name="Total PV Current",
         key="pm_total_pv_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_pm_total_pv_current,
+        device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm_pv_current_1", "pm_pv_current_2", "parallel_setting"],
         icon="mdi:current-dc",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Reactive or Apparent Power L1",
+        name="Reactive Power L1",
         key="pm_reactive_or_apparentpower_l1",
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
@@ -9614,7 +9642,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Reactive or Apparent Power L2",
+        name="Reactive Power L2",
         key="pm_reactive_or_apparentpower_l2",
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
@@ -9625,7 +9653,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Reactive or Apparent Power L3",
+        name="Reactive Power L3",
         key="pm_reactive_or_apparentpower_l3",
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         device_class=SensorDeviceClass.APPARENT_POWER,
@@ -9782,7 +9810,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:battery-arrow-down",
     ),
     SolaXModbusSensorEntityDescription(
-        name="PV Power Total",
+        name="PV Power Raw Total",
         key="pm_pv_power_total",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -13465,6 +13493,7 @@ class solax_plugin(plugin_base):
         if parallel_setting == "Master":
             # Use inverter_power_kw (total system capacity) for active-power limits.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
+            hub.data["remotecontrol_pm_inverter_limit"] = system_limit_w
             number_entity = hub.numberEntities.get("remotecontrol_active_power")
             if number_entity:
                 number_entity._attr_native_min_value = -system_limit_w
