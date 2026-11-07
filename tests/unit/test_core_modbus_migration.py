@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from homeassistant.components import persistent_notification
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
+from modbus_connection.exceptions import ModbusProtocolError
+from tmodbus.exceptions import InvalidResponseError
 
 from custom_components import solax_modbus as integration
 from custom_components.solax_modbus import SolaXModbusHub
@@ -586,26 +588,40 @@ async def test_unit_adapter_preserves_fc03_fc04_fc06_and_fc16(unit_transport: An
     state.unit.write_registers.assert_awaited_once_with(40, [8, 9])
 
 
+def makeDataError(fn: str, data: str) -> ModbusProtocolError:
+    try:
+        raise InvalidResponseError("Expected response to match request", response_bytes=bytes.fromhex(data))
+    except InvalidResponseError as err:
+        try:
+            raise ModbusProtocolError(f"{fn}(...): {err}") from err
+        except ModbusProtocolError as err:
+            return err
+
+
 @pytest.mark.asyncio
 async def test_unit_accepts_write_responses_with_trailing_bytes(unit_transport: Any) -> None:
-    from modbus_connection.exceptions import ModbusProtocolError
-    from tmodbus.exceptions import InvalidResponseError
-
-    def makeDataError(fn: str, data: str) -> ModbusProtocolError:
-        try:
-            raise InvalidResponseError("Expected response to match request", response_bytes=bytes.fromhex(data))
-        except InvalidResponseError as err:
-            try:
-                raise ModbusProtocolError(f"{fn}(...): {err}") from err
-            except ModbusProtocolError as err:
-                return err
-
     state = unit_transport
     state.unit.write_register.side_effect = makeDataError("write_register", "06 11 10 00 07 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
     state.unit.write_registers.side_effect = makeDataError("write_registers", "10 10 01 00 02 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
     single = await state.transport.write(1, 0x1110, [7], multiple=False)
     multiple = await state.transport.write(1, 0x1001, [8, 9], multiple=True)
     assert single.isError() is False and multiple.isError() is False
+    state.unit.write_register.assert_awaited_once_with(0x1110, 7)
+    state.unit.write_registers.assert_awaited_once_with(0x1001, [8, 9])
+
+
+@pytest.mark.asyncio
+async def test_unit_rejects_invalid_write_responses_with_trailing_bytes(unit_transport: Any) -> None:
+    state = unit_transport
+    state.unit.write_register.side_effect = makeDataError("write_register", "06 91 10 00 07 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
+    state.unit.write_registers.side_effect = makeDataError("write_registers", "10 10 01 09 02 05 30 00 00 00 00 00 00 00 00 00 00 00 00")
+
+    with pytest.raises(transport.CoreModbusUnitError) as caught:
+        await state.transport.write(1, 0x1110, [7], multiple=False)
+    assert caught.value.__cause__ is state.unit.write_register.side_effect
+    with pytest.raises(transport.CoreModbusUnitError) as caught:
+        await state.transport.write(1, 0x1001, [8, 9], multiple=True)
+    assert caught.value.__cause__ is state.unit.write_registers.side_effect
     state.unit.write_register.assert_awaited_once_with(0x1110, 7)
     state.unit.write_registers.assert_awaited_once_with(0x1001, [8, 9])
 
