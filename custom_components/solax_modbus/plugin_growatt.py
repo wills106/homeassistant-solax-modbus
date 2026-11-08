@@ -10150,6 +10150,11 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Load First",
             1: "Battery First",
             2: "Grid First",
+            3: "PV Only",
+            4: "Idle Charging",
+            5: "5, ?",
+            6: "Idle",
+            7: "7, ?",
         },
         register_type=REG_INPUT,
         allowedtypes=ALL_GEN_GROUP,  # to be checked
