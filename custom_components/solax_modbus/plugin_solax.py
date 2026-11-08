@@ -1644,10 +1644,10 @@ def _meter_select_grid_energy(export: bool, range: str, datadict: dict[str, Any]
     generator_mode = datadict.get("generator_control", "Disabled")
     if generator_mode == "Disabled":
         # Meter 1 represents grid energy if no generator
-        grid_source = "meter_1_" + ("export" if export else "import") + range
+        grid_source = "meter_1_" + ("export_" if export else "import_") + range
     else:
         # Otherwise meter 2 is grid energy, but direction reversed
-        grid_source = "meter_2_" + ("export" if not export else "import") + range
+        grid_source = "meter_2_" + ("export_" if not export else "import_") + range
     return int(datadict.get(grid_source, 0))
 
 
@@ -1672,12 +1672,12 @@ def _meter_select_generator_energy(export: bool, range: str, datadict: dict[str,
     generator_mode = datadict.get("generator_control", "Disabled")
     if generator_mode == "Disabled":
         # When there is no external generator mode, Meter 2 represents generator energy
-        meter_source = "meter_2_" + ("export" if export else "import") + range
+        meter_source = "meter_2_" + ("export_" if export else "import_") + range
         return int(datadict.get(meter_source, 0))
     # Otherwise meter 1 is combined generator/grid energy, and meter 2 is the grid but
     # with direction reversed. Generator energy is difference.
-    grid_source = "meter_2_" + ("export" if not export else "import") + range
-    combined_source = "meter_1_" + ("export" if export else "import") + range
+    grid_source = "meter_2_" + ("export_" if not export else "import_") + range
+    combined_source = "meter_1_" + ("export_" if export else "import_") + range
     return int(datadict.get(combined_source, 0)) - int(datadict.get(grid_source, 0))
 
 
