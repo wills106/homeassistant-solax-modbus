@@ -9792,6 +9792,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_U32,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
+        modbus_min=100,
         icon="mdi:solar-power",
     ),
     # PM I2 Inverter
