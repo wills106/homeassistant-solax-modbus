@@ -19,6 +19,7 @@ from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.solax_modbus import SolaXModbusHub
 from custom_components.solax_modbus import core_modbus as core
@@ -326,3 +327,29 @@ async def test_switch_local_nokey_skips_update(monkeypatch: pytest.MonkeyPatch, 
     )
     await switch._async_set_state(state)
     assert hub.data[switch._key] == 20
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", [True, False])
+@pytest.mark.parametrize("initial_data", [{}, {"test_switch": None}])
+async def test_switch_packed_error_on_empty_cache(
+    monkeypatch: pytest.MonkeyPatch, unit_transport: Any, state: bool, initial_data: dict[str, Any]
+) -> None:
+    hub, switch = _hub_with_data(
+        monkeypatch,
+        unit_transport,
+        initial_data,
+        {
+            BaseModbusSwitchEntityDescription(
+                name="Test Switch",
+                key="test_switch",
+                register=42,
+                write_method=WRITE_DATA_LOCAL,
+                icon="mdi:switch",
+                register_bit=3,
+                value_function=value_function_packed_switches,
+            ),
+        },
+    )
+    with pytest.raises(HomeAssistantError, match=r".*Changing switch value failed.*"):
+        await switch._async_set_state(state)
