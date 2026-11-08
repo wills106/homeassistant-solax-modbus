@@ -195,7 +195,7 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
         if value >= 0xFFFFFF00:
             last_value = pm_last_known_values.get(descr.key)
             if last_value is None:
-                _LOGGER.warning("PM U32 overflow %s: 0x%08X -> no previously known value. Setting to 0.", descr.key, value)
+                _LOGGER.debug("PM U32 overflow %s: 0x%08X -> no previously known value. Setting to 0.", descr.key, value)
                 return 0
             _LOGGER.debug("PM U32 overflow %s: 0x%08X -> keeping last value: %s", descr.key, value, last_value)
             return last_value
