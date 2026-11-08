@@ -572,7 +572,17 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         pv_power = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
-        house_load = datadict.get("house_load", 0)
+        # The house_load sensor includes meter_2_measured_power, which is the
+        # AC-coupled PV input. Remote control needs the load without it: with
+        # Meter 2 folded in, ap_target no longer reflects the surplus the
+        # inverter should absorb, and the excess is exported instead of
+        # charging the battery. This is the value 2026.10.1 used.
+        #
+        # An external_house_load override replaces the sensor, so it still wins
+        # where it is configured; the computed value is the fallback.
+        house_load = datadict.get("external_house_load")
+        if house_load is None:
+            house_load = inverter_power - datadict.get("measured_power", 0)
 
         _LOGGER.debug(
             "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW",
