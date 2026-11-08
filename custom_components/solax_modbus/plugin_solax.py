@@ -60,6 +60,7 @@ from custom_components.solax_modbus.const import (
     autorepeat_remaining,
     autorepeat_stop,
     plugin_base,
+    scale_function_clamp_positive,
     value_function_disable_enable,
     value_function_disabled_enabled,
     value_function_enable_disable,
@@ -9702,6 +9703,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         rounding=1,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
     ),
+    # Note: Spec says pm_pv_power_* registers are unsigned. However in practice they seem to be
+    # signed numbers that occasionally read slightly negative values. Handle this cleanly by
+    # by treating as signed and clamping to min of 0 (#2274). A system with >2GW PV is unlikely!
     SolaXModbusSensorEntityDescription(
         name="PV Power 1",
         key="pm_pv_power_1",
@@ -9711,7 +9715,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_group="pm",
         register=0x1F2,
         register_type=REG_INPUT,
-        register_data_type=REGISTER_U32,
+        register_data_type=REGISTER_S32,
+        scale=scale_function_clamp_positive,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
     ),
@@ -9724,7 +9729,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_group="pm",
         register=0x1F4,
         register_type=REG_INPUT,
-        register_data_type=REGISTER_U32,
+        register_data_type=REGISTER_S32,
+        scale=scale_function_clamp_positive,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power-variant",
     ),
@@ -9818,7 +9824,8 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_group="pm",
         register=0x202,
         register_type=REG_INPUT,
-        register_data_type=REGISTER_U32,
+        register_data_type=REGISTER_S32,
+        scale=scale_function_clamp_positive,
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         icon="mdi:solar-power",
     ),

@@ -532,6 +532,10 @@ def autorepeat_remaining(datadict: dict[str, Any], entitykey: str, timestamp: fl
 MAX_PVSTRINGS: int = 10
 
 
+def scale_function_clamp_positive(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return max(float(initval), 0)
+
+
 def value_str_default(val: Any, default: str) -> str:
     return str(val) if val is not None else default
 
