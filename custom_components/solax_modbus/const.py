@@ -602,9 +602,10 @@ def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str
 def value_function_packed_switches(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
     assert bit is not None and descr is not None
     state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
+    value = datadict.get(descr)
+    assert value is not None  # Cached data value must be known, otherwise packing could cause unrelated bits to be modified
     _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
+    new_value = (int(value) & ~(1 << bit)) | (state_int << bit)
     return new_value
 
 

@@ -6,6 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -154,7 +155,12 @@ class SolaXModbusSwitch(SwitchEntity, RestoreEntity):
 
     async def _async_set_state(self, is_on: bool) -> None:
         """Write and publish a new state only after the write was accepted."""
-        await self._write_switch_to_modbus(is_on)
+        try:
+            await self._write_switch_to_modbus(is_on)
+        except AssertionError as err:
+            _LOGGER.warning("%s: Changing switch %s failed to update with exception {%s}", self._platform_name, self._name, err)
+            raise HomeAssistantError(f"{self._name}: Changing switch value failed. Could not update modbus registers.") from err
+
         self._attr_is_on = is_on
         self._last_command_time = datetime.now()  # Record user action time
         self.async_write_ha_state()
