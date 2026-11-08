@@ -4156,13 +4156,23 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         name="External Measured Power Source",
         key="external_measured_power_source",
         write_method=WRITE_DATA_LOCAL,
-        initvalue=None,  # empty = no source, derived value used
+        initvalue=None,
         dynamic_options=True,
         dynamic_device_class=SensorDeviceClass.POWER,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-lightning-bolt-outline",
         allowedtypes=AC | HYBRID | MIC,
-        # option_dict stays None: options come from the entity registry at runtime
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="External Generator Power Source",
+        key="external_generator_power_source",
+        write_method=WRITE_DATA_LOCAL,
+        initvalue=None,
+        dynamic_options=True,
+        dynamic_device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        allowedtypes=AC | HYBRID | MIC,
     ),
     ###
     #
@@ -10444,6 +10454,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         value_function=value_function_select_generator_power,
+        external_override="external_generator_power",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6,
         depends_on=["meter_1_measured_power"],
         optional_depends_on=["generator_control", "meter_2_measured_power"],
