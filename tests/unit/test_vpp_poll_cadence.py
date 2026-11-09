@@ -86,7 +86,7 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         for key in ("house_load", "house_load_alt", "battery_capacity", "inverter_power", "pv_power_total", "battery_power_charge", "measured_power")
     }
     hub.sensorDescriptions.update(hub.computedSensors)
-    hub.sensorEntities = {key: Mock() for key in hub.computedSensors}
+    hub.sensorEntities = {key: mock_sensor(hub, value) for key, value in hub.sensorDescriptions.items()}
     hub.data.update(
         {
             "remotecontrol_power_control_mode": "Export-First Battery Limit",
