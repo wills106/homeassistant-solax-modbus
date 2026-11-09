@@ -2810,9 +2810,10 @@ class SolaXModbusHub:
             await self._hass.async_add_executor_job(self.loadLocalData)
             local_callback_needed = local_callback_needed or self.localsLoaded
 
-        # Local controls can change independently while a Modbus group is being read.
+        # Preserve concurrent/pending local edits, but let fresh register readbacks
+        # replace unchanged cached controls that share the same key.
         for key in self.writeLocals:
-            if key in self.data:
+            if key in self.data and (key not in previous_data or self.data[key] != previous_data[key] or self.tmpdata_expiry.get(key, 0) > 0):
                 data[key] = self.data[key]
 
         computed_fresh_keys: set[str] = set()
