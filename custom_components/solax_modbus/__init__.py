@@ -3007,9 +3007,11 @@ class SolaXModbusHub:
         if sample is None or identity in seen:
             return False
         value = sample.value
-        if key == "parallel_setting":
+        if key == "parallel_setting":  # TODO: Validation of parallel settings is SolaX specific and should be moved to the solax plugin.
             return value in ("Free", "Master", "Slave")
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if value is None or not isinstance(value, (int, float, str)):  # Only accept numeric values or strings
+            return False
+        if isinstance(value, (int, float)) and not math.isfinite(value):  # Numeric values must be finite
             return False
         return all(hub._control_input_valid(source, seen | {identity}) for hub, source, _sample in sample.inputs)
 
