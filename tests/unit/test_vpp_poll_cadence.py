@@ -4,18 +4,37 @@ import asyncio
 import time
 from dataclasses import replace
 from types import MethodType, SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.solax_modbus import BlockReadResult, SolaXModbusHub
 from custom_components.solax_modbus.button import SolaXModbusButton
 from custom_components.solax_modbus.const import BUTTONREPEAT_FIRST, BUTTONREPEAT_LOOP, BUTTONREPEAT_POST, PollOutcome
 from custom_components.solax_modbus.plugin_solax import BUTTON_TYPES, GEN5, NUMBER_TYPES, SELECT_TYPES, SENSOR_TYPES_MAIN
+from custom_components.solax_modbus.sensor import SolaXModbusSensor
 
 from .test_poll_snapshot import make_group, make_hub, successful_block
+
+
+def mock_sensor(hub: Any, description: Any) -> Any:
+    sensor = cast(Any, object.__new__(SolaXModbusSensor))
+    sensor._hub = hub
+    sensor.entity_description = description
+    sensor.modbus_data_updated = Mock()
+    scale = description.scale
+    if isinstance(scale, dict) and all(isinstance(opt, str) for opt in scale.values()) and description.native_unit_of_measurement is None:
+        # If the sensor has a set of distinct string options as reported by its value
+        # function being a dict, then inform HA of the available options.
+        # Only apply ENUM when there is no unit of measurement — a unit implies
+        # a numeric value and HA rejects the combination of a unit with a
+        # non-numeric device class (e.g. Growatt eps_set_voltage in V).
+        sensor._attr_options = list(scale.values())
+        sensor._attr_device_class = SensorDeviceClass.ENUM
+    return sensor
 
 
 def computed(key: str) -> Any:
@@ -45,6 +64,7 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         "battery_2_capacity_charge": 80,
         "parallel_setting": "Free",
         "battery_charge_max_current": 20,
+        "generator_control": "Disabled",
     }
     slow_keys = {
         "battery_total_capacity_charge",
@@ -52,6 +72,7 @@ def setup_vpp(fast: int = 5, slow: int = 15, count: int = 2, reverse: bool = Fal
         "battery_2_capacity_charge",
         "parallel_setting",
         "battery_charge_max_current",
+        "generator_control",
     }
     hub.sensorDescriptions = {
         key: replace(
