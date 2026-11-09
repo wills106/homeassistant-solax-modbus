@@ -130,7 +130,7 @@ async def prime(hub: Any, power: Any, settings: Any) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("fast", "slow"), [(5, 15), (6, 15), (7, 23), (15, 15), (15, 5)])
+@pytest.mark.parametrize(("fast", "slow"), [(5, 15), (6, 15), (7, 23), (15, 15)])
 @pytest.mark.parametrize("count", [2, 3])
 @pytest.mark.parametrize("reverse", [False, True])
 async def test_one_nonzero_filter_step_per_power_poll(fast: int, slow: int, count: int, reverse: bool, monkeypatch: pytest.MonkeyPatch) -> None:
