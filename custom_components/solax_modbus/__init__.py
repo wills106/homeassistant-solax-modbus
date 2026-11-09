@@ -2637,8 +2637,15 @@ class SolaXModbusHub:
         """Keep ED source resolution and multi-hub validity in the shared gate."""
         mapping = descr._energy_dashboard_mapping
         hubs = getattr(descr, "_energy_dashboard_source_hubs", None) or (descr._energy_dashboard_source_hub or self,)
+        # Aggregates can require topology inputs in addition to each hub's value.
+        required = set(self._dependency_values(descr.depends_on)) - {mapping.source_key, mapping.source_key_pm}
+        topology_inputs = self._observed_inputs(required)
+        if len(topology_inputs) != len(required):
+            data[descr.key] = None
+            self._remember_computed_sample(descr, None, ())
+            return True
         sources = []
-        inputs = []
+        inputs = list(topology_inputs)
         power_samples = []
         for hub in hubs:
             if hub is self and not hub._input_observations():
@@ -2677,6 +2684,7 @@ class SolaXModbusHub:
         previous = self._accepted_input_sample(descr.key)
         if previous is not None and previous.inputs == tuple(inputs):
             return False
+        sources[0].update({key: sample.value for _hub, key, sample in topology_inputs})
         source_data = sources[0].copy()
         source_data["_energy_dashboard_source_data"] = sources
         try:
