@@ -2115,7 +2115,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         icon="mdi:battery-clock",
         value_function=autorepeat_function_remotecontrol_recompute,
         autorepeat="remotecontrol_autorepeat_duration",
-        depends_on=["battery_capacity", "measured_power", "house_load"],
+        depends_on=["battery_capacity", "measured_power"],
         autorepeat_control="remotecontrol_power_control",
         autorepeat_dependencies=(
             "parallel_setting",
@@ -2123,9 +2123,6 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
             "export_control_user_limit",
         ),
         autorepeat_optional_dependencies=(
-            "inverter_power_l1",
-            "inverter_power_l2",
-            "inverter_power_l3",
             "measured_power_l1",
             "measured_power_l2",
             "measured_power_l3",
