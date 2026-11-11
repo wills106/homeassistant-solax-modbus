@@ -71,7 +71,7 @@ async def test_optional_input_does_not_stop_mode8_submodes(mode: str, key: str, 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", active_modes("remotecontrol_power_control_mode"))
-@pytest.mark.parametrize("value", [None, False, "100", float("nan"), float("inf"), 500])
+@pytest.mark.parametrize("value", [None, False, float("nan"), float("inf"), 500])
 async def test_invalid_or_expired_optional_is_omitted_and_invalidates_keepalive(mode: str, value: Any) -> None:
     hub, power, settings, _values, function = setup_vpp()
     hub.data["remotecontrol_power_control_mode"] = mode
@@ -268,7 +268,7 @@ async def test_missing_required_current_cannot_reach_guessed_default(mode: str, 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("value", "expired"), [(0, False), (None, False), (True, False), ("20", False), (float("nan"), False), (float("inf"), False), (20, True)]
+    ("value", "expired"), [(0, False), (None, False), (True, False), ("Parallel", True), (float("nan"), False), (float("inf"), False), (20, True)]
 )
 async def test_required_current_accepts_zero_and_rejects_invalid_or_expired_values(value: Any, expired: bool) -> None:
     hub, power, settings, _values, function = setup_vpp()

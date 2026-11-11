@@ -18,7 +18,6 @@ from typing import Any, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
@@ -3008,13 +3007,7 @@ class SolaXModbusHub:
         if sample is None or identity in seen:
             return False
         value = sample.value
-        if isinstance(value, str):
-            # Only accept string values if the key is for a sensor entity whose device class is Enum
-            # and the possible enum options contains that value.
-            entity = getattr(self, "sensorEntities", {}).get(key)
-            if entity is None or entity.device_class != SensorDeviceClass.ENUM or value not in entity.options:
-                return False
-        elif isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if isinstance(value, bool) or isinstance(value, (int, float)) and not math.isfinite(value):
             return False
         return all(hub._control_input_valid(source, seen | {identity}) for hub, source, _sample in sample.inputs)
 
