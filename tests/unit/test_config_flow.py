@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 import voluptuous as vol
@@ -11,7 +12,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.schema_config_entry_flow import SchemaCommonFlowHandler, SchemaFlowError
 
-from custom_components.solax_modbus import config_flow
+from custom_components.solax_modbus import async_setup_entry, config_flow
 from custom_components.solax_modbus.config_flow import (
     CONFIG_FLOW,
     CONFIG_SCHEMA,
@@ -30,8 +31,9 @@ from custom_components.solax_modbus.config_flow import (
 from custom_components.solax_modbus.const import (
     CONF_INTERFACE,
     CONF_MODBUS_ADDR,
+    CONF_MODBUS_REQUEST_SUMMARY_INTERVAL,
+    CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     CONF_PLUGIN,
-    CONF_RETRY_REPORT_INTERVAL,
     DEFAULT_PLUGIN,
     DOMAIN,
 )
@@ -94,8 +96,8 @@ def test_interface_selector_has_one_tcp_choice_and_a_valid_default() -> None:
 
 
 @pytest.mark.parametrize("schema", [CONFIG_SCHEMA, OPTION_SCHEMA])
-def test_retry_report_interval_defaults_to_disabled_and_accepts_nonnegative_minutes(schema: vol.Schema) -> None:
-    marker = next(key for key in schema.schema if key.schema == CONF_RETRY_REPORT_INTERVAL)
+def test_modbus_request_summary_interval_defaults_to_disabled_and_accepts_nonnegative_minutes(schema: vol.Schema) -> None:
+    marker = next(key for key in schema.schema if key.schema == CONF_MODBUS_REQUEST_SUMMARY_INTERVAL)
     assert marker.default() == 0
     validator = schema.schema[marker]
     assert validator(0) == 0
@@ -104,6 +106,94 @@ def test_retry_report_interval_defaults_to_disabled_and_accepts_nonnegative_minu
         validator(-1)
     with pytest.raises(vol.Invalid):
         validator("invalid")
+
+
+@pytest.mark.parametrize("schema", [CONFIG_SCHEMA, OPTION_SCHEMA])
+def test_modbus_request_summary_retries_only_defaults_to_unchecked(schema: vol.Schema) -> None:
+    marker = next(key for key in schema.schema if key.schema == CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY)
+    assert marker.default() is False
+    validator = vol.Schema(schema.schema[marker])
+    assert validator(False) is False
+    assert validator(True) is True
+    with pytest.raises(vol.Invalid):
+        validator("invalid")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("previous_key", ["retry_report_interval", "summary_report_interval"])
+@pytest.mark.parametrize("previous_interval", [0, 15])
+@pytest.mark.parametrize("new_interval", [None, 0, 7])
+async def test_setup_migrates_modbus_request_summary_interval(
+    monkeypatch: pytest.MonkeyPatch, previous_key: str, previous_interval: int, new_interval: int | None
+) -> None:
+    options = {CONF_NAME: "SolaX", CONF_PLUGIN: DEFAULT_PLUGIN, previous_key: previous_interval}
+    if new_interval is not None:
+        options[CONF_MODBUS_REQUEST_SUMMARY_INTERVAL] = new_interval
+    entry = SimpleNamespace(data={}, options=options)
+    update_entry = Mock(side_effect=lambda entry, **kwargs: setattr(entry, "options", kwargs["options"]))
+    hass = SimpleNamespace(data={}, config_entries=SimpleNamespace(async_update_entry=update_entry))
+    prepare = AsyncMock(side_effect=RuntimeError("stop before connection setup"))
+    monkeypatch.setattr("custom_components.solax_modbus.async_prepare_core_connection", prepare)
+
+    with pytest.raises(RuntimeError, match="stop before connection setup"):
+        await async_setup_entry(cast(Any, hass), cast(Any, entry))
+
+    expected = {
+        CONF_NAME: "SolaX",
+        CONF_PLUGIN: DEFAULT_PLUGIN,
+        CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: previous_interval if new_interval is None else new_interval,
+    }
+    update_entry.assert_called_once_with(entry, options=expected)
+    assert entry.options == expected
+    assert CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY not in entry.options
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("saved", "expected"),
+    [
+        ({"summary_report_retries_only": False}, {CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: False}),
+        ({"summary_report_retries_only": True}, {CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: True}),
+        (
+            {"summary_report_retries_only": True, CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: False},
+            {CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: False},
+        ),
+        (
+            {"summary_report_retries_only": False, CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: True},
+            {CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: True},
+        ),
+        (
+            {"retry_report_interval": 15, "summary_report_interval": 0},
+            {CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: 0},
+        ),
+        (
+            {"retry_report_interval": 15, "summary_report_interval": 5, CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: 0},
+            {CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: 0},
+        ),
+        (
+            {CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: 0, CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: False},
+            {CONF_MODBUS_REQUEST_SUMMARY_INTERVAL: 0, CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY: False},
+        ),
+    ],
+)
+async def test_setup_preserves_modbus_request_summary_values(
+    monkeypatch: pytest.MonkeyPatch, saved: dict[str, Any], expected: dict[str, Any]
+) -> None:
+    base = {CONF_NAME: "SolaX", CONF_PLUGIN: DEFAULT_PLUGIN}
+    entry = SimpleNamespace(data={}, options={**base, **saved})
+    update_entry = Mock(side_effect=lambda entry, **kwargs: setattr(entry, "options", kwargs["options"]))
+    hass = SimpleNamespace(data={}, config_entries=SimpleNamespace(async_update_entry=update_entry))
+    prepare = AsyncMock(side_effect=RuntimeError("stop before connection setup"))
+    monkeypatch.setattr("custom_components.solax_modbus.async_prepare_core_connection", prepare)
+
+    with pytest.raises(RuntimeError, match="stop before connection setup"):
+        await async_setup_entry(cast(Any, hass), cast(Any, entry))
+
+    assert entry.options == {**base, **expected}
+    if saved == expected:
+        update_entry.assert_not_called()
+    else:
+        update_entry.assert_called_once_with(entry, options={**base, **expected})
 
 
 @pytest.mark.asyncio

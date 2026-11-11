@@ -78,8 +78,10 @@ SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
 SCAN_GROUP_AUTO = "auto"  # _MEDIUM for temperatures, frequency and energy (kWh), otherwise _DEFAULT
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
-CONF_RETRY_REPORT_INTERVAL = "retry_report_interval"
-DEFAULT_RETRY_REPORT_INTERVAL = 0
+CONF_MODBUS_REQUEST_SUMMARY_INTERVAL = "modbus_request_summary_interval"
+DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL = 0
+CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY = "modbus_request_summary_retries_only"
+DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY = False
 
 # ================================= Button autorepeat initval codes for button value_functions ==========================
 BUTTONREPEAT_FIRST = 0  # first manual trigger click

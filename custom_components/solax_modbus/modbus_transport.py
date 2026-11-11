@@ -17,7 +17,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DEFAULT_RETRY_REPORT_INTERVAL
+from .const import DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL, DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY
 from .core_modbus import core_connection_params
 from .pymodbus_compat import ADDR_KW
 from .serial_modbus import SerialModbusResponse
@@ -45,8 +45,8 @@ class _RequestSummary:
         self.failed += not success
         self.timings.extend(timings)
 
-    def log(self, endpoint: str, kind: str) -> None:
-        if not self.retry_attempts:
+    def log(self, endpoint: str, kind: str, *, retries_only: bool = DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY) -> None:
+        if not self.requests or (retries_only and not self.retry_attempts):
             return
         values = sorted(self.timings)
         if values:
@@ -307,7 +307,8 @@ class CoreModbusUnitTransport:
         settings: dict[str, Any],
         unit: int,
         *,
-        retry_report_interval: int = DEFAULT_RETRY_REPORT_INTERVAL,
+        modbus_request_summary_interval: int = DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL,
+        modbus_request_summary_retries_only: bool = DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
         unit_getter: Callable[[HomeAssistant, ConfigEntry, Any, int], Any] = _get_core_unit,
     ) -> None:
         self._hass = hass
@@ -322,7 +323,8 @@ class CoreModbusUnitTransport:
         self._backoff_delay = 0.0
         self._retry_at = 0.0
         self._unit(unit)
-        self._summary_interval = max(0, int(retry_report_interval)) * 60
+        self._summary_interval = max(0, int(modbus_request_summary_interval)) * 60
+        self._summary_retries_only = modbus_request_summary_retries_only
         self._read_summary = _RequestSummary()
         self._write_summary = _RequestSummary()
         self._summary_timer: asyncio.TimerHandle | None = None
@@ -336,9 +338,9 @@ class CoreModbusUnitTransport:
         self._summary_timer = None
         if self._closed or not self._summary_interval:
             return
-        self._read_summary.log(self.endpoint, "read")
+        self._read_summary.log(self.endpoint, "read", retries_only=self._summary_retries_only)
         if self._write_summary.requests:
-            self._write_summary.log(self.endpoint, "write")
+            self._write_summary.log(self.endpoint, "write", retries_only=self._summary_retries_only)
         self._read_summary = _RequestSummary()
         self._write_summary = _RequestSummary()
         self._schedule_summary()
@@ -415,43 +417,29 @@ class CoreModbusUnitTransport:
                 reason = "timed out" if isinstance(err, ModbusTimeoutError) else "lost or failed to establish its connection"
                 if read:
                     # Avoid resetting a shared link for a transient missed response.
-                    for retry_number in (1, 2):
-                        if self._closed:
-                            raise CoreModbusBackoff("Modbus transport closed during recovery") from err
-                        try:
-                            result = await operation()
-                        except (ModbusConnectionError, ModbusTimeoutError, OSError, TimeoutError) as retry_error:
-                            if retry_number == 1:
-                                _LOGGER.warning(
-                                    "%s: %s %s (configured timeout %.1fs); retrying %s",
-                                    self.endpoint,
-                                    label,
-                                    reason,
-                                    self._settings["timeout"],
-                                    request_name,
-                                )
-                                _LOGGER.debug("%s: %s: %s", self.endpoint, label, err)
-                                _LOGGER.warning(
-                                    "%s: %s: first retry without resetting failed; retrying without resetting once more",
-                                    self.endpoint,
-                                    label,
-                                )
-                            else:
-                                _LOGGER.warning("%s: %s: second retry without resetting failed; reconnecting", self.endpoint, label)
-                            _LOGGER.debug("%s: %s: %s", self.endpoint, label, retry_error)
-                        except ModbusError as retry_error:
-                            _LOGGER.warning(
-                                "%s: %s: retry %d without resetting returned a protocol error: %s",
-                                self.endpoint,
-                                label,
-                                retry_number,
-                                retry_error,
-                            )
-                            self._recovery_succeeded()
-                            raise CoreModbusUnitError(str(retry_error)) from retry_error
-                        else:
-                            self._recovery_succeeded()
-                            return result
+                    if self._closed:
+                        raise CoreModbusBackoff("Modbus transport closed during recovery") from err
+                    try:
+                        result = await operation()
+                    except (ModbusConnectionError, ModbusTimeoutError, OSError, TimeoutError) as retry_error:
+                        _LOGGER.warning(
+                            "%s: %s %s (configured timeout %.1fs); retrying %s",
+                            self.endpoint,
+                            label,
+                            reason,
+                            self._settings["timeout"],
+                            request_name,
+                        )
+                        _LOGGER.debug("%s: %s: %s", self.endpoint, label, err)
+                        _LOGGER.warning("%s: %s: first retry without resetting failed; reconnecting", self.endpoint, label)
+                        _LOGGER.debug("%s: %s: %s", self.endpoint, label, retry_error)
+                    except ModbusError as retry_error:
+                        _LOGGER.warning("%s: %s: retry without resetting returned a protocol error: %s", self.endpoint, label, retry_error)
+                        self._recovery_succeeded()
+                        raise CoreModbusUnitError(str(retry_error)) from retry_error
+                    else:
+                        self._recovery_succeeded()
+                        return result
                 else:
                     _LOGGER.warning(
                         "%s: %s %s (configured timeout %.1fs); resetting the connection and retrying once: %s",
@@ -489,7 +477,7 @@ class CoreModbusUnitTransport:
                             # register errors available to the existing bisect path.
                             self._recovery_succeeded()
                     uncertainty = " The write may already have been applied." if not read else ""
-                    attempts = "three retries" if read else "one retry"
+                    attempts = "two retries" if read else "one retry"
                     raise CoreModbusUnitError(f"{label} failed after reconnect and {attempts}: {retry_error}.{uncertainty}") from retry_error
                 _LOGGER.warning("%s: repeated %s succeeded after reconnect", self.endpoint, label)
             except (ModbusError, OSError, TimeoutError) as err:

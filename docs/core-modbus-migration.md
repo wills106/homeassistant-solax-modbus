@@ -84,8 +84,8 @@ Home Assistant manages and shares these connections between integrations using t
 Recovery is enabled by default for Home Assistant-managed TCP and serial connections.
 Each request uses the existing configured timeout; no shorter attempt timeout is introduced.
 If a read times out or loses its connection, the integration repeats the **same read
-up to twice without resetting the connection**. If both repeats fail, it resets the
-link through the public HA unit API and repeats the read **once more**: at most four
+once without resetting the connection**. If that repeat fails, it resets the
+link through the public HA unit API and repeats the read **once more**: at most three
 attempts in total. A write retains its existing policy: reset the link and repeat the
 **same write once**, with no extra attempts before the reset. Home Assistant reopens the connection with
 the existing timeout, startup delay and message-spacing settings. There is no second
@@ -124,18 +124,32 @@ Device exceptions and invalid protocol replies do not trigger a timeout retry.
 Native clients on older HA versions and legacy YAML hubs keep their existing policies;
 this recovery is not stacked on top of their client-internal retries.
 
-### Optional retry summaries
+### Modbus request summaries
 
-Set **Retry report interval (min; 0 disables)** in the initial configuration or
+These diagnostic reports summarize Modbus communication reliability and response
+times, including request counts, retries and failures. Separate read and write
+reports appear in the Home Assistant log; they are not inverter or energy summaries.
+
+Set **Modbus request summary interval (min; 0 disables)** in the initial configuration or
 integration options to enable periodic warning-level summaries for managed connections.
 The default is **0**, so reporting adds no timer or request-timing collection unless
-enabled. Read and write summaries are separate and appear only if that interval
-contained an extra retry attempt. Counters reset after every interval, even if no
-summary is printed; a silent interval does not mean polling stopped.
+enabled. **Only report intervals with retries** is unchecked by default: reports
+include all intervals containing requests. Check it to report only intervals that
+contained an extra retry attempt. Read and write summaries are filtered separately;
+intervals with no requests are always omitted. Counters reset after every interval,
+even if no summary is printed; a silent interval does not mean polling stopped.
+
+These options are stored as `modbus_request_summary_interval` and
+`modbus_request_summary_retries_only`. Existing `retry_report_interval`,
+`summary_report_interval` and `summary_report_retries_only` settings are renamed
+automatically during integration setup, preserving their values. New keys take
+precedence; if both older interval keys exist, `summary_report_interval` takes
+precedence over `retry_report_interval`. The filter defaults to unchecked when
+absent; interval 0 disables reporting regardless of the filter.
 
 `requests` counts completed logical requests, while `retries` counts extra I/O attempts.
 The percentage is extra attempts divided by logical requests. For reads, `re-retries`
-counts requests reaching a third or fourth attempt, once per request. `failed` counts
+counts requests reaching a third attempt, once per request. `failed` counts
 requests ending in an error. Deferred reads and cancelled requests are not counted.
 The min/p50/p95/p99/max values use nearest-rank percentiles of successful attempt
 durations in milliseconds, excluding timeout durations and total recovery time.
