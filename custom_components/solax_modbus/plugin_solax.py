@@ -560,7 +560,6 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_power_charge = datadict.get("pm_battery_power_charge", 0)
         house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
-        generator_power = 0  # Assume no generator/secondary inverter when in parallel mode.
     elif parallel_setting == "Slave":
         # Slaves should not execute remote control
         _LOGGER.debug("[Mode1 Remote Control] Parallel mode detected (Slave): skipping remote control")
@@ -572,11 +571,11 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
         house_load = datadict.get("house_load", 0)
-        generator_power = datadict.get("generator_power") or 0
 
     # Grid balance is the amount of power flowing to the grid when the inverter output
     # is disabled, essentially the amount of power needed to match a grid target to the
     # inverter power required.
+    generator_power = datadict.get("generator_power") or 0
     grid_balance = generator_power - house_load
 
     # Debug logging: Input state
