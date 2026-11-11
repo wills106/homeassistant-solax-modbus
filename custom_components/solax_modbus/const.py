@@ -595,15 +595,6 @@ def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[
     return 0
 
 
-def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
-    """Convert 0/1 to Disabled/Enabled string."""
-    scale = {
-        0: "Disabled",
-        1: "Enabled",
-    }
-    return scale.get(initval, str(initval) + " Unknown Status")
-
-
 def value_function_enable_disable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:
     """Switch value function: write 1 for on, 0 for off (standard enable/disable register)."""
     return 1 if state else 0
