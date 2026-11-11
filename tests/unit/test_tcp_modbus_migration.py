@@ -104,6 +104,8 @@ async def test_tcp_migrates_in_place_preserving_all_three_framings(
         state.entry,
         {"type": transport_type, "host": "192.0.2.1", "port": 1502, "timeout": 11, "delay": 0, "message_wait_milliseconds": 0},
         2,
+        modbus_request_summary_interval=0,
+        modbus_request_summary_retries_only=False,
     )
     assert hub._transport is managed.return_value
     native.assert_not_called()
@@ -228,18 +230,18 @@ async def test_migrated_tcp_real_ha_pool_reads_writes_and_reconnects(
     clock = [1000.0]
     monkeypatch.setattr(transport, "monotonic", lambda: clock[0])
 
-    # A timeout resets the link with one reconnect and one retry; an exhausted read defers further reads.
+    # A timeout gets two retries with one reconnect; an exhausted read defers further reads.
     unit_client.read_input_registers.side_effect = TimeoutError("no response")
     attempts_before = unit_client.read_input_registers.await_count
     assert await hub.async_read_input_registers(2, 150, 1) is None
-    assert unit_client.read_input_registers.await_count == attempts_before + 2  # initial attempt plus one retry
+    assert unit_client.read_input_registers.await_count == attempts_before + 3
     client.disconnect.assert_awaited_once()
     assert hub._transport.backoff_remaining == pytest.approx(11)
     # bool() keeps mypy from narrowing the member expression across calls.
     assert bool(hub._transport.recovering)
     with pytest.raises(transport.CoreModbusBackoff):
         await hub.async_read_input_registers(2, 150, 1)
-    assert unit_client.read_input_registers.await_count == attempts_before + 2  # deferred reads send nothing
+    assert unit_client.read_input_registers.await_count == attempts_before + 3  # deferred reads send nothing
 
     unit_client.read_input_registers.side_effect = None
     clock[0] += 11  # wait out the read pause
