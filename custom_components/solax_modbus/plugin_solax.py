@@ -555,39 +555,24 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     if parallel_setting == "Master":
         # Use PM (Parallel Mode) total calculated sensors
+        _LOGGER.debug("[Mode1 Remote Control] Parallel mode detected (Master). Using PM sensors")
         pv_power = datadict.get("pm_total_pv_power", 0)
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_power_charge = datadict.get("pm_battery_power_charge", 0)
         house_load = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
         generator_power = 0  # Assume no generator/secondary inverter when in parallel mode.
-
-        _LOGGER.debug(
-            "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house_load=%sW",
-            inverter_power,
-            pv_power,
-            battery_power_charge,
-            house_load,
-        )
     elif parallel_setting == "Slave":
         # Slaves should not execute remote control
-        _LOGGER.debug("[REMOTE_CONTROL] Parallel mode detected (Slave): skipping remote control")
+        _LOGGER.debug("[Mode1 Remote Control] Parallel mode detected (Slave): skipping remote control")
         return {"action": WRITE_MULTI_MODBUS, "data": []}
     else:
         # Single inverter mode - use individual values
+        _LOGGER.debug("[Mode1 Remote Control] Single inverter mode: Using individual sensors")
         pv_power = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_power_charge = datadict.get("battery_power_charge", 0)
         house_load = datadict.get("house_load", 0)
         generator_power = datadict.get("generator_power") or 0
-
-        _LOGGER.debug(
-            "[REMOTE_CONTROL] Single inverter mode: inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW, generator_power=%sW",
-            inverter_power,
-            pv_power,
-            battery_power_charge,
-            house_load,
-            generator_power,
-        )
 
     # Grid balance is the amount of power flowing to the grid when the inverter output
     # is disabled, essentially the amount of power needed to match a grid target to the
@@ -596,14 +581,17 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # Debug logging: Input state
     _LOGGER.debug(
-        "[REMOTE_CONTROL] Input state: power_control=%s target=%sW import_limit=%sW export_limit=%sW measured_power=%sW pv_power=%sW house_load=%sW battery_capacity=%s%%",
+        "[Mode1 Remote Control] Input state: power_control=%s, target=%sW, import_limit=%sW, export_limit=%sW, measured_power=%sW, inverter_power=%sW, pv_power=%sW, battery_power_charge=%sW, house_load=%sW, generator_power=%sW, battery_capacity=%s%%",
         power_control,
         target,
         import_limit,
         export_limit,
         measured_power,
+        inverter_power,
         pv_power,
+        battery_power_charge,
         house_load,
+        generator_power,
         battery_capacity,
     )
 
@@ -674,7 +662,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         ap_target = target
 
     # Debug logging: Target calculation
-    _LOGGER.debug("[REMOTE_CONTROL] Target calculation: mode=%s ap_target=%sW", power_control, ap_target)
+    _LOGGER.debug("[Mode1 Remote Control] Target calculation: mode=%s ap_target=%sW", power_control, ap_target)
 
     # Phase envelope protection: Calculate safe ap_target based on phase limits
     # Get phase-specific data
@@ -724,7 +712,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         [grid_voltage_l1, grid_voltage_l2, grid_voltage_l3][worst_phase_idx]
 
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Phase currents - Measured: L1=%.2fA L2=%.2fA L3=%.2fA | House: L1=%.2fA L2=%.2fA L3=%.2fA | worst=L%d",
+            "[Mode1 Remote Control] Phase currents - Measured: L1=%.2fA L2=%.2fA L3=%.2fA | House: L1=%.2fA L2=%.2fA L3=%.2fA | worst=L%d",
             measured_current_l1,
             measured_current_l2,
             measured_current_l3,
@@ -745,7 +733,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
             safe_ap_target_from_phase = remaining_current_A * 3 * avg_voltage
 
             _LOGGER.debug(
-                "[REMOTE_CONTROL] Phase protection (import): L%d house=%.2fA limit=%.2fA remaining=%.2fA safe_ap_target=%.1fW",
+                "[Mode1 Remote Control] Phase protection (import): L%d house=%.2fA limit=%.2fA remaining=%.2fA safe_ap_target=%.1fW",
                 worst_phase_idx + 1,
                 worst_phase_house_current,
                 max_phase_current_limit,
@@ -755,7 +743,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         else:
             safe_ap_target_from_phase = 0
             _LOGGER.warning(
-                "[REMOTE_CONTROL] Phase protection (import): L%d house=%.2fA at or above limit %.2fA - blocking imports",
+                "[Mode1 Remote Control] Phase protection (import): L%d house=%.2fA at or above limit %.2fA - blocking imports",
                 worst_phase_idx + 1,
                 worst_phase_house_current,
                 max_phase_current_limit,
@@ -775,7 +763,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         safe_ap_target_export_from_phase = -(safe_export_total_current * avg_voltage)
 
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Phase protection (export): L%d house=%.2fA (lowest) limit=%.2fA safe_ap_target=%.1fW (negative)",
+            "[Mode1 Remote Control] Phase protection (export): L%d house=%.2fA (lowest) limit=%.2fA safe_ap_target=%.1fW (negative)",
             best_phase_idx + 1,
             min_phase_house_current,
             max_phase_current_limit,
@@ -796,7 +784,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = min(ap_target, import_bound)
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Import bounds: ap_target=%sW import_bound=%sW import_limit=%sW house_load=%sW generator_power=%sW total_import=%sW",
+            "[Mode1 Remote Control] Import bounds: ap_target=%sW import_bound=%sW import_limit=%sW house_load=%sW generator_power=%sW total_import=%sW",
             ap_target,
             import_bound,
             import_limit,
@@ -816,7 +804,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
         ap_target = max(ap_target, export_bound)
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Export bounds: ap_target=%sW export_bound=%sW export_limit=%sW house_load=%sW generator_power=%sW",
+            "[Mode1 Remote Control] Export bounds: ap_target=%sW export_bound=%sW export_limit=%sW house_load=%sW generator_power=%sW",
             ap_target,
             export_bound,
             export_limit,
@@ -828,7 +816,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     # Debug logging: Bounds checking
     if old_ap_target != ap_target:
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Bounds checking: initial_ap_target=%sW final_ap_target=%sW adjusted_by=%sW",
+            "[Mode1 Remote Control] Bounds checking: initial_ap_target=%sW final_ap_target=%sW adjusted_by=%sW",
             old_ap_target,
             ap_target,
             old_ap_target - ap_target,
@@ -844,7 +832,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         ap_target = max(ap_target, 0 - pv_power)
     if old_ap_target != ap_target:
         _LOGGER.debug(
-            "[REMOTE_CONTROL] Battery SoC checking: initial_ap_target=%sW final_ap_target=%sW adjusted_by=%sW",
+            "[Mode1 Remote Control] Battery SoC checking: initial_ap_target=%sW final_ap_target=%sW adjusted_by=%sW",
             old_ap_target,
             ap_target,
             old_ap_target - ap_target,
@@ -947,6 +935,7 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     min_discharge_soc = max(datadict.get("remotecontrol_minimum_soc_8_9", 10), datadict.get("selfuse_discharge_min_soc", 10))
     # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
+    measured_power = datadict.get("measured_power") or 0
     battery_capacity = datadict.get("battery_capacity") or 0
     rc_timeout = datadict.get("remotecontrol_timeout", 2)
     timeout_motion = datadict.get("remotecontrol_timeout_next_motion", "VPP Off")
@@ -957,41 +946,26 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
     if parallel_setting == "Master":
         # Use PM (Parallel Mode) total calculated sensors
+        _LOGGER.debug("[Mode8 Remote Control] Parallel mode detected (Master). Using PM sensors")
         pv = datadict.get("pm_total_pv_power", 0)
         inverter_power = datadict.get("pm_total_inverter_power", 0)
         battery_charge = datadict.get("pm_battery_power_charge", 0)
         houseload = datadict.get("pm_total_house_load", 0)  # Use the calculated PM house load or value from external sensor
         houseload_alt = houseload
         inverter_limit = datadict.get("remotecontrol_pm_inverter_limit", 60000)  # Limit set in localDataCallback.
-
-        _LOGGER.debug(
-            "[REMOTE_CONTROL] Parallel mode detected (Master): PM total inverter=%sW, PM total PV=%sW, PM battery=%sW, PM house load=%sW",
-            inverter_power,
-            pv,
-            battery_charge,
-            houseload,
-        )
     elif parallel_setting == "Slave":
         # Slaves should not execute remote control
-        _LOGGER.debug("[REMOTE_CONTROL] Parallel mode detected (Slave): skipping remote control")
+        _LOGGER.debug("[Mode8 Remote Control] Parallel mode detected (Slave): skipping remote control")
         return {"action": WRITE_MULTI_MODBUS, "data": []}
     else:
         # Single inverter mode - use individual values
+        _LOGGER.debug("[Mode8 Remote Control] Single inverter mode: Using individual sensors")
         pv = datadict.get("pv_power_total", 0)
         inverter_power = datadict.get("inverter_power", 0)
         battery_charge = int(datadict.get("battery_power_charge", 0) or 0)
         houseload = datadict.get("house_load", 0)
         houseload_alt = datadict.get("house_load_alt", 0)
         inverter_limit = datadict.get("inverter_power_type", 30000)
-
-        _LOGGER.debug(
-            "[REMOTE_CONTROL] Single inverter mode: inverter=%sW, total PV=%sW, battery=%sW, house load=%sW (alt: %sW)",
-            inverter_power,
-            pv,
-            battery_charge,
-            houseload,
-            houseload_alt,
-        )
 
     # Grid balance is the amount of power flowing to the grid when the inverter output
     # is disabled, essentially the amount of power needed to match a grid target to the
@@ -1001,6 +975,20 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     # in calculation function).
     generator_power = datadict.get("generator_power") or 0
     grid_balance = generator_power - max(houseload_alt, 0)
+
+    # Debug logging: Input state
+    _LOGGER.debug(
+        "[Mode8 Remote Control] Input state: power_control=%s, import_limit=%sW, measured_power=%sW, inverter_power=%sW, pv=%sW, battery_charge=%sW, houseload_alt=%sW, generator_power=%sW, battery_capacity=%s%%",
+        power_control,
+        import_limit,
+        measured_power,
+        inverter_power,
+        pv,
+        battery_charge,
+        houseload_alt,
+        generator_power,
+        battery_capacity,
+    )
 
     if power_control == "Mode 8 - PV and BAT control - Duration":
         pvlimit = setpvlimit  # import capping is done later
@@ -1031,11 +1019,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Debug inputs
         _LOGGER.debug(
-            "[Mode8 Negative Injection] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW imp_lim=%sW soc=%s%% min_soc=%s%% max_soc=%s%% cur_pvlimit=%sW last_push=%sW battery_charge=%sW",
+            "[Mode8 Negative Injection] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW measured_power=%sW imp_lim=%sW soc=%s%% min_soc=%s%% max_soc=%s%% cur_pvlimit=%sW last_push=%sW battery_charge=%sW",
             pv,
             houseload,
             houseload_alt,
             generator_power,
+            measured_power,
             import_limit,
             battery_capacity,
             min_discharge_soc,
@@ -1045,10 +1034,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             battery_charge,
         )
 
-        # Optional probes (if available)
-        measured_power = datadict.get("measured_power", None)
-        _LOGGER.debug("[Mode8 Negative Injection] probes: measured_power=%sW", measured_power if measured_power is not None else "n/a")
-
         if pv + grid_balance >= 0 or cur_pvlimit < min(setpvlimit, pv_threshold):
             # Surplus or limited pv path: battery is requested to charge at up to the rate
             # limit from PV alone then use measured export as the control signal to adjust PV limit.
@@ -1056,7 +1041,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             # At/above target: PV can be increased to reduce import in bounded steps.
             # If PV is being actively limited, continue in this loop to release PV restriction slowly.
             current_charge = -cur_push
-            measured_power = int(measured_power or 0)
             surplus = current_charge + measured_power - export_target
             control_state = "surplus" if pv + grid_balance >= 0 else "clipping"
 
@@ -1100,10 +1084,9 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             pvlimit = autorepeat_setpoint_filter(cur_pvlimit, target_pvlimit, filter_steps)
 
             _LOGGER.debug(
-                "[Mode8 Negative Injection] %s: surplus=%sW measured_power=%sW export_target=%sW error=%sW pvtarget=%sW reason=%s bms_cap≈%sW pct_cap=%sW desired_charge=%sW -> charge=%sW pvlimit=%sW",
+                "[Mode8 Negative Injection] %s: surplus=%sW export_target=%sW error=%sW pvtarget=%sW reason=%s bms_cap≈%sW pct_cap=%sW desired_charge=%sW -> charge=%sW pvlimit=%sW",
                 control_state,
                 surplus,
-                measured_power,
                 export_target,
                 error,
                 target_pvlimit,
@@ -1315,11 +1298,12 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
 
         # Debug inputs
         _LOGGER.debug(
-            "[Mode8 Export-First] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW exp_lim=%sW export_margin=%sW inverter_limit=%sW soc=%s%% min_soc=%s%% max_soc=%s%% cur_pvlimit=%sW last_push=%sW battery_charge=%sW",
+            "[Mode8 Export-First] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW, measured_power=%sW exp_lim=%sW export_margin=%sW inverter_limit=%sW soc=%s%% min_soc=%s%% max_soc=%s%% cur_pvlimit=%sW last_push=%sW battery_charge=%sW",
             pv,
             houseload,
             houseload_alt,
             generator_power,
+            measured_power,
             export_limit,
             export_margin_w,
             inverter_limit,
@@ -1329,13 +1313,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             cur_pvlimit,
             cur_push,
             battery_charge,
-        )
-
-        # Optional probes (if available)
-        measured_power = datadict.get("measured_power", None)
-        _LOGGER.debug(
-            "[Mode8 Export-First] probes: measured_power=%sW",
-            measured_power if measured_power is not None else "n/a",
         )
 
         if pv + grid_balance >= 0:
