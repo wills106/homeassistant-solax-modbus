@@ -2945,7 +2945,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
-    ),    
+    ),
     SolisModbusSensorEntityDescription(
         name="Meter Total ActivePower",
         key="meter_total_activepower",
