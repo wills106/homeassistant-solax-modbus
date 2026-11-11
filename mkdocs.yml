@@ -55,6 +55,7 @@ nav:
 - Solis:
   - FAQ - WIP: solis-faq.md
   - Solis Modes of Operation - WIP: solis-operation-modes.md
+  - Remote Dispatch: solis-remote-dispatch.md
 not_in_nav: |
   /index.md
 strict: true
