@@ -604,6 +604,17 @@ def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str
     return scale.get(initval, str(initval) + " Unknown Status")
 
 
+# This value function converts the bits to the number
+def value_function_packed_switches(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
+    assert bit is not None and descr is not None
+    state_int = 1 if state else 0
+    value = datadict.get(descr)
+    assert value is not None  # Cached data value must be known, otherwise packing could cause unrelated bits to be modified
+    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
+    new_value = (int(value) & ~(1 << bit)) | (state_int << bit)
+    return new_value
+
+
 def value_function_enable_disable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:
     """Switch value function: write 1 for on, 0 for off (standard enable/disable register)."""
     return 1 if state else 0
