@@ -78,6 +78,10 @@ SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
 SCAN_GROUP_AUTO = "auto"  # _MEDIUM for temperatures, frequency and energy (kWh), otherwise _DEFAULT
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
+# Seconds an active autorepeat control keeps re-sending its last command while a required input is invalid (e.g. after a Modbus read
+# timeout), measured from the last time every required input was valid. Beyond this the control is stopped. 0 stops immediately.
+CONF_AUTOREPEAT_INPUT_GRACE = "autorepeat_input_grace"
+DEFAULT_AUTOREPEAT_INPUT_GRACE = 0
 
 # ================================= Button autorepeat initval codes for button value_functions ==========================
 BUTTONREPEAT_FIRST = 0  # first manual trigger click

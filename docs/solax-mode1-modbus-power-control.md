@@ -21,6 +21,7 @@ A similar autorepeat mechanism is under development for mode 8
 ### Note:
  - For people using external tasks to control the power, the _remotecontrol_xxx_direct_ versions of the entities could be used. This is outside the scope if this wiki page.
  - If you use modbus power control autorepeat loops, make sure the polling interval for the fastest scangroup is sufficiently low e.g. 3-5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
+ - If a required input (for example `house_load` after a Modbus read timeout) becomes invalid, the autorepeat loop is stopped and a `Disabled` command is written. To ride through short dropouts, set the integration option *Remote control hold time on invalid inputs (s)* (default 0 = stop immediately). While it is running, the last command is re-sent as a keepalive without recomputing from the missing data, and the loop resumes when the inputs recover. If they stay invalid for longer than the hold time, it stops as before.
 
 ***
 ## Solax Gen4 approach - Mode 1
