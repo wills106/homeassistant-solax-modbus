@@ -35,6 +35,7 @@ key, and ensure the resulting script entity IDs match the calls below.
 
 ## Example scripts
 
+{% raw %}
 ```yaml
 solis_remote_dispatch_grid_test:
   alias: "[Solis] Remote Dispatch - Grid Balance test"
@@ -203,6 +204,7 @@ solis_remote_dispatch_monitor:
                 mode={{ states('sensor.solis_dispatch_control_mode') }},
                 power={{ states('sensor.solis_dispatch_power') }}.
 ```
+{% endraw %}
 
 ## Running a test
 
