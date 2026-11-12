@@ -98,7 +98,7 @@ async def test_mode8_omits_invalid_optional_input(sample_state: str) -> None:
     hub, power, settings, _values, function = setup_vpp()
     await prime(hub, power, settings)
     hub.data["_repeatUntil"].clear()
-    key = "bms_max_charge"
+    key = "generator_power"
     hub.sensorDescriptions[key] = next(d for d in SENSOR_TYPES_MAIN if d.key == key and d.register < 0)
     hub.data[key] = 999
     if sample_state != "unread":
