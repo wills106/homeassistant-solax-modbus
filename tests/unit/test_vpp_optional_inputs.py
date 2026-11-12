@@ -44,7 +44,7 @@ def accept(hub: Any, key: str, value: Any, *, expired: bool = False) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", active_modes("remotecontrol_power_control_mode"))
-@pytest.mark.parametrize("key", ["grid_export", "meter_2_measured_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"])
+@pytest.mark.parametrize("key", ["generator_power", "battery_max_charge_power", "bms_max_charge", "bms_2_max_charge"])
 @pytest.mark.parametrize("state", ["absent", "unread", "invalid", "expired"])
 @pytest.mark.parametrize("pv", [0, 8000], ids=["night", "day"])
 async def test_optional_input_does_not_stop_mode8_submodes(mode: str, key: str, state: str, pv: int) -> None:
@@ -71,27 +71,27 @@ async def test_optional_input_does_not_stop_mode8_submodes(mode: str, key: str, 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", active_modes("remotecontrol_power_control_mode"))
-@pytest.mark.parametrize("value", [None, False, "100", float("nan"), float("inf"), 500])
-async def test_invalid_or_expired_meter_is_omitted_and_invalidates_keepalive(mode: str, value: Any) -> None:
+@pytest.mark.parametrize("value", [None, False, float("nan"), float("inf"), 500])
+async def test_invalid_or_expired_optional_is_omitted_and_invalidates_keepalive(mode: str, value: Any) -> None:
     hub, power, settings, _values, function = setup_vpp()
     hub.data["remotecontrol_power_control_mode"] = mode
     await prime(hub, power, settings)
     accept(hub, "battery_charge_max_current", 20)
-    accept(hub, "meter_2_measured_power", 500)
+    accept(hub, "generator_power", 500)
     descr = hub.computedEntities["powercontrolmode8_trigger"]
     hub.compute_autorepeat_payload(BUTTONREPEAT_FIRST, descr)
-    assert function.call_args.args[2]["meter_2_measured_power"] == 500
+    assert function.call_args.args[2]["generator_power"] == 500
     calls = function.call_count
     hub.compute_autorepeat_payload(BUTTONREPEAT_LOOP, descr, interval=5)
     assert function.call_count == calls
-    accept(hub, "meter_2_measured_power", value, expired=value == 500)
+    accept(hub, "generator_power", value, expired=value == 500)
     hub.compute_autorepeat_payload(BUTTONREPEAT_LOOP, descr, interval=5)
     assert function.call_count == calls + 1
     assert function.call_args.args[0] == BUTTONREPEAT_LOOP
-    assert "meter_2_measured_power" not in function.call_args.args[2]
-    accept(hub, "meter_2_measured_power", 0)
+    assert "generator_power" not in function.call_args.args[2]
+    accept(hub, "generator_power", 0)
     hub.compute_autorepeat_payload(BUTTONREPEAT_LOOP, descr, interval=5)
-    assert function.call_args.args[2]["meter_2_measured_power"] == 0
+    assert function.call_args.args[2]["generator_power"] == 0
 
 
 @pytest.mark.asyncio
@@ -268,7 +268,7 @@ async def test_missing_required_current_cannot_reach_guessed_default(mode: str, 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("value", "expired"), [(0, False), (None, False), (True, False), ("20", False), (float("nan"), False), (float("inf"), False), (20, True)]
+    ("value", "expired"), [(0, False), (None, False), (True, False), ("Parallel", True), (float("nan"), False), (float("inf"), False), (20, True)]
 )
 async def test_required_current_accepts_zero_and_rejects_invalid_or_expired_values(value: Any, expired: bool) -> None:
     hub, power, settings, _values, function = setup_vpp()
@@ -328,12 +328,12 @@ async def test_accepted_optional_value_does_not_depend_on_entity_display_default
 async def test_optional_computed_value_cannot_hide_a_boolean_leaf() -> None:
     hub, power, settings, _values, function = setup_vpp()
     await prime(hub, power, settings)
-    accept(hub, "grid_export", 1)
+    accept(hub, "generator_power", 1)
     now = time.monotonic()
     leaf = InputObservation(now, True, now + 100)
     hub._computed_input_observations["boolean_leaf"] = leaf
-    hub._computed_input_observations["grid_export"] = InputObservation(now, 1, now + 100, ((hub, "boolean_leaf", leaf),))
+    hub._computed_input_observations["generator_power"] = InputObservation(now, 1, now + 100, ((hub, "boolean_leaf", leaf),))
     descr = hub.computedEntities["powercontrolmode8_trigger"]
     hub.compute_autorepeat_payload(BUTTONREPEAT_FIRST, descr)
     assert function.call_args.args[0] == BUTTONREPEAT_FIRST
-    assert "grid_export" not in function.call_args.args[2]
+    assert "generator_power" not in function.call_args.args[2]

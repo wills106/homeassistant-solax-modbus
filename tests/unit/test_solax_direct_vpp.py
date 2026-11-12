@@ -139,6 +139,7 @@ def make_mode_select(key: str, data: dict[str, Any]) -> tuple[SolaXModbusSelect,
 
 def make_direct_hub(data: dict[str, Any], mode: int = 0) -> Any:
     hub = make_hub()
+    hub._seriesnumber = "still unknown"  # number entities with min/max exceptions read hub.seriesnumber
     hub.plugin.order32 = "little"
     hub.data = data.copy()
     hub._poll_data_lock = asyncio.Lock()
