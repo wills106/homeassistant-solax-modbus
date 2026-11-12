@@ -3550,6 +3550,8 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         register=0x86,
         native_min_value=-30000,
         native_max_value=30000,
+        max_exceptions=MAX_EXPORT,  # rated power, e.g. X3-Aelio 60 kW, instead of a fixed 30 kW
+        min_exceptions_minus=MAX_EXPORT,
         native_step=100,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=NumberDeviceClass.POWER,
@@ -13761,18 +13763,21 @@ class solax_plugin(plugin_base):
         parallel_setting = hub.data.get("parallel_setting", "Free")
         if parallel_setting == "Master":
             # Use inverter_power_kw (total system capacity) for active-power limits.
+            # The direct mode 2/3 charge/discharge power gets the same limits, so its
+            # per-inverter rated limit (MAX_EXPORT) does not cap a parallel system.
             system_limit_w = hub.inverterPowerKw * 1000  # Convert kW to W
             hub.data["remotecontrol_pm_inverter_limit"] = system_limit_w
-            number_entity = hub.numberEntities.get("remotecontrol_active_power")
-            if number_entity:
-                number_entity._attr_native_min_value = -system_limit_w
-                number_entity._attr_native_max_value = system_limit_w
-                number_entity.entity_description = replace(
-                    number_entity.entity_description,
-                    native_min_value=-system_limit_w,
-                    native_max_value=system_limit_w,
-                )
-                _LOGGER.info("Parallel Master: Set active power limits to ±%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
+            for key in ("remotecontrol_active_power", "remotecontrol_charge_discharge_power_direct"):
+                number_entity = hub.numberEntities.get(key)
+                if number_entity:
+                    number_entity._attr_native_min_value = -system_limit_w
+                    number_entity._attr_native_max_value = system_limit_w
+                    number_entity.entity_description = replace(
+                        number_entity.entity_description,
+                        native_min_value=-system_limit_w,
+                        native_max_value=system_limit_w,
+                    )
+                    _LOGGER.info("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
 
         # For single inverters or if config_max_export is enabled, use config_max_export.
         # Parallel Master active-power limits are handled above using total system power,
