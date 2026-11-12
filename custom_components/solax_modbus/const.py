@@ -424,6 +424,8 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
+    unique_id_key: str | None = None  # optional stable identity when the data key differs
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
     device_group: str | None = None  # assign the entity to a named sub-device instead of the main inverter device
     active_when: dict[str, tuple[Any, ...]] | None = None  # {sensor_key: allowed values}; entity is unavailable unless every polled key matches
@@ -530,6 +532,10 @@ def autorepeat_remaining(datadict: dict[str, Any], entitykey: str, timestamp: fl
 
 
 MAX_PVSTRINGS: int = 10
+
+
+def scale_function_clamp_positive(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return max(float(initval), 0)
 
 
 def value_str_default(val: Any, default: str) -> str:
