@@ -473,12 +473,13 @@ class SolaXModbusSensor(SensorEntity):
         self._cancel_computed_expiry: Any = None
         self._attr_extra_state_attributes = _energy_dashboard_mapping_attrs(self.entity_description, self._hub)
         scale = description.scale
-        if description.native_unit_of_measurement is not None and isinstance(scale, (int, float)) and not isinstance(scale, bool) and scale > 0:
+        if description.native_unit_of_measurement is not None and isinstance(scale, (int, float)) and not isinstance(scale, bool) and scale != 0:
             # Display exactly the resolution the value carries: what the scale can express
             # (0.01 -> 2 decimals, 0.1 -> 1, unscaled -> integer), capped by the rounding
-            # actually applied to the state. Without this the frontend picks its own
-            # precision, hiding real decimals or padding integers with a fake ".0".
-            expressible = 0 if scale >= 1 else math.ceil(-math.log10(scale))
+            # actually applied to the state. Negative scales use the same magnitude so
+            # sign-inverted sensors keep their precision. Without this the frontend picks
+            # its own precision, hiding real decimals or padding integers with a fake ".0".
+            expressible = 0 if abs(scale) >= 1 else math.ceil(-math.log10(abs(scale)))
             self._attr_suggested_display_precision = min(expressible, description.rounding)
         elif isinstance(scale, dict) and all(isinstance(opt, str) for opt in scale.values()) and description.native_unit_of_measurement is None:
             # If the sensor has a set of distinct string options as reported by its value
