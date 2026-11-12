@@ -3007,9 +3007,7 @@ class SolaXModbusHub:
         if sample is None or identity in seen:
             return False
         value = sample.value
-        if key == "parallel_setting":
-            return value in ("Free", "Master", "Slave")
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if isinstance(value, bool) or isinstance(value, (int, float)) and not math.isfinite(value):
             return False
         return all(hub._control_input_valid(source, seen | {identity}) for hub, source, _sample in sample.inputs)
 
