@@ -35,6 +35,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
     plugin_base,
+    value_function_packed_switches,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -303,6 +304,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=0,  # Bit position (0 for bit 0)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -313,6 +315,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=1,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -322,6 +325,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=2,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -331,6 +335,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=3,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -340,6 +345,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=4,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -349,6 +355,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=5,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -358,6 +365,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=6,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -367,6 +375,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=7,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -376,6 +385,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=8,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -385,6 +395,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=9,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -394,6 +405,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=10,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -403,6 +415,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=11,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -412,6 +425,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=12,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -421,6 +435,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=13,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -430,6 +445,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=14,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
@@ -439,6 +455,7 @@ SWITCH_TYPES: Sequence["EnertechModbusSwitchEntityDescription"] = [
         register=0x196,  # Register address
         register_bit=15,  # Bit position (1 for bit 1)
         write_method=WRITE_SINGLE_MODBUS,
+        value_function=value_function_packed_switches,
         allowedtypes=ALLDEFAULT,
         icon="mdi:engine",
     ),
