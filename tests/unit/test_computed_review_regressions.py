@@ -193,9 +193,7 @@ def test_parallel_house_load_never_corrects_using_stale_optional(stale: str | No
     sources(
         hub,
         {
-            "pm_activepower_l1": 3000,
-            "pm_activepower_l2": 0,
-            "pm_activepower_l3": 0,
+            "pm_total_inverter_power": 3000,
             "parallel_setting": "Master",
             "measured_power": 1000,
             "pm_total_pv_power": 2900,
