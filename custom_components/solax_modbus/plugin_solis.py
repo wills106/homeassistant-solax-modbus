@@ -46,6 +46,7 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
+    value_function_packed_switches,
     value_function_rtc_ymd,
     value_function_sync_rtc_ymd,
 )
@@ -156,16 +157,6 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
-
-
-# This value function converts the bits to the number
-def mutate_bit_in_register(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    assert bit is not None and descr is not None
-    state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
-    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
-    return new_value
 
 
 def value_function_battery_control_override(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any] | None:
@@ -945,7 +936,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=0,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="IgFollow",
@@ -954,7 +945,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=1,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Relay protection",
@@ -963,7 +954,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=2,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="I-leak protection",
@@ -972,7 +963,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=3,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="PV iso Protection",
@@ -981,7 +972,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=4,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Grid-interference protection",
@@ -990,7 +981,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=5,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="DC component of grid current protection switch",
@@ -999,7 +990,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=6,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Const Voltage Mode Enable",
@@ -1008,7 +999,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=7,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
 ]
 
@@ -1066,6 +1057,7 @@ SELECT_TYPES = [
             49: "Backup/Reserve - No Timed Charge/Discharge",
             51: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority - No Timed Charge/Discharge",
             98: "Feed-in priority",
         },
@@ -1590,6 +1582,20 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name="Lead-acid Battery Temperature",
+        key="lead_acid_battery_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=33096,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
         name="Meter Total ActivePower",
         key="meter_total_activepower",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -1653,6 +1659,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
             49: "Backup/Reserve - No Timed Charge/Discharge",
             51: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority - No Timed Charge/Discharge",
             98: "Feed-in priority",
         },
@@ -2044,6 +2051,32 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Float Charge Voltage",
+        key="battery_float_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33209,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Equalisation Charge Voltage",
+        key="battery_equalisation_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33210,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Meter AC Voltage",
