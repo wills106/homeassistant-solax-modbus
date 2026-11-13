@@ -60,6 +60,7 @@ from .const import (
 from .const import (
     BUTTONREPEAT_LOOP,
     BUTTONREPEAT_POST,
+    CONF_AUTOREPEAT_INPUT_GRACE,
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_DEBUG_SETTINGS,
@@ -71,6 +72,7 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
+    DEFAULT_AUTOREPEAT_INPUT_GRACE,
     DEFAULT_BAUDRATE,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
@@ -701,6 +703,9 @@ class SolaXModbusHub:
         self._autorepeat_lock = asyncio.Lock()
         self._autorepeat_payloads: dict[str, tuple[Any, Any]] = {}
         self._autorepeat_pending_stops: dict[str, Any] = {}
+        self._autorepeat_input_grace = float(config.get(CONF_AUTOREPEAT_INPUT_GRACE, DEFAULT_AUTOREPEAT_INPUT_GRACE))
+        self._autorepeat_inputs_ok_at: dict[str, float] = {}  # monotonic time every required input was last valid, per control
+        self._autorepeat_in_grace: set[str] = set()
         self._computed_input_observations: dict[str, InputObservation] = {}
         self._pending_input_observations: dict[str, InputObservation] | None = None
         self._name: str = name
@@ -2132,7 +2137,7 @@ class SolaXModbusHub:
             # None publishes HA's unknown state without inventing an invalid enum option.
             return_value = descr.scale.get(val)
             if return_value is None:
-                _LOGGER.debug("%s: Value %d for key %d could not be mapped to a known state.", self._name, val, descr.key)
+                _LOGGER.debug("%s: Value %d for key %s could not be mapped to a known state.", self._name, val, descr.key)
         elif callable(descr.scale):  # function to call ?
             return_value = descr.scale(val, descr, data)
         else:  # apply simple numeric scaling and rounding if not a list of words
@@ -2647,8 +2652,15 @@ class SolaXModbusHub:
         """Keep ED source resolution and multi-hub validity in the shared gate."""
         mapping = descr._energy_dashboard_mapping
         hubs = getattr(descr, "_energy_dashboard_source_hubs", None) or (descr._energy_dashboard_source_hub or self,)
+        # Aggregates can require topology inputs in addition to each hub's value.
+        required = set(self._dependency_values(descr.depends_on)) - {mapping.source_key, mapping.source_key_pm}
+        topology_inputs = self._observed_inputs(required)
+        if len(topology_inputs) != len(required):
+            data[descr.key] = None
+            self._remember_computed_sample(descr, None, ())
+            return True
         sources = []
-        inputs = []
+        inputs = list(topology_inputs)
         power_samples = []
         for hub in hubs:
             if hub is self and not hub._input_observations():
@@ -2687,6 +2699,7 @@ class SolaXModbusHub:
         previous = self._accepted_input_sample(descr.key)
         if previous is not None and previous.inputs == tuple(inputs):
             return False
+        sources[0].update({key: sample.value for _hub, key, sample in topology_inputs})
         source_data = sources[0].copy()
         source_data["_energy_dashboard_source_data"] = sources
         try:
@@ -2820,9 +2833,10 @@ class SolaXModbusHub:
             await self._hass.async_add_executor_job(self.loadLocalData)
             local_callback_needed = local_callback_needed or self.localsLoaded
 
-        # Local controls can change independently while a Modbus group is being read.
+        # Preserve concurrent/pending local edits, but let fresh register readbacks
+        # replace unchanged cached controls that share the same key.
         for key in self.writeLocals:
-            if key in self.data:
+            if key in self.data and (key not in previous_data or self.data[key] != previous_data[key] or self.tmpdata_expiry.get(key, 0) > 0):
                 data[key] = self.data[key]
 
         computed_fresh_keys: set[str] = set()
@@ -3017,9 +3031,7 @@ class SolaXModbusHub:
         if sample is None or identity in seen:
             return False
         value = sample.value
-        if key == "parallel_setting":
-            return value in ("Free", "Master", "Slave")
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if isinstance(value, bool) or isinstance(value, (int, float)) and not math.isfinite(value):
             return False
         return all(hub._control_input_valid(source, seen | {identity}) for hub, source, _sample in sample.inputs)
 
@@ -3038,6 +3050,8 @@ class SolaXModbusHub:
             return None if phase == BUTTONREPEAT_LOOP and interval is None else descr.value_function(phase, descr, self.data)
         if phase == BUTTONREPEAT_POST:
             getattr(self, "_autorepeat_payloads", {}).pop(descr.key, None)
+            getattr(self, "_autorepeat_inputs_ok_at", {}).pop(descr.key, None)
+            getattr(self, "_autorepeat_in_grace", set()).discard(descr.key)
             payload = descr.value_function(phase, descr, self.data)
             if payload:
                 pending = getattr(self, "_autorepeat_pending_stops", {})
@@ -3066,11 +3080,36 @@ class SolaXModbusHub:
         ready = all(key in source and self._control_input_valid(key) for key in required)
         if not disabled and self._autorepeat_input_installed("parallel_setting"):
             ready = ready and self._control_input_valid("parallel_setting")
+        inputs_ok_at = getattr(self, "_autorepeat_inputs_ok_at", {})
+        in_grace: set[str] = getattr(self, "_autorepeat_in_grace", set())
+        now = _mtime.monotonic()
+        if ready:
+            if not stopping:
+                inputs_ok_at[descr.key] = now
+                self._autorepeat_inputs_ok_at = inputs_ok_at
+            if descr.key in in_grace:
+                in_grace.discard(descr.key)
+                _LOGGER.info("%s: required control inputs for %s are valid again, resuming", self._name, descr.key)
         if not ready:
-            self.data["_repeatUntil"][descr.key] = 0
             invalid = {key for key in required if key not in source or not self._control_input_valid(key)}
             if self._autorepeat_input_installed("parallel_setting") and not self._control_input_valid("parallel_setting"):
                 invalid.add("parallel_setting")
+            grace = getattr(self, "_autorepeat_input_grace", 0.0)
+            valid_at = inputs_ok_at.get(descr.key)
+            if phase == BUTTONREPEAT_LOOP and grace > 0 and valid_at is not None and now - valid_at <= grace:
+                # A transient dropout (e.g. a Modbus read timeout) must not end a running control. Nothing is recomputed from the
+                # missing data: the last command is re-sent as a keepalive until the inputs recover or the grace period expires.
+                if descr.key not in in_grace:
+                    in_grace.add(descr.key)
+                    self._autorepeat_in_grace = in_grace
+                    _LOGGER.warning(
+                        "%s: holding %s, required control input is invalid: %s (stops after %.0fs)", self._name, descr.key, sorted(invalid), grace
+                    )
+                if required and (interval is None or interval != self._autorepeat_interval(descr, required)):
+                    return None
+                held = getattr(self, "_autorepeat_payloads", {}).get(descr.key)
+                return held[1] if held is not None else None
+            self.data["_repeatUntil"][descr.key] = 0
             _LOGGER.warning("%s: stopping %s because a required control input is invalid: %s", self._name, descr.key, sorted(invalid))
             return self.compute_autorepeat_payload(BUTTONREPEAT_POST, descr)
         # Explicit disable and unsupported topology need no measurement owner.

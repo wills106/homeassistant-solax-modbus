@@ -46,6 +46,8 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
+    value_function_enable_disable,
+    value_function_packed_switches,
     value_function_rtc_ymd,
     value_function_sync_rtc_ymd,
 )
@@ -189,13 +191,33 @@ def value_function_battery_control_override(initval: int, descr: Any, datadict: 
 # mode mapping documented by Pho3niX90/solis_modbus (DISPATCH_* constants).
 
 
+def value_function_dispatch_prepare(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Enable dispatch using the locally staged failsafe number value."""
+    failsafe = int(datadict["dispatch_failsafe_setpoint"])
+    if not 1 <= failsafe <= 1440:
+        raise ValueError("Dispatch failsafe must be between 1 and 1440 minutes")
+    return [
+        ("_uint16", 1),
+        ("_uint16", failsafe),
+        ("_uint16", 0),
+        ("_uint16", 0xFFFF),
+        ("_uint16", 0xFFFF),
+    ]
+
+
 def value_function_dispatch_apply(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     """Block-write the realtime dispatch block (44105-44112) from the local dispatch entities."""
     mode = DISPATCH_MODE_OPTIONS_INV.get(datadict.get("dispatch_mode", "Battery Hold"), 1)
+    # 44108 bits 4-5: 0 = no instruction, 1 = allow, 2 = disallow grid charging.
+    # Apply this charging-source option only to battery charge/discharge control;
+    # other modes retain the existing zero function-switch payload.
+    grid_charging = 0
+    if mode == 2:
+        grid_charging = DISPATCH_GRID_CHARGING_OPTIONS_INV.get(datadict.get("dispatch_grid_charging", ""), 0)
     return [
         ("_uint16", mode),
         ("dispatch_power", int(datadict.get("dispatch_power", 0))),
-        ("_uint16", 0),
+        ("_uint16", grid_charging),
         ("dispatch_soc_min", int(datadict.get("dispatch_soc_min", 0))),
         ("dispatch_soc_max", int(datadict.get("dispatch_soc_max", 100))),
         ("_uint16", 0),
@@ -228,23 +250,16 @@ DISPATCH_MODE_OPTIONS = {
 # battery discharge / grid export). The select exposes merged names.
 DISPATCH_MODE_OPTIONS_INV = {v: k for k, v in DISPATCH_MODE_OPTIONS.items()}
 
+# Locally-staged choices encode the grid-charging field at bits 4-5.
+DISPATCH_GRID_CHARGING_OPTIONS = {
+    16: "Allow",
+    32: "Disallow",
+    0: "No instruction",
+}
+DISPATCH_GRID_CHARGING_OPTIONS_INV = {v: k for k, v in DISPATCH_GRID_CHARGING_OPTIONS.items()}
+
 
 # ============================================= Charging ===========================================================
-
-
-# This value function converts the bits to the number
-def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    assert bit is not None and descr is not None
-    state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
-    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
-    return new_value
-
-
-def value_function_direct_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    """Write the switch state directly as the whole register value (e.g. dispatch master 44100)."""
-    return 1 if state else 0
 
 
 def value_function_timingmode_charge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -552,6 +567,15 @@ BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_ymd,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Prepare Remote Dispatch",
+        key="dispatch_prepare",
+        register=44100,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:transmit",
+        value_function=value_function_dispatch_prepare,
     ),
     SolisModbusButtonEntityDescription(
         name="Apply Remote Dispatch",
@@ -1486,6 +1510,18 @@ NUMBER_TYPES = [
     #
     ###
     SolisModbusNumberEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        fmt="i",
+        native_min_value=10,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
+    ),
+    SolisModbusNumberEntityDescription(
         name="Battery Minimum SOC",
         key="battery_minimum_soc",
         register=43011,
@@ -1645,15 +1681,17 @@ NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name="Dispatch Failsafe Interval",
-        key="dispatch_failsafe",
-        register=44101,
+        key="dispatch_failsafe_setpoint",
+        unique_id_key="dispatch_failsafe",
+        register=-1,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         fmt="i",
         native_min_value=1,
         native_max_value=1440,
         native_step=1,
+        initvalue=5,
         allowedtypes=HYBRID,
-        write_method=WRITE_SINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:timer-outline",
     ),
@@ -2233,7 +2271,7 @@ SWITCH_TYPES = [
         key="dispatch_master",
         register=44100,
         allowedtypes=HYBRID,
-        value_function=value_function_direct_on_off,
+        value_function=value_function_enable_disable,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:power",
     ),
@@ -2244,7 +2282,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=0,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 2 Enable",
@@ -2253,7 +2291,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=1,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 3 Enable",
@@ -2262,7 +2300,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=2,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 4 Enable",
@@ -2271,7 +2309,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=3,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 5 Enable",
@@ -2280,7 +2318,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=4,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 6 Enable",
@@ -2289,7 +2327,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=5,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 1 Enable",
@@ -2298,7 +2336,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=6,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 2 Enable",
@@ -2307,7 +2345,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=7,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 3 Enable",
@@ -2316,7 +2354,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=8,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 4 Enable",
@@ -2325,7 +2363,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=9,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 5 Enable",
@@ -2334,7 +2372,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=10,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 6 Enable",
@@ -2343,7 +2381,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=11,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
 ]
 
@@ -2358,6 +2396,16 @@ SELECT_TYPES = [
         write_method=WRITE_DATA_LOCAL,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name="Dispatch Grid Charging",
+        key="dispatch_grid_charging",
+        register=-1,
+        option_dict=DISPATCH_GRID_CHARGING_OPTIONS,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:transmission-tower",
     ),
     SolisModbusSelectEntityDescription(
         name="Backflow Power Switch",
@@ -2933,6 +2981,20 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name="Lead-acid Battery Temperature",
+        key="lead_acid_battery_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=33096,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
         name="Meter Total ActivePower",
         key="meter_total_activepower",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -3478,6 +3540,32 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Float Charge Voltage",
+        key="battery_float_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33209,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Equalisation Charge Voltage",
+        key="battery_equalisation_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33210,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Meter AC Voltage",
@@ -4151,6 +4239,14 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         },
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Minimum SOC",
@@ -5131,6 +5227,18 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         icon="mdi:check-network",
     ),
     SolisModbusSensorEntityDescription(
+        name="Remote Dispatch Function Version",
+        key="remote_dispatch_function_version",
+        register=34503,
+        ignore_readerror=True,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U16,
+        entity_registry_enabled_default=True,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+    ),
+    SolisModbusSensorEntityDescription(
         name="Remote Dispatch Running Status",
         key="remote_dispatch_status",
         register=34504,
@@ -5140,6 +5248,18 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:play-circle-outline",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch Failsafe Interval",
+        key="dispatch_failsafe",
+        register=44101,
+        register_type=REG_HOLDING,
+        register_data_type=REGISTER_U16,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:timer-outline",
     ),
     SolisModbusSensorEntityDescription(
         name="Dispatch Master",
