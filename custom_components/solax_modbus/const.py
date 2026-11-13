@@ -78,6 +78,14 @@ SCAN_GROUP_FAST = CONF_SCAN_INTERVAL_FAST  # fast scanning (power,...)
 SCAN_GROUP_AUTO = "auto"  # _MEDIUM for temperatures, frequency and energy (kWh), otherwise _DEFAULT
 CONF_TIME_OUT = "time_out"
 DEFAULT_TIME_OUT = 5
+CONF_MODBUS_REQUEST_SUMMARY_INTERVAL = "modbus_request_summary_interval"
+DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL = 0
+CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY = "modbus_request_summary_retries_only"
+DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY = False
+# Seconds an active autorepeat control keeps re-sending its last command while a required input is invalid (e.g. after a Modbus read
+# timeout), measured from the last time every required input was valid. Beyond this the control is stopped. 0 stops immediately.
+CONF_AUTOREPEAT_INPUT_GRACE = "autorepeat_input_grace"
+DEFAULT_AUTOREPEAT_INPUT_GRACE = 0
 
 # ================================= Button autorepeat initval codes for button value_functions ==========================
 BUTTONREPEAT_FIRST = 0  # first manual trigger click
@@ -424,6 +432,8 @@ class BaseModbusTimeEntityDescription(TimeEntityDescription):
 class BaseModbusNumberEntityDescription(NumberEntityDescription):
     """Base class for modbus number declarations."""
 
+    unique_id_key: str | None = None  # optional stable identity when the data key differs
+
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
     device_group: str | None = None  # assign the entity to a named sub-device instead of the main inverter device
     active_when: dict[str, tuple[Any, ...]] | None = None  # {sensor_key: allowed values}; entity is unavailable unless every polled key matches
@@ -532,6 +542,10 @@ def autorepeat_remaining(datadict: dict[str, Any], entitykey: str, timestamp: fl
 MAX_PVSTRINGS: int = 10
 
 
+def scale_function_clamp_positive(initval: Any, descr: Any, datadict: dict[str, Any]) -> int | float:
+    return max(float(initval), 0)
+
+
 def value_str_default(val: Any, default: str) -> str:
     return str(val) if val is not None else default
 
@@ -589,13 +603,15 @@ def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[
     return 0
 
 
-def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
-    """Convert 0/1 to Disabled/Enabled string."""
-    scale = {
-        0: "Disabled",
-        1: "Enabled",
-    }
-    return scale.get(initval, str(initval) + " Unknown Status")
+# This value function converts the bits to the number
+def value_function_packed_switches(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
+    assert bit is not None and descr is not None
+    state_int = 1 if state else 0
+    value = datadict.get(descr)
+    assert value is not None  # Cached data value must be known, otherwise packing could cause unrelated bits to be modified
+    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
+    new_value = (int(value) & ~(1 << bit)) | (state_int << bit)
+    return new_value
 
 
 def value_function_enable_disable(bit: int | None, state: bool | None, sensor_key: str | None, datadict: dict[str, Any]) -> int:

@@ -19,8 +19,15 @@
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
+          "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)"
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
+          "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
+          "modbus_request_summary_retries_only": "Only report intervals with retries"
+        },
+        "data_description": {
+          "modbus_request_summary_interval": "Log summaries of Modbus communication reliability and response times, including request counts, retries and failures. Separate read and write reports appear in the Home Assistant log. Available for Home Assistant-managed Modbus connections. Set the interval in minutes; 0 disables reports.",
+          "modbus_request_summary_retries_only": "When checked, report only intervals containing retries, separately for reads and writes. Unchecked by default: report all intervals containing requests. Intervals without requests are always omitted."
         }
       },
       "serial": {
@@ -113,8 +120,15 @@
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
+          "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
           "inverter_name_suffix": "Name suffix for the inverter",
-          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)"
+          "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
+          "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
+          "modbus_request_summary_retries_only": "Only report intervals with retries"
+        },
+        "data_description": {
+          "modbus_request_summary_interval": "Log summaries of Modbus communication reliability and response times, including request counts, retries and failures. Separate read and write reports appear in the Home Assistant log. Available for Home Assistant-managed Modbus connections. Set the interval in minutes; 0 disables reports.",
+          "modbus_request_summary_retries_only": "When checked, report only intervals containing retries, separately for reads and writes. Unchecked by default: report all intervals containing requests. Intervals without requests are always omitted."
         }
       },
       "serial": {

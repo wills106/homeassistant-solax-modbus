@@ -36,6 +36,7 @@ from .connection import (
     matching_config_entries,
 )
 from .const import (
+    CONF_AUTOREPEAT_INPUT_GRACE,
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_ENERGY_DASHBOARD_DEVICE,
@@ -43,6 +44,8 @@ from .const import (
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
+    CONF_MODBUS_REQUEST_SUMMARY_INTERVAL,
+    CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     CONF_PLUGIN,
     CONF_READ_BATTERY,
     CONF_READ_DATAHUB,
@@ -56,12 +59,15 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
+    DEFAULT_AUTOREPEAT_INPUT_GRACE,
     DEFAULT_BAUDRATE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     # PLUGIN_PATH_OLDSTYLE,
     DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
+    DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL,
+    DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     DEFAULT_NAME,
     DEFAULT_PLUGIN,
     DEFAULT_PORT,
@@ -169,6 +175,11 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
         vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
+        vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_INTERVAL, default=DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL): vol.All(
+            vol.Coerce(int), vol.Range(min=0)
+        ),
+        vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY, default=DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY): bool,
+        vol.Optional(CONF_AUTOREPEAT_INPUT_GRACE, default=DEFAULT_AUTOREPEAT_INPUT_GRACE): cv.positive_int,
     }
 )
 
@@ -194,6 +205,11 @@ OPTION_SCHEMA = vol.Schema(
         vol.Optional(CONF_READ_EMS, default=DEFAULT_READ_EMS): bool,
         vol.Optional(CONF_READ_DATAHUB, default=DEFAULT_READ_DATAHUB): bool,
         vol.Optional(CONF_TIME_OUT, default=DEFAULT_TIME_OUT): int,
+        vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_INTERVAL, default=DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL): vol.All(
+            vol.Coerce(int), vol.Range(min=0)
+        ),
+        vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY, default=DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY): bool,
+        vol.Optional(CONF_AUTOREPEAT_INPUT_GRACE, default=DEFAULT_AUTOREPEAT_INPUT_GRACE): cv.positive_int,
     }
 )
 

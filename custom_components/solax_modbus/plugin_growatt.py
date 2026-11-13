@@ -9676,7 +9676,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9690,7 +9690,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9704,7 +9704,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
         icon="mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -9718,7 +9718,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
     ),
     GrowattModbusSensorEntityDescription(
         name="Reactive Power Inverter VPP",
@@ -9731,7 +9731,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=GEN | GEN3 | GEN4 | SPF,  # not implemented on GEN2 (MOD TL3-X answers 0x01)
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Combined Power VPP",
@@ -10371,6 +10371,7 @@ FIRMWARE_PREFIX_TYPES = {
     "TJ1": PV | GEN2 | X3,  # MID 17KTL3-X, confirmed in discussion #2434
     "DL1": PV | GEN2 | X3,  # PV TL3-X 15kW 3Phase (MOD)
     "DM1": PV | GEN2 | X3 | MPPT4,  # PV TL3-X 35kW 3Phase (MID)
+    "TN1": PV | GEN2 | X3 | MPPT8,  # MAX 60KTL3-X2, 8 MPPT #2490
     "AH1": PV | GEN3 | X1,  # Hybrid SPH 4kW - 10kW
     "AJ1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)
     "GH1": PV | GEN4 | X1,  # PV TL-X 2.5kW - 6kW (MIN)

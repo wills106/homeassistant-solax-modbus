@@ -21,6 +21,7 @@ A similar autorepeat mechanism is under development for mode 8
 ### Note:
  - For people using external tasks to control the power, the _remotecontrol_xxx_direct_ versions of the entities could be used. This is outside the scope if this wiki page.
  - If you use modbus power control autorepeat loops, make sure the polling interval for the fastest scangroup is sufficiently low e.g. 3-5 seconds, otherwise the values are updated too slowly. A too short interval can overload your system or modbus communication bus. Some people can go as low as 1 second, but it is safer to have more margin.
+ - If a required input (for example `house_load` after a Modbus read timeout) becomes invalid, the autorepeat loop is stopped and a `Disabled` command is written. To ride through short dropouts, set the integration option *Remote control hold time on invalid inputs (s)* (default 0 = stop immediately). While it is running, the last command is re-sent as a keepalive without recomputing from the missing data, and the loop resumes when the inputs recover. If they stay invalid for longer than the hold time, it stops as before.
 
 ***
 ## Solax Gen4 approach - Mode 1
@@ -160,7 +161,8 @@ The thresholds used by these automations can be configured through input_number 
 ### Automation parameters
 The example automations shown below use a couple of input_number and input_boolean declarations to be declared in config/configuration.yaml:
 
-```
+{% raw %}
+```yaml
 input_number:
   no_discharge_price_threshold:
     name: No discharge price threshold
@@ -194,6 +196,8 @@ input_boolean:
   no_discharge_enabled:
     name: No Discharge Enable
 ```
+{% endraw %}
+
 This can be displayed as:
 
 `          ` 
@@ -208,8 +212,8 @@ This example assumes that:
 * the current grid import price is determined by sensor 'sensor.xxx_consumption_price'
 * the target charge level is fixed at 2500W in this example
 
-```
-
+{% raw %}
+```yaml
 alias: Gridcontrol charge
 description: ""
 trigger:
@@ -271,10 +275,12 @@ action:
 mode: single
 
 ```
+{% endraw %}
 
 ### Automation to stop this charge
 
-```
+{% raw %}
+```yaml
 alias: Gridcontrol charge - Stop
 description: ""
 trigger:
@@ -334,12 +340,16 @@ action:
 mode: single
 
 ```
+{% endraw %}
+
 ### Automation to stop discharge at reasonably low import price (Houseload from Grid)
 
 Similar assumptions as above.
 This automation will activate an equivalent of the feedin-priority standard mode.
 A variation for self-use mode can be created by replacing "Enabled Battery Control" by "Enabled Grid Control"
-```
+
+{% raw %}
+```yaml
 alias: Houseload from grid (and PV)
 description: ""
 trigger:
@@ -382,7 +392,7 @@ action:
 mode: single
 
 ```
-
+{% endraw %}
 
 
 ***
