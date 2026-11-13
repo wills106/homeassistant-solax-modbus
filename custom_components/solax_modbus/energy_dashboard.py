@@ -37,6 +37,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
+    value_function_enable_disable,
 )
 from .debug import get_debug_setting
 from .device_registry_lookup import link_parent_device
@@ -477,9 +478,6 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
     energy_dashboard_platform_name = f"{hub._name} Energy Dashboard"
 
-    def _local_switch_value_function(_bit: Any, is_on: Any, _sensor_key: Any, _datadict: Any) -> Any:
-        return 1 if is_on else 0
-
     config_category = getattr(EntityCategory, "CONFIGURATION", None)
     if config_category is None:
         config_category = getattr(EntityCategory, "CONFIG", None)
@@ -495,7 +493,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_PV_VARIANTS,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:solar-power-variant",
                 entity_category=config_category,
             ),
@@ -506,7 +504,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_HOME_CONSUMPTION,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:home-lightning-bolt",
                 entity_category=config_category,
             ),
@@ -517,7 +515,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_GRID_TO_BATTERY,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:transmission-tower-export",
                 entity_category=config_category,
             ),

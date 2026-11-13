@@ -24,6 +24,7 @@ def make_hub() -> Any:
     hub.sensorDescriptions = {}
     hub.sensorEntities = {}
     hub.writeLocals = {}
+    hub.tmpdata_expiry = {}
     hub.writequeue = {}
     hub.localsUpdated = False
     hub.localsLoaded = True
