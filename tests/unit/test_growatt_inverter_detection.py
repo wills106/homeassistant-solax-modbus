@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from custom_components.solax_modbus.plugin_growatt import AC, GEN2, GEN3, GEN4, HYBRID, PV, X1, X3
+from custom_components.solax_modbus.plugin_growatt import AC, GEN2, GEN3, GEN4, HYBRID, MPPT8, PV, SENSOR_TYPES, X1, X3
 from custom_components.solax_modbus.plugin_growatt import plugin_instance as growatt_plugin
 
 
@@ -43,6 +43,25 @@ async def test_tj1_firmware_selects_existing_three_phase_pv_profile() -> None:
     assert invertertype == PV | GEN2 | X3
     assert hub.seriesnumber == "TJ1.0"
     assert hub.read_addresses == [3001, 209, 23, 9]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("firmware", ["TN1.0ZBBA", "TN1.0\x00ZBBA"])
+async def test_tn1_firmware_selects_eight_mppt_three_phase_pv_profile(firmware: str) -> None:
+    hub = GrowattHub({9: firmware})
+    plugin = growatt_plugin.create_hub_instance()
+
+    invertertype = await plugin.async_determineInverterType(hub, CONFIG)
+
+    assert invertertype == PV | GEN2 | X3 | MPPT8
+    assert hub.seriesnumber == firmware
+    assert hub.read_addresses == [3001, 209, 23, 9]
+    sensor_keys = {description.key for description in SENSOR_TYPES if plugin.matchInverterWithMask(invertertype, description.allowedtypes)}
+    for mppt in range(1, 9):
+        for measurement in ("voltage", "current", "power"):
+            assert f"pv_{measurement}_{mppt}" in sensor_keys
+    assert "pv_voltage_9" not in sensor_keys
+    assert "pv_voltage_10" not in sensor_keys
 
 
 @pytest.mark.asyncio

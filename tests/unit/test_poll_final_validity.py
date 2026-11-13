@@ -104,3 +104,25 @@ async def test_final_reconciliation_waits_for_other_interval_validation() -> Non
     await asyncio.gather(fast_task, *slow_tasks)
     assert published == [None, None]
     assert hub._pending_input_observations is None
+
+
+@pytest.mark.asyncio
+async def test_computed_sensor_removed_during_poll_is_skipped() -> None:
+    hub, ed, power, settings = setup_poll()
+    await hub._refresh_interval_group_once(settings)
+    await hub._refresh_interval_group_once(power)
+    for entity in hub.sensorEntities.values():
+        entity.modbus_data_updated.reset_mock()
+    original = hub.async_read_modbus_data
+
+    async def read(group: Any, fresh_keys: set[str]) -> PollOutcome:
+        outcome: PollOutcome = await original(group, fresh_keys)
+        # The energy dashboard drops its sensor while the poll is still running.
+        hub.computedSensors.pop(ed.key, None)
+        return outcome
+
+    hub.async_read_modbus_data = read
+    actual, _ = await hub._refresh_interval_group_once(power)
+    assert actual is PollOutcome.SUCCESS
+    hub.sensorEntities[ed.key].modbus_data_updated.assert_not_called()
+    assert hub.sensorEntities["house_load"].modbus_data_updated.call_count == 1
