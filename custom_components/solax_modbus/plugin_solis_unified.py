@@ -46,6 +46,7 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
+    value_function_packed_switches,
     value_function_rtc_ymd,
     value_function_sync_rtc_ymd,
 )
@@ -156,16 +157,6 @@ class SolisModbusSensorEntityDescription(BaseModbusSensorEntityDescription):
 
 
 # ====================================== Computed value functions  =================================================
-
-
-# This value function converts the bits to the number
-def mutate_bit_in_register(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    assert bit is not None and descr is not None
-    state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
-    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
-    return new_value
 
 
 def value_function_battery_control_override(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any] | None:
@@ -314,20 +305,43 @@ U16_CURRENT_MAX = REGISTER_U16_MAX * 0.1
 
 
 # Energy Dashboard Virtual Device mapping
+# Attach Energy Dashboard mapping to plugin instance
+from custom_components.solax_modbus.const import (  # noqa: E402 (required by the post-FB00 collections)
+    value_function_enable_disable,
+)
+
 from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMapping  # noqa: E402
 
-# Attach Energy Dashboard mapping to plugin instance
-
 # ===== helpers unique to the post-FB00 (Gen5/Gen6) register map ======================
+
+
+def value_function_dispatch_prepare(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
+    """Enable dispatch using the locally staged failsafe number value."""
+    failsafe = int(datadict["dispatch_failsafe_setpoint"])
+    if not 1 <= failsafe <= 1440:
+        raise ValueError("Dispatch failsafe must be between 1 and 1440 minutes")
+    return [
+        ("_uint16", 1),
+        ("_uint16", failsafe),
+        ("_uint16", 0),
+        ("_uint16", 0xFFFF),
+        ("_uint16", 0xFFFF),
+    ]
 
 
 def value_function_dispatch_apply(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
     """Block-write the realtime dispatch block (44105-44112) from the local dispatch entities."""
     mode = DISPATCH_MODE_OPTIONS_INV.get(datadict.get("dispatch_mode", "Battery Hold"), 1)
+    # 44108 bits 4-5: 0 = no instruction, 1 = allow, 2 = disallow grid charging.
+    # Apply this charging-source option only to battery charge/discharge control;
+    # other modes retain the existing zero function-switch payload.
+    grid_charging = 0
+    if mode == 2:
+        grid_charging = DISPATCH_GRID_CHARGING_OPTIONS_INV.get(datadict.get("dispatch_grid_charging", ""), 0)
     return [
         ("_uint16", mode),
         ("dispatch_power", int(datadict.get("dispatch_power", 0))),
-        ("_uint16", 0),
+        ("_uint16", grid_charging),
         ("dispatch_soc_min", int(datadict.get("dispatch_soc_min", 0))),
         ("dispatch_soc_max", int(datadict.get("dispatch_soc_max", 100))),
         ("_uint16", 0),
@@ -358,19 +372,13 @@ DISPATCH_MODE_OPTIONS = {
 
 DISPATCH_MODE_OPTIONS_INV = {v: k for k, v in DISPATCH_MODE_OPTIONS.items()}
 
+DISPATCH_GRID_CHARGING_OPTIONS = {
+    16: "Allow",
+    32: "Disallow",
+    0: "No instruction",
+}
 
-def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    assert bit is not None and descr is not None
-    state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
-    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
-    return new_value
-
-
-def value_function_direct_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    """Write the switch state directly as the whole register value (e.g. dispatch master 44100)."""
-    return 1 if state else 0
+DISPATCH_GRID_CHARGING_OPTIONS_INV = {v: k for k, v in DISPATCH_GRID_CHARGING_OPTIONS.items()}
 
 
 def value_function_timingmode_charge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -657,11 +665,13 @@ REG_HMI_SUB = 33069  # low-order byte = HMI sub version (hex)
 # used as a presence probe of the post-FB00 register map.
 REG_MODERN_PROBE = 34504
 
-# HMI firmware from 0xFB00 onwards identifies the Gen5/Gen6 S6 generation that the
-# FB00_* register map was written for. Some S6 units report a lower HMI version
-# (e.g. 0x4F03) while still implementing the post-FB00 map, so the version number
-# alone is not authoritative - see select_hmi_map().
-HMI_FB00_FLOOR = 0xFB00
+# 0x4F03 is the lowest HMI version observed on an inverter that implements the
+# post-FB00 (Gen5/Gen6 S6) register map; older inverters that do not implement it
+# report versions well below this (e.g. 0x1C06). The floor triggers the FB00_*
+# collections; the 34504 presence probe remains the authoritative fallback when
+# the version registers are silent - see select_hmi_map(). If a unit appears with
+# a lower HMI version that still needs the post-FB00 map, lower this value.
+HMI_FB00_FLOOR = 0x4F03
 
 MAP_LEGACY = "legacy"
 MAP_FB00 = "fb00"
@@ -680,15 +690,16 @@ def compute_hmi_version(major_low_byte: int | None, sub_low_byte: int | None) ->
 def select_hmi_map(hmi_version: int | None, modern_probe_ok: bool | None) -> str:
     """Pick which register map to use for this inverter.
 
-    The presence probe is authoritative: 34504 (Remote Dispatch Running Status) only
-    exists in the post-FB00 protocol, so an answering probe proves the post-FB00 map,
-    whatever the reported HMI version says. Reported HMI versions are a secondary
-    signal because some S6 units report versions numerically below 0xFB00 (e.g.
-    0x4F03) yet only implement the post-FB00 registers.
+    0x4F03 is the lowest known HMI version on an inverter implementing the post-FB00
+    register map, so any reported HMI version at or above it selects the FB00_*
+    collections. Older inverters that lack the post-FB00 registers report lower
+    versions (e.g. 0x1C06) and keep the LEGACY_* collections. The 34504 presence
+    probe decides when the version registers are silent: it only exists in the
+    post-FB00 protocol, so an answering probe proves the post-FB00 map.
 
-    - probe 34504 responds          -> fb00 map
-    - probe silent, HMI >= 0xFB00   -> fb00 map
-    - everything else               -> legacy map
+    - probe 34504 responds           -> fb00 map
+    - probe silent, HMI >= 0x4F03    -> fb00 map
+    - everything else                -> legacy map
     """
     if modern_probe_ok is True:
         return MAP_FB00
@@ -739,7 +750,7 @@ LEGACY_BUTTON_TYPES = [
     ),
 ]
 
-# --------- newer Gen5/Gen6 register map (HMI 0xFB00+) : BUTTON_TYPES ----------
+# --------- newer Gen5/Gen6 register map (post-FB00 registers, HMI >= 0x4F03) : BUTTON_TYPES ----------
 FB00_BUTTON_TYPES = [
     SolisModbusButtonEntityDescription(
         name="Sync RTC",
@@ -749,6 +760,15 @@ FB00_BUTTON_TYPES = [
         write_method=WRITE_MULTI_MODBUS,
         icon="mdi:home-clock",
         value_function=value_function_sync_rtc_ymd,
+    ),
+    SolisModbusButtonEntityDescription(
+        name="Prepare Remote Dispatch",
+        key="dispatch_prepare",
+        register=44100,
+        allowedtypes=HYBRID,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:transmit",
+        value_function=value_function_dispatch_prepare,
     ),
     SolisModbusButtonEntityDescription(
         name="Apply Remote Dispatch",
@@ -1461,7 +1481,7 @@ LEGACY_NUMBER_TYPES = [
     ),
 ]
 
-# --------- newer Gen5/Gen6 register map (HMI 0xFB00+) : NUMBER_TYPES ----------
+# --------- newer Gen5/Gen6 register map (post-FB00 registers, HMI >= 0x4F03) : NUMBER_TYPES ----------
 FB00_NUMBER_TYPES = [
     ###
     #
@@ -2263,6 +2283,18 @@ FB00_NUMBER_TYPES = [
     #
     ###
     SolisModbusNumberEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        fmt="i",
+        native_min_value=10,
+        native_max_value=100,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
+    ),
+    SolisModbusNumberEntityDescription(
         name="Battery Minimum SOC",
         key="battery_minimum_soc",
         register=43011,
@@ -2422,15 +2454,17 @@ FB00_NUMBER_TYPES = [
     ),
     SolisModbusNumberEntityDescription(
         name="Dispatch Failsafe Interval",
-        key="dispatch_failsafe",
-        register=44101,
+        key="dispatch_failsafe_setpoint",
+        unique_id_key="dispatch_failsafe",
+        register=-1,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         fmt="i",
         native_min_value=1,
         native_max_value=1440,
         native_step=1,
+        initvalue=5,
         allowedtypes=HYBRID,
-        write_method=WRITE_SINGLE_MODBUS,
+        write_method=WRITE_DATA_LOCAL,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:timer-outline",
     ),
@@ -3011,7 +3045,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=0,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="IgFollow",
@@ -3020,7 +3054,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=1,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Relay protection",
@@ -3029,7 +3063,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=2,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="I-leak protection",
@@ -3038,7 +3072,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=3,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="PV iso Protection",
@@ -3047,7 +3081,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=4,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Grid-interference protection",
@@ -3056,7 +3090,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=5,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="DC component of grid current protection switch",
@@ -3065,7 +3099,7 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=6,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Const Voltage Mode Enable",
@@ -3074,11 +3108,11 @@ LEGACY_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=7,
         sensor_key="special_settings",
-        value_function=mutate_bit_in_register,
+        value_function=value_function_packed_switches,
     ),
 ]
 
-# --------- newer Gen5/Gen6 register map (HMI 0xFB00+) : SWITCH_TYPES ----------
+# --------- newer Gen5/Gen6 register map (post-FB00 registers, HMI >= 0x4F03) : SWITCH_TYPES ----------
 FB00_SWITCH_TYPES = [
     # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
     SolisModbusSwitchEntityDescription(
@@ -3086,7 +3120,7 @@ FB00_SWITCH_TYPES = [
         key="dispatch_master",
         register=44100,
         allowedtypes=HYBRID,
-        value_function=value_function_direct_on_off,
+        value_function=value_function_enable_disable,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:power",
     ),
@@ -3097,7 +3131,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=0,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 2 Enable",
@@ -3106,7 +3140,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=1,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 3 Enable",
@@ -3115,7 +3149,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=2,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 4 Enable",
@@ -3124,7 +3158,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=3,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 5 Enable",
@@ -3133,7 +3167,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=4,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 6 Enable",
@@ -3142,7 +3176,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=5,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 1 Enable",
@@ -3151,7 +3185,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=6,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 2 Enable",
@@ -3160,7 +3194,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=7,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 3 Enable",
@@ -3169,7 +3203,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=8,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 4 Enable",
@@ -3178,7 +3212,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=9,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 5 Enable",
@@ -3187,7 +3221,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=10,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 6 Enable",
@@ -3196,7 +3230,7 @@ FB00_SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=11,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
 ]
 
@@ -3255,6 +3289,7 @@ LEGACY_SELECT_TYPES = [
             49: "Backup/Reserve - No Timed Charge/Discharge",
             51: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority - No Timed Charge/Discharge",
             98: "Feed-in priority",
         },
@@ -3274,7 +3309,7 @@ LEGACY_SELECT_TYPES = [
     ),
 ]
 
-# --------- newer Gen5/Gen6 register map (HMI 0xFB00+) : SELECT_TYPES ----------
+# --------- newer Gen5/Gen6 register map (post-FB00 registers, HMI >= 0x4F03) : SELECT_TYPES ----------
 FB00_SELECT_TYPES = [
     # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
     SolisModbusSelectEntityDescription(
@@ -3286,6 +3321,16 @@ FB00_SELECT_TYPES = [
         write_method=WRITE_DATA_LOCAL,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:dip-switch",
+    ),
+    SolisModbusSelectEntityDescription(
+        name="Dispatch Grid Charging",
+        key="dispatch_grid_charging",
+        register=-1,
+        option_dict=DISPATCH_GRID_CHARGING_OPTIONS,
+        allowedtypes=HYBRID,
+        write_method=WRITE_DATA_LOCAL,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:transmission-tower",
     ),
     SolisModbusSelectEntityDescription(
         name="Backflow Power Switch",
@@ -3336,6 +3381,7 @@ FB00_SELECT_TYPES = [
             41: "Battery Awaken",
             49: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority",
         },
         allowedtypes=HYBRID,
@@ -3858,6 +3904,20 @@ LEGACY_SENSOR_TYPES = [
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name="Lead-acid Battery Temperature",
+        key="lead_acid_battery_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=33096,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
         name="Meter Total ActivePower",
         key="meter_total_activepower",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -3921,6 +3981,7 @@ LEGACY_SENSOR_TYPES = [
             49: "Backup/Reserve - No Timed Charge/Discharge",
             51: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority - No Timed Charge/Discharge",
             98: "Feed-in priority",
         },
@@ -4312,6 +4373,32 @@ LEGACY_SENSOR_TYPES = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Float Charge Voltage",
+        key="battery_float_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33209,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Equalisation Charge Voltage",
+        key="battery_equalisation_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33210,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Meter AC Voltage",
@@ -4992,7 +5079,7 @@ LEGACY_SENSOR_TYPES = [
     ),
 ]
 
-# --------- newer Gen5/Gen6 register map (HMI 0xFB00+) : SENSOR_TYPES ----------
+# --------- newer Gen5/Gen6 register map (post-FB00 registers, HMI >= 0x4F03) : SENSOR_TYPES ----------
 FB00_SENSOR_TYPES = [
     # SolisModbusSensorEntityDescription(
     #    name = "Serial Number",
@@ -5496,6 +5583,20 @@ FB00_SENSOR_TYPES = [
         allowedtypes=HYBRID,
     ),
     SolisModbusSensorEntityDescription(
+        name="Lead-acid Battery Temperature",
+        key="lead_acid_battery_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        register=33096,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
         name="Meter Total ActivePower",
         key="meter_total_activepower",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -5555,6 +5656,7 @@ FB00_SENSOR_TYPES = [
             41: "Battery Awaken",
             49: "Backup/Reserve",
             64: "Feed-in priority - No Grid Charging",
+            80: "Feed-in priority + Backup/Reserve - No Grid Charging",
             96: "Feed-in priority",
         },
         allowedtypes=HYBRID,
@@ -6040,6 +6142,32 @@ FB00_SENSOR_TYPES = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Float Charge Voltage",
+        key="battery_float_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33209,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Equalisation Charge Voltage",
+        key="battery_equalisation_charge_voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        register=33210,
+        register_type=REG_INPUT,
+        scale=0.1,
+        rounding=1,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SolisModbusSensorEntityDescription(
         name="Meter AC Voltage",
@@ -6713,6 +6841,14 @@ FB00_SENSOR_TYPES = [
         },
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Battery Maximum SOC",
+        key="battery_maximum_soc",
+        register=43010,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        icon="mdi:battery-sync",
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Minimum SOC",
@@ -7693,6 +7829,18 @@ FB00_SENSOR_TYPES = [
         icon="mdi:check-network",
     ),
     SolisModbusSensorEntityDescription(
+        name="Remote Dispatch Function Version",
+        key="remote_dispatch_function_version",
+        register=34503,
+        ignore_readerror=True,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U16,
+        entity_registry_enabled_default=True,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+    ),
+    SolisModbusSensorEntityDescription(
         name="Remote Dispatch Running Status",
         key="remote_dispatch_status",
         register=34504,
@@ -7702,6 +7850,18 @@ FB00_SENSOR_TYPES = [
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:play-circle-outline",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Dispatch Failsafe Interval",
+        key="dispatch_failsafe",
+        register=44101,
+        register_type=REG_HOLDING,
+        register_data_type=REGISTER_U16,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        entity_registry_enabled_default=False,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:timer-outline",
     ),
     SolisModbusSensorEntityDescription(
         name="Dispatch Master",
@@ -7762,7 +7922,7 @@ class solis_unified_plugin(plugin_base):
     """Solis plugin holding both register maps and selecting one per inverter via HMI version.
 
     Register map selection (RS485_MODBUS(ESINV-33000ID) Hybrid Inverter.pdf, Ver3.5, section 5.1):
-      - HMI version 0xFB00..0xFFFF -> FB00_* collections (Gen5/Gen6 S6 map)
+      - HMI version >= 0x4F03      -> FB00_* collections (Gen5/Gen6 S6 post-FB00 register map)
       - anything older             -> LEGACY_* collections (older Solis map)
       - version unknown            -> presence probe of 34504 decides; default stays legacy
     """
@@ -7805,7 +7965,9 @@ class solis_unified_plugin(plugin_base):
             invertertype = HYBRID | X1  # Hybrid Gen5 3.6kW - 48v
         elif seriesnumber.startswith("160F5"):
             invertertype = HYBRID | X1  # Hybrid Gen5 3.6kW - 48v
-        elif seriesnumber.startswith(("103303", "103305")):
+        elif seriesnumber.startswith("103303"):
+            invertertype = HYBRID | X3 | MPPT4  # Hybrid Gen6  5kW - HV
+        elif seriesnumber.startswith("103305"):
             invertertype = HYBRID | X3 | MPPT4  # Hybrid Gen6  8kW - HV
         elif seriesnumber.startswith(("103306", "133306")):
             invertertype = HYBRID | X3 | MPPT4  # Hybrid Gen6  10kW - HV
@@ -7856,9 +8018,9 @@ class solis_unified_plugin(plugin_base):
         sub = await self._read_low_byte(hub, REG_HMI_SUB)
         hmi_version = compute_hmi_version(major, sub)
 
-        # Always probe the post-FB00-only Remote Dispatch register: several S6 units
-        # report an HMI version below 0xFB00 (e.g. 0x4F03) while only implementing the
-        # post-FB00 register map, so a responding 34504 outranks the version number.
+        # Always probe the post-FB00-only Remote Dispatch register: it decides units
+        # whose HMI version registers are silent or ambiguous (0x4F03 floor is the
+        # lowest known post-FB00 HMI, a responding 34504 is direct proof of the map).
         modern_probe_ok = await self._register_responds(hub, REG_MODERN_PROBE)
 
         # An explicit override (advanced YAML/options) wins over auto-detection.

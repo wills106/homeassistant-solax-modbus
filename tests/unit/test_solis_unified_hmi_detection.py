@@ -3,8 +3,10 @@
 Covers the auto-detection mechanism derived from the RS485_MODBUS(ESINV-33000ID)
 Hybrid Inverter protocol (Ver3.5, section 5.1):
 - HMI major/sub version registers 33002 + 33069 (low-order bytes)
-- 0xFB00..0xFFFF -> the FB00_* (Gen5/Gen6) register maps held in the unified plugin
-- 0x0001..0xFAFF -> the LEGACY_* (older-generation) register maps in the same file
+- 0x4F03..0xFFFF -> the FB00_* (Gen5/Gen6) register maps held in the unified plugin
+  (0x4F03 is the lowest known HMI version implementing the post-FB00 register set)
+- below 0x4F03 -> the LEGACY_* (older-generation) register maps in the same file
+  (a responding 34504 probe still rescues a low reported version)
 - unknown version -> presence probe of 34504 (Remote Dispatch Running Status)
 - explicit hmi_map override
 Plus parity checks: the unified plugin's embedded maps and its detection must match the
@@ -111,11 +113,13 @@ class TestComputeHmiVersion:
 
 
 class TestSelectHmiMap:
-    @pytest.mark.parametrize("version", [0xFB00, 0xFB05, 0xFBFF, 0xFF00])
+    # 0x4F03 is the lowest known HMI version implementing the post-FB00 register
+    # map (PR #2467 feedback), so it triggers the FB00_* collections.
+    @pytest.mark.parametrize("version", [0x4F03, 0x4F04, 0x4FFF, 0xFB00, 0xFB05, 0xFBFF, 0xFF00])
     def test_fb00_band_selects_fb00_map(self, version: int) -> None:
         assert select_hmi_map(version, None) == MAP_FB00
 
-    @pytest.mark.parametrize("version", [0x1C06, 0x1905, 0x040B, 0x0001, 0xFAFF])
+    @pytest.mark.parametrize("version", [0x1C06, 0x1905, 0x040B, 0x0001, 0x4F02])
     def test_older_versions_select_legacy_map(self, version: int) -> None:
         assert select_hmi_map(version, None) == MAP_LEGACY
 
@@ -124,12 +128,13 @@ class TestSelectHmiMap:
         assert select_hmi_map(None, False) == MAP_LEGACY
 
     def test_probe_responding_overrides_older_reported_version(self) -> None:
-        # Live-observed S6 unit: reports HMI 0x4F03 yet only implements the post-FB00
-        # map, and 34504 answers -> the probe (post-FB00-only register) wins.
+        # 0x4F03 alone (probe silent) already selects the post-FB00 map.
         assert select_hmi_map(0x4F03, True) == MAP_FB00
-        # An older unit whose 34504 read fails stays on the legacy map.
-        assert select_hmi_map(0x4F03, False) == MAP_LEGACY
+        assert select_hmi_map(0x4F03, False) == MAP_FB00
+        # A genuinely older unit (HMI below the floor) with a silent probe stays legacy,
+        # and an answering probe still rescues it if its version registers lie low.
         assert select_hmi_map(0x1C06, False) == MAP_LEGACY
+        assert select_hmi_map(0x1C06, True) == MAP_FB00
 
     def test_unknown_version_and_unknown_probe_defaults_legacy(self) -> None:
         assert select_hmi_map(None, None) == MAP_LEGACY
