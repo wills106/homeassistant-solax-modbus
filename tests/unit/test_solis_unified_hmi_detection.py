@@ -119,9 +119,12 @@ class TestSelectHmiMap:
     def test_fb00_band_selects_fb00_map(self, version: int) -> None:
         assert select_hmi_map(version, None) == MAP_FB00
 
-    @pytest.mark.parametrize("version", [0x1C06, 0x1905, 0x040B, 0x0001, 0x4F02])
+    @pytest.mark.parametrize("version", [0x1C06, 0x1905, 0x040B, 0x0001, 0x4310, 0x4F02])
     def test_older_versions_select_legacy_map(self, version: int) -> None:
+        # 0x4310: live-observed S5-EH1P6K-L (PR #2467) - below the 0x4F03 floor,
+        # so it must stay on the legacy register map.
         assert select_hmi_map(version, None) == MAP_LEGACY
+        assert select_hmi_map(version, False) == MAP_LEGACY
 
     def test_probe_rescues_unknown_version(self) -> None:
         assert select_hmi_map(None, True) == MAP_FB00
