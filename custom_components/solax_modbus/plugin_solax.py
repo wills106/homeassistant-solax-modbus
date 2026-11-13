@@ -14116,6 +14116,7 @@ ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
 EXTERNAL_SOURCE_TYPES: dict[str, UnitOfPower | None] = {
     "house_load": UnitOfPower.WATT,
     "measured_power": UnitOfPower.WATT,
+    "generator_power": UnitOfPower.WATT,
 }
 
 plugin_instance = solax_plugin(
