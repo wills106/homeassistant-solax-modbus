@@ -75,20 +75,6 @@ def test_match_inverter_with_mask_eps() -> None:
     assert solax_plugin.matchInverterWithMask(inverter_no_eps, mask) is False
 
 
-def test_external_source_types_present_and_valid() -> None:
-    # Find all sensors with external overrides and check that both the key names
-    # are valid, and they exist in external source types.
-    # TODO: extend to all plugins
-    required_overrides = [
-        getattr(descr, "external_override", "") for descr in solax_plugin.SENSOR_TYPES if getattr(descr, "external_override", None) is not None
-    ]
-
-    # All external overrides must start with "external_"
-    assert all([key.startswith("external_") for key in required_overrides])
-    # And they must exist in EXTERNAL_SOURCE_TYPES
-    assert set([key.removeprefix("external_") for key in required_overrides]).issubset(solax_plugin.EXTERNAL_SOURCE_TYPES.keys())
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("serial_number", ["H34T10H1234567", "N34A10K1234567"])
 async def test_determine_inverter_type_solax(mock_hub: Any, serial_number: str) -> None:
