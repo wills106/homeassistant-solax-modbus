@@ -1,5 +1,6 @@
 """Documented SolaX Hybrid fault bits, scoped by generation, phase and protocol.
 
+G2: X1 Hybrid Modbus RTU V2.56, Inverter / Charger / Manager error codes.
 G3: Modbus TCP/RTU V3.29, Inverter Error Code (X1/X3) and Manager Err Code.
 G4 legacy: Modbus TCP/RTU V3.34, Tables 2-3, 2-4 and 2-5.
 G4 ESS: ESS Modbus V001.02, Appendix C (explicitly an X3-Hybrid G4 example).
@@ -7,7 +8,8 @@ See docs/solax-entity-description.md for source links and supported models.
 Reserved bits are deliberately absent: a set reserved/unknown bit is still a fault.
 """
 
-# Only bits with the same meaning in all four legacy inverter tables are shared.
+# Only bits with the same meaning in all four Gen3/Gen4 legacy inverter tables are shared.
+# Gen2 uses a distinct bit layout (e.g. bit 4 is PLL Lost, bit 10 is PV Volt) so it does not reuse them.
 _COMMON_INVERTER_FAULTS = {
     1: "Grid Lost Fault",
     2: "Grid Volt Fault",
@@ -22,6 +24,40 @@ _COMMON_INVERTER_FAULTS = {
     12: "Isolation Fault",
     13: "Temp Over Fault",
     14: "BatConnDir Fault",
+}
+
+GEN2_X1_INVERTER_FAULTS = {
+    0: "Hardware Protection",
+    1: "Grid Lost Fault",
+    2: "Grid Volt Fault",
+    3: "Grid Freq Fault",
+    4: "PLL Lost Fault",
+    5: "Bus Volt Fault",
+    7: "Inverter OCP Fault",
+    8: "DCI OCP Fault",
+    9: "RC OCP Fault",
+    10: "PV Volt Fault",
+    11: "AC10mins Volt Fault",
+    12: "Isolation Fault",
+    13: "Temp Over Fault",
+    14: "Fan 1 Fault",
+    15: "Fan 2 Fault",
+    16: "SPI Comms Fault",
+    17: "SCI Comms Fault",
+    18: "CAN Comms Fault",
+    19: "Input Config Fault",
+    20: "EEPROM Fault",
+    21: "Relay Fault",
+    22: "Sample Consistence Fault",
+    23: "RCD Fault",
+    24: "Fan 1 Device Fault",
+    25: "Fan 2 Device Fault",
+    26: "HCT AC Device Fault",
+    27: "Overload Fault",
+    28: "EPS OCP Fault",
+    29: "DCI Device Fault",
+    30: "Other Device Fault",
+    31: "EPS Relay Fault",
 }
 
 _GEN3_INVERTER_FAULTS = {
@@ -108,6 +144,33 @@ GEN4_X3_INVERTER_FAULTS = {
 GEN4_X3_ESS_INVERTER_FAULTS = {
     **GEN4_X3_INVERTER_FAULTS,
     16: "Arc Fault",
+}
+
+GEN2_X1_CHARGER_FAULTS = {
+    0: "Boost Over Current",
+    1: "Battery Over Current",
+    2: "Battery Over Volt",
+    3: "Boost Over Volt",
+    4: "Charger BUS Over Volt",
+    5: "Charger Fan Fault",
+    6: "Charger EPS Overload",
+    7: "Charger High Temp",
+    8: "Charger Low Temp",
+    9: "Battery Awaken Failed",
+    10: "Charger Boost Fault",
+    11: "Charger Battery Fault",
+    12: "Charger EEPROM Fault",
+    13: "Charger Unrecover Fan Fault",
+    14: "Charger SPI Fault",
+    15: "Charger CAN Fault",
+}
+
+GEN2_X1_MANAGER_FAULTS = {
+    0: "Internet Error",
+    1: "RTC Error",
+    2: "EEPROM Error",
+    3: "Internal Comms Error",
+    4: "CT-Meter Missing",
 }
 
 GEN3_MANAGER_FAULTS = {
