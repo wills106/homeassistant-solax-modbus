@@ -36,7 +36,6 @@ from custom_components.solax_modbus.const import (
     BaseModbusSensorEntityDescription,
     UnitOfReactivePower,
     plugin_base,
-    value_function_disabled_enabled,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -980,7 +979,10 @@ SENSOR_TYPES_MAIN: list[AlphaESSModbusSensorEntityDescription] = [
     AlphaESSModbusSensorEntityDescription(
         key="3phase_unbalanced_mode",
         register=0x811,
-        scale=value_function_disabled_enabled,
+        scale={
+            0: "Disabled",
+            1: "Enabled",
+        },
         allowedtypes=GEN | X3,
         internal=True,
     ),

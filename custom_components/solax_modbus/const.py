@@ -599,15 +599,6 @@ def value_function_battery_input_solis(initval: Any, descr: Any, datadict: dict[
     return 0
 
 
-def value_function_disabled_enabled(initval: Any, descr: Any, datadict: dict[str, Any]) -> str:
-    """Convert 0/1 to Disabled/Enabled string."""
-    scale = {
-        0: "Disabled",
-        1: "Enabled",
-    }
-    return scale.get(initval, str(initval) + " Unknown Status")
-
-
 # This value function converts the bits to the number
 def value_function_packed_switches(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
     assert bit is not None and descr is not None
