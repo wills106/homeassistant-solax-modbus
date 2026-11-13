@@ -16,9 +16,9 @@ The old API and its Home Assistant deprecation warning remain in use while the Y
 
 Your integration name, entity IDs and automations are kept. Do not delete and re-add the integration.
 
-## Connection behavior
+## Connection behaviour
 
-| Situation | Behavior |
+| Situation | Behaviour |
 | --- | --- |
 | The selected YAML hub is still configured | Copy its connection settings and continue using the existing hub. Show a migration notification; do not open a second connection. |
 | YAML was removed, but the old hub is still running | Keep using the old hub until Home Assistant is restarted. |

@@ -14,7 +14,7 @@ Not only the error messages are of interest, but also the information on how blo
 The easiest way to temporarily enable debug logging is:
 - go to Settings -> Devices and services
 - Select the Solax Modbus integration
-- In the right corner aboven you will find a dropdown that allows you to enable debug logging: <img width="2358" height="742" alt="image" src="https://github.com/user-attachments/assets/d6089849-5671-46ec-b875-552b8ca1591c" />
+- In the right corner above you will find a dropdown that allows you to enable debug logging: <img width="2358" height="742" alt="image" src="https://github.com/user-attachments/assets/d6089849-5671-46ec-b875-552b8ca1591c" />
 - Restart HA (e.g. by going to Developer Tools > -> YAML tab -> Restart
 - Give HA sufficient time to restart and wait until all services are loaded. _Please make sure you wait long enough to catch sufficient logs (minimum 2 minutes)_
 - Go back to the Settings -> Devices and Services -> Solax modbus page and disable debug logging
@@ -51,7 +51,7 @@ You could also chose debug instead of info, but don't forget to disable debug mo
 
 ## Detected blocking call
 
-This issue is resolved in the 2024.02.6 version of the integration. Please update.
+Update to the latest version of the integration; older versions performed blocking Modbus calls on the event loop.
 
 ## Donations / Sponsor
 

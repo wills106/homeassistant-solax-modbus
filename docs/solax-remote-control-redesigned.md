@@ -221,7 +221,7 @@ ap_target = min(ap_target, import_limit - house_load, safe_ap_target_from_phase)
 - If ap_target = -30kW: Cap to max(-30kW, -20kW) = -20kW
 - Total grid export: 20kW (within limit)
 
-**Note:** Phase protection for exports is planned but not yet implemented.
+**Note:** Phase protection is also applied to exports: when exporting, the phase with the lowest house load is checked against the fuse limit, and the export target is capped accordingly.
 
 ### Complete Bounds Checking Logic
 ```python
@@ -312,7 +312,7 @@ Where:
 - Master distributes commands to slave inverters
 - Master reports total system status to Home Assistant
 
-**Slave Inverter Behavior**:
+**Slave Inverter Behaviour**:
 - Slaves should not execute remote control commands
 - Slaves report their individual status to the master
 - Slaves follow master's power distribution commands

@@ -27,8 +27,8 @@ Restarting Home Assistant does not start or repeat a VPP command.
 
 ## First use after upgrading / externally activated VPP
 
-Earlier versions did not persist the direct parameters. If VPP is already
-running but the integration does not know all its parameters, an individual
+If VPP is already running but the integration does not know all its
+parameters, an individual
 edit is rejected with an explanatory error. This prevents unknown companion
 values from being replaced with defaults. Configure the intended parameters
 with VPP disabled, then select the mode once to establish the complete command.
