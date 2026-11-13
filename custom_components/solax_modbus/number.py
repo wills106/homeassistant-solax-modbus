@@ -223,7 +223,8 @@ class SolaXModbusNumber(NumberEntity):
 
     @property
     def unique_id(self) -> str | None:
-        return f"{self._platform_name}_{self._key}"
+        identity_key = self.entity_description.unique_id_key or self._key
+        return f"{self._platform_name}_{identity_key}"
 
     @property
     def native_max_value(self) -> float:

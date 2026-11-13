@@ -35,6 +35,7 @@ from custom_components.solax_modbus.const import (
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
     plugin_base,
+    value_function_enable_disable,
 )
 
 from .pymodbus_compat import DataType, convert_from_registers
@@ -269,7 +270,7 @@ SWITCH_TYPES = [
         register=25100,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="grid_injection_power_limit_switch_state",
     ),
     SunwayModbusSwitchEntityDescription(
@@ -278,7 +279,7 @@ SWITCH_TYPES = [
         register=50001,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="eps_ups_function_switch_state",
     ),
     SunwayModbusSwitchEntityDescription(
@@ -287,7 +288,7 @@ SWITCH_TYPES = [
         register=50006,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="off_grid_asymmetric_output_switch_state",
     ),
     SunwayModbusSwitchEntityDescription(
@@ -296,7 +297,7 @@ SWITCH_TYPES = [
         register=50007,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="peak_load_shifting_switch_state",
     ),
     SunwayModbusSwitchEntityDescription(
@@ -305,7 +306,7 @@ SWITCH_TYPES = [
         register=52502,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="on_grid_battery_soc_protection_switch_state",
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-lock",
@@ -316,7 +317,7 @@ SWITCH_TYPES = [
         register=52504,
         write_method=WRITE_SINGLE_MODBUS,
         register_bit=0,
-        value_function=lambda bit, state, sk, d: 1 if state else 0,
+        value_function=value_function_enable_disable,
         sensor_key="off_grid_battery_soc_protection_switch_state",
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-lock-outline",
