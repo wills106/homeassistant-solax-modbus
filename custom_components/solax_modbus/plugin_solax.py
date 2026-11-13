@@ -13861,6 +13861,7 @@ from .energy_dashboard import EnergyDashboardMapping, EnergyDashboardSensorMappi
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
     plugin_name="solax",
+    inverter_count_key="pm_inverter_count",
     mappings=[
         # ===== SOC SENSOR =====
         # Battery SoC %

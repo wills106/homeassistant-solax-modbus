@@ -65,6 +65,8 @@ Parallel systems are supported with a Primary inverter and one or more Secondary
 - Uses Primary totals for "All" sensors where available
 - Exposes per‑inverter sensors to show individual contributions
 
+SolaX **All** totals that sum individual inverter readings remain unavailable until the expected inverter count and every contributor's readings are available. Enable **Parallel Mode (Master-Slave)** on the Primary integration and configure each Secondary inverter. The inverter count is polled automatically as a dependency; its diagnostic entity can remain disabled. This prevents incomplete totals during startup or a Secondary outage from being recorded as counter resets.
+
 For full parallel‑mode setup guidance, see: [solax-parallel-mode.md](solax-parallel-mode.md).
 
 ## Next Steps

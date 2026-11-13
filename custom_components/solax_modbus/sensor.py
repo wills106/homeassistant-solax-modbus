@@ -426,6 +426,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                         _LOGGER.info("%s: Registering %s Energy Dashboard entities", hub_name, len(new_entities))
                         entities.extend(new_entities)
                         async_add_entities(new_entities)
+                        # New computed entities may require disabled raw sensors.
+                        hub.blocks_changed = True
 
                     for key, description in desired.items():
                         sensor = dashboard_entities.get(key) or hub.sensorEntities.get(key)
@@ -603,6 +605,8 @@ class SolaXModbusSensor(SensorEntity):
     @property
     def available(self) -> bool:
         """Return whether the dashboard currently exposes this entity."""
+        if self.entity_description._energy_dashboard_source_hubs and self.native_value is None:
+            return False
         return self._energy_dashboard_active and self._computed_available and super().available
 
     @property
