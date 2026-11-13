@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+import struct
 from asyncio import sleep as _sleep
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -545,11 +546,45 @@ class CoreModbusUnitTransport:
         client = self._unit(unit)
         values = list(values)  # Preserve the exact payload across a possible retry.
 
+        def _decode_protocol_error(err: BaseException) -> bytes | None:
+            # Extract response payload from tmodbus protocol exception
+            seen: set[int] = set()
+            current: BaseException | None = err
+            while current is not None and id(current) not in seen:
+                seen.add(id(current))
+                raw = getattr(current, "response_bytes", None)
+                if isinstance(raw, (bytes, bytearray)):
+                    return bytes(raw)
+                current = current.__cause__ or current.__context__
+            return None
+
         async def operation() -> None:
-            if multiple:
-                await client.write_registers(address, values)
-            else:
-                await client.write_register(address, values[0])
+            from modbus_connection.exceptions import ModbusProtocolError
+
+            try:
+                if multiple:
+                    await client.write_registers(address, values)
+                else:
+                    await client.write_register(address, values[0])
+            except ModbusProtocolError as err:
+                # If there is a protocol error, it is possible the response is strictly
+                # valid but has trailing data (e.g. Sofar inverters).
+                # For the old pymodbus library, trailing data is already ignored. However
+                # for tmodbus in HA core, an exact match is required meaning trailing data
+                # triggers this exception.
+                # We check to see if the actual response starts with the expected response
+                # and if so accept it anyway. Otherwise rethrow.
+                function, value = (0x10, len(values)) if multiple else (0x06, values[0] & 0xFFFF)
+                expected_response = struct.pack(">BHH", function, address, value)
+                actual_response = _decode_protocol_error(err)
+                if actual_response is None or not actual_response.startswith(expected_response):
+                    raise
+                _LOGGER.debug(
+                    "%s: Accepted write response with trailing bytes. Response actual=[%s], expected=[%s]",
+                    self.endpoint,
+                    actual_response,
+                    expected_response,
+                )
 
         await self._request(client, f"write unit={unit} address=0x{address:x} count={len(values)}", operation, read=False)
         # The public API confirms successful writes by returning without error.

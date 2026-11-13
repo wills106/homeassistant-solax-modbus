@@ -46,6 +46,8 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
+    value_function_enable_disable,
+    value_function_packed_switches,
     value_function_rtc_ymd,
     value_function_sync_rtc_ymd,
 )
@@ -258,21 +260,6 @@ DISPATCH_GRID_CHARGING_OPTIONS_INV = {v: k for k, v in DISPATCH_GRID_CHARGING_OP
 
 
 # ============================================= Charging ===========================================================
-
-
-# This value function converts the bits to the number
-def value_function_timing_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    assert bit is not None and descr is not None
-    state_int = 1 if state else 0
-    value = int(datadict.get(descr, 0))
-    _LOGGER.debug(">>> Old value of %s: %s", descr, value)
-    new_value = (value & ~(1 << bit)) | (state_int << bit)
-    return new_value
-
-
-def value_function_direct_on_off(bit: int | None, state: bool | None, descr: str | None, datadict: dict[str, Any]) -> int:
-    """Write the switch state directly as the whole register value (e.g. dispatch master 44100)."""
-    return 1 if state else 0
 
 
 def value_function_timingmode_charge_1(initval: Any, descr: Any, datadict: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -2284,7 +2271,7 @@ SWITCH_TYPES = [
         key="dispatch_master",
         register=44100,
         allowedtypes=HYBRID,
-        value_function=value_function_direct_on_off,
+        value_function=value_function_enable_disable,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:power",
     ),
@@ -2295,7 +2282,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=0,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 2 Enable",
@@ -2304,7 +2291,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=1,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 3 Enable",
@@ -2313,7 +2300,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=2,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 4 Enable",
@@ -2322,7 +2309,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=3,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 5 Enable",
@@ -2331,7 +2318,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=4,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Charge Slot 6 Enable",
@@ -2340,7 +2327,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=5,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 1 Enable",
@@ -2349,7 +2336,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=6,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 2 Enable",
@@ -2358,7 +2345,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=7,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 3 Enable",
@@ -2367,7 +2354,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=8,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 4 Enable",
@@ -2376,7 +2363,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=9,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 5 Enable",
@@ -2385,7 +2372,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=10,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
     SolisModbusSwitchEntityDescription(
         name="Timed Discharge Slot 6 Enable",
@@ -2394,7 +2381,7 @@ SWITCH_TYPES = [
         icon="mdi:switch",
         register_bit=11,
         sensor_key="timed_charge_discharge_on_off",
-        value_function=value_function_timing_on_off,
+        value_function=value_function_packed_switches,
     ),
 ]
 

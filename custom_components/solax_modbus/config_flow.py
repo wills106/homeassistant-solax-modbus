@@ -36,6 +36,7 @@ from .connection import (
     matching_config_entries,
 )
 from .const import (
+    CONF_AUTOREPEAT_INPUT_GRACE,
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_ENERGY_DASHBOARD_DEVICE,
@@ -58,6 +59,7 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
+    DEFAULT_AUTOREPEAT_INPUT_GRACE,
     DEFAULT_BAUDRATE,
     DEFAULT_ENERGY_DASHBOARD_DEVICE,
     # PLUGIN_PATH_OLDSTYLE,
@@ -177,6 +179,7 @@ CONFIG_SCHEMA = vol.Schema(
             vol.Coerce(int), vol.Range(min=0)
         ),
         vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY, default=DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY): bool,
+        vol.Optional(CONF_AUTOREPEAT_INPUT_GRACE, default=DEFAULT_AUTOREPEAT_INPUT_GRACE): cv.positive_int,
     }
 )
 
@@ -206,6 +209,7 @@ OPTION_SCHEMA = vol.Schema(
             vol.Coerce(int), vol.Range(min=0)
         ),
         vol.Optional(CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY, default=DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY): bool,
+        vol.Optional(CONF_AUTOREPEAT_INPUT_GRACE, default=DEFAULT_AUTOREPEAT_INPUT_GRACE): cv.positive_int,
     }
 )
 

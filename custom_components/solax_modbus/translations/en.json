@@ -21,6 +21,7 @@
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
+          "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
           "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
           "modbus_request_summary_retries_only": "Only report intervals with retries"
         },
@@ -121,6 +122,7 @@
           "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
           "time_out": "Request timeout (s)",
+          "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
           "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
           "modbus_request_summary_retries_only": "Only report intervals with retries"
         },
