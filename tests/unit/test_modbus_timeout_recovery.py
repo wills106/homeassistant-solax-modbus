@@ -1,6 +1,7 @@
 """Bounded HA-managed read recovery without false health or quarantine events."""
 
 import asyncio
+from collections.abc import AsyncIterator
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
@@ -74,7 +75,7 @@ def recovery(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 @pytest.mark.parametrize("kind", ["holding", "input"])
 @pytest.mark.parametrize("error_type", [ModbusTimeoutError, ModbusConnectionError])
-async def test_timeout_reconnects_and_repeats_exact_read_once(
+async def test_first_read_retry_preserves_connection_and_exact_request(
     recovery: Any, kind: str, error_type: type[Exception], caplog: pytest.LogCaptureFixture
 ) -> None:
     method = getattr(recovery.unit, f"read_{kind}_registers")
@@ -86,7 +87,7 @@ async def test_timeout_reconnects_and_repeats_exact_read_once(
     result = await recovery.transport.read(kind, 1, 3306, 7)
 
     assert result.registers == [123]
-    assert [call[0] for call in order.mock_calls] == ["read", "disconnect", "read"]
+    assert [call[0] for call in order.mock_calls] == ["read", "read"]
     assert method.await_args_list[0] == method.await_args_list[1]
     assert method.await_args.args == (3306, 7)
     assert recovery.transport.backoff_remaining == 0
@@ -95,8 +96,7 @@ async def test_timeout_reconnects_and_repeats_exact_read_once(
     recovery.unit.require_connect_delay.assert_called_once_with(1)
     recovery.unit.set_message_spacing.assert_called_once_with(0.05)
     recovery.getter.assert_called_once()
-    assert "retrying once" in caplog.text
-    assert "succeeded after reconnect" in caplog.text
+    assert caplog.text == ""
 
 
 async def test_recovered_block_is_fresh_and_never_degrades_health_or_triggers_bisect(recovery: Any) -> None:
@@ -120,7 +120,7 @@ async def test_exhausted_read_records_one_failure_but_no_bad_register_evidence(r
     result = await recovery.hub.async_read_modbus_block({}, recovery.block, "holding")
 
     assert result.data_succeeded is False
-    assert recovery.unit.read_holding_registers.await_count == 2
+    assert recovery.unit.read_holding_registers.await_count == 3
     recovery.unit.disconnect.assert_awaited_once()
     assert recovery.hub._comm_last_block_failure_time is not None
     assert recovery.hub._comm_block_failures == {}
@@ -136,7 +136,7 @@ async def test_cooldown_sends_no_requests_and_does_not_record_another_block_fail
     with pytest.raises(transport.CoreModbusBackoff):
         await recovery.hub.async_read_modbus_block({}, recovery.block, "holding")
 
-    assert recovery.unit.read_holding_registers.await_count == 2
+    assert recovery.unit.read_holding_registers.await_count == 3
     assert recovery.hub._comm_last_block_failure_time == failed_at
     assert await recovery.hub.async_read_modbus_data(SimpleNamespace(publish_updates=True)) is PollOutcome.SKIPPED
 
@@ -169,7 +169,11 @@ async def test_backoff_uses_timeout_multiples_caps_at_ten_minutes_and_resets(rec
 @pytest.mark.parametrize("where", ["disconnect", "retry"])
 async def test_reset_and_reconnection_failures_are_bounded_and_logged(recovery: Any, where: str, caplog: pytest.LogCaptureFixture) -> None:
     error = ModbusConnectionError("cannot reconnect")
-    recovery.unit.read_holding_registers.side_effect = [ModbusTimeoutError("response timeout"), error]
+    recovery.unit.read_holding_registers.side_effect = [
+        ModbusTimeoutError("response timeout"),
+        ModbusTimeoutError("first retry timeout"),
+        error,
+    ]
     if where == "disconnect":
         recovery.unit.disconnect.side_effect = error
 
@@ -177,7 +181,7 @@ async def test_reset_and_reconnection_failures_are_bounded_and_logged(recovery: 
         await recovery.transport.read("holding", 1, 3306, 7)
 
     assert caught.value.__cause__ is error
-    assert recovery.unit.read_holding_registers.await_count == (1 if where == "disconnect" else 2)
+    assert recovery.unit.read_holding_registers.await_count == (2 if where == "disconnect" else 3)
     assert recovery.transport.backoff_remaining == 5
     assert ("no retry was sent" if where == "disconnect" else "reconnect or repeated") in caplog.text
     assert "paused for 5.0 seconds" in caplog.text
@@ -207,7 +211,7 @@ async def test_bisect_aborts_without_quarantining_when_transport_times_out(recov
     with pytest.raises(transport.CoreModbusBackoff):
         await recovery.hub._probe_block(recovery.block, "holding")
     assert recovery.hub.bad_regs == {"holding": set(), "input": set()}
-    assert recovery.unit.read_holding_registers.await_count == 2
+    assert recovery.unit.read_holding_registers.await_count == 3
 
 
 async def test_recovery_cooldown_does_not_multiply_sleep_slowdown(recovery: Any) -> None:
@@ -251,7 +255,7 @@ async def test_shutdown_cancels_reconnect_without_sending_retry(recovery: Any, w
         inflight.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
-    method.assert_awaited_once()
+    assert method.await_count == (1 if write else 2)
     assert recovery.transport.recovering is False
 
 
@@ -319,7 +323,11 @@ async def test_read_backoff_never_blocks_writes_and_writes_do_not_reset_or_exten
 
 
 async def test_request_lock_prevents_write_from_interleaving_with_read_reconnect(recovery: Any) -> None:
-    recovery.unit.read_holding_registers.side_effect = [ModbusTimeoutError("response timeout"), [42]]
+    recovery.unit.read_holding_registers.side_effect = [
+        ModbusTimeoutError("response timeout"),
+        ModbusTimeoutError("first retry timeout"),
+        [42],
+    ]
     entered = asyncio.Event()
     release = asyncio.Event()
 
@@ -408,7 +416,7 @@ async def test_real_unit_api_reconnects_and_keeps_existing_handles(monkeypatch: 
         new_client.connect.assert_awaited_once()
         assert factory.call_count == 2
         assert all(call.kwargs["timeout"] == 5 for call in factory.call_args_list)
-        assert getattr(failed_unit, client_operation).await_count == 1
+        assert getattr(failed_unit, client_operation).await_count == (2 if operation.startswith("read_") else 1)
         assert getattr(restored_unit, client_operation).await_count == 1
         getter.assert_called_once()
         assert await second_consumer.read_coils(0, 1) == [True]
@@ -434,12 +442,12 @@ async def test_exhausted_read_stops_remaining_blocks_and_cooldown_polls_are_skip
         holdingBlocks=[recovery.block, recovery.block], inputBlocks=[recovery.block], readPreparation=None, readFollowUp=None, sensors=[]
     )
     assert await hub.async_read_modbus_data(group) is PollOutcome.FAILED
-    assert recovery.unit.read_holding_registers.await_count == 2
+    assert recovery.unit.read_holding_registers.await_count == 3
     recovery.unit.read_input_registers.assert_not_awaited()
     failed_at = hub._comm_last_block_failure_time
     assert await hub.async_read_modbus_data(group) is PollOutcome.SKIPPED
     assert hub._comm_last_block_failure_time == failed_at
-    assert recovery.unit.read_holding_registers.await_count == 2
+    assert recovery.unit.read_holding_registers.await_count == 3
 
 
 async def test_explicit_register_error_after_pause_returns_to_normal_bisect_policy(recovery: Any) -> None:
@@ -450,3 +458,243 @@ async def test_explicit_register_error_after_pause_returns_to_normal_bisect_poli
     assert result.data_succeeded is False
     assert recovery.transport.recovering is False
     assert len(recovery.hub._comm_block_failures[recovery.hub._block_key(recovery.block, "holding")]) == 1
+
+
+@pytest.mark.parametrize("kind", ["holding", "input"])
+async def test_final_read_retry_succeeds_after_reset(recovery: Any, kind: str, caplog: pytest.LogCaptureFixture) -> None:
+    method = getattr(recovery.unit, f"read_{kind}_registers")
+    method.side_effect = [ModbusTimeoutError("timeout"), ModbusTimeoutError("retry timeout"), [123]]
+
+    response = await recovery.transport.read(kind, 1, 3306, 7)
+
+    assert response.registers == [123]
+    assert method.await_count == 3
+    assert all(call.args == (3306, 7) for call in method.await_args_list)
+    recovery.unit.disconnect.assert_awaited_once()
+    assert recovery.transport.recovering is False
+    assert "first retry without resetting failed; reconnecting" in caplog.text
+    assert "succeeded after reconnect" in caplog.text
+    assert f"retrying read_{kind}_registers(3306, 7)" in caplog.text
+
+
+@pytest.mark.parametrize("kind", ["holding", "input"])
+async def test_final_read_retry_resets_after_one_failed_retry(recovery: Any, kind: str) -> None:
+    method = getattr(recovery.unit, f"read_{kind}_registers")
+    method.side_effect = [ModbusTimeoutError("timeout")] * 2 + [[123]]
+    order = Mock()
+    order.attach_mock(method, "read")
+    order.attach_mock(recovery.unit.disconnect, "disconnect")
+
+    response = await recovery.transport.read(kind, 1, 3306, 7)
+
+    assert response.registers == [123]
+    assert [call[0] for call in order.mock_calls] == ["read", "read", "disconnect", "read"]
+    assert all(call.args == (3306, 7) for call in method.await_args_list)
+    assert recovery.transport.recovering is False
+
+
+@pytest.mark.parametrize("retry", [1, 2])
+@pytest.mark.parametrize("error", [ModbusExceptionError(2), ModbusProtocolError("invalid response")])
+async def test_protocol_error_during_read_retry_stops_recovery(recovery: Any, retry: int, error: Exception) -> None:
+    recovery.unit.read_holding_registers.side_effect = [ModbusTimeoutError("timeout")] * retry + [error]
+
+    with pytest.raises(transport.CoreModbusUnitError) as caught:
+        await recovery.transport.read("holding", 1, 3306, 7)
+
+    assert caught.value.__cause__ is error
+    assert recovery.unit.read_holding_registers.await_count == retry + 1
+    assert recovery.unit.disconnect.await_count == int(retry == 2)
+    assert recovery.transport.recovering is False
+
+
+@pytest.fixture
+async def reporting(recovery: Any) -> AsyncIterator[Any]:
+    recovery.transport = transport.CoreModbusUnitTransport(
+        cast(Any, object()),
+        cast(Any, object()),
+        recovery.transport._settings,
+        1,
+        modbus_request_summary_interval=5,
+        unit_getter=recovery.getter,
+    )
+    recovery.hub._transport = recovery.transport
+    try:
+        yield recovery
+    finally:
+        await recovery.transport.close()
+
+
+def test_retry_reporting_is_disabled_by_default(recovery: Any) -> None:
+    assert recovery.transport._summary_interval == 0
+    assert recovery.transport._summary_timer is None
+    assert recovery.transport._summary_retries_only is False
+
+
+@pytest.mark.parametrize("retries_only", [False, True])
+@pytest.mark.parametrize("retried", [False, True])
+@pytest.mark.parametrize("kind", ["read", "write"])
+async def test_modbus_request_summary_filter_applies_to_reads_and_writes(
+    recovery: Any, retries_only: bool, retried: bool, kind: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    adapter = transport.CoreModbusUnitTransport(
+        cast(Any, object()),
+        cast(Any, object()),
+        recovery.transport._settings,
+        1,
+        modbus_request_summary_interval=5,
+        modbus_request_summary_retries_only=retries_only,
+        unit_getter=recovery.getter,
+    )
+    try:
+        method = recovery.unit.read_holding_registers if kind == "read" else recovery.unit.write_register
+        method.side_effect = [ModbusTimeoutError("timeout"), [42]] if retried else [[42]]
+        if kind == "read":
+            await adapter.read("holding", 1, 3306, 7)
+        else:
+            await adapter.write(1, 4135, [1], multiple=False)
+        caplog.clear()
+        assert adapter._summary_timer is not None
+        adapter._summary_timer.cancel()
+        recovery.now += 300
+        adapter._log_request_summary()
+        if retries_only and not retried:
+            assert caplog.text == ""
+        else:
+            assert f"{kind} summary (5min): requests=1 retries={int(retried)}" in caplog.text
+        assert adapter._read_summary.requests == 0
+        assert adapter._write_summary.requests == 0
+        caplog.clear()
+        assert adapter._summary_timer is not None
+        adapter._summary_timer.cancel()
+        recovery.now += 300
+        adapter._log_request_summary()
+        assert caplog.text == ""
+    finally:
+        await adapter.close()
+
+
+@pytest.mark.parametrize("retries_only", [False, True])
+async def test_zero_summary_interval_disables_reporting_regardless_of_filter(recovery: Any, retries_only: bool) -> None:
+    adapter = transport.CoreModbusUnitTransport(
+        cast(Any, object()),
+        cast(Any, object()),
+        recovery.transport._settings,
+        1,
+        modbus_request_summary_interval=0,
+        modbus_request_summary_retries_only=retries_only,
+        unit_getter=recovery.getter,
+    )
+    try:
+        await adapter.read("holding", 1, 3306, 7)
+        await adapter.write(1, 4135, [1], multiple=False)
+        assert adapter._summary_timer is None
+        assert adapter._read_summary.requests == 0
+        assert adapter._read_summary.timings == []
+        assert adapter._write_summary.requests == 0
+        assert adapter._write_summary.timings == []
+    finally:
+        await adapter.close()
+
+
+@pytest.mark.parametrize("attempts", [1, 2, 3])
+async def test_read_summary_counts_logical_requests_and_extra_attempts(reporting: Any, attempts: int, caplog: pytest.LogCaptureFixture) -> None:
+    reporting.unit.read_holding_registers.side_effect = [ModbusTimeoutError("timeout")] * (attempts - 1) + [[42]]
+    await reporting.transport.read("holding", 1, 3306, 7)
+
+    summary = reporting.transport._read_summary
+    assert summary.requests == 1
+    assert summary.retry_attempts == attempts - 1
+    assert summary.re_retries == int(attempts > 2)
+    assert summary.failed == 0
+    assert len(summary.timings) == 1
+    caplog.clear()
+    summary.log(reporting.transport.endpoint, "read")
+    assert f"requests=1 retries={attempts - 1} ({100 * (attempts - 1):.3f}%)" in caplog.text
+    assert f"re-retries={int(attempts > 2)} failed=0" in caplog.text
+
+
+async def test_write_summary_is_separate_and_has_no_read_reretry_field(reporting: Any, caplog: pytest.LogCaptureFixture) -> None:
+    reporting.unit.write_register.side_effect = [ModbusTimeoutError("missing acknowledgement"), None]
+    await reporting.transport.write(1, 4135, [1], multiple=False)
+
+    summary = reporting.transport._write_summary
+    assert (summary.requests, summary.retry_attempts, summary.failed) == (1, 1, 0)
+    assert reporting.transport._read_summary.requests == 0
+    caplog.clear()
+    summary.log(reporting.transport.endpoint, "write")
+    assert "write summary (0min): requests=1 retries=1 (100.000%) failed=0" in caplog.text
+    assert "re-retries" not in caplog.text
+
+
+async def test_exhausted_read_summary_counts_failure_and_excludes_deferred_reads(reporting: Any) -> None:
+    reporting.unit.read_holding_registers.side_effect = ModbusTimeoutError("timeout")
+    with pytest.raises(transport.CoreModbusUnitError, match="failed after reconnect and two retries"):
+        await reporting.transport.read("holding", 1, 3306, 7)
+    with pytest.raises(transport.CoreModbusBackoff):
+        await reporting.transport.read("holding", 1, 3306, 7)
+
+    summary = reporting.transport._read_summary
+    assert (summary.requests, summary.retry_attempts, summary.re_retries, summary.failed) == (1, 2, 1, 1)
+    assert summary.timings == []
+
+
+async def test_cancelled_read_is_not_counted_as_completed_request(reporting: Any) -> None:
+    reporting.unit.read_holding_registers.side_effect = asyncio.CancelledError()
+    with pytest.raises(asyncio.CancelledError):
+        await reporting.transport.read("holding", 1, 3306, 7)
+    assert reporting.transport._read_summary.requests == 0
+    assert reporting.transport.recovering is False
+
+
+async def test_summary_timer_reports_intervals_without_retries_and_stops_on_close(reporting: Any, caplog: pytest.LogCaptureFixture) -> None:
+    await reporting.transport.read("holding", 1, 3306, 7)
+    old_timer = reporting.transport._summary_timer
+    old_timer.cancel()
+    reporting.now += 300
+    reporting.transport._log_request_summary()
+    assert "read summary (5min): requests=1 retries=0" in caplog.text
+    assert reporting.transport._read_summary.requests == 0
+    assert reporting.transport._summary_timer is not old_timer
+    timer = reporting.transport._summary_timer
+    await reporting.transport.close()
+    assert timer.cancelled()
+    assert reporting.transport._summary_timer is None
+    reporting.transport._log_request_summary()
+    assert reporting.transport._summary_timer is None
+    await reporting.transport.connect()
+    assert reporting.transport._summary_timer is not None
+
+
+def test_summary_percentiles_use_successful_attempt_timings_only(recovery: Any, caplog: pytest.LogCaptureFixture) -> None:
+    summary = transport._RequestSummary()
+    summary.record(2, [50.0], True)
+    summary.record(1, [100.0], True)
+    summary.record(3, [], False)
+    recovery.now += 300
+    summary.log("test-endpoint", "read")
+
+    assert "read summary (5min): requests=3 retries=3 (100.000%) re-retries=1 failed=1" in caplog.text
+    assert "min/p50/p95/p99/max=50/50/100/100/100ms" in caplog.text
+
+
+async def test_request_completing_after_report_is_counted_in_next_window(reporting: Any, caplog: pytest.LogCaptureFixture) -> None:
+    entered = asyncio.Event()
+    release = asyncio.Event()
+
+    async def read(address: int, count: int) -> list[int]:
+        entered.set()
+        await release.wait()
+        return [42]
+
+    reporting.unit.read_holding_registers.side_effect = read
+    task = asyncio.create_task(reporting.transport.read("holding", 1, 3306, 7))
+    await entered.wait()
+    reporting.transport._summary_timer.cancel()
+    reporting.now += 300
+    reporting.transport._log_request_summary()
+    release.set()
+    await task
+
+    assert caplog.text == ""
+    assert reporting.transport._read_summary.requests == 1
+    assert reporting.transport._read_summary.failed == 0

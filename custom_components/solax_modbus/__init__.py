@@ -68,6 +68,8 @@ from .const import (
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
     CONF_MODBUS_ADDR,
+    CONF_MODBUS_REQUEST_SUMMARY_INTERVAL,
+    CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     CONF_PLUGIN,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
@@ -76,6 +78,8 @@ from .const import (
     DEFAULT_BAUDRATE,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
+    DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL,
+    DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     DEFAULT_PORT,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
@@ -390,6 +394,17 @@ def _load_plugin(plugin_name: str) -> ModuleType:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a SolaX modbus."""
+    options = dict(entry.options)
+    for previous_key, current_key in (
+        ("summary_report_interval", CONF_MODBUS_REQUEST_SUMMARY_INTERVAL),
+        ("retry_report_interval", CONF_MODBUS_REQUEST_SUMMARY_INTERVAL),
+        ("summary_report_retries_only", CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY),
+    ):
+        if previous_key in options:
+            previous_value = options.pop(previous_key)
+            options.setdefault(current_key, previous_value)
+    if options != entry.options:
+        hass.config_entries.async_update_entry(entry, options=options)
     _LOGGER.debug("setup config entries - data: %s, options: %s", entry.data, entry.options)
 
     # Ensure DOMAIN dict exists (needed for reload support)
@@ -695,7 +710,16 @@ class SolaXModbusHub:
             if yaml_hub_name is not None or core_settings is None:
                 self._transport = CoreModbusTransport(hass, yaml_hub_name or config.get(CONF_CORE_HUB, ""), name)
             else:
-                self._transport = CoreModbusUnitTransport(hass, entry, core_settings, int(modbus_addr))
+                self._transport = CoreModbusUnitTransport(
+                    hass,
+                    entry,
+                    core_settings,
+                    int(modbus_addr),
+                    modbus_request_summary_interval=config.get(CONF_MODBUS_REQUEST_SUMMARY_INTERVAL, DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL),
+                    modbus_request_summary_retries_only=config.get(
+                        CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY, DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY
+                    ),
+                )
         else:
             self._transport = UnavailableModbusTransport(interface)
         self._lock = asyncio.Lock()
