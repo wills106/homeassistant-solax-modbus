@@ -1487,15 +1487,25 @@ class SolaXModbusHub:
             try:
                 cycle_computed_keys.update(self._compute_poll_sensors(self.data, cycle_fresh_keys, getattr(interval_group, "interval", None)))
                 self._computed_input_observations = self._pending_input_observations
-                cycle_computed_keys = {
-                    key
-                    for key in cycle_computed_keys
-                    if key not in self._computed_input_observations
-                    or getattr(self.computedSensors[key], "allow_none", False)
-                    or is_inputless_computed_sensor(self.computedSensors[key])
-                    or getattr(self.computedSensors[key], "_energy_dashboard_mapping", None) is not None
-                    or self._accepted_input_sample(key) is not None
-                }
+                accepted_keys: set[str] = set()
+                for key in cycle_computed_keys:
+                    if key not in self._computed_input_observations:
+                        accepted_keys.add(key)
+                        continue
+                    descr = self.computedSensors.get(key)
+                    if descr is None:
+                        # The sensor can go away while the groups are read (e.g. the
+                        # energy dashboard is reconciled); there is nothing to publish.
+                        _LOGGER.debug("%s: computed sensor %s was removed during the poll", self._name, key)
+                        continue
+                    if (
+                        getattr(descr, "allow_none", False)
+                        or is_inputless_computed_sensor(descr)
+                        or getattr(descr, "_energy_dashboard_mapping", None) is not None
+                        or self._accepted_input_sample(key) is not None
+                    ):
+                        accepted_keys.add(key)
+                cycle_computed_keys = accepted_keys
             finally:
                 self._pending_input_observations = None
 
