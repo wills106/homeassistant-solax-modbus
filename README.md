@@ -102,6 +102,7 @@ For further Documentation please refer to the [Read the Docs](https://homeassist
 [Read the Docs - General FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/faq/)
  - [Read the Docs - Sofar FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/sofar-faq/)
  - [Read the Docs - SolaX FAQ](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solax-faq/)
+ - [Solix remote dispatch](https://homeassistant-solax-modbus.readthedocs.io/en/latest/solis-remote-dispatch/)
 
 ## Multiple Connections
 

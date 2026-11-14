@@ -37,6 +37,7 @@ from .const import (
     WRITE_DATA_LOCAL,
     BaseModbusSensorEntityDescription,
     BaseModbusSwitchEntityDescription,
+    value_function_enable_disable,
 )
 from .debug import get_debug_setting
 from .device_registry_lookup import link_parent_device
@@ -352,6 +353,7 @@ class EnergyDashboardMapping:
     mappings: list[EnergyDashboardSensorMapping]  # List of sensor mappings
     enabled: bool = True  # Whether Energy Dashboard sensors are enabled
     parallel_mode_supported: bool = True  # Whether plugin supports parallel mode
+    inverter_count_key: str | None = None  # Expected contributors to parallel aggregates
 
 
 # RiemannSumEnergySensor class is defined in sensor.py
@@ -476,9 +478,6 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
     energy_dashboard_device_info = create_energy_dashboard_device_info(hub, hass)
     energy_dashboard_platform_name = f"{hub._name} Energy Dashboard"
 
-    def _local_switch_value_function(_bit: Any, is_on: Any, _sensor_key: Any, _datadict: Any) -> Any:
-        return 1 if is_on else 0
-
     config_category = getattr(EntityCategory, "CONFIGURATION", None)
     if config_category is None:
         config_category = getattr(EntityCategory, "CONFIG", None)
@@ -494,7 +493,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_PV_VARIANTS,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:solar-power-variant",
                 entity_category=config_category,
             ),
@@ -505,7 +504,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_HOME_CONSUMPTION,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:home-lightning-bolt",
                 entity_category=config_category,
             ),
@@ -516,7 +515,7 @@ def _energy_dashboard_switch_provider(hub: Any, hass: Any, entry: Any) -> tuple[
                 write_method=WRITE_DATA_LOCAL,
                 initvalue=0,
                 sensor_key=ED_SWITCH_GRID_TO_BATTERY,
-                value_function=_local_switch_value_function,
+                value_function=value_function_enable_disable,
                 icon="mdi:transmission-tower-export",
                 entity_category=config_category,
             ),
@@ -872,13 +871,19 @@ def _needs_aggregation(target_key: str) -> Any:
     )
 
 
-def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMapping) -> Any:
+def _create_aggregated_value_function(sensor_mapping: EnergyDashboardSensorMapping, inverter_count_key: str | None = None) -> Any:
     """Sum only complete source snapshots supplied by the shared evaluator."""
 
     def value_function(initval: Any, descr: Any, datadict: dict[str, Any]) -> Any:
         sources = datadict.get("_energy_dashboard_source_data", [])
         if not sources:
             return None
+        if inverter_count_key:
+            expected_count = sources[0].get(inverter_count_key)
+            if type(expected_count) is not int or expected_count < 1 or len(sources) != expected_count:
+                return None
+            if sources[0].get("parallel_setting") != "Master" or any(source.get("parallel_setting") != "Slave" for source in sources[1:]):
+                return None
         values = [sensor_mapping.get_value(source) for source in sources]
         if any(value is None for value in values):
             return None
@@ -1122,10 +1127,14 @@ async def create_energy_dashboard_sensors(hub: Any, mapping: EnergyDashboardMapp
                         all_mapping, hub, energy_dashboard_device_info, source_hub=hub, name_prefix="All "
                     )
                     if aggregated_sensor:
+                        dependencies = list(aggregated_sensor[0].depends_on or [])
+                        if mapping.inverter_count_key and mapping.inverter_count_key not in dependencies:
+                            dependencies.append(mapping.inverter_count_key)
                         # Replace value function with aggregated version
                         aggregated_sensor[0] = replace(
                             aggregated_sensor[0],
-                            value_function=_create_aggregated_value_function(all_mapping),
+                            value_function=_create_aggregated_value_function(all_mapping, mapping.inverter_count_key),
+                            depends_on=dependencies,
                             _energy_dashboard_source_hubs=(hub, *(slave_hub for _name, slave_hub in slave_hubs)),
                         )
                         sensors.extend(aggregated_sensor)

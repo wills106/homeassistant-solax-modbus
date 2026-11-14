@@ -131,7 +131,8 @@ The thresholds used by these automations can be configured through input_number 
 
 The example automations shown below use a couple of input_number declarations to be declared in config/configuration.yaml:
 
-```
+{% raw %}
+```yaml
 input_number:
   no_discharge_price_threshold:
     name: No discharge price threshold
@@ -158,6 +159,8 @@ input_number:
     max: 98
     step: 2
 ```
+{% endraw %}
+
 This can be displayed as:
 
 ![SolaX mobus power control automation dashboard](images/solax-modbus-power-control-dashboard-automation.png)
@@ -168,7 +171,8 @@ This example assumes that:
 * the current grid import price is determined by sensor 'sensor.xxx_consumption_price'
 * the target charge level is fixed at 2500W in this example
 
-```
+{% raw %}
+```yaml
 alias: Gridcontrol charge
 description: ""
 trigger:
@@ -211,10 +215,12 @@ action:
       entity_id: button.solax_remotecontrol_trigger
 mode: single
 ```
+{% endraw %}
 
 ### Automation to stop  this forced Grid Charge
 
-```
+{% raw %}
+```yaml
 alias: Gridcontrol charge - Stop
 description: ""
 trigger:
@@ -260,6 +266,7 @@ action:
       entity_id: button.solax_remotecontrol_trigger
 mode: single
 ```
+{% endraw %}
 
 ### Automation to stop discharge at reasonably low import price (Houseload from Grid)
 
@@ -267,7 +274,8 @@ Similar assumptions as above.
 This automation will activate an equivalent of the feedin-priority standard mode.
 A variation for self-use mode can be created by replacing "Enabled Battery Control" by "Enabled Grid Control"
 
-```
+{% raw %}
+```yaml
 alias: Houseload from grid (and PV)
 description: ""
 trigger:
@@ -309,6 +317,7 @@ action:
       entity_id: button.solax_remotecontrol_trigger
 mode: single
 ```
+{% endraw %}
 
 ## Solax Gen3 approach
 

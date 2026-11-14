@@ -151,8 +151,11 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
 
         # Handle U32 overflow pattern
         if value >= 0xFFFFFF00:
-            last_value = pm_last_known_values.get(descr.key, 0)
-            _LOGGER.warning("PM U32 overflow %s: 0x%08X -> using last: %sW", descr.key, value, last_value)
+            last_value = pm_last_known_values.get(descr.key)
+            if last_value is None:
+                _LOGGER.warning("PM U32 overflow %s: 0x%08X -> no previously known value. Setting to 0.", descr.key, value)
+                return 0
+            _LOGGER.debug("PM U32 overflow %s: 0x%08X -> keeping last value: %s", descr.key, value, last_value)
             return last_value
 
         # Store valid values for future use
@@ -2351,7 +2354,10 @@ class solax_lv_plugin(plugin_base):
             seriesnumber = "unknown"
 
         # derive invertertupe from seriiesnumber
-        if seriesnumber.startswith("HL1060"):
+        if seriesnumber.startswith("HL1050"):
+            invertertype = HYBRID | GEN | X1  # X1-Hybrid-LV 5kW #2507
+            self.inverter_model = f"X1-Hybrid-LV {seriesnumber[4:5]}.{seriesnumber[5:6]}kW"
+        elif seriesnumber.startswith("HL1060"):
             invertertype = HYBRID | GEN | X1  # X1-Hybrid-LV 6kW
             self.inverter_model = f"X1-Hybrid-LV {seriesnumber[4:5]}.{seriesnumber[5:6]}kW"
         elif seriesnumber.startswith("10J080"):
