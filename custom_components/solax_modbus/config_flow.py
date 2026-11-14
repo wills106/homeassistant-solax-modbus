@@ -388,14 +388,26 @@ async def _duplicate_inverter_schema(handler: SchemaCommonFlowHandler) -> vol.Sc
 ENTITY_TYPE_ATTRIBUTES = ("SENSOR_TYPES", "NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES")
 
 
-def _plugin_uses_feature_flag(plugin_name: str | None, flag_name: str) -> bool:
-    """Return whether a plugin declares any entity gated by the named allowedtypes flag."""
+def _load_plugin(plugin_name: str) -> ModuleType:
+    _LOGGER.debug("trying to load plugin - plugin_name: %s", plugin_name)
+    plugin = importlib.import_module(f".plugin_{plugin_name}", "custom_components.solax_modbus")
+    if not plugin:
+        _LOGGER.error("Could not import plugin with name: %s", plugin_name)
+    return plugin
+
+
+async def _safe_load_plugin(handler: SchemaCommonFlowHandler, plugin_name: str | None) -> ModuleType | None:
     if not plugin_name:
-        return True
+        return None
     try:
-        plugin = _load_plugin(plugin_name)
+        plugin = await handler.parent_handler.hass.async_add_executor_job(_load_plugin, plugin_name)
     except Exception:
-        return True
+        return None
+    return plugin
+
+
+def _plugin_uses_feature_flag(plugin: ModuleType, flag_name: str) -> bool:
+    """Return whether a plugin declares any entity gated by the named allowedtypes flag."""
     flag = getattr(plugin, flag_name, None)
     if not isinstance(flag, int) or not flag:
         return False
@@ -408,26 +420,14 @@ def _plugin_uses_feature_flag(plugin_name: str | None, flag_name: str) -> bool:
     return False
 
 
-def _plugin_supports_energy_dashboard(plugin_name: str | None) -> bool:
+def _plugin_supports_energy_dashboard(plugin: ModuleType) -> bool:
     """Return whether a plugin provides Energy Dashboard mappings."""
-    if not plugin_name:
-        return True
-    try:
-        plugin = _load_plugin(plugin_name)
-    except Exception:
-        return True
     instance = getattr(plugin, "plugin_instance", plugin)
     return getattr(instance, "ENERGY_DASHBOARD_MAPPING", None) is not None or getattr(plugin, "ENERGY_DASHBOARD_MAPPING", None) is not None
 
 
-def _plugin_supports_device_group(plugin_name: str | None, group: str) -> bool:
+def _plugin_supports_device_group(plugin: ModuleType, group: str) -> bool:
     """Return whether a plugin declares any entity belonging to a named device group."""
-    if not plugin_name:
-        return True
-    try:
-        plugin = _load_plugin(plugin_name)
-    except Exception:
-        return True
     instance = getattr(plugin, "plugin_instance", plugin)
     for attribute in ("NUMBER_TYPES", "SELECT_TYPES", "SWITCH_TYPES", "TIME_TYPES", "BUTTON_TYPES", "SENSOR_TYPES"):
         for source in (instance, plugin):
@@ -440,32 +440,26 @@ def _plugin_supports_device_group(plugin_name: str | None, group: str) -> bool:
 async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
     """Options schema without the feature switches the selected plugin does not implement."""
     plugin_name = handler.options.get(CONF_PLUGIN)
+    plugin = await _safe_load_plugin(handler, plugin_name)
     hidden: set[str] = set()
-    for option, group in ((CONF_READ_DCB, "dry_contact"), (CONF_READ_GEN, "external_generator")):
-        if not _plugin_supports_device_group(plugin_name, group):
-            hidden.add(option)
-    if not _plugin_supports_energy_dashboard(plugin_name):
-        hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
-    for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
-        if not _plugin_uses_feature_flag(plugin_name, flag_name):
-            hidden.add(option)
-    if not _plugin_supports_device_group(plugin_name, "ems"):
-        hidden.add(CONF_READ_EMS)
-    if not _plugin_supports_device_group(plugin_name, "datahub"):
-        hidden.add(CONF_READ_DATAHUB)
+    if plugin is not None:
+        for option, group in ((CONF_READ_DCB, "dry_contact"), (CONF_READ_GEN, "external_generator")):
+            if not _plugin_supports_device_group(plugin, group):
+                hidden.add(option)
+        if not _plugin_supports_energy_dashboard(plugin):
+            hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
+        for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
+            if not _plugin_uses_feature_flag(plugin, flag_name):
+                hidden.add(option)
+        if not _plugin_supports_device_group(plugin, "ems"):
+            hidden.add(CONF_READ_EMS)
+        if not _plugin_supports_device_group(plugin, "datahub"):
+            hidden.add(CONF_READ_DATAHUB)
     schema = {marker: value for marker, value in OPTION_SCHEMA.schema.items() if getattr(marker, "schema", None) not in hidden}
     if _legacy_core_selected(handler):
         interface = next(marker for marker in schema if getattr(marker, "schema", None) == CONF_INTERFACE)
         schema[interface] = selector.SelectSelector(selector.SelectSelectorConfig(options=[*INTERFACES, LEGACY_INTERFACE]))
     return vol.Schema(schema)
-
-
-def _load_plugin(plugin_name: str) -> ModuleType:
-    _LOGGER.info("trying to load plugin - plugin_name: %s", plugin_name)
-    plugin = importlib.import_module(f".plugin_{plugin_name}", "custom_components.solax_modbus")
-    if not plugin:
-        _LOGGER.error("Could not import plugin with name: %s", plugin_name)
-    return plugin
 
 
 if (MAJOR_VERSION >= 2023) or ((MAJOR_VERSION == 2022) and (MINOR_VERSION >= 12)):  # type: ignore[comparison-overlap]  # backward compat
