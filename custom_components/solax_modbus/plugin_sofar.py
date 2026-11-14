@@ -4465,7 +4465,7 @@ class sofar_plugin(plugin_base):
                     native_min_value=0,
                     native_max_value=system_limit_w,
                 )
-                _LOGGER.info("Parallel Master: Set feedin_max_power limit to 0-%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
+                _LOGGER.debug("Parallel Master: Set feedin_max_power limit to 0-%sW (inverter_power_kw=%skW)", system_limit_w, hub.inverterPowerKw)
         return True
 
 
