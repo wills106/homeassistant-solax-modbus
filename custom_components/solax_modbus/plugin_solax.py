@@ -1217,9 +1217,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         # Split PV surplus into (a) battery charging up to charge rate limit (b) grid export if any excess
         # In deficit (house load > PV), prevent battery discharge, making up difference by importing from grid
 
-        # Export limit no readscale:
-        export_limit = datadict.get("export_control_user_limit", 30000)
-
         # SOC bounds
         max_charge_soc = datadict.get("battery_charge_upper_soc", 100)
 
@@ -1227,41 +1224,50 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         pvlimit = setpvlimit
         pushmode_power = 0  # +ve = discharge, -ve = charge
 
+        # Determine currently requested charge rate to allow filtering
+        cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
         # Debug inputs
         _LOGGER.debug(
-            "[Mode8 No-Discharge] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW soc=%s%% max_soc=%s%% pvlimit=%sW",
+            "[Mode8 No-Discharge] inputs pv=%sW hl=%sW hl_alt=%sW (using hl_alt) generator=%sW soc=%s%% max_soc=%s%% last_push=%sW battery_charge=%sW",
             pv,
             houseload,
             houseload_alt,
             generator_power,
             battery_capacity,
             max_charge_soc,
-            pvlimit,
+            cur_push,
+            battery_charge,
         )
 
-        # Surplus path: charge battery (within BMS and user cap), exporting any excess.
-        net_balance = pv + grid_balance
-        if net_balance >= 0:
-            surplus = net_balance
-
-            # Battery gets surplus PV up to BMS limit
+        # Current error between grid target, the actual measured grid power, and any power we are
+        # currently requesting from the battery. Negative means we are are not charging the battery
+        # enough, positive means we need to discharge it more to achieve balance.
+        # We set a grid target of 0 to try and encourage PV to go to the battery by default. If we
+        # get a negative balance, we can charge the battery up to that amount. Otherwise we must
+        # clamp discharge to 0 to hold the battery SoC.
+        # Any surplus beyond charging the battery at max rate will end up going to the grid up to
+        # the user export limit, beyond which the inverter will curtail PV automatically. A user
+        # set PV limit can also still be applied.
+        grid_target = 0
+        power_balance = grid_target - measured_power + cur_push
+        if power_balance >= 0:
+            # Surplus, charge the battery where possible
+            surplus = -power_balance
+            # Request all surplus charge the battery if possible based on current SoC
             desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
-            pushmode_power = -desired_charge
+            # Setpoint filter to slow down changes to battery
+            selected_charge = autorepeat_setpoint_filter(-cur_push, desired_charge, filter_steps)
+            pushmode_power = min(-selected_charge, 0)
 
-            # If there is any left over, it goes to the grid
-            surplus_export = max(0, surplus - desired_charge)
-            export_within_cap = min(export_limit, surplus_export)
-            if surplus_export > export_limit:
-                # Unless we've exceeded the export limit, in which case limit the PV too
-                pvlimit = pv - (surplus_export - export_limit)
-                surplus_export = export_limit
+            # If there is any left over, it will go to the grid. Calculate estimated surplus export
+            # for logging purposes.
+            surplus_export = max(0, surplus - selected_charge)
 
             _LOGGER.debug(
-                "[Mode8 No-Discharge] charge-first: surplus=%sW within_bms=%sW surplus_export=%sW within_cap=%sW pvlimit=%sW bms_cap≈%sW pct_cap=%sW -> charge=%sW",
+                "[Mode8 No-Discharge] charge-first: surplus=%sW within_bms=%sW surplus_export=%sW pvlimit=%sW bms_cap≈%sW pct_cap=%sW -> charge=%sW",
                 surplus,
                 max_charge,
                 surplus_export,
-                export_within_cap,
                 pvlimit,
                 bms_cap_w,
                 pct_cap_w,
@@ -1269,15 +1275,17 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             )
 
         else:
-            # Deficit path: hold battery SoC
-            deficit = 0 - net_balance
-
+            # Deficit. Hold battery SoC, using grid import instead.
+            deficit = power_balance
             pushmode_power = 0
-            _LOGGER.debug("[Mode8 No-Discharge] deficit: deficit=%sW hold-soc=%s%% chosen_push=%sW", deficit, battery_capacity, pushmode_power)
+
+            _LOGGER.debug("[Mode8 No-Discharge] deficit: deficit=%sW hold-soc=%s%% -> push=0W", deficit, battery_capacity)
 
         # Final debug and state
         net_flow = min(pvlimit, pv) + grid_balance + pushmode_power
-        _LOGGER.debug("[Mode8 No-Discharge] result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow)
+        _LOGGER.debug(
+            "[Mode8 No-Discharge] estimated result: push=%sW pvlimit=%sW net_flow=%sW (>0 export, <0 import)", pushmode_power, pvlimit, net_flow
+        )
 
     elif power_control == "Export-First Battery Limit":
         # --- Export-First Battery Limit (Mode 8 custom) ---
