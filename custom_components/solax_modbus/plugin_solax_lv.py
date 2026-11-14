@@ -2423,13 +2423,11 @@ class solax_lv_plugin(plugin_base):
     def localDataCallback(self, hub: Any) -> bool:
         # adapt the read scales for export_control_user_limit if exception is configured
         # only called after initial polling cycle and subsequent modifications to local data
-        _LOGGER.info("local data update callback")
-
         config_scale_entity = hub.numberEntities.get("config_export_control_limit_readscale")
         if config_scale_entity and config_scale_entity.enabled:
             new_read_scale = hub.data.get("config_export_control_limit_readscale")
             if new_read_scale is not None:
-                _LOGGER.info("local data update callback for read_scale: %s enabled: %s", new_read_scale, config_scale_entity.enabled)
+                _LOGGER.debug("local data update callback for read_scale: %s enabled: %s", new_read_scale, config_scale_entity.enabled)
                 number_entity = hub.numberEntities.get("export_control_user_limit")
                 sensor_entity = hub.sensorEntities.get("export_control_user_limit")
                 if number_entity:
@@ -2461,7 +2459,7 @@ class solax_lv_plugin(plugin_base):
                             native_min_value=0,
                             native_max_value=system_limit_w,
                         )
-                        _LOGGER.info("Parallel Master: Set %s limits to 0-%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
+                        _LOGGER.debug("Parallel Master: Set %s limits to 0-%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
                     else:
                         number_entity._attr_native_min_value = -system_limit_w
                         number_entity._attr_native_max_value = system_limit_w
@@ -2470,7 +2468,7 @@ class solax_lv_plugin(plugin_base):
                             native_min_value=-system_limit_w,
                             native_max_value=system_limit_w,
                         )
-                        _LOGGER.info("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
+                        _LOGGER.debug("Parallel Master: Set %s limits to ±%sW (inverter_power_kw=%skW)", key, system_limit_w, hub.inverterPowerKw)
 
         # For single inverters or if config_max_export is enabled, use config_max_export.
         # Parallel Master remote-control limits are handled above using total system power,
@@ -2500,7 +2498,7 @@ class solax_lv_plugin(plugin_base):
                         number_entity.entity_description,
                         native_max_value=new_max_export,
                     )
-                    _LOGGER.info("local data update callback for entity: %s new limit: %s", key, new_max_export)
+                    _LOGGER.debug("local data update callback for entity: %s new limit: %s", key, new_max_export)
 
         return False
 
