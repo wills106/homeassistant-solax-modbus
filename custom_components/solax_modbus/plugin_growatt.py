@@ -10123,7 +10123,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             9: "Bypass",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10139,7 +10139,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             5: "Update Mode",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10157,7 +10157,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             7: "7, ?",
         },
         register_type=REG_INPUT,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:run",
     ),
         GrowattModbusSensorEntityDescription(
@@ -10168,7 +10168,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:alert-circle-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10179,7 +10179,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:alert-circle-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10190,7 +10190,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:shield-alert-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10201,7 +10201,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:shield-alert-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10214,7 +10214,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 1 VPP",
@@ -10226,7 +10226,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10239,7 +10239,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 2 VPP",
@@ -10251,7 +10251,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10264,7 +10264,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 3 VPP",
@@ -10320,7 +10320,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
         GrowattModbusSensorEntityDescription(
         name="Grid Frequency VPP",
@@ -10334,7 +10334,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.01,
         rounding=2,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31106: Grid voltage / Line A-B voltage (UINT16, 0.1 V)
     # Bij output-mode L/N is dit de netspanning, anders de lijnspanning A-B.
@@ -10350,7 +10350,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31107: BC line voltage (UINT16, 0.1 V)
     GrowattModbusSensorEntityDescription(
@@ -10365,7 +10365,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31108: CA line voltage (UINT16, 0.1 V)
     GrowattModbusSensorEntityDescription(
@@ -10380,7 +10380,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31109: Grid current / phase A current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10395,7 +10395,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31110: Grid phase B current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10410,7 +10410,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     # 31111: Grid phase C current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10425,7 +10425,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
      GrowattModbusSensorEntityDescription(
         name=" Grid Meter Power VPP",
@@ -10439,7 +10439,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:transmission-tower",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10455,7 +10455,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Energy To Load VPP",
@@ -10483,7 +10483,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Energy To Grid VPP",
@@ -10497,7 +10497,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Energy To Grid VPP",
@@ -10539,7 +10539,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Battery BMS1 Charge VPP",
@@ -10553,7 +10553,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Battery BMS1 Discharge VPP",
@@ -10567,7 +10567,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Battery BMS1 Discharge VPP",
@@ -10581,7 +10581,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Max Charge Power BMS1 VPP",
@@ -10596,7 +10596,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Max Discharge Power BMS1 VPP",
@@ -10612,7 +10612,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         rounding=1,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Voltage BMS1 VPP",
@@ -10626,7 +10626,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Current BMS1 VPP",
@@ -10640,7 +10640,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10653,7 +10653,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery SOH BMS1 VPP",
@@ -10665,7 +10665,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=ALL_GEN_GROUP,  # to be checked
+        allowedtypes=HYBRID | GEN4 | X3
         icon="mdi:battery-heart-variant",
     ),
 ]
