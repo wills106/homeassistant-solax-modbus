@@ -321,7 +321,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(entities)
     # now the groups are available
     hub.rebuild_blocks(initial_groups)  # , computedRegs) # first time call
-    _LOGGER.info("%s: computedRegs: %s", hub.name, hub.computedSensors)
+    _LOGGER.debug("%s: computedRegs: %s", hub.name, hub.computedSensors)
 
     # Energy Dashboard Virtual Device integration (after rebuild_blocks so initial_groups are ready for reading)
     try:
