@@ -1156,6 +1156,11 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             selected_charge,
         )
     elif power_control == "Enabled Feedin Priority":
+        # Attempts to push all PV to the home/grid.
+        # If PV is insufficient to cover house load, battery will discharge to make up the difference.
+        # If PV is greater than the combined house load and export limit, PV will be curtailed and the
+        # battery will still not be charged. Try "Export-First Battery Limit" to allow battery to charge
+        # with excess beyond export limit.
         pvlimit = setpvlimit
         # Determine currently requested charge rate to allow filtering
         cur_push = (-battery_charge) if (cur_push := datadict.get("remotecontrol_current_pushmode_power", None)) is None else cur_push
