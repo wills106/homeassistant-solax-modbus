@@ -177,10 +177,6 @@ def value_function_minutes_to_time(initval: int, descr: Any, datadict: dict[str,
     minutes = max(0, min(int(initval), 1440))
     return f"{minutes // 60:02}:{minutes % 60:02}"
 
-def minutes_to_time(minutes: int) -> str:
-    minutes = max(0, min(int(minutes), 1440))
-    return f"{minutes // 60:02}:{minutes % 60:02}"
-
 def time_to_int(time_str: str | None) -> int:
     if time_str is None:
         time_str = "00:00"
@@ -2260,7 +2256,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_3_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=HYBRID | GEN4 | MPPT3,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2284,7 +2280,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=GEN3 | GEN4,
         internal=True,
     ),
-        GrowattModbusSensorEntityDescription(
+    GrowattModbusSensorEntityDescription(
         key="active_power_limit_vpp",
         register=30151,
         allowedtypes=HYBRID | GEN4,
@@ -2547,7 +2543,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN4,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-clock",
-        internal="true"
+        internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery SOH",
@@ -3315,7 +3311,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         name="Grid Status",
         allowedtypes=GEN4,
         value_function=lambda initval, descr, datadict: (
-            "Off (Výpadek - z baterie)" if (datadict.get("register_3000", 0) & 0xFF) == 2 else "On (connected to net)"
+            "Off-grid (battery)" if (datadict.get("register_3000", 0) & 0xFF) == 2 else "On-grid"
         ),
         depends_on=["register_3000"],
         icon="mdi:transmission-tower",
@@ -10128,7 +10124,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Status VPP",
-        key="battery_operating_status_VPP",
+        key="battery_operating_status_vpp",
         register=31001,
         scale={
             0: "Standby",
@@ -10264,7 +10260,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=HYBRID | GEN4 | MPPT3,
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 3 VPP",
@@ -10276,7 +10272,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=HYBRID | GEN4 | MPPT3,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10337,7 +10333,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN4,
     ),
     # 31106: Grid voltage / Line A-B voltage (UINT16, 0.1 V)
-    # Bij output-mode L/N is dit de netspanning, anders de lijnspanning A-B.
+    # In output mode L/N this is the grid voltage, otherwise the line-to-line voltage A-B.
     GrowattModbusSensorEntityDescription(
         name="Grid Voltage AB VPP",
         key="grid_voltage_ab_vpp",
@@ -10428,8 +10424,8 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=HYBRID | GEN4,
     ),
      GrowattModbusSensorEntityDescription(
-        name=" Grid Meter Power VPP",
-        key="Grid meter_power_vpp",
+        name="Grid Meter Power VPP",
+        key="grid_meter_power_vpp",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10459,7 +10455,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Energy To Load VPP",
-        key="todays_energy_to_Load_vpp",
+        key="todays_energy_to_load_vpp",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
