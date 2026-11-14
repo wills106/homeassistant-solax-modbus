@@ -1397,15 +1397,14 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     elif power_control == "Enabled Grid Control":
         # --- Enabled Grid Control (Mode 8 custom) ---
         # Controller goals:
-        # The aim is the balance house load, pv and battery push to achieve a constant power
-        # at the grid connection. PV will not be curtailed.
-        # 1) If PV - house load ≥ required export (export surplus), charge battery with excess PV if
+        # The aim is to achieve a constant power at the grid connection. PV will not be curtailed.
+        # 1) If measured export ≥ required export (export surplus), charge battery with excess PV if
         #    possible. Export will be higher than target if excess PV.
-        # 2) If PV - house load < required export (export deficit), discharge battery to make up deficit
+        # 2) If measured export < required export (export deficit), discharge battery to make up deficit
         #    if possible, otherwise let export reduce. Swap to import if house load exceeds local sources.
-        # 3) If house load ≥ required import (import deficit), use PV or battery to make up deficit where
+        # 3) If measured import ≥ required import (import deficit), use PV or battery to make up deficit where
         #    possible. Import will be higher than target if insufficient local sources.
-        # 4) If house load < required import (import surplus), charge battery with surplus from grid. If
+        # 4) If measured import < required import (import surplus), charge battery with surplus from grid. If
         #    there is PV, that will also charge battery. If battery cannot be charged import will drop
         #    and may switch to export if excess PV.
 
@@ -1436,11 +1435,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             battery_charge,
         )
 
-        # Current balance between house load, grid target and PV generation. Negative means
-        # excess energy available to charge the battery, positive means we need to discharge
-        # the battery to zero the balance.
-        export_deadband_w = int(datadict.get("export_feedback_deadband_w", 50) or 50)
-        power_balance = export_deadband_w + grid_target - pv - grid_balance
+        # Current error between grid target, the actual measured grid power, and any power we are
+        # currently requesting from the battery. Negative means we are are not charging the battery
+        # enough, positive meas we need to discharge it more to achieve balance.
+        power_balance = grid_target - measured_power + cur_push
         if power_balance <= 0:
             # Surplus, charge the battery where possible
             surplus = -power_balance
