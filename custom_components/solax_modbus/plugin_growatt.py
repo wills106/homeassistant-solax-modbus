@@ -2230,7 +2230,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_1_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=ALL_GEN_GROUP, # to be checked
+        allowedtypes=HYBRID | GEN4 | X3,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2245,7 +2245,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_2_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=ALL_GEN_GROUP, # to be checked
+        allowedtypes=HYBRID | GEN4 | X3,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2260,7 +2260,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_3_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=ALL_GEN_GROUP, # to be checked
+        allowedtypes=HYBRID | GEN4 | X3,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2269,7 +2269,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30099,
         scale=1,
         register_data_type=REGISTER_U16,
-        allowedtypes=ALL_GEN_GROUP, # to be checked
+        allowedtypes=HYBRID | GEN4 | X3,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
         internal=True,
