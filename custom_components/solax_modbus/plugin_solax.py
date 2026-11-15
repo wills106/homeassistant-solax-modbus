@@ -2112,7 +2112,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         value_function=value_function_sync_rtc,
     ),
     SolaxModbusButtonEntityDescription(
-        name="Remotecontrol Trigger (mode 1-7)",
+        name="Auto (Mode 1) - Trigger",
         key="remotecontrol_trigger",
         device_group="vpp",
         register=0x7C,
@@ -2144,7 +2144,7 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
     ),
     SolaxModbusButtonEntityDescription(
-        name="PowerControlMode Trigger (mode 8/9)",
+        name="Auto (Mode 8) - Trigger",
         key="powercontrolmode8_trigger",
         device_group="vpp",
         register=0xA0,
@@ -2512,7 +2512,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     #
     ###
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Active Power (mode 1)",
+        name="Auto (Mode 1) - Active Power",
         key="remotecontrol_active_power",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | VPP,
@@ -2529,7 +2529,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Reactive Power (mode 1)",
+        name="Auto (Mode 1) - Reactive Power",
         key="remotecontrol_reactive_power",
         device_group="vpp",
         register_data_type=REGISTER_S32,
@@ -2545,7 +2545,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration (mode 1-8)",
+        name="Auto (Mode 1) - Command Duration",  # Must be set to > poll interval and < safety timeout.
         key="remotecontrol_duration",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -2561,7 +2561,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Autorepeat Duration (mode 1-9)",
+        name="Auto (Mode 1/8) - Total Run Time",
         key="remotecontrol_autorepeat_duration",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -2577,7 +2577,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Import Limit (mode 1-9)",
+        name="Auto (Mode 1/8) - Import Limit",
         key="remotecontrol_import_limit",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2593,7 +2593,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol PV Power Limit (mode 8/9)",
+        name="Auto (Mode 8) - PV Power Limit",
         key="remotecontrol_pv_power_limit",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2609,7 +2609,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (mode 8/9)",
+        name="Auto (Mode 8) - Push Power",
         key="remotecontrol_push_mode_power_8_9",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2625,7 +2625,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Battery Charge Limit (mode 8/9)",
+        name="Auto (Mode 8) - Battery Charge Limit",
         key="export_first_battery_charge_limit_8_9",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2640,7 +2640,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 8/9)",
+        name="Auto (Mode 8) - Target SOC",
         key="remotecontrol_target_soc_8_9",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2656,7 +2656,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Minimum SOC (mode 8/9)",
+        name="Auto (Mode 8) - Minimum SOC",
         key="remotecontrol_minimum_soc_8_9",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2672,7 +2672,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Filter Smoothing Factor (mode 8/9)",
+        name="Auto (Mode 8) - Filter Smoothing Factor",
         key="remotecontrol_smoothing_factor",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -2686,7 +2686,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Timeout (mode 1-9)",
+        name="Auto (Mode 1/8) - Safety Timeout",
         key="remotecontrol_timeout",
         device_group="vpp",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
@@ -3478,7 +3478,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     #
     #####
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Active Power (mode 1; direct)",
+        name="Direct (Mode 1) - Active Power",
         key="remotecontrol_active_power_direct",
         register_data_type=REGISTER_S32,
         fmt="i",
@@ -3497,7 +3497,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Reactive Power (mode 1; direct)",
+        name="Direct (Mode 1) - Reactive Power",
         key="remotecontrol_reactive_power_direct",
         register_data_type=REGISTER_S32,
         fmt="i",
@@ -3515,7 +3515,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration (mode 1; direct)",
+        name="Direct (Mode 1) - Duration",
         key="remotecontrol_duration_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
@@ -3533,7 +3533,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 3; direct)",
+        name="Direct (Mode 3) - Target SOC",
         key="remotecontrol_target_soc_direct",
         device_group="vpp",
         register=0x83,
@@ -3549,7 +3549,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target Energy (mode 2; direct)",
+        name="Direct (Mode 2) - Target Energy",
         key="remotecontrol_target_energy_direct",
         register_data_type=REGISTER_U32,
         fmt="i",
@@ -3567,7 +3567,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Charge/Discharge Power (mode 2/3; direct)",
+        name="Direct (Mode 2/3) - Charge/Discharge Power",
         key="remotecontrol_charge_discharge_power_direct",
         register_data_type=REGISTER_S32,
         fmt="i",
@@ -3587,7 +3587,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol TimeOut (mode 1-7; direct)",
+        name="Direct (Mode 1-7) - Timeout",
         key="remotecontrol_timeout_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
@@ -3605,7 +3605,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (mode 4; direct)",
+        name="Direct (Mode 4) - Push Mode Power",
         key="remotecontrol_push_mode_power_direct",
         register_data_type=REGISTER_S32,
         fmt="i",
@@ -3623,7 +3623,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol PV Power Limit (mode 8/9, direct)",
+        name="Direct (Mode 8/9) - PV Power Limit",
         key="remotecontrol_pv_power_limit_direct",
         register_data_type=REGISTER_U32,
         fmt="i",
@@ -3641,7 +3641,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Push Mode Power (mode 8/9; direct)",
+        name="Direct (Mode 8/9) - Push Power",
         key="remotecontrol_push_mode_power_8_9_direct",
         register_data_type=REGISTER_S32,
         fmt="i",
@@ -3659,7 +3659,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Duration (mode 8; direct)",
+        name="Direct (Mode 8) - Timeout",
         key="remotecontrol_duration_8_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
@@ -3677,7 +3677,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol Target SOC (mode 9; direct)",
+        name="Direct (Mode 9) - Target SOC",
         key="remotecontrol_target_soc_9_direct",
         device_group="vpp",
         register=0xA6,
@@ -3694,7 +3694,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
-        name="Remotecontrol TimeOut (mode 8/9; direct)",
+        name="Direct (Mode 9) - Timeout",
         key="remotecontrol_timeout_8_9_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
@@ -4127,7 +4127,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     #
     ###
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control (mode 1)",
+        name="Auto (Mode 1) - Power Control Mode",
         key="remotecontrol_power_control",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -4148,7 +4148,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Set Type (mode 1-9)",
+        name="Auto (Mode 1/8) - Set Type",
         key="remotecontrol_set_type",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -4162,7 +4162,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Power Control Mode (mode 8/9)",
+        name="Auto (Mode 8) - Power Control Mode",
         key="remotecontrol_power_control_mode",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -4183,7 +4183,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Timeout Next Motion (mode 1-9)",
+        name="Auto (Mode 8) - Next Motion",
         key="remotecontrol_timeout_next_motion",
         device_group="vpp",
         register_data_type=REGISTER_U16,
@@ -4514,7 +4514,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
     #
     #####
     SolaxModbusSelectEntityDescription(
-        name="Modbus Power Control (direct)",
+        name="Direct (Mode 1-7) - Control Mode",
         key="modbus_power_control_direct",
         device_group="vpp",
         register=0x7C,
@@ -4537,7 +4537,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="RemoteControl Target Set Type (mode 1-7; direct)",
+        name="Direct (Mode 1-7) - Target Set Type",
         key="remote_control_target_set_type_direct",
         device_group="vpp",
         register=0x7D,
@@ -4552,7 +4552,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="RemoteControl Power Control Mode (mode 8/9; direct)",
+        name="Direct (Mode 8/9) - Control Mode",
         key="remote_control_power_control_mode_direct",
         device_group="vpp",
         register=0xA0,
@@ -4568,7 +4568,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:transmission-tower",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Power Control Mode Target Set Type (mode 8/9; direct)",
+        name="Direct (Mode 8/9) - Target Set Type",
         key="power_control_mode_target_set_type_direct",
         device_group="vpp",
         register=0xA1,
@@ -6517,9 +6517,9 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         allowedtypes=AC | HYBRID | GEN5,
     ),
     # V001.00 added VPP readback registers at 0x01A0+. Most fields are
-    # mode-dependent, so only expose the stable mode plus mode 8/9 targets.
+    # mode-dependent, so only expose the stable mode plus mode 8 targets.
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Readback Mode",
+        name="Readback (Mode 8) - Current Mode",
         key="remotecontrol_readback_mode",
         device_group="vpp",
         register=0x1A0,
@@ -6543,7 +6543,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:transmission-tower",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Mode 8 PV Power Limit Readback",
+        name="Readback (Mode 8) - PV Power Limit",
         key="remotecontrol_mode8_pv_power_limit_readback",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -6559,7 +6559,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Mode 8 Battery Power Target Readback",
+        name="Readback (Mode 8) - Battery Power Target",
         key="remotecontrol_mode8_battery_power_target_readback",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -6575,7 +6575,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:battery-sync",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Mode 8 Timeout Readback",
+        name="Readback (Mode 8) - Timeout",
         key="remotecontrol_mode8_timeout_readback",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         device_class=SensorDeviceClass.DURATION,
@@ -6590,7 +6590,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:timer",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Mode 8 Next Motion Readback",
+        name="Readback (Mode 8) - Next Motion",
         key="remotecontrol_mode8_next_motion_readback",
         device_group="vpp",
         register=0x1A7,
@@ -10849,7 +10849,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol Autorepeat Remaining",
+        name="Auto (Mode 1/8) - Run Time Remaining",
         key="remotecontrol_autorepeat_remaining",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10861,7 +10861,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:home-clock",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol current inverter power",
+        name="Auto (Mode 1) - Current Inverter Power",
         key="remotecontrol_current_inverter_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10875,7 +10875,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         suggested_display_precision=0,
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol current PV power limit",
+        name="Auto (Mode 8) - Current PV Limit",
         key="remotecontrol_current_pv_power_limit",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -10889,7 +10889,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         icon="mdi:solar-power-variant",
     ),
     SolaXModbusSensorEntityDescription(
-        name="Remotecontrol current pushmode power",
+        name="Auto (Mode 8) - Current Push Power",
         key="remotecontrol_current_pushmode_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
