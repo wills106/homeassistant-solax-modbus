@@ -1822,8 +1822,8 @@ def value_function_pm_total_house_load(initval: int, descr: Any, datadict: dict[
     physics_method = pv_power - grid_power - battery_power
 
     # Apply delta correction during remote control if delta is reasonable (< 25%)
-    rc_active = datadict.get("remotecontrol_active_power", 0)
-    correction_ready = all(key in datadict for key in ("pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"))
+    rc_active = datadict.get("remotecontrol_autorepeat_remaining", 0)
+    correction_ready = all(key in datadict for key in ("pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_autorepeat_remaining"))
     if correction_ready and rc_active != 0 and inverter_method != 0:
         delta = physics_method - inverter_method
 
@@ -9863,7 +9863,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_group="pm",
         allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5 | GEN6 | PM,
         depends_on=["pm_total_inverter_power", "measured_power", "parallel_setting"],
-        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_active_power"],
+        optional_depends_on=["pm_total_pv_power", "pm_battery_power_charge", "remotecontrol_autorepeat_remaining"],
         icon="mdi:home-lightning-bolt",
     ),
     SolaXModbusSensorEntityDescription(
