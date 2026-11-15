@@ -26,8 +26,10 @@ from custom_components.solax_modbus.const import (
     BUTTONREPEAT_POST,
     CONF_READ_EPS,
     CONF_READ_PM,
+    CONF_READ_VPP,
     DEFAULT_READ_EPS,
     DEFAULT_READ_PM,
+    DEFAULT_READ_VPP,
     REG_HOLDING,
     REG_INPUT,
     REGISTER_S16,
@@ -139,6 +141,9 @@ MPPT6 = 0x200000
 MPPT8 = 0x400000
 MPPT10 = 0x800000
 ALL_MPPT_GROUP = MPPT3 | MPPT4 | MPPT5 | MPPT6 | MPPT8 | MPPT10
+
+VPP = 0x1000000
+ALL_VPP_GROUP = VPP
 
 ALLDEFAULT = 0  # should be equivalent to AC | HYBRID | GEN2 | GEN3 | GEN4 | GEN5 | X1 | X3
 
@@ -13826,10 +13831,13 @@ class solax_plugin(plugin_base):
 
             read_eps = configdict.get(CONF_READ_EPS, DEFAULT_READ_EPS)
             read_pm = configdict.get(CONF_READ_PM, DEFAULT_READ_PM)
+            read_vpp = configdict.get(CONF_READ_VPP, DEFAULT_READ_VPP)
             if read_eps:
                 invertertype = invertertype | EPS
             if read_pm:
                 invertertype = invertertype | PM
+            if read_vpp:
+                invertertype = invertertype | VPP
 
         return invertertype
 
@@ -13844,12 +13852,13 @@ class solax_plugin(plugin_base):
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP) != 0) or (entitymask & ALL_MPPT_GROUP == 0)
         pmmatch = ((inverterspec & entitymask & ALL_PM_GROUP) != 0) or (entitymask & ALL_PM_GROUP == 0)
+        vppmatch = ((inverterspec & entitymask & ALL_VPP_GROUP) != 0) or (entitymask & ALL_VPP_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and pmmatch and vppmatch) and not blacklisted
 
     def getSoftwareVersion(self, new_data: dict[str, Any]) -> str | None:
         return new_data.get("software_version", None)
