@@ -15,6 +15,7 @@ from custom_components.solax_modbus.plugin_solax import (
     GEN3,
     GEN4,
     HYBRID,
+    VPP,
     X1,
     X3,
     SolaXModbusSensorEntityDescription,
@@ -27,7 +28,7 @@ from custom_components.solax_modbus.plugin_solax import (
 PRI_SERIAL = "PRI502H9168435"
 
 # FIT inverterspec as the plugin sets it for PRI devices
-FIT_INVERTER = FIT | GEN3 | X1
+FIT_INVERTER = FIT | GEN3 | X1 | VPP
 
 # PV input sensor keys that FIT must NOT expose (no DC MPPT hardware)
 PV_SENSOR_KEYS = {
@@ -235,5 +236,6 @@ async def test_determine_inverter_type_pri_serial(mock_hub: Any) -> None:
     config: dict[str, Any] = {"read_eps": False, "read_dcb": False}
     inverter_type = await solax_plugin.async_determineInverterType(mock_hub, config)
 
-    expected = FIT | GEN3 | X1
+    expected = FIT_INVERTER
+
     assert inverter_type == expected, f"PRI serial should map to FIT|GEN3|X1 ({expected:#06x}), got {inverter_type:#06x}"

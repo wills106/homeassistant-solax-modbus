@@ -186,7 +186,8 @@ def test_invalid_optional_meter_is_omitted_without_mutating_source(bad: Any) -> 
 
 
 @pytest.mark.parametrize(
-    ("stale", "expected"), [(None, 2050), ("pm_total_pv_power", 2000), ("remotecontrol_active_power", 2000), ("pm_battery_power_charge", 2000)]
+    ("stale", "expected"),
+    [(None, 2050), ("pm_total_pv_power", 2000), ("remotecontrol_autorepeat_remaining", 2000), ("pm_battery_power_charge", 2000)],
 )
 def test_parallel_house_load_never_corrects_using_stale_optional(stale: str | None, expected: int) -> None:
     hub = make_hub()
@@ -198,7 +199,7 @@ def test_parallel_house_load_never_corrects_using_stale_optional(stale: str | No
             "measured_power": 1000,
             "pm_total_pv_power": 2900,
             "pm_battery_power_charge": 0,
-            "remotecontrol_active_power": 500,
+            "remotecontrol_autorepeat_remaining": 500,
         },
     )
     fresh = set(hub.data) - {stale}
