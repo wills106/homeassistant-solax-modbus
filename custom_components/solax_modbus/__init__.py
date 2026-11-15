@@ -76,6 +76,7 @@ from .const import (
     CONF_READ_EPS,
     CONF_READ_GEN,
     CONF_READ_PM,
+    CONF_READ_VPP,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
@@ -97,6 +98,7 @@ from .const import (
     DEFAULT_READ_EPS,
     DEFAULT_READ_GEN,
     DEFAULT_READ_PM,
+    DEFAULT_READ_VPP,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
@@ -461,8 +463,9 @@ DEVICE_GROUP_NAMES: dict[str, str] = {
     "dry_contact": "Dry Contact",
     "external_generator": "External Generator",
     "eps": "EPS",
+    "vpp": "Remote Control",
     "pm": "Parallel",
-    "ems": "EMS∕V2G",
+    "ems": "EMS/V2G",
     "datahub": "Datahub",
 }
 
@@ -470,6 +473,7 @@ GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
     "dry_contact": (CONF_READ_DCB, DEFAULT_READ_DCB),
     "external_generator": (CONF_READ_GEN, DEFAULT_READ_GEN),
     "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
+    "vpp": (CONF_READ_VPP, DEFAULT_READ_VPP),
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
     "ems": (CONF_READ_EMS, DEFAULT_READ_EMS),
     "datahub": (CONF_READ_DATAHUB, DEFAULT_READ_DATAHUB),
@@ -3669,7 +3673,7 @@ class SolaXModbusHub:
             _LOGGER.debug("%s: probe %s 0x%x-0x%x timed out after %s", self._name, typ, block_obj.start, block_obj.end, timeout_msg)
             return False
         except Exception as ex:
-            _LOGGER.info("%s: probe %s 0x%x-0x%x failed: %s", self._name, typ, block_obj.start, block_obj.end, ex)
+            _LOGGER.warning("%s: probe %s 0x%x-0x%x failed: %s", self._name, typ, block_obj.start, block_obj.end, ex)
             return False
 
 
