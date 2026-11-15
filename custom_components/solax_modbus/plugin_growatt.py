@@ -103,6 +103,13 @@ APX_BMS_INPUT = 0x800000
 TSS_BMS_INPUT = 0x1000000
 ALL_APX_BMS_REGISTER_GROUP = APX_BMS_INPUT | TSS_BMS_INPUT
 
+# Set during detection when the VPP protocol version register (30099) reports at least VPP_MIN_PROTOCOL_VERSION.
+VPP = 0x2000000
+ALL_VPP_GROUP = VPP
+
+VPP_PROTOCOL_VERSION_REGISTER = 30099
+VPP_MIN_PROTOCOL_VERSION = 205  # 0 or a read error means no VPP support
+
 APX_BMS_INPUT_SERIAL_PREFIXES = ["DLP", "TSS", "AL1"]
 
 ALLDEFAULT = 0  # should be equivalent to HYBRID | AC | GEN | GEN2 | GEN3 | GEN4 | X1 | X3
@@ -885,7 +892,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusNumberEntityDescription(
     # not persistent - lowest of 30151 and 30154 is taken
@@ -897,7 +904,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusNumberEntityDescription(
         name="Export Limit Rate VPP",
@@ -908,7 +915,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_registry_enabled_default=True,
         icon="mdi:transmission-tower-export",
@@ -923,7 +930,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -942,7 +949,7 @@ NUMBER_TYPES = [
         native_step=0.1,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=NumberDeviceClass.POWER,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -961,7 +968,7 @@ NUMBER_TYPES = [
         native_step=0.1,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=NumberDeviceClass.POWER,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -977,7 +984,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -993,7 +1000,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -1009,7 +1016,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -1025,7 +1032,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -1040,7 +1047,7 @@ NUMBER_TYPES = [
         native_max_value=1440,
         native_step=5,
         native_unit_of_measurement=UnitOfTime.MINUTES,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-clock",
@@ -1054,7 +1061,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=5,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-sync",
@@ -1068,7 +1075,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-sync",
@@ -1082,7 +1089,7 @@ NUMBER_TYPES = [
         native_max_value=100,
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:battery-sync",
@@ -1407,7 +1414,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -1422,7 +1429,7 @@ SELECT_TYPES = [
             3: "CT External",
             4: "CT Internal",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_registry_enabled_default=True,
         icon="mdi:transmission-tower-export",
@@ -1435,7 +1442,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_registry_enabled_default=True,
         icon="mdi:chart-bell-curve-cumulative",
@@ -1455,7 +1462,7 @@ SELECT_TYPES = [
             6: "Idle",
             7: "7, ?",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:run",
@@ -1475,7 +1482,7 @@ SELECT_TYPES = [
             6: "Idle",
             7: "7, ?",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:run",
@@ -1488,7 +1495,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -1502,7 +1509,7 @@ SELECT_TYPES = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:dip-switch",
@@ -1513,7 +1520,7 @@ SELECT_TYPES = [
         register=30411,
         register_data_type=REGISTER_U16,
         option_dict={i: str(i) for i in range(0, 21)},
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
         icon="mdi:clock-check",
@@ -1523,7 +1530,7 @@ SELECT_TYPES = [
         key="vpp_default_mode_vpp",
         register=30476,
         option_dict={0: "Load First", 1: "Battery First", 2: "Grid First"},
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         write_method=WRITE_SINGLE_MODBUS,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=True,
@@ -2226,7 +2233,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_1_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2241,7 +2248,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_2_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2256,7 +2263,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             "pv_voltage_3_vpp",
         ],
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=HYBRID | GEN4 | MPPT3,
+        allowedtypes=MPPT3 | VPP,
         icon="mdi:solar-power-variant",
 ),
     GrowattModbusSensorEntityDescription(
@@ -2265,7 +2272,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30099,
         scale=1,
         register_data_type=REGISTER_U16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
         internal=True,
@@ -2277,19 +2284,19 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="active_power_limit_vpp",
         register=30151,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="active_power_limit_2_vpp",
         register=30154,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
@@ -2303,7 +2310,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             3: "CT External",
             4: "CT Internal",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:transmission-tower-export",
         internal=True,
     ),
@@ -2312,7 +2319,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30201,
         register_data_type=REGISTER_S16,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:transmission-tower-export",
         internal=True,
     ),
@@ -2321,7 +2328,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30202,
         register_data_type=REGISTER_U16,
         native_unit_of_measurement=PERCENTAGE,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:transmission-tower-off",
         internal=True,
@@ -2331,7 +2338,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30215,
         scale=0.1,
         register_data_type=REGISTER_U16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:battery-charging-high",
         internal=True,
     ),
@@ -2340,7 +2347,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30216,
         scale=0.1,
         register_data_type=REGISTER_U16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:battery-charging-high",
         internal=True,
     ),
@@ -2350,7 +2357,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-lock",
         internal=True,
@@ -2363,7 +2370,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:chart-bell-curve-cumulative",
         internal=True,
@@ -2374,7 +2381,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-arrow-up",
         internal=True,
@@ -2385,7 +2392,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-arrow-down",
         internal=True,
@@ -2396,7 +2403,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-arrow-down",
         internal=True,
@@ -2408,13 +2415,13 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="vpp_time_vpp",
         register=30408,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         scale=1,
         internal=True,
     ),
@@ -2422,7 +2429,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         key="vpp_power_vpp",
         register=30409,
         register_data_type=REGISTER_S16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         scale=1,
         internal=True,
     ),
@@ -2434,7 +2441,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             0: "Disabled",
             1: "Enabled",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
@@ -2442,28 +2449,28 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register=30411,
         register_data_type=REGISTER_U8L,
         scale=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="time_1_begin_time_vpp",
         register=30412,
         scale=value_function_minutes_to_time,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
         GrowattModbusSensorEntityDescription(
         key="time_1_end_time_vpp",
         register=30413,
         scale=value_function_minutes_to_time,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="time_1_power_vpp",
         register=30414,
         register_data_type=REGISTER_S16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         scale=1,
         internal=True,
     ),
@@ -2481,7 +2488,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             6: "Idle",
             7: "7, ?",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
@@ -2498,28 +2505,28 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             6: "Idle",
             7: "7, ?",
         },
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="time_2_begin_time_vpp",
         register=30415,
         scale=value_function_minutes_to_time,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="time_2_end_time_vpp",
         register=30416,
         scale=value_function_minutes_to_time,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="time_2_power_vpp",
         register=30417,
         register_data_type=REGISTER_S16,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         scale=1,
         internal=True,
     ),
@@ -2531,7 +2538,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S16,
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:battery-sync",
     ),
     GrowattModbusSensorEntityDescription(
@@ -2540,7 +2547,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_HOLDING,
         register_data_type=REGISTER_U16,
         scale={0: "Load First", 1: "Battery First", 2: "Grid First"},
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-clock",
         internal=True,
@@ -10119,7 +10126,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             9: "Bypass",
         },
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10135,7 +10142,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             5: "Update Mode",
         },
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:run",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10153,7 +10160,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
             7: "7, ?",
         },
         register_type=REG_INPUT,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:run",
     ),
         GrowattModbusSensorEntityDescription(
@@ -10164,7 +10171,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:alert-circle-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10175,7 +10182,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:alert-circle-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10186,7 +10193,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:shield-alert-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10197,7 +10204,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:shield-alert-outline",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10210,7 +10217,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 1 VPP",
@@ -10222,7 +10229,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10235,7 +10242,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 2 VPP",
@@ -10247,7 +10254,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10260,7 +10267,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4 | MPPT3,
+        allowedtypes=MPPT3 | VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="PV Current 3 VPP",
@@ -10272,7 +10279,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4 | MPPT3,
+        allowedtypes=MPPT3 | VPP,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10287,7 +10294,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:solar-power-variant",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10301,7 +10308,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U32,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:solar-power",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10316,7 +10323,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
         GrowattModbusSensorEntityDescription(
         name="Grid Frequency VPP",
@@ -10330,7 +10337,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.01,
         rounding=2,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31106: Grid voltage / Line A-B voltage (UINT16, 0.1 V)
     # In output mode L/N this is the grid voltage, otherwise the line-to-line voltage A-B.
@@ -10346,7 +10353,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31107: BC line voltage (UINT16, 0.1 V)
     GrowattModbusSensorEntityDescription(
@@ -10361,7 +10368,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31108: CA line voltage (UINT16, 0.1 V)
     GrowattModbusSensorEntityDescription(
@@ -10376,7 +10383,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31109: Grid current / phase A current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10391,7 +10398,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31110: Grid phase B current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10406,7 +10413,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     # 31111: Grid phase C current (INT16, 0.1 A)
     GrowattModbusSensorEntityDescription(
@@ -10421,7 +10428,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
      GrowattModbusSensorEntityDescription(
         name="Grid Meter Power VPP",
@@ -10435,7 +10442,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:transmission-tower",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10451,7 +10458,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Energy To Load VPP",
@@ -10465,7 +10472,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Energy To Load VPP",
@@ -10479,7 +10486,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Energy To Grid VPP",
@@ -10493,7 +10500,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Energy To Grid VPP",
@@ -10507,7 +10514,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Combined Power VPP",
@@ -10520,7 +10527,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_S32,
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:battery",
     ),
         GrowattModbusSensorEntityDescription(
@@ -10535,7 +10542,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Battery BMS1 Charge VPP",
@@ -10549,7 +10556,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Today's Battery BMS1 Discharge VPP",
@@ -10563,7 +10570,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Total Battery BMS1 Discharge VPP",
@@ -10577,7 +10584,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_MEDIUM,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Max Charge Power BMS1 VPP",
@@ -10592,7 +10599,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Max Discharge Power BMS1 VPP",
@@ -10608,7 +10615,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         rounding=1,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Voltage BMS1 VPP",
@@ -10622,7 +10629,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery Current BMS1 VPP",
@@ -10636,7 +10643,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         scan_group=SCAN_GROUP_FAST,
         scale=0.1,
         rounding=1,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:current-dc",
     ),
     GrowattModbusSensorEntityDescription(
@@ -10649,7 +10656,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_FAST,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
     ),
     GrowattModbusSensorEntityDescription(
         name="Battery SOH BMS1 VPP",
@@ -10661,7 +10668,7 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         scan_group=SCAN_GROUP_MEDIUM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         icon="mdi:battery-heart-variant",
     ),
 ]
@@ -11200,7 +11207,7 @@ TIME_TYPES = [
         register=30412,
         option_dict=TIME_OPTIONS_MINUTES_AFTER_MIDNIGHT,
         write_method=WRITE_SINGLE_MODBUS,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
@@ -11210,7 +11217,7 @@ TIME_TYPES = [
         register=30413,
         option_dict=TIME_OPTIONS_MINUTES_AFTER_MIDNIGHT,
         write_method=WRITE_SINGLE_MODBUS,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
@@ -11220,7 +11227,7 @@ TIME_TYPES = [
         register=30415,
         option_dict=TIME_OPTIONS_MINUTES_AFTER_MIDNIGHT,
         write_method=WRITE_SINGLE_MODBUS,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
@@ -11230,7 +11237,7 @@ TIME_TYPES = [
         register=30416,
         option_dict=TIME_OPTIONS_MINUTES_AFTER_MIDNIGHT,
         write_method=WRITE_SINGLE_MODBUS,
-        allowedtypes=HYBRID | GEN4,
+        allowedtypes=VPP,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:clock-start",
     ),
@@ -11362,6 +11369,32 @@ def _inverter_type_from_prefix(identifier: str | None, prefix_types: dict[str, i
     return 0
 
 
+async def async_read_vpp_protocol_version(hub: Any) -> int | None:
+    """Read the VPP protocol version (holding register 30099); None when the inverter does not answer."""
+    try:
+        res = await hub.async_read_holding_registers(unit=hub._modbus_addr, address=VPP_PROTOCOL_VERSION_REGISTER, count=1)
+        if not res or res.isError():
+            return None
+        return int(res.registers[0])
+    except Exception:
+        _LOGGER.debug("%s: reading the VPP protocol version failed", hub.name, exc_info=True)
+        return None
+
+
+async def async_vpp_supported(hub: Any) -> bool:
+    """True when register 30099 reports a VPP protocol version of at least VPP_MIN_PROTOCOL_VERSION."""
+    version = await async_read_vpp_protocol_version(hub)
+    supported = version is not None and version >= VPP_MIN_PROTOCOL_VERSION
+    _LOGGER.info(
+        "%s: VPP protocol version %s (minimum %d): VPP %s",
+        hub.name,
+        version,
+        VPP_MIN_PROTOCOL_VERSION,
+        "enabled" if supported else "disabled",
+    )
+    return supported
+
+
 @dataclass(kw_only=True)
 class growatt_plugin(plugin_base):
     async def async_determineInverterType(self, hub: Any, configdict: dict[str, Any]) -> int:
@@ -11403,6 +11436,8 @@ class growatt_plugin(plugin_base):
                 invertertype = invertertype | EPS
             if read_dcb:
                 invertertype = invertertype | DCB
+            if await async_vpp_supported(hub):
+                invertertype = invertertype | VPP
 
         return invertertype
 
@@ -11421,12 +11456,13 @@ class growatt_plugin(plugin_base):
         dcbmatch = ((inverterspec & entitymask & ALL_DCB_GROUP) != 0) or (entitymask & ALL_DCB_GROUP == 0)
         mpptmatch = ((inverterspec & entitymask & ALL_MPPT_GROUP) != 0) or (entitymask & ALL_MPPT_GROUP == 0)
         apx_bms_register_match = ((inverterspec & entitymask & ALL_APX_BMS_REGISTER_GROUP) != 0) or (entitymask & ALL_APX_BMS_REGISTER_GROUP == 0)
+        vppmatch = ((inverterspec & entitymask & ALL_VPP_GROUP) != 0) or (entitymask & ALL_VPP_GROUP == 0)
         blacklisted = False
         if blacklist:
             for start in blacklist:
                 if serialnumber.startswith(start):
                     blacklisted = True
-        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and apx_bms_register_match) and not blacklisted
+        return (genmatch and xmatch and hybmatch and epsmatch and dcbmatch and mpptmatch and apx_bms_register_match and vppmatch) and not blacklisted
 
 
 ENERGY_DASHBOARD_MAPPING = EnergyDashboardMapping(
