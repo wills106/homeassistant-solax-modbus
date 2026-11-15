@@ -450,7 +450,7 @@ async def _option_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
             hidden.add(option)
     if not _plugin_supports_energy_dashboard(plugin_name):
         hidden.add(CONF_ENERGY_DASHBOARD_DEVICE)
-    for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM")):
+    for option, flag_name in ((CONF_READ_EPS, "EPS"), (CONF_READ_PM, "PM"), (CONF_READ_VPP, "VPP")):
         if not _plugin_uses_feature_flag(plugin_name, flag_name):
             hidden.add(option)
     if not _plugin_supports_device_group(plugin_name, "ems"):
