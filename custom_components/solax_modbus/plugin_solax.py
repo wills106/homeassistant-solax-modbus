@@ -942,7 +942,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
     pushmode_power = datadict.get("remotecontrol_push_mode_power_8_9", 0)
     target_soc = datadict.get("remotecontrol_target_soc_8_9", 95)
     min_discharge_soc = max(datadict.get("remotecontrol_minimum_soc_8_9", 10), datadict.get("selfuse_discharge_min_soc", 10))
-    # rc_duration = datadict.get("remotecontrol_duration", 20)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     measured_power = datadict.get("measured_power") or 0
     battery_capacity = datadict.get("battery_capacity") or 0
@@ -1522,10 +1521,6 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
             "remotecontrol_push_mode_power_8_9",
             pushmode_power,
         ),
-        # (
-        #    "remotecontrol_duration",
-        #    rc_duration,
-        # ),
         (
             "remotecontrol_timeout",
             rc_timeout,
