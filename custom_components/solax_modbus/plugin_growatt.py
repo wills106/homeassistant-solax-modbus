@@ -2275,7 +2275,6 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
         allowedtypes=VPP,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:information",
-        internal=True,
     ),
     GrowattModbusSensorEntityDescription(
         key="vpp_status_vpp",
