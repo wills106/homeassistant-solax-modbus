@@ -38,29 +38,33 @@ class _RequestSummary:
         self.re_retries = 0
         self.failed = 0
         self.timings: list[float] = []
+        self.request_timings: list[float] = []
 
-    def record(self, attempts: int, timings: list[float], success: bool) -> None:
+    def record(self, attempts: int, timings: list[float], success: bool, request_duration_ms: float) -> None:
         self.requests += 1
         self.retry_attempts += attempts - 1
         self.re_retries += attempts > 2
         self.failed += not success
         self.timings.extend(timings)
+        self.request_timings.append(request_duration_ms)
 
     def log(self, endpoint: str, kind: str, *, retries_only: bool = DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY) -> None:
         if not self.requests or (retries_only and not self.retry_attempts):
             return
-        values = sorted(self.timings)
-        if values:
-            # Nearest-rank percentiles, using successful attempts only.
+
+        def format_timings(samples: list[float]) -> str:
+            values = sorted(samples)
+
             def percentile(fraction: float) -> float:
                 return values[max(0, ceil(len(values) * fraction) - 1)]
 
-            timing = f"min/p50/p95/p99/max={values[0]:.0f}/{percentile(0.50):.0f}/{percentile(0.95):.0f}/{percentile(0.99):.0f}/{values[-1]:.0f}ms"
-        else:
-            timing = "no successful attempt timings"
+            return f"min/p50/p95/p99/max={values[0]:.0f}/{percentile(0.50):.0f}/{percentile(0.95):.0f}/{percentile(0.99):.0f}/{values[-1]:.0f}ms"
+
+        timing = format_timings(self.timings) if self.timings else "no successful attempt timings"
+        request_timing = format_timings(self.request_timings)
         re_retries = f"re-retries={self.re_retries} " if kind == "read" else ""
         _LOGGER.warning(
-            "%s: %s summary (%.0fmin): requests=%d retries=%d (%.3f%%) %sfailed=%d; %s",
+            "%s: %s summary (%.0fmin): requests=%d retries=%d (%.3f%%) %sfailed=%d; %s; request_total_%s",
             endpoint,
             kind,
             (monotonic() - self.started) / 60,
@@ -70,6 +74,7 @@ class _RequestSummary:
             re_retries,
             self.failed,
             timing,
+            request_timing,
         )
 
 
@@ -374,6 +379,7 @@ class CoreModbusUnitTransport:
         if not self._summary_interval:
             return await self._request_with_retries(client, label, operation, read=read, request_name=request_name)
 
+        request_started = monotonic()
         attempts = 0
         timings: list[float] = []
 
@@ -388,7 +394,7 @@ class CoreModbusUnitTransport:
         def record(success: bool) -> None:
             if attempts:
                 summary = self._read_summary if read else self._write_summary
-                summary.record(attempts, timings, success)
+                summary.record(attempts, timings, success, (monotonic() - request_started) * 1000)
 
         try:
             result = await self._request_with_retries(client, label, measured_operation, read=read, request_name=request_name)

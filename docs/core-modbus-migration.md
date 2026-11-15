@@ -151,8 +151,16 @@ absent; interval 0 disables reporting regardless of the filter.
 The percentage is extra attempts divided by logical requests. For reads, `re-retries`
 counts requests reaching a third attempt, once per request. `failed` counts
 requests ending in an error. Deferred reads and cancelled requests are not counted.
-The min/p50/p95/p99/max values use nearest-rank percentiles of successful attempt
-durations in milliseconds, excluding timeout durations and total recovery time.
+The original min/p50/p95/p99/max values use nearest-rank percentiles of successful
+attempt durations in milliseconds, excluding timeout durations and total recovery time.
+The additional `request_total_min/p50/p95/p99/max` values measure completed logical
+requests, both successful and failed, from entry into the measured request wrapper.
+They include time waiting for its serialization lock, failed attempts and reconnect/retry
+work. They do not include later polling ticks spent in recovery backoff: a deferred
+request makes no I/O attempt and is not counted. Cancelled requests are excluded too.
+Use the attempt timings for response speed and the request totals for the time a slow
+or recovered request occupies the caller. This is diagnostic only: it adds no requests
+and does not change timeout, retry or polling settings.
 An in-flight request is counted in the interval in which it completes.
 
 ## Automatic TCP migration

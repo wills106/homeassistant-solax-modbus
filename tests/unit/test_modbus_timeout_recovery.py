@@ -590,8 +590,10 @@ async def test_zero_summary_interval_disables_reporting_regardless_of_filter(rec
         assert adapter._summary_timer is None
         assert adapter._read_summary.requests == 0
         assert adapter._read_summary.timings == []
+        assert adapter._read_summary.request_timings == []
         assert adapter._write_summary.requests == 0
         assert adapter._write_summary.timings == []
+        assert adapter._write_summary.request_timings == []
     finally:
         await adapter.close()
 
@@ -626,6 +628,78 @@ async def test_write_summary_is_separate_and_has_no_read_reretry_field(reporting
     assert "re-retries" not in caplog.text
 
 
+@pytest.mark.parametrize("kind,attempts", [("holding", 1), ("holding", 2), ("holding", 3), ("write", 1), ("write", 2)])
+async def test_summary_measures_total_request_time_including_recovery(reporting: Any, kind: str, attempts: int) -> None:
+    calls = 0
+
+    async def operation(*args: Any) -> list[int]:
+        nonlocal calls
+        calls += 1
+        if calls < attempts:
+            reporting.now += 5
+            raise ModbusTimeoutError("response timeout")
+        reporting.now += 0.125
+        return [42]
+
+    async def disconnect() -> None:
+        reporting.now += 0.75
+
+    reporting.unit.disconnect.side_effect = disconnect
+    if kind == "write":
+        reporting.unit.write_register.side_effect = operation
+        await reporting.transport.write(1, 4135, [1], multiple=False)
+        summary = reporting.transport._write_summary
+    else:
+        reporting.unit.read_holding_registers.side_effect = operation
+        await reporting.transport.read(kind, 1, 3306, 7)
+        summary = reporting.transport._read_summary
+
+    reconnect_ms = 750 if (kind == "write" and attempts == 2) or attempts == 3 else 0
+    assert summary.timings == pytest.approx([125])
+    assert summary.request_timings == pytest.approx([5000 * (attempts - 1) + reconnect_ms + 125])
+    assert calls == attempts
+
+
+@pytest.mark.parametrize("kind,attempts", [("holding", 3), ("write", 2)])
+async def test_summary_measures_total_time_for_failed_requests(reporting: Any, kind: str, attempts: int) -> None:
+    async def operation(*args: Any) -> None:
+        reporting.now += 5
+        raise ModbusTimeoutError("response timeout")
+
+    async def disconnect() -> None:
+        reporting.now += 0.75
+
+    reporting.unit.disconnect.side_effect = disconnect
+    with pytest.raises(transport.CoreModbusUnitError):
+        if kind == "write":
+            reporting.unit.write_register.side_effect = operation
+            await reporting.transport.write(1, 4135, [1], multiple=False)
+        else:
+            reporting.unit.read_holding_registers.side_effect = operation
+            await reporting.transport.read(kind, 1, 3306, 7)
+
+    summary = reporting.transport._write_summary if kind == "write" else reporting.transport._read_summary
+    assert summary.failed == 1
+    assert summary.timings == []
+    assert len(summary.request_timings) == 1
+    assert summary.request_timings == pytest.approx([5000 * attempts + 750])
+
+
+async def test_summary_total_includes_request_lock_wait(reporting: Any) -> None:
+    await reporting.transport._request_lock.acquire()
+    task = asyncio.create_task(reporting.transport.read("holding", 1, 3306, 7))
+    try:
+        await asyncio.sleep(0)
+        reporting.now += 2
+    finally:
+        reporting.transport._request_lock.release()
+    await task
+
+    summary = reporting.transport._read_summary
+    assert summary.timings == [0]
+    assert summary.request_timings == [2000]
+
+
 async def test_exhausted_read_summary_counts_failure_and_excludes_deferred_reads(reporting: Any) -> None:
     reporting.unit.read_holding_registers.side_effect = ModbusTimeoutError("timeout")
     with pytest.raises(transport.CoreModbusUnitError, match="failed after reconnect and two retries"):
@@ -643,6 +717,7 @@ async def test_cancelled_read_is_not_counted_as_completed_request(reporting: Any
     with pytest.raises(asyncio.CancelledError):
         await reporting.transport.read("holding", 1, 3306, 7)
     assert reporting.transport._read_summary.requests == 0
+    assert reporting.transport._read_summary.request_timings == []
     assert reporting.transport.recovering is False
 
 
@@ -667,14 +742,15 @@ async def test_summary_timer_reports_intervals_without_retries_and_stops_on_clos
 
 def test_summary_percentiles_use_successful_attempt_timings_only(recovery: Any, caplog: pytest.LogCaptureFixture) -> None:
     summary = transport._RequestSummary()
-    summary.record(2, [50.0], True)
-    summary.record(1, [100.0], True)
-    summary.record(3, [], False)
+    summary.record(2, [50.0], True, 5050.0)
+    summary.record(1, [100.0], True, 100.0)
+    summary.record(3, [], False, 15000.0)
     recovery.now += 300
     summary.log("test-endpoint", "read")
 
     assert "read summary (5min): requests=3 retries=3 (100.000%) re-retries=1 failed=1" in caplog.text
     assert "min/p50/p95/p99/max=50/50/100/100/100ms" in caplog.text
+    assert "request_total_min/p50/p95/p99/max=100/5050/15000/15000/15000ms" in caplog.text
 
 
 async def test_request_completing_after_report_is_counted_in_next_window(reporting: Any, caplog: pytest.LogCaptureFixture) -> None:
@@ -698,3 +774,4 @@ async def test_request_completing_after_report_is_counted_in_next_window(reporti
     assert caplog.text == ""
     assert reporting.transport._read_summary.requests == 1
     assert reporting.transport._read_summary.failed == 0
+    assert reporting.transport._read_summary.request_timings == [300000]
