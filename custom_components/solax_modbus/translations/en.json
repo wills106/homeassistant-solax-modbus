@@ -170,6 +170,7 @@
           "read_gen": "External Generator Support",
           "read_modbus_addr": "The Modbus address of the Inverter",
           "read_pm": "Parallel Mode (Master-Slave)",
+          "read_vpp": "Remote Control Functionality (VPP)",
           "scan_interval": "Default polling interval (s)",
           "scan_interval_fast": "Fast polling interval (s)",
           "scan_interval_medium": "Medium polling interval (s)",
