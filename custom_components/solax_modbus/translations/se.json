@@ -1,124 +1,124 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Enheten är redan konfigurerad"
+    },
+    "error": {
+      "already_configured": "Enheten är redan konfigurerad",
+      "invalid_host": "Ogiltig värdadress",
+      "name_already_used": "Detta namn är redan använt eller ogiltigt"
+    },
     "step": {
-      "user": {
-        "title": "Definiera Modbus-anslutning",
+      "battery": {
         "data": {
-          "name": "Prefix för namnsättning av sensorer på växelriktaren",
-          "read_modbus_addr": "Modbus-adress för växelriktaren",
-          "interface": "Gränssnitt",
-          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Stöd för extern generator",
-          "read_pm": "Parallelläge (Master-Slave)",
-          "read_ems": "EMS / V2G (fordon-till-nät)",
-          "read_datahub": "Datahub (effektstyrning)",
-          "plugin": "Typ av växelriktare",
-          "scan_interval": "Standardpollningsintervall (s)",
-          "time_out": "Timeout för begäran (s)",
-          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
-          "scan_interval_fast": "Snabbt pollingintervall (s)",
-          "inverter_name_suffix": "Namnsuffix för växelriktaren"
-        }
+          "read_battery": "Aktivera avläsning"
+        },
+        "title": "Avläs batterimoduler"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+        },
+        "title": "Val av Core Modbus-hubb"
       },
       "serial": {
-        "title": "Parametrar för seriell port",
         "data": {
-          "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
-        }
+          "baudrate": "Överföringshastighet (baudrate)",
+          "read_serial_port": "Namn på den seriella porten"
+        },
+        "title": "Parametrar för seriell port"
       },
       "tcp": {
-        "title": "Parametrar för TCP/IP",
         "data": {
           "host": "Adress till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
           "tcp_type": "The Modbus TCP variant"
-        }
+        },
+        "title": "Parametrar för TCP/IP"
       },
-      "core": {
-        "title": "Val av Core Modbus-hubb",
+      "user": {
         "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
-        }
-      },
-      "battery": {
-        "title": "Avläs batterimoduler",
-        "data": {
-          "read_battery": "Aktivera avläsning"
-        }
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "interface": "Gränssnitt",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
+          "name": "Prefix för namnsättning av sensorer på växelriktaren",
+          "plugin": "Typ av växelriktare",
+          "read_datahub": "Datahub (effektstyrning)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (fordon-till-nät)",
+          "read_eps": "Nödkraftsval (EPS)",
+          "read_gen": "Stöd för extern generator",
+          "read_modbus_addr": "Modbus-adress för växelriktaren",
+          "read_pm": "Parallelläge (Master-Slave)",
+          "scan_interval": "Standardpollningsintervall (s)",
+          "scan_interval_fast": "Snabbt pollingintervall (s)",
+          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
+          "time_out": "Timeout för begäran (s)"
+        },
+        "title": "Definiera Modbus-anslutning"
       }
-    },
-    "error": {
-      "already_configured": "Enheten är redan konfigurerad",
-      "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
-    },
-    "abort": {
-      "already_configured": "Enheten är redan konfigurerad"
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Enheten är redan konfigurerad"
+    },
+    "error": {
+      "already_configured": "Enheten är redan konfigurerad",
+      "invalid_host": "Ogiltig värdadress",
+      "name_already_used": "Detta namn är redan använt eller ogiltigt"
+    },
     "step": {
-      "init": {
-        "title": "Definiera Modbus-anslutning",
+      "battery": {
         "data": {
-          "name": "Prefix för namnsättning av sensorer på växelriktaren",
-          "read_modbus_addr": "Modbus-adress till växelriktaren",
-          "interface": "Gränssnitt",
-          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
+          "read_battery": "Aktivera avläsning"
+        },
+        "title": "Avläs batterimoduler"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
+        },
+        "title": "Val av Core Modbus-hubb"
+      },
+      "init": {
+        "data": {
           "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Nödkraftsval (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Stöd för extern generator",
-          "read_pm": "Parallelläge (Master-Slave)",
-          "read_ems": "EMS / V2G (fordon-till-nät)",
-          "read_datahub": "Datahub (effektstyrning)",
+          "interface": "Gränssnitt",
+          "inverter_name_suffix": "Namnsuffix för växelriktaren",
+          "inverter_power_kw": "Maximal växelriktareffekt i kW (vid parallellkoppling: total systemkapacitet)",
+          "name": "Prefix för namnsättning av sensorer på växelriktaren",
           "plugin": "Typ av växelriktare",
+          "read_datahub": "Datahub (effektstyrning)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (fordon-till-nät)",
+          "read_eps": "Nödkraftsval (EPS)",
+          "read_gen": "Stöd för extern generator",
+          "read_modbus_addr": "Modbus-adress till växelriktaren",
+          "read_pm": "Parallelläge (Master-Slave)",
           "scan_interval": "Standardpollningsintervall (s)",
-          "time_out": "Timeout för begäran (s)",
-          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
           "scan_interval_fast": "Snabbt pollingintervall (s)",
-          "inverter_name_suffix": "Namnsuffix för växelriktaren"
-        }
+          "scan_interval_medium": "Mellanlångt pollingintervall (s)",
+          "time_out": "Timeout för begäran (s)"
+        },
+        "title": "Definiera Modbus-anslutning"
       },
       "serial": {
-        "title": "Parametrar för seriell port",
         "data": {
-          "read_serial_port": "Namn på den seriella porten",
-          "baudrate": "Överföringshastighet (baudrate)"
-        }
+          "baudrate": "Överföringshastighet (baudrate)",
+          "read_serial_port": "Namn på den seriella porten"
+        },
+        "title": "Parametrar för seriell port"
       },
       "tcp": {
-        "title": "Parametrar för TCP/IP",
         "data": {
           "host": "Adress till växelriktaren eller Modbus-gränssnittet",
           "port": "TCP-port för anslutning till växelriktaren",
           "tcp_type": "Typ av Modbus TCP-anslutning"
-        }
-      },
-      "core": {
-        "title": "Val av Core Modbus-hubb",
-        "data": {
-          "read_core_hub": "Core Modbus-hubben som används för att ansluta till växelriktaren"
-        }
-      },
-      "battery": {
-        "title": "Avläs batterimoduler",
-        "data": {
-          "read_battery": "Aktivera avläsning"
-        }
+        },
+        "title": "Parametrar för TCP/IP"
       }
-    },
-    "error": {
-      "already_configured": "Enheten är redan konfigurerad",
-      "name_already_used": "Detta namn är redan använt eller ogiltigt",
-      "invalid_host": "Ogiltig värdadress"
-    },
-    "abort": {
-      "already_configured": "Enheten är redan konfigurerad"
     }
   }
 }
