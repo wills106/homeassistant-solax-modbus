@@ -382,9 +382,11 @@ DIRECT_VPP_PARAMETER_MODES: dict[str, tuple[int, ...]] = {
     "power_control_mode_target_set_type_direct": (8, 9),
     "remotecontrol_pv_power_limit_direct": (8, 9),
     "remotecontrol_push_mode_power_8_9_direct": (8, 9),
-    "remotecontrol_duration_8_direct": (8,),
+    "remotecontrol_timeout_8_direct": (8,),
+    "remotecontrol_next_motion_8_direct": (8,),
     "remotecontrol_target_soc_9_direct": (9,),
-    "remotecontrol_timeout_8_9_direct": (8, 9),
+    "remotecontrol_timeout_9_direct": (9,),
+    "remotecontrol_next_motion_9_direct": (9,),
 }
 
 
@@ -435,14 +437,24 @@ def build_direct_vpp_command(mode: int, data: dict[str, Any], *, allow_defaults:
         except (TypeError, ValueError, OverflowError) as ex:
             raise HomeAssistantError(f"Invalid direct VPP parameter '{description.name}': {parameter!r}") from ex
 
-    if mode in (8, 9):
+    if mode == 8:
         return 0xA0, [
             (REGISTER_U16, mode),
             (REGISTER_U16, value("power_control_mode_target_set_type_direct")),
             (REGISTER_U32, value("remotecontrol_pv_power_limit_direct")),
             (REGISTER_S32, value("remotecontrol_push_mode_power_8_9_direct")),
-            (REGISTER_U16, value("remotecontrol_duration_8_direct" if mode == 8 else "remotecontrol_target_soc_9_direct")),
-            (REGISTER_U16, value("remotecontrol_timeout_8_9_direct")),
+            (REGISTER_U16, value("remotecontrol_timeout_8_direct")),
+            (REGISTER_U16, value("remotecontrol_next_motion_8_direct")),
+        ]
+    if mode == 9:
+        return 0xA0, [
+            (REGISTER_U16, mode),
+            (REGISTER_U16, value("power_control_mode_target_set_type_direct")),
+            (REGISTER_U32, value("remotecontrol_pv_power_limit_direct")),
+            (REGISTER_S32, value("remotecontrol_push_mode_power_8_9_direct")),
+            (REGISTER_U16, value("remotecontrol_target_soc_9_direct")),
+            (REGISTER_U16, value("remotecontrol_timeout_9_direct")),
+            (REGISTER_U16, value("remotecontrol_next_motion_9_direct")),
         ]
 
     payload = [
@@ -3655,7 +3667,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     ),
     SolaxModbusNumberEntityDescription(
         name="Direct (Mode 8) - Timeout",
-        key="remotecontrol_duration_8_direct",
+        key="remotecontrol_timeout_8_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
         device_group="vpp",
@@ -3690,7 +3702,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     ),
     SolaxModbusNumberEntityDescription(
         name="Direct (Mode 9) - Timeout",
-        key="remotecontrol_timeout_8_9_direct",
+        key="remotecontrol_timeout_9_direct",
         register_data_type=REGISTER_U16,
         fmt="i",
         device_group="vpp",
@@ -4521,11 +4533,9 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             2: "Enable Electric Quantity Target Control Mode",
             3: "Enable SOC Target Control Mode",
             4: "Push Power-Positive/Negative Mode",
-            5: "Push Power – Zero Mode",
+            5: "Push Power - Zero Mode",
             6: "Self-Consume - Charge/Discharge Mode",
             7: "Self-Consume - Charge Only Mode",
-            8: "Individual Setting - Duration Mode",
-            9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
         initvalue=0,  # Disabled
@@ -4576,6 +4586,35 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
         initvalue=1,  # Set
         icon="mdi:transmission-tower",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Direct (Mode 8) - Next Motion",
+        key="remotecontrol_next_motion_8_direct",
+        device_group="vpp",
+        register=0xA7,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
+        option_dict={
+            0xA0: "VPP Off",
+            0xA1: "Mode 6",
+        },
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        initvalue=0xA1,
+        register_data_type=REGISTER_U16,
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Direct (Mode 9) - Next Motion",
+        key="remotecontrol_next_motion_9_direct",
+        device_group="vpp",
+        register=0xA8,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp,
+        option_dict={
+            0xA0: "VPP Off",
+            0xA1: "Mode 6",
+        },
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | VPP,
+        initvalue=0xA1,
     ),
     #####
     #
