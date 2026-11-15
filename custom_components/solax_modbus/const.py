@@ -335,6 +335,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    device_group: str | None = None  # assign the entity to a named sub-device instead of the main inverter device
     modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
     modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None
