@@ -538,6 +538,7 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # terminate expiring loop by disabling remotecontrol
     if initval == BUTTONREPEAT_POST:
+        datadict["remotecontrol_current_inverter_power"] = None
         return {"action": WRITE_MULTI_MODBUS, "data": [("remotecontrol_power_control", "Disabled")]}
 
     # Get control parameters
@@ -858,8 +859,10 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
     ]
 
     if power_control == "Disabled":
+        datadict["remotecontrol_current_inverter_power"] = None
         autorepeat_stop(datadict, "remotecontrol_trigger")
-
+    # Save current control values to allow PM total power calculation
+    datadict["remotecontrol_current_inverter_power"] = ap_target
     _LOGGER.debug("Evaluated remotecontrol_trigger: corrected/clamped values: %s", res)
     return {"action": WRITE_MULTI_MODBUS, "data": res}
 
@@ -10856,6 +10859,20 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         recompute_each_poll=True,
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
         icon="mdi:home-clock",
+    ),
+    SolaXModbusSensorEntityDescription(
+        name="Remotecontrol current inverter power",
+        key="remotecontrol_current_inverter_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_group="vpp",
+        value_function=value_function_remotecontrol_current_power,
+        depends_on=[],
+        allow_none=True,
+        recompute_each_poll=True,
+        allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6 | VPP,
+        icon="mdi:solar-power-variant",
+        suggested_display_precision=0,
     ),
     SolaXModbusSensorEntityDescription(
         name="Remotecontrol current PV power limit",
