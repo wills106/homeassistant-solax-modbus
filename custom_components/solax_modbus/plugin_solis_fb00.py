@@ -32,6 +32,10 @@ from custom_components.solax_modbus.const import (
     REGISTER_U16_MAX,
     REGISTER_U32,
     REGISTER_WORDS,
+    SCAN_GROUP_AUTO,
+    SCAN_GROUP_DEFAULT,
+    SCAN_GROUP_FAST,
+    SCAN_GROUP_MEDIUM,
     SLEEPMODE_LASTAWAKE,
     WRITE_DATA_LOCAL,
     WRITE_MULTI_MODBUS,
@@ -2505,6 +2509,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
         icon="mdi:clock",
     ),
     SolisModbusSensorEntityDescription(
@@ -3161,6 +3166,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         allowedtypes=HYBRID,
         icon="mdi:battery-heart",
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="BMS Battery Voltage",
@@ -3198,6 +3204,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="BMS Battery Discharge Limit",
@@ -3210,6 +3217,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="House Load",
@@ -3529,6 +3537,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Discharge Current Limit",
@@ -3540,6 +3549,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         scale=0.1,
         rounding=1,
         allowedtypes=HYBRID | X1,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Float Charge Voltage",
@@ -3553,6 +3563,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Equalisation Charge Voltage",
@@ -3566,6 +3577,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
     ),
     SolisModbusSensorEntityDescription(
         name="Meter AC Voltage",
@@ -5224,6 +5236,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=False,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
         icon="mdi:check-network",
     ),
     SolisModbusSensorEntityDescription(
@@ -5236,6 +5249,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         entity_registry_enabled_default=True,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
+        scan_group=SCAN_GROUP_DEFAULT,
         icon="mdi:information-outline",
     ),
     SolisModbusSensorEntityDescription(
@@ -5450,6 +5464,10 @@ plugin_instance = solis_fb00_plugin(
     # order16="big",
     order32="big",
     auto_block_ignore_readerror=True,
+    default_holding_scangroup=SCAN_GROUP_DEFAULT,
+    default_input_scangroup=SCAN_GROUP_AUTO,  # SCAN_GROUP_MEDIUM for slow changing units like temperature, kWh, ...
+    auto_default_scangroup=SCAN_GROUP_FAST,
+    auto_slow_scangroup=SCAN_GROUP_MEDIUM,
 )
 
 # Attach Energy Dashboard mapping to plugin instance
