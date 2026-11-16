@@ -2,7 +2,7 @@
 
 **Author:** fxstein  
 **Date:** January 9, 2026  
-**GitHub:** https://github.com/fxstein/homeassistant-solax-modbus
+**GitHub:** https://github.com/wills106/homeassistant-solax-modbus
 
 **Applies To:** X3 (Three-phase) inverters with remote control
 
@@ -145,7 +145,7 @@ Phase protection activates automatically when:
 
 No additional configuration needed!
 
-## Behavior
+## Behaviour
 
 ### When Phase-Limited (Phase Constraint is More Restrictive)
 
@@ -276,7 +276,7 @@ Tested and verified with:
 - ✅ Import limits (32kW - 35kW)
 - ✅ Phase limits (55A - 63A)
 
-Results: Stable operation, no oscillation, correct limiting behavior.
+Results: Stable operation, no oscillation, correct limiting behaviour.
 
 ## See Also
 
