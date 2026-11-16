@@ -13,7 +13,8 @@ Known Serials
 
 S6-EH1P8K-L-PLUS (8 kW, two MPPTs)
 
-- Use plugin_solis or plugin_solis_fb00
+- Use plugin_solis_unified (auto-detects the register map via the HMI version registers 33002/33069)
+- plugin_solis or plugin_solis_fb00 remain available to force a specific register map
 - Known serial prefix: 303126
 
 ### Three Phase
@@ -26,12 +27,14 @@ Known Serials
 
 S6-EH3P10K-H-EU (10 kW, four MPPTs)
 
-- Use plugin_solis or plugin_solis_fb00
+- Use plugin_solis_unified (auto-detects the register map via the HMI version registers 33002/33069)
+- plugin_solis or plugin_solis_fb00 remain available to force a specific register map
 - Known serial prefixes: 103306, 133306
 
 Gen6 HV three-phase hybrid (four MPPTs)
 
-- Use plugin_solis or plugin_solis_fb00
+- Use plugin_solis_unified (auto-detects the register map via the HMI version registers 33002/33069)
+- plugin_solis or plugin_solis_fb00 remain available to force a specific register map
 - Known serial prefixes: 103303 (5 kW), 103314 (10 kW), 103315 (15 kW S6-EH3P15K-H), 103316 (20 kW)
 
 ## Sofar Solar
