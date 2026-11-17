@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from custom_components.solax_modbus.plugin_solax import GEN4, HYBRID, X1, plugin_instance
+from custom_components.solax_modbus.plugin_solax import GEN4, HYBRID, VPP, X1, plugin_instance
 
 
 @pytest.mark.asyncio
@@ -28,5 +28,5 @@ async def test_tigo_tsi_x1_detection(mock_hub: Any, serial_number: str, expected
     ):
         inverter_type = await plugin.async_determineInverterType(mock_hub, {"read_eps": False, "read_pm": False})
 
-    assert inverter_type == HYBRID | GEN4 | X1
+    assert inverter_type == HYBRID | GEN4 | X1 | VPP
     assert mock_hub.inverter_model == expected_model

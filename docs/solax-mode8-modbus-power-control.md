@@ -3,6 +3,9 @@
 This page describes features that will appear in the near future.
 Not to be confused with the `remotecontrol_xxx_direct` approach.
 
+The autorepeat entities appear in the `Remote Control` device group, and have friendly names which begin with `Auto (Mode 8)`. 
+Any beginning with `Direct (Mode x)` are unused for auto-repeat purposes.
+
 ## Why use Modbus power control?
 
 Normal power controls are rather static and are written to EEPROM, so they are not well suited for use in automations as the automation might change the values too often. 

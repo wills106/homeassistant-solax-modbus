@@ -1,7 +1,11 @@
 # SolaX direct VPP controls
 
-The existing `(direct)` entities send one-shot VPP commands. They do not start
+The existing `_direct` entities send one-shot VPP commands. They do not start
 the integration's autorepeat controller.
+
+The autorepeat entities appear in the `Remote Control` device group, and have
+friendly names which begin with `Direct (Mode x)`. 
+Any beginning with `Auto (Mode x)` are unused for direct control purposes.
 
 ## Operation
 

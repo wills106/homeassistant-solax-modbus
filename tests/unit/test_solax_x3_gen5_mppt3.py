@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from custom_components.solax_modbus import SolaXModbusHub
-from custom_components.solax_modbus.plugin_solax import GEN5, HYBRID, MPPT3, SENSOR_TYPES_MAIN, X3, plugin_instance
+from custom_components.solax_modbus.plugin_solax import GEN5, HYBRID, MPPT3, SENSOR_TYPES_MAIN, VPP, X3, plugin_instance
 
 
 @pytest.mark.asyncio
@@ -45,7 +45,7 @@ async def test_x3_gen5_mppt_detection(mock_hub: Any, prefix: str, has_mppt3: boo
     ):
         inverter_type = await plugin.async_determineInverterType(mock_hub, {"read_eps": False, "read_pm": False})
 
-    assert inverter_type == HYBRID | GEN5 | X3 | (MPPT3 if has_mppt3 else 0)
+    assert inverter_type == HYBRID | GEN5 | X3 | (MPPT3 if has_mppt3 else 0) | VPP
     assert mock_hub.inverter_model == model
 
     descriptions = {

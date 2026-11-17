@@ -54,9 +54,11 @@ def parameters() -> dict[str, Any]:
         "power_control_mode_target_set_type_direct": "Set",
         "remotecontrol_pv_power_limit_direct": 15000,
         "remotecontrol_push_mode_power_8_9_direct": -2000,
-        "remotecontrol_duration_8_direct": 3600,
+        "remotecontrol_timeout_8_direct": 7200,
+        "remotecontrol_next_motion_8_direct": 0xA1,
         "remotecontrol_target_soc_9_direct": 80,
-        "remotecontrol_timeout_8_9_direct": 120,
+        "remotecontrol_timeout_9_direct": 120,
+        "remotecontrol_next_motion_9_direct": 0xA0,
     }
 
 
@@ -76,9 +78,12 @@ def test_legacy_modes_write_complete_zero_padded_block(mode: int, expected: list
     assert encode_command(mode, parameters) == (0x7C, expected)
 
 
-@pytest.mark.parametrize(("mode", "duration_or_soc"), [(8, 3600), (9, 80)])
-def test_individual_modes_write_separate_complete_block(mode: int, duration_or_soc: int, parameters: dict[str, Any]) -> None:
-    assert encode_command(mode, parameters) == (0xA0, [mode, 1, 15000, 0, 0xF830, 0xFFFF, duration_or_soc, 120])
+def test_individual_mode8_write_separate_complete_block(parameters: dict[str, Any]) -> None:
+    assert encode_command(8, parameters) == (0xA0, [8, 1, 15000, 0, 0xF830, 0xFFFF, 7200, 0xA1])
+
+
+def test_individual_mode9_write_separate_complete_block(parameters: dict[str, Any]) -> None:
+    assert encode_command(9, parameters) == (0xA0, [9, 1, 15000, 0, 0xF830, 0xFFFF, 80, 120, 0xA0])
 
 
 def test_disable_needs_no_target_values() -> None:
@@ -126,17 +131,6 @@ def test_building_a_command_does_not_mutate_parameters(parameters: dict[str, Any
     assert parameters == original
 
 
-def make_mode_select(key: str, data: dict[str, Any]) -> tuple[SolaXModbusSelect, Any]:
-    description = next(description for description in SELECT_TYPES if description.key == key)
-    assert description.option_dict is not None
-    description = replace(description, reverse_option_dict={label: raw for raw, label in description.option_dict.items()})
-    hub = make_direct_hub(data)
-    entity = SolaXModbusSelect("solax", hub, 1, {}, description)
-    # Current HA marks this method final; bypass that type restriction only for the test mock.
-    cast(Any, entity).async_write_ha_state = Mock()
-    return entity, hub
-
-
 def make_direct_hub(data: dict[str, Any], mode: int = 0) -> Any:
     hub = make_hub()
     hub._seriesnumber = "still unknown"  # number entities with min/max exceptions read hub.seriesnumber
@@ -163,10 +157,26 @@ def make_number(key: str, hub: Any) -> SolaXModbusNumber:
     return entity
 
 
+def make_select(key: str, hub: Any) -> SolaXModbusSelect:
+    description = next(description for description in SELECT_TYPES if description.key == key)
+    assert description.option_dict is not None
+    description = replace(description, reverse_option_dict={label: raw for raw, label in description.option_dict.items()})
+    entity = SolaXModbusSelect("solax", hub, 1, {}, description)
+    # Current HA marks this method final; bypass that type restriction only for the test mock.
+    cast(Any, entity).async_write_ha_state = Mock()
+    return entity
+
+
+def make_mode_select(key: str, data: dict[str, Any]) -> tuple[SolaXModbusSelect, Any]:
+    hub = make_direct_hub(data)
+    entity = make_select(key, hub)
+    return entity, hub
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("key", "mode"),
-    [("modbus_power_control_direct", mode) for mode in range(10)] + [("remote_control_power_control_mode_direct", mode) for mode in (0, 8, 9)],
+    [("modbus_power_control_direct", mode) for mode in range(8)] + [("remote_control_power_control_mode_direct", mode) for mode in (0, 8, 9)],
 )
 async def test_mode_selection_sends_one_full_command(key: str, mode: int, parameters: dict[str, Any]) -> None:
     entity, hub = make_mode_select(key, parameters)
@@ -222,6 +232,7 @@ def test_all_direct_parameters_use_transactional_writer_and_persistence(key: str
 @pytest.mark.parametrize(
     ("key", "mode", "new_value"),
     [
+        ("remote_control_target_set_type_direct", 1, "Update"),
         ("remotecontrol_active_power_direct", 1, -2000),
         ("remotecontrol_reactive_power_direct", 1, -300),
         ("remotecontrol_duration_direct", 1, 120),
@@ -231,18 +242,27 @@ def test_all_direct_parameters_use_transactional_writer_and_persistence(key: str
         ("remotecontrol_charge_discharge_power_direct", 3, -3000),
         ("remotecontrol_timeout_direct", 5, 300),
         ("remotecontrol_push_mode_power_direct", 4, -5000),
+        ("power_control_mode_target_set_type_direct", 8, "Set"),
         ("remotecontrol_pv_power_limit_direct", 8, 0),
         ("remotecontrol_push_mode_power_8_9_direct", 9, -5000),
-        ("remotecontrol_duration_8_direct", 8, 7200),
+        ("remotecontrol_timeout_8_direct", 8, 7200),
+        ("remotecontrol_next_motion_8_direct", 8, "VPP Off"),
         ("remotecontrol_target_soc_9_direct", 9, 90),
-        ("remotecontrol_timeout_8_9_direct", 8, 240),
+        ("remotecontrol_timeout_9_direct", 9, 240),
+        ("remotecontrol_next_motion_9_direct", 9, "Mode 6"),
     ],
 )
-async def test_active_parameter_change_immediately_sends_complete_command(key: str, mode: int, new_value: int, parameters: dict[str, Any]) -> None:
+async def test_active_parameter_change_immediately_sends_complete_command(
+    key: str, mode: int, new_value: int | str, parameters: dict[str, Any]
+) -> None:
     hub = make_direct_hub(parameters, mode)
-    entity = make_number(key, hub)
 
-    await entity.async_set_native_value(new_value)
+    if isinstance(new_value, str):
+        select = make_select(key, hub)
+        await select.async_select_option(new_value)
+    else:
+        number = make_number(key, hub)
+        await number.async_set_native_value(new_value)
 
     address, payload = build_direct_vpp_command(mode, parameters | {key: new_value})
     hub.async_read_input_registers.assert_awaited_once_with(unit=1, address=0x100, count=1)
@@ -286,7 +306,7 @@ async def test_stale_mode_select_cannot_reactivate_expired_vpp(parameters: dict[
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("key", "mode"),
-    [("remotecontrol_duration_8_direct", 9), ("remotecontrol_target_soc_9_direct", 8), ("remotecontrol_active_power_direct", 4)],
+    [("remotecontrol_timeout_8_direct", 9), ("remotecontrol_target_soc_9_direct", 8), ("remotecontrol_active_power_direct", 4)],
 )
 async def test_irrelevant_parameter_does_not_resend_or_switch_active_mode(key: str, mode: int, parameters: dict[str, Any]) -> None:
     hub = make_direct_hub(parameters, mode)

@@ -35,6 +35,7 @@ CONF_READ_EPS = "read_eps"
 CONF_READ_DCB = "read_dcb"
 CONF_READ_GEN = "read_gen"
 CONF_READ_PM = "read_pm"
+CONF_READ_VPP = "read_vpp"
 CONF_READ_EMS = "read_ems"
 CONF_READ_DATAHUB = "read_datahub"
 CONF_MODBUS_ADDR = "read_modbus_addr"
@@ -55,6 +56,7 @@ DEFAULT_READ_EPS = False
 DEFAULT_READ_DCB = False
 DEFAULT_READ_GEN = False
 DEFAULT_READ_PM = False
+DEFAULT_READ_VPP = True
 DEFAULT_READ_EMS = False
 DEFAULT_READ_DATAHUB = False
 DEFAULT_BAUDRATE = "19200"
@@ -333,6 +335,7 @@ class BaseModbusButtonEntityDescription(ButtonEntityDescription):
     """Base class for modbus button declarations."""
 
     allowedtypes: int = 0  # overload with ALLDEFAULT from plugin
+    device_group: str | None = None  # assign the entity to a named sub-device instead of the main inverter device
     modbus_min: int | None = None  # Minimum protocol version as reported by register 0x82 (e.g. 100 for V001.00); not the document revision.
     modbus_max: int | None = None  # Maximum protocol version as reported by register 0x82.
     register: int | None = None

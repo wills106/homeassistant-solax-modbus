@@ -8,6 +8,7 @@ from custom_components.solax_modbus.plugin_solax import (
     GEN3,
     GEN4,
     HYBRID,
+    VPP,
     X3,
 )
 from custom_components.solax_modbus.plugin_solax import (
@@ -90,7 +91,7 @@ async def test_determine_inverter_type_solax(mock_hub: Any, serial_number: str) 
     # Run detection
     inverter_type = await solax_plugin.async_determineInverterType(mock_hub, config)
 
-    expected = HYBRID | X3 | GEN4
+    expected = HYBRID | X3 | GEN4 | VPP
 
     assert inverter_type == expected
     assert mock_hub.inverter_model == "X3-Hybrid-10kW"

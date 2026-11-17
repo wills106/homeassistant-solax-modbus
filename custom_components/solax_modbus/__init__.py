@@ -55,15 +55,14 @@ from .connection import (
     modbus_connection_identity,
 )
 from .const import (
-    BUTTONREPEAT_FIRST as BUTTONREPEAT_FIRST,
-)
-from .const import (
+    # BUTTONREPEAT_FIRST,
     BUTTONREPEAT_LOOP,
     BUTTONREPEAT_POST,
     CONF_AUTOREPEAT_INPUT_GRACE,
     CONF_BAUDRATE,
     CONF_CORE_HUB,
     CONF_DEBUG_SETTINGS,
+    CONF_ENERGY_DASHBOARD_DEVICE,
     CONF_INTERFACE,
     CONF_INVERTER_NAME_SUFFIX,
     CONF_INVERTER_POWER_KW,
@@ -71,16 +70,36 @@ from .const import (
     CONF_MODBUS_REQUEST_SUMMARY_INTERVAL,
     CONF_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
     CONF_PLUGIN,
+    CONF_READ_DATAHUB,
+    CONF_READ_DCB,
+    CONF_READ_EMS,
+    CONF_READ_EPS,
+    CONF_READ_GEN,
+    CONF_READ_PM,
+    CONF_READ_VPP,
     CONF_SERIAL_PORT,
     CONF_TCP_TYPE,
     CONF_TIME_OUT,
     DEFAULT_AUTOREPEAT_INPUT_GRACE,
     DEFAULT_BAUDRATE,
+    DEFAULT_ENERGY_DASHBOARD_DEVICE,
+    # DEFAULT_INTERFACE,
+    # DEFAULT_INVERTER_NAME_SUFFIX,
     DEFAULT_INVERTER_POWER_KW,
     DEFAULT_MODBUS_ADDR,
     DEFAULT_MODBUS_REQUEST_SUMMARY_INTERVAL,
     DEFAULT_MODBUS_REQUEST_SUMMARY_RETRIES_ONLY,
+    # DEFAULT_NAME,
+    # DEFAULT_PLUGIN,
     DEFAULT_PORT,
+    DEFAULT_READ_DATAHUB,
+    DEFAULT_READ_DCB,
+    DEFAULT_READ_EMS,
+    DEFAULT_READ_EPS,
+    DEFAULT_READ_GEN,
+    DEFAULT_READ_PM,
+    DEFAULT_READ_VPP,
+    DEFAULT_SCAN_INTERVAL,
     DEFAULT_SERIAL_PORT,
     DEFAULT_TCP_TYPE,
     DEFAULT_TIME_OUT,
@@ -103,78 +122,15 @@ from .const import (
     REGISTER_WORDS,
     SCAN_GROUP_AUTO,
     SCAN_GROUP_DEFAULT,
+    # SCAN_GROUP_MEDIUM,
     SLEEPMODE_LASTAWAKE,
     WRITE_MULTI_MODBUS,
+    # WRITE_MULTISINGLE_MODBUS,
     WRITE_SINGLE_MODBUS,
     PollOutcome,
     descriptor_optional_depends,
     is_inputless_computed_sensor,
-)
-from .const import (
-    CONF_ENERGY_DASHBOARD_DEVICE as CONF_ENERGY_DASHBOARD_DEVICE,
-)
-from .const import (
-    CONF_READ_DATAHUB as CONF_READ_DATAHUB,
-)
-from .const import (
-    CONF_READ_DCB as CONF_READ_DCB,
-)
-from .const import (
-    CONF_READ_EMS as CONF_READ_EMS,
-)
-from .const import (
-    CONF_READ_EPS as CONF_READ_EPS,
-)
-from .const import (
-    CONF_READ_GEN as CONF_READ_GEN,
-)
-from .const import (
-    CONF_READ_PM as CONF_READ_PM,
-)
-from .const import (
-    DEFAULT_ENERGY_DASHBOARD_DEVICE as DEFAULT_ENERGY_DASHBOARD_DEVICE,
-)
-from .const import (
-    DEFAULT_INTERFACE as DEFAULT_INTERFACE,
-)
-from .const import (
-    DEFAULT_INVERTER_NAME_SUFFIX as DEFAULT_INVERTER_NAME_SUFFIX,
-)
-from .const import (
-    DEFAULT_NAME as DEFAULT_NAME,
-)
-from .const import (
-    DEFAULT_PLUGIN as DEFAULT_PLUGIN,
-)
-from .const import (
-    DEFAULT_READ_DATAHUB as DEFAULT_READ_DATAHUB,
-)
-from .const import (
-    DEFAULT_READ_DCB as DEFAULT_READ_DCB,
-)
-from .const import (
-    DEFAULT_READ_EMS as DEFAULT_READ_EMS,
-)
-from .const import (
-    DEFAULT_READ_EPS as DEFAULT_READ_EPS,
-)
-from .const import (
-    DEFAULT_READ_GEN as DEFAULT_READ_GEN,
-)
-from .const import (
-    DEFAULT_READ_PM as DEFAULT_READ_PM,
-)
-from .const import (
-    DEFAULT_SCAN_INTERVAL as DEFAULT_SCAN_INTERVAL,
-)
-from .const import (
-    SCAN_GROUP_MEDIUM as SCAN_GROUP_MEDIUM,
-)
-from .const import (
-    WRITE_MULTISINGLE_MODBUS as WRITE_MULTISINGLE_MODBUS,
-)
-from .const import (
-    matches_active_when as matches_active_when,
+    matches_active_when,
 )
 from .core_modbus import async_prepare_core_connection, configured_core_connection
 from .device_registry_lookup import link_parent_device
@@ -507,8 +463,9 @@ DEVICE_GROUP_NAMES: dict[str, str] = {
     "dry_contact": "Dry Contact",
     "external_generator": "External Generator",
     "eps": "EPS",
+    "vpp": "Remote Control",
     "pm": "Parallel",
-    "ems": "EMS∕V2G",
+    "ems": "EMS/V2G",
     "datahub": "Datahub",
 }
 
@@ -516,6 +473,7 @@ GATED_DEVICE_GROUPS: dict[str, tuple[str, bool]] = {
     "dry_contact": (CONF_READ_DCB, DEFAULT_READ_DCB),
     "external_generator": (CONF_READ_GEN, DEFAULT_READ_GEN),
     "eps": (CONF_READ_EPS, DEFAULT_READ_EPS),
+    "vpp": (CONF_READ_VPP, DEFAULT_READ_VPP),
     "pm": (CONF_READ_PM, DEFAULT_READ_PM),
     "ems": (CONF_READ_EMS, DEFAULT_READ_EMS),
     "datahub": (CONF_READ_DATAHUB, DEFAULT_READ_DATAHUB),
@@ -3715,7 +3673,7 @@ class SolaXModbusHub:
             _LOGGER.debug("%s: probe %s 0x%x-0x%x timed out after %s", self._name, typ, block_obj.start, block_obj.end, timeout_msg)
             return False
         except Exception as ex:
-            _LOGGER.info("%s: probe %s 0x%x-0x%x failed: %s", self._name, typ, block_obj.start, block_obj.end, ex)
+            _LOGGER.warning("%s: probe %s 0x%x-0x%x failed: %s", self._name, typ, block_obj.start, block_obj.end, ex)
             return False
 
 

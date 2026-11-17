@@ -37,10 +37,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     plugin = hub.plugin
     entities = []
     for button_info in plugin.BUTTON_TYPES:
-        if plugin.matchInverterWithMask(
-            hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist
-        ) and matches_modbus_protocol(hub, button_info):
-            button = SolaXModbusButton(hub_name, hub, modbus_addr, hub.device_info, button_info)
+        if (
+            plugin.matchInverterWithMask(hub._invertertype, button_info.allowedtypes, hub.seriesnumber, button_info.blacklist)
+            and matches_modbus_protocol(hub, button_info)
+            and hub.device_group_enabled(button_info.device_group)
+        ):
+            device_info = hub.group_device_info(button_info.device_group) if button_info.device_group else hub.device_info
+            button = SolaXModbusButton(hub_name, hub, modbus_addr, device_info, button_info)
             entities.append(button)
             if button_info.key == plugin.wakeupButton():
                 hub.wakeupButton = button_info
