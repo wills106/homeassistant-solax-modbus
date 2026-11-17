@@ -160,10 +160,13 @@ def _validation_cache(datadict: dict[str, Any], key: str) -> dict[str, Any]:
     return scoped
 
 
+_PM_OVERFLOW_LIMS = {REGISTER_U32: 0xFFFFF000, REGISTER_U16: 0xFFFC}
+
+
 def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> Any:
     """Validate register values for corruption.
 
-    - PM U32 sensors: detect 0xFFFFFF00 overflow pattern and use last known value.
+    - PM U16/U32 sensors: detect overflow pattern and either set unknown or use last known value.
     - battery_capacity: treat zero SoC as invalid and use last known value.
     """
     pm_last_known_values = _validation_cache(datadict, "pm_last_known_values")
@@ -186,21 +189,21 @@ def validate_register_data(descr: Any, value: Any, datadict: dict[str, Any]) -> 
         if soc_value is not None and soc_value > 0:
             soc_last_known_values[descr.key] = value
 
-    # PM U32 sensors only (filter by key prefix)
-    if descr.key.startswith("pm_") and descr.register_data_type == REGISTER_U32:
+    # PM unsigned sensors only (filter by key prefix)
+    if descr.key.startswith("pm_") and descr.register_data_type in _PM_OVERFLOW_LIMS:
         # Handle None from core errors
         if value is None:
             last_value = pm_last_known_values.get(descr.key, 0)
             _LOGGER.warning("PM sensor %s received None -> using last: %sW", descr.key, last_value)
             return last_value
 
-        # Handle U32 overflow pattern
-        if value >= 0xFFFFFF00:
+        # Handle overflow pattern
+        if value >= _PM_OVERFLOW_LIMS.get(descr.register_data_type):
             last_value = pm_last_known_values.get(descr.key)
             if last_value is None:
-                _LOGGER.debug("PM U32 overflow %s: 0x%08X -> no previously known value. Setting to 0.", descr.key, value)
-                return 0
-            _LOGGER.debug("PM U32 overflow %s: 0x%08X -> keeping last value: %s", descr.key, value, last_value)
+                _LOGGER.debug("PM unsigned overflow %s: 0x%08X -> no previously known value.", descr.key, value)
+                return None
+            _LOGGER.debug("PM unsigned overflow %s: 0x%08X -> keeping last value: %s", descr.key, value, last_value)
             return last_value
 
         # Store valid values for future use
