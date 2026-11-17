@@ -1,124 +1,124 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Enheden er allerede konfigureret"
+    },
+    "error": {
+      "already_configured": "Enheden er allerede konfigureret",
+      "invalid_host": "Ugyldig host adresse",
+      "name_already_used": "Navn er allerede brugt eller ikke gyldigt"
+    },
     "step": {
-      "user": {
-        "title": "Definer Modbus forbindelse",
+      "battery": {
         "data": {
-          "name": "prefix for navngivning af sensorer på din Inverter",
-          "read_modbus_addr": "Modbus adressen på Inverteren",
-          "interface": "Interface",
-          "inverter_name_suffix": "Navne suffix til inverteren",
-          "inverter_power_kw": "Max inverter effekt i kW (ved parallelkobling: total system kapacitet)",
-          "energy_dashboard_device": "Energi Dashboard Virtual Device",
-          "read_eps": "Nød Drift Option (EPS)",
-          "read_dcb": "Dry Kontakt Boks",
-          "read_gen": "Ekstern Generator Understøttelse",
-          "read_pm": "Parallel Drift (Master-Slave)",
-          "read_ems": "EMS / V2G (køretøj-til-net)",
-          "read_datahub": "Datahub (effektstyring)",
-          "plugin": "Vælg Inverter Type",
-          "scan_interval": "Standard polling interval (s)",
-          "scan_interval_medium": "Mellemlangt polling interval (s)",
-          "scan_interval_fast": "Hurtig polling interval (s)",
-          "time_out": "Timeout for forespørgsel (s)"
-        }
+          "read_battery": "Aktiver aflæsning"
+        },
+        "title": "Aflæs batteri moduler"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
+        },
+        "title": "Valg af Core Modbus-hub"
       },
       "serial": {
-        "title": "Parameter for Serial Interface",
         "data": {
-          "read_serial_port": "Serial port navn",
-          "baudrate": "Overføringshastighed (baudrate)"
-        }
+          "baudrate": "Overføringshastighed (baudrate)",
+          "read_serial_port": "Serial port navn"
+        },
+        "title": "Parameter for Serial Interface"
       },
       "tcp": {
-        "title": "TCP/IP Parametre",
         "data": {
           "host": "Adressen til din inverter eller Modbus interface",
           "port": "TCP-port til at tilslutte til inverteren",
           "tcp_type": "Modbus TCP variant"
-        }
+        },
+        "title": "TCP/IP Parametre"
       },
-      "battery": {
-        "title": "Aflæs batteri moduler",
+      "user": {
         "data": {
-          "read_battery": "Aktiver aflæsning"
-        }
-      },
-      "core": {
-        "title": "Valg af Core Modbus-hub",
-        "data": {
-          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
-        }
+          "energy_dashboard_device": "Energi Dashboard Virtual Device",
+          "interface": "Interface",
+          "inverter_name_suffix": "Navne suffix til inverteren",
+          "inverter_power_kw": "Max inverter effekt i kW (ved parallelkobling: total system kapacitet)",
+          "name": "prefix for navngivning af sensorer på din Inverter",
+          "plugin": "Vælg Inverter Type",
+          "read_datahub": "Datahub (effektstyring)",
+          "read_dcb": "Dry Kontakt Boks",
+          "read_ems": "EMS / V2G (køretøj-til-net)",
+          "read_eps": "Nød Drift Option (EPS)",
+          "read_gen": "Ekstern Generator Understøttelse",
+          "read_modbus_addr": "Modbus adressen på Inverteren",
+          "read_pm": "Parallel Drift (Master-Slave)",
+          "scan_interval": "Standard polling interval (s)",
+          "scan_interval_fast": "Hurtig polling interval (s)",
+          "scan_interval_medium": "Mellemlangt polling interval (s)",
+          "time_out": "Timeout for forespørgsel (s)"
+        },
+        "title": "Definer Modbus forbindelse"
       }
-    },
-    "error": {
-      "already_configured": "Enheden er allerede konfigureret",
-      "name_already_used": "Navn er allerede brugt eller ikke gyldigt",
-      "invalid_host": "Ugyldig host adresse"
-    },
-    "abort": {
-      "already_configured": "Enheden er allerede konfigureret"
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Enheden er allerede konfigureret"
+    },
+    "error": {
+      "already_configured": "Enheden er allerede konfigureret",
+      "invalid_host": "Ugyldig host adresse",
+      "name_already_used": "Navn er allerede brugt eller ikke gyldigt"
+    },
     "step": {
-      "init": {
-        "title": "Definer Modbus tilslutning",
+      "battery": {
         "data": {
-          "name": "Prefix for navngivning af sensorer på din inverter",
-          "read_modbus_addr": "Modbus-adressen på Inverteren",
+          "read_battery": "Aktiver aflæsning"
+        },
+        "title": "Aflæs batteri moduler"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
+        },
+        "title": "Valg af Core Modbus-hub"
+      },
+      "init": {
+        "data": {
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
           "interface": "Interface",
           "inverter_name_suffix": "Navne suffix for inverteren",
           "inverter_power_kw": "Max inverter effekt i kW (for parallelkobling: total system kapacitet)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Nød Drift Option (EPS)",
-          "read_dcb": "Dry Kontakt Boks",
-          "read_gen": "Ekstern Generator Understøttelse",
-          "read_pm": "Parallel Drift (Master-Slave)",
-          "read_ems": "EMS / V2G (køretøj-til-net)",
-          "read_datahub": "Datahub (effektstyring)",
+          "name": "Prefix for navngivning af sensorer på din inverter",
           "plugin": "Vælg Inverter Type",
+          "read_datahub": "Datahub (effektstyring)",
+          "read_dcb": "Dry Kontakt Boks",
+          "read_ems": "EMS / V2G (køretøj-til-net)",
+          "read_eps": "Nød Drift Option (EPS)",
+          "read_gen": "Ekstern Generator Understøttelse",
+          "read_modbus_addr": "Modbus-adressen på Inverteren",
+          "read_pm": "Parallel Drift (Master-Slave)",
           "scan_interval": "Standard polling interval (s)",
-          "scan_interval_medium": "Medium polling interval (s)",
           "scan_interval_fast": "Hurtig polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
           "time_out": "Timeout for forespørgsel (s)"
-        }
+        },
+        "title": "Definer Modbus tilslutning"
       },
       "serial": {
-        "title": "Serial Interface Parameters",
         "data": {
-          "read_serial_port": "Serial port navn",
-          "baudrate": "Overføringshastighed (baudrate)"
-        }
+          "baudrate": "Overføringshastighed (baudrate)",
+          "read_serial_port": "Serial port navn"
+        },
+        "title": "Serial Interface Parameters"
       },
       "tcp": {
-        "title": "Parametre TCP/IP",
         "data": {
           "host": "Adressen på din inverters Modbus-interface",
           "port": "TCP porten for forbindelsen til din inverter",
           "tcp_type": "Modbus TCP variant"
-        }
-      },
-      "battery": {
-        "title": "Aflæs batteri moduler",
-        "data": {
-          "read_battery": "Aktiver aflæsning"
-        }
-      },
-      "core": {
-        "title": "Valg af Core Modbus-hub",
-        "data": {
-          "read_core_hub": "Core Modbus-hub som anvendes til tilslutning til inverteren"
-        }
+        },
+        "title": "Parametre TCP/IP"
       }
-    },
-    "error": {
-      "already_configured": "Enheden er allerede konfigureret",
-      "name_already_used": "Navn er allerede brugt eller ikke gyldigt",
-      "invalid_host": "Ugyldig host adresse"
-    },
-    "abort": {
-      "already_configured": "Enheden er allerede konfigureret"
     }
   }
 }

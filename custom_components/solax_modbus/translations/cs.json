@@ -1,124 +1,124 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Zařízení je již nakonfigurováno"
+    },
+    "error": {
+      "already_configured": "Zařízení je již nakonfigurováno",
+      "invalid_host": "Neplatná adresa hostitele",
+      "name_already_used": "Název byl již použit nebo je neplatný"
+    },
     "step": {
-      "user": {
-        "title": "Definice připojení přes Modbus",
+      "battery": {
         "data": {
-          "name": "Předpona pro názvy senzorů měniče",
-          "read_modbus_addr": "Adresa Modbus měniče",
-          "interface": "Rozhraní",
-          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Možnost záložního zdroje (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Podpora externího generátoru",
-          "read_pm": "Paralelní režim (Master-Slave)",
-          "read_ems": "EMS / V2G (vozidlo-síť)",
-          "read_datahub": "Datahub (řízení výkonu)",
-          "plugin": "Vyberte druh měniče",
-          "scan_interval": "Výchozí interval dotazování (s)",
-          "time_out": "Časový limit dotazu (s)",
-          "inverter_name_suffix": "Přípona názvu měniče",
-          "scan_interval_medium": "Střední interval dotazování (s)",
-          "scan_interval_fast": "Rychlý interval dotazování (s)"
-        }
+          "read_battery": "Povolit čtení"
+        },
+        "title": "Čtení bateriových modulů"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        },
+        "title": "Core Modbus hub selection"
       },
       "serial": {
-        "title": "Parametry sériového rozhraní",
         "data": {
-          "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
-        }
+          "baudrate": "Baudrate",
+          "read_serial_port": "Název sériového portu"
+        },
+        "title": "Parametry sériového rozhraní"
       },
       "tcp": {
-        "title": "Parametry TCP/IP",
         "data": {
           "host": "Adresa měniče nebo Modbus adaptéru",
           "port": "TCP port připojení k měniči",
           "tcp_type": "Varianta TCP protokolu Modbus"
-        }
+        },
+        "title": "Parametry TCP/IP"
       },
-      "battery": {
-        "title": "Čtení bateriových modulů",
+      "user": {
         "data": {
-          "read_battery": "Povolit čtení"
-        }
-      },
-      "core": {
-        "title": "Core Modbus hub selection",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
-        }
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "interface": "Rozhraní",
+          "inverter_name_suffix": "Přípona názvu měniče",
+          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
+          "name": "Předpona pro názvy senzorů měniče",
+          "plugin": "Vyberte druh měniče",
+          "read_datahub": "Datahub (řízení výkonu)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (vozidlo-síť)",
+          "read_eps": "Možnost záložního zdroje (EPS)",
+          "read_gen": "Podpora externího generátoru",
+          "read_modbus_addr": "Adresa Modbus měniče",
+          "read_pm": "Paralelní režim (Master-Slave)",
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)",
+          "scan_interval_medium": "Střední interval dotazování (s)",
+          "time_out": "Časový limit dotazu (s)"
+        },
+        "title": "Definice připojení přes Modbus"
       }
-    },
-    "error": {
-      "already_configured": "Zařízení je již nakonfigurováno",
-      "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná adresa hostitele"
-    },
-    "abort": {
-      "already_configured": "Zařízení je již nakonfigurováno"
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Zařízení je již nakonfigurováno"
+    },
+    "error": {
+      "already_configured": "Zařízení je již nakonfigurováno",
+      "invalid_host": "Neplatná adresa hostitele",
+      "name_already_used": "Název byl již použit nebo je neplatný"
+    },
     "step": {
-      "init": {
-        "title": "Definice připojení přes Modbus",
+      "battery": {
         "data": {
-          "name": "Předpona pro názvy senzorů měniče",
-          "read_modbus_addr": "Adresa Modbus měniče",
-          "interface": "Rozhraní",
-          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
+          "read_battery": "Povolit čtení"
+        },
+        "title": "Čtení bateriových modulů"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        },
+        "title": "Core Modbus hub selection"
+      },
+      "init": {
+        "data": {
           "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Možnost záložního zdroje (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Podpora externího generátoru",
-          "read_pm": "Paralelní režim (Master-Slave)",
-          "read_ems": "EMS / V2G (vozidlo-síť)",
-          "read_datahub": "Datahub (řízení výkonu)",
-          "plugin": "Vyberte druh měniče",
-          "scan_interval": "Výchozí interval dotazování (s)",
-          "time_out": "Časový limit dotazu (s)",
+          "interface": "Rozhraní",
           "inverter_name_suffix": "Přípona názvu měniče",
+          "inverter_power_kw": "Maximální výkon měniče v kW (pro paralelní zapojení: celková kapacita systému)",
+          "name": "Předpona pro názvy senzorů měniče",
+          "plugin": "Vyberte druh měniče",
+          "read_datahub": "Datahub (řízení výkonu)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (vozidlo-síť)",
+          "read_eps": "Možnost záložního zdroje (EPS)",
+          "read_gen": "Podpora externího generátoru",
+          "read_modbus_addr": "Adresa Modbus měniče",
+          "read_pm": "Paralelní režim (Master-Slave)",
+          "scan_interval": "Výchozí interval dotazování (s)",
+          "scan_interval_fast": "Rychlý interval dotazování (s)",
           "scan_interval_medium": "Střední interval dotazování (s)",
-          "scan_interval_fast": "Rychlý interval dotazování (s)"
-        }
+          "time_out": "Časový limit dotazu (s)"
+        },
+        "title": "Definice připojení přes Modbus"
       },
       "serial": {
-        "title": "Parametry sériového rozhraní",
         "data": {
-          "read_serial_port": "Název sériového portu",
-          "baudrate": "Baudrate"
-        }
+          "baudrate": "Baudrate",
+          "read_serial_port": "Název sériového portu"
+        },
+        "title": "Parametry sériového rozhraní"
       },
       "tcp": {
-        "title": "Parametry TCP/IP",
         "data": {
           "host": "Adresa měniče nebo Modbus adaptéru",
           "port": "TCP port připojení k měniči",
           "tcp_type": "Varianta TCP protokolu Modbus"
-        }
-      },
-      "battery": {
-        "title": "Čtení bateriových modulů",
-        "data": {
-          "read_battery": "Povolit čtení"
-        }
-      },
-      "core": {
-        "title": "Core Modbus hub selection",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
-        }
+        },
+        "title": "Parametry TCP/IP"
       }
-    },
-    "error": {
-      "already_configured": "Zařízení je již nakonfigurováno",
-      "name_already_used": "Název byl již použit nebo je neplatný",
-      "invalid_host": "Neplatná adresa hostitele"
-    },
-    "abort": {
-      "already_configured": "Zařízení je již nakonfigurováno"
     }
   }
 }

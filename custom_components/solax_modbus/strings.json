@@ -1,204 +1,204 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "already_configured": "Device is already configured",
+      "invalid_host": "Invalid host address",
+      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial.",
+      "name_already_used": "Name was already used or was invalid"
+    },
     "step": {
-      "user": {
-        "title": "Define Modbus connection",
+      "battery": {
         "data": {
-          "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The Modbus address of the Inverter",
-          "interface": "Interface",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "External Generator Support",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "read_ems": "EMS / V2G (Vehicle to Grid)",
-          "read_datahub": "Datahub (power control interface)",
-          "plugin": "Select Inverter Type",
-          "scan_interval": "Default polling interval (s)",
-          "scan_interval_medium": "Medium polling interval (s)",
-          "scan_interval_fast": "Fast polling interval (s)",
-          "time_out": "Request timeout (s)",
+          "read_battery": "Enable readout"
+        },
+        "title": "Read out battery modules"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        },
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
+        "title": "Legacy YAML Modbus hub"
+      },
+      "core_serial": {
+        "data": {
+          "baudrate": "Baud rate",
+          "bytesize": "Data bits",
+          "method": "Modbus serial framing",
+          "parity": "Parity",
+          "read_serial_port": "Serial port",
+          "stopbits": "Stop bits"
+        },
+        "title": "Home Assistant managed Modbus serial"
+      },
+      "core_tcp": {
+        "data": {
+          "host": "Inverter or Modbus adapter address",
+          "message_wait_milliseconds": "Message spacing (ms)",
+          "port": "Port",
+          "tcp_type": "Modbus TCP variant"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
+        },
+        "title": "Home Assistant managed Modbus TCP"
+      },
+      "duplicate_inverter": {
+        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway.",
+        "title": "Duplicate inverter configuration"
+      },
+      "serial": {
+        "data": {
+          "baudrate": "Baudrate",
+          "read_serial_port": "Serial port name"
+        },
+        "title": "Serial Interface Parameters"
+      },
+      "tcp": {
+        "data": {
+          "host": "The address of your inverter or Modbus interface",
+          "message_wait_milliseconds": "Message spacing (ms)",
+          "port": "The TCP port on which to connect to the inverter",
+          "tcp_type": "The Modbus TCP variant"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
+        },
+        "title": "TCP/IP Parameters"
+      },
+      "user": {
+        "data": {
           "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "interface": "Interface",
           "inverter_name_suffix": "Name suffix for the inverter",
           "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
           "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
-          "modbus_request_summary_retries_only": "Only report intervals with retries"
+          "modbus_request_summary_retries_only": "Only report intervals with retries",
+          "name": "The prefix to be used for your inverter sensors",
+          "plugin": "Select Inverter Type",
+          "read_datahub": "Datahub (power control interface)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (Vehicle to Grid)",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_gen": "External Generator Support",
+          "read_modbus_addr": "The Modbus address of the Inverter",
+          "read_pm": "Parallel Mode (Master-Slave)",
+          "scan_interval": "Default polling interval (s)",
+          "scan_interval_fast": "Fast polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
+          "time_out": "Request timeout (s)"
         },
         "data_description": {
           "modbus_request_summary_interval": "Log summaries of Modbus communication reliability and response times, including request counts, retries and failures. Separate read and write reports appear in the Home Assistant log. Available for Home Assistant-managed Modbus connections. Set the interval in minutes; 0 disables reports.",
           "modbus_request_summary_retries_only": "When checked, report only intervals containing retries, separately for reads and writes. Unchecked by default: report all intervals containing requests. Intervals without requests are always omitted."
-        }
-      },
-      "serial": {
-        "title": "Serial Interface Parameters",
-        "data": {
-          "read_serial_port": "Serial port name",
-          "baudrate": "Baudrate"
-        }
-      },
-      "tcp": {
-        "title": "TCP/IP Parameters",
-        "data": {
-          "host": "The address of your inverter or Modbus interface",
-          "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant",
-          "message_wait_milliseconds": "Message spacing (ms)"
         },
-        "data_description": {
-          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
-        }
-      },
-      "core": {
-        "title": "Legacy YAML Modbus hub",
-        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
-        }
-      },
-      "core_tcp": {
-        "title": "Home Assistant managed Modbus TCP",
-        "data": {
-          "host": "Inverter or Modbus adapter address",
-          "port": "Port",
-          "tcp_type": "Modbus TCP variant",
-          "message_wait_milliseconds": "Message spacing (ms)"
-        },
-        "data_description": {
-          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
-        }
-      },
-      "core_serial": {
-        "title": "Home Assistant managed Modbus serial",
-        "data": {
-          "read_serial_port": "Serial port",
-          "baudrate": "Baud rate",
-          "parity": "Parity",
-          "bytesize": "Data bits",
-          "stopbits": "Stop bits",
-          "method": "Modbus serial framing"
-        }
-      },
-      "battery": {
-        "title": "Read out battery modules",
-        "data": {
-          "read_battery": "Enable readout"
-        }
-      },
-      "duplicate_inverter": {
-        "title": "Duplicate inverter configuration",
-        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
+        "title": "Define Modbus connection"
       }
-    },
-    "error": {
-      "already_configured": "Device is already configured",
-      "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address",
-      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial."
-    },
-    "abort": {
-      "already_configured": "Device is already configured"
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "already_configured": "Device is already configured",
+      "invalid_host": "Invalid host address",
+      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial.",
+      "name_already_used": "Name was already used or was invalid"
+    },
     "step": {
-      "init": {
-        "title": "Define Modbus connection",
+      "battery": {
         "data": {
-          "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "The Modbus address of the Inverter",
-          "interface": "Interface",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "External Generator Support",
-          "read_pm": "Parallel Mode (Master-Slave)",
-          "read_ems": "EMS / V2G (Vehicle to Grid)",
-          "read_datahub": "Datahub (power control interface)",
-          "plugin": "Select Inverter Type",
-          "scan_interval": "Default polling interval (s)",
-          "scan_interval_medium": "Medium polling interval (s)",
-          "scan_interval_fast": "Fast polling interval (s)",
-          "time_out": "Request timeout (s)",
+          "read_battery": "Enable readout"
+        },
+        "title": "Read out battery modules"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "The core Modbus hub used to connect to the inverter"
+        },
+        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
+        "title": "Legacy YAML Modbus hub"
+      },
+      "core_serial": {
+        "data": {
+          "baudrate": "Baud rate",
+          "bytesize": "Data bits",
+          "method": "Modbus serial framing",
+          "parity": "Parity",
+          "read_serial_port": "Serial port",
+          "stopbits": "Stop bits"
+        },
+        "title": "Home Assistant managed Modbus serial"
+      },
+      "core_tcp": {
+        "data": {
+          "host": "Inverter or Modbus adapter address",
+          "message_wait_milliseconds": "Message spacing (ms)",
+          "port": "Port",
+          "tcp_type": "Modbus TCP variant"
+        },
+        "data_description": {
+          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
+        },
+        "title": "Home Assistant managed Modbus TCP"
+      },
+      "duplicate_inverter": {
+        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway.",
+        "title": "Duplicate inverter configuration"
+      },
+      "init": {
+        "data": {
           "autorepeat_input_grace": "Remote control hold time on invalid inputs (s, 0 = stop immediately)",
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "interface": "Interface",
           "inverter_name_suffix": "Name suffix for the inverter",
           "inverter_power_kw": "Max inverter power in kW (for parallel: total system capacity)",
           "modbus_request_summary_interval": "Modbus request summary interval (min; 0 disables)",
-          "modbus_request_summary_retries_only": "Only report intervals with retries"
+          "modbus_request_summary_retries_only": "Only report intervals with retries",
+          "name": "The prefix to be used for your inverter sensors",
+          "plugin": "Select Inverter Type",
+          "read_datahub": "Datahub (power control interface)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (Vehicle to Grid)",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_gen": "External Generator Support",
+          "read_modbus_addr": "The Modbus address of the Inverter",
+          "read_pm": "Parallel Mode (Master-Slave)",
+          "scan_interval": "Default polling interval (s)",
+          "scan_interval_fast": "Fast polling interval (s)",
+          "scan_interval_medium": "Medium polling interval (s)",
+          "time_out": "Request timeout (s)"
         },
         "data_description": {
           "modbus_request_summary_interval": "Log summaries of Modbus communication reliability and response times, including request counts, retries and failures. Separate read and write reports appear in the Home Assistant log. Available for Home Assistant-managed Modbus connections. Set the interval in minutes; 0 disables reports.",
           "modbus_request_summary_retries_only": "When checked, report only intervals containing retries, separately for reads and writes. Unchecked by default: report all intervals containing requests. Intervals without requests are always omitted."
-        }
+        },
+        "title": "Define Modbus connection"
       },
       "serial": {
-        "title": "Serial Interface Parameters",
         "data": {
-          "read_serial_port": "Serial port name",
-          "baudrate": "Baudrate"
-        }
+          "baudrate": "Baudrate",
+          "read_serial_port": "Serial port name"
+        },
+        "title": "Serial Interface Parameters"
       },
       "tcp": {
-        "title": "TCP/IP Parameters",
         "data": {
           "host": "The address of your inverter or Modbus interface",
+          "message_wait_milliseconds": "Message spacing (ms)",
           "port": "The TCP port on which to connect to the inverter",
-          "tcp_type": "The Modbus TCP variant",
-          "message_wait_milliseconds": "Message spacing (ms)"
+          "tcp_type": "The Modbus TCP variant"
         },
         "data_description": {
           "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
-        }
-      },
-      "core": {
-        "title": "Legacy YAML Modbus hub",
-        "description": "This option is only retained for existing legacy connections. Home Assistant removes the legacy hub access API in 2027.10; connections still using it will then stop working. Follow the Core Modbus migration guide in the integration documentation before upgrading. The migration notification includes a link to the guide. Do not remove a YAML hub still used by other integrations.",
-        "data": {
-          "read_core_hub": "The core Modbus hub used to connect to the inverter"
-        }
-      },
-      "core_tcp": {
-        "title": "Home Assistant managed Modbus TCP",
-        "data": {
-          "host": "Inverter or Modbus adapter address",
-          "port": "Port",
-          "tcp_type": "Modbus TCP variant",
-          "message_wait_milliseconds": "Message spacing (ms)"
         },
-        "data_description": {
-          "message_wait_milliseconds": "Minimum quiet interval between requests. Leave at 0 unless your inverter or adapter needs a delay; try 150 for affected Sofar connections. Increasing this slows polling and writes."
-        }
-      },
-      "core_serial": {
-        "title": "Home Assistant managed Modbus serial",
-        "data": {
-          "read_serial_port": "Serial port",
-          "baudrate": "Baud rate",
-          "parity": "Parity",
-          "bytesize": "Data bits",
-          "stopbits": "Stop bits",
-          "method": "Modbus serial framing"
-        }
-      },
-      "battery": {
-        "title": "Read out battery modules",
-        "data": {
-          "read_battery": "Enable readout"
-        }
-      },
-      "duplicate_inverter": {
-        "title": "Duplicate inverter configuration",
-        "description": "Another inverter configuration already uses this Modbus connection and address. If both configurations are enabled, they will poll the same inverter and may cause communication problems. Submit to save anyway."
+        "title": "TCP/IP Parameters"
       }
-    },
-    "error": {
-      "already_configured": "Device is already configured",
-      "name_already_used": "Name was already used or was invalid",
-      "invalid_host": "Invalid host address",
-      "legacy_hub_unavailable": "Legacy YAML hub access cannot be selected for a new connection or enabled on another interface. The access API is removed in HA 2027.10. Choose TCP / Ethernet or Serial."
-    },
-    "abort": {
-      "already_configured": "Device is already configured"
     }
   }
 }

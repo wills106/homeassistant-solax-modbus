@@ -1,124 +1,124 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Le périphérique est déjà configuré"
+    },
+    "error": {
+      "already_configured": "Le périphérique est déjà configuré",
+      "invalid_host": "Adresse d'hôte invalide",
+      "name_already_used": "Le nom est déjà utilisé ou est invalide"
+    },
     "step": {
-      "user": {
-        "title": "Définir la connexion Modbus",
+      "battery": {
         "data": {
-          "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
-          "interface": "Interface",
-          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (en parallèle : capacité totale du système)",
-          "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Prise en charge du générateur externe",
-          "read_pm": "Mode paralléle (Primaire-Secondaire)",
-          "read_ems": "EMS / V2G (véhicule-réseau)",
-          "read_datahub": "Datahub (contrôle de puissance)",
-          "plugin": "Selectionnez le type d'onduleur",
-          "scan_interval": "Intervalle d'interrogation par défaut (s)",
-          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
-          "scan_interval_fast": "Intervalle d'interrogation rapide (s)",
-          "time_out": "Délai d'attente des requêtes (s)",
-          "inverter_name_suffix": "Suffixe du nom de l'onduleur"
-        }
+          "read_battery": "Activer la lecture"
+        },
+        "title": "Lecture des modules de batterie"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
+        },
+        "title": "Sélection du hub Modbus principal"
       },
       "serial": {
-        "title": "Paramètres de l'interface Série",
         "data": {
-          "read_serial_port": "Nom du port série",
-          "baudrate": "Baudrate"
-        }
+          "baudrate": "Baudrate",
+          "read_serial_port": "Nom du port série"
+        },
+        "title": "Paramètres de l'interface Série"
       },
       "tcp": {
-        "title": "Paramètres TCP/IP",
         "data": {
           "host": "Adresse de l'onduleur ou de l'interface Modbus",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "The Modbus TCP variant"
-        }
+        },
+        "title": "Paramètres TCP/IP"
       },
-      "core": {
-        "title": "Sélection du hub Modbus principal",
+      "user": {
         "data": {
-          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
-        }
-      },
-      "battery": {
-        "title": "Lecture des modules de batterie",
-        "data": {
-          "read_battery": "Activer la lecture"
-        }
+          "energy_dashboard_device": "Energy Dashboard Virtual Device",
+          "interface": "Interface",
+          "inverter_name_suffix": "Suffixe du nom de l'onduleur",
+          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (en parallèle : capacité totale du système)",
+          "name": "The prefix to be used for your inverter sensors",
+          "plugin": "Selectionnez le type d'onduleur",
+          "read_datahub": "Datahub (contrôle de puissance)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (véhicule-réseau)",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_gen": "Prise en charge du générateur externe",
+          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
+          "read_pm": "Mode paralléle (Primaire-Secondaire)",
+          "scan_interval": "Intervalle d'interrogation par défaut (s)",
+          "scan_interval_fast": "Intervalle d'interrogation rapide (s)",
+          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
+          "time_out": "Délai d'attente des requêtes (s)"
+        },
+        "title": "Définir la connexion Modbus"
       }
-    },
-    "error": {
-      "already_configured": "Le périphérique est déjà configuré",
-      "name_already_used": "Le nom est déjà utilisé ou est invalide",
-      "invalid_host": "Adresse d'hôte invalide"
-    },
-    "abort": {
-      "already_configured": "Le périphérique est déjà configuré"
     }
   },
   "options": {
+    "abort": {
+      "already_configured": "Le périphérique est déjà configuré"
+    },
+    "error": {
+      "already_configured": "Le périphérique est déjà configuré",
+      "invalid_host": "Adresse d'hôte invalide",
+      "name_already_used": "Le nom est déjà utilisé ou est invalide"
+    },
     "step": {
-      "init": {
-        "title": "Définir la connexion Modbus",
+      "battery": {
         "data": {
-          "name": "The prefix to be used for your inverter sensors",
-          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
-          "interface": "Interface",
-          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (en parallèle : capacité totale du système)",
+          "read_battery": "Activer la lecture"
+        },
+        "title": "Lecture des modules de batterie"
+      },
+      "core": {
+        "data": {
+          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
+        },
+        "title": "Sélection du hub Modbus principal"
+      },
+      "init": {
+        "data": {
           "energy_dashboard_device": "Energy Dashboard Virtual Device",
-          "read_eps": "Emergency Power Option (EPS)",
-          "read_dcb": "Dry Contact Box",
-          "read_gen": "Prise en charge du générateur externe",
-          "read_pm": "Mode paralléle (Primaire-Secondaire)",
-          "read_ems": "EMS / V2G (véhicule-réseau)",
-          "read_datahub": "Datahub (contrôle de puissance)",
+          "interface": "Interface",
+          "inverter_name_suffix": "Suffixe du nom de l'onduleur",
+          "inverter_power_kw": "Puissance maximale de l'onduleur en kW (en parallèle : capacité totale du système)",
+          "name": "The prefix to be used for your inverter sensors",
           "plugin": "Selectionnez le type d'onduleur",
+          "read_datahub": "Datahub (contrôle de puissance)",
+          "read_dcb": "Dry Contact Box",
+          "read_ems": "EMS / V2G (véhicule-réseau)",
+          "read_eps": "Emergency Power Option (EPS)",
+          "read_gen": "Prise en charge du générateur externe",
+          "read_modbus_addr": "L'adresse Modbus de l'onduleur",
+          "read_pm": "Mode paralléle (Primaire-Secondaire)",
           "scan_interval": "Intervalle d'interrogation par défaut (s)",
-          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
           "scan_interval_fast": "Intervalle d'interrogation rapide (s)",
-          "time_out": "Délai d'attente des requêtes (s)",
-          "inverter_name_suffix": "Suffixe du nom de l'onduleur"
-        }
+          "scan_interval_medium": "Intervalle d'interrogation moyen (s)",
+          "time_out": "Délai d'attente des requêtes (s)"
+        },
+        "title": "Définir la connexion Modbus"
       },
       "serial": {
-        "title": "Paramètres de l'interface Série",
         "data": {
-          "read_serial_port": "Nom du port série",
-          "baudrate": "Baudrate"
-        }
+          "baudrate": "Baudrate",
+          "read_serial_port": "Nom du port série"
+        },
+        "title": "Paramètres de l'interface Série"
       },
       "tcp": {
-        "title": "Paramètres TCP/IP",
         "data": {
           "host": "Adresse de l'onduleur ou de l'interface Modbus",
           "port": "The TCP port on which to connect to the inverter",
           "tcp_type": "La variante Modbus TCP"
-        }
-      },
-      "core": {
-        "title": "Sélection du hub Modbus principal",
-        "data": {
-          "read_core_hub": "Le hub Modbus principal utilisé pour se connecter à l'onduleur"
-        }
-      },
-      "battery": {
-        "title": "Lecture des modules de batterie",
-        "data": {
-          "read_battery": "Activer la lecture"
-        }
+        },
+        "title": "Paramètres TCP/IP"
       }
-    },
-    "error": {
-      "already_configured": "Le périphérique est déjà configuré",
-      "name_already_used": "Le nom est déjà utilisé ou est invalide",
-      "invalid_host": "Adresse d'hôte invalide"
-    },
-    "abort": {
-      "already_configured": "Le périphérique est déjà configuré"
     }
   }
 }
