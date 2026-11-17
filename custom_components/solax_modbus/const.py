@@ -250,6 +250,7 @@ class BaseModbusSensorEntityDescription(SensorEntityDescription):
     blacklist: list[str] | None = None
     register: int = -1  # initialize with invalid register
     rounding: int = 1
+    suggested_display_precision: int | None = None  # display precision, applied if sensor has unit of measurement.
     register_type: int | None = None  # REG_HOLDING or REG_INPUT or REG_DATA
     register_data_type: str | None = None  # REGISTER_U16, REGISTER_S32, REGISTER_F32, etc.
     fault_bits: dict[int, str] | None = None  # Bit index -> fault label; keep the polled integer as the raw value.

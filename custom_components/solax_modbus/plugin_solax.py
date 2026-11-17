@@ -10637,6 +10637,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         depends_on=["meter_1_export_today"],
         optional_depends_on=["generator_control", "meter_2_export_today"],
         icon="mdi:home-export-outline",
+        suggested_display_precision=1,
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Import Today",
@@ -10649,6 +10650,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         depends_on=["meter_1_import_today"],
         optional_depends_on=["generator_control", "meter_2_import_today"],
         icon="mdi:home-import-outline",
+        suggested_display_precision=1,
     ),
     SolaXModbusSensorEntityDescription(
         name="Grid Export Total",
@@ -10685,6 +10687,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         depends_on=["meter_1_export_today"],
         optional_depends_on=["generator_control", "meter_2_export_today"],
         icon="mdi:home-export-outline",
+        suggested_display_precision=1,
     ),
     SolaXModbusSensorEntityDescription(
         name="Generator Import Today",
@@ -10697,6 +10700,7 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         depends_on=["meter_1_import_today"],
         optional_depends_on=["generator_control", "meter_2_import_today"],
         icon="mdi:home-import-outline",
+        suggested_display_precision=1,
     ),
     SolaXModbusSensorEntityDescription(
         name="Generator Export Total",
