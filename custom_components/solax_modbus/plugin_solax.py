@@ -645,8 +645,9 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         if battery_capacity < 98 and pv_power + grid_balance > 0:
             # If the grid balance including PV would result in an export,
             # and the battery is not fully charnged, then try to charge the
-            # battery with the excess to minimise any export.
-            ap_target = pv_power + grid_balance
+            # battery with the excess to minimise any export. We do this by
+            # only covering the grid balance through the inverter port.
+            ap_target = 0 + grid_balance
         else:
             # When the battery is fully charged (allowing a tolerance to prevent
             # older inverters shutting down PV), or there is insufficient PV to
