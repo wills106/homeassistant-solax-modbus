@@ -10795,7 +10795,6 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         allowedtypes=AC | HYBRID,
-        entity_registry_enabled_default=False,
         depends_on=[
             "pv_power_total",
             "battery_power_charge",
