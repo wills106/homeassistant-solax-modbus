@@ -965,7 +965,10 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         inverter_power = datadict.get("inverter_power", 0)
         battery_charge = int(datadict.get("battery_power_charge", 0) or 0)
         houseload = datadict.get("house_load", 0)
-        houseload_alt = datadict.get("house_load_alt", 0)
+        # house_load_alt is disabled by default and so may be absent; compute it from its inputs in that case
+        houseload_alt = datadict.get("house_load_alt")
+        if houseload_alt is None:
+            houseload_alt = value_function_house_load_alt(initval, descr, datadict)
         inverter_limit = datadict.get("inverter_power_type", 30000)
 
     # Grid balance is the amount of power flowing to the grid when the inverter output
@@ -2168,7 +2171,6 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
                 "pv_power_total",
                 "battery_power_charge",
                 "house_load",
-                "house_load_alt",
                 "battery_charge_max_current",
                 "inverter_power_type",
             ),
