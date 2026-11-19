@@ -642,19 +642,24 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     elif power_control == "Enabled No Discharge":
         # Hold battery level by preventing discharge
-        if battery_capacity < 98 and pv_power + grid_balance > 0:
-            # If the grid balance including PV would result in an export,
-            # and the battery is not fully charnged, then try to charge the
-            # battery with the excess to minimise any export. We do this by
-            # only covering the grid balance through the inverter port.
-            ap_target = 0 + grid_balance
+        if battery_capacity < 98:
+            if pv_power + grid_balance > 0:
+                # If the grid balance including PV would result in an export,
+                # and the battery is not fully charnged, then try to charge the
+                # battery with the excess to minimise any export. We do this by
+                # only covering the grid balance through the inverter port.
+                ap_target = 0 + grid_balance
+            else:
+                # Otherwise there is insufficient power to cover everything, so
+                # limit to just transferring the PV power through the inverter.
+                ap_target = 0 - pv_power
         else:
             # When the battery is fully charged (allowing a tolerance to prevent
-            # older inverters shutting down PV), or there is insufficient PV to
-            # cover the grid balance, then we push only the PV power through to
-            # the grid connected port. We add a little headroom so that PV output
-            # can grow after e.g. clouds. This will also trickle discharge the
-            # battery, keeping the SoC close to 98%.
+            # older inverters shutting down PV), then we push only the PV power
+            # through to the grid connected port. We add a little headroom so that
+            # PV output can grow after e.g. clouds. This will also trickle discharge
+            # the battery, keeping the SoC close to 98% preventing older inverters
+            # from shutting down.
             ap_target = 0 - pv_power - 150
         power_control = "Enabled Power Control"
 
