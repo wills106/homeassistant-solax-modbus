@@ -881,6 +881,16 @@ BUTTON_TYPES = [
         write_method=WRITE_SINGLE_MODBUS,
         icon="mdi:battery-heart",
     ),
+    GrowattModbusButtonEntityDescription(
+        # writes system time (Table 3-6) to 30104-30109
+        name="Sync RTC VPP",
+        key="sync_rtc_vpp",
+        register=30104,
+        allowedtypes=VPP,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:home-clock",
+        value_function=value_function_sync_rtc_ymd,
+    ),
 ]
 
 # ================================= Number Declarations ============================================================
@@ -918,6 +928,21 @@ NUMBER_TYPES = [
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         allowedtypes=VPP,
+    ),
+    GrowattModbusNumberEntityDescription(
+        name="Reactive Power Limit VPP",
+        key="reactive_power_limit_vpp",
+        register=30160,
+        register_data_type=REGISTER_S16,
+        fmt="i",
+        native_min_value=0,
+        native_max_value=70,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        allowedtypes=VPP,
+        write_method=WRITE_SINGLE_MODBUS,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:sine-wave",
     ),
     GrowattModbusNumberEntityDescription(
         name="Export Limit Rate VPP",
@@ -2323,6 +2348,14 @@ SENSOR_TYPES: list[GrowattModbusSensorEntityDescription] = [
     GrowattModbusSensorEntityDescription(
         key="active_power_limit_2_vpp",
         register=30154,
+        allowedtypes=VPP,
+        internal=True,
+    ),
+    GrowattModbusSensorEntityDescription(
+        key="reactive_power_limit_vpp",
+        register=30160,
+        register_data_type=REGISTER_S16,
+        scale=1,
         allowedtypes=VPP,
         internal=True,
     ),
