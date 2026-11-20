@@ -871,6 +871,16 @@ BUTTON_TYPES = [
         entity_registry_enabled_default=False,
         value_function=value_function_time_clear,
     ),
+    GrowattModbusButtonEntityDescription(
+        # write-only: 1 = send wake-up command to the battery
+        name="Battery Wake-up VPP",
+        key="battery_wakeup_vpp",
+        register=30495,
+        command=1,
+        allowedtypes=VPP,
+        write_method=WRITE_SINGLE_MODBUS,
+        icon="mdi:battery-heart",
+    ),
 ]
 
 # ================================= Number Declarations ============================================================
