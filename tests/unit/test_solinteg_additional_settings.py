@@ -55,3 +55,11 @@ def test_additional_settings_have_internal_readback_sensors() -> None:
         **SELECT_SETTINGS,
     }
     assert all(description.internal for description in descriptions.values())
+
+
+def test_charge_cutoff_soc_allows_full_charge() -> None:
+    description = next(description for description in NUMBER_TYPES if description.key == "charge_cutoff_soc")
+
+    assert description.register == 52506
+    assert description.native_min_value == 10
+    assert description.native_max_value == 100
