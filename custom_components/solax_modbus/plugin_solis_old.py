@@ -511,7 +511,7 @@ class solis_old_plugin(plugin_base):
 
 plugin_instance = solis_old_plugin(
     plugin_name="Solis Old",
-    plugin_manufacturer="Ginlog Solis",
+    plugin_manufacturer="Ginlong Solis",
     SENSOR_TYPES=SENSOR_TYPES,
     NUMBER_TYPES=NUMBER_TYPES,
     BUTTON_TYPES=BUTTON_TYPES,
