@@ -1240,34 +1240,36 @@ def autorepeat_function_powercontrolmode8_recompute(initval: int, descr: Any, da
         )
 
         # Current error between grid target, the actual measured grid power, and any power we are
-        # currently requesting from the battery. Negative means we are are not charging the battery
-        # enough, positive means we need to discharge it more to achieve balance.
+        # currently requesting from the battery.
         # We set a grid target of 0 to try and encourage PV to go to the battery by default. If we
         # get a negative balance, we can charge the battery up to that amount. Otherwise we must
         # clamp discharge to 0 to hold the battery SoC.
+        # If the measured grid power is positive it means we can try to chanrge the battery more
+        # if within BMS limit. Alternatively if grid power is negative and we are currently charging
+        # the battery we can try to reduce the charge rate to reduce import.
+        # If after reducing requested charge to zero we are still importing, keep the battery
+        # clamped to zero to prevent any discharge.
         # Any surplus beyond charging the battery at max rate will end up going to the grid up to
         # the user export limit, beyond which the inverter will curtail PV automatically. A user
         # set PV limit can also still be applied.
         grid_target = 0
         power_balance = grid_target - measured_power + cur_push
-        if power_balance >= 0:
-            # Surplus, charge the battery where possible
+        if power_balance < 0:
+            # Either surplus export we can use to charge the battery, or we are currently
+            # charging the battery too much and need to reduce it.
             surplus = -power_balance
             # Request all surplus charge the battery if possible based on current SoC
             desired_charge, max_charge, bms_cap_w, pct_cap_w = autorepeat_bms_charge(datadict, battery_capacity, max_charge_soc, surplus)
             # Setpoint filter to slow down changes to battery
             selected_charge = autorepeat_setpoint_filter(-cur_push, desired_charge, filter_steps)
             pushmode_power = min(-selected_charge, 0)
-
-            # If there is any left over, it will go to the grid. Calculate estimated surplus export
-            # for logging purposes.
-            surplus_export = max(0, surplus - selected_charge)
+            # If there is any left over, it will go to the grid.
 
             _LOGGER.debug(
                 "[Mode8 No-Discharge] charge-first: surplus=%sW within_bms=%sW surplus_export=%sW pvlimit=%sW bms_cap≈%sW pct_cap=%sW -> charge=%sW",
                 surplus,
                 max_charge,
-                surplus_export,
+                max(0, surplus - selected_charge),
                 pvlimit,
                 bms_cap_w,
                 pct_cap_w,
