@@ -1,6 +1,6 @@
 import logging
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from time import time
 from typing import Any
@@ -364,6 +364,12 @@ class SolaXModbusTimeEntityDescription(BaseModbusTimeEntityDescription):
 # ====================================== Computed value functions  =================================================
 
 
+DIRECT_VPP_PARAMETER_MODES_GEN3: dict[str, tuple[int, ...]] = {
+    "remotecontrol_active_power_direct": (1,),
+    "remotecontrol_reactive_power_direct": (1,),
+}
+
+
 DIRECT_VPP_PARAMETER_MODES: dict[str, tuple[int, ...]] = {
     "remote_control_target_set_type_direct": (1, 2, 3, 4, 5, 6, 7),
     "remotecontrol_active_power_direct": (1,),
@@ -383,15 +389,73 @@ DIRECT_VPP_PARAMETER_MODES: dict[str, tuple[int, ...]] = {
 }
 
 
-def _direct_vpp_descriptions() -> dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription]:
+def _direct_vpp_descriptions(
+    parameters: dict[str, tuple[int, ...]],
+) -> dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription]:
     descriptions: dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription] = {
-        description.key: description for description in NUMBER_TYPES if description.key in DIRECT_VPP_PARAMETER_MODES
+        description.key: description for description in NUMBER_TYPES if description.key in parameters
     }
-    descriptions.update((description.key, description) for description in SELECT_TYPES if description.key in DIRECT_VPP_PARAMETER_MODES)
+    descriptions.update((description.key, description) for description in SELECT_TYPES if description.key in parameters)
     return descriptions
 
 
-def build_direct_vpp_command(mode: int, data: dict[str, Any], *, allow_defaults: bool = True) -> tuple[int, list[tuple[str, int]]]:
+def _direct_vpp_value(
+    mode: int,
+    data: dict[str, Any],
+    parameters: dict[str, tuple[int, ...]],
+    descriptions: dict[str, BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription],
+    allow_defaults: bool,
+    key: str,
+) -> int:
+    if mode not in parameters[key]:
+        return 0
+    description = descriptions[key]
+    parameter = data.get(key)
+    if parameter is None and allow_defaults:
+        parameter = description.initvalue
+    if parameter is None:
+        if not allow_defaults:
+            raise HomeAssistantError(
+                f"Direct VPP parameter '{description.name}' is unknown. "
+                "Configure the direct VPP targets and select the mode before updating an already active command."
+            )
+        raise HomeAssistantError(f"Set '{description.name}' before enabling direct VPP mode {mode}")
+    if isinstance(description, BaseModbusSelectEntityDescription) and description.option_dict and isinstance(parameter, str):
+        raw_option = {label: raw for raw, label in description.option_dict.items()}.get(parameter)
+        if raw_option is not None:
+            parameter = raw_option
+    try:
+        return int(parameter)
+    except (TypeError, ValueError, OverflowError) as ex:
+        raise HomeAssistantError(f"Invalid direct VPP parameter '{description.name}': {parameter!r}") from ex
+
+
+def _build_direct_vpp_command_gen3(mode: int, data: dict[str, Any], allow_defaults: bool = True) -> tuple[int, list[tuple[str, int]]]:
+    """Build one complete GEN3 direct VPP command, without starting an autorepeat loop.
+
+    SolaX requires FC16 over 0x7C..0x80 for modes 1
+    """
+    if mode not in range(2):
+        raise HomeAssistantError(f"Unsupported direct VPP mode: {mode}")
+    if mode == 0:
+        # Disable through ModbusPowerControl.
+        # Do not require configured targets just to stop remote control.
+        return 0x7C, [(REGISTER_U16, 0), (REGISTER_S32, 0), (REGISTER_S32, 0)]
+
+    descriptions = _direct_vpp_descriptions(DIRECT_VPP_PARAMETER_MODES_GEN3)
+
+    def value(key: str) -> int:
+        return _direct_vpp_value(mode, data, DIRECT_VPP_PARAMETER_MODES_GEN3, descriptions, allow_defaults, key)
+
+    payload = [
+        (REGISTER_U16, mode),
+        (REGISTER_S32, value("remotecontrol_active_power_direct")),
+        (REGISTER_S32, value("remotecontrol_reactive_power_direct")),
+    ]
+    return 0x7C, payload
+
+
+def _build_direct_vpp_command(mode: int, data: dict[str, Any], allow_defaults: bool = True) -> tuple[int, list[tuple[str, int]]]:
     """Build one complete direct VPP command, without starting an autorepeat loop.
 
     SolaX requires FC16 over 0x7C..0x88 for modes 1..3 and 0x7C..0x8A
@@ -405,30 +469,10 @@ def build_direct_vpp_command(mode: int, data: dict[str, Any], *, allow_defaults:
         # Do not require configured targets just to stop remote control.
         return 0x7C, [(REGISTER_U16, 0)] * 13
 
-    descriptions = _direct_vpp_descriptions()
+    descriptions = _direct_vpp_descriptions(DIRECT_VPP_PARAMETER_MODES)
 
     def value(key: str) -> int:
-        if mode not in DIRECT_VPP_PARAMETER_MODES[key]:
-            return 0
-        description = descriptions[key]
-        parameter = data.get(key)
-        if parameter is None and allow_defaults:
-            parameter = description.initvalue
-        if parameter is None:
-            if not allow_defaults:
-                raise HomeAssistantError(
-                    f"Direct VPP parameter '{description.name}' is unknown. "
-                    "Configure the direct VPP targets and select the mode before updating an already active command."
-                )
-            raise HomeAssistantError(f"Set '{description.name}' before enabling direct VPP mode {mode}")
-        if isinstance(description, BaseModbusSelectEntityDescription) and description.option_dict and isinstance(parameter, str):
-            raw_option = {label: raw for raw, label in description.option_dict.items()}.get(parameter)
-            if raw_option is not None:
-                parameter = raw_option
-        try:
-            return int(parameter)
-        except (TypeError, ValueError, OverflowError) as ex:
-            raise HomeAssistantError(f"Invalid direct VPP parameter '{description.name}': {parameter!r}") from ex
+        return _direct_vpp_value(mode, data, DIRECT_VPP_PARAMETER_MODES, descriptions, allow_defaults, key)
 
     if mode in (8, 9):
         return 0xA0, [
@@ -456,14 +500,16 @@ def build_direct_vpp_command(mode: int, data: dict[str, Any], *, allow_defaults:
     return 0x7C, payload
 
 
-async def async_write_direct_vpp(
+async def _async_write_direct_vpp(
     hub: Any,
     unit: int,
     description: BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription,
     parameter: int | float,
+    build_command: Callable[[int, dict[str, Any], bool], tuple[int, list[tuple[str, int]]]],
+    all_parameters: dict[str, tuple[int, ...]],
 ) -> None:
     """Apply parameter edits immediately, but never activate a mode implicitly."""
-    is_parameter = description.key in DIRECT_VPP_PARAMETER_MODES
+    is_parameter = description.key in all_parameters
     # Serialize the complete read/build/write transaction with other direct VPP
     # changes and polling (including the existing autorepeat controllers).
     async with hub._poll_data_lock:
@@ -486,13 +532,13 @@ async def async_write_direct_vpp(
             mode = int(parameter)
 
         data = hub.data | {description.key: parameter}
-        if not is_parameter or mode in DIRECT_VPP_PARAMETER_MODES[description.key]:
-            address, payload = build_direct_vpp_command(mode, data, allow_defaults=not is_parameter)
+        if not is_parameter or mode in all_parameters[description.key]:
+            address, payload = build_command(mode, data, not is_parameter)
             await hub.async_write_registers_multi(unit=unit, address=address, payload=payload)
             # Remember the complete successful command, including defaults from
             # explicit activation, for later edits and Home Assistant restarts.
-            for key, field in _direct_vpp_descriptions().items():
-                if mode in DIRECT_VPP_PARAMETER_MODES[key]:
+            for key, field in _direct_vpp_descriptions(all_parameters).items():
+                if mode in all_parameters[key]:
                     hub.data[key] = data[key] if data.get(key) is not None else field.initvalue
                     entity = hub.numberEntities.get(key) or hub.selectEntities.get(key)
                     if entity is not None and entity.hass is not None and entity.enabled:
@@ -505,6 +551,24 @@ async def async_write_direct_vpp(
         hub.data[description.key] = parameter
 
 
+async def async_write_direct_vpp_gen3(
+    hub: Any,
+    unit: int,
+    description: BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription,
+    parameter: int | float,
+) -> None:
+    await _async_write_direct_vpp(hub, unit, description, parameter, _build_direct_vpp_command_gen3, DIRECT_VPP_PARAMETER_MODES_GEN3)
+
+
+async def async_write_direct_vpp(
+    hub: Any,
+    unit: int,
+    description: BaseModbusNumberEntityDescription | BaseModbusSelectEntityDescription,
+    parameter: int | float,
+) -> None:
+    await _async_write_direct_vpp(hub, unit, description, parameter, _build_direct_vpp_command, DIRECT_VPP_PARAMETER_MODES)
+
+
 DEFAULT_FILTER_SMOOTING_FACTOR = 5
 
 
@@ -514,7 +578,48 @@ def autorepeat_setpoint_filter(current_value: int, desired_value: int, steps: in
     return int((current_value * (steps - 1) + desired_value) / steps)
 
 
-def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+def _build_autorepeat_vpp_command_gen3(datadict: dict[str, Any], power_control: str, active_power: int, reactive_power: int) -> list[tuple[str, Any]]:
+    # If power control is disabled, force active/reactive to 0.
+    if power_control == "Disabled":
+        active_power = 0
+        reactive_power = 0
+    # Send the whole control packet
+    return [
+        ("remotecontrol_power_control", power_control),
+        ("remotecontrol_active_power", active_power),
+        ("remotecontrol_reactive_power", reactive_power),
+    ]
+
+
+def _build_autorepeat_vpp_command(datadict: dict[str, Any], power_control: str, active_power: int, reactive_power: int) -> list[tuple[str, Any]]:
+    # If power control is disabled, just write the disabled flag.
+    if power_control == "Disabled":
+        return [("remotecontrol_power_control", "Disabled")]
+    # Otherwise send the whole control packet
+    set_type = datadict.get("remotecontrol_set_type", "Set")
+    rc_duration = datadict.get("remotecontrol_duration", 20)
+    rc_timeout = datadict.get("remotecontrol_timeout", 0)
+    reap_up = datadict.get("reactive_power_upper", 0)
+    reap_lo = datadict.get("reactive_power_lower", 0)
+    return [
+        ("remotecontrol_power_control", power_control),
+        ("remotecontrol_set_type", set_type),
+        ("remotecontrol_active_power", active_power),
+        ("remotecontrol_reactive_power", max(min(reap_up, reactive_power), reap_lo)),
+        ("remotecontrol_duration", rc_duration),
+        (REGISTER_U16, 0),  # dummy target soc
+        (REGISTER_U32, 0),  # dummy target energy Wh
+        (REGISTER_S32, 0),  # dummy target charge/discharge power
+        ("remotecontrol_timeout", rc_timeout),
+    ]
+
+
+def _autorepeat_function_remotecontrol_recompute(
+    initval: int,
+    descr: Any,
+    datadict: dict[str, Any],
+    build_command: Callable[[dict[str, Any], str, int, int], list[tuple[str, Any]]],
+) -> dict[str, Any]:
     """Remote control power calculations for SolaX inverters - Redesigned Implementation.
 
     This function implements the redesigned remote control calculations based on clear
@@ -533,19 +638,14 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
 
     # terminate expiring loop by disabling remotecontrol
     if initval == BUTTONREPEAT_POST:
-        return {"action": WRITE_MULTI_MODBUS, "data": [("remotecontrol_power_control", "Disabled")]}
+        return {"action": WRITE_MULTI_MODBUS, "data": build_command(datadict, "Disabled", 0, 0)}
 
     # Get control parameters
     power_control = datadict.get("remotecontrol_power_control", "Disabled")
-    set_type = datadict.get("remotecontrol_set_type", "Set")
     target = datadict.get("remotecontrol_active_power", 0)
     reactive_power = datadict.get("remotecontrol_reactive_power", 0)
-    rc_duration = datadict.get("remotecontrol_duration", 20)
-    reap_up = datadict.get("reactive_power_upper", 0)
-    reap_lo = datadict.get("reactive_power_lower", 0)
     import_limit = datadict.get("remotecontrol_import_limit", 20000)
     export_limit = datadict.get("export_control_user_limit", 20000)
-    rc_timeout = datadict.get("remotecontrol_timeout", 0)
 
     # Get power measurements
     measured_power = datadict.get("measured_power", 0)  # Grid power (positive = import, negative = export)
@@ -840,23 +940,20 @@ def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadi
         )
 
     # Prepare result data
-    res = [
-        ("remotecontrol_power_control", power_control),
-        ("remotecontrol_set_type", set_type),
-        ("remotecontrol_active_power", ap_target),
-        ("remotecontrol_reactive_power", max(min(reap_up, reactive_power), reap_lo)),
-        ("remotecontrol_duration", rc_duration),
-        (REGISTER_U16, 0),  # dummy target soc
-        (REGISTER_U32, 0),  # dummy target energy Wh
-        (REGISTER_S32, 0),  # dummy target charge/discharge power
-        ("remotecontrol_timeout", rc_timeout),
-    ]
-
+    res = build_command(datadict, power_control, ap_target, reactive_power)
     if power_control == "Disabled":
         autorepeat_stop(datadict, "remotecontrol_trigger")
 
     _LOGGER.debug("Evaluated remotecontrol_trigger: corrected/clamped values: %s", res)
     return {"action": WRITE_MULTI_MODBUS, "data": res}
+
+
+def autorepeat_function_remotecontrol_recompute_gen3(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+    return _autorepeat_function_remotecontrol_recompute(initval, descr, datadict, _build_autorepeat_vpp_command_gen3)
+
+
+def autorepeat_function_remotecontrol_recompute(initval: int, descr: Any, datadict: dict[str, Any]) -> dict[str, Any]:
+    return _autorepeat_function_remotecontrol_recompute(initval, descr, datadict, _build_autorepeat_vpp_command)
 
 
 def autorepeat_bms_charge(datadict: dict[str, Any], battery_capacity: float, max_charge_soc: float, available: float) -> tuple[int, int, int, int]:
@@ -2140,6 +2237,28 @@ BUTTON_TYPES: Sequence["SolaxModbusButtonEntityDescription"] = [
         autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power", "pm_total_inverter_power"),
     ),
     SolaxModbusButtonEntityDescription(
+        name="Remotecontrol Trigger (mode 1-7)",
+        key="remotecontrol_trigger",
+        register=0x7C,
+        allowedtypes=AC | HYBRID | GEN3,
+        write_method=WRITE_MULTI_MODBUS,
+        icon="mdi:battery-clock",
+        value_function=autorepeat_function_remotecontrol_recompute_gen3,
+        autorepeat="remotecontrol_autorepeat_duration",
+        depends_on=["battery_capacity", "measured_power"],
+        autorepeat_control="remotecontrol_power_control",
+        autorepeat_dependencies=(
+            "selfuse_discharge_min_soc",
+            "export_control_user_limit",
+            "pv_power_total",
+            "inverter_power",
+            "battery_power_charge",
+            "house_load",
+        ),
+        autorepeat_optional_dependencies=("generator_power",),
+        autorepeat_cadence=("measured_power", "pv_power_total", "inverter_power"),
+    ),
+    SolaxModbusButtonEntityDescription(
         name="PowerControlMode Trigger (mode 8/9)",
         key="powercontrolmode8_trigger",
         register=0xA0,
@@ -2509,7 +2628,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
     SolaxModbusNumberEntityDescription(
         name="Remotecontrol Active Power (mode 1)",
         key="remotecontrol_active_power",
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
         native_min_value=-30000,
         native_max_value=30000,
         native_step=100,
@@ -2526,7 +2645,7 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         name="Remotecontrol Reactive Power (mode 1)",
         key="remotecontrol_reactive_power",
         register_data_type=REGISTER_S32,
-        allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        allowedtypes=AC | HYBRID | GEN3 | GEN4 | GEN5,
         native_min_value=-4000,
         native_max_value=4000,
         native_step=100,
@@ -2568,9 +2687,39 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Autorepeat Duration (mode 1)",
+        key="remotecontrol_autorepeat_duration",
+        register_data_type=REGISTER_U16,
+        allowedtypes=AC | HYBRID | GEN3,
+        icon="mdi:home-clock",
+        initvalue=0,  # seconds -
+        native_min_value=0,
+        native_max_value=172800,
+        native_step=1,
+        fmt="i",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        write_method=WRITE_DATA_LOCAL,
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
         name="Remotecontrol Import Limit (mode 1-9)",
         key="remotecontrol_import_limit",
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        # Local mains-connection limit: use the data type's maximum, not the inverter rating.
+        native_min_value=0,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        initvalue=20000,
+        register_data_type=REGISTER_S32,
+        write_method=WRITE_DATA_LOCAL,
+        fmt="i",
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Import Limit (mode 1)",
+        key="remotecontrol_import_limit",
+        allowedtypes=AC | HYBRID | GEN3,
         # Local mains-connection limit: use the data type's maximum, not the inverter rating.
         native_min_value=0,
         native_step=100,
@@ -3479,6 +3628,24 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Active Power (mode 1; direct)",
+        key="remotecontrol_active_power_direct",
+        register_data_type=REGISTER_S32,
+        fmt="i",
+        register=0x7E,
+        native_min_value=-30000,
+        native_max_value=30000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.POWER,
+        initvalue=0,
+        # min_exceptions_minus=MAX_EXPORT,  # negative
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp_gen3,
+        allowedtypes=AC | HYBRID | GEN3,
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
         name="Remotecontrol Reactive Power (mode 1; direct)",
         key="remotecontrol_reactive_power_direct",
         register_data_type=REGISTER_S32,
@@ -3493,6 +3660,23 @@ NUMBER_TYPES: Sequence["SolaxModbusNumberEntityDescription"] = [
         write_method=WRITE_DATA_LOCAL,
         async_write_function=async_write_direct_vpp,
         allowedtypes=AC | HYBRID | GEN4 | GEN5,
+        suggested_display_precision=0,
+    ),
+    SolaxModbusNumberEntityDescription(
+        name="Remotecontrol Reactive Power (mode 1; direct)",
+        key="remotecontrol_reactive_power_direct",
+        register_data_type=REGISTER_S32,
+        fmt="i",
+        register=0x80,
+        native_min_value=-4000,
+        native_max_value=4000,
+        native_step=100,
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=NumberDeviceClass.REACTIVE_POWER,
+        initvalue=0,
+        write_method=WRITE_DATA_LOCAL,
+        async_write_function=async_write_direct_vpp_gen3,
+        allowedtypes=AC | HYBRID | GEN3,
         suggested_display_precision=0,
     ),
     SolaxModbusNumberEntityDescription(
@@ -4318,17 +4502,26 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:meter-electric",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Export Duration",
+        name="Remotecontrol Export Duration (mode 1 auto/direct)",
         key="export_duration",
         register=0x9F,
         option_dict={
             4: "Default",
+            300: "5 Minutes",
+            600: "10 Minutes",
             900: "15 Minutes",
             1800: "30 Minutes",
             2700: "45 Minutes",
             3600: "60 Minutes",
             5400: "90 Minutes",
             7200: "120 Minutes",
+            10800: "3 Hours",
+            14400: "4 Hours",
+            21600: "6 Hours",
+            28800: "8 Hours",
+            43200: "12 Hours",
+            57600: "16 Hours",
+            65535: "Until Stopped",
         },
         allowedtypes=AC | HYBRID | GEN3,
         entity_category=EntityCategory.CONFIG,
@@ -4498,6 +4691,20 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
             9: "Individual Setting - Target SOC Mode",
         },
         allowedtypes=AC | HYBRID | GEN4 | GEN5 | GEN6,
+        initvalue=0,  # Disabled
+        icon="mdi:transmission-tower",
+    ),
+    SolaxModbusSelectEntityDescription(
+        name="Modbus Power Control (direct)",
+        key="modbus_power_control_direct",
+        register=0x7C,
+        write_method=WRITE_MULTI_MODBUS,
+        async_write_function=async_write_direct_vpp_gen3,
+        option_dict={
+            0: "Disabled",
+            1: "Enable Power Control Mode",
+        },
+        allowedtypes=AC | HYBRID | GEN3,
         initvalue=0,  # Disabled
         icon="mdi:transmission-tower",
     ),
@@ -5747,12 +5954,21 @@ SENSOR_TYPES_MAIN: list[SolaXModbusSensorEntityDescription] = [
         register=0x10B,
         scale={
             4: "Default",
+            300: "5 Minutes",
+            600: "10 Minutes",
             900: "15 Minutes",
             1800: "30 Minutes",
             2700: "45 Minutes",
             3600: "60 Minutes",
             5400: "90 Minutes",
             7200: "120 Minutes",
+            10800: "3 Hours",
+            14400: "4 Hours",
+            21600: "6 Hours",
+            28800: "8 Hours",
+            43200: "12 Hours",
+            57600: "16 Hours",
+            65535: "Until Stopped",
         },
         allowedtypes=AC | HYBRID | GEN3,
         internal=True,
