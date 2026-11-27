@@ -24,8 +24,8 @@ from custom_components.solax_modbus.plugin_solax import (
     NUMBER_TYPES,
     SELECT_TYPES,
     async_write_direct_vpp,
-    build_direct_vpp_command,
 )
+from custom_components.solax_modbus.plugin_solax import _build_direct_vpp_command as build_direct_vpp_command
 from custom_components.solax_modbus.select import SolaXModbusSelect
 from tests.unit.test_write_pipeline import make_hub
 
