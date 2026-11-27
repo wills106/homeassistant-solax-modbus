@@ -4502,7 +4502,7 @@ SELECT_TYPES: Sequence["SolaxModbusSelectEntityDescription"] = [
         icon="mdi:meter-electric",
     ),
     SolaxModbusSelectEntityDescription(
-        name="Remotecontrol Export Duration (mode 1 auto/direct)",
+        name="Remotecontrol Duration (mode 1 auto/direct)",
         key="export_duration",
         register=0x9F,
         option_dict={
