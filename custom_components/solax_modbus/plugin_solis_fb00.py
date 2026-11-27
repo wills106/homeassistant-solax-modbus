@@ -2263,8 +2263,17 @@ NUMBER_TYPES = [
     ),
 ]
 
-# ================================= Select Declarations ============================================================
+# ================================= Switch Declarations ============================================================
 SWITCH_TYPES = [
+    SolisModbusSwitchEntityDescription(
+        name="Backup Port",
+        key="backup_port_enable",
+        register=43111,
+        allowedtypes=HYBRID,
+        sensor_key="backup_port_state",
+        value_function=value_function_enable_disable,
+        icon="mdi:power-socket",
+    ),
     # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
     SolisModbusSwitchEntityDescription(
         name="Dispatch Master",
@@ -2384,6 +2393,8 @@ SWITCH_TYPES = [
         value_function=value_function_packed_switches,
     ),
 ]
+
+# ================================= Select Declarations ============================================================
 
 SELECT_TYPES = [
     # ============================ Remote Dispatch (Ver3.4 44100 block) ============================
@@ -3518,6 +3529,17 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
         icon="mdi:home",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Backup Port State",
+        key="backup_port_state",
+        register=33200,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U16,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        newblock=True,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Charge Current Limit",
