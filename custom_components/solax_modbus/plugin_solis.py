@@ -935,7 +935,7 @@ SWITCH_TYPES = [
         key="backup_port_enable",
         register=43111,
         allowedtypes=HYBRID,
-        sensor_key="backup_supply_state",
+        sensor_key="backup_port_state",
         value_function=value_function_enable_disable,
         icon="mdi:power-socket",
     ),
@@ -2044,7 +2044,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
     ),
     SolisModbusSensorEntityDescription(
         name="Backup Port State",
-        key="backup_supply_state",
+        key="backup_port_state",
         register=33200,
         register_type=REG_INPUT,
         register_data_type=REGISTER_U16,
