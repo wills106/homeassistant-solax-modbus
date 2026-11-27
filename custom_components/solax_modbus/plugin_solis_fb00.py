@@ -3538,8 +3538,7 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         register_data_type=REGISTER_U16,
         allowedtypes=HYBRID,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=True,
-        entity_registry_visible_default=False,
+        entity_registry_enabled_default=False,
         newblock=True,
     ),
     SolisModbusSensorEntityDescription(
