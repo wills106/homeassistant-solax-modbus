@@ -46,6 +46,7 @@ from custom_components.solax_modbus.const import (
     plugin_base,
     value_function_battery_input_solis,
     value_function_battery_output_solis,
+    value_function_enable_disable,
     value_function_packed_switches,
     value_function_rtc_ymd,
     value_function_sync_rtc_ymd,
@@ -926,9 +927,18 @@ NUMBER_TYPES = [
     ),
 ]
 
-# ================================= Select Declarations ============================================================
+# ================================= Switch Declarations ============================================================
 
 SWITCH_TYPES = [
+    SolisModbusSwitchEntityDescription(
+        name="Backup Port",
+        key="backup_port_enable",
+        register=43111,
+        allowedtypes=HYBRID,
+        sensor_key="backup_supply_state",
+        value_function=value_function_enable_disable,
+        icon="mdi:power-socket",
+    ),
     SolisModbusSwitchEntityDescription(
         name="MPPT Parallel Function",
         key="mppt_parallel_function",
@@ -1002,6 +1012,8 @@ SWITCH_TYPES = [
         value_function=value_function_packed_switches,
     ),
 ]
+
+# ================================= Select Declarations ============================================================
 
 SELECT_TYPES = [
     SolisModbusSelectEntityDescription(
@@ -2029,6 +2041,18 @@ SENSOR_TYPES: list[SolisModbusSensorEntityDescription] = [
         sleepmode=SLEEPMODE_LASTAWAKE,
         allowedtypes=HYBRID,
         icon="mdi:home",
+    ),
+    SolisModbusSensorEntityDescription(
+        name="Backup Port State",
+        key="backup_supply_state",
+        register=33200,
+        register_type=REG_INPUT,
+        register_data_type=REGISTER_U16,
+        allowedtypes=HYBRID,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=True,
+        entity_registry_visible_default=False,
+        newblock=True,
     ),
     SolisModbusSensorEntityDescription(
         name="Battery Charge Current Limit",
